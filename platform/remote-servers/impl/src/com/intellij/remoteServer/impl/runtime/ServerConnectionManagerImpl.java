@@ -1,10 +1,12 @@
 package com.intellij.remoteServer.impl.runtime;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +19,9 @@ import java.util.Map;
  * @author nik
  */
 public class ServerConnectionManagerImpl extends ServerConnectionManager {
+
+  private static final int POLL_DEPLOYMENTS_DELAY = 2000;
+
   private final Map<RemoteServer<?>, ServerConnection> myConnections = new HashMap<RemoteServer<?>, ServerConnection>();
   private final ServerConnectionEventDispatcher myEventDispatcher = new ServerConnectionEventDispatcher();
 
@@ -26,12 +31,42 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
     ApplicationManager.getApplication().assertIsDispatchThread();
     ServerConnection connection = myConnections.get(server);
     if (connection == null) {
-      ServerTaskExecutorImpl executor = new ServerTaskExecutorImpl();
-      connection = new ServerConnectionImpl(server, server.getType().createConnector(server.getConfiguration(), executor), this);
+      connection = doCreateConnection(server, this);
       myConnections.put(server, connection);
       myEventDispatcher.fireConnectionCreated(connection);
+      pollDeployments(connection);
     }
     return connection;
+  }
+
+  private void pollDeployments(final ServerConnection connection) {
+    connection.computeDeployments(new Runnable() {
+
+      @Override
+      public void run() {
+        new Alarm().addRequest(new Runnable() {
+
+          @Override
+          public void run() {
+            if (connection == getConnection(connection.getServer())) {
+              pollDeployments(connection);
+            }
+          }
+        }, POLL_DEPLOYMENTS_DELAY, ModalityState.any());
+      }
+    });
+  }
+
+  @NotNull
+  @Override
+  public <C extends ServerConfiguration> ServerConnection createTemporaryConnection(@NotNull RemoteServer<C> server) {
+    return doCreateConnection(server, null);
+  }
+
+  private <C extends ServerConfiguration> ServerConnection doCreateConnection(@NotNull RemoteServer<C> server,
+                                                                              ServerConnectionManagerImpl manager) {
+    ServerTaskExecutorImpl executor = new ServerTaskExecutorImpl();
+    return new ServerConnectionImpl(server, server.getType().createConnector(server, executor), manager, getEventDispatcher());
   }
 
   @Nullable

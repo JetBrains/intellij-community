@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.history;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.BinaryContentRevision;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 
@@ -27,9 +28,9 @@ import org.jetbrains.idea.svn.SvnVcs;
 public class SvnRepositoryBinaryContentRevision extends SvnRepositoryContentRevision implements BinaryContentRevision {
   private byte[] myBinaryContent;
 
-  public SvnRepositoryBinaryContentRevision(final SvnVcs vcs, final String repositoryRoot, final String path,
+  public SvnRepositoryBinaryContentRevision(final SvnVcs vcs, @NotNull final FilePath remotePath,
                                             @Nullable final FilePath localPath, final long revision) {
-    super(vcs, repositoryRoot, path, localPath, revision);
+    super(vcs, remotePath, localPath, revision);
   }
 
   @Nullable

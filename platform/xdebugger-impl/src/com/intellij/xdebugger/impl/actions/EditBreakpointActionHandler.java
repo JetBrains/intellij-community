@@ -57,7 +57,7 @@ public abstract class EditBreakpointActionHandler extends DebuggerActionHandler 
     Point point = gutterComponent.getPoint(breakpointGutterRenderer);
     if (point == null) return;
     final Icon icon = breakpointGutterRenderer.getIcon();
-    Point whereToShow = new Point(point.x + icon.getIconWidth() / 2 + gutterComponent.getIconsAreaWidth(), point.y + icon.getIconHeight() / 2);
+    Point whereToShow = new Point(point.x + icon.getIconWidth() / 2, point.y + icon.getIconHeight() / 2);
     doShowPopup(project, gutterComponent, whereToShow, breakpoint);
   }
 

@@ -8,9 +8,9 @@ Groovy script
     PsiElement(class)('class')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a')
-    PsiWhiteSpace(' ')
     Extends clause
       <empty list>
+    PsiWhiteSpace(' ')
     Implements clause
       PsiElement(implements)('implements')
       PsiWhiteSpace(' ')

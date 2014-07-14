@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,16 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.stubs.*;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.StubBase;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStrongWhitespaceHolderElementType;
 import com.intellij.psi.tree.IStubFileElementType;
@@ -180,11 +183,32 @@ public class TreeUtil {
   }
 
   @Nullable
+  public static ASTNode findSibling(ASTNode start, TokenSet types) {
+    ASTNode child = start;
+    while (true) {
+      if (child == null) return null;
+      if (types.contains(child.getElementType())) return child;
+      child = child.getTreeNext();
+    }
+  }
+
+  @Nullable
   public static ASTNode findSiblingBackward(ASTNode start, IElementType elementType) {
     ASTNode child = start;
     while (true) {
       if (child == null) return null;
       if (child.getElementType() == elementType) return child;
+      child = child.getTreePrev();
+    }
+  }
+
+
+  @Nullable
+  public static ASTNode findSiblingBackward(ASTNode start, TokenSet types) {
+    ASTNode child = start;
+    while (true) {
+      if (child == null) return null;
+      if (types.contains(child.getElementType())) return child;
       child = child.getTreePrev();
     }
   }
@@ -205,8 +229,8 @@ public class TreeUtil {
     return null;
   }
 
-  public static Pair<ASTNode, ASTNode> findTopmostSiblingParents(ASTNode one, ASTNode two) {
-    if (one == two) return Pair.create(null, null);
+  public static Couple<ASTNode> findTopmostSiblingParents(ASTNode one, ASTNode two) {
+    if (one == two) return Couple.of(null, null);
 
     LinkedList<ASTNode> oneParents = new LinkedList<ASTNode>();
     LinkedList<ASTNode> twoParents = new LinkedList<ASTNode>();
@@ -225,7 +249,7 @@ public class TreeUtil {
     }
     while (one == two && one != null);
 
-    return new Pair<ASTNode, ASTNode>(one, two);
+    return Couple.of(one, two);
   }
 
   public static void clearCaches(@NotNull final TreeElement tree) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,7 +135,7 @@ public abstract class XmlFormattingPolicy {
   public abstract boolean addSpaceIntoEmptyTag();
 
   public void setRootBlock(final ASTNode node, final Block rootBlock) {
-    myRootToBlockMap.put(new Pair<PsiElement, Language>(node.getPsi(), node.getPsi().getLanguage()), rootBlock);
+    myRootToBlockMap.put(Pair.create(node.getPsi(), node.getPsi().getLanguage()), rootBlock);
   }
 
   public FormattingDocumentModel getDocumentModel() {

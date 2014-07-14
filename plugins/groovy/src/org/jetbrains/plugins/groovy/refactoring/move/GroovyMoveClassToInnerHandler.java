@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
-import org.jetbrains.plugins.groovy.editor.GroovyImportOptimizer;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyImportUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -95,6 +95,7 @@ public class GroovyMoveClassToInnerHandler implements MoveClassToInnerHandler {
     else {
       //rebind imports first
       Collections.sort(usageInfos, new Comparator<UsageInfo>() {
+        @Override
         public int compare(UsageInfo o1, UsageInfo o2) {
           return PsiUtil.BY_POSITION.compare(o1.getElement(), o2.getElement());
         }
@@ -116,6 +117,7 @@ public class GroovyMoveClassToInnerHandler implements MoveClassToInnerHandler {
     }
   }
 
+  @Override
   public void retargetClassRefsInMoved(@NotNull final Map<PsiElement, PsiElement> oldToNewElementsMapping) {
     for (final PsiElement newClass : oldToNewElementsMapping.values()) {
       if (!(newClass instanceof GrTypeDefinition)) continue;
@@ -166,6 +168,7 @@ public class GroovyMoveClassToInnerHandler implements MoveClassToInnerHandler {
     return newInnerClass;
   }
 
+  @Override
   public void retargetNonCodeUsages(@NotNull final Map<PsiElement, PsiElement> oldToNewElementMap,
                                     @NotNull final NonCodeUsageInfo[] nonCodeUsages) {
     for (PsiElement newClass : oldToNewElementMap.values()) {
@@ -196,7 +199,7 @@ public class GroovyMoveClassToInnerHandler implements MoveClassToInnerHandler {
   public void removeRedundantImports(PsiFile targetClassFile) {
     if (targetClassFile instanceof GroovyFile) {
       GroovyFile file = (GroovyFile)targetClassFile;
-      final Set<GrImportStatement> usedImports = GroovyImportOptimizer.findUsedImports(file);
+      final Set<GrImportStatement> usedImports = GroovyImportUtil.findUsedImports(file);
       final List<GrImportStatement> validImports = org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getValidImportStatements(file);
       for (GrImportStatement importStatement : validImports) {
         if (!usedImports.contains(importStatement)) {

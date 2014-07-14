@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
@@ -113,10 +114,10 @@ public class EqualsCalledOnEnumConstantInspection extends BaseInspection {
         newExpression.append(arguments[0].getText());
       }
       if (not) {
-        replaceExpression(prefixExpression, newExpression.toString());
+        PsiReplacementUtil.replaceExpression(prefixExpression, newExpression.toString());
       }
       else {
-        replaceExpression(methodCallExpression, newExpression.toString());
+        PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString());
       }
     }
   }

@@ -24,7 +24,7 @@ public class GitCreateTagAction extends GitLogSingleCommitAction {
 
   @Override
   protected void actionPerformed(@NotNull GitRepository repository, @NotNull VcsFullCommitDetails commit) {
-    String reference = commit.getHash().asString();
+    String reference = commit.getId().asString();
     new GitCreateNewTag(repository.getProject(), repository, reference, null).execute();
   }
 

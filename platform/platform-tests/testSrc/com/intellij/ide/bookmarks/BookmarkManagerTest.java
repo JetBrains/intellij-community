@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,15 @@ package com.intellij.ide.bookmarks;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.impl.AbstractEditorProcessingOnDocumentModificationTest;
+import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.TestFileType;
 import org.jetbrains.annotations.NonNls;
+import org.picocontainer.ComponentAdapter;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,7 +36,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 12/27/10 1:43 PM
  */
-public class BookmarkManagerTest extends AbstractEditorProcessingOnDocumentModificationTest {
+public class BookmarkManagerTest extends AbstractEditorTest {
   private final List<Bookmark> myBookmarks = new ArrayList<Bookmark>();
   
   @Override
@@ -69,6 +71,12 @@ public class BookmarkManagerTest extends AbstractEditorProcessingOnDocumentModif
   }
   
   public void testBookmarkLineRemove() throws IOException {
+    List<ComponentAdapter> adapters = getProject().getPicoContainer().getComponentAdaptersOfType(ChangeListManagerImpl.class);
+    System.out.println(adapters.size() + " adapters:");
+    for (ComponentAdapter adapter : adapters) {
+      System.out.println(adapter);
+    }
+
     @NonNls String text =
       "public class Test {\n" +
       "    public void test() {\n" +

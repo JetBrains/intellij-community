@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -35,11 +36,11 @@ public final class DesktopLayout implements JDOMExternalizable {
   /**
    * Map between <code>id</code>s and registered <code>WindowInfo</code>s.
    */
-  private final HashMap<String, WindowInfoImpl> myRegisteredId2Info;
+  private final Map<String, WindowInfoImpl> myRegisteredId2Info;
   /**
    * Map between <code>id</code>s and unregistered <code>WindowInfo</code>s.
    */
-  private final HashMap<String, WindowInfoImpl> myUnregisteredId2Info;
+  private final Map<String, WindowInfoImpl> myUnregisteredId2Info;
   /**
    *
    */
@@ -107,9 +108,8 @@ public final class DesktopLayout implements JDOMExternalizable {
    *
    * @param id     <code>id</code> of tool window to be registered.
    * @param anchor the default tool window anchor.
-   * @return
    */
-  final WindowInfoImpl register(final String id, final ToolWindowAnchor anchor, final boolean splitMode) {
+  final WindowInfoImpl register(@NotNull String id, @NotNull ToolWindowAnchor anchor, final boolean splitMode) {
     WindowInfoImpl info = myUnregisteredId2Info.get(id);
     if (info != null) { // tool window has been already registered some time
       myUnregisteredId2Info.remove(id);
@@ -289,7 +289,9 @@ public final class DesktopLayout implements JDOMExternalizable {
     for (Object o : layoutElement.getChildren()) {
       final Element e = (Element)o;
       if (WindowInfoImpl.TAG.equals(e.getName())) {
-        final WindowInfoImpl info = new WindowInfoImpl(e.getAttributeValue(ID_ATTR));
+        String id = e.getAttributeValue(ID_ATTR);
+        assert id != null;
+        final WindowInfoImpl info = new WindowInfoImpl(id);
         info.readExternal(e);
         if (info.getOrder() == -1) { // if order isn't defined then window's button will be the last one in the stripe
           info.setOrder(getMaxOrder(info.getAnchor()) + 1);

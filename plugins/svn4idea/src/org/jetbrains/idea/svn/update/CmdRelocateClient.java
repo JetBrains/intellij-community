@@ -24,6 +24,6 @@ public class CmdRelocateClient extends BaseSvnClient implements RelocateClient {
     parameters.add(toPrefix);
     CommandUtil.put(parameters, copyRoot, false);
 
-    CommandUtil.execute(myVcs, SvnTarget.fromFile(copyRoot), SvnCommandName.relocate, parameters, null);
+    execute(myVcs, SvnTarget.fromFile(copyRoot), SvnCommandName.relocate, parameters, null);
   }
 }

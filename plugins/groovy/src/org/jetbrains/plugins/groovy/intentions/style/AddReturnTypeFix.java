@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil;
+import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -101,7 +102,7 @@ public class AddReturnTypeFix implements IntentionAction {
     PsiType type = method.getInferredReturnType();
     if (type == null) type = PsiType.getJavaLangObject(PsiManager.getInstance(project), file.getResolveScope());
     type = TypesUtil.unboxPrimitiveTypeWrapper(type);
-    method.setReturnType(type);
+    GrReferenceAdjuster.shortenAllReferencesIn(method.setReturnType(type));
   }
 
   @Override

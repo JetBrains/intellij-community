@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,18 +19,19 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Document;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 public interface SchemeProcessor<T extends ExternalizableScheme> {
-  T readScheme(Document schemeContent) throws InvalidDataException, IOException, JDOMException;
-  Document writeScheme(T scheme) throws WriteExternalException;
+  T readScheme(@NotNull Document schemeContent) throws InvalidDataException, IOException, JDOMException;
+  Document writeScheme(@NotNull T scheme) throws WriteExternalException;
 
-  boolean shouldBeSaved(T scheme);
-  void initScheme(T scheme);
+  boolean shouldBeSaved(@NotNull T scheme);
+  void initScheme(@NotNull T scheme);
 
-  void onSchemeAdded(T scheme);
-  void onSchemeDeleted(T scheme);
+  void onSchemeAdded(@NotNull T scheme);
+  void onSchemeDeleted(@NotNull T scheme);
 
   void onCurrentSchemeChanged(final Scheme oldCurrentScheme);
 }

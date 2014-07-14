@@ -65,3 +65,9 @@ class SubClass2 extends SubClass{
     super.doSmth();
   }
 }
+
+class SAM {
+  {
+    Object runnable = (Runnable) () -> {};
+  }
+}

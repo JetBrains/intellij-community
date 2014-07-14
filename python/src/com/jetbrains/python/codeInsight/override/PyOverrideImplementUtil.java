@@ -156,7 +156,8 @@ public class PyOverrideImplementUtil {
     final int offset = editor.getCaretModel().getOffset();
     PsiElement anchor = null;
     for (PyStatement statement: statementList.getStatements()) {
-      if (statement.getTextRange().getStartOffset() < offset) {
+      if (statement.getTextRange().getStartOffset() < offset ||
+          (statement instanceof PyExpressionStatement && ((PyExpressionStatement)statement).getExpression() instanceof PyStringLiteralExpression)) {
         anchor = statement;
       }
     }
@@ -224,7 +225,7 @@ public class PyOverrideImplementUtil {
       statementBody.append(PyNames.PASS);
     }
     else {
-      if (!PyNames.INIT.equals(baseFunction.getName()) && baseFunction.getReturnType(context, null) != PyNoneType.INSTANCE) {
+      if (!PyNames.INIT.equals(baseFunction.getName()) && context.getReturnType(baseFunction) != PyNoneType.INSTANCE) {
         statementBody.append("return ");
       }
       if (baseClass.isNewStyleClass()) {
@@ -234,12 +235,12 @@ public class PyOverrideImplementUtil {
         if (!langLevel.isPy3K()) {
           final String baseFirstName = !baseParams.isEmpty() ? baseParams.get(0).getName() : null;
           final String firstName = baseFirstName != null ? baseFirstName : PyNames.CANONICAL_SELF;
-          PsiElement outerClass = PsiTreeUtil.getParentOfType(pyClass, PyClass.class, true);
+          PsiElement outerClass = PsiTreeUtil.getParentOfType(pyClass, PyClass.class, true, PyFunction.class);
           String className = pyClass.getName();
           final List<String> nameResult = Lists.newArrayList(className);
           while(outerClass instanceof PyClass) {
             nameResult.add(0, ((PyClass)outerClass).getName());
-            outerClass = PsiTreeUtil.getParentOfType(outerClass, PyClass.class, true);
+            outerClass = PsiTreeUtil.getParentOfType(outerClass, PyClass.class, true, PyFunction.class);
           }
 
           className = StringUtil.join(nameResult, ".");

@@ -25,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
@@ -144,7 +145,7 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
         newExpressionText.append(argument.getText());
       }
       newExpressionText.append('.').append(referenceName).append('(').append(qualifier.getText()).append(')');
-      replaceExpression(polyadicExpression, newExpressionText.toString());
+      PsiReplacementUtil.replaceExpression(polyadicExpression, newExpressionText.toString());
     }
   }
 

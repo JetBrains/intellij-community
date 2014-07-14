@@ -16,6 +16,7 @@
 package com.intellij.execution.process.impl;
 
 import com.intellij.execution.process.OSProcessManager;
+import com.intellij.execution.process.RunnerWinProcess;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -42,18 +43,27 @@ public class OSProcessManagerImpl extends OSProcessManager {
   public boolean killProcessTree(@NotNull Process process) {
     if (SystemInfo.isWindows) {
       try {
-        new WinProcess(process).killRecursively();
+        WinProcess winProcess = createWinProcess(process);
+        winProcess.killRecursively();
         return true;
       }
       catch (Throwable e) {
-        LOG.info("Cannot kill process tree");
-        LOG.info(e);
+        LOG.info("Cannot kill process tree", e);
       }
     }
     else if (SystemInfo.isUnix) {
       return UnixProcessManager.sendSigKillToProcessTree(process);
     }
     return false;
+  }
+
+  @NotNull
+  private static WinProcess createWinProcess(@NotNull Process process) {
+    if (process instanceof RunnerWinProcess) {
+      RunnerWinProcess runnerWinProcess = (RunnerWinProcess) process;
+      return new WinProcess(runnerWinProcess.getOriginalProcess());
+    }
+    return new WinProcess(process);
   }
 
   @Override

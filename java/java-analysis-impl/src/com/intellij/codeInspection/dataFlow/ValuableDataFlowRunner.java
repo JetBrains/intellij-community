@@ -61,6 +61,10 @@ public class ValuableDataFlowRunner extends DataFlowRunner {
       return new ValuableDfaVariableState(var);
     }
 
+    @Override
+    public void flushFields() {
+      // this is a compile time values analysis/resolve so do not flush variables
+    }
   }
 
   static class ValuableDfaVariableState extends DfaVariableState {

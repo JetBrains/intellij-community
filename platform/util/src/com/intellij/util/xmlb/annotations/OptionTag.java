@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.util.xmlb.annotations;
 
 import com.intellij.util.xmlb.Constants;
+import com.intellij.util.xmlb.Converter;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -32,7 +33,12 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.METHOD})
 public @interface OptionTag {
   String value() default "";
+
   String tag() default Constants.OPTION;
+
   String nameAttribute() default Constants.NAME;
+
   String valueAttribute() default Constants.VALUE;
+
+  Class<? extends Converter> converter() default Converter.class;
 }

@@ -15,14 +15,21 @@
  */
 package com.intellij.compiler.ant;
 
+import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerEncodingService;
+import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -123,6 +130,18 @@ public class ModuleChunk {
     return myMainModule.getProject();
   }
 
+  public String getChunkSpecificCompileOptions() {
+    final StringBuilder options = new StringBuilder();
+    final Charset encoding = CompilerEncodingService.getInstance(getProject()).getPreferredModuleEncoding(myMainModule);
+    if (encoding != null) {
+      appendOption(options, "-encoding", encoding.name());
+    }
+    appendOption(options, "-source", getLanguageLevelOption(EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(myMainModule)));
+    appendOption(options, "-target", CompilerConfiguration.getInstance(getProject()).getBytecodeTargetLevel(myMainModule));
+    return options.toString();
+  }
+
+
   public boolean contains(final Module module) {
     for (Module chunkModule : myModules) {
       if (chunkModule.equals(module)) {
@@ -131,4 +150,28 @@ public class ModuleChunk {
     }
     return false;
   }
+
+  private static void appendOption(StringBuilder options, @NotNull final String name, @Nullable String value) {
+    if (!StringUtil.isEmpty(value)) {
+      if (options.length() > 0) {
+        options.append(" ");
+      }
+      options.append(name).append(" ").append(value);
+    }
+  }
+
+  private static String getLanguageLevelOption(LanguageLevel level) {
+    if (level != null) {
+      switch (level) {
+        case JDK_1_3: return "1.3";
+        case JDK_1_4: return "1.4";
+        case JDK_1_5: return "1.5";
+        case JDK_1_6: return "1.6";
+        case JDK_1_7: return "1.7";
+        case JDK_1_8: return "8";
+      }
+    }
+    return null;
+  }
+
 }

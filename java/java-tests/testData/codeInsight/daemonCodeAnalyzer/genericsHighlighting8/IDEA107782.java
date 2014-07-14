@@ -1,4 +1,4 @@
-public class Test {
+class Test {
   {
     final MyResult hello = parseXML(new Parser());
   }

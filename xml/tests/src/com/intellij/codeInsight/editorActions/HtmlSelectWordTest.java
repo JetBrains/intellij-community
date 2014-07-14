@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,22 +35,26 @@ public class HtmlSelectWordTest extends LightCodeInsightFixtureTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    oldSelectWholeCssSelectorOptionValue = WebEditorOptions.getInstance().isSelectWholeCssSelectorSuffixOnDoubleClick();
+    oldSelectWholeCssSelectorOptionValue = WebEditorOptions.getInstance().isSelectWholeCssIdentifierOnDoubleClick();
   }
 
   @Override
   public void tearDown() throws Exception {
-    WebEditorOptions.getInstance().setSelectWholeCssSelectorSuffixOnDoubleClick(oldSelectWholeCssSelectorOptionValue);
+    WebEditorOptions.getInstance().setSelectWholeCssIdentifierOnDoubleClick(oldSelectWholeCssSelectorOptionValue);
     super.tearDown();
   }
   
   public void testSelectClassNames() {
-    WebEditorOptions.getInstance().setSelectWholeCssSelectorSuffixOnDoubleClick(true);
+    WebEditorOptions.getInstance().setSelectWholeCssIdentifierOnDoubleClick(true);
     doTest();
   }
 
   public void testSelectClassNamesWithDisabledSelectSelectorOption() {
-    WebEditorOptions.getInstance().setSelectWholeCssSelectorSuffixOnDoubleClick(false);
+    WebEditorOptions.getInstance().setSelectWholeCssIdentifierOnDoubleClick(false);
+    doTest();
+  }
+
+  public void testSelectTag() {
     doTest();
   }
 

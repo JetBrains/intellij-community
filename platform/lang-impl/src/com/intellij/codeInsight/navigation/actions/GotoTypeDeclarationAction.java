@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,19 +91,19 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
   }
 
   @Nullable
-  public static PsiElement findSymbolType(Editor editor, int offset) {
+  public static PsiElement findSymbolType(@NotNull Editor editor, int offset) {
     final PsiElement[] psiElements = findSymbolTypes(editor, offset);
     if (psiElements != null && psiElements.length > 0) return psiElements[0];
     return null;
   }
 
   @Nullable
-  public static PsiElement[] findSymbolTypes(Editor editor, int offset) {
+  public static PsiElement[] findSymbolTypes(@NotNull Editor editor, int offset) {
     PsiElement targetElement = TargetElementUtilBase.getInstance().findTargetElement(editor,
-      TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED |
-      TargetElementUtilBase.ELEMENT_NAME_ACCEPTED |
-      TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED,
-      offset);
+                                                                                     TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED |
+                                                                                     TargetElementUtilBase.ELEMENT_NAME_ACCEPTED |
+                                                                                     TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED,
+                                                                                     offset);
 
     if (targetElement != null) {
       final PsiElement[] symbolType = getSymbolTypeDeclarations(targetElement, editor, offset);
@@ -116,7 +116,9 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
       Set<PsiElement> types = new THashSet<PsiElement>();
 
       for(ResolveResult r: results) {
-        final PsiElement[] declarations = getSymbolTypeDeclarations(r.getElement(), editor, offset);
+        PsiElement element = r.getElement();
+        if (element == null) continue;
+        final PsiElement[] declarations = getSymbolTypeDeclarations(element, editor, offset);
         if (declarations != null) {
           for (PsiElement declaration : declarations) {
             assert declaration != null;
@@ -132,7 +134,7 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
   }
 
   @Nullable
-  private static PsiElement[] getSymbolTypeDeclarations(final PsiElement targetElement, Editor editor, int offset) {
+  private static PsiElement[] getSymbolTypeDeclarations(@NotNull PsiElement targetElement, Editor editor, int offset) {
     for(TypeDeclarationProvider provider: Extensions.getExtensions(TypeDeclarationProvider.EP_NAME)) {
       PsiElement[] result;
       if (provider instanceof TypeDeclarationPlaceAwareProvider) {

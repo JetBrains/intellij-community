@@ -41,6 +41,7 @@ import java.util.List;
  * @since 10/22/13
  */
 public class AddGradleDslPluginAction extends CodeInsightAction {
+  public static final String ID = "AddGradleDslPluginAction";
   static final ThreadLocal<String> TEST_THREAD_LOCAL = new ThreadLocal<String>();
   private final KeyValue[] myPlugins;
 
@@ -83,8 +84,8 @@ public class AddGradleDslPluginAction extends CodeInsightAction {
 
   @NotNull
   private static KeyValue<String, String> createPluginKey(@NotNull String pluginName) {
-    String description =
-      GradleDocumentationBundle.messageOrDefault("gradle.documentation.org.gradle.api.Project.apply.plugin." + pluginName, "");
+    String description = GradleDocumentationBundle.messageOrDefault(
+      String.format("gradle.documentation.org.gradle.api.Project.apply.plugin.%s.non-html", pluginName), "");
     return KeyValue.create(pluginName, description);
   }
 }

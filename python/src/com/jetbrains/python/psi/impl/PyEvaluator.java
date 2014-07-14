@@ -16,20 +16,27 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonFQDNNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 /**
+ * TODO: Merge PythonDataflowUtil, {@link com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator}  and {@link com.jetbrains.python.psi.impl.PyEvaluator} and all its inheritors and improve Abstract Interpretation
+ *
  * @author yole
  */
 public class PyEvaluator {
   private Set<PyExpression> myVisited = new HashSet<PyExpression>();
   private Map<String, Object> myNamespace;
   private boolean myEvaluateCollectionItems = true;
+  private boolean myEvaluateKeys = true;
 
   public void setNamespace(Map<String, Object> namespace) {
     myNamespace = namespace;
@@ -39,34 +46,24 @@ public class PyEvaluator {
     myEvaluateCollectionItems = evaluateCollectionItems;
   }
 
-  public Object evaluate(PyExpression expr) {
+  /**
+   * @param evaluateKeys evaluate keys for dicts or not (i.e. you wanna see string or StringLiteralExpressions as keys)
+   */
+  public void setEvaluateKeys(final boolean evaluateKeys) {
+    myEvaluateKeys = evaluateKeys;
+  }
+
+  @Nullable
+  public Object evaluate(@Nullable PyExpression expr) {
     if (expr == null || myVisited.contains(expr)) {
       return null;
     }
     myVisited.add(expr);
     if (expr instanceof PyParenthesizedExpression) {
-      return evaluate(((PyParenthesizedExpression) expr).getContainedExpression());
+      return evaluate(((PyParenthesizedExpression)expr).getContainedExpression());
     }
     if (expr instanceof PySequenceExpression) {
-      PyExpression[] elements = ((PySequenceExpression)expr).getElements();
-      if (expr instanceof PyDictLiteralExpression) {
-        Map<Object, Object> result = new HashMap<Object, Object>();
-        for (PyKeyValueExpression keyValueExpression : ((PyDictLiteralExpression)expr).getElements()) {
-          Object dictKey = evaluate(keyValueExpression.getKey());
-          if (dictKey != null) {
-            PyExpression value = keyValueExpression.getValue();
-            result.put(dictKey, myEvaluateCollectionItems ? evaluate(value) : value);
-          }
-        }
-        return result;
-      }
-      else {
-        List<Object> result = new ArrayList<Object>();
-        for (PyExpression element : elements) {
-          result.add(myEvaluateCollectionItems ? evaluate(element) : element);
-        }
-        return result;
-      }
+      return evaluateSequenceExpression((PySequenceExpression)expr);
     }
     if (expr instanceof PyCallExpression) {
       return evaluateCall((PyCallExpression)expr);
@@ -91,21 +88,45 @@ public class PyEvaluator {
     return null;
   }
 
-  public static Object concatenate(Object lhs, Object rhs) {
+  /**
+   * Evaluates some sequence (tuple, list)
+   *
+   * @param expr seq expression
+   * @return evaluated seq
+   */
+  protected Object evaluateSequenceExpression(PySequenceExpression expr) {
+    PyExpression[] elements = expr.getElements();
+    if (expr instanceof PyDictLiteralExpression) {
+      Map<Object, Object> result = new HashMap<Object, Object>();
+      for (final PyKeyValueExpression keyValueExpression : ((PyDictLiteralExpression)expr).getElements()) {
+        addRecordFromDict(result, keyValueExpression.getKey(), keyValueExpression.getValue());
+      }
+      return result;
+    }
+    else {
+      List<Object> result = new ArrayList<Object>();
+      for (PyExpression element : elements) {
+        result.add(myEvaluateCollectionItems ? evaluate(element) : element);
+      }
+      return result;
+    }
+  }
+
+  public Object concatenate(Object lhs, Object rhs) {
     if (lhs instanceof String && rhs instanceof String) {
-      return (String) lhs + (String) rhs;
+      return (String)lhs + (String)rhs;
     }
     if (lhs instanceof List && rhs instanceof List) {
       List<Object> result = new ArrayList<Object>();
-      result.addAll((List) lhs);
-      result.addAll((List) rhs);
+      result.addAll((List)lhs);
+      result.addAll((List)rhs);
       return result;
     }
     return null;
   }
 
   protected Object evaluateReferenceExpression(PyReferenceExpression expr) {
-    if (expr.getQualifier() == null) {
+    if (!expr.isQualified()) {
       if (myNamespace != null) {
         return myNamespace.get(expr.getReferencedName());
       }
@@ -120,6 +141,7 @@ public class PyEvaluator {
     return null;
   }
 
+  @Nullable
   protected Object evaluateCall(PyCallExpression call) {
     final PyExpression[] args = call.getArguments();
     if (call.isCalleeText(PyNames.REPLACE) && args.length == 2) {
@@ -131,10 +153,58 @@ public class PyEvaluator {
         Object arg1 = evaluate(args[0]);
         Object arg2 = evaluate(args[1]);
         if (arg1 instanceof String && arg2 instanceof String) {
-          return ((String) result).replace((String) arg1, (String) arg2);
+          return ((String)result).replace((String)arg1, (String)arg2);
         }
       }
     }
+
+    // Support dict([("k": "v")]) syntax
+    if (call.isCallee(PythonFQDNNames.DICT_CLASS)) {
+      final Collection<PyTupleExpression> tuples = PsiTreeUtil.findChildrenOfType(call, PyTupleExpression.class);
+      if (!tuples.isEmpty()) {
+        final Map<Object, Object> result = new HashMap<Object, Object>();
+        for (final PyTupleExpression tuple : tuples) {
+          final PsiElement[] tupleElements = tuple.getChildren();
+          if (tupleElements.length != 2) {
+            return null;
+          }
+          final PyExpression key = PyUtil.as(tupleElements[0], PyExpression.class);
+          final PyExpression value = PyUtil.as(tupleElements[1], PyExpression.class);
+          if ((key != null)) {
+            addRecordFromDict(result, key, value);
+          }
+        }
+        return result;
+      }
+    }
+
+
     return null;
+  }
+
+  /**
+   * Adds record for map when working with dict
+   *
+   * @param result map to return to user
+   * @param key    dict key
+   * @param value  dict value
+   */
+  private void addRecordFromDict(@NotNull final Map<Object, Object> result,
+                                 @NotNull final PyExpression key,
+                                 @Nullable final PyExpression value) {
+    result.put(myEvaluateKeys ? evaluate(key) : key, myEvaluateCollectionItems ? evaluate(value) : value);
+  }
+
+  /**
+   * Shortcut that evaluates expression with default params and casts it to particular type (if possible)
+   *
+   * @param expression exp to evaluate
+   * @param resultType expected type
+   * @param <T>        expected type
+   * @return value if expression is evaluated to this type, null otherwise
+   */
+  @Nullable
+  public static <T> T evaluate(@Nullable final PyExpression expression, @NotNull final Class<T> resultType) {
+    return PyUtil.as(new PyEvaluator().evaluate(expression), resultType);
   }
 }

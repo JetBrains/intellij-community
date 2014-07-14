@@ -84,7 +84,7 @@ public class AnsiEscapeDecoder {
     return endMacroPos;
   }
 
-  private Key getCurrentOutputAttributes(final Key outputType) {
+  protected Key getCurrentOutputAttributes(final Key outputType) {
     if (outputType == ProcessOutputTypes.STDERR || outputType == ProcessOutputTypes.SYSTEM) {
       return outputType;
     }

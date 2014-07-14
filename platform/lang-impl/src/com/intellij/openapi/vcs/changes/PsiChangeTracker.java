@@ -16,44 +16,23 @@
 
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.util.PsiFilter;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class PsiChangeTracker {
   private PsiChangeTracker() {
-  }
-
-  public static <T extends PsiElement> Map<T, FileStatus> getElementsChanged(PsiFile file, final PsiFilter<T> filter) {
-    final Project project = file.getProject();
-    final VirtualFile vf = file.getVirtualFile();
-
-    if (vf == null) return Collections.emptyMap();
-
-    final String oldText = getUnmodifiedDocument(vf, project);
-    //TODO: make loop for different languages
-    //TODO: for ( PsiFile f : file.getViewProvider().getAllFiles() )
-    //TODO: for some languages (eg XML) isEquivalentTo works ugly. Think about pluggable matchers for different languages/elements
-    final PsiFile oldFile = oldText == null
-                            ? null : PsiFileFactory.getInstance(project).createFileFromText(oldText, file);
-    return getElementsChanged(file, oldFile, filter);
   }
 
   public static <T extends PsiElement> Map<T, FileStatus> getElementsChanged(PsiElement file,
@@ -121,38 +100,5 @@ public class PsiChangeTracker {
     }
 
     return result;
-  }
-
-  @Nullable
-  private static String getUnmodifiedDocument(final VirtualFile file, Project project) {
-    final Change change = ChangeListManager.getInstance(project).getChange(file);
-    if (change != null) {
-      final ContentRevision beforeRevision = change.getBeforeRevision();
-      if (beforeRevision instanceof BinaryContentRevision) {
-        return null;
-      }
-      if (beforeRevision != null) {
-        String content;
-        try {
-          content = beforeRevision.getContent();
-        }
-        catch (VcsException ex) {
-          content = null;
-        }
-        return content == null ? null : StringUtil.convertLineSeparators(content);
-      }
-      return null;
-    }
-
-    if (FileDocumentManager.getInstance().isFileModified(file)) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        @Override
-        public String compute() {
-          return LoadTextUtil.loadText(file).toString();
-        }
-      });
-    }
-
-    return null;
   }
 }

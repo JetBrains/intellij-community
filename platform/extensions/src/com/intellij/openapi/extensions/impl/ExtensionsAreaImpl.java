@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,17 @@ package com.intellij.openapi.extensions.impl;
 import com.intellij.openapi.extensions.*;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
+import gnu.trove.THashMap;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.Namespace;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
-import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
-import java.io.IOException;
-import java.io.StringWriter;
 import java.util.*;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
@@ -39,7 +36,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   private final LogProvider myLogger;
   public static final String ATTRIBUTE_AREA = "area";
 
-  private static final Map<String,String> ourDefaultEPs = new HashMap<String, String>();
+  private static final Map<String,String> ourDefaultEPs = new THashMap<String, String>();
 
   static {
     ourDefaultEPs.put(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME, EPAvailabilityListenerExtension.class.getName());
@@ -50,14 +47,13 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   private final AreaPicoContainerImpl myPicoContainer;
   private final Throwable myCreationTrace;
   private final Map<String,ExtensionPointImpl> myExtensionPoints = new ConcurrentHashMap<String, ExtensionPointImpl>();
-  private final Map<String,Throwable> myEPTraces = DEBUG_REGISTRATION ? new HashMap<String, Throwable>():null;
+  private final Map<String,Throwable> myEPTraces = DEBUG_REGISTRATION ? new THashMap<String, Throwable>():null;
   private final MultiMap<String, ExtensionPointAvailabilityListener> myAvailabilityListeners = new MultiMap<String, ExtensionPointAvailabilityListener>();
   private final List<Runnable> mySuspendedListenerActions = new ArrayList<Runnable>();
   private boolean myAvailabilityNotificationsActive = true;
 
   private final AreaInstance myAreaInstance;
   private final String myAreaClass;
-  private final Map<Element,ExtensionComponentAdapter> myExtensionElement2extension = new HashMap<Element, ExtensionComponentAdapter>();
 
   public ExtensionsAreaImpl(String areaClass, AreaInstance areaInstance, PicoContainer parentPicoContainer, @NotNull LogProvider logger) {
     myCreationTrace = DEBUG_REGISTRATION ? new Throwable("Area creation trace") : null;
@@ -159,7 +155,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     else {
       adapter = new ExtensionComponentAdapter(extensionPoint.getClassName(), extensionElement, container, pluginDescriptor, true);
     }
-    myExtensionElement2extension.put(extensionElement, adapter);
     internalGetPluginContainer().registerComponent(adapter);
     extensionPoint.registerExtensionAdapter(adapter);
   }
@@ -202,37 +197,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
   private MutablePicoContainer internalGetPluginContainer() {
     return myPicoContainer;
-  }
-
-  @Override
-  public void unregisterExtensionPoint(@NotNull String pluginName, @NotNull Element extensionPointElement) {
-    String epName = pluginName + '.' + extensionPointElement.getAttributeValue("name");
-    unregisterExtensionPoint(epName);
-  }
-
-  @Override
-  public void unregisterExtension(@NotNull String pluginName, @NotNull Element extensionElement) {
-    String epName = extractEPName(extensionElement);
-    if (!myExtensionElement2extension.containsKey(extensionElement)) {
-      XMLOutputter xmlOutputter = new XMLOutputter();
-      Format format = Format.getCompactFormat().setIndent("  ").setTextMode(Format.TextMode.NORMALIZE);
-      xmlOutputter.setFormat(format);
-      StringWriter stringWriter = new StringWriter();
-      try {
-        xmlOutputter.output(extensionElement, stringWriter);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-      myLogger.warn(stringWriter.toString());
-      throw new IllegalArgumentException("Trying to unregister extension element that was never registered");
-    }
-    ExtensionComponentAdapter adapter = myExtensionElement2extension.remove(extensionElement);
-    if (adapter == null) return;
-    if (getExtensionPoint(epName).unregisterComponentAdapter(adapter)) {
-      MutablePicoContainer pluginContainer = internalGetPluginContainer();
-      pluginContainer.unregisterComponent(adapter.getComponentKey());
-    }
   }
 
   @SuppressWarnings({"unchecked"})
@@ -331,12 +295,9 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     myExtensionPoints.put(name, extensionPoint);
     notifyEPRegistered(extensionPoint);
     if (DEBUG_REGISTRATION) {
+      //noinspection ThrowableResultOfMethodCallIgnored
       myEPTraces.put(name, new Throwable("Original registration for " + name));
     }
-  }
-
-  private static boolean equal(final String areaClass, final String anotherAreaClass) {
-    return areaClass == null ? anotherAreaClass == null : areaClass.equals(anotherAreaClass);
   }
 
   @SuppressWarnings({"unchecked"})
@@ -368,6 +329,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   @Override
   @NotNull
   public <T> ExtensionPointImpl<T> getExtensionPoint(@NotNull String extensionPointName) {
+    //noinspection unchecked
     ExtensionPointImpl<T> extensionPoint = myExtensionPoints.get(extensionPointName);
     if (extensionPoint == null) {
       throw new IllegalArgumentException("Missing extension point: " + extensionPointName + " in area " + myAreaInstance);

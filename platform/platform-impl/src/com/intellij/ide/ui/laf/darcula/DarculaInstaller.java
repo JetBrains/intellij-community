@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,11 @@
  */
 package com.intellij.ide.ui.laf.darcula;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.JBColor;
 
 /**
@@ -46,37 +36,7 @@ public class DarculaInstaller {
         EditorColorsManager.getInstance().setGlobalScheme(scheme);
       }
     }
-
     update();
-  }
-
-  private static void update() {
-    UISettings.getInstance().fireUISettingsChanged();
-    EditorFactory.getInstance().refreshAllEditors();
-
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    for (Project openProject : openProjects) {
-      FileStatusManager.getInstance(openProject).fileStatusesChanged();
-      DaemonCodeAnalyzer.getInstance(openProject).restart();
-    }
-    for (IdeFrame frame : WindowManagerEx.getInstanceEx().getAllProjectFrames()) {
-      if (frame instanceof IdeFrameImpl) {
-        ((IdeFrameImpl)frame).updateView();
-      }
-    }
-    //Editor[] editors = EditorFactory.getInstance().getAllEditors();
-    //for (Editor editor : editors) {
-    //  ((EditorEx)editor).reinitSettings();
-    //}
-    ActionToolbarImpl.updateAllToolbarsImmediately();
-
-    restart(); //todo[kb] remove when get fixed ToolbarDecorator and toolwindow tabs
-  }
-
-  private static void restart() {
-    if (Messages.showOkCancelDialog("You must restart the IDE to changes take effect. Restart now?", "Restart Is Required", "Restart", "Postpone", Messages.getQuestionIcon()) == Messages.OK) {
-      ApplicationManagerEx.getApplicationEx().restart(true);
-    }
   }
 
   public static void install() {
@@ -89,5 +49,10 @@ public class DarculaInstaller {
       }
     }
     update();
+  }
+
+  protected static void update() {
+    UISettings.getInstance().fireUISettingsChanged();
+    ActionToolbarImpl.updateAllToolbarsImmediately();
   }
 }

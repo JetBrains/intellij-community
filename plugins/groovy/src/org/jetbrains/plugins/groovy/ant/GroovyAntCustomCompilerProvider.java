@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -45,11 +45,12 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
   /**
    * The property for groovyc task SDK
    */
-  @NonNls private final static String GROOVYC_TASK_SDK_PROPERTY = "grooovyc.task.sdk";
+  @NonNls private static final String GROOVYC_TASK_SDK_PROPERTY = "grooovyc.task.sdk";
 
   /**
    * {@inheritDoc}
    */
+  @Override
   public void generateCustomCompile(Project project,
                                     ModuleChunk chunk,
                                     GenerationOptions genOptions,
@@ -61,13 +62,13 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
                                     PatternSetRef compilerExcludes,
                                     Tag srcTag,
                                     String outputPathRef) {
-    Tag groovyc = new Tag("groovyc", Pair.create("destdir", outputPathRef), Pair.create("fork", "yes"));
+    Tag groovyc = new Tag("groovyc", Couple.of("destdir", outputPathRef), Couple.of("fork", "yes"));
     // note that boot classpath tag is ignored
     groovyc.add(srcTag);
     groovyc.add(classpathTag);
     groovyc.add(compilerExcludes);
     final Tag javac =
-      new Tag("javac", Pair.create("debug", BuildProperties.propertyRef(BuildProperties.PROPERTY_COMPILER_GENERATE_DEBUG_INFO)));
+      new Tag("javac", Couple.of("debug", BuildProperties.propertyRef(BuildProperties.PROPERTY_COMPILER_GENERATE_DEBUG_INFO)));
     javac.add(compilerArgs);
     groovyc.add(javac);
     generator.add(groovyc);
@@ -76,6 +77,7 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
   /**
    * {@inheritDoc}
    */
+  @Override
   public void generateCustomCompilerTaskRegistration(Project project, GenerationOptions genOptions, CompositeGenerator generator) {
     final GroovyConfigUtils utils = GroovyConfigUtils.getInstance();
     // find SDK library with maximum version number in order to use for compiler
@@ -97,19 +99,21 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
     String groovySdkPathRef = BuildProperties.getLibraryPathId(sdkLib.getName());
     generator.add(new Property(GROOVYC_TASK_SDK_PROPERTY, groovySdkPathRef));
     //noinspection HardCodedStringLiteral
-    Tag taskdef = new Tag("taskdef", Pair.create("name", "groovyc"), Pair.create("classname", "org.codehaus.groovy.ant.Groovyc"),
-                          Pair.create("classpathref", "${" + GROOVYC_TASK_SDK_PROPERTY + "}"));
+    Tag taskdef = new Tag("taskdef", Couple.of("name", "groovyc"), Couple.of("classname", "org.codehaus.groovy.ant.Groovyc"),
+                          Couple.of("classpathref", "${" + GROOVYC_TASK_SDK_PROPERTY + "}"));
     generator.add(taskdef);
   }
 
   /**
    * {@inheritDoc}
    */
+  @Override
   public boolean hasCustomCompile(ModuleChunk chunk) {
     for (Module m : chunk.getModules()) {
       if (LibrariesUtil.hasGroovySdk(m)) {
         final Set<String> scriptExtensions = GroovyFileTypeLoader.getCustomGroovyScriptExtensions();
         final ContentIterator groovyFileSearcher = new ContentIterator() {
+          @Override
           public boolean processFile(VirtualFile fileOrDir) {
             ProgressManager.checkCanceled();
             if (isCompilableGroovyFile(fileOrDir, scriptExtensions)) {

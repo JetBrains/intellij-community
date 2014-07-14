@@ -48,10 +48,10 @@ public class ExternalSystemTaskRunner extends GenericProgramRunner {
 
   @Nullable
   @Override
-  protected RunContentDescriptor doExecute(Project project,
-                                           RunProfileState state,
+  protected RunContentDescriptor doExecute(@NotNull Project project,
+                                           @NotNull RunProfileState state,
                                            RunContentDescriptor contentToReuse,
-                                           ExecutionEnvironment env) throws ExecutionException
+                                           @NotNull ExecutionEnvironment env) throws ExecutionException
   {
     ExecutionResult executionResult = state.execute(env.getExecutor(), this);
     if (executionResult == null) return null;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.patterns.InitialPatternCondition;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.StringInterner;
@@ -100,7 +99,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
   private static Set<Method> getStaticMethods(List<Class> patternClasses) {
     return new THashSet<Method>(ContainerUtil.concat(patternClasses, new Function<Class, Collection<? extends Method>>() {
       public Collection<Method> fun(final Class aClass) {
-        return ContainerUtil.findAll(ReflectionCache.getMethods(aClass), new Condition<Method>() {
+        return ContainerUtil.findAll(aClass.getMethods(), new Condition<Method>() {
           public boolean value(final Method method) {
             return Modifier.isStatic(method.getModifiers())
                    && Modifier.isPublic(method.getModifiers())

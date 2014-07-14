@@ -5,7 +5,7 @@ interface YO<<warning descr="Type parameter 'T' is never used">T</warning>> {}
 interface YO1 extends YO<String> {}
 interface YO2 extends YO<Integer> {}
 
-public class ConvertibleTest {
+class ConvertibleTest {
 
     YO2 bar (YO1 s) {
           return <error descr="Inconvertible types; cannot cast 'YO1' to 'YO2'">(YO2) s</error>;
@@ -19,7 +19,7 @@ interface Interface2 {}
 
 class Implementation implements Interface1 {}
 
-public class InconvertibleTypesTest <E extends Interface2>
+class InconvertibleTypesTest <E extends Interface2>
 {
     E thing;
 

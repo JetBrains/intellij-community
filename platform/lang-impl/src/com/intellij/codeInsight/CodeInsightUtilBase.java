@@ -107,10 +107,16 @@ public class CodeInsightUtilBase extends CodeInsightUtilCore {
   // returns true on success
   public static boolean prepareEditorForWrite(@NotNull Editor editor) {
     if (!editor.isViewer()) return true;
+    showReadOnlyViewWarning(editor);
+    return false;
+  }
+
+  public static void showReadOnlyViewWarning(Editor editor) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+    
     JComponent component = HintUtil.createInformationLabel("This view is read-only");
     final LightweightHint hint = new LightweightHint(component);
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManager.UNDER,
                                HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0, false);
-    return false;
   }
 }

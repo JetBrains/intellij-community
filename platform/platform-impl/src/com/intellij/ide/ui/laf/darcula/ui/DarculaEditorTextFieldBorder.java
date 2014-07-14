@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.InsetsUIResource;
 import java.awt.*;
@@ -31,6 +32,9 @@ import java.awt.*;
 public class DarculaEditorTextFieldBorder implements Border {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+    if (isComboBoxEditor(c) || isCellEditor(c)) {
+      return;
+    }
     final EditorTextField textField = UIUtil.getParentOfType(EditorTextField.class, c);
     if (textField == null) return;
 
@@ -61,11 +65,22 @@ public class DarculaEditorTextFieldBorder implements Border {
 
   @Override
   public Insets getBorderInsets(Component c) {
+    if (isComboBoxEditor(c) || isCellEditor(c)) {
+      return new InsetsUIResource(0,0,0,0);
+    }
     return new InsetsUIResource(6, 7, 6, 7);
   }
 
   @Override
   public boolean isBorderOpaque() {
     return true;
+  }
+
+  public static boolean isComboBoxEditor(Component c) {
+    return UIUtil.getParentOfType(JComboBox.class, c) != null;
+  }
+
+  public static boolean isCellEditor(Component c) {
+    return UIUtil.getParentOfType(JTable.class, c) != null;
   }
 }

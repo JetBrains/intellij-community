@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
       final ApplicabilityFilter[] applicabilityFilters = provider.getApplicabilityFilters();
       if (applicabilityFilters != null) {
         for (ApplicabilityFilter applicabilityFilter : applicabilityFilters) {
-          myApplicabilityFilters.add(new Pair<String, ApplicabilityFilter>(applicabilityFilter.getPrefix(), applicabilityFilter));
+          myApplicabilityFilters.add(Pair.create(applicabilityFilter.getPrefix(), applicabilityFilter));
         }
       }
     }
@@ -123,7 +123,7 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
         }
 
         ApplicabilityFilter filter = (ApplicabilityFilter)klass.newInstance();
-        myApplicabilityFilters.add(new Pair<String, ApplicabilityFilter>(filterElement.getAttributeValue(PREFIX_ATTR), filter));
+        myApplicabilityFilters.add(Pair.create(filterElement.getAttributeValue(PREFIX_ATTR), filter));
       }
       catch (Exception e) {
         LOG.error("Cannot instantiate filter " + className, e);

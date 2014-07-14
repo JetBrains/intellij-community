@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,6 +123,7 @@ public class SmartTreeStructureTest extends LightPlatformCodeInsightFixtureTestC
 
   public void testSorting() throws Exception {
     myModel.addSorter(new Sorter() {
+      @NotNull
       @Override
       public Comparator getComparator() {
         return new Comparator() {
@@ -154,6 +155,7 @@ public class SmartTreeStructureTest extends LightPlatformCodeInsightFixtureTestC
     });
 
     myModel.addSorter(new Sorter() {
+      @NotNull
       @Override
       public Comparator getComparator() {
         return new Comparator() {

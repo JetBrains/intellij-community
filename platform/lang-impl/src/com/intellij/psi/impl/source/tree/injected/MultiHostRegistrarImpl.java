@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.DocumentCommitThread;
+import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.DocumentCommitProcessor;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -54,6 +54,7 @@ import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -213,16 +214,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
       Language forcedLanguage = myContextElement.getUserData(InjectedFileViewProvider.LANGUAGE_FOR_INJECTED_COPY_KEY);
       myLanguage = forcedLanguage == null ? LanguageSubstitutors.INSTANCE.substituteLanguage(myLanguage, virtualFile, myProject) : forcedLanguage;
 
-      DocumentImpl decodedDocument;
-      if (StringUtil.indexOf(outChars, '\r') == -1) {
-        decodedDocument = new DocumentImpl(outChars);
-      }
-      else {
-        decodedDocument = new DocumentImpl("", true);
-        decodedDocument.setAcceptSlashR(true);
-        decodedDocument.replaceString(0,0,outChars);
-      }
-      FileDocumentManagerImpl.registerDocument(decodedDocument, virtualFile);
+      createDocument(virtualFile);
 
       InjectedFileViewProvider viewProvider = new InjectedFileViewProvider(myPsiManager, virtualFile, documentWindow, myLanguage);
       ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(myLanguage);
@@ -304,6 +296,14 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     finally {
       clear();
     }
+  }
+
+  @NotNull
+  private static DocumentEx createDocument(@NotNull LightVirtualFile virtualFile) {
+    CharSequence content = virtualFile.getContent();
+    DocumentImpl document = new DocumentImpl(content, StringUtil.indexOf(content, '\r') >= 0, false);
+    FileDocumentManagerImpl.registerDocument(document, virtualFile);
+    return document;
   }
 
   // returns true if shreds were set, false if old ones were reused
@@ -391,10 +391,16 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
                                                   "\nLanguage: "+parsedNode.getPsi().getLanguage()+
                                                   "\nHost file: "+ shreds.get(0).getHost().getContainingFile().getVirtualFile()
         ;
-    for (Map.Entry<LeafElement, String> entry : patcher.newTexts.entrySet()) {
-      LeafElement leaf = entry.getKey();
-      String newText = entry.getValue();
-      leaf.rawReplaceWithText(newText);
+    DebugUtil.startPsiModification("injection leaf patching");
+    try {
+      for (Map.Entry<LeafElement, String> entry : patcher.newTexts.entrySet()) {
+        LeafElement leaf = entry.getKey();
+        String newText = entry.getValue();
+        leaf.rawReplaceWithText(newText);
+      }
+    }
+    finally {
+      DebugUtil.finishPsiModification();
     }
 
     TreeUtil.clearCaches((TreeElement)parsedNode);
@@ -441,14 +447,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
           public void run() {
             //todo
             final DiffLog diffLog = BlockSupportImpl.mergeTrees(oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator());
-            CodeStyleManager.getInstance(hostPsiFile.getProject()).performActionWithFormatterDisabled(new Runnable() {
-              @Override
-              public void run() {
-                synchronized (PsiLock.LOCK) {
-                  DocumentCommitThread.doActualPsiChange(oldFile, diffLog);
-                }
-              }
-            });
+            DocumentCommitProcessor.doActualPsiChange(oldFile, diffLog);
           }
         });
         assert shreds.isValid();
@@ -536,7 +535,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
 
   @Override
   public String toString() {
-    return result.toString();
+    return String.valueOf(result);
   }
 
   @NotNull

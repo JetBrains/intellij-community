@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -212,12 +213,16 @@ public class PsiBuilderTest extends LightIdeaTestCase {
 
     myBuilder = createBuilder("  bar", tree);
     parseWhenEmptyElementAfterWhitespaceIsLastChild();
+    DebugUtil.startPsiModification(null);
     try {
       myBuilder.getTreeBuilt();
       fail();
     }
     catch (BlockSupport.ReparsedSuccessfullyException e) {
       e.getDiffLog().performActualPsiChange(tree.getPsi().getContainingFile());
+    }
+    finally {
+      DebugUtil.finishPsiModification();
     }
 
     assertEquals("  bar", tree.getText());

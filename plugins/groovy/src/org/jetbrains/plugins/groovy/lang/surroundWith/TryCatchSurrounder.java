@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
  * Date: 22.05.2007
  */
 public class TryCatchSurrounder extends TrySurrounder {
+  @Override
   public String getTemplateDescription() {
     return super.getTemplateDescription() + " / catch";
   }
 
+  @Override
   protected GroovyPsiElement doSurroundElements(PsiElement[] elements, PsiElement context) throws IncorrectOperationException {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(elements[0].getProject());
     GrTryCatchStatement tryStatement = (GrTryCatchStatement) factory.createStatementFromText("try {\n} catch(exception){\n}", context);

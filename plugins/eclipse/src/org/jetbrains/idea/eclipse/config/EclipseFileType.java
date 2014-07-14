@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,9 @@ import javax.swing.*;
  * Author: Vladislav.Kaznacheev
  */
 public class EclipseFileType implements FileType {
+
+  public static final FileType INSTANCE = new EclipseFileType();
+
   @NotNull
   @NonNls
   public String getName() {
@@ -61,7 +64,7 @@ public class EclipseFileType implements FileType {
     return false;
   }
 
-  public String getCharset(@NotNull final VirtualFile file, final byte[] content) {
+  public String getCharset(@NotNull final VirtualFile file, @NotNull final byte[] content) {
     return CharsetToolkit.UTF8;
   }
 }

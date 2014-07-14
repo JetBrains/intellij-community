@@ -56,81 +56,52 @@ public class ThreadWithDefaultRunMethodInspection extends BaseInspection {
     @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
-      final PsiAnonymousClass anonymousClass =
-        expression.getAnonymousClass();
-
+      final PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
       if (anonymousClass != null) {
-        final PsiJavaCodeReferenceElement baseClassReference =
-          anonymousClass.getBaseClassReference();
-        final PsiElement referent = baseClassReference.resolve();
-        if (referent == null) {
-          return;
-        }
-        final PsiClass referencedClass = (PsiClass)referent;
-        final String referencedClassName =
-          referencedClass.getQualifiedName();
-        if (!"java.lang.Thread".equals(referencedClassName)) {
-          return;
-        }
         if (definesRun(anonymousClass)) {
           return;
         }
-        final PsiExpressionList argumentList =
-          expression.getArgumentList();
-        if (argumentList == null) {
-          return;
-        }
-        final PsiExpression[] arguments = argumentList.getExpressions();
-        for (PsiExpression argument : arguments) {
-          if (TypeUtils.expressionHasTypeOrSubtype(argument,
-                                                   "java.lang.Runnable")) {
-            return;
-          }
-        }
-        registerNewExpressionError(expression);
+        processExpression(expression, anonymousClass.getBaseClassReference());
       }
       else {
-        final PsiJavaCodeReferenceElement classReference =
-          expression.getClassReference();
+        final PsiJavaCodeReferenceElement classReference = expression.getClassReference();
         if (classReference == null) {
           return;
         }
-        final PsiElement referent = classReference.resolve();
-        if (referent == null) {
-          return;
-        }
-        final PsiClass referencedClass = (PsiClass)referent;
-        final String referencedClassName =
-          referencedClass.getQualifiedName();
-        if (!"java.lang.Thread".equals(referencedClassName)) {
-          return;
-        }
-        final PsiExpressionList argumentList =
-          expression.getArgumentList();
-        if (argumentList == null) {
-          return;
-        }
-        final PsiExpression[] arguments = argumentList.getExpressions();
-        for (PsiExpression argument : arguments) {
-          if (TypeUtils.expressionHasTypeOrSubtype(argument,
-                                                   "java.lang.Runnable")) {
-            return;
-          }
-        }
-        registerNewExpressionError(expression);
+        processExpression(expression, classReference);
       }
     }
 
+    private void processExpression(PsiNewExpression expression, PsiJavaCodeReferenceElement baseClassReference) {
+      final PsiElement referent = baseClassReference.resolve();
+      if (referent == null) {
+        return;
+      }
+      final PsiClass referencedClass = (PsiClass)referent;
+      final String referencedClassName = referencedClass.getQualifiedName();
+      if (!"java.lang.Thread".equals(referencedClassName)) {
+        return;
+      }
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      if (argumentList == null) {
+        return;
+      }
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      for (PsiExpression argument : arguments) {
+        if (TypeUtils.expressionHasTypeOrSubtype(argument, "java.lang.Runnable")) {
+          return;
+        }
+      }
+
+      registerNewExpressionError(expression);
+    }
+
     private static boolean definesRun(PsiAnonymousClass aClass) {
-      final PsiMethod[] methods = aClass.getMethods();
+      final PsiMethod[] methods = aClass.findMethodsByName(HardcodedMethodConstants.RUN, false);
       for (final PsiMethod method : methods) {
-        final String methodName = method.getName();
-        if (HardcodedMethodConstants.RUN.equals(methodName)) {
-          final PsiParameterList parameterList =
-            method.getParameterList();
-          if (parameterList.getParametersCount() == 0) {
-            return true;
-          }
+        final PsiParameterList parameterList = method.getParameterList();
+        if (parameterList.getParametersCount() == 0) {
+          return true;
         }
       }
       return false;

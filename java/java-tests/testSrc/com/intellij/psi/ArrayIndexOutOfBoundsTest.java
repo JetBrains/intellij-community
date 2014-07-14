@@ -99,7 +99,7 @@ public class ArrayIndexOutOfBoundsTest extends PsiTestCase {
       public void run() {
         final PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("anotherBla");
         assertNotNull("Package anotherBla not found", aPackage);
-        WriteCommandAction.runWriteCommandAction(new Runnable() {
+        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
           @Override
           public void run() {
             aPackage.getDirectories()[0].delete();

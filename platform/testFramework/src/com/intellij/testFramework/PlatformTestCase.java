@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -46,8 +48,6 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryIndexImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -68,7 +68,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.util.PatchedWeakReference;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.IndexedRootsProvider;
@@ -141,7 +140,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
-  private static String[] PREFIX_CANDIDATES = new String[] { "Python", "PyCharmCore", "UltimateLangXml", "Idea" };
+  private static final String[] PREFIX_CANDIDATES = {
+    "AppCode", "CppIde", "CidrCommon", 
+    "Python", "PyCharmCore", "Ruby", "UltimateLangXml", "Idea" };
 
   public static void autodetectPlatformPrefix() {
     if (ourPlatformPrefixInitialized) {
@@ -228,6 +229,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     LightPlatformTestCase.clearUncommittedDocuments(getProject());
 
     runStartupActivities();
+    ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
   }
 
   protected Project doCreateProject(File projectFile) throws Exception {
@@ -268,7 +270,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     catch (Exception e) {
       base = " (" + e + " while getting base dir)";
     }
-    return project.toString() + (place != null ? place : "") + base;
+    return project + (place != null ? place : "") + base;
   }
 
   protected void runStartupActivities() {
@@ -308,14 +310,14 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected static Module doCreateRealModuleIn(String moduleName, final Project project, final ModuleType moduleType) {
     final VirtualFile baseDir = project.getBaseDir();
     assertNotNull(baseDir);
-    final File moduleFile = new File(baseDir.getPath().replace('/', File.separatorChar),
-                                     moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+    final File moduleFile = new File(FileUtil.toSystemDependentName(baseDir.getPath()), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     FileUtil.createIfDoesntExist(moduleFile);
     myFilesToDelete.add(moduleFile);
     return new WriteAction<Module>() {
       @Override
-      protected void run(Result<Module> result) throws Throwable {
-        final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile);
+      protected void run(@NotNull Result<Module> result) throws Throwable {
+        VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile);
+        assertNotNull(virtualFile);
         Module module = ModuleManager.getInstance(project).newModule(virtualFile.getPath(), moduleType.getId());
         module.getModuleFile();
         result.setResult(module);
@@ -344,8 +346,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
 
     LocalHistoryImpl.getInstanceImpl().cleanupForNextTest();
-
-    PatchedWeakReference.clearAll();
   }
 
   private static Set<VirtualFile> eternallyLivingFiles() {
@@ -402,15 +402,14 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
 
     try {
-      checkForSettingsDamage();
+      CompositeException damage = checkForSettingsDamage();
+      result.add(damage);
     }
     catch (Throwable e) {
       result.add(e);
     }
     try {
       Project project = getProject();
-      DirectoryIndexImpl directoryIndex =
-      project != null ? (DirectoryIndexImpl)DirectoryIndex.getInstance(project) : null;
       disposeProject(result);
 
       if (project != null) {
@@ -693,7 +692,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   @Override
-  protected void invokeTestRunnable(final Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull final Runnable runnable) throws Exception {
     final Exception[] e = new Exception[1];
     Runnable runnable1 = new Runnable() {
       @Override
@@ -786,7 +785,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     setContentOnDisk(temp, bom, content, charset);
 
     myFilesToDelete.add(temp);
-    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+    final VirtualFile file = getVirtualFile(temp);
     assert file != null : temp;
     return file;
   }
@@ -829,6 +828,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   private static void setPlatformPrefix(String prefix) {
     System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, prefix);
+    ourPlatformPrefixInitialized = true;
   }
 
   @Retention(RetentionPolicy.RUNTIME)
@@ -839,7 +839,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected static VirtualFile createChildData(@NotNull final VirtualFile dir, @NotNull @NonNls final String name) {
     return new WriteAction<VirtualFile>() {
       @Override
-      protected void run(Result<VirtualFile> result) throws Throwable {
+      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
         result.setResult(dir.createChildData(null, name));
       }
     }.execute().throwException().getResultObject();
@@ -848,7 +848,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected static VirtualFile createChildDirectory(@NotNull final VirtualFile dir, @NotNull @NonNls final String name) {
     return new WriteAction<VirtualFile>() {
       @Override
-      protected void run(Result<VirtualFile> result) throws Throwable {
+      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
         result.setResult(dir.createChildDirectory(null, name));
       }
     }.execute().throwException().getResultObject();

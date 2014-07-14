@@ -127,6 +127,9 @@ def excepthook(exctype, value, tb):
     debugger.force_post_mortem_stop += 1
 
     pydevd_tracing.SetTrace(None) #no tracing from here
+
+    pydev_log.debug('Handling post-mortem stop on exception breakpoint %s'% exception_breakpoint.qname)
+
     debugger.handle_post_mortem_stop(thread.additionalInfo, thread)
 
 #=======================================================================================================================

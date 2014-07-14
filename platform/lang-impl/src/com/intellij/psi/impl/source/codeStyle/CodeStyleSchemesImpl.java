@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,22 +52,22 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes implements E
   public CodeStyleSchemesImpl(SchemesManagerFactory schemesManagerFactory) {
     SchemeProcessor<CodeStyleSchemeImpl> processor = new BaseSchemeProcessor<CodeStyleSchemeImpl>() {
       @Override
-      public CodeStyleSchemeImpl readScheme(final Document schemeContent) throws IOException, JDOMException, InvalidDataException {
+      public CodeStyleSchemeImpl readScheme(@NotNull final Document schemeContent) throws IOException, JDOMException, InvalidDataException {
         return CodeStyleSchemeImpl.readScheme(schemeContent);
       }
 
       @Override
-      public Document writeScheme(final CodeStyleSchemeImpl scheme) throws WriteExternalException {
+      public Document writeScheme(@NotNull final CodeStyleSchemeImpl scheme) throws WriteExternalException {
         return scheme.saveToDocument();
       }
 
       @Override
-      public boolean shouldBeSaved(final CodeStyleSchemeImpl scheme) {
+      public boolean shouldBeSaved(@NotNull final CodeStyleSchemeImpl scheme) {
         return !scheme.isDefault();
       }
 
       @Override
-      public void initScheme(final CodeStyleSchemeImpl scheme) {
+      public void initScheme(@NotNull final CodeStyleSchemeImpl scheme) {
         scheme.init(CodeStyleSchemesImpl.this);
       }
     };
@@ -101,11 +101,12 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes implements E
   public CodeStyleScheme createNewScheme(String preferredName, CodeStyleScheme parentScheme) {
     String name;
     if (preferredName == null) {
+      if (parentScheme == null) throw new IllegalArgumentException("parentScheme must not be null");
       // Generate using parent name
       name = null;
       for (int i = 1; name == null; i++) {
         String currName = parentScheme.getName() + " (" + i + ")";
-        if (null == findSchemeByName(currName)) {
+        if (findSchemeByName(currName) == null) {
           name = currName;
         }
       }
@@ -114,7 +115,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes implements E
       name = null;
       for (int i = 0; name == null; i++) {
         String currName = i == 0 ? preferredName : preferredName + " (" + i + ")";
-        if (null == findSchemeByName(currName)) {
+        if (findSchemeByName(currName) == null) {
           name = currName;
         }
       }

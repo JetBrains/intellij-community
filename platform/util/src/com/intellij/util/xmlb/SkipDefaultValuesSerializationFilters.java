@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,18 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
+import gnu.trove.THashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class SkipDefaultValuesSerializationFilters implements SerializationFilter {
-  private final Map<Class, Object> myDefaultBeans = new HashMap<Class, Object>();
+  private final Map<Class<?>, Object> myDefaultBeans = new THashMap<Class<?>, Object>();
 
   @Override
-  public boolean accepts(final Accessor accessor, final Object bean) {
+  public boolean accepts(final Accessor accessor, @Nullable Object bean) {
     if (bean == null) {
       return true;
     }
@@ -36,35 +38,28 @@ public class SkipDefaultValuesSerializationFilters implements SerializationFilte
     final Object defValue = accessor.read(defaultBean);
     final Object beanValue = accessor.read(bean);
     if (defValue instanceof Element && beanValue instanceof Element) {
-      return !JDOMUtil.writeElement((Element)defValue, "\n").equals(JDOMUtil.writeElement((Element)beanValue, "\n"));
+      return !JDOMUtil.areElementsEqual((Element)beanValue, (Element)defValue);
     }
-
-    return !Comparing.equal(beanValue, defValue);
+    else {
+      return !Comparing.equal(beanValue, defValue);
+    }
   }
 
-  private Object getDefaultBean(final Object bean) {
-    Class c = bean.getClass();
+  private Object getDefaultBean(@NotNull Object bean) {
+    Class<?> c = bean.getClass();
     Object o = myDefaultBeans.get(c);
-
     if (o == null) {
-      try {
-        o = c.newInstance();
-        configure(o);
-      }
-      catch (InstantiationException e) {
-        throw new XmlSerializationException(e);
-      }
-      catch (IllegalAccessException e) {
-        throw new XmlSerializationException(e);
-      }
+      o = XmlSerializerImpl.newInstance(c);
+      configure(o);
 
       myDefaultBeans.put(c, o);
     }
-
     return o;
   }
 
-  protected void configure(final Object o) {
-    //todo put your own default object configuration here
+  /**
+   * Override to put your own default object configuration
+   */
+  protected void configure(@NotNull Object o) {
   }
 }

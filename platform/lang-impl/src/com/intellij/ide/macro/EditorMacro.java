@@ -18,6 +18,8 @@ package com.intellij.ide.macro;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +57,19 @@ public abstract class EditorMacro extends Macro {
       }
     }
     return null;
+  }
+
+  /**
+   * @return 1-based column index where tabs are treated as single characters. External tools don't know about IDEA's tab size.
+   */
+  protected static String getColumnNumber(Editor editor, LogicalPosition pos) {
+    if (EditorUtil.inVirtualSpace(editor, pos)) {
+      return String.valueOf(pos.column + 1);
+    }
+
+    int offset = editor.logicalPositionToOffset(pos);
+    int lineStart = editor.getDocument().getLineStartOffset(editor.getDocument().getLineNumber(offset));
+    return String.valueOf(offset - lineStart + 1);
   }
 
   @Nullable

@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.codeInspection.ui.RefElementNode;
@@ -78,7 +79,10 @@ public class SuppressActionWrapper extends ActionGroup {
     return actions;
   }
 
-  private boolean suppress(final PsiElement element, final SuppressIntentionAction action) {
+  private boolean suppress(final PsiElement element,
+                           final CommonProblemDescriptor descriptor,
+                           final SuppressIntentionAction action,
+                           final RefEntity refEntity) {
     final PsiModificationTracker tracker = PsiManager.getInstance(myProject).getModificationTracker();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -86,13 +90,25 @@ public class SuppressActionWrapper extends ActionGroup {
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         try {
           final long startModificationCount = tracker.getModificationCount();
+
+          PsiElement container = null;
+          if (action instanceof SuppressIntentionActionFromFix) {
+            container = ((SuppressIntentionActionFromFix)action).getContainer(element);
+          }
+          if (container == null) {
+            container = element;
+          }
+
           if (action.isAvailable(myProject, null, element)) {
             action.invoke(myProject, null, element);
           }
           if (startModificationCount != tracker.getModificationCount()) {
             final Set<GlobalInspectionContextImpl> globalInspectionContexts = myManager.getRunningContexts();
             for (GlobalInspectionContextImpl context : globalInspectionContexts) {
-              context.ignoreElement(myToolWrapper.getTool(), element);
+              context.ignoreElement(myToolWrapper.getTool(), container);
+              if (descriptor != null) {
+                context.getPresentation(myToolWrapper).ignoreCurrentElementProblem(refEntity, descriptor);
+              }
             }
           }
         }
@@ -149,7 +165,13 @@ public class SuppressActionWrapper extends ActionGroup {
                 final Pair<PsiElement, CommonProblemDescriptor> content = getContentToSuppress(node);
                 if (content.first == null) break;
                 final PsiElement element = content.first;
-                if (!suppress(element, mySuppressAction)) break;
+                RefEntity refEntity = null;
+                if (node instanceof RefElementNode) {
+                  refEntity = ((RefElementNode)node).getElement();
+                } else if (node instanceof ProblemDescriptionNode) {
+                  refEntity = ((ProblemDescriptionNode)node).getElement();
+                }
+                if (!suppress(element, content.second, mySuppressAction, refEntity)) break;
               }
               final Set<GlobalInspectionContextImpl> globalInspectionContexts = myManager.getRunningContexts();
               for (GlobalInspectionContextImpl context : globalInspectionContexts) {

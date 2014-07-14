@@ -34,7 +34,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   protected Object clone() {
     try {
       UserDataHolderBase clone = (UserDataHolderBase)super.clone();
-      clone.myUserMap = KeyFMap.EMPTY_MAP;
+      clone.setUserMap(KeyFMap.EMPTY_MAP);
       copyCopyableDataTo(clone);
       return clone;
     }
@@ -45,30 +45,39 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
 
   @TestOnly
   public String getUserDataString() {
-    final KeyFMap userMap = myUserMap;
+    final KeyFMap userMap = getUserMap();
     final KeyFMap copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
     return userMap.toString() + (copyableMap == null ? "" : copyableMap.toString());
   }
 
   public void copyUserDataTo(UserDataHolderBase other) {
-    other.myUserMap = myUserMap;
+    other.setUserMap(getUserMap());
   }
 
   @Override
   public <T> T getUserData(@NotNull Key<T> key) {
     //noinspection unchecked
-    return myUserMap.get(key);
+    return getUserMap().get(key);
+  }
+
+  @NotNull
+  protected KeyFMap getUserMap() {
+    return myUserMap;
   }
 
   @Override
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
     while (true) {
-      KeyFMap map = myUserMap;
+      KeyFMap map = getUserMap();
       KeyFMap newMap = value == null ? map.minus(key) : map.plus(key, value);
-      if (newMap == map || updater.compareAndSet(this, map, newMap)) {
+      if (newMap == map || changeUserMap(map, newMap)) {
         break;
       }
     }
+  }
+
+  protected boolean changeUserMap(KeyFMap oldMap, KeyFMap newMap) {
+    return updater.compareAndSet(this, oldMap, newMap);
   }
 
   public <T> T getCopyableUserData(Key<T> key) {
@@ -79,14 +88,14 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
 
   public <T> void putCopyableUserData(Key<T> key, T value) {
     while (true) {
-      KeyFMap map = myUserMap;
+      KeyFMap map = getUserMap();
       KeyFMap copyableMap = map.get(COPYABLE_USER_MAP_KEY);
       if (copyableMap == null) {
         copyableMap = KeyFMap.EMPTY_MAP;
       }
       KeyFMap newCopyableMap = value == null ? copyableMap.minus(key) : copyableMap.plus(key, value);
       KeyFMap newMap = newCopyableMap.isEmpty() ? map.minus(COPYABLE_USER_MAP_KEY) : map.plus(COPYABLE_USER_MAP_KEY, newCopyableMap);
-      if (newMap == map || updater.compareAndSet(this, map, newMap)) {
+      if (newMap == map || changeUserMap(map, newMap)) {
         return;
       }
     }
@@ -95,12 +104,12 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   @Override
   public <T> boolean replace(@NotNull Key<T> key, @Nullable T oldValue, @Nullable T newValue) {
     while (true) {
-      KeyFMap map = myUserMap;
+      KeyFMap map = getUserMap();
       if (map.get(key) != oldValue) {
         return false;
       }
       KeyFMap newMap = newValue == null ? map.minus(key) : map.plus(key, newValue);
-      if (newMap == map || updater.compareAndSet(this, map, newMap)) {
+      if (newMap == map || changeUserMap(map, newMap)) {
         return true;
       }
     }
@@ -110,13 +119,13 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   @NotNull
   public <T> T putUserDataIfAbsent(@NotNull final Key<T> key, @NotNull final T value) {
     while (true) {
-      KeyFMap map = myUserMap;
+      KeyFMap map = getUserMap();
       T oldValue = map.get(key);
       if (oldValue != null) {
         return oldValue;
       }
       KeyFMap newMap = map.plus(key, value);
-      if (newMap == map || updater.compareAndSet(this, map, newMap)) {
+      if (newMap == map || changeUserMap(map, newMap)) {
         return value;
       }
     }
@@ -127,11 +136,15 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   }
 
   protected void clearUserData() {
-    myUserMap = KeyFMap.EMPTY_MAP;
+    setUserMap(KeyFMap.EMPTY_MAP);
+  }
+
+  protected void setUserMap(KeyFMap map) {
+    myUserMap = map;
   }
 
   public boolean isUserDataEmpty() {
-    return myUserMap.isEmpty();
+    return getUserMap().isEmpty();
   }
 
   private static final AtomicFieldUpdater<UserDataHolderBase, KeyFMap> updater = AtomicFieldUpdater.forFieldOfType(UserDataHolderBase.class, KeyFMap.class);

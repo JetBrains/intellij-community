@@ -4,6 +4,6 @@ import java.io.IOException;
 <warning descr="Unused import statement">import java.io.IOException;</warning>
 
 
-public class c { 
+class c {
   public IOException m;
 }

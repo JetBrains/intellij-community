@@ -117,7 +117,8 @@ public class SuspiciousNameCombinationInspectionBase extends BaseJavaBatchLocalI
         PsiExpression expr = variable.getInitializer();
         if (expr instanceof PsiReferenceExpression) {
           PsiReferenceExpression refExpr = (PsiReferenceExpression) expr;
-          checkCombination(variable, variable.getName(), refExpr.getReferenceName(), "suspicious.name.assignment");
+          PsiIdentifier nameIdentifier = variable.getNameIdentifier();
+          checkCombination(nameIdentifier != null ? nameIdentifier : variable, variable.getName(), refExpr.getReferenceName(), "suspicious.name.assignment");
         }
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,7 +138,7 @@ public class NamedChildrenConfigurable implements UnnamedConfigurable{
     java.util.List<Pair<String, TextWithImports>> result = new ArrayList<Pair<String, TextWithImports>>();
 
     for (int idx = 0; idx < size; idx++) {
-      result.add(new Pair<String, TextWithImports>((String)model.getValueAt(idx, 0), (TextWithImports)model.getValueAt(idx, 1)));
+      result.add(Pair.create((String)model.getValueAt(idx, 0), (TextWithImports)model.getValueAt(idx, 1)));
     }
     myRenderer.setChildren(result);
   }

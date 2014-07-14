@@ -5,9 +5,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
-import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
-import com.intellij.psi.codeStyle.arrangement.Rearranger;
+import com.intellij.psi.codeStyle.arrangement.*;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
@@ -42,9 +40,11 @@ public class XmlRearranger
   static {
     DEFAULT_MATCH_RULES.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(
       new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.NAME, "xmlns:.*"))));
-    DEFAULT_SETTINGS = new StdRulePriorityAwareSettings(
+    DEFAULT_SETTINGS = StdArrangementSettings.createByMatchRules(
       Collections.<ArrangementGroupingRule>emptyList(), DEFAULT_MATCH_RULES);
   }
+
+  private static final DefaultArrangementSettingsSerializer SETTINGS_SERIALIZER = new DefaultArrangementSettingsSerializer(DEFAULT_SETTINGS);
 
   @NotNull
   public static StdArrangementMatchRule attrArrangementRule(@NotNull String nameFilter,
@@ -54,6 +54,12 @@ public class XmlRearranger
       new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.NAME, nameFilter),
       new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.XML_NAMESPACE, namespaceFilter)
     )), orderType);
+  }
+
+  @NotNull
+  @Override
+  public ArrangementSettingsSerializer getSerializer() {
+    return SETTINGS_SERIALIZER;
   }
 
   @Nullable
@@ -80,7 +86,7 @@ public class XmlRearranger
                                                                                          @Nullable Document document,
                                                                                          @NotNull Collection<TextRange> ranges,
                                                                                          @NotNull PsiElement element,
-                                                                                         @Nullable ArrangementSettings settings)
+                                                                                         @NotNull ArrangementSettings settings)
   {
     final XmlArrangementParseInfo newEntryInfo = new XmlArrangementParseInfo();
     element.accept(new XmlArrangementVisitor(newEntryInfo, Collections.singleton(element.getTextRange())));
@@ -99,7 +105,7 @@ public class XmlRearranger
   public List<XmlElementArrangementEntry> parse(@NotNull PsiElement root,
                                                 @Nullable Document document,
                                                 @NotNull Collection<TextRange> ranges,
-                                                @Nullable ArrangementSettings settings) {
+                                                @NotNull ArrangementSettings settings) {
     final XmlArrangementParseInfo parseInfo = new XmlArrangementParseInfo();
     root.accept(new XmlArrangementVisitor(parseInfo, ranges));
     return parseInfo.getEntries();

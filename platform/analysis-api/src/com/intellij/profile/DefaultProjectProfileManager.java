@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -268,13 +268,13 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
             assert profileName != null;
 
             final String name = generator.generateUniqueName(FileUtil.sanitizeFileName(profileName)) + ".xml";
-            result.add(new Pair<Element, String>(profile,  name));
+            result.add(Pair.create(profile, name));
           }
         }
       }
 
 
-      if (!e.getContent().isEmpty()) result.add(new Pair<Element, String>(e, generator.generateUniqueName("profiles_settings") + ".xml"));
+      if (!e.getContent().isEmpty()) result.add(Pair.create(e, generator.generateUniqueName("profiles_settings") + ".xml"));
 
       return result;
     }

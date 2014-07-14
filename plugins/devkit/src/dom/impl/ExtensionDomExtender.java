@@ -49,6 +49,7 @@ import java.util.*;
  */
 public class ExtensionDomExtender extends DomExtender<Extensions> {
   private static final PsiClassConverter CLASS_CONVERTER = new PluginPsiClassConverter();
+  private static final Converter LANGUAGE_CONVERTER = new LanguageResolvingConverter();
 
   private static class MyRequired implements Required {
     @Override
@@ -135,21 +136,20 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
     if (ideaPlugin == null) return;
 
-    String prefix = getEpPrefix(extensions);
+    String epPrefix = extensions.getEpPrefix();
     for (IdeaPlugin plugin : getVisiblePlugins(ideaPlugin)) {
       final String pluginId = StringUtil.notNullize(plugin.getPluginId(), "com.intellij");
       for (ExtensionPoints points : plugin.getExtensionPoints()) {
         for (ExtensionPoint point : points.getExtensionPoints()) {
-          registerExtensionPoint(registrar, point, prefix, pluginId);
+          registerExtensionPoint(registrar, point, epPrefix, pluginId);
         }
       }
     }
   }
 
-  private static String getEpPrefix(Extensions extensions) {
-    String prefix = extensions.getDefaultExtensionNs().getStringValue();
-    if (prefix == null) prefix = extensions.getXmlns().getStringValue();
-    return prefix != null ? prefix + "." : "";
+  @Override
+  public boolean supportsStubs() {
+    return false;
   }
 
   private static Set<IdeaPlugin> getVisiblePlugins(IdeaPlugin ideaPlugin) {
@@ -183,15 +183,15 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
   private static void registerExtensionPoint(final DomExtensionsRegistrar registrar,
                                              final ExtensionPoint extensionPoint,
-                                             String prefix,
+                                             String epPrefix,
                                              @Nullable String pluginId) {
     String epName = extensionPoint.getName().getStringValue();
     if (epName != null && StringUtil.isNotEmpty(pluginId)) epName = pluginId + "." + epName;
     if (epName == null) epName = extensionPoint.getQualifiedName().getStringValue();
     if (epName == null) return;
-    if (!epName.startsWith(prefix)) return;
+    if (!epName.startsWith(epPrefix)) return;
 
-    final DomExtension domExtension = registrar.registerCollectionChildrenExtension(new XmlName(epName.substring(prefix.length())), Extension.class);
+    final DomExtension domExtension = registrar.registerCollectionChildrenExtension(new XmlName(epName.substring(epPrefix.length())), Extension.class);
     domExtension.setDeclaringElement(extensionPoint);
     domExtension.addExtender(EXTENSION_EXTENDER);
   }
@@ -236,6 +236,9 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         final DomExtension extension =
           registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), clazz).setDeclaringElement(field);
         markAsClass(extension, fieldName, withElement);
+        if (clazz.equals(String.class)) {
+          markAsLanguage(extension, fieldName);
+        }
       }
       return;
     }
@@ -265,6 +268,12 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     }
   }
 
+  private static void markAsLanguage(DomExtension extension, String fieldName) {
+    if ("language".equals(fieldName)) {
+      extension.setConverter(LANGUAGE_CONVERTER);
+    }
+  }
+
   private static void markAsClass(DomExtension extension, String fieldName, @Nullable With withElement) {
     if (withElement != null) {
       final String withClassName = withElement.getImplements().getStringValue();
@@ -275,7 +284,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         }
       });
     }
-    if (isClassField(fieldName) || withElement != null) {
+    if (withElement != null || isClassField(fieldName)) {
       extension.setConverter(CLASS_CONVERTER);
     }
   }

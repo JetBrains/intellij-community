@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -97,8 +98,8 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    super.tearDown();
     delete(myWorkingDirectory.getVirtualFile());
+    super.tearDown();
   }
 
   @NotNull
@@ -277,45 +278,6 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
     PsiTestUtil.addSourceRoot(module, src.getVirtualFile());
     return module;
   }
-
-  class TestFileStructure {
-      private int myLevel;
-      @NotNull private PsiDirectory myRoot;
-      @NotNull private PsiDirectory myCurrentLevelDirectory;
-      private List<List<PsiFile>> myFilesForLevel = new ArrayList<List<PsiFile>>();
-
-      TestFileStructure(@NotNull PsiDirectory root) {
-        myRoot = root;
-        myCurrentLevelDirectory = root;
-        myFilesForLevel.add(new ArrayList<PsiFile>());
-        myLevel = 0;
-      }
-
-      TestFileStructure addTestFilesToCurrentDirectory(String[] names) throws IOException {
-        getFilesAtLevel(myLevel).addAll(createTestFiles(myCurrentLevelDirectory, names));
-        return this;
-      }
-
-      TestFileStructure createDirectoryAndMakeItCurrent(String name) {
-        myLevel++;
-        myFilesForLevel.add(new ArrayList<PsiFile>());
-        myCurrentLevelDirectory = createDirectory(myCurrentLevelDirectory.getVirtualFile(), name);
-        return this;
-      }
-
-      List<PsiFile> getFilesAtLevel(int level) {
-        assert (myLevel >= level);
-        return myFilesForLevel.get(level);
-      }
-
-      List<PsiFile> getAllFiles() {
-        List<PsiFile> all = new ArrayList<PsiFile>();
-        for (List<PsiFile> files: myFilesForLevel) {
-          all.addAll(files);
-        }
-        return all;
-      }
-    }
 }
 
 
@@ -363,6 +325,18 @@ class MockReformatFileSettings implements LayoutCodeOptions {
   private boolean myOptimizeImports;
   private boolean myProcessOnlyChangedText;
   private boolean myIsOK = true;
+
+  @Nullable
+  @Override
+  public SearchScope getSearchScope() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getFileTypeMask() {
+    return null;
+  }
 
   @Override
   public boolean isProcessWholeFile() {

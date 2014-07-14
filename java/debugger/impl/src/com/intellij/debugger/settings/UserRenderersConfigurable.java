@@ -52,6 +52,7 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
   private static final Icon UP_ICON = IconUtil.getMoveUpIcon();
   private static final Icon DOWN_ICON = IconUtil.getMoveDownIcon();
 
+  private JPanel myNameFieldPanel;
   private JTextField myNameField;
   private ElementsChooser<NodeRenderer> myRendererChooser;
   private NodeRenderer myCurrentRenderer = null;
@@ -91,14 +92,14 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
     left.add(renderersList, BorderLayout.CENTER);
 
     myNameField = new JTextField();
-    final JPanel nameFieldPanel = new JPanel(new BorderLayout());
-    nameFieldPanel.add(new JLabel(DebuggerBundle.message("label.user.renderers.configurable.renderer.name")), BorderLayout.WEST);
-    nameFieldPanel.add(myNameField, BorderLayout.CENTER);
-
+    myNameFieldPanel = new JPanel(new BorderLayout());
+    myNameFieldPanel.add(new JLabel(DebuggerBundle.message("label.user.renderers.configurable.renderer.name")), BorderLayout.WEST);
+    myNameFieldPanel.add(myNameField, BorderLayout.CENTER);
+    myNameFieldPanel.setVisible(false);
 
     final JPanel center = new JPanel(new BorderLayout(0, 4));
 
-    center.add(nameFieldPanel, BorderLayout.NORTH);
+    center.add(myNameFieldPanel, BorderLayout.NORTH);
     center.add(rendererDataPanel, BorderLayout.CENTER);
 
     myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -159,11 +160,11 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
     }
     myCurrentRenderer = renderer;
     if (renderer != null) {
-      myNameField.setEnabled(true);
+      myNameFieldPanel.setVisible(true);
       myNameField.setText(renderer.getName());
     }
     else {
-      myNameField.setEnabled(false);
+      myNameFieldPanel.setVisible(false);
       myNameField.setText("");
     }
     myRendererDataConfigurable.setRenderer(renderer);
@@ -183,6 +184,8 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
   public void apply() throws ConfigurationException {
     myRendererDataConfigurable.apply();
     flushTo(NodeRendererSettings.getInstance().getCustomRenderers());
+
+    NodeRendererSettings.getInstance().fireRenderersChanged();
   }
 
   private void flushTo(final RendererConfiguration rendererConfiguration) {

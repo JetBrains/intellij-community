@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.events.XmlDocumentChanged;
 import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
@@ -31,13 +32,15 @@ public class XmlDocumentChangedImpl implements XmlDocumentChanged {
     myDocument = document;
   }
 
+  @Override
   public XmlDocument getDocument() {
     return myDocument;
   }
 
   public static PomModelEvent createXmlDocumentChanged(PomModel source, XmlDocument document) {
     final PomModelEvent event = new PomModelEvent(source);
-    final XmlAspectChangeSetImpl xmlAspectChangeSet = new XmlAspectChangeSetImpl(source, (XmlFile)document.getParent());
+    XmlFile xmlFile = PsiTreeUtil.getParentOfType(document, XmlFile.class);
+    final XmlAspectChangeSetImpl xmlAspectChangeSet = new XmlAspectChangeSetImpl(source, xmlFile);
     xmlAspectChangeSet.add(new XmlDocumentChangedImpl(document));
     event.registerChangeSet(source.getModelAspect(XmlAspect.class), xmlAspectChangeSet);
     return event;

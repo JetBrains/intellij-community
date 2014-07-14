@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,6 +78,7 @@ public class ResolverTree {
   private static class PsiTypeVarCollector extends PsiExtendedTypeVisitor {
     final HashSet<PsiTypeVariable> mySet = new HashSet<PsiTypeVariable>();
 
+    @Override
     public Object visitTypeVariable(final PsiTypeVariable var) {
       mySet.add(var);
 
@@ -209,10 +210,12 @@ public class ResolverTree {
     }
 
     final DFSTBuilder<PsiTypeVariable> dfstBuilder = new DFSTBuilder<PsiTypeVariable>(new Graph<PsiTypeVariable>() {
+      @Override
       public Collection<PsiTypeVariable> getNodes() {
         return nodes;
       }
 
+      @Override
       public Iterator<PsiTypeVariable> getIn(final PsiTypeVariable n) {
         final HashSet<PsiTypeVariable> in = ins.get(n);
 
@@ -223,6 +226,7 @@ public class ResolverTree {
         return in.iterator();
       }
 
+      @Override
       public Iterator<PsiTypeVariable> getOut(final PsiTypeVariable n) {
         final HashSet<PsiTypeVariable> out = outs.get(n);
 
@@ -241,6 +245,7 @@ public class ResolverTree {
     sccs.forEach(new TIntProcedure() {
       int myTNumber = 0;
 
+      @Override
       public boolean execute(int size) {
         for (int j = 0; j < size; j++) {
           index.put(dfstBuilder.getNodeByTNumber(myTNumber + j), myTNumber);
@@ -387,7 +392,7 @@ public class ResolverTree {
 
     fillTypeRange(lowerBound, upperBound, range);
 
-    return range.toArray(new PsiType[]{});
+    return range.toArray(PsiType.createArray(range.size()));
   }
 
   private void reduceInterval(final Constraint left, final Constraint right) {
@@ -451,7 +456,7 @@ public class ResolverTree {
   }
 
   private void reduce() {
-    if (myConstraints.size() == 0) {
+    if (myConstraints.isEmpty()) {
       return;
     }
 
@@ -665,18 +670,22 @@ public class ResolverTree {
 
   private void reduceTypeVar(final Constraint x, final Constraint y) {
     reduceSideVar(x, y, new Reducer() {
+      @Override
       public LinkedList<Pair<PsiType, Binding>> unify(final PsiType x, final PsiType y) {
         return myBindingFactory.intersect(x, y);
       }
 
+      @Override
       public Constraint create(final PsiTypeVariable var, final PsiType type) {
         return new Subtype(type, var);
       }
 
+      @Override
       public PsiType getType(final Constraint c) {
         return c.getLeft();
       }
 
+      @Override
       public PsiTypeVariable getVar(final Constraint c) {
         return (PsiTypeVariable)c.getRight();
       }
@@ -685,18 +694,22 @@ public class ResolverTree {
 
   private void reduceVarType(final Constraint x, final Constraint y) {
     reduceSideVar(x, y, new Reducer() {
+      @Override
       public LinkedList<Pair<PsiType, Binding>> unify(final PsiType x, final PsiType y) {
         return myBindingFactory.union(x, y);
       }
 
+      @Override
       public Constraint create(final PsiTypeVariable var, final PsiType type) {
         return new Subtype(var, type);
       }
 
+      @Override
       public PsiType getType(final Constraint c) {
         return c.getRight();
       }
 
+      @Override
       public PsiTypeVariable getVar(final Constraint c) {
         return (PsiTypeVariable)c.getLeft();
       }
@@ -711,7 +724,7 @@ public class ResolverTree {
 
     final LinkedList<Pair<PsiType, Binding>> union = reducer.unify(xType, yType);
 
-    if (union.size() == 0) {
+    if (union.isEmpty()) {
       return;
     }
 
@@ -749,7 +762,7 @@ public class ResolverTree {
       }
     }
     else {
-      if (myConstraints.size() == 0) {
+      if (myConstraints.isEmpty()) {
         logSolution();
 
         mySolutions.putSolution(myCurrentBinding);

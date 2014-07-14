@@ -27,6 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -39,10 +40,11 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
     return true;
   }
 
+  @NotNull
   @Override
   public PsiElement createFromTemplate(final Project project, final PsiDirectory directory, String fileName, final FileTemplate template,
                                        final String templateText,
-                                       final Map<String, Object> props) throws IncorrectOperationException {
+                                       @NotNull final Map<String, Object> props) throws IncorrectOperationException {
     fileName = checkAppendExtension(fileName, template);
 
     if (FileTypeManager.getInstance().isFileIgnored(fileName)) {

@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.javaFX;
 
 import com.intellij.util.io.DataExternalizer;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -29,7 +30,7 @@ import java.util.Set;
 */
 public class FxmlDataExternalizer implements DataExternalizer<Set<String>> {
   @Override
-  public void save(DataOutput out, Set<String> value) throws IOException {
+  public void save(@NotNull DataOutput out, Set<String> value) throws IOException {
     out.writeInt(value.size());
     for (String s : value) {
       out.writeUTF(s);
@@ -37,7 +38,7 @@ public class FxmlDataExternalizer implements DataExternalizer<Set<String>> {
   }
 
   @Override
-  public Set<String> read(DataInput in) throws IOException {
+  public Set<String> read(@NotNull DataInput in) throws IOException {
     final int size = in.readInt();
     final Set<String> result = new HashSet<String>(size);
 

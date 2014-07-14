@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,8 +64,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
                                                                            chooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
 
         @Override
-        protected void onFileChoosen(@NotNull VirtualFile chosenFile) {
-          super.onFileChoosen(chosenFile);
+        protected void onFileChosen(@NotNull VirtualFile chosenFile) {
+          super.onFileChosen(chosenFile);
           myCommonOptionsForm.setWorkingDirectory(chosenFile.getParent().getPath());
         }
       };

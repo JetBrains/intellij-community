@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.refactoring.move.moveInner.MoveInnerDialog;
 import com.intellij.refactoring.move.moveInner.MoveInnerImpl;
 import com.intellij.refactoring.move.moveInner.MoveInnerProcessor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -36,6 +37,7 @@ public class MoveInnerTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
   
+  @NotNull
   @Override
   protected String getTestRoot() {
     return "/refactoring/moveInner/";
@@ -80,6 +82,10 @@ public class MoveInnerTest extends MultiFileTestCase {
   }
 
   public void testConstructorVisibility() throws Exception {  // IDEADEV-19561
+    doTest(createAction("p.A.B", "B", false, null, false, false, null));
+  }
+
+  public void testConstructorUtilClassVisibility() throws Exception {
     doTest(createAction("p.A.B", "B", false, null, false, false, null));
   }
 

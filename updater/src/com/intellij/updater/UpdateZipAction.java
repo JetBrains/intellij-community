@@ -103,6 +103,8 @@ public class UpdateZipAction extends BaseUpdateAction {
       new ZipFile(newerFile).close();
     }
     catch (IOException e) {
+      Runner.logger.error("Corrupted target file: " + newerFile);
+      Runner.printStackTrace(e);
       throw new IOException("Corrupted target file: " + newerFile, e);
     }
 
@@ -115,6 +117,8 @@ public class UpdateZipAction extends BaseUpdateAction {
       olderZip = new ZipFile(olderFile);
     }
     catch (IOException e) {
+      Runner.logger.error("Corrupted source file: " + olderFile);
+      Runner.printStackTrace(e);
       throw new IOException("Corrupted source file: " + olderFile, e);
     }
 
@@ -137,6 +141,8 @@ public class UpdateZipAction extends BaseUpdateAction {
             patchOutput.closeEntry();
           }
           catch (IOException e) {
+            Runner.logger.error("Error building patch for .zip entry " + name);
+            Runner.printStackTrace(e);
             throw new IOException("Error building patch for .zip entry " + name, e);
           }
         }
@@ -149,11 +155,11 @@ public class UpdateZipAction extends BaseUpdateAction {
 
   protected void doApply(final ZipFile patchFile, File toFile) throws IOException {
     File temp = Utils.createTempFile();
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    final ZipOutputWrapper out = new ZipOutputWrapper(new FileOutputStream(temp));
-    out.setCompressionLevel(0);
-
+    FileOutputStream fileOut = new FileOutputStream(temp);
     try {
+      final ZipOutputWrapper out = new ZipOutputWrapper(fileOut);
+      out.setCompressionLevel(0);
+
       processZipFile(toFile, new Processor() {
         public void process(ZipEntry entry, InputStream in) throws IOException {
           String path = entry.getName();
@@ -183,9 +189,11 @@ public class UpdateZipAction extends BaseUpdateAction {
           in.close();
         }
       }
+
+      out.finish();
     }
     finally {
-      out.close();
+      fileOut.close();
     }
 
     replaceUpdated(temp, toFile);

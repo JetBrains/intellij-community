@@ -88,6 +88,8 @@ public interface CodeStyleSettingsCustomizable {
     SPACE_BEFORE_TYPE_PARAMETER_LIST,
     SPACE_BEFORE_ANOTATION_PARAMETER_LIST,
     SPACE_WITHIN_ANNOTATION_PARENTHESES,
+    SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES,
+    SPACE_WITHIN_EMPTY_METHOD_PARENTHESES
   }
 
   enum BlankLinesOption {
@@ -202,6 +204,8 @@ public interface CodeStyleSettingsCustomizable {
   String SPACES_WITHIN = ApplicationBundle.message("group.spaces.within");
   String SPACES_IN_TERNARY_OPERATOR = ApplicationBundle.message("group.spaces.in.ternary.operator");
   String SPACES_WITHIN_TYPE_ARGUMENTS = ApplicationBundle.message("group.spaces.in.type.arguments");
+  String SPACES_IN_TYPE_ARGUMENTS = ApplicationBundle.message("group.spaces.in.type.arguments.block");
+  String SPACES_IN_TYPE_PARAMETERS = ApplicationBundle.message("group.spaces.in.type.parameters.block");
   String SPACES_OTHER = ApplicationBundle.message("group.spaces.other");
 
   String BLANK_LINES_KEEP = ApplicationBundle.message("title.keep.blank.lines");

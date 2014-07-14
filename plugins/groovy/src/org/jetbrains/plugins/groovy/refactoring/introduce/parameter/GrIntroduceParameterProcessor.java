@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterProcessor");
 
   private final GrIntroduceParameterSettings mySettings;
-  private IntroduceParameterData.ExpressionWrapper myParameterInitializer;
+  private final IntroduceParameterData.ExpressionWrapper myParameterInitializer;
 
   public GrIntroduceParameterProcessor(GrIntroduceParameterSettings settings) {
     this(settings, createExpressionWrapper(settings));
@@ -78,9 +78,10 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
     LOG.assertTrue(settings.getToSearchFor() instanceof PsiMethod);
 
     final StringPartInfo stringPartInfo = settings.getStringPartInfo();
-    final GrExpression expression = stringPartInfo != null
-                                    ? GrIntroduceHandlerBase.generateExpressionFromStringPart(stringPartInfo, settings.getProject())
-                                    : settings.getExpression();
+    GrVariable var = settings.getVar();
+    final GrExpression expression = stringPartInfo != null ? stringPartInfo.createLiteralFromSelected() :
+                                    var != null ? var.getInitializerGroovy()
+                                                : settings.getExpression();
     return new GrExpressionWrapper(expression);
   }
 
@@ -177,9 +178,16 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
     }
 
     if (mySettings.replaceAllOccurrences()) {
-      PsiElement[] exprs = GroovyIntroduceParameterUtil.getOccurrences(mySettings);
-      for (PsiElement expr : exprs) {
-        result.add(new InternalUsageInfo(expr));
+      if (mySettings.getVar() != null) {
+        for (PsiElement element : GrIntroduceHandlerBase.collectVariableUsages(mySettings.getVar(), mySettings.getToReplaceIn())) {
+          result.add(new InternalUsageInfo(element));
+        }
+      }
+      else {
+        PsiElement[] exprs = GroovyIntroduceParameterUtil.getOccurrences(mySettings);
+        for (PsiElement expr : exprs) {
+          result.add(new InternalUsageInfo(expr));
+        }
       }
     }
     else {
@@ -241,7 +249,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
     final StringPartInfo stringPartInfo = mySettings.getStringPartInfo();
     if (stringPartInfo != null) {
       final GrExpression
-        expr = GrIntroduceHandlerBase.processLiteral(mySettings.getName(), mySettings.getStringPartInfo(), mySettings.getProject());
+        expr = mySettings.getStringPartInfo().replaceLiteralWithConcatenation(mySettings.getName());
       final Editor editor = PsiUtilBase.findEditor(expr);
       if (editor != null) {
         editor.getSelectionModel().removeSelection();

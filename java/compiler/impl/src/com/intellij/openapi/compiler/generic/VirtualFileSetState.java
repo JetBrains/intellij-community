@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,24 +64,22 @@ public class VirtualFileSetState {
 
 
   private static class VirtualFileWithDependenciesExternalizer implements DataExternalizer<VirtualFileSetState> {
-    private byte[] myBuffer = IOUtil.allocReadWriteUTFBuffer();
-
     @Override
-    public void save(DataOutput out, VirtualFileSetState value) throws IOException {
+    public void save(@NotNull DataOutput out, VirtualFileSetState value) throws IOException {
       final Map<String, Long> dependencies = value.myTimestamps;
       out.writeInt(dependencies.size());
       for (Map.Entry<String, Long> entry : dependencies.entrySet()) {
-        IOUtil.writeUTFFast(myBuffer, out, entry.getKey());
+        IOUtil.writeUTF(out, entry.getKey());
         out.writeLong(entry.getValue());
       }
     }
 
     @Override
-    public VirtualFileSetState read(DataInput in) throws IOException {
+    public VirtualFileSetState read(@NotNull DataInput in) throws IOException {
       final VirtualFileSetState state = new VirtualFileSetState();
       int size = in.readInt();
       while (size-- > 0) {
-        final String url = IOUtil.readUTFFast(myBuffer, in);
+        final String url = IOUtil.readUTF(in);
         final long timestamp = in.readLong();
         state.myTimestamps.put(url, timestamp);
       }

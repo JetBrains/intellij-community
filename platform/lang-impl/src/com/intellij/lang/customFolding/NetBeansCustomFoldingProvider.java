@@ -34,7 +34,7 @@ public class NetBeansCustomFoldingProvider extends CustomFoldingProvider {
 
   @Override
   public String getPlaceholderText(String elementText) {
-    String customText = elementText.replaceFirst(".*desc\\s*=\\s*\"(.*)\".*", "$1").trim();
+    String customText = elementText.replaceFirst(".*desc\\s*=\\s*\"([^\"]*)\".*", "$1").trim();
     return customText.isEmpty() ? "..." : customText;
   }
 
@@ -55,6 +55,6 @@ public class NetBeansCustomFoldingProvider extends CustomFoldingProvider {
 
   @Override
   public boolean isCollapsedByDefault(String text) {
-    return text.matches(".*defaultstate\\s*=\\s*\"collapsed\".*");
+    return super.isCollapsedByDefault(text) || text.matches(".*defaultstate\\s*=\\s*\"collapsed\".*");
   }
 }

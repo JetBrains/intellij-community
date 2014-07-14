@@ -28,14 +28,14 @@ class SimpleChange extends Change implements DiffRangeMarker.RangeInvalidListene
   private final SimpleChangeSide[] mySides;
   private final ChangeList myChangeList;
 
-  public SimpleChange(ChangeType type, @NotNull TextRange range1, @NotNull TextRange range2, ChangeList changeList) {
-    mySides = new SimpleChangeSide[]{createSide(changeList, range1, FragmentSide.SIDE1),
-                         createSide(changeList, range2, FragmentSide.SIDE2)};
+  public SimpleChange(@NotNull ChangeType type, @NotNull TextRange range1, @NotNull TextRange range2, @NotNull ChangeList changeList) {
+    mySides = new SimpleChangeSide[]{ createSide(changeList, range1, FragmentSide.SIDE1),
+                                      createSide(changeList, range2, FragmentSide.SIDE2)};
     myType = type;
     myChangeList = changeList;
   }
 
-  private SimpleChangeSide createSide(ChangeList changeList, TextRange range1, FragmentSide side) {
+  private SimpleChangeSide createSide(@NotNull ChangeList changeList, @NotNull TextRange range1, @NotNull FragmentSide side) {
     return new SimpleChangeSide(side, new DiffRangeMarker((DocumentEx)changeList.getDocument(side), range1, this));
   }
 
@@ -45,7 +45,7 @@ class SimpleChange extends Change implements DiffRangeMarker.RangeInvalidListene
    * @param newRange     New change range.
    */
   @Override
-  protected void changeSide(ChangeSide sideToChange, DiffRangeMarker newRange) {
+  protected void changeSide(@NotNull ChangeSide sideToChange, @NotNull DiffRangeMarker newRange) {
     for (int i = 0; i < mySides.length; i++) {
       SimpleChangeSide side = mySides[i];
       if (side.equals(sideToChange)) {
@@ -59,7 +59,8 @@ class SimpleChange extends Change implements DiffRangeMarker.RangeInvalidListene
     myChangeList.remove(this);
   }
 
-  public ChangeSide getChangeSide(FragmentSide side) {
+  @NotNull
+  public ChangeSide getChangeSide(@NotNull FragmentSide side) {
     return mySides[side.getIndex()];
   }
 
@@ -100,7 +101,7 @@ class SimpleChange extends Change implements DiffRangeMarker.RangeInvalidListene
     myChangeList.remove(this);
   }
 
-  public static Change fromRanges(@NotNull TextRange baseRange, @NotNull TextRange versionRange, ChangeList changeList) {
+  public static Change fromRanges(@NotNull TextRange baseRange, @NotNull TextRange versionRange, @NotNull ChangeList changeList) {
     ChangeType type = ChangeType.fromRanges(baseRange, versionRange);
     return new SimpleChange(type, baseRange, versionRange, changeList);
   }

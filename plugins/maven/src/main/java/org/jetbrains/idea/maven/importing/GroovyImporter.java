@@ -14,6 +14,9 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This class can not be moved to org.jetbrains.idea.maven.plugins.groovy package because it's used from 'Eclipse Groovy Compiler Plugin'
+ */
 public abstract class GroovyImporter extends MavenImporter {
   public GroovyImporter(String pluginGroupID, String pluginArtifactID) {
     super(pluginGroupID, pluginArtifactID);

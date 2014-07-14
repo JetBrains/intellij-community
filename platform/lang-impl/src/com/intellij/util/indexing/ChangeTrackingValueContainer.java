@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,15 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.Computable;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -72,26 +76,25 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
     return getMergedData().size();
   }
 
+  @NotNull
   @Override
-  public Iterator<Value> getValueIterator() {
+  public ValueIterator<Value> getValueIterator() {
     return getMergedData().getValueIterator();
   }
 
+  @NotNull
   @Override
   public List<Value> toValueList() {
     return getMergedData().toValueList();
   }
 
-  @Override
-  public boolean isAssociated(final Value value, final int inputId) {
-    return getMergedData().isAssociated(value, inputId);
-  }
-
+  @NotNull
   @Override
   public IntPredicate getValueAssociationPredicate(Value value) {
     return getMergedData().getValueAssociationPredicate(value);
   }
 
+  @NotNull
   @Override
   public IntIterator getInputIdsIterator(final Value value) {
     return getMergedData().getInputIdsIterator(value);
@@ -114,6 +117,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
         return merged;
       }
 
+      FileId2ValueMapping<Value> fileId2ValueMapping = null;
       final ValueContainer<Value> fromDisk = myInitializer.compute();
       final ValueContainerImpl<Value> newMerged;
 
@@ -123,11 +127,17 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
         newMerged = ((ChangeTrackingValueContainer<Value>)fromDisk).getMergedData().copy();
       }
 
+      if (myAdded != null && newMerged.size() > ValueContainerImpl.NUMBER_OF_VALUES_THRESHOLD) {
+        // Calculate file ids that have Value mapped to avoid O(NumberOfValuesInMerged) during removal
+        fileId2ValueMapping = new FileId2ValueMapping<Value>(newMerged);
+      }
+      final FileId2ValueMapping<Value> finalFileId2ValueMapping = fileId2ValueMapping;
       if (myInvalidated != null) {
         myInvalidated.forEach(new TIntProcedure() {
           @Override
           public boolean execute(int inputId) {
-            newMerged.removeAssociatedValue(inputId);
+            if (finalFileId2ValueMapping != null) finalFileId2ValueMapping.removeFileId(inputId);
+            else newMerged.removeAssociatedValue(inputId);
             return true;
           }
         });
@@ -136,9 +146,13 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
       if (myAdded != null) {
         myAdded.forEach(new ContainerAction<Value>() {
           @Override
-          public boolean perform(final int id, final Value value) {
-            newMerged.removeAssociatedValue(id); // enforcing "one-value-per-file for particular key" invariant
-            newMerged.addValue(id, value);
+          public boolean perform(final int inputId, final Value value) {
+            // enforcing "one-value-per-file for particular key" invariant
+            if (finalFileId2ValueMapping != null) finalFileId2ValueMapping.removeFileId(inputId);
+            else newMerged.removeAssociatedValue(inputId);
+
+            newMerged.addValue(inputId, value);
+            if (finalFileId2ValueMapping != null) finalFileId2ValueMapping.associateFileIdToValue(inputId, value);
             return true;
           }
         });
@@ -160,7 +174,23 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
     return myAdded;
   }
 
-  public @Nullable TIntHashSet getInvalidated() {
-    return myInvalidated;
+  @Override
+  public void saveTo(DataOutput out, DataExternalizer<Value> externalizer) throws IOException {
+    if (needsCompacting()) {
+      getMergedData().saveTo(out, externalizer);
+    } else {
+      final TIntHashSet set = myInvalidated;
+      if (set != null && set.size() > 0) {
+        for (int inputId : set.toArray()) {
+          DataInputOutputUtil.writeINT(out, -inputId); // mark inputId as invalid, to be processed on load in ValueContainerImpl.readFrom
+        }
+      }
+
+      final ValueContainer<Value> toAppend = getAddedDelta();
+      if (toAppend != null && toAppend.size() > 0) {
+        toAppend.saveTo(out, externalizer);
+      }
+    }
   }
+
 }

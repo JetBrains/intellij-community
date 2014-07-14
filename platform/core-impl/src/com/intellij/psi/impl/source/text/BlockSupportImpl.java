@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.intellij.psi.impl.source.text;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
@@ -75,7 +76,7 @@ public class BlockSupportImpl extends BlockSupport {
   @Override
   @NotNull
   public DiffLog reparseRange(@NotNull final PsiFile file,
-                              TextRange changedPsiRange,
+                              @NotNull TextRange changedPsiRange,
                               @NotNull final CharSequence newFileText,
                               @NotNull final ProgressIndicator indicator) {
     final PsiFileImpl fileImpl = (PsiFileImpl)file;
@@ -103,16 +104,17 @@ public class BlockSupportImpl extends BlockSupport {
         final TextRange textRange = node.getTextRange();
         final IReparseableElementType reparseable = (IReparseableElementType)elementType;
 
-        if (baseLanguage.isKindOf(reparseable.getLanguage())) {
+        if (baseLanguage.isKindOf(reparseable.getLanguage()) && textRange.getLength() + lengthShift > 0) {
           final int start = textRange.getStartOffset();
           final int end = start + textRange.getLength() + lengthShift;
-          if (!assertFileLength(file, newFileText, node, elementType, start, end)) {
+          if (end > newFileText.length()) {
+            reportInconsistentLength(file, newFileText, node, start, end);
             break;
           }
 
           CharSequence newTextStr = newFileText.subSequence(start, end);
 
-          if (reparseable.isParsable(newTextStr, baseLanguage, project)) {
+          if (reparseable.isParsable(node.getTreeParent(), newTextStr, baseLanguage, project)) {
             ASTNode chameleon = reparseable.createNode(newTextStr);
             if (chameleon != null) {
               DummyHolder holder = DummyHolderFactory.createHolder(fileImpl.getManager(), null, node.getPsi(), charTable);
@@ -136,26 +138,23 @@ public class BlockSupportImpl extends BlockSupport {
     return makeFullParse(node, newFileText, textLength, fileImpl, indicator);
   }
 
-  private static boolean assertFileLength(PsiFile file, CharSequence newFileText, ASTNode node, IElementType elementType, int start, int end) {
-    if ((end > newFileText.length() || start > end) && ApplicationManager.getApplication().isInternal()) {
-      String newTextBefore = newFileText.subSequence(0, start).toString();
-      String oldTextBefore = file.getText().subSequence(0, start).toString();
-      String message = "IOOBE: type=" + elementType +
-                       "; start=" + start +
-                       "; end=" + end +
-                       "; oldText=" + node.getText() +
-                       "; newText=" + newFileText.subSequence(start, newFileText.length()) +
-                       "; length=" + node.getTextLength();
-      if (oldTextBefore.equals(newTextBefore)) {
-        message += "; oldTextBefore==newTextBefore";
-      } else {
-        message += "; oldTextBefore=" + oldTextBefore +
-                   "; newTextBefore=" + newTextBefore;
-      }
-      LOG.error(message);
-      return false;
+  private static void reportInconsistentLength(PsiFile file, CharSequence newFileText, ASTNode node, int start, int end) {
+    String message = "Index out of bounds: type=" + node.getElementType() +
+                     "; file=" + file +
+                     "; file.class=" + file.getClass() +
+                     "; start=" + start +
+                     "; end=" + end +
+                     "; length=" + node.getTextLength();
+    String newTextBefore = newFileText.subSequence(0, start).toString();
+    String oldTextBefore = file.getText().subSequence(0, start).toString();
+    if (oldTextBefore.equals(newTextBefore)) {
+      message += "; oldTextBefore==newTextBefore";
     }
-    return true;
+    LOG.error(message,
+              new Attachment(file.getName() + "_oldNodeText.txt", node.getText()),
+              new Attachment(file.getName() + "_oldFileText.txt", file.getText()),
+              new Attachment(file.getName() + "_newFileText.txt", newFileText.toString())
+    );
   }
 
   @NotNull
@@ -316,7 +315,8 @@ public class BlockSupportImpl extends BlockSupport {
     PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(manager);
     event.setParent(scope);
     event.setFile(scope.getContainingFile());
-    event.setOffset(scope.getTextRange().getStartOffset());
+    TextRange range = scope.getTextRange();
+    event.setOffset(range == null ? 0 : range.getStartOffset());
     event.setOldLength(scope.getTextLength());
       // the "generic" event is being sent on every PSI change. It does not carry any specific info except the fact that "something has changed"
     event.setGenericChange(isGenericChange);
@@ -324,7 +324,7 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   public static void sendAfterChildrenChangedEvent(@NotNull PsiManagerImpl manager,
-                                                   @NotNull PsiFileImpl scope,
+                                                   @NotNull PsiFile scope,
                                                    int oldLength,
                                                    boolean isGenericChange) {
     if(!scope.isPhysical()) {

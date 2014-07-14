@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,10 +114,10 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
   }
 
   public void testClassesAndPackagesInUnqualifiedImports() {
-    myFixture.addClass("package xxxxx; public class xxxxxxxxx {}")
+    myFixture.addClass("package Xxxxx; public class Xxxxxxxxx {}")
     myFixture.configureByText 'a.groovy', 'package foo; import <caret>'
-    type 'xxx'
-    assert myFixture.lookupElementStrings == ['xxxxxxxxx', 'xxxxx']
+    type 'Xxx'
+    assert myFixture.lookupElementStrings == ['Xxxxxxxxx', 'Xxxxx']
   }
 
 
@@ -139,14 +139,18 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     myFixture.addClass("class Foo { static class Bar {} }")
     myFixture.configureByText "a.groovy", "void foo(Foo<caret>[] a) { }"
     type '.'
-    assert !lookup
+    assert lookup
+    type '.'
+    myFixture.checkResult('void foo(Foo..<caret>[] a) { }')
   }
 
   public void testTypingFirstVarargDot2() {
     myFixture.addClass("class Foo { static class Bar {} }")
     myFixture.configureByText "a.groovy", "void foo(Foo<caret>) { }"
     type '.'
-    assert !lookup
+    assert lookup
+    type '.'
+    myFixture.checkResult('void foo(Foo..<caret>) { }')
   }
 
   public void testDotDot() {

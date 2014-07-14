@@ -39,7 +39,7 @@ public class UserNameCredentialsDialog extends DialogWrapper implements Document
   @NonNls
   private static final String HELP_ID = "vcs.subversion.authentication";
 
-  protected UserNameCredentialsDialog(Project project) {
+  public UserNameCredentialsDialog(Project project) {
     super(project, true);
     setResizable(false);
   }

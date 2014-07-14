@@ -28,7 +28,8 @@ public class ConfigurationTypeUtil {
   private ConfigurationTypeUtil() {
   }
 
-  public static <T extends ConfigurationType> T findConfigurationType(final Class<T> configurationTypeClass) {
+  @NotNull
+  public static <T extends ConfigurationType> T findConfigurationType(@NotNull Class<T> configurationTypeClass) {
     ConfigurationType[] types = Extensions.getExtensions(ConfigurationType.CONFIGURATION_TYPE_EP);
     for (ConfigurationType type : types) {
       if (configurationTypeClass.isInstance(type)) {
@@ -36,9 +37,8 @@ public class ConfigurationTypeUtil {
         return (T)type;
       }
     }
-    assert false : Arrays.toString(types) + " loader: " + configurationTypeClass.getClassLoader() +
-                   ", " + configurationTypeClass;
-    return null;
+    throw new AssertionError(Arrays.toString(types) + " loader: " + configurationTypeClass.getClassLoader() +
+                             ", " + configurationTypeClass);
   }
 
   public static boolean equals(@NotNull ConfigurationType type1, @NotNull ConfigurationType type2) {

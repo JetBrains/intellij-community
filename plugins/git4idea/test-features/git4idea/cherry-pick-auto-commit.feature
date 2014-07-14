@@ -17,6 +17,7 @@ Background:
     Then the last commit is
       """
       fix #1
+
       (cherry picked from commit f5027a3)
       """
     And success notification is shown 'Cherry-pick successful'
@@ -149,9 +150,11 @@ Background:
     Then `git log -2` should return
       """
       fix #2
+
       (cherry picked from commit c123abc)
       -----
       fix #1
+
       (cherry picked from commit f5027a3)
       """
     And success notification is shown 'Cherry-pick successful'
@@ -179,6 +182,7 @@ Background:
     Then the last commit is
       """
       fix #1
+
       (cherry picked from commit f5027a3)
       """
     And error notification is shown 'Cherry-pick failed'
@@ -211,6 +215,7 @@ Background:
     Then the last commit is
       """
       fix #1
+      
       (cherry picked from commit f5027a3)
       """
     And merge dialog should be shown

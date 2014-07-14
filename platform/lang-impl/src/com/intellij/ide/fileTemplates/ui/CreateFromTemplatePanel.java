@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -170,7 +170,7 @@ public class CreateFromTemplatePanel{
           }
         }
       }
-      myAttributes.add(new Pair<String, JTextField>(attribute, field));
+      myAttributes.add(Pair.create(attribute, field));
       myAttrPanel.add(label, new GridBagConstraints(0, myLastRow, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                                     insets, 0, 0));
       myAttrPanel.add(field, new GridBagConstraints(1, myLastRow, 1, 1, 1.0, 0.0, GridBagConstraints.WEST,

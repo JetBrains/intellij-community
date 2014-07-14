@@ -62,7 +62,7 @@
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
     </group>
 
-    <group id="NewXmlDescriptor" class="com.intellij.ide.actions.NonEmptyActionGroup" text="XML Configuration File" popup="true" icon="AllIcons.FileTypes.Xml">
+    <group id="NewXmlDescriptor" class="com.intellij.ide.actions.NonTrivialActionGroup" text="XML Configuration File" popup="true" icon="AllIcons.FileTypes.Xml">
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
 
@@ -72,15 +72,25 @@
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
 
-    <action id="OpenInBrowser" class="com.intellij.ide.browsers.OpenFileInDefaultBrowserAction"
-            text="Open in _Browser" description="Open a selected file in default browser"
+    <!-- id should be "OpenInDefaultBrowser", but existing name preserved to keep compatibility - if user configured shortcut for action, it should not be lost -->
+    <action id="OpenInBrowser" class="com.intellij.ide.browsers.actions.OpenFileInDefaultBrowserAction"
+            text="Open in default _browser" description="Open selected file in default browser"
             icon="AllIcons.Nodes.PpWeb">
+    </action>
+
+    <group id="OpenInBrowserGroup" class="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserGroupAction">
       <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ViewSource"/>
       <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
-      <!--<add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="EditSource"/>-->
-    </action>
-    
+    </group>
+    <group id="OpenInBrowserEditorContextBarGroupAction"
+           class="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserEditorContextBarGroupAction"
+           description="Open In...">
+      <add-to-group group-id="EditorContextBarMenu" anchor="last"/>
+    </group>
+
     <action id="SurroundWithEmmet" class="com.intellij.codeInsight.template.emmet.SurroundWithEmmetAction" 
             text="Surround with Emmet" description="Surround selected code with Emmet abbreviation"/>
+    <action id="EmmetPreview" class="com.intellij.codeInsight.template.emmet.EmmetPreviewAction" 
+            text="Emmet Preview" description="Show preview for emmet abbreviation"/>
   </actions>
 </component>

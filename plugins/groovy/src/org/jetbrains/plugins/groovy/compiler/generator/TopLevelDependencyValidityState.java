@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ class TopLevelDependencyValidityState implements ValidityState {
     myTimestamp = timestamp;
   }
 
+  @Override
   public boolean equalsTo(ValidityState validityState) {
     if (!(validityState instanceof TopLevelDependencyValidityState)) return false;
 
@@ -45,6 +46,7 @@ class TopLevelDependencyValidityState implements ValidityState {
         && myMembers.equals(((TopLevelDependencyValidityState) validityState).myMembers);
   }
 
+  @Override
   public void save(DataOutput out) throws IOException {
     out.writeLong(myTimestamp);
     out.writeChar('\n');

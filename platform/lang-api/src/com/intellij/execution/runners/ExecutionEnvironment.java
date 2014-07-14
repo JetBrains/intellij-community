@@ -41,6 +41,7 @@ import static com.intellij.openapi.actionSystem.LangDataKeys.*;
 
 
 public class ExecutionEnvironment extends UserDataHolderBase {
+
   private static final AtomicLong myIdHolder = new AtomicLong(1L);
 
   @NotNull private final Project myProject;
@@ -204,9 +205,11 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   public String toString() {
     if (myRunnerAndConfigurationSettings != null) {
       return myRunnerAndConfigurationSettings.getName();
-    } else if (myRunProfile != null) {
-        return myRunProfile.getName();
-    } else if (myContentToReuse != null) {
+    }
+    else if (myRunProfile != null) {
+      return myRunProfile.getName();
+    }
+    else if (myContentToReuse != null) {
       return myContentToReuse.getDisplayName();
     }
     return super.toString();

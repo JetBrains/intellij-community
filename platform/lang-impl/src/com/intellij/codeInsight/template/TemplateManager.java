@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.template;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PairProcessor;
@@ -27,7 +28,7 @@ import java.util.Map;
 
 public abstract class TemplateManager {
   public static TemplateManager getInstance(Project project) {
-    return project.getComponent(TemplateManager.class);
+    return ServiceManager.getService(project, TemplateManager.class);
   }
 
   public abstract void startTemplate(@NotNull Editor editor, @NotNull Template template);

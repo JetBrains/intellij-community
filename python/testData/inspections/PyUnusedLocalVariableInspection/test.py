@@ -303,3 +303,16 @@ def test_unused_condition_local_with_last_if_in_cycle(c):
         x = False #pass
         if c:
             x = True
+
+
+# PY-7527
+def test_unused_empty_init_parameter():
+    class C(object):
+        def __init__(self, <weak_warning descr="Parameter 'foo' value is not used">foo</weak_warning>):
+            pass
+
+        def f(self, bar):
+            pass
+
+    return C
+

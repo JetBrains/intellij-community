@@ -24,8 +24,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class MessagesEx extends Messages {
 
@@ -56,6 +58,25 @@ public class MessagesEx extends Messages {
   @NotNull
   public static MessageInfo error(Project project, String message, String title) {
     return new MessageInfo(project, message, title);
+  }
+
+  public static void showErrorDialog(@Nullable Component parent, String message, @NotNull String title) {
+    if (parent != null) Messages.showErrorDialog(parent, message, title);
+    else showErrorDialog(message, title);
+  }
+
+  public static void showWarningDialog(@Nullable Component parent, String message, @NotNull String title) {
+    if (parent != null) Messages.showWarningDialog(parent, message, title);
+    else showWarningDialog(message, title);
+  }
+
+  public static void showInfoMessage(@Nullable Component parent, String message, @NotNull String title) {
+    if (parent != null) Messages.showInfoMessage(parent, message, title);
+    else showInfoMessage(message, title);
+  }
+
+  public static int showOkCancelDialog(@Nullable Component parent, String message, String title, Icon icon) {
+    return parent != null ? Messages.showOkCancelDialog(parent, message, title, icon) : showOkCancelDialog(message, title, icon);
   }
 
   public abstract static class BaseDialogInfo<ThisClass extends BaseDialogInfo> {

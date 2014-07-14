@@ -23,6 +23,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ui.GraphicsUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.geom.CubicCurve2D;
@@ -34,7 +36,7 @@ import java.util.ArrayList;
  */
 public class DividerPolygon {
 
-  private final Color myColor;
+  @Nullable private final Color myColor;
   private final int myStart1;
   private final int myStart2;
   private final int myEnd1;
@@ -43,7 +45,7 @@ public class DividerPolygon {
 
   public static final double CTRL_PROXIMITY_X = 0.3;
 
-  public DividerPolygon(int start1, int start2, int end1, int end2, Color color, boolean applied) {
+  public DividerPolygon(int start1, int start2, int end1, int end2, @Nullable Color color, boolean applied) {
     myApplied = applied;
     myStart1 = advance(start1);
     myStart2 = advance(start2);
@@ -150,7 +152,9 @@ public class DividerPolygon {
     //g.setComposite(composite);
   }
 
-  public static ArrayList<DividerPolygon> createVisiblePolygons(EditingSides sides, FragmentSide left, int diffDividerPolygonsOffset) {
+  public static ArrayList<DividerPolygon> createVisiblePolygons(@NotNull EditingSides sides,
+                                                                @NotNull FragmentSide left,
+                                                                int diffDividerPolygonsOffset) {
     Editor editor1 = sides.getEditor(left);
     Editor editor2 = sides.getEditor(left.otherSide());
     LineBlocks lineBlocks = sides.getLineBlocks();
@@ -174,7 +178,10 @@ public class DividerPolygon {
     return new FoldingTransformation(editor);
   }
 
-  private static DividerPolygon createPolygon(Transformation[] transformations, Trapezium trapezium, Color color, FragmentSide left,
+  private static DividerPolygon createPolygon(@NotNull Transformation[] transformations,
+                                              @NotNull Trapezium trapezium,
+                                              @Nullable Color color,
+                                              @NotNull FragmentSide left,
                                               int diffDividerPolygonsOffset, boolean applied) {
     Interval base1 = trapezium.getBase(left);
     Interval base2 = trapezium.getBase(left.otherSide());

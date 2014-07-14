@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.inspections.quickfix.PyCreatePropertyQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
@@ -80,13 +81,13 @@ public class PyPropertyAccessInspection extends PyInspection {
           final PyClass cls = ((PyClassType)type).getPyClass();
           final String name = node.getName();
           if (name != null) {
-            final Pair<PyClass, String> key = new Pair<PyClass, String>(cls, name);
+            final Pair<PyClass, String> key = Pair.create(cls, name);
             final Property property;
             if (myPropertyCache.containsKey(key)) {
               property = myPropertyCache.get(key);
             }
             else {
-              property = cls.findProperty(name);
+              property = cls.findProperty(name, true);
             }
             myPropertyCache.put(key, property); // we store nulls, too, to know that a property does not exist
             if (property != null) {
@@ -117,7 +118,7 @@ public class PyPropertyAccessInspection extends PyInspection {
         else {
           message = PyBundle.message("INSP.property.$0.cant.be.read", name);
         }
-        registerProblem(node, message);
+        registerProblem(node, message, new PyCreatePropertyQuickFix(dir));
       }
     }
 

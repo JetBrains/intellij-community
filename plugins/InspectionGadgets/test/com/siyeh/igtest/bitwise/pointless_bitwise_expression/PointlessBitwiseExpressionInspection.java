@@ -61,6 +61,13 @@ public class PointlessBitwiseExpressionInspection {
     }
 
     void longExpressions(int i, int j) {
-        i = j && 0 & 100;
+        i = j & 0 & 100;
+    }
+
+    void m(int i) {
+      int h  = 0 << 8;
+      int b = i ^  i; // 0
+      int c = i &  i; // i
+      int d = i |  i; // i
     }
 }

@@ -7,17 +7,10 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
-public class NullableStuffInspectionTest extends InspectionTestCase {
+public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase {
   private final NullableStuffInspection myInspection = new NullableStuffInspection();
   {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = false;
@@ -25,27 +18,18 @@ public class NullableStuffInspectionTest extends InspectionTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/nullableProblems/";
   }
 
-  private void doTest() throws Exception {
-    doTest("nullableProblems/" + getTestName(true), new LocalInspectionToolWrapper(myInspection),"java 1.5");
-  }
-  private void doTest14() throws Exception {
-    myExcludeAnnotations = true;
-    try {
-      doTest("nullableProblems/" + getTestName(true), new LocalInspectionToolWrapper(myInspection),"java 1.4");
-    }
-    finally {
-      myExcludeAnnotations = false;
-    }
+  private void doTest() {
+    myFixture.enableInspections(myInspection);
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 
   public void testProblems() throws Exception{ doTest(); }
   public void testProblems2() throws Exception{ doTest(); }
   public void testNullableFieldNotnullParam() throws Exception{ doTest(); }
   public void testNotNullFieldNullableParam() throws Exception{ doTest(); }
-  public void testJdk14() throws Exception{ doTest14(); }
 
   public void testGetterSetterProblems() throws Exception{ doTest(); }
   public void testOverriddenMethods() throws Exception{
@@ -53,28 +37,34 @@ public class NullableStuffInspectionTest extends InspectionTestCase {
     doTest();
   }
 
-  private boolean myExcludeAnnotations = false;
+  public void testHonorSuperParameterDefault() {
+    myFixture.addClass("package javax.annotation; public @interface ParametersAreNonnullByDefault {}");
+    myFixture.addClass("package javax.annotation; public @interface Nullable {}");
+    myFixture.addFileToProject("foo/package-info.java", "@javax.annotation.ParametersAreNonnullByDefault package foo;");
 
-  @Override
-  protected void setupRootModel(String testDir, VirtualFile[] sourceDir, String sdkName) {
-    super.setupRootModel(testDir, sourceDir, sdkName);
+    myFixture.addClass("import javax.annotation.*; package foo; public interface NullableFunction { void fun(@Nullable Object o); }");
+    myFixture.addClass("package foo; public interface AnyFunction { void fun(Object o); }");
 
-    if (myExcludeAnnotations) {
-      final Sdk sdk = ModuleRootManager.getInstance(myModule).getSdk();
-      assert sdk != null;
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          final SdkModificator sdkMod = sdk.getSdkModificator();
-          for (VirtualFile file : sdkMod.getRoots(OrderRootType.CLASSES)) {
-            if ("annotations.jar".equals(file.getName())) {
-              sdkMod.removeRoot(file, OrderRootType.CLASSES);
-              break;
-            }
-          }
-          sdkMod.commitChanges();
-        }
-      });
-    }
+    doTest();
   }
+
+  public void testHonorThisParameterDefault() {
+    myFixture.addClass("package javax.annotation; public @interface ParametersAreNonnullByDefault {}");
+    myFixture.addFileToProject("foo/package-info.java", "@javax.annotation.ParametersAreNonnullByDefault package foo;");
+
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".java", "foo/Classes.java"));
+    myFixture.enableInspections(myInspection);
+    myFixture.checkHighlighting(true, false, true);
+  }
+
+  public void testHonorParameterDefaultInSetters() {
+    myFixture.addClass("package javax.annotation; public @interface ParametersAreNonnullByDefault {}");
+    myFixture.addClass("package javax.annotation; public @interface Nullable {}");
+    myFixture.addFileToProject("foo/package-info.java", "@javax.annotation.ParametersAreNonnullByDefault package foo;");
+
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".java", "foo/Classes.java"));
+    myFixture.enableInspections(myInspection);
+    myFixture.checkHighlighting(true, false, true);
+  }
+
 }

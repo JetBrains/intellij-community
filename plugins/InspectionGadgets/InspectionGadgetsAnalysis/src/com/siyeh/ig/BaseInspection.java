@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,19 @@
  */
 package com.siyeh.ig;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.telemetry.InspectionGadgetsTelemetry;
 import org.jetbrains.annotations.Nls;
@@ -32,16 +38,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
-import java.lang.reflect.Field;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.List;
 
 public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.siyeh.ig.BaseInspection");
-
-  @NonNls private static final String INSPECTION = "Inspection";
-  @NonNls private static final String INSPECTION_BASE = "InspectionBase";
 
   private String m_shortName = null;
   private long timestamp = -1L;
@@ -51,14 +53,9 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
   public String getShortName() {
     if (m_shortName == null) {
       final Class<? extends BaseInspection> aClass = getClass();
-      final String name = aClass.getName();
-      if (name.endsWith(INSPECTION)) {
-        m_shortName = name.substring(name.lastIndexOf((int)'.') + 1, name.length() - INSPECTION.length());
-      }
-      else if (name.endsWith(INSPECTION_BASE)) {
-        m_shortName = name.substring(name.lastIndexOf((int)'.') + 1, name.length() - INSPECTION_BASE.length());
-      }
-      else {
+      final String name = aClass.getSimpleName();
+      m_shortName = InspectionProfileEntry.getShortName(name);
+      if (m_shortName.equals(name)) {
         throw new AssertionError("class name must end with 'Inspection' to correctly calculate the short name: " + name);
       }
     }
@@ -107,42 +104,33 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
     return visitor;
   }
 
-  protected JFormattedTextField prepareNumberEditor(@NonNls String fieldName) {
-    try {
-      final NumberFormat formatter = NumberFormat.getIntegerInstance();
-      formatter.setParseIntegerOnly(true);
-      final JFormattedTextField valueField = new JFormattedTextField(formatter);
-      final Field field = getClass().getField(fieldName);
-      valueField.setValue(field.get(this));
-      valueField.setColumns(2);
-      UIUtil.fixFormattedField(valueField);
-      final Document document = valueField.getDocument();
-      document.addDocumentListener(new DocumentAdapter() {
-        @Override
-        public void textChanged(DocumentEvent evt) {
-          try {
-            valueField.commitEdit();
-            final Number number = (Number)valueField.getValue();
-            field.set(BaseInspection.this,
-                      Integer.valueOf(number.intValue()));
-          }
-          catch (IllegalAccessException e) {
-            LOG.error(e);
-          }
-          catch (ParseException e) {
-            // No luck this time. Will update the field when correct value is entered.
-          }
+  protected JFormattedTextField prepareNumberEditor(@NonNls final String fieldName) {
+    final NumberFormat formatter = NumberFormat.getIntegerInstance();
+    formatter.setParseIntegerOnly(true);
+    final JFormattedTextField valueField = new JFormattedTextField(formatter);
+    Object value = ReflectionUtil.getField(getClass(), this, null, fieldName);
+    valueField.setValue(value);
+    valueField.setColumns(2);
+
+    // hack to work around text field becoming unusably small sometimes when using GridBagLayout
+    valueField.setMinimumSize(valueField.getPreferredSize());
+
+    UIUtil.fixFormattedField(valueField);
+    final Document document = valueField.getDocument();
+    document.addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void textChanged(DocumentEvent evt) {
+        try {
+          valueField.commitEdit();
+          final Number number = (Number)valueField.getValue();
+          ReflectionUtil.setField(BaseInspection.this.getClass(), BaseInspection.this, int.class, fieldName, number.intValue());
         }
-      });
-      return valueField;
-    }
-    catch (NoSuchFieldException e) {
-      LOG.error(e);
-    }
-    catch (IllegalAccessException e) {
-      LOG.error(e);
-    }
-    return null;
+        catch (ParseException e) {
+          // No luck this time. Will update the field when correct value is entered.
+        }
+      }
+    });
+    return valueField;
   }
 
   protected static void parseString(String string, List<String>... outs) {
@@ -208,5 +196,12 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
       InspectionGadgetsTelemetry.getInstance().reportRun(displayName, end - timestamp);
       timestamp = -1L;
     }
+  }
+
+  public static boolean isInspectionEnabled(@NonNls String shortName, PsiElement context) {
+    final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(context.getProject());
+    final InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getInspectionProfile();
+    final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+    return profile.isToolEnabled(key, context);
   }
 }

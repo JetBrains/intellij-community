@@ -16,7 +16,13 @@
 package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Holds settings specific to a particular project imported from an external system.
@@ -27,6 +33,18 @@ import org.jetbrains.annotations.NotNull;
 public abstract class ExternalProjectSettings implements Comparable<ExternalProjectSettings>, Cloneable {
 
   private String  myExternalProjectPath;
+  @AbstractCollection(surroundWithTag = true)
+  @Nullable private Set<String> myModules = new HashSet<String>();
+
+  @NotNull
+  public Set<String> getModules() {
+    return myModules == null ? Collections.<String>emptySet() : myModules;
+  }
+
+  public void setModules(@Nullable Set<String> modules) {
+    this.myModules = modules;
+  }
+
   private boolean myUseAutoImport;
   private boolean myCreateEmptyContentRootDirectories;
 
@@ -84,6 +102,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
 
   protected void copyTo(@NotNull ExternalProjectSettings receiver) {
     receiver.myExternalProjectPath = myExternalProjectPath;
+    receiver.myModules = new HashSet<String>(myModules);
     receiver.myUseAutoImport = myUseAutoImport;
     receiver.myCreateEmptyContentRootDirectories = myCreateEmptyContentRootDirectories;
   }

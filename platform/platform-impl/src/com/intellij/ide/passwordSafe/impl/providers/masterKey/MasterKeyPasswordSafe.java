@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,20 @@ package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 
 import com.intellij.ide.passwordSafe.MasterPasswordUnavailableException;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
+import com.intellij.ide.passwordSafe.impl.PasswordSafeTimed;
 import com.intellij.ide.passwordSafe.impl.providers.BasePasswordSafeProvider;
 import com.intellij.ide.passwordSafe.impl.providers.ByteArrayWrapper;
 import com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil;
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.windows.WindowsCryptUtils;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.UnsupportedEncodingException;
@@ -53,7 +57,16 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
   /**
    * The key to use to encrypt data
    */
-  private transient final AtomicReference<byte[]> key = new AtomicReference<byte[]>();
+  private transient final PasswordSafeTimed<AtomicReference<byte[]>> key = new PasswordSafeTimed<AtomicReference<byte[]>>() {
+    protected AtomicReference<byte[]> compute() {
+      return new AtomicReference<byte[]>();
+    }
+
+    @Override
+    protected int getMinutesToLive() {
+      return Registry.intValue("passwordSafe.masterPassword.ttl");
+    }
+  };
 
   /**
    * The constructor
@@ -78,7 +91,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
    * @param encrypt  if the password should be encrypted an stored is master database
    */
   void resetMasterPassword(String password, boolean encrypt) {
-    this.key.set(EncryptionUtil.genPasswordKey(password));
+    key.get().set(EncryptionUtil.genPasswordKey(password));
     database.clear();
     try {
       storePassword(null, MasterKeyPasswordSafe.class, testKey(password), TEST_PASSWORD_VALUE);
@@ -86,7 +99,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
         database.setPasswordInfo(encryptPassword(password));
       }
       else {
-        database.setPasswordInfo(new byte[0]);
+        database.setPasswordInfo(ArrayUtil.EMPTY_BYTE_ARRAY);
       }
     }
     catch (PasswordSafeException e) {
@@ -101,8 +114,8 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
    * @return true, if password is a correct one
    */
   boolean setMasterPassword(String password) {
-    byte[] savedKey = this.key.get();
-    this.key.set(EncryptionUtil.genPasswordKey(password));
+    byte[] savedKey = key.get().get();
+    key.get().set(EncryptionUtil.genPasswordKey(password));
     String rc;
     try {
       rc = getPassword(null, MasterKeyPasswordSafe.class, testKey(password));
@@ -111,7 +124,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
       throw new IllegalStateException("There should be no problem with password at this point", e);
     }
     if (!TEST_PASSWORD_VALUE.equals(rc)) {
-      this.key.set(savedKey);
+      key.get().set(savedKey);
       return false;
     }
     else {
@@ -132,7 +145,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
     if (!setMasterPassword(oldPassword)) {
       return false;
     }
-    byte[] oldKey = key.get();
+    byte[] oldKey = key.get().get(); // set right in the previous call
     byte[] newKey = EncryptionUtil.genPasswordKey(newPassword);
     ByteArrayWrapper testKey = new ByteArrayWrapper(EncryptionUtil.dbKey(oldKey, MasterKeyPasswordSafe.class, testKey(oldPassword)));
     HashMap<ByteArrayWrapper, byte[]> oldDb = new HashMap<ByteArrayWrapper, byte[]>();
@@ -165,41 +178,41 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
   }
 
   @Override
-  protected byte[] key(@Nullable final Project project) throws PasswordSafeException {
-    ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
+  protected byte[] key(@Nullable final Project project, @NotNull final Class requestor) throws PasswordSafeException {
+    Application application = ApplicationManager.getApplication();
     if (!isTestMode() && application.isHeadlessEnvironment()) {
       throw new MasterPasswordUnavailableException("The provider is not available in headless environment");
     }
-    if (key.get() == null) {
+    final Ref<byte[]> result = Ref.create(key.get().get());
+    if (result.isNull()) {
       if (isPasswordEncrypted()) {
         try {
-          String s = decryptPassword(database.getPasswordInfo());
-          setMasterPassword(s);
+          setMasterPassword(decryptPassword(database.getPasswordInfo()));
+          result.set(key.get().get());
         }
         catch (PasswordSafeException e) {
           // ignore exception and ask password
         }
       }
-      if (key.get() == null) {
+      if (result.isNull()) {
         final Ref<PasswordSafeException> ex = new Ref<PasswordSafeException>();
-        if (application.holdsReadLock()) {
-          throw new IllegalStateException("Access from read action is not allowed, because it might lead to a deadlock.");
-        }
         application.invokeAndWait(new Runnable() {
           public void run() {
-            if (key.get() == null) {
+            result.set(key.get().get());
+            if (result.isNull()) {
               try {
                 if (isTestMode()) {
                   throw new MasterPasswordUnavailableException("Master password must be specified in test mode.");
                 }
                 if (database.isEmpty()) {
-                  if (!ResetPasswordDialog.newPassword(project, MasterKeyPasswordSafe.this)) {
+                  if (!MasterPasswordDialog.resetMasterPasswordDialog(project, MasterKeyPasswordSafe.this, requestor).showAndGet()) {
                     throw new MasterPasswordUnavailableException("Master password is required to store passwords in the database.");
                   }
                 }
                 else {
-                  MasterPasswordDialog.askPassword(project, MasterKeyPasswordSafe.this);
+                  MasterPasswordDialog.askPassword(project, MasterKeyPasswordSafe.this, requestor);
                 }
+                result.set(key.get().get());
               }
               catch (PasswordSafeException e) {
                 ex.set(e);
@@ -217,25 +230,25 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
         }
       }
     }
-    return this.key.get();
+    return result.get();
   }
 
   /**
    * {@inheritDoc}
    */
   @Override
-  public String getPassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException {
+  public String getPassword(@Nullable Project project, @NotNull Class requestor, String key) throws PasswordSafeException {
     if (database.isEmpty()) {
       return null;
     }
-    return super.getPassword(project, requester, key);
+    return super.getPassword(project, requestor, key);
   }
 
   /**
    * {@inheritDoc}
    */
   @Override
-  public void removePassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException {
+  public void removePassword(@Nullable Project project, @NotNull Class requester, String key) throws PasswordSafeException {
     if (database.isEmpty()) {
       return;
     }
@@ -291,6 +304,11 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
     return "Master Key PasswordSafe";
   }
 
+
+  public boolean isMasterPasswordEnabled() {
+    return setMasterPassword("");
+  }
+
   /**
    * @return true, if OS protected passwords are supported for the current platform
    */
@@ -323,7 +341,8 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
    *          if decryption fails
    */
   private static String decryptPassword(byte[] pw) throws MasterPasswordUnavailableException {
-    assert SystemInfo.isWindows;
+    if (!SystemInfo.isWindows) throw new AssertionError("Windows OS expected");
+
     try {
       return new String(WindowsCryptUtils.unprotect(pw), "UTF-8");
     }
@@ -336,6 +355,8 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
    * @return true, if the password is currently encrypted in the database
    */
   public boolean isPasswordEncrypted() {
+    if (!isOsProtectedPasswordSupported()) return false;
+
     byte[] i = database.getPasswordInfo();
     return i != null && i.length > 0;
   }

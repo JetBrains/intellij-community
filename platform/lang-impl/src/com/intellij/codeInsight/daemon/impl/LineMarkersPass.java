@@ -122,10 +122,10 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
       collectLineMarkersForInjected(lineMarkers, elements, this, myFile, progress);
     }
 
-    myMarkers = mergeLineMarkers(lineMarkers);
+    myMarkers = mergeLineMarkers(lineMarkers, myEditor);
   }
 
-  private List<LineMarkerInfo> mergeLineMarkers(@NotNull List<LineMarkerInfo> markers) {
+  static List<LineMarkerInfo> mergeLineMarkers(@NotNull List<LineMarkerInfo> markers, Editor editor) {
     List<MergeableLineMarkerInfo> forMerge = new ArrayList<MergeableLineMarkerInfo>();
     final Iterator<LineMarkerInfo> iterator = markers.iterator();
     while (iterator.hasNext()) {
@@ -137,12 +137,12 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
       }
     }
 
-    if (forMerge.isEmpty() || myEditor == null) return markers;
+    if (forMerge.isEmpty() || editor == null) return markers;
 
     final List<LineMarkerInfo> result = new ArrayList<LineMarkerInfo>(markers);
     TIntObjectHashMap<List<MergeableLineMarkerInfo>> sameLineMarkers = new TIntObjectHashMap<List<MergeableLineMarkerInfo>>();
     for (MergeableLineMarkerInfo info : forMerge) {
-      final LogicalPosition position = myEditor.offsetToLogicalPosition(info.startOffset);
+      final LogicalPosition position = editor.offsetToLogicalPosition(info.startOffset);
       List<MergeableLineMarkerInfo> infos = sameLineMarkers.get(position.line);
       if (infos == null) {
         infos = new ArrayList<MergeableLineMarkerInfo>();

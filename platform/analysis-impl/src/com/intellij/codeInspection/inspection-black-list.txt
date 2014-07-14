@@ -10,7 +10,7 @@ com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection
 com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection
 com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection
 com.intellij.codeInspection.i18n.I18nInspection
-com.intellij.codeInspection.i18n.InconsistentResourceBundleInspection
+com.intellij.codeInspection.i18n.inconsistentResourceBundle.InconsistentResourceBundleInspection
 com.intellij.codeInspection.javaDoc.JavaDocLocalInspection
 com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal
 com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection
@@ -76,7 +76,7 @@ com.siyeh.ig.bugs.ReturnNullInspection
 com.siyeh.ig.classlayout.EmptyClassInspection
 com.siyeh.ig.classlayout.InnerClassOnInterfaceInspection
 com.siyeh.ig.classlayout.ListenerMayUseAdapterInspection
-com.siyeh.ig.classlayout.MissingOverrideAnnotationInspection
+com.siyeh.ig.inheritance.MissingOverrideAnnotationInspection
 com.siyeh.ig.classlayout.UtilityClassInspection
 com.siyeh.ig.classlayout.UtilityClassWithoutPrivateConstructorInspection
 com.siyeh.ig.classmetrics.AnonymousClassComplexityInspection
@@ -163,7 +163,6 @@ com.siyeh.ig.methodmetrics.ThreeNegationsPerMethodInspection
 com.siyeh.ig.methodmetrics.ThrownExceptionsPerMethodInspection
 com.siyeh.ig.migration.ForCanBeForeachInspection
 com.siyeh.ig.migration.IfCanBeSwitchInspection
-com.siyeh.ig.migration.MethodCanBeVariableArityMethodInspection
 com.siyeh.ig.modularization.ModuleWithTooFewClassesInspection
 com.siyeh.ig.modularization.ModuleWithTooManyClassesInspection
 com.siyeh.ig.naming.AnnotationNamingConventionInspection

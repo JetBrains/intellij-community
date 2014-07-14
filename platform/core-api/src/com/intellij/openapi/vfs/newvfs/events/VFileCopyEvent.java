@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ public class VFileCopyEvent extends VFileEvent {
   private final VirtualFile myNewParent;
   private final String myNewChildName;
 
-  public VFileCopyEvent(final Object requestor, final VirtualFile file, final VirtualFile newParent, final String newChildName) {
+  public VFileCopyEvent(final Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String newChildName) {
     super(requestor, false);
     myFile = file;
     myNewParent = newParent;
@@ -37,23 +37,28 @@ public class VFileCopyEvent extends VFileEvent {
   }
 
   @Override
+  @NotNull
   public VirtualFile getFile() {
     return myFile;
   }
 
+  @NotNull
   public VirtualFile getNewParent() {
     return myNewParent;
   }
 
+  @NotNull
   public String getNewChildName() {
     return myNewChildName;
   }
 
+  @Override
   @NonNls
   public String toString() {
     return "VfsEvent[copy " + myFile +" to " + myNewParent + " as " + myNewChildName +"]";
   }
 
+  @NotNull
   @Override
   public String getPath() {
     return myNewParent.getPath() + "/" + myNewChildName;
@@ -70,6 +75,7 @@ public class VFileCopyEvent extends VFileEvent {
     return myFile.isValid() && myNewParent.findChild(myNewChildName) == null;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -83,9 +89,9 @@ public class VFileCopyEvent extends VFileEvent {
     return true;
   }
 
+  @Override
   public int hashCode() {
-    int result;
-    result = myFile.hashCode();
+    int result = myFile.hashCode();
     result = 31 * result + myNewParent.hashCode();
     result = 31 * result + myNewChildName.hashCode();
     return result;

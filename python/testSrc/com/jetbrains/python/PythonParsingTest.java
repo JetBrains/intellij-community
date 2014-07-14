@@ -16,10 +16,15 @@
 package com.jetbrains.python;
 
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 /**
  * @author yole
@@ -220,7 +225,7 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   public void testTrailingSemicolon() {  // PY-363
-    doTest();    
+    doTest();
   }
 
   public void testStarExpression() {   // PEP-3132
@@ -248,6 +253,10 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   public void testCommentBeforeMethod() { // PY-2209 & friends
+    doTest();
+  }
+
+  public void testBadDecoratorNotMethod() {
     doTest();
   }
 
@@ -318,7 +327,7 @@ public class PythonParsingTest extends ParsingTestCase {
   public void testIncompleteFor() {  // PY-3792
     doTest();
   }
-  
+
   public void testCallInAssignment() {  // PY-5062
     doTest();
   }
@@ -438,6 +447,22 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON33);
   }
 
+  public void testEmptyBlockInFunctionBeforeFunction() {
+    doTest();
+  }
+
+  public void testBlockWithoutColon() {
+    doTest();
+  }
+
+  public void testSingleDefBeforeFunction() {
+    doTest();
+  }
+
+  public void testSingleClassBeforeFunction() {
+    doTest();
+  }
+
   public void doTest(LanguageLevel languageLevel) {
     LanguageLevel prev = myLanguageLevel;
     myLanguageLevel = languageLevel;
@@ -447,6 +472,7 @@ public class PythonParsingTest extends ParsingTestCase {
     finally {
       myLanguageLevel = prev;
     }
+    ensureEachFunctionHasStatementList(myFile, PyFunction.class);
   }
 
   @Override
@@ -454,5 +480,14 @@ public class PythonParsingTest extends ParsingTestCase {
     final PsiFile file = super.createFile(name, text);
     file.getVirtualFile().putUserData(LanguageLevel.KEY, myLanguageLevel);
     return file;
+  }
+
+  public static <T extends PyFunction> void ensureEachFunctionHasStatementList(
+    @NotNull PsiFile parentFile,
+    @NotNull Class<T> functionType) {
+    Collection<T> functions = PsiTreeUtil.findChildrenOfType(parentFile, functionType);
+    for (T functionToCheck : functions) {
+      functionToCheck.getStatementList(); //To make sure each function has statement list (does not throw exception)
+    }
   }
 }

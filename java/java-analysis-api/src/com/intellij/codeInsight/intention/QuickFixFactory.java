@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,13 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
+import com.intellij.codeInspection.IntentionAndQuickFixAction;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -26,6 +30,7 @@ import com.intellij.psi.util.PropertyMemberType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -129,7 +134,8 @@ public abstract class QuickFixFactory {
 
   @NotNull public abstract IntentionAction createRemoveParameterListFix(@NotNull PsiMethod parent);
 
-  @NotNull public abstract IntentionAction createShowModulePropertiesFix(@NotNull PsiElement element);
+  @NotNull public abstract IntentionAndQuickFixAction createShowModulePropertiesFix(@NotNull PsiElement element);
+  @NotNull public abstract IntentionAndQuickFixAction createShowModulePropertiesFix(@NotNull Module module);
 
   @NotNull public abstract IntentionAction createIncreaseLanguageLevelFix(@NotNull LanguageLevel level);
 
@@ -145,8 +151,8 @@ public abstract class QuickFixFactory {
 
   @NotNull public abstract IntentionAction createRenameFileFix(@NotNull String newName);
 
-  @NotNull public abstract IntentionAction createRenameElementFix(@NotNull PsiNamedElement element);
-  @NotNull public abstract IntentionAction createRenameElementFix(@NotNull PsiNamedElement element, @NotNull String newName);
+  @NotNull public abstract LocalQuickFixAndIntentionActionOnPsiElement createRenameElementFix(@NotNull PsiNamedElement element);
+  @NotNull public abstract LocalQuickFixAndIntentionActionOnPsiElement createRenameElementFix(@NotNull PsiNamedElement element, @NotNull String newName);
 
   @NotNull public abstract IntentionAction createChangeExtendsToImplementsFix(@NotNull PsiClass aClass, @NotNull PsiClassType classToExtendFrom);
 
@@ -178,6 +184,7 @@ public abstract class QuickFixFactory {
                                                   int minUsagesNumberToShowDialog);
 
   @NotNull public abstract IntentionAction createCreateMethodFromUsageFix(@NotNull PsiMethodCallExpression call);
+  @NotNull public abstract IntentionAction createCreateMethodFromUsageFix(PsiMethodReferenceExpression methodReferenceExpression);
 
   @NotNull public abstract IntentionAction createCreateAbstractMethodFromUsageFix(@NotNull PsiMethodCallExpression call);
 
@@ -204,7 +211,7 @@ public abstract class QuickFixFactory {
 
   @NotNull public abstract IntentionAction createDeferFinalAssignmentFix(@NotNull PsiVariable variable, @NotNull PsiReferenceExpression expression);
 
-  @NotNull public abstract IntentionAction createVariableAccessFromInnerClassFix(@NotNull PsiVariable variable, @NotNull PsiClass aClass);
+  @NotNull public abstract IntentionAction createVariableAccessFromInnerClassFix(@NotNull PsiVariable variable, @NotNull PsiElement scope);
 
   @NotNull public abstract IntentionAction createCreateConstructorParameterFromFieldFix(@NotNull PsiField field);
 
@@ -222,6 +229,40 @@ public abstract class QuickFixFactory {
 
   public abstract void registerPullAsAbstractUpFixes(@NotNull PsiMethod method, @NotNull QuickFixActionRegistrar registrar);
 
-  public abstract IntentionAction createCreateAnnotationMethodFromUsageFix(PsiNameValuePair pair);
+  @NotNull
+  public abstract IntentionAction createCreateAnnotationMethodFromUsageFix(@NotNull PsiNameValuePair pair);
 
+  @NotNull
+  public abstract IntentionAction createOptimizeImportsFix(boolean onTheFly);
+
+  public abstract void registerFixesForUnusedParameter(@NotNull PsiParameter parameter, @NotNull Object highlightInfo);
+
+  @NotNull
+  public abstract IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project, @NotNull String qualifiedName, @NotNull String element);
+
+  @NotNull
+  public abstract IntentionAction createCreateGetterOrSetterFix(boolean createGetter, boolean createSetter, @NotNull PsiField field);
+
+  @NotNull
+  public abstract IntentionAction createRenameToIgnoredFix(@NotNull PsiNamedElement namedElement);
+
+  @NotNull
+  public abstract IntentionAction createEnableOptimizeImportsOnTheFlyFix();
+
+  @NotNull
+  public abstract IntentionAction createSafeDeleteFix(@NotNull PsiElement element);
+
+  @Nullable
+  public abstract List<LocalQuickFix> registerOrderEntryFixes(@NotNull QuickFixActionRegistrar registrar,
+                                                                                          @NotNull PsiReference reference);
+
+  @NotNull
+  public abstract IntentionAction createAddMissingRequiredAnnotationParametersFix(@NotNull PsiAnnotation annotation,
+                                                                                  @NotNull PsiMethod[] annotationMethods,
+                                                                                  @NotNull Collection<String> missedElements);
+  @NotNull
+  public abstract IntentionAction createSurroundWithQuotesAnnotationParameterValueFix(@NotNull PsiAnnotationMemberValue value, @NotNull PsiType expectedType);
+
+  @NotNull
+  public abstract IntentionAction addMethodQualifierFix(@NotNull PsiMethodCallExpression methodCall);
 }

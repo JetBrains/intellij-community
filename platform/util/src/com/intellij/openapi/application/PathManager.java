@@ -320,19 +320,19 @@ public class PathManager {
 
     if (propFile != null) {
       try {
-        InputStream fis = new BufferedInputStream(new FileInputStream(propFile));
+        Reader fis = new BufferedReader(new FileReader(propFile));
         try {
-          final PropertyResourceBundle bundle = new PropertyResourceBundle(fis);
-          final Enumeration keys = bundle.getKeys();
-          String home = (String)bundle.handleGetObject("idea.home");
+          Map<String, String> properties = FileUtil.loadProperties(fis);
+
+          String home = properties.get("idea.home");
           if (home != null && ourHomePath == null) {
             ourHomePath = getAbsolutePath(substituteVars(home));
           }
-          final Properties sysProperties = System.getProperties();
-          while (keys.hasMoreElements()) {
-            String key = (String)keys.nextElement();
+
+          Properties sysProperties = System.getProperties();
+          for (String key : properties.keySet()) {
             if (sysProperties.getProperty(key, null) == null) { // load the property from the property file only if it is not defined yet
-              final String value = substituteVars(bundle.getString(key));
+              String value = substituteVars(properties.get(key));
               sysProperties.setProperty(key, value);
             }
           }

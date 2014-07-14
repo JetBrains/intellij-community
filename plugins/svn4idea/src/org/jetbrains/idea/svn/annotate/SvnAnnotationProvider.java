@@ -118,7 +118,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
           // ignore mime type=true : IDEA-19562
           final ISVNAnnotateHandler annotateHandler = createAnnotationHandler(progress, result);
 
-          final boolean calculateMergeinfo = SvnConfiguration.getInstance(myVcs.getProject()).SHOW_MERGE_SOURCES_IN_ANNOTATE &&
+          final boolean calculateMergeinfo = SvnConfiguration.getInstance(myVcs.getProject()).isShowMergeSourcesInAnnotate() &&
                                              SvnUtil.checkRepositoryVersion15(myVcs, url);
           final MySteppedLogGetter logGetter = new MySteppedLogGetter(
             myVcs, ioFile, progress,
@@ -248,7 +248,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
                                                                        pair.getSecond().getPath(), current);
     final ISVNAnnotateHandler annotateHandler = createAnnotationHandler(ProgressManager.getInstance().getProgressIndicator(), result);
 
-    final boolean calculateMergeinfo = SvnConfiguration.getInstance(myVcs.getProject()).SHOW_MERGE_SOURCES_IN_ANNOTATE &&
+    final boolean calculateMergeinfo = SvnConfiguration.getInstance(myVcs.getProject()).isShowMergeSourcesInAnnotate() &&
                                        SvnUtil.checkRepositoryVersion15(myVcs, wasUrl.toString());
     AnnotateClient client = myVcs.getFactory().createAnnotateClient();
     client.annotate(SvnTarget.fromURL(wasUrl), SVNRevision.create(1), svnRevision, svnRevision, calculateMergeinfo,
@@ -451,8 +451,8 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     }
 
     private void doLog(final boolean includeMerged, final SVNRevision truncateTo, final int max) throws VcsException {
-      myClient.doLog(myIoFile, myEndRevision, truncateTo == null ? SVNRevision.create(1L) : truncateTo,
-                     SVNRevision.UNDEFINED, false, false, includeMerged, max, null,
+      myClient.doLog(SvnTarget.fromFile(myIoFile), myEndRevision, truncateTo == null ? SVNRevision.create(1L) : truncateTo,
+                     false, false, includeMerged, max, null,
                      new ISVNLogEntryHandler() {
                        public void handleLogEntry(SVNLogEntry logEntry) {
                          if (SVNRevision.UNDEFINED.getNumber() == logEntry.getRevision()) {
@@ -478,6 +478,6 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
   }
 
   private static SVNDiffOptions getLogClientOptions(@NotNull SvnVcs vcs) {
-    return SvnConfiguration.getInstance(vcs.getProject()).IGNORE_SPACES_IN_ANNOTATE ? new SVNDiffOptions(true, true, true) : null;
+    return SvnConfiguration.getInstance(vcs.getProject()).isIgnoreSpacesInAnnotate() ? new SVNDiffOptions(true, true, true) : null;
   }
 }

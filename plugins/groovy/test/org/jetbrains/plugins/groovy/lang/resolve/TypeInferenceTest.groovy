@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.resolve;
-
+package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiReference
@@ -26,15 +25,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType
-import org.jetbrains.plugins.groovy.util.TestUtils
 
 import static com.intellij.psi.CommonClassNames.*
 
 /**
  * @author ven
  */
-public class TypeInferenceTest extends GroovyResolveTestCase {
-  final String basePath = TestUtils.testDataPath + "resolve/inference/"
+public class TypeInferenceTest extends TypeInferenceTestBase {
 
   public void testTryFinallyFlow() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("tryFinallyFlow/A.groovy").element;
@@ -168,7 +165,7 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   }
 
   public void testConditionalExpressionWithNumericTypes() {
-    assertTypeEquals("java.math.BigDecimal", "A.groovy");
+    assertTypeEquals("java.lang.Number", "A.groovy");
   }
 
   public void testImplicitCallMethod() {
@@ -223,7 +220,7 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
     final PsiReference ref = configureByFile(getTestName(true) + "/A.groovy");
     assertInstanceOf(ref, GrReferenceExpression.class);
     final PsiType type = ((GrReferenceExpression)ref).type;
-    assertNull(type);
+    assertTrue(true); //test just should not fail with SOF exception
   }
 
   public void testTraditionalForVar() {
@@ -257,7 +254,7 @@ class X {
 
     def getAt(String s) {new X()}
 
-    def plus(X x, int i) {x}
+    def plus(int i) {this}
 }
 
 map = new X()
@@ -265,7 +262,7 @@ map = new X()
 map['i'] += 2
 ''') as GroovyFile
     GrAssignmentExpression assignment = file.topStatements[2] as GrAssignmentExpression
-    assertTrue(assignment.LValue.type.equalsToText(JAVA_UTIL_DATE))
+    assertType("X", assignment.type)
   }
 
   void testAllTypeParamsAreSubstituted() {
@@ -355,7 +352,7 @@ def foo(Integer a) {
     <caret>a.substring(2)
   }
 }
-''', '[java.lang.String,java.lang.Integer]')
+''', '[java.lang.Integer,java.lang.String]')
   }
 
   void testInferArgumentTypeFromMethod2() {
@@ -366,7 +363,7 @@ def foo(Integer a) {
     bar(a)
     <caret>a.substring(2)
 }
-''', '[java.lang.String,java.lang.Integer]')
+''', '[java.lang.Integer,java.lang.String]')
   }
 
   void testInferArgumentTypeFromMethod3() {
@@ -378,7 +375,7 @@ def foo(Integer a) {
     print a
     <caret>a.substring(2)
 }
-''', '[java.lang.String,java.lang.Integer]')
+''', '[java.lang.Integer,java.lang.String]')
   }
 
   void testInferArgumentTypeFromMethod4() {
@@ -392,7 +389,7 @@ def foo(Integer a) {
     <caret>a.substring(2)
   }
 }
-''', '[java.lang.String,java.lang.Integer]')
+''', '[java.lang.Integer,java.lang.String]')
   }
 
   void testEmptyListOrListWithGenerics() {
@@ -605,33 +602,116 @@ class Any {
 ''', 'java.lang.Object')
   }
 
-  private void doTest(String text, String type) {
-    def file = myFixture.configureByText('_.groovy', text)
-    def ref = file.findReferenceAt(myFixture.editor.caretModel.offset) as GrReferenceExpression
-    def actual = ref.type
-    if (type == null) {
-      assertNull(actual)
-      return
-    }
-
-    assertNotNull(actual)
-    if (actual instanceof PsiIntersectionType) {
-      assertEquals(type, genIntersectionTypeText(actual))
-    }
-    else {
-      assertEquals(type, actual.canonicalText)
-    }
+  void testUnary() {
+    doExprTest('~/abc/', 'java.util.regex.Pattern')
   }
 
-  private static String genIntersectionTypeText(PsiIntersectionType t) {
-    StringBuilder b = new StringBuilder('[')
-    for (PsiType c : t.conjuncts) {
-      b.append(c.canonicalText).append(',')
-    }
-    if (t.conjuncts) {
-      b.replace(b.length() - 1, b.length(), ']')
-    }
-    return b.toString()
+  void testUnary2() {
+    doExprTest('-/abc/', null)
+  }
+
+  void testUnary3() {
+    doExprTest('''
+      class A {
+        def bitwiseNegate() {'abc'}
+      }
+      ~new A()
+''', 'java.lang.String')
+  }
+
+  void testPlus1() {
+    doExprTest('2+2', 'java.lang.Integer')
+  }
+
+  void testPlus2() {
+    doExprTest('2f+2', 'java.lang.Double')
+  }
+
+  void testPlus3() {
+    doExprTest('2f+2f', 'java.lang.Double')
+  }
+
+  void testPlus4() {
+    doExprTest('2.5+2', 'java.math.BigDecimal')
+  }
+
+  void testMultiply1() {
+    doExprTest('2*2', 'java.lang.Integer')
+  }
+
+  void testMultiply2() {
+    doExprTest('2f*2f', 'java.lang.Double')
+  }
+
+  void testMultiply3() {
+    doExprTest('2d*2d', 'java.lang.Double')
+  }
+
+  void testMultiply4() {
+    doExprTest('2.4*2', 'java.math.BigDecimal')
+  }
+
+  void testMultiply5() {
+    doExprTest('((byte)2)*((byte)2)', 'java.lang.Integer')
+  }
+
+  void testMultiply6() {
+    doExprTest('"abc"*"cde"', 'java.lang.String') //expected number as a right operand
+  }
+
+  void testMultiply7() {
+    doExprTest('''
+      class A {
+        def multiply(A a) {new B()}
+      }
+      class B{}
+      new A()*new A()
+''', 'B')
+  }
+
+  void testMultiply8() {
+    doExprTest('''
+      class A { }
+      new A()*new A()
+''', null)
+  }
+
+  void testDiv1() {
+    doExprTest('1/2', 'java.math.BigDecimal')
+  }
+
+  void testDiv2() {
+    doExprTest('1/2.4', 'java.math.BigDecimal')
+  }
+
+  void testDiv3() {
+    doExprTest('1d/2', 'java.lang.Double')
+  }
+
+  void testDiv4() {
+    doExprTest('1f/2', 'java.lang.Double')
+  }
+
+  void testDiv5() {
+    doExprTest('1f/2.4', 'java.lang.Double')
+  }
+
+  void testRecursionWithMaps() {
+    doTest('''
+def foo(Map map) {
+  while(true)
+    ma<caret>p = [a:map]
+}
+''', 'java.util.Map<java.lang.String, java.util.Map>')
+  }
+
+  void testRecursionWithLists() {
+    doTest('''
+def foo(List list) {
+  while(true)
+    lis<caret>t = [list]
+}
+''', 'java.util.ArrayList<java.util.List>')
   }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 Bas Leijdekkers
+ * Copyright 2006-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.abstraction;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -217,6 +218,9 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
           final PsiClass containingClass = method.getContainingClass();
           if (containingClass == null ||
               containingClass.isInterface()) {
+            return;
+          }
+          if (JavaHighlightUtil.isSerializationRelatedMethod(method, containingClass)) {
             return;
           }
           if (MethodUtils.hasSuper(method)) {

@@ -35,8 +35,7 @@ public abstract class TypePointerBase<T extends PsiType> implements SmartTypePoi
 
   @Override
   public T getType() {
-    Reference<T> typeRef = myTypeRef;
-    T myType = typeRef == null ? null : typeRef.get();
+    T myType = SoftReference.dereference(myTypeRef);
     if (myType != null && myType.isValid()) return myType;
 
     myType = calcType();

@@ -17,6 +17,7 @@ package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -85,18 +86,36 @@ public class MethodOverloadsParentMethodInspectionBase extends BaseInspection {
       if (MethodUtils.hasSuper(method)) {
         return;
       }
-      PsiClass ancestorClass = aClass.getSuperClass();
       final Set<PsiClass> visitedClasses = new HashSet<PsiClass>();
-      while (ancestorClass != null) {
-        if (!visitedClasses.add(ancestorClass)) {
-          return;
-        }
-        if (methodOverloads(method, ancestorClass)) {
-          registerMethodError(method);
-          return;
-        }
-        ancestorClass = ancestorClass.getSuperClass();
+      processSupers(method, aClass, aClass, visitedClasses);
+    }
+
+    private boolean processSupers(final PsiMethod method,
+                                  final PsiClass psiClass,
+                                  final PsiClass initialClass,
+                                  final Set<PsiClass> visitedClasses) {
+      if (!visitedClasses.add(psiClass)) {
+        return false;
       }
+      if (initialClass != psiClass && methodOverloads(method, psiClass)) {
+        registerMethodError(method);
+        return true;
+      } 
+      else {
+        if (PsiUtil.isLanguageLevel8OrHigher(method)) {
+          for (PsiClass superClass : psiClass.getSupers()) {
+            if (processSupers(method, superClass, initialClass, visitedClasses)) {
+              return true;
+            }
+          }
+        } else {
+          final PsiClass superClass = psiClass.getSuperClass();
+          if (superClass != null) {
+            return processSupers(method, superClass, initialClass, visitedClasses);
+          }
+        }
+      }
+      return false;
     }
 
     private boolean methodOverloads(PsiMethod method, PsiClass ancestorClass) {
@@ -107,6 +126,7 @@ public class MethodOverloadsParentMethodInspectionBase extends BaseInspection {
       for (final PsiMethod testMethod : methods) {
         if (!testMethod.hasModifierProperty(PsiModifier.PRIVATE) &&
             !testMethod.hasModifierProperty(PsiModifier.STATIC) &&
+            !testMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
             !isOverriddenInClass(testMethod, method.getContainingClass())) {
           final PsiParameterList testParameterList = testMethod.getParameterList();
           final PsiParameter[] testParameters = testParameterList.getParameters();

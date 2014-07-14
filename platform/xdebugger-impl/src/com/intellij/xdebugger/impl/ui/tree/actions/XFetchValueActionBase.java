@@ -15,28 +15,21 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.Semaphore;
-import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.nodes.HeadlessValueEvaluationCallback;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchMessageNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.util.List;
 
 public abstract class XFetchValueActionBase extends AnAction {
@@ -84,11 +77,11 @@ public abstract class XFetchValueActionBase extends AnAction {
           valueCollector.add(StringUtil.notNullize(valueNode.getRawValue()));
         }
         else {
-          startFetchingValue(fullValueEvaluator, new CopyValueEvaluationCallback(valueNode, valueCollector));
+          new CopyValueEvaluationCallback(valueNode, valueCollector).startFetchingValue(fullValueEvaluator);
         }
       }
       else if (node instanceof WatchMessageNode) {
-        valueCollector.add(((WatchMessageNode)node).getExpression());
+        valueCollector.add(((WatchMessageNode)node).getExpression().getExpression());
       }
     }
     valueCollector.processed = true;
@@ -123,95 +116,20 @@ public abstract class XFetchValueActionBase extends AnAction {
 
   protected abstract void handle(final Project project, final String value);
 
-  private static void startFetchingValue(XFullValueEvaluator fullValueEvaluator, final CopyValueEvaluationCallback callback) {
-    fullValueEvaluator.startEvaluation(callback);
-    new Alarm().addRequest(new Runnable() {
-      @Override
-      public void run() {
-        callback.showProgress();
-      }
-    }, 500);
-  }
-
-  private static final class CopyValueEvaluationCallback implements XFullValueEvaluator.XFullValueEvaluationCallback {
-    private final XValueNodeImpl myNode;
-
+  private static final class CopyValueEvaluationCallback extends HeadlessValueEvaluationCallback {
     private final int myValueIndex;
     private final ValueCollector myValueCollector;
 
-    private volatile boolean myEvaluated;
-    private volatile boolean myCanceled;
-    private final Semaphore mySemaphore;
+    public CopyValueEvaluationCallback(@NotNull XValueNodeImpl node, @NotNull ValueCollector valueCollector) {
+      super(node);
 
-    public CopyValueEvaluationCallback(@NotNull XValueNodeImpl node, ValueCollector valueCollector) {
-      myNode = node;
       myValueCollector = valueCollector;
       myValueIndex = valueCollector.acquire();
-      mySemaphore = new Semaphore();
-      mySemaphore.down();
     }
 
     @Override
-    public void evaluated(@NotNull String fullValue) {
-      evaluationComplete(fullValue);
-    }
-
-    @Override
-    public void evaluated(@NotNull String fullValue, @Nullable Font font) {
-      evaluated(fullValue);
-    }
-
-    @Override
-    public void errorOccurred(@NotNull String errorMessage) {
-      try {
-        String message = XDebuggerBundle.message("load.value.task.error", errorMessage);
-        XDebugSessionImpl.NOTIFICATION_GROUP.createNotification(message, NotificationType.ERROR).notify(myNode.getTree().getProject());
-      }
-      finally {
-        evaluationComplete(errorMessage);
-      }
-    }
-
-    private void evaluationComplete(String value) {
-      try {
-        myEvaluated = true;
-        mySemaphore.up();
-      }
-      finally {
-        myValueCollector.evaluationComplete(myValueIndex, value, myNode.getTree().getProject());
-      }
-    }
-
-    @Override
-    public boolean isObsolete() {
-      return myCanceled;
-    }
-
-    public void showProgress() {
-      if (myEvaluated || myNode.isObsolete()) return;
-
-      new Task.Backgroundable(myNode.getTree().getProject(), XDebuggerBundle.message("load.value.task.text")) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          indicator.setIndeterminate(true);
-          int i = 0;
-          while (!myCanceled && !myEvaluated) {
-            indicator.checkCanceled();
-            indicator.setFraction(((i++) % 100) * 0.01);
-            mySemaphore.waitFor(300);
-          }
-        }
-
-        @Override
-        public boolean shouldStartInBackground() {
-          return false;
-        }
-
-        @Override
-        public void onCancel() {
-          myCanceled = true;
-        }
-      }.queue();
+    protected void evaluationComplete(@NotNull String value, @NotNull Project project) {
+      myValueCollector.evaluationComplete(myValueIndex, value, project);
     }
   }
 }

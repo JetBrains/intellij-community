@@ -24,6 +24,7 @@ import com.intellij.codeInspection.XmlQuickFixFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl;
@@ -73,13 +74,6 @@ public class HtmlUnknownTagInspectionBase extends HtmlLocalInspectionTool implem
     return descriptor == null || descriptor instanceof AnyXmlElementDescriptor;
   }
 
-  // this hack is needed, because we temporarily ignore svg and mathML namespaces
-  // todo: provide schemas for svg and mathML and remove this in IDEA XI
-  private static boolean isInSpecialHtml5Namespace(XmlTag tag) {
-    final String ns = tag.getNamespace();
-    return HtmlUtil.SVG_NAMESPACE.equals(ns) || HtmlUtil.MATH_ML_NAMESPACE.endsWith(ns);
-  }
-
   @Override
   @Nls
   @NotNull
@@ -100,18 +94,7 @@ public class HtmlUnknownTagInspectionBase extends HtmlLocalInspectionTool implem
   }
 
   protected String createPropertiesString() {
-    final StringBuffer buffer = new StringBuffer();
-    for (final String property : myValues) {
-      if (buffer.length() == 0) {
-        buffer.append(property);
-      }
-      else {
-        buffer.append(',');
-        buffer.append(property);
-      }
-    }
-
-    return buffer.toString();
+    return StringUtil.join(myValues, ",");
   }
 
   @Override
@@ -153,7 +136,7 @@ public class HtmlUnknownTagInspectionBase extends HtmlLocalInspectionTool implem
 
   @Override
   protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    if (!(tag instanceof HtmlTag) || !XmlHighlightVisitor.shouldBeValidated(tag) || isInSpecialHtml5Namespace(tag)) {
+    if (!(tag instanceof HtmlTag) || !XmlHighlightVisitor.shouldBeValidated(tag)) {
       return;
     }
 

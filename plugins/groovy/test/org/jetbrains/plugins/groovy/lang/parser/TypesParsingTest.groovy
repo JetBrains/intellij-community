@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,8 @@ public class TypesParsingTest extends GroovyParsingTestCase {
   public void testType11() throws Throwable { doTest(); }
   public void testType12() throws Throwable { doTest(); }
   public void testType13() throws Throwable { doTest(); }
+  public void testType14() throws Throwable { doTest(); }
+  public void testType15() throws Throwable { doTest(); }
   public void testType2() throws Throwable { doTest(); }
   public void testType3() throws Throwable { doTest(); }
   public void testType4() throws Throwable { doTest(); }
@@ -48,6 +50,10 @@ public class TypesParsingTest extends GroovyParsingTestCase {
   public void testNewlineBeforeExtends() throws Throwable { doTest(); }
   public void testStaticInitializer() throws Throwable { doTest(); }
   public void testInterfaceWithGroovyDoc() throws Throwable { doTest(); }
+
+  public void testIncorrectParam1() { doTest() }
+  public void testIncorrectParameter2() { doTest() }
+  public void testIncorrectParam3() { doTest() }
 
   public void testEmptyTypeArgs() {doTest()}
 }

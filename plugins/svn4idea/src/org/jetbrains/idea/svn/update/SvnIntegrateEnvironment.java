@@ -20,15 +20,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.integrate.MergeClient;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -66,10 +61,10 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
 
   @Override
   protected boolean isDryRun() {
-    return SvnConfiguration.getInstance(myVcs.getProject()).MERGE_DRY_RUN;
+    return SvnConfiguration.getInstance(myVcs.getProject()).isMergeDryRun();
   }
 
-  private class IntegrateCrawler extends AbstractUpdateIntegrateCrawler {
+  private static class IntegrateCrawler extends AbstractUpdateIntegrateCrawler {
 
     public IntegrateCrawler(SvnVcs vcs,
                             UpdateEventHandler handler,
@@ -83,7 +78,7 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
     }
 
     protected void showProgressMessage(final ProgressIndicator progress, final File root) {
-      if (SvnConfiguration.getInstance(myVcs.getProject()).MERGE_DRY_RUN) {
+      if (SvnConfiguration.getInstance(myVcs.getProject()).isMergeDryRun()) {
         progress.setText(SvnBundle.message("progress.text.merging.dry.run.changes", root.getAbsolutePath()));
       }
       else {
@@ -104,44 +99,13 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
       SvnTarget source1 = SvnTarget.fromURL(info.getUrl1(), info.getRevision1());
       SvnTarget source2 = SvnTarget.fromURL(info.getUrl2(), info.getRevision2());
 
-      client.merge(source1, source2, root, svnConfig.UPDATE_DEPTH, svnConfig.MERGE_DIFF_USE_ANCESTRY, svnConfig.MERGE_DRY_RUN, false, false,
+      client.merge(source1, source2, root, svnConfig.getUpdateDepth(), svnConfig.isMergeDiffUseAncestry(), svnConfig.isMergeDryRun(), false, false,
                    svnConfig.getMergeOptions(), myHandler);
-      svnConfig.LAST_MERGED_REVISION = getLastMergedRevision(info.getRevision2(), info.getUrl2());
       return info.getResultRevision();
     }
 
     protected boolean isMerge() {
       return true;
-    }
-  }
-
-  @Nullable
-  private String getLastMergedRevision(final SVNRevision rev2, final SVNURL svnURL2) {
-    if (!rev2.isValid() || rev2.isLocal()) {
-      return null;
-    }
-    else {
-      final long number = rev2.getNumber();
-      if (number > 0) {
-        return String.valueOf(number);
-      }
-      else {
-
-        // TODO: Rewrite with command line implementation
-        SVNRepository repos = null;
-        try {
-          repos = myVcs.createRepository(svnURL2.toString());
-          final long latestRev = repos.getLatestRevision();
-          return String.valueOf(latestRev);
-        }
-        catch (SVNException e) {
-          return null;
-        } finally {
-          if (repos != null) {
-            repos.closeSession();
-          }
-        }
-      }
     }
   }
 

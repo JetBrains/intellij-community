@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-public class FlipIntersectionTypesTest extends LightQuickFixTestCase {
+public class FlipIntersectionTypesTest extends LightQuickFixParameterizedTestCase {
   public void test() throws Exception {
     doAllTests();
   }

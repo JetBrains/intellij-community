@@ -58,11 +58,13 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
     return myDataIndexer;
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
@@ -81,7 +83,7 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
   private static class MyDataIndexer implements DataIndexer<String, Void, FileContent> {
     @Override
     @NotNull
-    public Map<String, Void> map(final FileContent inputData) {
+    public Map<String, Void> map(@NotNull final FileContent inputData) {
       final String className = getControllerClassName(inputData.getContentAsText().toString());
       if (className != null) {
         return Collections.singletonMap(className, null);
@@ -133,7 +135,7 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
       super(StdFileTypes.XML);
     }
     @Override
-    public boolean acceptInput(final VirtualFile file) {
+    public boolean acceptInput(@NotNull final VirtualFile file) {
       return JavaFxFileTypeFactory.isFxml(file);
     }
   }

@@ -90,7 +90,7 @@ public class PyImportedModuleType implements PyType {
   }
 
   @Override
-  public boolean isBuiltin(TypeEvalContext context) {
+  public boolean isBuiltin() {
     return false;  // no module can be imported from builtins
   }
 

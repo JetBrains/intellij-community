@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Bas Leijdekkers
+ * Copyright 2010-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.editor.Document;
@@ -23,16 +24,15 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
-public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClassAccessInspectionBase {
+public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClassAccessInspectionBase implements CleanupLocalInspectionTool{
 
   @Override
   public JComponent createOptionsPanel() {
@@ -70,8 +70,8 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
       if (!(target instanceof PsiClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)target;
-      final PsiClass containingClass = aClass.getContainingClass();
+      final PsiClass innerClass = (PsiClass)target;
+      final PsiClass containingClass = innerClass.getContainingClass();
       if (containingClass == null) {
         return;
       }
@@ -84,7 +84,7 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
         return;
       }
       final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
-      final String innerClassName = aClass.getQualifiedName();
+      final String innerClassName = innerClass.getQualifiedName();
       if (innerClassName == null) {
         return;
       }
@@ -115,10 +115,10 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
       }
       final ReferenceCollector referenceCollector;
       if (onDemand) {
-        referenceCollector = new ReferenceCollector(qualifiedName, onDemand);
+        referenceCollector = new ReferenceCollector(qualifiedName, true);
       }
       else {
-        referenceCollector = new ReferenceCollector(innerClassName, onDemand);
+        referenceCollector = new ReferenceCollector(innerClassName, false);
       }
       final PsiClass[] classes = javaFile.getClasses();
       for (PsiClass psiClass : classes) {
@@ -134,7 +134,8 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
       if (referenceImportStatement != null) {
         referenceImportStatement.delete();
       }
-      ImportUtils.addImportIfNeeded(containingClass, referenceElement);
+      final PsiClass outerClass = ClassUtils.getOutermostContainingClass(containingClass);
+      ImportUtils.addImportIfNeeded(outerClass, referenceElement);
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
       final Document document = documentManager.getDocument(containingFile);
       if (document == null) {
@@ -160,7 +161,7 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
       }
       //noinspection SuspiciousMethodCalls
       if (references.contains(element)) {
-        final String shortClassName = aClass.getName();
+        final String shortClassName = getShortClassName(aClass, new StringBuilder()).toString();
         if (isReferenceToTargetClass(shortClassName, aClass, element)) {
           out.append(shortClassName);
         }
@@ -180,6 +181,16 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
       return out;
     }
 
+    private static StringBuilder getShortClassName(@NotNull PsiClass aClass, @NotNull StringBuilder builder) {
+      final PsiClass containingClass = aClass.getContainingClass();
+      if (containingClass != null) {
+        getShortClassName(containingClass, builder);
+        builder.append('.');
+      }
+      builder.append(aClass.getName());
+      return builder;
+    }
+
     private static boolean isReferenceToTargetClass(String referenceText, PsiClass targetClass, PsiElement context) {
       final PsiManager manager = targetClass.getManager();
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
@@ -189,6 +200,55 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
         return true;
       }
       return manager.areElementsEquivalent(targetClass, referencedClass);
+    }
+  }
+
+  private static class ReferenceCollector extends JavaRecursiveElementVisitor {
+
+    private final String name;
+    private final boolean onDemand;
+    private final Set<PsiJavaCodeReferenceElement> references = new HashSet<PsiJavaCodeReferenceElement>();
+
+    ReferenceCollector(String name, boolean onDemand) {
+      this.name = name;
+      this.onDemand = onDemand;
+    }
+
+    @Override
+    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      super.visitReferenceElement(reference);
+      if (reference.isQualified()) {
+        return;
+      }
+      final PsiElement target = reference.resolve();
+      if (!(target instanceof PsiClass)) {
+        return;
+      }
+      final PsiClass aClass = (PsiClass)target;
+      if (!onDemand) {
+        final String qualifiedName = aClass.getQualifiedName();
+        if (name.equals(qualifiedName)) {
+          references.add(reference);
+        }
+        return;
+      }
+      final PsiClass containingClass = aClass.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      final String qualifiedName = containingClass.getQualifiedName();
+      if (name.equals(qualifiedName)) {
+        references.add(reference);
+      }
+    }
+
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      visitReferenceElement(expression);
+    }
+
+    public Collection<PsiJavaCodeReferenceElement> getReferences() {
+      return references;
     }
   }
 }

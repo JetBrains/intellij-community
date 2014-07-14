@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -26,13 +27,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public class JavaTypeDeclarationProvider implements TypeDeclarationPlaceAwareProvider {
   @Override
-  public PsiElement[] getSymbolTypeDeclarations(PsiElement symbol) {
+  public PsiElement[] getSymbolTypeDeclarations(@NotNull PsiElement symbol) {
     return getSymbolTypeDeclarations(symbol, null, -1);
   }
 
   @Nullable
   @Override
-  public PsiElement[] getSymbolTypeDeclarations(PsiElement targetElement, Editor editor, int offset) {
+  public PsiElement[] getSymbolTypeDeclarations(@NotNull PsiElement targetElement, Editor editor, int offset) {
     PsiType type;
     if (targetElement instanceof PsiVariable){
       type = ((PsiVariable)targetElement).getType();

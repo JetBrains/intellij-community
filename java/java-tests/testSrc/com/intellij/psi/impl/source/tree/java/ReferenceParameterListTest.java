@@ -56,7 +56,7 @@ public class ReferenceParameterListTest extends PsiTestCase {
             null);
 
 
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         try {

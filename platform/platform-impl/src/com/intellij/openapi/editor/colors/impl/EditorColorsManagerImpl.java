@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -26,6 +27,7 @@ import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -35,6 +37,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
@@ -42,6 +45,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -84,7 +88,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
     loadAdditionalTextAttributes();
 
-    setGlobalScheme(myDefaultColorSchemesManager.getAllSchemes()[0]);
+    setGlobalSchemeInner(myDefaultColorSchemesManager.getAllSchemes()[0]);
   }
 
   private static boolean isUnitTestOrHeadlessMode() {
@@ -157,6 +161,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     return loadSchemeFromDocument(document, false);
   }
 
+  @NotNull
   private static EditorColorsSchemeImpl loadSchemeFromDocument(final Document document,
                                                                final boolean isEditable)
     throws InvalidDataException {
@@ -222,9 +227,20 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   }
 
   @Override
-  public void setGlobalScheme(EditorColorsScheme scheme) {
-    mySchemesManager.setCurrentSchemeName(scheme == null ? getDefaultScheme().getName() : scheme.getName());
-    fireChanges(scheme);
+  public void setGlobalScheme(@Nullable EditorColorsScheme scheme) {
+    if (setGlobalSchemeInner(scheme)) {
+      fireChanges(scheme);
+
+      LafManager.getInstance().updateUI();
+      EditorFactory.getInstance().refreshAllEditors();
+    }
+  }
+
+  private boolean setGlobalSchemeInner(@Nullable EditorColorsScheme scheme) {
+    String newValue = scheme == null ? getDefaultScheme().getName() : scheme.getName();
+    EditorColorsScheme oldValue = mySchemesManager.getCurrentScheme();
+    mySchemesManager.setCurrentSchemeName(newValue);
+    return oldValue != null && !Comparing.equal(newValue, oldValue.getName());
   }
 
   @NotNull
@@ -321,25 +337,14 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     Element element = parentNode.getChild(NODE_NAME);
     if (element != null) {
       String name = element.getAttributeValue(NAME_ATTR);
-      if (name != null && !"".equals(name.trim())) {
+      if (StringUtil.isNotEmpty(name)) {
         myGlobalSchemeName = name;
       }
     }
 
-    initGlobalScheme();
-  }
-
-  private void initGlobalScheme() {
-    if (myGlobalSchemeName != null) {
-      setGlobalSchemeByName(myGlobalSchemeName);
-    }
-    else {
-      setGlobalScheme(myDefaultColorSchemesManager.getAllSchemes()[0]);
-    }
-  }
-
-  private void setGlobalSchemeByName(String schemeName) {
-    setGlobalScheme(mySchemesManager.findSchemeByName(schemeName));
+    EditorColorsScheme globalScheme =
+      myGlobalSchemeName != null ? mySchemesManager.findSchemeByName(myGlobalSchemeName) : myDefaultColorSchemesManager.getAllSchemes()[0];
+    setGlobalSchemeInner(globalScheme);
   }
 
   @Override
@@ -369,14 +374,14 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
   private final class MySchemeProcessor extends BaseSchemeProcessor<EditorColorsSchemeImpl> implements SchemeExtensionProvider {
     @Override
-    public EditorColorsSchemeImpl readScheme(final Document document)
+    public EditorColorsSchemeImpl readScheme(@NotNull final Document document)
       throws InvalidDataException {
 
       return loadSchemeFromDocument(document, true);
     }
 
     @Override
-    public Document writeScheme(final EditorColorsSchemeImpl scheme) {
+    public Document writeScheme(@NotNull final EditorColorsSchemeImpl scheme) {
       Element root = new Element(SCHEME_NODE_NAME);
       try {
         scheme.writeExternal(root);
@@ -389,12 +394,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
       return new Document(root);
     }
 
-    public void renameScheme(final String name, final EditorColorsScheme scheme) {
-      scheme.setName(name);
-    }
-
     @Override
-    public boolean shouldBeSaved(final EditorColorsSchemeImpl scheme) {
+    public boolean shouldBeSaved(@NotNull final EditorColorsSchemeImpl scheme) {
       return !(scheme instanceof ReadOnlyColorsScheme);
     }
 

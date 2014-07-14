@@ -22,6 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class AssignmentUsedAsConditionInspection extends BaseInspection {
@@ -64,7 +65,7 @@ public class AssignmentUsedAsConditionInspection extends BaseInspection {
       final PsiExpression rightExpression = expression.getRExpression();
       assert rightExpression != null;
       final String newExpression = leftExpression.getText() + "==" + rightExpression.getText();
-      replaceExpression(expression, newExpression);
+      PsiReplacementUtil.replaceExpression(expression, newExpression);
     }
   }
 

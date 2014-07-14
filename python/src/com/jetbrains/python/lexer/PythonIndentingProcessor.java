@@ -194,9 +194,6 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     if (DUMP_TOKENS) {
       System.out.println("\n--- LEXER START---");
     }
-    if (startOffset != 0 || initialState != 0) {
-      throw new RuntimeException("Indenting lexer does not support incremental lexing");
-    }
   }
 
   private void setStartState() {

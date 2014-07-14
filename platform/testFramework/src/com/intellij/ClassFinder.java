@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 package com.intellij;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -33,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 
 public class ClassFinder {
   private final List<String> classNameList = new ArrayList<String>();
@@ -61,7 +61,7 @@ public class ClassFinder {
       }
     }
     else {
-      addIfNotNull(classNameList, computeClassName(current));
+      ContainerUtil.addIfNotNull(classNameList, computeClassName(current));
     }
   }
 

@@ -193,12 +193,6 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
         return EmptyConflictSide.getInstance();
       }
     }
-    // todo temporally
-    /*if (SVNNodeKind.DIR.equals(version.getKind())) {
-      return new HistoryAsBrowseChangesConflictSide(myVcs.getProject(), version);
-    } else {
-      return new HistoryConflictSide(myVcs, version);
-    }*/
     HistoryConflictSide side = new HistoryConflictSide(myVcs, version, untilThisOther);
     if (untilThisOther != null && ! isLeft) {
       side.setListToReportLoaded(myRightRevisionsList);
@@ -314,11 +308,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
         additionalPath = myChange.getAfterRevision().getFile();
       }
     } else {
-      if (myChange.getBeforeRevision() != null) {
-        mainPath = myChange.getBeforeRevision().getFile();
-      } else {
-        mainPath = myChange.getAfterRevision().getFile();
-      }
+      mainPath = myChange.getBeforeRevision() != null ? myChange.getBeforeRevision().getFile() : myChange.getAfterRevision().getFile();
     }
     return new Paths(mainPath, additionalPath);
   }
@@ -368,15 +358,6 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
       return null;
     }
     // my edit, theirs move or delete
-    /*if (SVNConflictAction.DELETE.equals(description.getConflictAction()) && description.getSourceLeftVersion() != null) {
-      //todo
-      return new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          mergeMyEditTheirsDelete();
-        }
-      };
-    }    */
     if (SVNConflictAction.EDIT.equals(description.getConflictAction()) && description.getSourceLeftVersion() != null &&
         SVNConflictReason.DELETED.equals(description.getConflictReason()) && (myChange.isMoved() || myChange.isRenamed()) &&
         myCommittedRevision != null) {
@@ -397,10 +378,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
   }
 
   public static String filePath(FilePath newFilePath) {
-    return newFilePath.getName() +
-    " (" +
-    newFilePath.getParentPath().getPath() +
-    ")";
+    return newFilePath.getName() + " (" + newFilePath.getParentPath().getPath() + ")";
   }
 
   private static ActionListener createBoth(SVNTreeConflictDescription description) {
@@ -524,12 +502,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     @Override
     public void load() throws SVNException, VcsException {
       SVNRevision from = SVNRevision.create(myVersion.getPegRevision());
-      if (myPeg == null) {
-        // just a portion of history
-        myProvider.reportAppendableHistory(myPath, mySessionAdapter, from, myPeg, LIMIT, myPeg, true);
-      } else {
-        myProvider.reportAppendableHistory(myPath, mySessionAdapter, from, myPeg, 0, myPeg, true);
-      }
+      myProvider.reportAppendableHistory(myPath, mySessionAdapter, from, myPeg, myPeg == null ? LIMIT : 0, myPeg, true);
       VcsAbstractHistorySession session = mySessionAdapter.getSession();
       if (myListToReportLoaded != null && session != null) {
         List<VcsFileRevision> list = session.getRevisionList();
@@ -576,15 +549,4 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
       return myFileHistoryPanel;
     }
   }
-
-  /*private static class HistoryAsBrowseChangesConflictSide implements AbstractConflictSide<Object> {
-    public HistoryAsBrowseChangesConflictSide(Project project, SVNConflictVersion version) {
-      //To change body of created methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public JPanel createPanel() {
-      return null;
-    }
-  }*/
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
   @NotNull
   public PsiType[] getExpressionTypes() {
     PsiExpression[] expressions = getExpressions();
-    PsiType[] types = new PsiType[expressions.length];
+    PsiType[] types = PsiType.createArray(expressions.length);
 
     for (int i = 0; i < types.length; i++) {
       types[i] = expressions[i].getType();

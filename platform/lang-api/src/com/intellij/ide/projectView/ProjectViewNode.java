@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import java.util.List;
  * @see TreeStructureProvider#modify(com.intellij.ide.util.treeView.AbstractTreeNode, java.util.Collection, com.intellij.ide.projectView.ViewSettings)
  */
 
-public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> implements RootsProvider {
+public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> implements RootsProvider, SettingsProvider {
 
   protected static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.ProjectViewNode");
 
@@ -82,6 +82,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
     return null;
   }
 
+  @Override
   public final ViewSettings getSettings() {
     return mySettings;
   }
@@ -108,7 +109,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
                                                 Object value,
                                                 ViewSettings settings) throws
                                                                        InstantiationException {
-    Object[] parameters = new Object[]{project, value, settings};
+    Object[] parameters = {project, value, settings};
     for (Constructor<? extends AbstractTreeNode> constructor : (Constructor<? extends AbstractTreeNode>[])nodeClass.getConstructors()) {
       if (constructor.getParameterTypes().length != 3) continue;
       try {
@@ -164,6 +165,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
     return false;
   }
 
+  @NotNull
   @Override
   public Collection<VirtualFile> getRoots() {
     Value value = getValue();

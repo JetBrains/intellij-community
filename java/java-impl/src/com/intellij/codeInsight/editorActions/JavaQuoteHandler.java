@@ -29,7 +29,7 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
   private final TokenSet concatenatableStrings;
 
   public JavaQuoteHandler() {
-    super(new IElementType[] { JavaTokenType.STRING_LITERAL, JavaTokenType.CHARACTER_LITERAL});
+    super(JavaTokenType.STRING_LITERAL, JavaTokenType.CHARACTER_LITERAL);
     concatenatableStrings = TokenSet.create(JavaTokenType.STRING_LITERAL);
   }
 

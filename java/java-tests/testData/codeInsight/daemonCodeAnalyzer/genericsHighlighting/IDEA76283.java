@@ -1,5 +1,5 @@
 import java.util.*;
-public class IDEA76283 {
+class IDEA76283 {
 }
 
 interface Parametrized<T extends Number> {

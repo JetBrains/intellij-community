@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.gradle.integrations.maven;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -74,6 +76,7 @@ public class ImportMavenRepositoriesTask implements Runnable {
   @Override
   public void run() {
     if(myProject.isDisposed()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
     final List<PsiFile> psiFileList = ContainerUtil.newArrayList();
@@ -98,9 +101,9 @@ public class ImportMavenRepositoriesTask implements Runnable {
 
     final PsiFile[] psiFiles = ArrayUtil.toObjectArray(psiFileList, PsiFile.class);
 
-    final Set<MavenRemoteRepository> mavenRemoteRepositories = new WriteCommandAction<Set<MavenRemoteRepository>>(myProject, psiFiles) {
+    final Set<MavenRemoteRepository> mavenRemoteRepositories = new ReadAction<Set<MavenRemoteRepository>>() {
       @Override
-      protected void run(Result<Set<MavenRemoteRepository>> result) throws Throwable {
+      protected void run(@NotNull Result<Set<MavenRemoteRepository>> result) throws Throwable {
         Set<MavenRemoteRepository> myRemoteRepositories = ContainerUtil.newHashSet();
         for (PsiFile psiFile : psiFiles) {
           List<GrClosableBlock> repositoriesBlocks = ContainerUtil.newArrayList();
@@ -119,13 +122,14 @@ public class ImportMavenRepositoriesTask implements Runnable {
       }
     }.execute().getResultObject();
 
-    if (mavenRemoteRepositories.isEmpty()) return;
+    if (mavenRemoteRepositories == null || mavenRemoteRepositories.isEmpty()) return;
 
     MavenRepositoriesHolder.getInstance(myProject).update(mavenRemoteRepositories);
 
     MavenProjectIndicesManager.getInstance(myProject).scheduleUpdateIndicesList(new Consumer<List<MavenIndex>>() {
       @Override
       public void consume(List<MavenIndex> indexes) {
+        if(myProject.isDisposed()) return;
         for (MavenIndex mavenIndex : indexes) {
           if (mavenIndex.getUpdateTimestamp() == -1 &&
               MavenRepositoriesHolder.getInstance(myProject).contains(mavenIndex.getRepositoryId())) {

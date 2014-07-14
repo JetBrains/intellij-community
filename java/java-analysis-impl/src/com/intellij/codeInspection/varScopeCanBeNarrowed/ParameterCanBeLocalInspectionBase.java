@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ParameterCanBeLocalInspectionBase extends AbstractBaseJavaLocalInspectionTool {
+public class ParameterCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "ParameterCanBeLocal";
 
   @NotNull

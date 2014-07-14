@@ -28,6 +28,7 @@ public class Digester {
         zipFile = new ZipFile(file);
       }
       catch (IOException e) {
+        Runner.printStackTrace(e);
         return doDigestRegularFile(file);
       }
 

@@ -88,6 +88,7 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
 
     myFormatPanel = new ProjectFormatPanel();
     myNamePathComponent = NamePathComponent.initNamePathComponent(context);
+    myNamePathComponent.setShouldBeAbsolute(true);
     if (context.isCreatingNewProject()) {
       mySettingsPanel.add(myNamePathComponent, BorderLayout.NORTH);
       addExpertPanel(myModulePanel);
@@ -165,7 +166,7 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
 
     if (!validateModulePaths()) return false;
     if (!myWizardContext.isCreatingNewProject()) {
-      validateExistingModuleName();
+      validateExistingModuleName(myWizardContext.getProject());
     }
 
     if (mySettingsStep != null) {
@@ -224,11 +225,11 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
     addField(label, field, panel);
   }
 
-  private static void addField(String label, JComponent field, JPanel panel) {
+  static void addField(String label, JComponent field, JPanel panel) {
     JLabel jLabel = new JBLabel(label);
     jLabel.setLabelFor(field);
     panel.add(jLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST,
-                                                 GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+                                                 GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 4, 0));
     panel.add(field, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
                                                 GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
   }
@@ -359,15 +360,15 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
     }
   }
 
-  private void validateExistingModuleName() throws ConfigurationException {
+  private void validateExistingModuleName(Project project) throws ConfigurationException {
     final String moduleName = getModuleName();
     final Module module;
-    final ProjectStructureConfigurable fromConfigurable = ProjectStructureConfigurable.getInstance(myWizardContext.getProject());
+    final ProjectStructureConfigurable fromConfigurable = ProjectStructureConfigurable.getInstance(project);
     if (fromConfigurable != null) {
       module = fromConfigurable.getModulesConfig().getModule(moduleName);
     }
     else {
-      module = ModuleManager.getInstance(myWizardContext.getProject()).findModuleByName(moduleName);
+      module = ModuleManager.getInstance(project).findModuleByName(moduleName);
     }
     if (module != null) {
       throw new ConfigurationException("Module \'" + moduleName + "\' already exist in project. Please, specify another name.");
@@ -443,7 +444,7 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
 
   @NotNull
   public JTextField getModuleNameField() {
-    return myModuleName;
+    return getNameComponent();
   }
 
   protected String getModuleName() {

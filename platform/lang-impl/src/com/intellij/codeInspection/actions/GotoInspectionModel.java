@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.ide.util.gotoByName.SimpleChooseByNameModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.MultiMap;
 
 import javax.swing.*;
 import java.util.HashMap;
@@ -35,7 +36,7 @@ import java.util.Set;
  * @author Konstantin Bulenkov
  */
 public class GotoInspectionModel extends SimpleChooseByNameModel {
-  private final Map<String, InspectionToolWrapper> myToolNames = new HashMap<String, InspectionToolWrapper>();
+  private final MultiMap<String, InspectionToolWrapper> myToolNames = MultiMap.createSmartList();
   private final Map<String, Set<InspectionToolWrapper>> myGroupNames = new HashMap<String, Set<InspectionToolWrapper>>();
   private final Map<String, InspectionToolWrapper> myToolShortNames = new HashMap<String, InspectionToolWrapper>();
   private final String[] myNames;
@@ -54,7 +55,7 @@ public class GotoInspectionModel extends SimpleChooseByNameModel {
           continue;
         }
       }
-      myToolNames.put(tool.getDisplayName(), workingTool);
+      myToolNames.putValue(tool.getDisplayName(), workingTool);
       final String groupName = tool.getGroupDisplayName();
       Set<InspectionToolWrapper> toolsInGroup = myGroupNames.get(groupName);
       if (toolsInGroup == null) {
@@ -84,11 +85,8 @@ public class GotoInspectionModel extends SimpleChooseByNameModel {
   @Override
   public Object[] getElementsByName(final String id, final String pattern) {
     final Set<InspectionToolWrapper> result = new HashSet<InspectionToolWrapper>();
-    InspectionToolWrapper e = myToolNames.get(id);
-    if (e != null) {
-      result.add(e);
-    }
-    e = myToolShortNames.get(id);
+    result.addAll(myToolNames.get(id));
+    InspectionToolWrapper e = myToolShortNames.get(id);
     if (e != null) {
       result.add(e);
     }

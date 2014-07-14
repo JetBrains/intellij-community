@@ -63,15 +63,13 @@ public class TypeAssertionIntention implements IntentionAction {
     PyExpression problemElement = PsiTreeUtil.getParentOfType(elementAt, PyReferenceExpression.class);
     if (problemElement == null) return false;
     if (problemElement.getParent() instanceof PyWithItem) return false;
-    if (problemElement instanceof PyQualifiedExpression) {
-      final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
-      if (qualifier != null && !qualifier.getText().equals(PyNames.CANONICAL_SELF)) {
-        problemElement = qualifier;
-      }
+    final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
+    if (qualifier != null && !qualifier.getText().equals(PyNames.CANONICAL_SELF)) {
+      problemElement = qualifier;
     }
     final PsiReference reference = problemElement.getReference();
     if (problemElement.getParent() instanceof PyCallExpression ||
-        PsiTreeUtil.getParentOfType(problemElement, PyListCompExpression.class) != null ||
+        PsiTreeUtil.getParentOfType(problemElement, PyComprehensionElement.class) != null ||
         PsiTreeUtil.getParentOfType(problemElement, PyLambdaExpression.class) != null ||
         PsiTreeUtil.getParentOfType(problemElement, PyGeneratorExpression.class) != null ||
         (reference != null && reference.resolve() == null)) {
@@ -88,13 +86,11 @@ public class TypeAssertionIntention implements IntentionAction {
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
       String name = problemElement.getText();
-      if (problemElement instanceof PyQualifiedExpression) {
-        final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
-        if (qualifier != null && !qualifier.getText().equals(PyNames.CANONICAL_SELF)) {
-          final String referencedName = ((PyQualifiedExpression)problemElement).getReferencedName();
-          if (referencedName == null || PyNames.GETITEM.equals(referencedName))
-            name = qualifier.getText();
-        }
+      final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
+      if (qualifier != null && !qualifier.getText().equals(PyNames.CANONICAL_SELF)) {
+        final String referencedName = ((PyQualifiedExpression)problemElement).getReferencedName();
+        if (referencedName == null || PyNames.GETITEM.equals(referencedName))
+          name = qualifier.getText();
       }
 
       final String text = "assert isinstance(" + name + ", )";
@@ -115,7 +111,7 @@ public class TypeAssertionIntention implements IntentionAction {
 
         if (statementList != null) {
           PsiElement statementListParent = PsiTreeUtil.getParentOfType(statementList, PyStatement.class);
-          if (document.getLineNumber(statementList.getTextOffset()) ==
+          if (statementListParent != null && document.getLineNumber(statementList.getTextOffset()) ==
               document.getLineNumber(statementListParent.getTextOffset())) {
             final String substring =
               TextRange.create(statementListParent.getTextRange().getStartOffset(), statementList.getTextOffset()).substring(document.getText());
@@ -125,6 +121,7 @@ public class TypeAssertionIntention implements IntentionAction {
 
             statementListParent = statementListParent.replace(foo);
             statementList = PsiTreeUtil.findChildOfType(statementListParent, PyStatementList.class);
+            assert statementList != null;
             element = statementList.getStatements()[0];
           }
           else

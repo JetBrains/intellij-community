@@ -18,11 +18,14 @@ package org.zmlx.hg4idea.repo;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 
 public interface HgRepository extends Repository {
@@ -38,8 +41,17 @@ public interface HgRepository extends Repository {
   @NotNull
   String getCurrentBranch();
 
+  /**
+   * @return map with heavy branch names and appropriate set of head hashes
+   */
   @NotNull
-  Collection<HgNameWithHashInfo> getBranches();
+  Map<String, Set<Hash>> getBranches();
+
+  /**
+   * @return names of opened heavy branches
+   */
+  @NotNull
+  Set<String> getOpenedBranches();
 
   @NotNull
   Collection<HgNameWithHashInfo> getBookmarks();
@@ -52,6 +64,9 @@ public interface HgRepository extends Repository {
 
   @Nullable
   String getCurrentBookmark();
+
+  @Nullable
+  String getTipRevision();
 
   @NotNull
   HgConfig getRepositoryConfig();

@@ -1,13 +1,20 @@
 package com.intellij.xdebugger.evaluation;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
+import com.sun.org.apache.xpath.internal.jaxp.XPathExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 public abstract class XDebuggerEditorsProviderBase extends XDebuggerEditorsProvider {
   @NotNull
@@ -24,43 +31,31 @@ public abstract class XDebuggerEditorsProviderBase extends XDebuggerEditorsProvi
     return document;
   }
 
-  protected abstract PsiFile createExpressionCodeFragment(@NotNull Project project, @NotNull String text, @Nullable PsiElement context, boolean isPhysical);
+  @NotNull
+  @Override
+  public Document createDocument(@NotNull Project project,
+                                 @NotNull XExpression expression,
+                                 @Nullable XSourcePosition sourcePosition,
+                                 @NotNull EvaluationMode mode) {
+    PsiElement context = null;
+    if (sourcePosition != null) {
+      context = getContextElement(sourcePosition.getFile(), sourcePosition.getOffset(), project);
+    }
 
-  protected PsiElement getContextElement(@NotNull VirtualFile virtualFile, int offset, @NotNull Project project) {
-    return doGetContextElement(virtualFile, offset, project);
+    PsiFile codeFragment = createExpressionCodeFragment(project, expression, context, true);
+    Document document = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
+    assert document != null;
+    return document;
   }
 
-  public static PsiElement doGetContextElement(@NotNull VirtualFile virtualFile, int offset, @NotNull Project project) {
-    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-    PsiFile file = PsiManager.getInstance(project).findFile(virtualFile);
-    if (file == null || document == null) {
-      return null;
-    }
+  protected abstract PsiFile createExpressionCodeFragment(@NotNull Project project, @NotNull String text, @Nullable PsiElement context, boolean isPhysical);
 
-    if (offset < 0) {
-      offset = 0;
-    }
-    if (offset > document.getTextLength()) {
-      offset = document.getTextLength();
-    }
-    int startOffset = offset;
+  protected PsiFile createExpressionCodeFragment(@NotNull Project project, @NotNull XExpression expression, @Nullable PsiElement context, boolean isPhysical) {
+    return createExpressionCodeFragment(project, expression.getExpression(), context, isPhysical);
+  }
 
-    int lineEndOffset = document.getLineEndOffset(document.getLineNumber(offset));
-    PsiElement result = null;
-    do {
-      PsiElement element = file.findElementAt(offset);
-      if (!(element instanceof PsiWhiteSpace) && !(element instanceof PsiComment)) {
-        result = element;
-        break;
-      }
-
-      offset = element.getTextRange().getEndOffset() + 1;
-    }
-    while (offset < lineEndOffset);
-
-    if (result == null) {
-      result = file.findElementAt(startOffset);
-    }
-    return result;
+  @Nullable
+  protected PsiElement getContextElement(@NotNull VirtualFile virtualFile, int offset, @NotNull Project project) {
+    return XDebuggerUtil.getInstance().findContextElement(virtualFile, offset, project, false);
   }
 }

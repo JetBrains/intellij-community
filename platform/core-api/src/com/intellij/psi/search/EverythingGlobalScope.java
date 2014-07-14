@@ -48,6 +48,11 @@ public class EverythingGlobalScope extends GlobalSearchScope {
   }
 
   @Override
+  public boolean isForceSearchingInLibrarySources() {
+    return true;
+  }
+
+  @Override
   public boolean isSearchInModuleContent(@NotNull final Module aModule) {
     return true;
   }

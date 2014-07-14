@@ -28,6 +28,16 @@ public class DefaultPlatformTopHitProvider extends ActionsTopHitProvider {
      {"new c", "new class ", "NewClass"},
      {"new i", "new interface ", "NewClass"},
      {"new e", "new enum ", "NewClass"},
+     {"line", "line numbers ", "EditorToggleShowLineNumbers"},
+     {"show li", "show line numbers ", "EditorToggleShowLineNumbers"},
+     {"ann", "annotate ", "Annotate"},
+     {"wrap", "wraps ", "EditorToggleUseSoftWraps"},
+     {"soft w", "soft wraps ", "EditorToggleUseSoftWraps"},
+     {"use sof", "use soft wraps ", "EditorToggleUseSoftWraps"},
+     {"use wr", "use wraps ", "EditorToggleUseSoftWraps"},
+     {"ref", "refactor ", "Refactorings.QuickListPopupAction"},
+     {"mov", "move ", "Move"},
+     {"ren", "rename  ", "RenameElement"},
    };
 
   @Override

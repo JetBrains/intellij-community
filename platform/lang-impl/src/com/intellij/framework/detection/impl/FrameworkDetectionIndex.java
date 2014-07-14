@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
     return new DataIndexer<Integer, Void, FileContent>() {
       @NotNull
       @Override
-      public Map<Integer, Void> map(FileContent inputData) {
+      public Map<Integer, Void> map(@NotNull FileContent inputData) {
         final FileType fileType = inputData.getFileType();
         if (!detectors.containsKey(fileType)) {
           return Collections.emptyMap();
@@ -91,11 +91,13 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
     };
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<Integer> getKeyDescriptor() {
     return EnumeratorIntegerDescriptor.INSTANCE;
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     final Set<FileType> acceptedTypes = new HashSet<FileType>();

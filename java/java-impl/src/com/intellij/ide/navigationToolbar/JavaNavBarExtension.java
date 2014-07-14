@@ -22,19 +22,15 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.lang.StdLanguages;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-import java.util.Collection;
-import java.util.Collections;
-
-public class JavaNavBarExtension implements NavBarModelExtension{
+public class JavaNavBarExtension extends AbstractNavBarModelExtension {
   public String getPresentableText(final Object object) {
     if (object instanceof PsiClass) {
       return ClassPresentationUtil.getNameForClass((PsiClass)object, false);
@@ -77,11 +73,6 @@ public class JavaNavBarExtension implements NavBarModelExtension{
       }
       return containingFile;
     }
-    return psiElement.isPhysical() ? psiElement : null;
-  }
-
-  @Override
-  public Collection<VirtualFile> additionalRoots(Project project) {
-    return Collections.emptyList();
+    return psiElement;
   }
 }

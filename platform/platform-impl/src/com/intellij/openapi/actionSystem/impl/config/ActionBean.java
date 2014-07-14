@@ -50,9 +50,12 @@ public class ActionBean {
   @Attribute(ActionManagerImpl.INTERNAL_ATTR_NAME)
   public boolean internal;
 
-  @Attribute("use-shortcut-of")
+  @Attribute(ActionManagerImpl.USE_SHORTCUT_OF_ATTR_NAME)
   public boolean useShortcutOf;
 
   @Attribute(ActionManagerImpl.KEYMAP_ATTR_NAME)
   public String keymap;
+
+  @Attribute(ActionManagerImpl.OVERRIDES_ATTR_NAME)
+  public boolean overrides;
 }

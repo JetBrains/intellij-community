@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -39,6 +40,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Set;
 
 /**
@@ -70,6 +72,15 @@ class JavaChangeSignatureUsageSearcher {
   private void findSimpleUsages(final PsiMethod method, final ArrayList<UsageInfo> result) {
     PsiMethod[] overridingMethods = findSimpleUsagesWithoutParameters(method, result, true, true, true);
     findUsagesInCallers(result);
+
+    final ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>(Arrays.asList(overridingMethods));
+    methods.add(method);
+
+    for (PsiMethod psiMethod : methods) {
+      for (PsiFunctionalExpression functionalExpression : FunctionalExpressionSearch.search(psiMethod)) {
+        result.add(new FunctionalInterfaceChangedUsageInfo(functionalExpression, psiMethod));
+      }
+    }
 
     //Parameter name changes are not propagated
     findParametersUsage(method, result, overridingMethods);
@@ -316,6 +327,18 @@ class JavaChangeSignatureUsageSearcher {
       return RefactoringBundle.message("there.is.already.a.0.in.the.1.it.will.conflict.with.the.renamed.parameter",
                                        RefactoringUIUtil.getDescription(myCollidingElement, true),
                                        RefactoringUIUtil.getDescription(myMethod, true));
+    }
+  }
+  
+  private static class FunctionalInterfaceChangedUsageInfo extends UnresolvableCollisionUsageInfo {
+
+    public FunctionalInterfaceChangedUsageInfo(PsiElement element, PsiElement referencedElement) {
+      super(element, referencedElement);
+    }
+
+    @Override
+    public String getDescription() {
+      return "Functional expression will be corrupted";
     }
   }
 }

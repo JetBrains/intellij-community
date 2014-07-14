@@ -1,4 +1,4 @@
-public class Main {
+class Main {
 
     interface Function<T, U> {
         T fun(U t);

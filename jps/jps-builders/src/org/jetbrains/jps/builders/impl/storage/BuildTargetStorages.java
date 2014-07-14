@@ -18,6 +18,7 @@ package org.jetbrains.jps.builders.impl.storage;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.builders.storage.StorageProvider;
@@ -55,7 +56,7 @@ public class BuildTargetStorages extends CompositeStorageOwner {
             return provider.createStorage(myPaths.getTargetDataRoot(myTarget));
           }
           catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BuildDataCorruptedException(e);
           }
         }
       };
@@ -68,12 +69,8 @@ public class BuildTargetStorages extends CompositeStorageOwner {
     try {
       return (S)lazyValue.getValue();
     }
-    catch (RuntimeException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof IOException) {
-        throw (IOException)cause;
-      }
-      throw e;
+    catch (BuildDataCorruptedException e) {
+      throw e.getCause();
     }
   } 
   

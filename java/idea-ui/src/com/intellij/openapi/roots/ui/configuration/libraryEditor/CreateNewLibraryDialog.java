@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigur
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -91,5 +92,11 @@ public class CreateNewLibraryDialog extends LibraryEditorDialogBase {
   @Override
   protected boolean shouldCheckName(String newName) {
     return true;
+  }
+
+  @Nullable
+  @Override
+  protected String getHelpId() {
+    return "Create_Library_dialog";
   }
 }

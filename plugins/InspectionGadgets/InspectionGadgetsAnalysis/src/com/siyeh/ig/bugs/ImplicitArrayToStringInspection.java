@@ -25,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -151,13 +152,13 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
           final PsiReferenceExpression methodExpression =
             methodCallExpression.getMethodExpression();
           if ("valueOf".equals(methodExpression.getReferenceName())) {
-            replaceExpressionAndShorten(methodCallExpression,
-                                        newExpressionText);
+            PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression,
+                                                           newExpressionText);
             return;
           }
         }
       }
-      replaceExpressionAndShorten(expression, newExpressionText);
+      PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpressionText);
     }
   }
 

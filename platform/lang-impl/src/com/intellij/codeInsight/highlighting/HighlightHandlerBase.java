@@ -42,7 +42,7 @@ public abstract class HighlightHandlerBase {
     int lineStartOffset = document.getLineStartOffset(lineNumber);
     int lineEndOffset = document.getLineEndOffset(lineNumber);
     int lineFragmentEndOffset = Math.min(lineStartOffset + 140, lineEndOffset);
-    String lineText = document.getText().substring(lineStartOffset, lineFragmentEndOffset);
+    String lineText = document.getImmutableCharSequence().subSequence(lineStartOffset, lineFragmentEndOffset).toString();
     if (lineFragmentEndOffset != lineEndOffset) {
       lineText = lineText.trim() + "...";
     }

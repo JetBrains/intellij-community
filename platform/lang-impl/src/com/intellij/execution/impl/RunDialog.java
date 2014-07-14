@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class RunDialog extends DialogWrapper implements RunConfigurable.RunDialo
   private final Project myProject;
   private final RunConfigurable myConfigurable;
   private JComponent myCenterPanel;
-  @NonNls public static String HELP_ID = "reference.dialogs.rundebug";
+  @NonNls public static final String HELP_ID = "reference.dialogs.rundebug";
   private final Executor myExecutor;
 
   public RunDialog(final Project project, final Executor executor) {

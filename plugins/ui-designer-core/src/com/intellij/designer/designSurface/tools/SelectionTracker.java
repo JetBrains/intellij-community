@@ -72,6 +72,14 @@ public class SelectionTracker extends TargetingTool {
   @Override
   protected void handleButtonUp(int button) {
     if (myState == STATE_DRAG) {
+      // Control clicking on a Mac is used to simulate right clicks: do not treat this as
+      // a selection reset (since it makes it impossible to pull up the context menu with
+      // a multi-selection: the right click action causes the selection to be replaced
+      // with the single item under the mouse)
+      if (SystemInfo.isMac && myInputEvent != null && myInputEvent.isControlDown()) {
+        return;
+      }
+
       performSelection();
       myState = STATE_NONE;
     }

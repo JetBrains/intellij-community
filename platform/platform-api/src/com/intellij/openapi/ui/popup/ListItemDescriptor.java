@@ -22,18 +22,18 @@ import javax.swing.*;
 /**
  * @author kir
  */
-public interface ListItemDescriptor {
+public interface ListItemDescriptor<T> {
   @Nullable
-  String getTextFor(Object value);
+  String getTextFor(T value);
 
   @Nullable
-  String getTooltipFor(Object value);
+  String getTooltipFor(T value);
 
   @Nullable
-  Icon getIconFor(Object value);
+  Icon getIconFor(T value);
 
-  boolean hasSeparatorAboveOf(Object value);
+  boolean hasSeparatorAboveOf(T value);
 
   @Nullable
-  String getCaptionAboveOf(Object value);
+  String getCaptionAboveOf(T value);
 }

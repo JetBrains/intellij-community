@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,15 +38,18 @@ public class GantLibraryPresentationProvider extends GroovyLibraryPresentationPr
     super(GANT_KIND);
   }
 
+  @Override
   public boolean managesLibrary(final VirtualFile[] libraryFiles) {
     return GantUtils.isGantLibrary(libraryFiles);
   }
 
+  @Override
   @Nls
   public String getLibraryVersion(final VirtualFile[] libraryFiles) {
     return GantUtils.getGantVersion(GantUtils.getGantLibraryHome(libraryFiles));
   }
 
+  @Override
   @NotNull
   public Icon getIcon() {
     return JetgroovyIcons.Groovy.Gant_sdk;

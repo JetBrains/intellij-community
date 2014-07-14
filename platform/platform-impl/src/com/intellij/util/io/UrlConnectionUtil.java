@@ -19,6 +19,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -35,7 +36,9 @@ public class UrlConnectionUtil {
   private UrlConnectionUtil() {
   }
 
-  public static @Nullable InputStream getConnectionInputStream(URLConnection connection, ProgressIndicator pi) {
+  public static
+  @Nullable
+  InputStream getConnectionInputStream(URLConnection connection, ProgressIndicator pi) {
     try {
       return getConnectionInputStreamWithException(connection, pi);
     }
@@ -48,25 +51,36 @@ public class UrlConnectionUtil {
   }
 
 
-  public static InputStream getConnectionInputStreamWithException(URLConnection connection, ProgressIndicator pi) throws IOException {
+  public static InputStream getConnectionInputStreamWithException(@NotNull URLConnection connection, @Nullable ProgressIndicator pi)
+    throws IOException {
     InputStreamGetter getter = new InputStreamGetter(connection);
     final Future<?> getterFuture = ApplicationManager.getApplication().executeOnPooledThread(getter);
-
     while (true) {
-      pi.checkCanceled();
+      if (pi != null) {
+        pi.checkCanceled();
+      }
+
       try {
         try {
           getterFuture.get(50, TimeUnit.MILLISECONDS);
         }
-        catch (TimeoutException e) {}
-        pi.setIndeterminate(true);
-        pi.setText(pi.getText());
-        if (getterFuture.isDone()) break;
+        catch (TimeoutException ignored) {
+        }
+
+        if (pi != null) {
+          pi.setIndeterminate(true);
+          pi.setText(pi.getText());
+        }
+
+        if (getterFuture.isDone()) {
+          break;
+        }
       }
       catch (Exception e) {
         throw new ProcessCanceledException(e);
       }
     }
+    //noinspection ThrowableResultOfMethodCallIgnored
     if (getter.getException() != null) {
       throw getter.getException();
     }
@@ -91,6 +105,7 @@ public class UrlConnectionUtil {
       return myInputStream;
     }
 
+    @Override
     public void run() {
       try {
         myInputStream = myUrlConnection.getInputStream();

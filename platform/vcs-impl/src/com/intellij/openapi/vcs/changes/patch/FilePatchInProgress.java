@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.formove.PathMerger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatus;
@@ -257,8 +257,8 @@ public class FilePatchInProgress implements Strippable {
     return result;
   }
 
-  public Pair<String, String> getKey() {
-    return new Pair<String, String>(myPatch.getBeforeName(), myPatch.getAfterName());
+  public Couple<String> getKey() {
+    return Couple.of(myPatch.getBeforeName(), myPatch.getAfterName());
   }
 
   private void refresh() {

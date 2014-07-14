@@ -16,7 +16,6 @@
 package org.zmlx.hg4idea.status.ui;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
@@ -27,14 +26,14 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.action.HgBranchPopup;
-import org.zmlx.hg4idea.repo.HgRepositoryImpl;
-import org.zmlx.hg4idea.status.HgCurrentBranchStatus;
+import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.awt.event.MouseEvent;
@@ -46,11 +45,10 @@ public class HgStatusWidget extends EditorBasedWidget
   implements StatusBarWidget.MultipleTextValuesPresentation,
              StatusBarWidget.Multiframe, HgUpdater {
 
-  private static final String MAX_STRING = "hg: default branch (128)";
+  private static final String MAX_STRING = "Hg: Merging default ";
 
   @NotNull private final HgVcs myVcs;
   @NotNull private final HgProjectSettings myProjectSettings;
-  @NotNull private final HgCurrentBranchStatus myCurrentBranchStatus;
 
   private volatile String myText = "";
   private volatile String myTooltip = "";
@@ -59,8 +57,6 @@ public class HgStatusWidget extends EditorBasedWidget
     super(project);
     myVcs = vcs;
     myProjectSettings = projectSettings;
-
-    myCurrentBranchStatus = new HgCurrentBranchStatus();
   }
 
   @Override
@@ -101,8 +97,9 @@ public class HgStatusWidget extends EditorBasedWidget
       return null;
     }
     VirtualFile root = HgUtil.getRootForSelectedFile(project);
-    if (root != null) {
-      return HgBranchPopup.getInstance(project, HgRepositoryImpl.getInstance(root, project, project)).asListPopup();
+    HgRepository repository = HgUtil.getRepositoryManager(project).getRepositoryForRoot(root);
+    if (repository != null) {
+      return HgBranchPopup.getInstance(project, repository).asListPopup();
     }
     return null;
   }
@@ -143,7 +140,7 @@ public class HgStatusWidget extends EditorBasedWidget
   }
 
   public void update(final Project project) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         if ((project == null) || project.isDisposed()) {
@@ -151,15 +148,13 @@ public class HgStatusWidget extends EditorBasedWidget
           return;
         }
 
-        emptyTextAndTooltip();
-
-        if (null != myCurrentBranchStatus.getStatusText()) {
-          myText = myCurrentBranchStatus.getStatusText();
-          myTooltip = myCurrentBranchStatus.getToolTipText();
+        final HgRepository repo = HgUtil.getCurrentRepository(project);
+        if (repo == null) { // the file is not under version control => display nothing
+          emptyTextAndTooltip();
+          return;
         }
-
-        int maxLength = MAX_STRING.length();
-        myText = StringUtil.shortenTextWithEllipsis(myText, maxLength, 5);
+        myTooltip = HgUtil.getDisplayableBranchOrBookmarkText(repo);
+        myText = StringUtil.shortenTextWithEllipsis(myTooltip, MAX_STRING.length(), 5);
         if (!isDisposed() && myStatusBar != null) {
           myStatusBar.updateWidget(ID());
         }
@@ -176,6 +171,7 @@ public class HgStatusWidget extends EditorBasedWidget
 
     MessageBusConnection busConnection = project.getMessageBus().connect();
     busConnection.subscribe(HgVcs.STATUS_TOPIC, this);
+    busConnection.subscribe(HgVcs.BRANCH_TOPIC,this);
 
     DvcsUtil.installStatusBarWidget(myProject, this);
   }
@@ -197,10 +193,5 @@ public class HgStatusWidget extends EditorBasedWidget
   private void emptyTextAndTooltip() {
     myText = "";
     myTooltip = "";
-  }
-
-  @NotNull
-  public HgCurrentBranchStatus getCurrentBranchStatus() {
-    return myCurrentBranchStatus;
   }
 }

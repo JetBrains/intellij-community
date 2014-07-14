@@ -1,10 +1,16 @@
 package org.jetbrains.idea.svn.copy;
 
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.commandLine.*;
+import org.jetbrains.idea.svn.checkin.CmdCheckinClient;
+import org.jetbrains.idea.svn.checkin.CommitEventHandler;
+import org.jetbrains.idea.svn.commandLine.BaseUpdateCommandListener;
+import org.jetbrains.idea.svn.commandLine.CommandUtil;
+import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -28,24 +34,25 @@ public class CmdCopyMoveClient extends BaseSvnClient implements CopyMoveClient {
 
     // for now parsing of the output is not required as command is executed only for one file
     // and will be either successful or exception will be thrown
-    // TODO: for now use dst as target, as if using source - then process will be started in the source folder and folder will be locked
-    // TODO: And if resolving working directory to some other folder (i.e. project root) => errors in parsing (info, status) occur, as
-    // TODO: base directory passed to parser do not correspond to working directory, but svn outputs relative paths
-    CommandUtil.execute(myVcs, SvnTarget.fromFile(dst), isMove ? SvnCommandName.move : SvnCommandName.copy, parameters, null);
+    // Use idea home directory for directory renames which differ only by character case on case insensitive file systems - otherwise that
+    // directory being renamed will be blocked by svn process
+    File workingDirectory =
+      isMove && !SystemInfo.isFileSystemCaseSensitive && FileUtil.filesEqual(src, dst) ? CommandUtil.getHomeDirectory() : null;
+    execute(myVcs, SvnTarget.fromFile(dst), workingDirectory, getCommandName(isMove), parameters, null);
   }
 
   @Override
   public long copy(@NotNull SvnTarget source,
-                            @NotNull SvnTarget destination,
-                            @Nullable SVNRevision revision,
-                            boolean makeParents,
-                            @NotNull String message,
-                            @Nullable CommitEventHandler handler) throws VcsException {
+                   @NotNull SvnTarget destination,
+                   @Nullable SVNRevision revision,
+                   boolean makeParents,
+                   boolean isMove,
+                   @NotNull String message,
+                   @Nullable CommitEventHandler handler) throws VcsException {
     if (!destination.isURL()) {
       throw new IllegalArgumentException("Only urls are supported as destination " + destination);
     }
 
-    // TODO: Check that command fails when destination exists
     List<String> parameters = new ArrayList<String>();
 
     CommandUtil.put(parameters, source);
@@ -57,12 +64,11 @@ public class CmdCopyMoveClient extends BaseSvnClient implements CopyMoveClient {
 
     // copy to url output is the same as commit output - just statuses have "copy of" suffix
     // so "Adding" will be "Adding copy of"
-    SvnCommitRunner.CommandListener listener = new SvnCommitRunner.CommandListener(handler);
-    // TODO: Check correctness when source is url
+    CmdCheckinClient.CommandListener listener = new CmdCheckinClient.CommandListener(handler);
     if (source.isFile()) {
       listener.setBaseDirectory(source.getFile());
     }
-    CommandUtil.execute(myVcs, source, SvnCommandName.copy, parameters, listener);
+    execute(myVcs, source, getCommandName(isMove), parameters, listener);
 
     return listener.getCommittedRevision();
   }
@@ -83,8 +89,13 @@ public class CmdCopyMoveClient extends BaseSvnClient implements CopyMoveClient {
     File workingDirectory = CommandUtil.getHomeDirectory();
     BaseUpdateCommandListener listener = new BaseUpdateCommandListener(workingDirectory, handler);
 
-    CommandUtil.execute(myVcs, source, workingDirectory, SvnCommandName.copy, parameters, listener);
+    execute(myVcs, source, workingDirectory, SvnCommandName.copy, parameters, listener);
 
     listener.throwWrappedIfException();
+  }
+
+  @NotNull
+  private static SvnCommandName getCommandName(boolean isMove) {
+    return isMove ? SvnCommandName.move : SvnCommandName.copy;
   }
 }

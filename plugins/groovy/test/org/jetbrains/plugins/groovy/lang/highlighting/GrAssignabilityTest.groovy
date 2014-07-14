@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,12 @@ class GrAssignabilityTest extends GrHighlightingTestBase {
   public void testIncompatibleTypesAssignments() { doTest(); }
 
   public void testDefaultMapConstructorNamedArgs() {
+    addBigDecimal()
     doTest(new GroovyConstructorNamedArgumentsInspection());
   }
 
   public void testDefaultMapConstructorNamedArgsError() {
+    addBigDecimal()
     doTest(new GroovyConstructorNamedArgumentsInspection());
   }
 
@@ -368,7 +370,7 @@ def foo(Function<String, String> function) {
 foo<warning descr="'foo' in '_' cannot be applied to '(Function<java.lang.Double,java.lang.Double>)'">({println  it.byteValue()} as Function<Double, Double>)</warning>
 foo({println  it.substring(1)} as Function)
 foo({println  it.substring(1)} as Function<String, String>)
-foo<warning descr="'foo' in '_' cannot be applied to '(groovy.lang.Closure<java.lang.Void>)'">({println  it})</warning>
+foo<warning descr="'foo' in '_' cannot be applied to '(groovy.lang.Closure)'">({println  it})</warning>
 
 ''')
   }
@@ -797,6 +799,22 @@ def bar() {
 def zoo() {
   <warning>return</warning> foo()
 }
+''')
+  }
+
+  void testBinaryOperatorApplicability() {
+    testHighlighting('''\
+void bug(Collection<String> foo, Collection<String> bar) {
+    foo <warning descr="'leftShift' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.util.Collection<java.lang.String>)'"><<</warning> bar   // warning missed
+    foo << "a"
+}''')
+  }
+
+  void testPlusIsApplicable() {
+    testHighlighting('''\
+print 1 + 2
+
+print 4 <warning descr="'plus' in 'org.codehaus.groovy.runtime.StringGroovyMethods' cannot be applied to '(java.util.ArrayList)'">+</warning> new ArrayList()
 ''')
   }
 }

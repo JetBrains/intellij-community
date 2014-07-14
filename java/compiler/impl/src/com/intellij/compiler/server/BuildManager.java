@@ -72,6 +72,7 @@ import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -90,7 +91,6 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ide.PooledThreadExecutor;
 import org.jetbrains.io.ChannelRegistrar;
 import org.jetbrains.io.NettyUtil;
@@ -382,12 +382,8 @@ public class BuildManager implements ApplicationComponent{
     scheduleAutoMake();
   }
 
-  public boolean rescanRequired(Project project) {
-    final String projectPath = getProjectPath(project);
-    synchronized (myProjectDataMap) {
-      final ProjectData data = myProjectDataMap.get(projectPath);
-      return data == null || data.myNeedRescan;
-    }
+  public boolean isProjectWatched(Project project) {
+    return myProjectDataMap.containsKey(getProjectPath(project));
   }
 
   @Nullable
@@ -457,7 +453,7 @@ public class BuildManager implements ApplicationComponent{
       return false;
     }
     final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
-    if (!config.useOutOfProcessBuild() || !config.MAKE_PROJECT_ON_SAVE) {
+    if (!config.MAKE_PROJECT_ON_SAVE) {
       return false;
     }
     if (!config.allowAutoMakeWhileRunningApplication() && hasRunningProcess(project)) {
@@ -615,7 +611,7 @@ public class BuildManager implements ApplicationComponent{
               data = new ProjectData(new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE));
               myProjectDataMap.put(projectPath, data);
             }
-            if (isRebuild) {
+            if (isRebuild || (isAutomake && Registry.is("compiler.automake.force.fs.rescan", false))) {
               data.dropChanges();
             }
             if (IS_UNIT_TEST_MODE) {
@@ -878,7 +874,11 @@ public class BuildManager implements ApplicationComponent{
         cmdLine.addParameter(option);
       }
     }
-
+    
+    if (isProfilingMode) {
+      cmdLine.addParameter("-agentlib:yjpagent=disablej2ee,disablealloc,delay=10000,sessionname=ExternalBuild");
+    }
+    
     // debugging
     final int debugPort = Registry.intValue("compiler.process.debug.port");
     if (debugPort > 0) {
@@ -899,7 +899,8 @@ public class BuildManager implements ApplicationComponent{
       cmdLine.addParameter("-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + mySystemCharset.name());
     }
     cmdLine.addParameter("-D" + JpsGlobalLoader.FILE_TYPES_COMPONENT_NAME_KEY + "=" + FileTypeManagerImpl.getFileTypeComponentName());
-    for (String name : new String[]{"user.language", "user.country", "user.region", PathManager.PROPERTY_HOME_PATH}) {
+    for (String name : new String[]{"user.language", "user.country", "user.region", PathManager.PROPERTY_HOME_PATH,
+                                    PathManager.PROPERTY_CONFIG_PATH, PathManager.PROPERTY_PLUGINS_PATH, PathManager.PROPERTY_PATHS_SELECTOR}) {
       final String value = System.getProperty(name);
       if (value != null) {
         cmdLine.addParameter("-D" + name + "=" + value);
@@ -909,6 +910,7 @@ public class BuildManager implements ApplicationComponent{
     cmdLine.addParameter("-D" + GlobalOptions.LOG_DIR_OPTION + "=" + FileUtil.toSystemIndependentName(getBuildLogDirectory().getAbsolutePath()));
 
     final File workDirectory = getBuildSystemDirectory();
+    //noinspection ResultOfMethodCallIgnored
     workDirectory.mkdirs();
     cmdLine.addParameter("-Djava.io.tmpdir=" + FileUtil.toSystemIndependentName(workDirectory.getPath()) + "/" + TEMP_DIR_NAME);
 
@@ -924,18 +926,17 @@ public class BuildManager implements ApplicationComponent{
     launcherCp.add(ClasspathBootstrap.getResourcePath(launcherClass));
     launcherCp.add(compilerPath);
     ClasspathBootstrap.appendJavaCompilerClasspath(launcherCp);
-    // this will disable standard extensions to ensure javac is loaded from the right tools.jar
-    cmdLine.addParameter("-Djava.ext.dirs=");
+    launcherCp.addAll(BuildProcessClasspathManager.getLauncherClasspath(project));
     cmdLine.addParameter("-classpath");
     cmdLine.addParameter(classpathToString(launcherCp));
     
     cmdLine.addParameter(launcherClass.getName());
 
     final List<String> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath(true);
+    cp.add(getJpsPluginSystemClassesPath());
     cp.addAll(myClasspathManager.getBuildProcessPluginsClasspath(project));
     if (isProfilingMode) {
       cp.add(new File(workDirectory, "yjp-controller-api-redist.jar").getPath());
-      cmdLine.addParameter("-agentlib:yjpagent=disablej2ee,disablealloc,delay=10000,sessionname=ExternalBuild");
     }
     cmdLine.addParameter(classpathToString(cp));
 
@@ -956,6 +957,17 @@ public class BuildManager implements ApplicationComponent{
         return true;
       }
     };
+  }
+
+  private static String getJpsPluginSystemClassesPath() {
+    File classesRoot = new File(PathUtil.getJarPathForClass(BuildManager.class));
+    if (classesRoot.isDirectory()) {
+      //running from sources: load classes from .../out/production/jps-plugin-system
+      return new File(classesRoot.getParentFile(), "jps-plugin-system").getAbsolutePath();
+    }
+    else {
+      return new File(classesRoot.getParentFile(), "rt/jps-plugin-system.jar").getAbsolutePath();
+    }
   }
 
   public File getBuildSystemDirectory() {
@@ -1016,11 +1028,6 @@ public class BuildManager implements ApplicationComponent{
     Channel serverChannel = bootstrap.bind(NetUtils.getLoopbackAddress(), 0).syncUninterruptibly().channel();
     myChannelRegistrar.add(serverChannel);
     return ((InetSocketAddress)serverChannel.localAddress()).getPort();
-  }
-
-  @TestOnly
-  public void stopWatchingProject(Project project) {
-    myProjectDataMap.remove(getProjectPath(project));
   }
 
   private static String classpathToString(List<String> cp) {
@@ -1251,7 +1258,7 @@ public class BuildManager implements ApplicationComponent{
     @Override
     public String getValue() {
       if (myPath.length == 1) {
-        final String name = FileNameCache.getVFileName(myPath[0]);
+        final String name = FileNameCache.getVFileName(myPath[0]).toString();
         // handle case of windows drive letter
         return name.length() == 2 && name.endsWith(":")? name + "/" : name;
       }

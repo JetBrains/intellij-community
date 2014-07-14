@@ -27,11 +27,11 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
 import com.intellij.openapi.project.Project;
@@ -45,12 +45,21 @@ public abstract class BaseValueAction extends DebuggerAction {
 
   public void actionPerformed(AnActionEvent e) {
     final DataContext actionContext = e.getDataContext();
+    final Project project = CommonDataKeys.PROJECT.getData(actionContext);
     final DebuggerTreeNodeImpl node = getSelectedNode(actionContext);
+    final String text = getValueText(node);
+    if (text != null) {
+      DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
+        public void run() {
+          processText(project, DebuggerUtilsEx.prepareValueText(text, project), node, null);
+        }
+      });
+      return;
+    }
     final Value value = getValue(node);
     if (value == null) {
       return;
     }
-    final Project project = CommonDataKeys.PROJECT.getData(actionContext);
     final DebuggerManagerEx debuggerManager = DebuggerManagerEx.getInstanceEx(project);
     if(debuggerManager == null) {
       return;
@@ -98,6 +107,18 @@ public abstract class BaseValueAction extends DebuggerAction {
     Value value = getValue(getSelectedNode(e.getDataContext()));
     presentation.setEnabled(value != null);
     presentation.setVisible(value != null);
+  }
+
+  @Nullable
+  private static String getValueText(final DebuggerTreeNodeImpl node) {
+    if (node == null) {
+      return null;
+    }
+    NodeDescriptorImpl descriptor = node.getDescriptor();
+    if (descriptor instanceof ValueDescriptorImpl) {
+      return ((ValueDescriptorImpl)descriptor).getValueText();
+    }
+    return null;
   }
 
   @Nullable

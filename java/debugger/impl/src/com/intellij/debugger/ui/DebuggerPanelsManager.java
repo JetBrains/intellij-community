@@ -17,6 +17,7 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.*;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -29,9 +30,9 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentListener;
 import com.intellij.execution.ui.RunContentManager;
@@ -43,10 +44,12 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.xdebugger.XDebugProcess;
+import com.intellij.xdebugger.XDebugProcessStarter;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.HashMap;
 
 public class DebuggerPanelsManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.DebuggerPanelsManager");
@@ -54,38 +57,38 @@ public class DebuggerPanelsManager implements ProjectComponent {
   private final Project myProject;
   private final ExecutionManager myExecutionManager;
 
-  private final PositionHighlighter myEditorManager;
-  private final HashMap<ProcessHandler, DebuggerSessionTab> mySessionTabs = new HashMap<ProcessHandler, DebuggerSessionTab>();
+  //private final PositionHighlighter myEditorManager;
+  //private final HashMap<ProcessHandler, DebuggerSessionTab> mySessionTabs = new HashMap<ProcessHandler, DebuggerSessionTab>();
 
   public DebuggerPanelsManager(Project project, final EditorColorsManager colorsManager, ExecutionManager executionManager) {
     myProject = project;
     myExecutionManager = executionManager;
 
-    myEditorManager = new PositionHighlighter(myProject, getContextManager());
-
-    final EditorColorsListener myColorsListener = new EditorColorsListener() {
-      public void globalSchemeChange(EditorColorsScheme scheme) {
-        myEditorManager.updateContextPointDescription();
-      }
-    };
-    colorsManager.addEditorColorsListener(myColorsListener);
-    Disposer.register(project, new Disposable() {
-      public void dispose() {
-        colorsManager.removeEditorColorsListener(myColorsListener);
-      }
-    });
-
-    getContextManager().addListener(new DebuggerContextListener() {
-      public void changeEvent(final DebuggerContextImpl newContext, int event) {
-        if (event == DebuggerSession.EVENT_PAUSE) {
-          DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
-            public void run() {
-              toFront(newContext.getDebuggerSession());
-            }
-          });
-        }
-      }
-    });
+    //myEditorManager = new PositionHighlighter(myProject, getContextManager());
+    //
+    //final EditorColorsListener myColorsListener = new EditorColorsListener() {
+    //  public void globalSchemeChange(EditorColorsScheme scheme) {
+    //    myEditorManager.updateContextPointDescription();
+    //  }
+    //};
+    //colorsManager.addEditorColorsListener(myColorsListener);
+    //Disposer.register(project, new Disposable() {
+    //  public void dispose() {
+    //    colorsManager.removeEditorColorsListener(myColorsListener);
+    //  }
+    //});
+    //
+    //getContextManager().addListener(new DebuggerContextListener() {
+    //  public void changeEvent(final DebuggerContextImpl newContext, int event) {
+    //    if (event == DebuggerSession.EVENT_PAUSE) {
+    //      DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
+    //        public void run() {
+    //          toFront(newContext.getDebuggerSession());
+    //        }
+    //      });
+    //    }
+    //  }
+    //});
   }
 
   private DebuggerStateManager getContextManager() {
@@ -129,20 +132,15 @@ public class DebuggerPanelsManager implements ProjectComponent {
       debugProcess.putUserData(BatchEvaluator.REMOTE_SESSION_KEY, Boolean.TRUE);
     }
 
-    final DebuggerSessionTab sessionTab = new DebuggerSessionTab(myProject, modelEnvironment.getSessionName(), environment, debuggerSession);
-    RunContentDescriptor runContentDescriptor = sessionTab.getRunContentDescriptor();
-    RunContentDescriptor reuseContent = environment.getReuseContent();
-    if (reuseContent != null) {
-      final ProcessHandler prevHandler = reuseContent.getProcessHandler();
-      if (prevHandler != null) {
-        final DebuggerSessionTab prevSession = mySessionTabs.get(prevHandler);
-        if (prevSession != null) {
-          sessionTab.reuse(prevSession);
+    XDebugSession debugSession =
+      XDebuggerManager.getInstance(myProject).startSessionAndShowTab(modelEnvironment.getSessionName(), environment.getReuseContent(), new XDebugProcessStarter() {
+        @Override
+        @NotNull
+        public XDebugProcess start(@NotNull XDebugSession session) {
+          return new JavaDebugProcess(session, debuggerSession);
         }
-      }
-    }
-    mySessionTabs.put(runContentDescriptor.getProcessHandler(), sessionTab);
-    return runContentDescriptor;
+      });
+    return debugSession.getRunContentDescriptor();
   }
 
 
@@ -152,11 +150,11 @@ public class DebuggerPanelsManager implements ProjectComponent {
 
     final RunContentListener myContentListener = new RunContentListener() {
       public void contentSelected(RunContentDescriptor descriptor) {
-        DebuggerSessionTab sessionTab = descriptor != null ? getSessionTab(descriptor.getProcessHandler()) : null;
+        DebuggerSession session = getSession(myProject, descriptor.getExecutionConsole());
 
-        if (sessionTab != null) {
+        if (session != null) {
           getContextManager()
-            .setState(sessionTab.getContextManager().getContext(), sessionTab.getSession().getState(), DebuggerSession.EVENT_CONTEXT, null);
+            .setState(session.getContextManager().getContext(), session.getState(), DebuggerSession.EVENT_CONTEXT, null);
         }
         else {
           getContextManager()
@@ -165,11 +163,6 @@ public class DebuggerPanelsManager implements ProjectComponent {
       }
 
       public void contentRemoved(RunContentDescriptor descriptor) {
-        DebuggerSessionTab sessionTab = getSessionTab(descriptor.getProcessHandler());
-        if (sessionTab != null) {
-          mySessionTabs.remove(descriptor.getProcessHandler());
-          Disposer.dispose(sessionTab);
-        }
       }
     };
 
@@ -225,13 +218,21 @@ public class DebuggerPanelsManager implements ProjectComponent {
     }
   }
 
-  private DebuggerSessionTab getSessionTab(ProcessHandler processHandler) {
-    return mySessionTabs.get(processHandler);
+  private DebuggerSession getSession(Project project, ExecutionConsole console) {
+    XDebugSession session = XDebuggerManager.getInstance(project).getDebugSession(console);
+    if (session != null) {
+      XDebugProcess process = session.getDebugProcess();
+      if (process instanceof JavaDebugProcess) {
+        return ((JavaDebugProcess)process).getDebuggerSession();
+      }
+    }
+    return null;
   }
 
   @Nullable
   private DebuggerSessionTab getSessionTab(DebuggerSession session) {
-    return session != null ? getSessionTab(session.getProcess().getExecutionResult().getProcessHandler()) : null;
+    //return session != null ? getSessionTab(session.getProcess().getExecutionResult().getProcessHandler()) : null;
+    return null;
   }
 
 }

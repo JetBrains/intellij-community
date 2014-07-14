@@ -2,7 +2,11 @@ package org.jetbrains.plugins.javaFX;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.ex.JpsElementBase;
+import org.jetbrains.plugins.javaFX.packaging.JavaFxManifestAttribute;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxPackagerConstants;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: anna
@@ -36,6 +40,7 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
     myState.setAlias(state.myAlias);
     myState.setConvertCss2Bin(state.myConvertCss2Bin);
     myState.setNativeBundle(state.myNativeBundle);
+    myState.setCustomManifestAttributes(state.myCustomManifestAttributes);
   }
 
   @NotNull
@@ -67,6 +72,7 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
     private String myKeypass;
     private boolean myConvertCss2Bin;
     public JavaFxPackagerConstants.NativeBundles myNativeBundle = JavaFxPackagerConstants.NativeBundles.none;
+    private List<JavaFxManifestAttribute> myCustomManifestAttributes = new ArrayList<JavaFxManifestAttribute>();
 
     public String getTitle() {
       return myTitle;
@@ -202,6 +208,14 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
 
     public void setNativeBundle(JavaFxPackagerConstants.NativeBundles nativeBundle) {
       myNativeBundle = nativeBundle;
+    }
+
+    public List<JavaFxManifestAttribute> getCustomManifestAttributes() {
+      return myCustomManifestAttributes;
+    }
+
+    public void setCustomManifestAttributes(List<JavaFxManifestAttribute> customManifestAttributes) {
+      myCustomManifestAttributes = customManifestAttributes;
     }
   }
 }

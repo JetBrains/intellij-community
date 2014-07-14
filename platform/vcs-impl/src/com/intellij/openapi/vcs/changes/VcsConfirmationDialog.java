@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class VcsConfirmationDialog extends OptionsDialog {
   private final String myMessage;
   private final String myDoNotShowMessage;
 
-  protected VcsConfirmationDialog(Project project, VcsShowConfirmationOption option, String message, String doNotShowMessage) {
+  protected VcsConfirmationDialog(Project project, VcsShowConfirmationOption option, String message, @NotNull String doNotShowMessage) {
     super(project);
     myOption = option;
     myMessage = message;
@@ -68,6 +68,7 @@ public class VcsConfirmationDialog extends OptionsDialog {
     return panel;
   }
 
+  @NotNull
   @Override
   protected String getDoNotShowMessage() {
     return myDoNotShowMessage;

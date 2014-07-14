@@ -15,13 +15,12 @@
  */
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.impl.DebuggerContextUtil;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -38,7 +37,11 @@ public abstract class GotoFrameSourceAction extends DebuggerAction{
     if(project == null) return;
     StackFrameDescriptorImpl stackFrameDescriptor = getStackFrameDescriptor(dataContext);
     if(stackFrameDescriptor != null) {
-      DebuggerContextUtil.setStackFrame(getContextManager(dataContext), stackFrameDescriptor.getFrameProxy());
+      //DebuggerContextUtil.setStackFrame(getContextManager(dataContext), stackFrameDescriptor.getFrameProxy());
+      SourcePosition sourcePosition = stackFrameDescriptor.getSourcePosition();
+      if (sourcePosition != null) {
+        sourcePosition.navigate(true);
+      }
     }
   }
 

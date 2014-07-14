@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,6 +104,9 @@ public class KeywordCompletionTest extends CompletionTestBase {
   void testElse2()               { doTest() }
   void testClassAfterAnnotation(){ doTest() }
   void testClassAfterAnno2()     { doTest() }
+  void testExtends()             { doTest() }
+  void testImplements()          { doTest() }
+  void testAfterNumberLiteral()  { doTest() }
 
   String basePath = TestUtils.testDataPath + 'groovy/oldCompletion/keyword'
 

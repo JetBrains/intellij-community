@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ package com.intellij.vcsUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -38,6 +38,7 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
@@ -294,25 +295,23 @@ public class VcsUtil {
     });
   }
 
-  //  FileDocumentManager has difficulties in loading the content for files
-  //  which are outside the project structure?
-  public static byte[] getFileByteContent(final File file) throws IOException {
-    return ApplicationManager.getApplication().runReadAction(new Computable<byte[]>() {
-      public byte[] compute() {
-        byte[] content;
-        try {
-          content = FileUtil.loadFileBytes(file);
-        }
-        catch (IOException e) {
-          content = null;
-        }
-        return content;
-      }
-    });
+  @Nullable
+  public static byte[] getFileByteContent(@NotNull File file) throws IOException {
+    try {
+      return FileUtil.loadFileBytes(file);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      return null;
+    }
   }
 
   public static FilePath getFilePath(String path) {
     return getFilePath(new File(path));
+  }
+
+  public static FilePath getFilePath(@NotNull VirtualFile file) {
+    return VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
   }
 
   public static FilePath getFilePath(File file) {
@@ -321,6 +320,10 @@ public class VcsUtil {
 
   public static FilePath getFilePath(String path, boolean isDirectory) {
     return getFilePath(new File(path), isDirectory);
+  }
+
+  public static FilePath getFilePathOnNonLocal(String path, boolean isDirectory) {
+    return VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(path, isDirectory);
   }
 
   public static FilePath getFilePath(File file, boolean isDirectory) {
@@ -586,7 +589,7 @@ public class VcsUtil {
     return (! s1Trimmed.equals(s2Trimmed)) && s1Trimmed.equalsIgnoreCase(s2Trimmed);
   }
 
-  private static String ANNO_ASPECT = "show.vcs.annotation.aspect.";
+  private static final String ANNO_ASPECT = "show.vcs.annotation.aspect.";
   //public static boolean isAspectAvailableByDefault(LineAnnotationAspect aspect) {
   //  if (aspect.getId() == null) return aspect.isShowByDefault();
   //  return PropertiesComponent.getInstance().getBoolean(ANNO_ASPECT + aspect.getId(), aspect.isShowByDefault());
@@ -623,17 +626,21 @@ public class VcsUtil {
 
   @NotNull
   public static Collection<VcsDirectoryMapping> findRoots(@NotNull VirtualFile rootDir, @NotNull Project project)
-    throws IllegalArgumentException
-  {
+    throws IllegalArgumentException {
     if (!rootDir.isDirectory()) {
       throw new IllegalArgumentException(
         "Can't find VCS at the target file system path. Reason: expected to find a directory there but it's not. The path: "
         + rootDir.getParent()
       );
     }
+    Collection<VcsRoot> roots = ServiceManager.getService(project, VcsRootDetector.class).detect(rootDir);
     Collection<VcsDirectoryMapping> result = ContainerUtilRt.newArrayList();
-    for (VcsRootFinder finder : VcsRootFinder.EP_NAME.getExtensions(project)) {
-      result.addAll(finder.findRoots(rootDir));
+    for (VcsRoot vcsRoot : roots) {
+      VirtualFile vFile = vcsRoot.getPath();
+      AbstractVcs rootVcs = vcsRoot.getVcs();
+      if (rootVcs != null && vFile != null) {
+        result.add(new VcsDirectoryMapping(vFile.getPath(), rootVcs.getName()));
+      }
     }
     return result;
   }

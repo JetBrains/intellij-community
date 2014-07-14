@@ -16,6 +16,8 @@
 package com.intellij.ui.win;
 
 import com.intellij.idea.StartupUtil;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.util.lang.UrlClassLoader;
 
 import java.lang.ref.WeakReference;
@@ -35,8 +37,7 @@ public class RecentTasks {
 
   private synchronized static void init() {
     if (initialized.get()) return;
-
-    initialize("JetBrains.JetBrainsNativeAppID." + StartupUtil.getAcquiredPort());
+    initialize(ApplicationInfoEx.getInstanceEx().getVersionName() + "." + PathManager.getConfigPath().hashCode());
     initialized.set(true);
   }
 

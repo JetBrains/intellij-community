@@ -18,56 +18,38 @@ package org.zmlx.hg4idea.action;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgMergeCommand;
-import org.zmlx.hg4idea.command.HgTagBranch;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.provider.update.HgConflictResolver;
 import org.zmlx.hg4idea.provider.update.HgHeadMerger;
+import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.ui.HgMergeDialog;
-import org.zmlx.hg4idea.util.HgBranchesAndTags;
-import org.zmlx.hg4idea.util.HgUiUtil;
 
 import java.util.Collection;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgMerge extends HgAbstractGlobalAction {
 
   @Override
   public void execute(@NotNull final Project project,
-                      @NotNull final Collection<VirtualFile> repos,
-                      @Nullable final VirtualFile selectedRepo) {
-    HgUiUtil.loadBranchesInBackgroundableAndExecuteAction(project, repos, new Consumer<HgBranchesAndTags>() {
-
-      @Override
-      public void consume(HgBranchesAndTags info) {
-        showMergeDialogAndExecute(project, repos, selectedRepo, info);
-      }
-    });
-  }
-
-  private void showMergeDialogAndExecute(final Project project,
-                                         Collection<VirtualFile> repos,
-                                         @Nullable VirtualFile selectedRepo, HgBranchesAndTags branchesAndTags) {
-    final HgMergeDialog mergeDialog = new HgMergeDialog(project, repos, selectedRepo, branchesAndTags);
+                      @NotNull final Collection<HgRepository> repos,
+                      @Nullable final HgRepository selectedRepo) {
+    final HgMergeDialog mergeDialog = new HgMergeDialog(project, repos, selectedRepo);
     mergeDialog.show();
     if (mergeDialog.isOK()) {
+      final String targetValue = mergeDialog.getTargetValue();
+      final VirtualFile repoRoot = mergeDialog.getRepository().getRoot();
       new Task.Backgroundable(project, "Merging changes...") {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            executeMerge(mergeDialog, project);
-            markDirtyAndHandleErrors(project, mergeDialog.getRepository());
+            executeMerge(project, repoRoot, targetValue);
+            markDirtyAndHandleErrors(project, repoRoot);
           }
           catch (HgCommandException e) {
             handleException(project, e);
@@ -77,63 +59,25 @@ public class HgMerge extends HgAbstractGlobalAction {
     }
   }
 
-  private static void executeMerge(final HgMergeDialog dialog, final Project project) throws HgCommandException {
+
+  private static void executeMerge(@NotNull final Project project, @NotNull VirtualFile repo, @NotNull String targetValue)
+    throws HgCommandException {
     UpdatedFiles updatedFiles = UpdatedFiles.create();
-    HgCommandResultNotifier notifier = new HgCommandResultNotifier(project);
-    final VirtualFile repo = dialog.getRepository();
 
     HgMergeCommand hgMergeCommand = new HgMergeCommand(project, repo);
+    hgMergeCommand.setRevision(targetValue);
 
-    HgRevisionNumber incomingRevision = null;
-    HgTagBranch branch = dialog.getBranch();
-    if (branch != null) {
-      hgMergeCommand.setBranch(branch.getName());
-      incomingRevision = branch.getHead();
+    try {
+      new HgHeadMerger(project, hgMergeCommand).merge(repo);
+      new HgConflictResolver(project, updatedFiles).resolve(repo);
     }
-
-    HgTagBranch tag = dialog.getTag();
-    if (tag != null) {
-      hgMergeCommand.setRevision(tag.getName());
-      incomingRevision = tag.getHead();
-    }
-
-    HgTagBranch bookmark = dialog.getBookmark();
-    if (bookmark != null) {
-      hgMergeCommand.setRevision(bookmark.getName());
-      incomingRevision = bookmark.getHead();
-    }
-
-    String revision = dialog.getRevision();
-    if (revision != null) {
-      hgMergeCommand.setRevision(revision);
-      incomingRevision = HgRevisionNumber.getLocalInstance(revision);
-    }
-
-    HgRevisionNumber otherHead = dialog.getOtherHead();
-    if (otherHead != null) {
-      String changeset = otherHead.getChangeset();
-      hgMergeCommand.setRevision(StringUtil.isEmptyOrSpaces(changeset) ? otherHead.getRevision() : changeset);
-      incomingRevision = otherHead;
-    }
-
-    if (incomingRevision != null) {
-      try {
-        new HgHeadMerger(project, hgMergeCommand)
-          .merge(repo, updatedFiles, incomingRevision);
-        new HgConflictResolver(project, updatedFiles).resolve(repo);
+    catch (VcsException e) {
+      if (e.isWarning()) {
+        VcsNotifier.getInstance(project).notifyWarning("Warning during merge", e.getMessage());
       }
-      catch (VcsException e) {
-        if (e.isWarning()) {
-          notifier.notifyWarning("Warning during merge", e.getMessage());
-        }
-        else {
-          notifier.notifyError(null, "Exception during merge", e.getMessage());
-        }
+      else {
+        VcsNotifier.getInstance(project).notifyError("Exception during merge", e.getMessage());
       }
-    }
-    else {
-      //noinspection ThrowableInstanceNeverThrown
-      notifier.notifyError(null, "Merge error", HgVcsMessages.message("hg4idea.error.invalidTarget"));
     }
   }
 }

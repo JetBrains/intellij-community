@@ -22,22 +22,25 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.lang.reflect.Field;
 
 public class MultipleCheckboxOptionsPanel extends JPanel {
 
-    private final InspectionProfileEntry owner;
+    private final OptionAccessor myOptionAccessor;
 
-    public MultipleCheckboxOptionsPanel(InspectionProfileEntry owner) {
+    public MultipleCheckboxOptionsPanel(final InspectionProfileEntry owner) {
+        this(new OptionAccessor.Default(owner));
+    }
+
+    public MultipleCheckboxOptionsPanel(final OptionAccessor optionAccessor) {
         super(new GridBagLayout());
-        this.owner = owner;
+        myOptionAccessor = optionAccessor;
     }
 
     public void addCheckbox(String label,
                             @NonNls String property) {
-        final boolean selected = getPropertyValue(owner, property);
+        final boolean selected = myOptionAccessor.getOption(property);
         final JCheckBox checkBox = new JCheckBox(label, selected);
-        configureCheckbox(owner, property, checkBox);
+        configureCheckbox(myOptionAccessor, property, checkBox);
         final GridBagConstraints constraints = new GridBagConstraints();
         constraints.anchor = GridBagConstraints.FIRST_LINE_START;
         constraints.gridx = 0;
@@ -54,59 +57,33 @@ public class MultipleCheckboxOptionsPanel extends JPanel {
         add(checkBox, constraints);
     }
 
-    private static void configureCheckbox(InspectionProfileEntry owner, String property, JCheckBox checkBox) {
+    private static void configureCheckbox(OptionAccessor accessor, String property, JCheckBox checkBox) {
         final ButtonModel model = checkBox.getModel();
-        final CheckboxChangeListener changeListener = new CheckboxChangeListener(owner, property, model);
+        final CheckboxChangeListener changeListener = new CheckboxChangeListener(accessor, property, model);
         model.addChangeListener(changeListener);
     }
 
     public static void initAndConfigureCheckbox(InspectionProfileEntry owner, String property, JCheckBox checkBox) {
-        checkBox.setSelected(getPropertyValue(owner, property));
-        configureCheckbox(owner, property, checkBox);
-    }
-
-    private static boolean getPropertyValue(InspectionProfileEntry owner,
-                                            String property) {
-        try {
-            final Class<? extends InspectionProfileEntry> aClass = owner.getClass();
-            final Field field = aClass.getField(property);
-            return field.getBoolean(owner);
-        } catch (IllegalAccessException ignored) {
-            return false;
-        } catch (NoSuchFieldException ignored) {
-            return false;
-        }
+        OptionAccessor optionAccessor = new OptionAccessor.Default(owner);
+        checkBox.setSelected(optionAccessor.getOption(property));
+        configureCheckbox(optionAccessor, property, checkBox);
     }
 
     private static class CheckboxChangeListener implements ChangeListener {
-        private final InspectionProfileEntry owner;
+        private final OptionAccessor myAccessor;
         private final String property;
         private final ButtonModel model;
 
-        CheckboxChangeListener(InspectionProfileEntry owner, String property,
-                               ButtonModel model) {
-            this.owner = owner;
+        CheckboxChangeListener(OptionAccessor myAccessor, String property, ButtonModel model) {
+            this.myAccessor = myAccessor;
             this.property = property;
             this.model = model;
         }
 
         @Override
         public void stateChanged(ChangeEvent e) {
-            setPropertyValue(owner, property, model.isSelected());
+            myAccessor.setOption(property, model.isSelected());
         }
 
-        private static void setPropertyValue(InspectionProfileEntry owner,
-                                             String property,
-                                             boolean selected) {
-            try {
-                final Class<? extends InspectionProfileEntry> aClass = owner.getClass();
-                final Field field = aClass.getField(property);
-                field.setBoolean(owner, selected);
-            } catch (IllegalAccessException ignored) {
-                // nothing
-            } catch (NoSuchFieldException ignored) {
-                // nothing
-            }
-        }
     }
 }

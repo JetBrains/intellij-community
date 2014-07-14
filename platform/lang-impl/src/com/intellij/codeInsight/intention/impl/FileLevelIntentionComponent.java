@@ -26,12 +26,15 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.LightColors;
+import com.intellij.ui.awt.RelativePoint;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -72,11 +75,11 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
     }
 
     myLabel.setText(description);
-    myLabel.setIcon(SeverityRegistrar.getSeverityRegistrar(project).compare(severity, HighlightSeverity.ERROR) >= 0 ? AllIcons.Actions.QuickfixBulb : AllIcons.Actions.IntentionBulb);
+    myGearLabel.setIcon(AllIcons.General.Gear);
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         IntentionListStep step = new IntentionListStep(null, info, editor, psiFile, project);
         if (intentions != null && !intentions.isEmpty()) {
           HighlightInfo.IntentionActionDescriptor descriptor = intentions.get(0).getFirst();
@@ -85,10 +88,13 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
             step = step.getSubStep(actionWithTextCaching, null);
           }
         }
-        JBPopupFactory.getInstance().createListPopup(step).showUnderneathOf(myLabel);
+        ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
+        Dimension dimension = popup.getContent().getPreferredSize();
+        Point at = new Point(-dimension.width + myGearLabel.getWidth(), FileLevelIntentionComponent.this.getHeight());
+        popup.show(new RelativePoint(e.getComponent(), at));
         return true;
       }
-    }.installOn(myLabel);
+    }.installOn(myGearLabel);
   }
 
   @Override

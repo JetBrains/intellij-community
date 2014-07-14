@@ -203,6 +203,8 @@ public class SmartFMap<K,V> implements Map<K,V> {
   @NotNull
   @Override
   public Set<K> keySet() {
+    if (isEmpty()) return Collections.emptySet();
+    
     LinkedHashSet<K> result = new LinkedHashSet<K>();
     for (Entry<K, V> entry : entrySet()) {
       result.add(entry.getKey());
@@ -213,6 +215,8 @@ public class SmartFMap<K,V> implements Map<K,V> {
   @NotNull
   @Override
   public Collection<V> values() {
+    if (isEmpty()) return Collections.emptyList();
+    
     ArrayList<V> result = new ArrayList<V>();
     for (Entry<K, V> entry : entrySet()) {
       result.add(entry.getValue());
@@ -242,6 +246,8 @@ public class SmartFMap<K,V> implements Map<K,V> {
   @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
+    if (isEmpty()) return Collections.emptySet();
+    
     LinkedHashSet<Entry<K, V>> set = new LinkedHashSet<Entry<K, V>>();
     if (myMap instanceof Map) {
       for (Entry<K, V> entry : ((Map<K, V>)myMap).entrySet()) {

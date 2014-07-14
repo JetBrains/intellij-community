@@ -18,6 +18,7 @@ package com.siyeh.ipp.commutative;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -81,6 +82,6 @@ public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention {
       callString = strippedArg.getText() + '.' + methodName + '(' +
                    strippedTarget.getText() + ')';
     }
-    replaceExpression(callString, call);
+    PsiReplacementUtil.replaceExpression(call, callString);
   }
 }

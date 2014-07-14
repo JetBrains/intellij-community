@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,13 @@
  */
 package com.siyeh.ig.methodmetrics;
 
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.util.ui.FormBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -26,15 +29,8 @@ public class ParametersPerConstructorInspection extends ParametersPerConstructor
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel();
-    final JLabel textFieldLabel = new JLabel(getConfigurationLabel());
     final JFormattedTextField valueField = prepareNumberEditor("m_limit");
-    final JLabel comboBoxLabel = new JLabel(InspectionGadgetsBundle.message("constructor.visibility.option"));
-    final JComboBox comboBox = new JComboBox();
-    comboBox.addItem(Scope.NONE);
-    comboBox.addItem(Scope.PRIVATE);
-    comboBox.addItem(Scope.PACKAGE_LOCAL);
-    comboBox.addItem(Scope.PROTECTED);
+    final JComboBox comboBox = new ComboBox(new Object[] {Scope.NONE, Scope.PRIVATE, Scope.PACKAGE_LOCAL, Scope.PROTECTED});
     comboBox.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
@@ -50,25 +46,11 @@ public class ParametersPerConstructorInspection extends ParametersPerConstructor
     });
     comboBox.setPrototypeDisplayValue(Scope.PROTECTED);
 
-    final GroupLayout layout = new GroupLayout(panel);
-    layout.setAutoCreateGaps(true);
-    panel.setLayout(layout);
-    final GroupLayout.ParallelGroup horizontal = layout.createParallelGroup();
-    horizontal.addGroup(layout.createSequentialGroup()
-                      .addComponent(textFieldLabel)
-                      .addComponent(valueField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE));
-    horizontal.addGroup(layout.createSequentialGroup()
-                      .addComponent(comboBoxLabel).addComponent(comboBox, 100, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE));
-    layout.setHorizontalGroup(horizontal);
-    final GroupLayout.SequentialGroup vertical = layout.createSequentialGroup();
-    vertical.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                      .addComponent(textFieldLabel)
-                      .addComponent(valueField));
-    vertical.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                      .addComponent(comboBoxLabel)
-                      .addComponent(comboBox));
-    layout.setVerticalGroup(vertical);
-
+    final FormBuilder formBuilder = FormBuilder.createFormBuilder();
+    formBuilder.addLabeledComponent(getConfigurationLabel(), valueField);
+    formBuilder.addLabeledComponent(InspectionGadgetsBundle.message("constructor.visibility.option"), comboBox);
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.add(formBuilder.getPanel(), BorderLayout.NORTH);
     return panel;
   }
 }

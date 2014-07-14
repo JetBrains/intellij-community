@@ -1,0 +1,52 @@
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <name>Coverage</name>
+  <depends optional="true" config-file="testng-integration.xml">TestNG-J</depends>
+  <depends optional="true" config-file="junit-integration.xml">JUnit</depends>
+  <depends>com.intellij.modules.java</depends>
+  <description>
+      <![CDATA[
+     This plugin supports gathering coverage information and presenting it right in
+     the editor and in the Project view.
+        The following features are available:
+        <ul>
+        <li>Coverage tab in the run/debug configurations.</li>
+        <li>Run with coverage command.</li>
+        <li>Ability to generate standalone HTML reports for external use.</li>
+        </ul>
+      ]]>
+   </description>
+  <vendor>JetBrains</vendor>
+
+  <xi:include href="/META-INF/coverage-common-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <extensions defaultExtensionNs="com.intellij">
+    <runConfigurationExtension implementation="com.intellij.execution.coverage.CoverageJavaRunConfigurationExtension"/>
+    <!--<coverageRunner implementation="com.intellij.coverage.CoberturaCoverageRunner"/>-->
+    <coverageRunner implementation="com.intellij.coverage.IDEACoverageRunner"/>
+    <coverageRunner implementation="com.intellij.coverage.JaCoCoCoverageRunner"/>
+    <coverageEngine implementation="com.intellij.coverage.JavaCoverageEngine" order = "last"/>
+    <projectViewNodeDecorator implementation="com.intellij.coverage.CoverageProjectViewClassNodeDecorator"/>
+
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <projectService serviceInterface="com.intellij.coverage.JavaCoverageAnnotator"
+                    serviceImplementation="com.intellij.coverage.JavaCoverageAnnotator"/>
+    <programRunner implementation="com.intellij.coverage.DefaultJavaCoverageRunner"/>
+    <selectInTarget implementation="com.intellij.coverage.view.SelectInCoverageView"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.javaCoverageEngineExtension" interface="com.intellij.coverage.JavaCoverageEngineExtension"/>
+  </extensionPoints>
+  <project-components>
+    <component>
+      <interface-class>com.intellij.coverage.CoverageDataManager</interface-class>
+      <implementation-class>com.intellij.coverage.CoveragePluginDataManagerImpl</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>    
+  </project-components>
+  <actions>
+    <group id="IDEACoverageMenu" popup="false">
+      <reference ref="CoverageMenu"/>
+      <add-to-group group-id="AnalyzeMenu" anchor="before" relative-to-action="AnalyzeActions"/>
+    </group>
+  </actions>
+</idea-plugin>

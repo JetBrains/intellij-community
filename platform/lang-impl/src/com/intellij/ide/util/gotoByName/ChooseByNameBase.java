@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,10 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.actions.GotoFileAction;
+import com.intellij.ide.actions.WindowAction;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -60,6 +63,7 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
@@ -82,7 +86,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
@@ -157,6 +160,7 @@ public abstract class ChooseByNameBase {
   protected boolean myInitIsDone;
   static final boolean ourLoadNamesEachTime = FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
   private boolean myFixLostTyping = true;
+  private boolean myAlwaysHasMore = false;
 
   public boolean checkDisposed() {
     if (myDisposedFlag && myPostponedOkAction != null && !myPostponedOkAction.isProcessed()) {
@@ -188,12 +192,15 @@ public abstract class ChooseByNameBase {
   }
 
   @SuppressWarnings("UnusedDeclaration") // Used in MPS
-  protected ChooseByNameBase(Project project, @NotNull ChooseByNameModel model, @NotNull ChooseByNameItemProvider provider, String initialText) {
+  protected ChooseByNameBase(Project project,
+                             @NotNull ChooseByNameModel model,
+                             @NotNull ChooseByNameItemProvider provider,
+                             String initialText) {
     this(project, model, provider, initialText, 0);
   }
 
   /**
-   * @param initialText  initial text which will be in the lookup text field
+   * @param initialText initial text which will be in the lookup text field
    */
   protected ChooseByNameBase(Project project,
                              @NotNull ChooseByNameModel model,
@@ -631,7 +638,7 @@ public abstract class ChooseByNameBase {
                             ListSelectionModel.SINGLE_SELECTION);
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (!myTextField.hasFocus()) {
           myTextField.requestFocus();
         }
@@ -882,6 +889,12 @@ public abstract class ChooseByNameBase {
       }
     });
     myTextPopup.show(layeredPane);
+    if (myTextPopup instanceof AbstractPopup) {
+      Window window = ((AbstractPopup)myTextPopup).getPopupWindow();
+      if (window instanceof JDialog) {
+        ((JDialog)window).getRootPane().putClientProperty(WindowAction.NO_WINDOW_ACTIONS, Boolean.TRUE);
+      }
+    }
   }
 
   private JLayeredPane getLayeredPane() {
@@ -944,7 +957,7 @@ public abstract class ChooseByNameBase {
     final Runnable request = new Runnable() {
       @Override
       public void run() {
-        scheduleCalcElements(text, myCheckBox.isSelected(), postRunnable == null, modalityState, new Consumer<Set<?>>() {
+        scheduleCalcElements(text, myCheckBox.isSelected(), modalityState, new Consumer<Set<?>>() {
           @Override
           public void consume(Set<?> elements) {
             synchronized (myRebuildMutex) {
@@ -981,10 +994,9 @@ public abstract class ChooseByNameBase {
 
   public void scheduleCalcElements(String text,
                                    boolean checkboxState,
-                                   boolean canCancel,
                                    ModalityState modalityState,
                                    Consumer<Set<?>> callback) {
-    scheduleCalcElements(new CalcElementsThread(text, checkboxState, callback, modalityState, canCancel, false));
+    scheduleCalcElements(new CalcElementsThread(text, checkboxState, callback, modalityState, false));
   }
 
   private void scheduleCalcElements(final CalcElementsThread thread) {
@@ -1231,6 +1243,10 @@ public abstract class ChooseByNameBase {
 
     private MyTextField() {
       super(40);
+      if (!(getUI() instanceof DarculaTextFieldUI)) {
+        setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(this));
+      }
+      setBorder(new DarculaTextBorder());
       enableEvents(AWTEvent.KEY_EVENT_MASK);
       myCompletionKeyStroke = getShortcut(IdeActions.ACTION_CODE_COMPLETION);
       forwardStroke = getShortcut(IdeActions.ACTION_GOTO_FORWARD);
@@ -1246,18 +1262,6 @@ public abstract class ChooseByNameBase {
           }
         }
       });
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension size = super.getPreferredSize();
-      Border border = super.getBorder();
-      if (border != null && UIUtil.isUnderAquaLookAndFeel()) {
-        Insets insets = border.getBorderInsets(this);
-        size.height += insets.top + insets.bottom;
-        size.width += insets.left + insets.right;
-      }
-      return size;
     }
 
     @Nullable
@@ -1329,12 +1333,20 @@ public abstract class ChooseByNameBase {
         }
         return;
       }
+      int position = myTextField.getCaretPosition();
+      int code = keyStroke.getKeyCode();
+      int modifiers = keyStroke.getModifiers();
       try {
         super.processKeyEvent(e);
       }
       catch (NullPointerException e1) {
         if (!Patches.SUN_BUG_ID_6322854) {
           throw e1;
+        }
+      }
+      finally {
+        if ((code == KeyEvent.VK_UP || code == KeyEvent.VK_DOWN) && modifiers == 0) {
+          myTextField.setCaretPosition(position);
         }
       }
     }
@@ -1454,7 +1466,7 @@ public abstract class ChooseByNameBase {
     return false;
   }
 
-  private static final String EXTRA_ELEM = "...";
+  public static final String EXTRA_ELEM = "...";
   public static final String NON_PREFIX_SEPARATOR = "non-prefix matches:";
 
   public static Component renderNonPrefixSeparatorComponent(Color backgroundColor) {
@@ -1476,25 +1488,23 @@ public abstract class ChooseByNameBase {
     private final ModalityState myModalityState;
 
     private final ProgressIndicator myCancelled = new ProgressIndicatorBase();
-    private final boolean myCanCancel;
 
     CalcElementsThread(String pattern,
                        boolean checkboxState,
                        Consumer<Set<?>> callback,
                        @NotNull ModalityState modalityState,
-                       boolean canCancel, boolean scopeExpanded) {
+                       boolean scopeExpanded) {
       myPattern = pattern;
       myCheckboxState = checkboxState;
       myCallback = callback;
       myModalityState = modalityState;
-      myCanCancel = canCancel;
       myScopeExpanded = scopeExpanded;
     }
 
     private final Alarm myShowCardAlarm = new Alarm();
 
     private void scheduleRestart() {
-      scheduleCalcElements(new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState, myCanCancel, myScopeExpanded));
+      scheduleCalcElements(new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState, myScopeExpanded));
     }
 
     @Override
@@ -1549,13 +1559,13 @@ public abstract class ChooseByNameBase {
           final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : myScopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
           showCard(cardToShow, 0);
 
-          final Set<Object> filtered = filter(elements);
-
+          final boolean edt = myModel instanceof EdtSortingModel;
+          final Set<Object> filtered = !edt ? filter(elements) : Collections.emptySet();
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
               if (!myCancelled.isCanceled()) {
-                myCallback.consume(filtered);
+                myCallback.consume(edt ? filter(elements) : filtered);
               }
             }
           }, myModalityState);
@@ -1586,6 +1596,9 @@ public abstract class ChooseByNameBase {
           }
         }
       );
+      if (myAlwaysHasMore) {
+        elements.add(EXTRA_ELEM);
+      }
       if (ContributorsBasedGotoByModel.LOG.isDebugEnabled()) {
         long end = System.currentTimeMillis();
         ContributorsBasedGotoByModel.LOG.debug("addElementsByPattern("+pattern+"): "+(end-start)+"ms; "+elements.size()+" elements");
@@ -1610,9 +1623,7 @@ public abstract class ChooseByNameBase {
     }
 
     private void cancel() {
-      if (myCanCancel) {
-        myCancelled.cancel();
-      }
+      myCancelled.cancel();
     }
 
   }
@@ -1647,6 +1658,19 @@ public abstract class ChooseByNameBase {
 
   public void setListSizeIncreasing(final int listSizeIncreasing) {
     myListSizeIncreasing = listSizeIncreasing;
+  }
+
+  public boolean isAlwaysHasMore() {
+    return myAlwaysHasMore;
+  }
+
+  /**
+   * Display <tt>...</tt> item at the end of the list regardless of whether it was filled up or not.
+   * This option can be useful in cases, when it can't be said beforehand, that the next call to {@link ChooseByNameItemProvider}
+   * won't give new items.
+   */
+  public void setAlwaysHasMore(boolean enabled) {
+    myAlwaysHasMore = enabled;
   }
 
   private static final String ACTION_NAME = "Show All in View";
@@ -1692,13 +1716,13 @@ public abstract class ChooseByNameBase {
               @Override
               public void run() {
                 final boolean[] overFlow = {false};
-                myCalcElementsThread = new CalcElementsThread(text, everywhere, null, ModalityState.NON_MODAL, true, false) {
+                myCalcElementsThread = new CalcElementsThread(text, everywhere, null, ModalityState.NON_MODAL, false) {
                   private final AtomicBoolean userAskedToAbort = new AtomicBoolean();
                   @Override
                   protected boolean isOverflow(@NotNull Set<Object> elementsArray) {
                     if (elementsArray.size() > UsageLimitUtil.USAGES_LIMIT - myMaximumListSizeLimit && !userAskedToAbort.getAndSet(true)) {
                       final UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(myProject, UsageViewBundle
-                        .message("find.excessive.usage.count.prompt", elementsArray.size() + myMaximumListSizeLimit));
+                        .message("find.excessive.usage.count.prompt", elementsArray.size() + myMaximumListSizeLimit, StringUtil.pluralize(presentation.getUsagesWord())), presentation);
                       if (ret == UsageLimitUtil.Result.ABORT) {
                         overFlow[0] = true;
                         return true;
@@ -1783,5 +1807,9 @@ public abstract class ChooseByNameBase {
     }
 
     public abstract Object[][] getElements();
+  }
+
+  public JTextField getTextField() {
+    return myTextField;
   }
 }

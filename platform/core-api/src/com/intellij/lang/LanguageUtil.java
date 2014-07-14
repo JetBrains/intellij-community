@@ -18,6 +18,7 @@ package com.intellij.lang;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.util.Condition;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 public final class LanguageUtil {
   private LanguageUtil() {
@@ -89,5 +91,20 @@ public final class LanguageUtil {
       return false;
     }
     return true;
+  }
+
+  @NotNull
+  public static Language getRootLanguage(@NotNull PsiElement element) {
+    final FileViewProvider provider = element.getContainingFile().getViewProvider();
+    final Set<Language> languages = provider.getLanguages();
+    if (languages.size() > 1) {
+      PsiElement current = element;
+      while (current != null) {
+        final Language language = current.getLanguage();
+        if (languages.contains(language)) return language;
+        current = current.getParent();
+      }
+    }
+    return provider.getBaseLanguage();
   }
 }

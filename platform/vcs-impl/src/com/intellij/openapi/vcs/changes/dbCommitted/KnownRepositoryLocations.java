@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.dbCommitted;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.util.containers.MultiMap;
 
 import java.util.*;
@@ -31,19 +31,14 @@ public class KnownRepositoryLocations {
 
   private final Map<String, Long> myJustVcs;
   private final MultiMap<String, String> myMap;
-  private final Map<Pair<String, String>, Long> myLocations;
+  private final Map<Couple<String>, Long> myLocations;
   private final Map<Long, RevisionId> myLastRevision;
   private final Map<Long, RevisionId> myFirstRevision;
   private final Map<String, Long> myAuthors;
 
   public KnownRepositoryLocations() {
-    myMap = new MultiMap<String, String>() {
-      @Override
-      protected Collection<String> createCollection() {
-        return new HashSet<String>();
-      }
-    };
-    myLocations = new HashMap<Pair<String, String>, Long>();
+    myMap = MultiMap.createSet();
+    myLocations = new HashMap<Couple<String>, Long>();
     myLastRevision = new HashMap<Long, RevisionId>();
     myFirstRevision = new HashMap<Long, RevisionId>();
     myJustVcs = new HashMap<String, Long>();
@@ -111,7 +106,7 @@ public class KnownRepositoryLocations {
 
   public long getLocationId(final String key, final String path) {
     synchronized (myMap) {
-      final Long id = myLocations.get(new Pair<String, String>(key, path));
+      final Long id = myLocations.get(Couple.of(key, path));
       assert  id != null;
       return id;
     }
@@ -120,7 +115,7 @@ public class KnownRepositoryLocations {
   public void add(final String key, final String path, final long id) {
     synchronized (myMap) {
       myMap.putValue(key, path);
-      myLocations.put(new Pair<String, String>(key, path), id);
+      myLocations.put(Couple.of(key, path), id);
     }
   }
 

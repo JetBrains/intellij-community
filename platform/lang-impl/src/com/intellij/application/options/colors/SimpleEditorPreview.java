@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,14 @@ package com.intellij.application.options.colors;
 import com.intellij.application.options.colors.highlighting.HighlightData;
 import com.intellij.application.options.colors.highlighting.HighlightsExtractor;
 import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.event.CaretAdapter;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -41,10 +45,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Map;
+import java.util.*;
 import java.util.List;
 
 public class SimpleEditorPreview implements PreviewPanel{
@@ -80,7 +81,7 @@ public class SimpleEditorPreview implements PreviewPanel{
     if (navigatable) {
       addMouseMotionListener(myEditor, page.getHighlighter(), myHighlightData, false);
 
-      CaretListener listener = new CaretListener() {
+      CaretListener listener = new CaretAdapter() {
         @Override
         public void caretPositionChanged(CaretEvent e) {
           navigate(myEditor, true, e.getNewPosition(), page.getHighlighter(), myHighlightData, false);
@@ -88,6 +89,10 @@ public class SimpleEditorPreview implements PreviewPanel{
       };
       myEditor.getCaretModel().addCaretListener(listener);
     }
+  }
+
+  public EditorEx getEditor() {
+    return myEditor;
   }
 
   private void addMouseMotionListener(final Editor view,
@@ -132,12 +137,7 @@ public class SimpleEditorPreview implements PreviewPanel{
     if (highlighter != null) {
       HighlighterIterator itr = ((EditorEx)editor).getHighlighter().createIterator(offset);
       selectItem(itr, highlighter, select);
-      if (!select) {
-        ClickNavigator.setCursor(editor, Cursor.HAND_CURSOR);
-      }
-      else {
-        ClickNavigator.setCursor(editor, Cursor.TEXT_CURSOR);
-      }
+      ClickNavigator.setCursor(editor, select ? Cursor.TEXT_CURSOR : Cursor.HAND_CURSOR);
     }
   }
 
@@ -200,7 +200,7 @@ public class SimpleEditorPreview implements PreviewPanel{
       String type = ((EditorSchemeAttributeDescriptor)description).getType();
 
       List<HighlightData> highlights = startBlinkingHighlights(myEditor,
-                                                                         myHighlightData, type,
+                                                               myHighlightData, type,
                                                                myPage.getHighlighter(), true,
                                                                myBlinkingAlarm, BLINK_COUNT, myPage);
 
@@ -227,7 +227,7 @@ public class SimpleEditorPreview implements PreviewPanel{
   private static boolean isOffsetVisible(final Editor editor, final int startOffset) {
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
     Point point = editor.logicalPositionToXY(editor.offsetToLogicalPosition(startOffset));
-    return point.y >= visibleArea.y && point.y < visibleArea.x + visibleArea.height;
+    return point.y >= visibleArea.y && point.y < (visibleArea.y + visibleArea.height);
   }
 
   private void stopBlinking() {

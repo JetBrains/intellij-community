@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-public class SurroundWithTryCatchTest extends LightQuickFixTestCase {
+public class SurroundWithTryCatchTest extends LightQuickFixParameterizedTestCase {
   public void test() throws Exception {
     doAllTests();
   }

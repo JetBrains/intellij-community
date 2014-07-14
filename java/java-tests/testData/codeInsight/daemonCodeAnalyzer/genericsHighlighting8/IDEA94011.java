@@ -10,7 +10,7 @@ class Test {
 
     public void test(Set<MyConsumer> set) {
         @SuppressWarnings("unchecked")
-        Map<Parent, MyConsumer<Parent>> map = <error descr="Inferred type 'T' for type parameter 'T' is not within its bound; should implement 'Test.Consumer<Test.Parent>'">create(set)</error>;
+        Map<Parent, MyConsumer<Parent>> map = create<error descr="'create(java.util.Set<T>)' in 'Test' cannot be applied to '(java.util.Set<Test.MyConsumer>)'">(set)</error>;
 
     }
 

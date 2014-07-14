@@ -17,7 +17,7 @@ package org.jetbrains.plugins.github.extensions;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.AuthData;
-import git4idea.jgit.GitHttpAuthDataProvider;
+import git4idea.remote.GitHttpAuthDataProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.util.GithubAuthData;
@@ -37,6 +37,9 @@ public class GithubHttpAuthDataProvider implements GitHttpAuthDataProvider {
     }
 
     GithubSettings settings = GithubSettings.getInstance();
+    if (!settings.isValidGitAuth()) {
+      return null;
+    }
 
     String host1 = GithubUrlUtil.getHostFromUrl(settings.getHost());
     String host2 = GithubUrlUtil.getHostFromUrl(url);
@@ -65,4 +68,8 @@ public class GithubHttpAuthDataProvider implements GitHttpAuthDataProvider {
     }
   }
 
+  @Override
+  public void forgetPassword(@NotNull String url) {
+    GithubSettings.getInstance().setValidGitAuth(false);
+  }
 }

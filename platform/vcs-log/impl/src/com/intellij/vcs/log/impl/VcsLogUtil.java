@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,16 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.graph.GraphFacade;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
-/**
- * @author Kirill Likhodedov
- */
 public class VcsLogUtil {
   @NotNull
   public static MultiMap<VirtualFile, VcsRef> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
     MultiMap<VirtualFile, VcsRef> map = new MultiMap<VirtualFile, VcsRef>() {
+      @NotNull
       @Override
       protected Map<VirtualFile, Collection<VcsRef>> createMap() {
         return new TreeMap<VirtualFile, Collection<VcsRef>>(new Comparator<VirtualFile>() { // TODO common to VCS root sorting method
@@ -47,4 +43,20 @@ public class VcsLogUtil {
     }
     return map;
   }
+
+  @NotNull
+  public static List<Integer> getVisibleCommits(@NotNull final GraphFacade facade) {
+    return new AbstractList<Integer>() {
+      @Override
+      public Integer get(int index) {
+        return facade.getCommitAtRow(index);
+      }
+
+      @Override
+      public int size() {
+        return facade.getVisibleCommitCount();
+      }
+    };
+  }
+
 }

@@ -20,6 +20,7 @@ import com.google.common.collect.Collections2;
 import com.intellij.dvcs.test.MockVcsHelper;
 import com.intellij.dvcs.test.MockVirtualFile;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.changes.Change;
@@ -39,7 +40,6 @@ import cucumber.annotation.en.Then;
 import cucumber.annotation.en.When;
 import git4idea.cherrypick.GitCherryPicker;
 import git4idea.config.GitVersionSpecialty;
-import git4idea.log.GitContentRevisionFactory;
 
 import java.util.*;
 
@@ -160,10 +160,9 @@ public class GitCherryPickStepdefs {
   public void git_log_should_return(int commitNum, String messages) throws Throwable {
     List<String> expectedMessages = Arrays.asList(messages.split("-----"));
 
-
     final String RECORD_SEPARATOR = "@";
     boolean fullBody = GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(myVcs.getVersion());
-    String data= fullBody ? "%B" : "%s%b";
+    String data = fullBody ? "%B" : "%s%b";
     String output = git("log -%s --pretty=%s%s", String.valueOf(commitNum), data, RECORD_SEPARATOR);
     List<String> actualMessages = Arrays.asList(output.split(RECORD_SEPARATOR));
 
@@ -171,8 +170,8 @@ public class GitCherryPickStepdefs {
       String expectedMessage = StringUtil.convertLineSeparators(expectedMessages.get(i).trim());
       String actualMessage = StringUtil.convertLineSeparators(actualMessages.get(i).trim());
       if (!fullBody) {
-        // the subject (%s) somehow contains both "fix #1" and "cherry-picked from <hash>" in a single line
-        // which is probably Git misbehavior, so let's compare without taking line breaks and spaces into consideration
+        // the subject (%s) contains both "fix #1" and "cherry-picked from <hash>" in a single line
+        // so let's compare without taking line breaks and spaces into consideration
         expectedMessage = expectedMessage.replace("\n", "").replace(" ", "");
         actualMessage = actualMessage.replace("\n", "").replace(" ", "");
       }
@@ -260,11 +259,17 @@ public class GitCherryPickStepdefs {
   }
 
   private static VcsFullCommitDetails mockCommit(String hash, String message) {
-    List<Change> changes = new ArrayList<Change>();
+    final List<Change> changes = new ArrayList<Change>();
     changes.add(new Change(null, new MockContentRevision(new FilePathImpl(new MockVirtualFile("name")), VcsRevisionNumber.NULL)));
     return ServiceManager.getService(myProject, VcsLogObjectsFactory.class).createFullDetails(
       HashImpl.build(hash), Collections.<Hash>emptyList(), 0, NullVirtualFile.INSTANCE, message, "John Smith", "john@mail.com", message,
-      "John Smith", "john@mail.com", 0, changes, GitContentRevisionFactory.getInstance(myProject));
+      "John Smith", "john@mail.com", 0, new ThrowableComputable<Collection<Change>, Exception>() {
+        @Override
+        public Collection<Change> compute() throws Exception {
+          return changes;
+        }
+      }
+    );
   }
 
 }

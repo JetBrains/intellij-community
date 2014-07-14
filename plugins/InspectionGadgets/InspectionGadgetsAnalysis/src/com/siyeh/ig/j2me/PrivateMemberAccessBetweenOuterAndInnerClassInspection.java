@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,11 +59,6 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
     final PsiMember member = (PsiMember)infos[1];
     @NonNls final String memberName;
     if (member instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)member;
-      if (method.isConstructor()) {
-
-      }
-
       memberName = member.getName() + "()";
     }
     else {
@@ -168,10 +163,10 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new PrivateMemberAccessFromInnerClassVisior();
+    return new PrivateMemberAccessFromInnerClassVisitor();
   }
 
-  private static class PrivateMemberAccessFromInnerClassVisior
+  private static class PrivateMemberAccessFromInnerClassVisitor
     extends BaseInspectionVisitor {
 
     @Override
@@ -225,9 +220,6 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
         return;
       }
       super.visitReferenceExpression(expression);
-      if (expression.getQualifierExpression() == null) {
-        return;
-      }
       final PsiElement referenceNameElement =
         expression.getReferenceNameElement();
       if (referenceNameElement == null) {
@@ -246,12 +238,9 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
       if (!member.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
-      final PsiClass memberClass =
-        ClassUtils.getContainingClass(member);
-      if (memberClass == null) {
-        return;
-      }
-      if (memberClass.equals(containingClass)) {
+      final PsiClass memberClass = ClassUtils.getContainingClass(member);
+      if (memberClass == null || memberClass.equals(containingClass) ||
+          (!PsiTreeUtil.isAncestor(containingClass, memberClass, true) && !PsiTreeUtil.isAncestor(memberClass, containingClass, true))) {
         return;
       }
       registerError(referenceNameElement, memberClass, member);
@@ -259,14 +248,11 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
 
     @Nullable
     private static PsiClass getContainingContextClass(PsiElement element) {
-      final PsiClass aClass =
-        ClassUtils.getContainingClass(element);
+      final PsiClass aClass = ClassUtils.getContainingClass(element);
       if (aClass instanceof PsiAnonymousClass) {
-        final PsiAnonymousClass anonymousClass =
-          (PsiAnonymousClass)aClass;
-        final PsiExpressionList args = anonymousClass.getArgumentList();
-        if (args != null &&
-            PsiTreeUtil.isAncestor(args, element, true)) {
+        final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)aClass;
+        final PsiExpressionList arguments = anonymousClass.getArgumentList();
+        if (arguments != null && PsiTreeUtil.isAncestor(arguments, element, true)) {
           return ClassUtils.getContainingClass(aClass);
         }
       }

@@ -20,7 +20,6 @@
  */
 package org.jetbrains.idea.eclipse;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
@@ -70,7 +69,7 @@ public abstract class Eclipse2ModulesTest extends IdeaTestCase {
 
   protected void doTest(final String workspaceRoot, final String projectRoot) throws Exception {
     final VirtualFile file =
-      WriteCommandAction.runWriteCommandAction(new Computable<VirtualFile>() {
+      WriteCommandAction.runWriteCommandAction(null, new Computable<VirtualFile>() {
         @Override
         @Nullable
         public VirtualFile compute() {

@@ -9,7 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="analysis-api" exported="" />
     <orderEntry type="module" module-name="core-api" />
-    <orderEntry type="module" module-name="core-impl" />
+    <orderEntry type="module" module-name="core-impl" exported="" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="extensions" />
     <orderEntry type="module" module-name="resources-en" />

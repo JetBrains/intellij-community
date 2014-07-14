@@ -284,7 +284,8 @@ public class StatisticsPanel implements DataProvider {
       public void run() {
         final int rowIndex = myTableModel.getIndexOf(proxy);
         if (rowIndex >= 0) {
-          myStatisticsTableView.setRowSelectionInterval(rowIndex, rowIndex);
+          final int rowIndexToView = myStatisticsTableView.convertRowIndexToView(rowIndex);
+          myStatisticsTableView.setRowSelectionInterval(rowIndexToView, rowIndexToView);
         }
       }
     });

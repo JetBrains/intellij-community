@@ -29,6 +29,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -928,8 +929,14 @@ public class MavenUtil {
   }
 
   public static String getArtifactName(String packaging, Module module, boolean exploded) {
-    final String baseName = module.getName() + ":" + packaging;
-    return exploded ? baseName + " exploded" : baseName;
+    return module.getName() + ":" + packaging + (exploded ? " exploded" : "");
   }
 
+  public static String getEjbClientArtifactName(Module module) {
+    return module.getName() + ":ejb-client";
+  }
+
+  public static String getIdeaVersionToPassToMavenProcess() {
+    return ApplicationInfoImpl.getShadowInstance().getMajorVersion() + "." + ApplicationInfoImpl.getShadowInstance().getMinorVersion();
+  }
 }

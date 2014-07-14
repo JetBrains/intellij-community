@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,25 +130,11 @@ class EditorPosition implements Cloneable {
   }
 
   /**
-   * Calculates width in columns for the collapsed symbols of the given fold region and delegates further processing
-   * to {@link #advance(FoldRegion, int)}.
-   *
-   * @param foldRegion    fold region which end offset should be pointed by the current position
-   */
-  public void advance(@NotNull FoldRegion foldRegion) {
-    Document document = myEditor.getDocument();
-    int collapsedSymbolsWidthInColumns = myRepresentationHelper.toVisualColumnSymbolsNumber(
-      document.getCharsSequence(), foldRegion.getStartOffset(), foldRegion.getEndOffset(), x
-    );
-    advance(foldRegion, collapsedSymbolsWidthInColumns);
-  }
-
-  /**
    * Updates state of the current processing position in order to point it to the end offset of the given fold region.
    *
    * @param foldRegion                        fold region which end offset should be pointed by the current position
    * @param collapsedSymbolsWidthInColumns    identifies collapsed text width in columns, i.e. width of the last collapsed logical line
-   *                                          in columns
+   *                                          in columns, negative value, if it's unknown and needs to be calculated
    */
   public void advance(@NotNull FoldRegion foldRegion, int collapsedSymbolsWidthInColumns) {
     // We assume that fold region placeholder contains only 'simple' symbols, i.e. symbols that occupy single visual column.
@@ -161,11 +147,23 @@ class EditorPosition implements Cloneable {
     int endOffsetLogicalLine = document.getLineNumber(foldRegion.getEndOffset());
     if (logicalLine == endOffsetLogicalLine) {
       // Single-line fold region.
+      if (collapsedSymbolsWidthInColumns < 0) {
+        collapsedSymbolsWidthInColumns = myRepresentationHelper.toVisualColumnSymbolsNumber(document.getCharsSequence(),
+                                                                                            foldRegion.getStartOffset(),
+                                                                                            foldRegion.getEndOffset(),
+                                                                                            x);
+      }
       logicalColumn += collapsedSymbolsWidthInColumns;
       foldingColumnDiff += placeholder.length() - collapsedSymbolsWidthInColumns;
     }
     else {
       // Multi-line fold region.
+      if (collapsedSymbolsWidthInColumns < 0) {
+        collapsedSymbolsWidthInColumns = myRepresentationHelper.toVisualColumnSymbolsNumber(document.getCharsSequence(),
+                                                                                            foldRegion.getStartOffset(),
+                                                                                            foldRegion.getEndOffset(),
+                                                                                            0);
+      }
       int linesDiff = endOffsetLogicalLine - logicalLine;
       logicalLine += linesDiff;
       foldedLines += linesDiff;

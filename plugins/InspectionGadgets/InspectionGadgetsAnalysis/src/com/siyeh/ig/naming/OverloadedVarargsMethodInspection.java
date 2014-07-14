@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Bas Leijdekkers
+ * Copyright 2006-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,10 +64,11 @@ public class OverloadedVarargsMethodInspection extends BaseInspection {
       }
       final String methodName = method.getName();
       final PsiMethod[] sameNameMethods =
-        aClass.findMethodsByName(methodName, false);
+        aClass.findMethodsByName(methodName, true);
       for (PsiMethod sameNameMethod : sameNameMethods) {
         if (!sameNameMethod.equals(method)) {
           registerMethodError(method, method);
+          return;
         }
       }
     }

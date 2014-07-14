@@ -43,7 +43,6 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   public static final Comparator<XValueNodeImpl> COMPARATOR = new Comparator<XValueNodeImpl>() {
     @Override
     public int compare(XValueNodeImpl o1, XValueNodeImpl o2) {
-      //noinspection ConstantConditions
       return StringUtil.naturalCompare(o1.getName(), o2.getName());
     }
   };
@@ -150,7 +149,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     }
   }
 
-  public static void buildText(@NotNull XValuePresentation valuePresenter, @NotNull final ColoredTextContainer text) {
+  public static void buildText(@NotNull XValuePresentation valuePresenter, @NotNull ColoredTextContainer text) {
     XValuePresentationUtil.appendSeparator(text, valuePresenter.getSeparator());
     String type = valuePresenter.getType();
     if (type != null) {
@@ -183,13 +182,19 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       return new XDebuggerTreeNodeHyperlink(myFullValueEvaluator.getLinkText()) {
         @Override
         public void onClick(MouseEvent event) {
-          DebuggerUIUtil.showValuePopup(myFullValueEvaluator, event, myTree.getProject());
+          if (myFullValueEvaluator.isShowValuePopup()) {
+            DebuggerUIUtil.showValuePopup(myFullValueEvaluator, event, myTree.getProject(), null);
+          }
+          else {
+            new HeadlessValueEvaluationCallback(XValueNodeImpl.this).startFetchingValue(myFullValueEvaluator);
+          }
         }
       };
     }
     return null;
   }
 
+  @Override
   @Nullable
   public String getName() {
     return myName;
@@ -200,11 +205,13 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     return myValuePresentation;
   }
 
+  @Override
   @Nullable
   public String getRawValue() {
     return myRawValue;
   }
 
+  @Override
   public boolean isComputed() {
     return myValuePresentation != null;
   }

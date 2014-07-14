@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +44,7 @@ public class FileContentQueue {
   private static final long MAX_SIZE_OF_BYTES_IN_QUEUE = 1024 * 1024;
   private static final long PROCESSED_FILE_BYTES_THRESHOLD = 1024 * 1024 * 3;
   private static final long LARGE_SIZE_REQUEST_THRESHOLD = PROCESSED_FILE_BYTES_THRESHOLD - 1024 * 300; // 300k for other threads
+  private static final FileContent TOMBSTONE = new FileContent(NullVirtualFile.INSTANCE);
 
   // Unbounded (!)
   private final LinkedBlockingDeque<FileContent> myLoadedContentsQueue = new LinkedBlockingDeque<FileContent>();
@@ -57,7 +59,7 @@ public class FileContentQueue {
   private final Object myProceedWithProcessingLock = new Object();
   private static final boolean ourAllowParallelFileReading = SystemProperties.getBooleanProperty("idea.allow.parallel.file.reading", true);
 
-  public void queue(final Collection<VirtualFile> files, @NotNull final ProgressIndicator indicator) {
+  public void queue(@NotNull Collection<VirtualFile> files, @NotNull final ProgressIndicator indicator) {
     myFilesToLoadQueue.addAll(files);
     final Runnable contentLoadingRunnable = new Runnable() {
       @Override
@@ -72,7 +74,7 @@ public class FileContentQueue {
 
           // put end-of-queue marker only if not canceled
           try {
-            myLoadedContentsQueue.put(new FileContent(null));
+            myLoadedContentsQueue.put(TOMBSTONE);
           }
           catch (InterruptedException e) {
             LOG.error(e);
@@ -93,7 +95,7 @@ public class FileContentQueue {
     ApplicationManager.getApplication().executeOnPooledThread(contentLoadingRunnable);
   }
 
-  private void addLast(VirtualFile file, @NotNull final ProgressIndicator indicator) throws InterruptedException {
+  private void addLast(@NotNull VirtualFile file, @NotNull final ProgressIndicator indicator) throws InterruptedException {
     FileContent content = new FileContent(file);
 
     if (isValidFile(file)) {
@@ -108,12 +110,12 @@ public class FileContentQueue {
     myLoadedContentsQueue.put(content);
   }
 
-  private static boolean isValidFile(VirtualFile file) {
+  private static boolean isValidFile(@NotNull VirtualFile file) {
     return file.isValid() && !file.isDirectory() && !file.is(VFileProperty.SPECIAL) && !VfsUtilCore.isBrokenLink(file);
   }
 
   @SuppressWarnings("InstanceofCatchParameter")
-  private boolean doLoadContent(final FileContent content, @NotNull final ProgressIndicator indicator) throws InterruptedException {
+  private boolean doLoadContent(@NotNull FileContent content, @NotNull final ProgressIndicator indicator) throws InterruptedException {
     final long contentLength = content.getLength();
 
     boolean counterUpdated = false;
@@ -213,20 +215,19 @@ public class FileContentQueue {
             if (isValidFile(virtualFileToLoad)) {
               try {
                 content.getBytes();
+                return content;
+              }
+              catch (IOException e) {
+                LOG.info(virtualFileToLoad + ": " + e);
+              }
+              catch (InvalidVirtualFileAccessException e) {
+                LOG.info(virtualFileToLoad + ": " + e);
               }
               catch (Throwable t) {
-                if (t instanceof IOException || t instanceof InvalidVirtualFileAccessException) {
-                  LOG.info(t);
-                }
-                else {
-                  LOG.error(t);
-                }
-                content.setEmptyContent();
+                LOG.error(virtualFileToLoad + ": " + t);
               }
             }
-            else {
-              content.setEmptyContent();
-            }
+            content.setEmptyContent();
             return content;
           }
 
@@ -256,8 +257,7 @@ public class FileContentQueue {
       }
     }
 
-    final VirtualFile file = result.getVirtualFile();
-    if (file == null) {
+    if (result == TOMBSTONE) {
       try {
         myLoadedContentsQueue.put(result); // put it back to notify the others
       }

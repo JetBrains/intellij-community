@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,10 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
   private final Object myEquality;
 
   public DelegatingGlobalSearchScope(@NotNull GlobalSearchScope baseScope) {
-    super(baseScope.getProject());
-    myBaseScope = baseScope;
-    myEquality = ArrayUtil.EMPTY_OBJECT_ARRAY;
+    this(baseScope, ArrayUtil.EMPTY_OBJECT_ARRAY);
   }
 
-  public DelegatingGlobalSearchScope(GlobalSearchScope baseScope, Object... equality) {
+  public DelegatingGlobalSearchScope(@NotNull GlobalSearchScope baseScope, @NotNull Object... equality) {
     super(baseScope.getProject());
     myBaseScope = baseScope;
     myEquality = Arrays.asList(equality);
@@ -71,6 +69,7 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
     return myBaseScope.isSearchOutsideRootModel();
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return myBaseScope.getDisplayName();

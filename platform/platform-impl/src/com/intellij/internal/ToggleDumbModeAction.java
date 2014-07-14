@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,17 @@
  */
 package com.intellij.internal;
 
-import com.intellij.ide.caches.CacheUpdater;
-import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.TimeoutUtil;
-
-import java.util.Arrays;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -45,28 +42,15 @@ public class ToggleDumbModeAction extends AnAction implements DumbAware {
       final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
       if (project == null) return;
 
-      CacheUpdater updater = new CacheUpdater() {
-        public int getNumberOfPendingUpdateJobs() {
-          return 0;
-        }
-
-        public VirtualFile[] queryNeededFiles(ProgressIndicator indicator) {
+      DumbServiceImpl.getInstance(project).queueTask(new DumbModeTask() {
+        @Override
+        public void performInDumbMode(@NotNull ProgressIndicator indicator) {
           while (myDumb) {
+            indicator.checkCanceled();
             TimeoutUtil.sleep(100);
           }
-          return VirtualFile.EMPTY_ARRAY;
         }
-
-        public void processFile(FileContent fileContent) {
-        }
-
-        public void updatingDone() {
-        }
-
-        public void canceled() {
-        }
-      };
-      DumbServiceImpl.getInstance(project).queueCacheUpdateInDumbMode(Arrays.asList(updater));
+      });
     }
   }
 

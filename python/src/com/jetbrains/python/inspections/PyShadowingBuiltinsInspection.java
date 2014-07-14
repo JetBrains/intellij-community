@@ -27,6 +27,7 @@ import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.NotNull;
@@ -92,7 +93,7 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
 
     @Override
     public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
-      if (node.getQualifier() == null) {
+      if (!node.isQualified()) {
         processElement(node);
       }
     }

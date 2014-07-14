@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ public class VFileContentChangeEvent extends VFileEvent {
     return "VfsEvent[update: " + myFile.getUrl() + "]";
   }
 
+  @NotNull
   @Override
   public String getPath() {
     return myFile.getPath();
@@ -90,8 +91,7 @@ public class VFileContentChangeEvent extends VFileEvent {
   }
 
   public int hashCode() {
-    int result;
-    result = myFile.hashCode();
+    int result = myFile.hashCode();
     result = 31 * result + (int)(myOldModificationStamp ^ (myOldModificationStamp >>> 32));
     result = 31 * result + (int)(myNewModificationStamp ^ (myNewModificationStamp >>> 32));
     return result;

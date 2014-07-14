@@ -15,9 +15,7 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
-import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 /**
@@ -29,15 +27,7 @@ public class SoftWrapTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testSoftWrapInInjection() throws Exception {
 
     myFixture.configureByFile("softWrap.html");
-    Editor editor = myFixture.getEditor();
-    editor.getSettings().setUseSoftWraps(true);
-    ((SoftWrapModelImpl)editor.getSoftWrapModel()).getApplianceManager().setWidthProvider(new SoftWrapApplianceManager.VisibleAreaWidthProvider() {
-      @Override
-      public int getVisibleAreaWidth() {
-        return 600;
-      }
-    });
-
+    EditorTestUtil.configureSoftWraps(myFixture.getEditor(), 83);
     myFixture.type('j');
     myFixture.checkResultByFile("softWrap_after.html");
   }

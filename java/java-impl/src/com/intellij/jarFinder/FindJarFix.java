@@ -31,7 +31,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
-import org.apache.xerces.parsers.DOMParser;
+import org.cyberneko.html.parsers.DOMParser;
 import org.jetbrains.annotations.NotNull;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
@@ -40,11 +40,8 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import javax.swing.*;
-import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.util.*;
 
 /**
@@ -129,22 +126,9 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
     final Runnable runnable = new Runnable() {
       public void run() {
         try {
-          Document doc;
-
-          DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-          builderFactory.setExpandEntityReferences(false);
-          builderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-
-          URL url = new URL(CLASS_ROOT_URL + fqn.replace('.', '/') + CLASS_PAGE_EXT);
-
-          InputStream stream = url.openStream();
-          try {
-            doc = builderFactory.newDocumentBuilder().parse(stream);
-          }
-          finally {
-            stream.close();
-          }
-
+          final DOMParser parser = new DOMParser();
+          parser.parse(CLASS_ROOT_URL + fqn.replace('.', '/') + CLASS_PAGE_EXT);
+          final Document doc = parser.getDocument();
           if (doc != null) {
             final NodeList links = doc.getElementsByTagName(LINK_TAG_NAME);
             for (int i = 0; i < links.getLength(); i++) {

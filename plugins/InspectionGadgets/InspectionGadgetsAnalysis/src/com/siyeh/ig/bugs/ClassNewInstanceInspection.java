@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +107,7 @@ public class ClassNewInstanceInspection extends BaseInspection {
         (PsiMethodCallExpression)grandParent;
       @NonNls final String newExpression = qualifier.getText() +
                                            ".getConstructor().newInstance()";
-      replaceExpression(methodCallExpression, newExpression);
+      PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression);
     }
 
     private static void addThrowsClause(PsiMethod method,

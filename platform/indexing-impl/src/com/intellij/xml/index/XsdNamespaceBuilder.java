@@ -105,7 +105,7 @@ public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter implemen
     if (tagName != null && myTags.contains(tagName)) {
       rate |= 0x02;
     }
-    if (Comparing.equal(version, myVersion)) {
+    if (version != null && version.equals(myVersion)) {
       rate |= 0x01;
     }
     return rate;

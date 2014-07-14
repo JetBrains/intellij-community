@@ -41,6 +41,14 @@ public class NegativelyNamedBooleanVariableInspectionTest extends LightInspectio
            "}");
   }
 
+  public void testNewNames() {
+    doTest("class Z {" +
+           "  private boolean /*Boolean variable 'invalidState' is negatively named*/invalidState/**/ = true;" +
+           "  private boolean /*Boolean variable 'isInvalidSource' is negatively named*/isInvalidSource/**/ = false;" +
+           "  private boolean /*Boolean variable 'doesNotCompute' is negatively named*/doesNotCompute/**/ = true;" +
+           "}");
+  }
+
   @Override
   protected InspectionProfileEntry getInspection() {
     return new NegativelyNamedBooleanVariableInspection();

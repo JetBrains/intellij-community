@@ -95,7 +95,7 @@ class PyDocumentationBuilder {
             PyType type = context.getType(qual);
             if (type instanceof PyClassType) {
               cls = ((PyClassType)type).getPyClass();
-              Property property = cls.findProperty(elementName);
+              Property property = cls.findProperty(elementName, true);
               if (property != null) {
                 is_property = true;
                 final AccessDirection dir = AccessDirection.of((PyElement)outer);

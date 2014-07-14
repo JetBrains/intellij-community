@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.debugger.filters;
 
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,6 +28,7 @@ import java.util.List;
 public class GroovyDebuggerClassFilterProvider implements DebuggerClassFilterProvider {
   private static final List<ClassFilter> FILTERS = Arrays.asList(new ClassFilter("org.codehaus.groovy.*"), new ClassFilter("groovy.*"));
 
+  @Override
   public List<ClassFilter> getFilters() {
     GroovyDebuggerSettings settings = GroovyDebuggerSettings.getInstance();
     Boolean flag = settings.DEBUG_DISABLE_SPECIFIC_GROOVY_METHODS;
@@ -38,18 +38,4 @@ public class GroovyDebuggerClassFilterProvider implements DebuggerClassFilterPro
     return Collections.emptyList();
   }
 
-  public boolean isAuxiliaryFrame(String className, String methodName) {
-    if (className.equals(GroovyCommonClassNames.DEFAULT_GROOVY_METHODS) ||
-        className.equals("org.codehaus.groovy.runtime.DefaultGroovyMethodsSupport")) {
-      return false;
-    }
-
-    for (ClassFilter filter : FILTERS) {
-      final String pattern = filter.getPattern();
-      if (className.startsWith(pattern.substring(0, pattern.length() - 1))) {
-        return true;
-      }
-    }
-    return false;
-  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,52 +19,74 @@
  */
 package com.intellij.util.indexing;
 
-import com.intellij.ide.caches.CacheUpdater;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.file.exclude.ProjectFileExclusionManagerImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ProjectRootManagerComponent;
+import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
 public class FileBasedIndexProjectHandler extends AbstractProjectComponent implements IndexableFileSet {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndexProjectHandler");
   private final FileBasedIndexImpl myIndex;
   private final ProjectRootManagerEx myRootManager;
   private final FileTypeManager myFileTypeManager;
-  private final ProjectFileExclusionManagerImpl myExclusionManager;
 
   public FileBasedIndexProjectHandler(final FileBasedIndexImpl index, final Project project, final ProjectRootManagerComponent rootManager, FileTypeManager ftManager, final ProjectManager projectManager) {
     super(project);
     myIndex = index;
     myRootManager = rootManager;
     myFileTypeManager = ftManager;
-    myExclusionManager = ProjectFileExclusionManagerImpl.getInstance(project);
+
+    if (ApplicationManager.getApplication().isInternal()) {
+      project.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+
+        public void enteredDumbMode() {
+        }
+
+        public void exitDumbMode() {
+          LOG.info("Has changed files: " + (createChangedFilesIndexingTask(project) != null) + "; project=" + project);
+        }
+      });
+    }
 
     final StartupManagerEx startupManager = (StartupManagerEx)StartupManager.getInstance(project);
     if (startupManager != null) {
       startupManager.registerPreStartupActivity(new Runnable() {
         @Override
         public void run() {
-          final RefreshCacheUpdater changedFilesUpdater = new RefreshCacheUpdater();
-          final UnindexedFilesUpdater unindexedFilesUpdater = new UnindexedFilesUpdater(project, index);
+          PushedFilePropertiesUpdater.getInstance(project).initializeProperties();
 
-          startupManager.registerCacheUpdater(unindexedFilesUpdater);
-          rootManager.registerRootsChangeUpdater(unindexedFilesUpdater);
-          rootManager.registerRefreshUpdater(changedFilesUpdater);
+          // dumb mode should start before post-startup activities
+          // only when queueTask is called from UI thread, we can guarantee that
+          // when the method returns, the application has entered dumb mode
+          UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              if (!project.isDisposed()) {
+                DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, true));
+              }
+            }
+          });
+
           myIndex.registerIndexableSet(FileBasedIndexProjectHandler.this, project);
           projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
             private boolean removed = false;
@@ -72,8 +94,6 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
             public void projectClosing(Project project) {
               if (!removed) {
                 removed = true;
-                rootManager.unregisterRefreshUpdater(changedFilesUpdater);
-                rootManager.unregisterRootsChangeUpdater(unindexedFilesUpdater);
                 myIndex.removeIndexableSet(FileBasedIndexProjectHandler.this);
               }
             }
@@ -87,7 +107,6 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   public boolean isInSet(@NotNull final VirtualFile file) {
     final ProjectFileIndex index = myRootManager.getFileIndex();
     if (index.isInContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file)) {
-      if (myExclusionManager != null && myExclusionManager.isExcluded(file)) return false;
       return !myFileTypeManager.isFileIgnored(file);
     }
     return false;
@@ -113,29 +132,34 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
     myIndex.removeIndexableSet(this);
   }
 
-  private class RefreshCacheUpdater implements CacheUpdater {
-    @Override
-    public int getNumberOfPendingUpdateJobs() {
-      return myIndex.getNumberOfPendingInvalidations();
+  @Nullable
+  public static DumbModeTask createChangedFilesIndexingTask(final Project project) {
+    final FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+
+    if (index.getChangedFileCount() + index.getNumberOfPendingInvalidations() < 20) {
+      return null;
     }
 
-    @Override
-    public VirtualFile[] queryNeededFiles(ProgressIndicator indicator) {
-      Collection<VirtualFile> files = myIndex.getFilesToUpdate(myProject);
-      return VfsUtilCore.toVirtualFileArray(files);
-    }
+    return new DumbModeTask() {
+      @Override
+      public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+        final Collection<VirtualFile> files = index.getFilesToUpdate(project);
+        indicator.setIndeterminate(false);
+        indicator.setText(IdeBundle.message("progress.indexing.updating"));
+        reindexRefreshedFiles(indicator, files, project, index);
+      }
+    };
+  }
 
-    @Override
-    public void processFile(FileContent fileContent) {
-      myIndex.processRefreshedFile(myProject, fileContent);
-    }
-
-    @Override
-    public void updatingDone() {
-    }
-
-    @Override
-    public void canceled() {
-    }
+  private static void reindexRefreshedFiles(ProgressIndicator indicator,
+                                            Collection<VirtualFile> files,
+                                            final Project project,
+                                            final FileBasedIndexImpl index) {
+    CacheUpdateRunner.processFiles(indicator, true, files, project, new Consumer<FileContent>() {
+      @Override
+      public void consume(FileContent content) {
+        index.processRefreshedFile(project, content);
+      }
+    });
   }
 }

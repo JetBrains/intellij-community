@@ -15,7 +15,6 @@
     <facetType implementation="com.intellij.appengine.facet.AppEngineFacetType"/>
     <project.converterProvider implementation="com.intellij.appengine.converter.AppEngineFacetConverterProvider"/>
     <framework.detector implementation="com.intellij.appengine.facet.AppEngineFrameworkDetector"/>
-    <compiler implementation="com.intellij.appengine.enhancement.EnhancerCompiler"/>
     <compileServer.plugin classpath="google-app-engine-jps-plugin.jar;appEngine-runtime.jar"/>
 
     <xml.schemaProvider implementation="com.intellij.appengine.descriptor.AppEngineWebSchemaProvider"/>

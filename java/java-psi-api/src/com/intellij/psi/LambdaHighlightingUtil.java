@@ -17,7 +17,9 @@ package com.intellij.psi;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,15 +38,41 @@ public class LambdaHighlightingUtil {
   @Nullable
   public static String checkInterfaceFunctional(@NotNull PsiClass psiClass, String interfaceNonFunctionalMessage) {
     if (psiClass instanceof PsiTypeParameter) return null; //should be logged as cyclic inference
-    final List<MethodSignature> signatures = LambdaUtil.findFunctionCandidates(psiClass);
+    final List<HierarchicalMethodSignature> signatures = LambdaUtil.findFunctionCandidates(psiClass);
     if (signatures == null) return interfaceNonFunctionalMessage;
     if (signatures.isEmpty()) return "No target method found";
     if (signatures.size() == 1) {
-      final MethodSignature functionalMethod = signatures.get(0);
-      if (functionalMethod.getTypeParameters().length > 0) return "Target method is generic";
       return null;
     }
     return "Multiple non-overriding abstract methods found";
+  }
+
+  @Nullable
+  public static PsiElement checkParametersCompatible(PsiLambdaExpression expression,
+                                                     PsiParameter[] methodParameters,
+                                                     PsiSubstitutor substitutor) {
+    final PsiParameter[] lambdaParameters = expression.getParameterList().getParameters();
+    if (lambdaParameters.length != methodParameters.length) {
+      return expression;
+    }
+    else {
+      boolean hasFormalParameterTypes = expression.hasFormalParameterTypes();
+      for (int i = 0; i < lambdaParameters.length; i++) {
+        PsiParameter lambdaParameter = lambdaParameters[i];
+        PsiType lambdaParameterType = lambdaParameter.getType();
+        PsiType substitutedParamType = substitutor.substitute(methodParameters[i].getType());
+        if (hasFormalParameterTypes) {
+          if (!PsiTypesUtil.compareTypes(lambdaParameterType, substitutedParamType, true)) {
+            return lambdaParameter;
+          }
+        } else {
+          if (!TypeConversionUtil.isAssignable(substitutedParamType, lambdaParameterType)) {
+            return lambdaParameter;
+          }
+        }
+      }
+    }
+    return null;
   }
 
   public static String checkReturnTypeCompatible(PsiLambdaExpression lambdaExpression, PsiType functionalInterfaceReturnType) {
@@ -99,13 +127,27 @@ public class LambdaHighlightingUtil {
   @Nullable
   public static String checkInterfaceFunctional(PsiType functionalInterfaceType) {
     if (functionalInterfaceType instanceof PsiIntersectionType) {
+      int count = 0;
       for (PsiType type : ((PsiIntersectionType)functionalInterfaceType).getConjuncts()) {
-        if (checkInterfaceFunctional(type) == null) return null;
+        if (checkInterfaceFunctional(type) == null) {
+          count++;
+        }
       }
+
+      if (count > 1) {
+        return "Multiple non-overriding abstract methods found in " + functionalInterfaceType.getPresentableText();
+      }
+      return null;
     }
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(functionalInterfaceType));
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final PsiClass aClass = resolveResult.getElement();
     if (aClass != null) {
+      if (aClass instanceof PsiTypeParameter) return null; //should be logged as cyclic inference
+      final List<HierarchicalMethodSignature> signatures = LambdaUtil.findFunctionCandidates(aClass);
+      if (signatures != null && signatures.size() == 1) {
+        final MethodSignature functionalMethod = signatures.get(0);
+        if (functionalMethod.getTypeParameters().length > 0) return "Target method is generic";
+      }
       if (checkReturnTypeApplicable(resolveResult, aClass)) {
         return "No instance of type " + functionalInterfaceType.getPresentableText() + " exists so that lambda expression can be type-checked";
       }

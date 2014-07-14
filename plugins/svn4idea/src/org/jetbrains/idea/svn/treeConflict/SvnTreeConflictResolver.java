@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.portable.SvnStatusClientI;
+import org.jetbrains.idea.svn.status.StatusClient;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
@@ -123,7 +123,7 @@ public class SvnTreeConflictResolver {
       } else {
         final Set<File> usedToBeAdded = new HashSet<File>();
         if (myPath.isDirectory()) {
-          SvnStatusClientI statusClient = myVcs.getFactory(ioFile).createStatusClient();
+          StatusClient statusClient = myVcs.getFactory(ioFile).createStatusClient();
           statusClient.doStatus(ioFile, SVNRevision.UNDEFINED, SVNDepth.INFINITY, false, false, false, false,
                                 new ISVNStatusHandler() {
                                   @Override

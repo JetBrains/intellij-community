@@ -52,6 +52,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,8 +90,8 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private AntBuildFileBase myBuildFile;
   private final String[] myTargets;
   private int myPriorityThreshold = PRIORITY_BRIEF;
-  private int myErrorCount;
-  private int myWarningCount;
+  private volatile int myErrorCount;
+  private volatile int myWarningCount;
   private volatile boolean myIsOutputPaused = false;
 
   @NotNull
@@ -102,15 +103,13 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private final java.util.List<LogCommand> myLog = Collections.synchronizedList(new ArrayList<LogCommand>(1024));
   private volatile int myCommandsProcessedCount = 0;
 
-  private JPanel myProgressPanel;
-
   private final AntMessageCustomizer[] myMessageCustomizers = AntMessageCustomizer.EP_NAME.getExtensions();
 
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Runnable myFlushLogRunnable = new Runnable() {
     @Override
     public void run() {
-      if (myTreeView != null && myCommandsProcessedCount < myLog.size()) {
+      if (myCommandsProcessedCount < myLog.size()) {
         if (!myIsOutputPaused) {
           new OutputFlusher().doFlush();
           myTreeView.scrollToLastMessage();
@@ -119,7 +118,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     }
   };
 
-  private boolean myIsAborted;
+  private volatile boolean myIsAborted;
   private ActionToolbar myLeftToolbar;
   private ActionToolbar myRightToolbar;
   private final TreeExpander myTreeExpander = new TreeExpander() {
@@ -164,19 +163,6 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     add(myMessagePanel, BorderLayout.CENTER);
 
     showAntView(AntBuildFileImpl.TREE_VIEW.value(buildFile.getAllOptions()));
-  }
-
-  public boolean hasMessagesOfType(MessageType type) {
-    synchronized (myLog) {
-      for (LogCommand cmd : myLog) {
-        if (cmd instanceof MessageCommand) {
-          if (((MessageCommand)cmd).getMessage().getType() == type) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
   }
 
   public void changeView() {
@@ -316,19 +302,6 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     return messageView;
   }
 
-  public void removeProgressPanel() {
-    if (myProgressPanel != null) {
-      myMessagePanel.remove(myProgressPanel);
-      // fix of 9377
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          myMessagePanel.validate();
-        }
-      });
-      myProgressPanel = null;
-    }
-  }
-
   public void setParsingThread(OutputParser parsingThread) {
     myParsingThread = parsingThread;
     myIsAborted = false;
@@ -446,7 +419,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
   public void outputError(String error, int priority) {
-    //updateErrorAndWarningCounters(priority);
+    updateErrorAndWarningCounters(priority);
     final AntMessage message = createErrorMessage(priority, error);
     addCommand(new AddMessageCommand(message));
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
@@ -455,7 +428,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
   public void outputException(String exception) {
     updateErrorAndWarningCounters(PRIORITY_ERR);
-    AntMessage message = createErrorMessage(0, exception);
+    AntMessage message = createErrorMessage(PRIORITY_ERR, exception);
     addCommand(new AddExceptionCommand(message));
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
     wolf.queue(message.getFile());
@@ -624,16 +597,21 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
         return true;
       }
 
-      AntBuildMessageView messageView = myContent.getUserData(KEY);
+      final AntBuildMessageView messageView = myContent.getUserData(KEY);
 
-      if (messageView.isStoppedOrTerminateRequested()) {
+      if (messageView == null || messageView.isStoppedOrTerminateRequested()) {
         return true;
       }
 
-      if (myCloseAllowed) return true;
+      if (myCloseAllowed) {
+        return true;
+      }
 
-      int result = Messages.showYesNoCancelDialog(AntBundle.message("ant.process.is.active.terminate.confirmation.text"),
-                                                  AntBundle.message("close.ant.build.messages.dialog.title"), Messages.getQuestionIcon());
+      final int result = Messages.showYesNoCancelDialog(
+        AntBundle.message("ant.process.is.active.terminate.confirmation.text"), 
+        AntBundle.message("close.ant.build.messages.dialog.title"), Messages.getQuestionIcon()
+      );
+      
       if (result == 0) { // yes
         messageView.stopProcess();
         myCloseAllowed = true;
@@ -797,19 +775,67 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     return myWarningCount;
   }
 
-  void buildFinished(boolean isProgressAborted, long buildTimeInMilliseconds, @NotNull final AntBuildListener antBuildListener, OutputPacketProcessor dispatcher) {
+  void buildFinished(boolean isProgressAborted, final long buildTimeInMilliseconds, @NotNull final AntBuildListener antBuildListener, OutputPacketProcessor dispatcher) {
     final boolean aborted = isProgressAborted || myIsAborted;
-    final String message = getFinishStatusText(aborted, buildTimeInMilliseconds);
 
     dispatcher.processOutput(new Printable() {
       @Override
       public void printOn(Printer printer) {
         if (!myProject.isDisposed()) { // if not disposed
+          final String message = getFinishStatusText(aborted, buildTimeInMilliseconds);
           addCommand(new FinishBuildCommand(message));
           final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
           if (statusBar != null) {
             statusBar.setInfo(message);
           }
+          final AntBuildFileBase buildFile = myBuildFile;
+          final boolean isBackground = buildFile != null && buildFile.isRunInBackground();
+          final boolean shouldActivate = !isBackground || getErrorCount() > 0;
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            public void run() {
+              final Runnable finishRunnable = new Runnable() {
+                public void run() {
+                  final int errorCount = getErrorCount();
+                  try {
+                    final AntBuildFileBase buildFile = myBuildFile;
+                    if (buildFile != null) {
+                      if (errorCount == 0 && buildFile.isViewClosedWhenNoErrors()) {
+                        close();
+                      }
+                      else if (errorCount > 0) {
+                        myTreeView.scrollToFirstError();
+                      }
+                      else {
+                        myTreeView.scrollToStatus();
+                      }
+                    }
+                    else {
+                      myTreeView.scrollToLastMessage();
+                    }
+                  }
+                  finally {
+                    VirtualFileManager.getInstance().asyncRefresh(new Runnable() {
+                      public void run() {
+                        antBuildListener.buildFinished(aborted ? AntBuildListener.ABORTED : AntBuildListener.FINISHED_SUCCESSFULLY, errorCount);
+                      }
+                    });
+                  }
+                }
+              };
+              if (shouldActivate) {
+                final ToolWindow toolWindow = !myProject.isDisposed() ? ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW) : null;
+                if (toolWindow != null) { // can be null if project is closed
+                  toolWindow.activate(finishRunnable, false);
+                }
+                else {
+                  finishRunnable.run();
+                }
+              }
+              else {
+                finishRunnable.run();
+              }
+            }
+          });
         }
       }
     });
@@ -819,50 +845,25 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
         if (!myIsOutputPaused) {
           new OutputFlusher().doFlush();
         }
-        final AntBuildFileBase buildFile = myBuildFile;
-        if (buildFile != null) {
-          if (getErrorCount() == 0 && buildFile.isViewClosedWhenNoErrors()) {
-            close();
-          }
-          else if (getErrorCount() > 0) {
-            myTreeView.scrollToFirstError();
-          }
-          else {
-            myTreeView.scrollToStatus();
-          }
-        }
-        else {
-          myTreeView.scrollToLastMessage();
-        }
-        VirtualFileManager.getInstance().asyncRefresh(new Runnable() {
-          public void run() {
-            antBuildListener.buildFinished(aborted ? AntBuildListener.ABORTED : AntBuildListener.FINISHED_SUCCESSFULLY, getErrorCount());
-          }
-        });
       }
     });
   }
 
-  public String getFinishStatusText(boolean isAborted, long buildTimeInMilliseconds) {
-    int errors = getErrorCount();
-    int warnings = getWarningCount();
+  private String getFinishStatusText(boolean isAborted, long buildTimeInMilliseconds) {
     final String theDateAsString = DateFormatUtil.formatDateTime(Clock.getTime());
-
-    String formattedBuildTime = formatBuildTime(buildTimeInMilliseconds / 1000);
-
+    final String formattedBuildTime = formatBuildTime(buildTimeInMilliseconds / 1000);
     if (isAborted) {
       return AntBundle.message("build.finished.status.ant.build.aborted", formattedBuildTime, theDateAsString);
     }
-    else if (errors == 0 && warnings == 0) {
+    final int errors = getErrorCount();
+    final int warnings = getWarningCount();
+    if (errors == 0 && warnings == 0) {
       return AntBundle.message("build.finished.status.ant.build.completed.successfully", formattedBuildTime, theDateAsString);
     }
-    else if (errors == 0) {
+    if (errors == 0) {
       return AntBundle.message("build.finished.status.ant.build.completed.with.warnings", warnings, formattedBuildTime, theDateAsString);
     }
-    else {
-      return AntBundle
-        .message("build.finished.status.ant.build.completed.with.errors.warnings", errors, warnings, formattedBuildTime, theDateAsString);
-    }
+    return AntBundle.message("build.finished.status.ant.build.completed.with.errors.warnings", errors, warnings, formattedBuildTime, theDateAsString);
   }
 
   private static String formatBuildTime(long seconds) {

@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BooleanTableCellRenderer;
+import com.intellij.ui.TableUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -29,7 +30,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -72,14 +72,12 @@ public class CreateTestDialog extends DialogWrapper {
     myTableModel = new DefaultTableModel(methods, 2);
     myMethodsTable.setModel(myTableModel);
 
-    TableColumnModel model = myMethodsTable.getColumnModel();
-    model.getColumn(0).setMaxWidth(new JCheckBox().getPreferredSize().width);
-
     TableColumn checkColumn = myMethodsTable.getColumnModel().getColumn(0);
+    TableUtil.setupCheckboxColumn(checkColumn);
     checkColumn.setCellRenderer(new BooleanTableCellRenderer());
     checkColumn.setCellEditor(new DefaultCellEditor(new JCheckBox()));
 
-    model.getColumn(1).setHeaderValue("Test method");
+    myMethodsTable.getColumnModel().getColumn(1).setHeaderValue("Test method");
     checkColumn.setHeaderValue("");
     getOKAction().setEnabled(true);
   }

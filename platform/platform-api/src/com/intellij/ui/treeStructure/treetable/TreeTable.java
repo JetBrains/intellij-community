@@ -145,8 +145,7 @@ public class TreeTable extends JBTable {
    * editing row in this case, ensures the editor is never painted.
    */
   public int getEditingRow() {
-    return (isTreeColumn(editingColumn)) ? -1 :
-        editingRow;
+    return editingColumn == -1 || isTreeColumn(editingColumn) ? -1 : editingRow;
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.RuntimeInterruptedException;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -578,8 +579,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private void iterateScopes(DataHolder dataHolder, List<VcsDirtyScope> scopes, boolean wasEverythingDirty) {
     final ChangeListManagerGate gate = dataHolder.getChangeListWorker().createSelfGate();
     // do actual requests about file statuses
+    Getter<Boolean> disposedGetter = new Getter<Boolean>() {
+      @Override
+      public Boolean get() {
+        return myProject.isDisposed() || myUpdater.getIsStoppedGetter().get();
+      }
+    };
     final UpdatingChangeListBuilder builder = new UpdatingChangeListBuilder(dataHolder.getChangeListWorker(),
-      dataHolder.getComposite(), myUpdater.getIsStoppedGetter(), myIgnoredIdeaLevel, gate);
+      dataHolder.getComposite(), disposedGetter, myIgnoredIdeaLevel, gate);
 
     for (final VcsDirtyScope scope : scopes) {
       myUpdateChangesProgressIndicator.checkCanceled();
@@ -778,10 +785,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  Pair<Integer, Integer> getUnversionedFilesSize() {
+  Couple<Integer> getUnversionedFilesSize() {
     synchronized (myDataLock) {
       final VirtualFileHolder holder = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED);
-      return new Pair<Integer, Integer>(holder.getSize(), holder.getNumDirs());
+      return Couple.of(holder.getSize(), holder.getNumDirs());
     }
   }
 
@@ -1088,9 +1095,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return getChangesIn(new FilePathImpl(dir));
   }
 
+  @NotNull
   @Override
-  public ThreeState haveChangesUnder(final VirtualFile vf) {
-    if (vf == null || ! vf.isValid() || ! vf.isDirectory()) return ThreeState.NO;
+  public ThreeState haveChangesUnder(@NotNull final VirtualFile vf) {
+    if (!vf.isValid() || !vf.isDirectory()) return ThreeState.NO;
     synchronized (myDataLock) {
       return myWorker.haveChangesUnder(vf);
     }
@@ -1228,8 +1236,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   private boolean doCommit(final LocalChangeList changeList, final List<Change> changes, final boolean synchronously) {
+    FileDocumentManager.getInstance().saveAllDocuments();
     return new CommitHelper(myProject, changeList, changes, changeList.getName(),
-                     changeList.getComment(), new ArrayList<CheckinHandler>(), false, synchronously, NullableFunction.NULL, null).doCommit();
+                     StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment(),
+                     new ArrayList<CheckinHandler>(), false, synchronously, NullableFunction.NULL, null).doCommit();
   }
 
   public void commitChangesSynchronously(LocalChangeList changeList, List<Change> changes) {

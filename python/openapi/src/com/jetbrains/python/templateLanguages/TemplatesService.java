@@ -18,8 +18,11 @@ package com.jetbrains.python.templateLanguages;
 import com.intellij.lang.Language;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.packaging.PyPackageManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -41,6 +44,9 @@ public abstract class TemplatesService {
                                                                                   WEB2PY,
                                                                                   CHAMELEON);
 
+  public static List<String> ALL_TEMPLATE_BINDINGS = ContainerUtil.immutableList("django-mako", "django-jinja", "django-chameleon",
+                                                                                  "flask-mako", "pyramid_jinja2");
+
   public abstract Language getSelectedTemplateLanguage();
 
   public static TemplatesService getInstance(Module module) {
@@ -53,6 +59,7 @@ public abstract class TemplatesService {
 
   public abstract void setTemplateLanguage(String templateLanguage);
 
+  @NotNull
   public abstract List<VirtualFile> getTemplateFolders();
 
   public abstract void setTemplateFolders(VirtualFile... roots);
@@ -63,5 +70,9 @@ public abstract class TemplatesService {
 
   public abstract List<String> getTemplateFileTypes();
   public abstract void setTemplateFileTypes(List<String> fileTypes);
+
+  public abstract void generateTemplates(@NotNull final TemplateSettingsHolder settings, VirtualFile baseDir);
+  public abstract void installTemplateEngine(@NotNull final TemplateSettingsHolder settings, @NotNull final PyPackageManager packageManager,
+                                             @NotNull final Project project, @NotNull final String prefix);
 }
 

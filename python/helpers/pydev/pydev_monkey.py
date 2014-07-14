@@ -4,7 +4,7 @@ import sys
 import pydev_log
 import traceback
 
-helpers = os.path.dirname(__file__)
+helpers = os.path.dirname(__file__).replace('\\', '/')
 
 def is_python(path):
     if path.endswith("'") or path.endswith('"'):
@@ -100,8 +100,9 @@ def patch_arg_str_win(arg_str):
     args = str_to_args(new_arg_str)
     if not is_python(args[0]):
         return arg_str
-    art = args_to_str(patch_args(args))
-    return art
+    arg_str = args_to_str(patch_args(args))
+    pydev_log.debug("New args: %s"% arg_str)
+    return arg_str
 
 def monkey_patch_module(module, funcname, create_func):
     if hasattr(module, funcname):

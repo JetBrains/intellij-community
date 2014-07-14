@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -56,7 +55,7 @@ import java.util.Map;
  * User: anna
  * Date: Sep 6, 2010
  */
-public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter implements ProjectComponent, EditorFactoryListener {
+public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter implements EditorFactoryListener, Disposable {
   private final Map<VirtualFile, MyDocumentChangeAdapter> myListenerMap = new HashMap<VirtualFile, MyDocumentChangeAdapter>();
   private static final Logger LOG = Logger.getInstance("#" + ChangeSignatureGestureDetector.class.getName());
   private boolean myDeaf = false;
@@ -64,21 +63,26 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   private final PsiManager myPsiManager;
   private final FileEditorManager myFileEditorManager;
   private final Project myProject;
-  private final TemplateManager myTemplateManager;
   private final PsiDocumentManager myPsiDocumentManager;
 
   public ChangeSignatureGestureDetector(final PsiDocumentManager psiDocumentManager,
                                         final FileDocumentManager documentManager,
                                         final PsiManager psiManager,
                                         final FileEditorManager fileEditorManager,
-                                        final TemplateManager templateManager,
                                         final Project project) {
     myDocumentManager = documentManager;
     myPsiDocumentManager = psiDocumentManager;
     myPsiManager = psiManager;
     myFileEditorManager = fileEditorManager;
     myProject = project;
-    myTemplateManager = templateManager;
+    myPsiManager.addPsiTreeChangeListener(this, this);
+    EditorFactory.getInstance().addEditorFactoryListener(this, this);
+    Disposer.register(this, new Disposable() {
+      @Override
+      public void dispose() {
+        LOG.assertTrue(myListenerMap.isEmpty(), myListenerMap);
+      }
+    });
   }
 
   public static ChangeSignatureGestureDetector getInstance(Project project){
@@ -138,37 +142,6 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   }
 
   @Override
-  public void projectOpened() {
-    myPsiManager.addPsiTreeChangeListener(this);
-    EditorFactory.getInstance().addEditorFactoryListener(this, myProject);
-    Disposer.register(myProject, new Disposable() {
-      @Override
-      public void dispose() {
-        myPsiManager.removePsiTreeChangeListener(ChangeSignatureGestureDetector.this);
-        LOG.assertTrue(myListenerMap.isEmpty(), myListenerMap);
-      }
-    });
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "ChangeSignatureGestureDetector";
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @Override
   public void beforeChildRemoval(@NotNull PsiTreeChangeEvent event) {
     final PsiElement child = event.getChild();
     if (child instanceof PsiFile) {
@@ -208,7 +181,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
       final MyDocumentChangeAdapter changeBean = myListenerMap.get(file.getVirtualFile());
       if (changeBean != null && changeBean.getInitialText() != null) {
         final Editor editor = myFileEditorManager.getSelectedTextEditor();
-        if (editor != null && myTemplateManager.getActiveTemplate(editor) != null) return;
+        if (editor != null && TemplateManager.getInstance(myProject).getActiveTemplate(editor) != null) return;
         final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(child.getLanguage());
         if (detector == null) return;
         if (detector.ignoreChanges(child)) return;
@@ -395,5 +368,10 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
       myInitialChangeInfo = null;
       myCurrentInfo = null;
     }
+  }
+
+  @Override
+  public void dispose() {
+
   }
 }

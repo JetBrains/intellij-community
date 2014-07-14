@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.incrementalMerge;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.DiffUtil;
@@ -29,6 +30,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -42,7 +45,7 @@ public class ChangeList {
   private ArrayList<Change> myChanges;
   private ArrayList<Change> myAppliedChanges;
 
-  public ChangeList(Document base, Document version, Project project) {
+  public ChangeList(@NotNull Document base, @NotNull Document version, Project project) {
     myDocuments[0] = base;
     myDocuments[1] = version;
     myProject = project;
@@ -56,7 +59,7 @@ public class ChangeList {
     LOG.assertTrue(myListeners.remove(listener));
   }
 
-  public void setChanges(ArrayList<Change> changes) {
+  public void setChanges(@NotNull ArrayList<Change> changes) {
     if (myChanges != null) {
       HashSet<Change> newChanges = new HashSet<Change>(changes);
       LOG.assertTrue(newChanges.size() == changes.size());
@@ -77,6 +80,7 @@ public class ChangeList {
 
   public Project getProject() { return myProject; }
 
+  @NotNull
   public List<Change> getChanges() {
     return new ArrayList<Change>(myChanges);
   }
@@ -102,18 +106,19 @@ public class ChangeList {
     }
   }
 
-  public Document getDocument(FragmentSide side) {
+  @NotNull
+  public Document getDocument(@NotNull FragmentSide side) {
     return myDocuments[side.getIndex()];
   }
 
   private ArrayList<Change> buildChanges() throws FilesTooBigForDiffException {
     Document base = getDocument(FragmentSide.SIDE1);
-    String[] baseLines = DiffUtil.convertToLines(base.getText());
+    DiffString[] baseLines = DiffUtil.convertToLines(base.getText());
     Document version = getDocument(FragmentSide.SIDE2);
-    String[] versionLines = DiffUtil.convertToLines(version.getText());
+    DiffString[] versionLines = DiffUtil.convertToLines(version.getText());
     DiffFragment[] fragments = ComparisonPolicy.DEFAULT.buildDiffFragmentsFromLines(baseLines, versionLines);
     final ArrayList<Change> result = new ArrayList<Change>();
-    new DiffFragmemntsEnumerator(fragments) {
+    new DiffFragmentsEnumerator(fragments) {
       protected void process(DiffFragment fragment) {
         if (fragment.isEqual()) return;
         Context context = getContext();
@@ -129,11 +134,11 @@ public class ChangeList {
     return myChanges.get(index);
   }
 
-  private abstract static class DiffFragmemntsEnumerator {
-    private final DiffFragment[] myFragments;
-    private final Context myContext;
+  private abstract static class DiffFragmentsEnumerator {
+    @NotNull private final DiffFragment[] myFragments;
+    @NotNull private final Context myContext;
 
-    private DiffFragmemntsEnumerator(DiffFragment[] fragments) {
+    private DiffFragmentsEnumerator(@NotNull DiffFragment[] fragments) {
       myContext = new Context();
       myFragments = fragments;
     }
@@ -142,8 +147,8 @@ public class ChangeList {
       for (DiffFragment fragment : myFragments) {
         myContext.myFragment = fragment;
         process(fragment);
-        String text1 = fragment.getText1();
-        String text2 = fragment.getText2();
+        DiffString text1 = fragment.getText1();
+        DiffString text2 = fragment.getText2();
         myContext.myStarts[0] += StringUtil.length(text1);
         myContext.myStarts[1] += StringUtil.length(text2);
         myContext.myLines[0] += countLines(text1);
@@ -151,11 +156,12 @@ public class ChangeList {
       }
     }
 
-    private static int countLines(String text) {
+    private static int countLines(@Nullable DiffString text) {
       if (text == null) return 0;
       return StringUtil.countNewLines(text);
     }
 
+    @NotNull
     protected Context getContext() {
       return myContext;
     }
@@ -172,15 +178,16 @@ public class ChangeList {
       return myFragment;
     }
 
-    public int getStart(FragmentSide side) {
+    public int getStart(@NotNull FragmentSide side) {
       return myStarts[side.getIndex()];
     }
 
-    public int getEnd(FragmentSide side) {
+    public int getEnd(@NotNull FragmentSide side) {
       return getStart(side) + StringUtil.length(side.getText(myFragment));
     }
 
-    public TextRange createRange(FragmentSide side) {
+    @NotNull
+    public TextRange createRange(@NotNull FragmentSide side) {
       return new TextRange(getStart(side), getEnd(side));
     }
   }
@@ -195,7 +202,7 @@ public class ChangeList {
     return LineBlocks.fromChanges(changes);
   }
 
-  public void remove(Change change) {
+  public void remove(@NotNull Change change) {
     if (change.getType().isApplied()) {
       LOG.assertTrue(myAppliedChanges.remove(change), change);
     }
@@ -206,7 +213,7 @@ public class ChangeList {
     fireOnChangeRemoved();
   }
 
-  public void apply(Change change) {
+  public void apply(@NotNull Change change) {
     LOG.assertTrue(myChanges.remove(change), change);
     myAppliedChanges.add(change);
     fireOnChangeApplied();

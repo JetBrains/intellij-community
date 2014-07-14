@@ -25,4 +25,6 @@ public interface CloudGitAgentDeployment {
   CloudGitApplication findApplication();
 
   void deleteApplication();
+
+  CloudGitApplication findApplication4Repository(String[] repositoryUrls);
 }

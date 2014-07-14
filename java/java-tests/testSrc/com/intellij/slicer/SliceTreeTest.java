@@ -146,10 +146,17 @@ public class SliceTreeTest extends SliceTestCase {
   public void testLeafExpressionsMoreComplex() throws Exception {
     SliceTreeStructure treeStructure = configureTree("Duplicate");
     SliceNode root = (SliceNode)treeStructure.getRootElement();
-    Collection<PsiElement> leaves = SliceLeafAnalyzer.calcLeafExpressions(root, treeStructure, SliceLeafAnalyzer.createMap());
+    Map<SliceNode, Collection<PsiElement>> map = SliceLeafAnalyzer.createMap();
+    Collection<PsiElement> leaves = SliceLeafAnalyzer.calcLeafExpressions(root, treeStructure, map);
     assertNotNull(leaves);
-    assertEquals(2, leaves.size());
     List<PsiElement> list = new ArrayList<PsiElement>(leaves);
+    String message = ContainerUtil.map(list, new Function<PsiElement, String>() {
+      @Override
+      public String fun(PsiElement element) {
+        return element.getClass() +": '"+element.getText()+"' ("+ SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY.computeHashCode(element)+") ";
+      }
+    }).toString();
+    assertEquals(map.entrySet()+"\n"+message, 2, leaves.size());
     Collections.sort(list, new Comparator<PsiElement>() {
       @Override
       public int compare(PsiElement o1, PsiElement o2) {

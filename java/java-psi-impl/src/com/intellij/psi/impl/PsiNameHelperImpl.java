@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 package com.intellij.psi.impl;
 
 import com.intellij.lang.java.lexer.JavaLexer;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiNameHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,8 +27,8 @@ import org.jetbrains.annotations.Nullable;
 public class PsiNameHelperImpl extends PsiNameHelper {
   private final LanguageLevelProjectExtension myLanguageLevelExtension;
 
-  public PsiNameHelperImpl(JavaPsiFacade manager) {
-    myLanguageLevelExtension = LanguageLevelProjectExtension.getInstance(manager.getProject());
+  public PsiNameHelperImpl(Project project) {
+    myLanguageLevelExtension = LanguageLevelProjectExtension.getInstance(project);
   }
 
   @Override
@@ -36,6 +36,7 @@ public class PsiNameHelperImpl extends PsiNameHelper {
     return isIdentifier(text, getLanguageLevel());
   }
 
+  @NotNull
   protected LanguageLevel getLanguageLevel() {
     return myLanguageLevelExtension.getLanguageLevel();
   }
@@ -65,6 +66,7 @@ public class PsiNameHelperImpl extends PsiNameHelper {
 
   public static PsiNameHelper getInstance() {
     return new PsiNameHelperImpl() {
+      @NotNull
       @Override
       protected LanguageLevel getLanguageLevel() {
         return LanguageLevel.HIGHEST;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,8 +154,8 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
     while (current != null) {
       final IElementType elementType = prev.getElementType();
 
-      if ((elementType == XmlElementType.XML_NAME || elementType == XmlElementType.XML_TAG_NAME) &&
-          current.getElementType() == XmlElementType.XML_END_TAG_START) {
+      if ((elementType == XmlTokenType.XML_NAME || elementType == XmlTokenType.XML_TAG_NAME) &&
+          current.getElementType() == XmlTokenType.XML_END_TAG_START) {
         return (XmlToken)prev.getPsi();
       }
 

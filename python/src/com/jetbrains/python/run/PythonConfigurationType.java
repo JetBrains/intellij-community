@@ -17,8 +17,8 @@ package com.jetbrains.python.run;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NonNls;
@@ -34,13 +34,7 @@ public class PythonConfigurationType implements ConfigurationType {
   private final PythonConfigurationFactory myFactory = new PythonConfigurationFactory(this);
 
   public static PythonConfigurationType getInstance() {
-    for(ConfigurationType configType: Extensions.getExtensions(CONFIGURATION_TYPE_EP)) {
-      if (configType instanceof PythonConfigurationType) {
-        return (PythonConfigurationType) configType;
-      }
-    }
-    assert false;
-    return null;
+    return ConfigurationTypeUtil.findConfigurationType(PythonConfigurationType.class);
   }
 
   private static class PythonConfigurationFactory extends PythonConfigurationFactoryBase {

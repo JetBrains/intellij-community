@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginHeaderPanel;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.openapi.extensions.PluginId;
@@ -32,8 +33,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author anna
@@ -42,11 +43,13 @@ import java.util.List;
 public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private static JEditorPane myDescriptionPanel = new JEditorPane();
+  private JEditorPane myDescriptionPanel = new JEditorPane();
+  private PluginHeaderPanel myHeader;
 
   public DetectedPluginsPanel() {
     super(PluginDownloader.class);
     final JTable entryTable = getEntryTable();
+    myHeader = new PluginHeaderPanel(null, entryTable);
     entryTable.setTableHeader(null);
     entryTable.setDefaultRenderer(PluginDownloader.class, new ColoredTableCellRenderer() {
       protected void customizeCellRenderer(final JTable table,
@@ -85,7 +88,7 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
           final PluginDownloader selection = getValueAt(selectedRow);
           final IdeaPluginDescriptor descriptor = selection.getDescriptor();
           if (descriptor != null) {
-            PluginManagerMain.pluginInfoUpdate(descriptor, null, myDescriptionPanel);
+            PluginManagerMain.pluginInfoUpdate(descriptor, null, myDescriptionPanel, myHeader , null);
           }
         }
       }

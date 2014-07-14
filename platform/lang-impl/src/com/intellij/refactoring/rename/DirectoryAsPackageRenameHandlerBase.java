@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
@@ -40,8 +41,16 @@ import com.intellij.psi.impl.file.PsiPackageBase;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author yole
@@ -213,12 +222,27 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
     message.append(RefactoringBundle.message("multiple.directories.correspond.to.package"));
     message.append(packageQname);
     message.append(":\n\n");
-    for (int i = 0; i < directories.length; i++) {
-      PsiDirectory directory = directories[i];
-      if (i > 0) {
-        message.append("\n");
+    final List<PsiDirectory> generated = new ArrayList<PsiDirectory>();
+    final List<PsiDirectory> source = new ArrayList<PsiDirectory>();
+    for (PsiDirectory directory : directories) {
+      final VirtualFile virtualFile = directory.getVirtualFile();
+      if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(virtualFile, directory.getProject())) {
+        generated.add(directory);
+      } else {
+        source.add(directory);
       }
-      message.append(directory.getVirtualFile().getPresentableUrl());
+    }
+    final Function<PsiDirectory, String> directoryPresentation = new Function<PsiDirectory, String>() {
+      @Override
+      public String fun(PsiDirectory directory) {
+        return directory.getVirtualFile().getPresentableUrl();
+      }
+    };
+    message.append(StringUtil.join(source, directoryPresentation, "\n"));
+    if (!generated.isEmpty()) {
+      message.append("\n\nalso generated:\n");
+      message.append(StringUtil.join(generated, directoryPresentation, "\n"));
+      
     }
   }
 

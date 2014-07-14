@@ -90,7 +90,8 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
                            @NotNull GithubTagInfo tag) throws GeneratorException {
     File zipArchiveFile = getCacheFile(tag);
     boolean brokenZip = true;
-    if (zipArchiveFile.isFile()) {
+    boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+    if (!unitTestMode && zipArchiveFile.isFile()) {
       try {
         ZipUtil.unzipWithProgressSynchronously(project, getTitle(), zipArchiveFile, extractToDir, true);
         brokenZip = false;
@@ -111,6 +112,9 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
         }
       }
       if (!downloaded) {
+        if (unitTestMode) {
+          throw new GeneratorException("Download " + tag.getZipballUrl() + " is skipped in unit test mode");
+        }
         downloadAndUnzip(project, tag.getZipballUrl(), zipArchiveFile, extractToDir, true);
       }
     }

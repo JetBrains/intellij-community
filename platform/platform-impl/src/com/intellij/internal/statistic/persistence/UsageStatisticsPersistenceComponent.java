@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ import java.util.Set;
     )}
 )
 public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersistenceComponent
-  implements ApplicationComponent, PersistentStateComponent<Element> {
+  implements NamedComponent, PersistentStateComponent<Element> {
 
   @NonNls private boolean isAllowed = false;
   @NonNls private boolean isShowNotification = true;
@@ -170,13 +170,5 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
   @NotNull
   public String getComponentName() {
     return "SentUsagesPersistenceComponent";
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
   }
 }

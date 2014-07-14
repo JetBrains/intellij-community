@@ -24,6 +24,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.WebProjectGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,7 @@ import javax.swing.*;
 public class WebModuleBuilder extends ModuleBuilder {
 
   public static final String GROUP_NAME = "Static Web";
-  public static final Icon ICON = AllIcons.General.Web;
+  public static final Icon ICON = AllIcons.Nodes.PpWeb;
 
   private final WebProjectTemplate<?> myTemplate;
 
@@ -58,6 +59,16 @@ public class WebModuleBuilder extends ModuleBuilder {
   @Override
   public ModuleType getModuleType() {
     return WebModuleType.getInstance();
+  }
+
+  @Override
+  public String getPresentableName() {
+    return getGroupName();
+  }
+
+  @Override
+  public boolean isTemplateBased() {
+    return true;
   }
 
   @Override
@@ -97,7 +108,7 @@ public class WebModuleBuilder extends ModuleBuilder {
     if (myTemplate == null) {
       return super.modifySettingsStep(settingsStep);
     }
-    WebProjectGenerator.GeneratorPeer peer = myTemplate.getPeer();
+    final WebProjectGenerator.GeneratorPeer peer = myTemplate.getPeer();
     peer.buildUI(settingsStep);
     return new ModuleWizardStep() {
       @Override
@@ -108,7 +119,13 @@ public class WebModuleBuilder extends ModuleBuilder {
       @Override
       public void updateDataModel() {
       }
+
+      @Override
+      public boolean validate() throws ConfigurationException {
+        ValidationInfo info = peer.validate();
+        if (info != null) throw new ConfigurationException(info.message);
+        return true;
+      }
     };
   }
-
 }

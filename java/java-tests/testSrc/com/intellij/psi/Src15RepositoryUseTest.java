@@ -299,7 +299,7 @@ public class Src15RepositoryUseTest extends PsiTestCase {
       public boolean accept(final VirtualFile file) {
         return !"package-info.java".equals(file.getName());
       }
-    });
+    }, myTestRootDisposable);
 
     final PsiClass annotationTypeClass = findClass("annotations.AnnotationType");
     assertTrue(annotationTypeClass.isAnnotationType());
@@ -321,11 +321,11 @@ public class Src15RepositoryUseTest extends PsiTestCase {
   }
 
   private void setupLoadingFilter() {
-    getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.ALL);
+    getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, myTestRootDisposable);
   }
 
   private void tearDownLoadingFilter() {
-    getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
+    getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
   }
 
   @NotNull

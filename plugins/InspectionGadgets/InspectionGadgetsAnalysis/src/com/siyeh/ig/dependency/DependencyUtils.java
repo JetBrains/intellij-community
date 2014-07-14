@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -249,11 +249,10 @@ public class DependencyUtils {
     return newDependents;
   }
 
-  static void tabulateDependentPackages(RefEntity entity,
-                                        Set<RefPackage> dependents) {
+  static void tabulateDependentPackages(RefEntity entity, Set<RefPackage> dependents) {
     if (entity instanceof RefElement) {
       final RefElement element = (RefElement)entity;
-      final Collection<RefElement> references = element.getOutReferences();
+      final Collection<RefElement> references = element.getInReferences();
       for (RefElement reference : references) {
         final RefPackage refPackage = RefJavaUtil.getPackage(reference);
         if (refPackage != null) {

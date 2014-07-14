@@ -15,17 +15,10 @@
  */
 package com.intellij.ide.projectView.actions;
 
-import com.intellij.openapi.actionSystem.ActionGroupUtil;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.ide.actions.NonTrivialActionGroup;
 
 /**
  * @author yole
  */
-public class MarkRootGroup extends DefaultActionGroup implements DumbAware {
-  @Override
-  public void update(AnActionEvent e) {
-    e.getPresentation().setVisible(!ActionGroupUtil.isGroupEmpty(this, e));
-  }
+public class MarkRootGroup extends NonTrivialActionGroup {
 }

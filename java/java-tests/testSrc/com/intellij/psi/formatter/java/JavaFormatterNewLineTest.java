@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.util.IncorrectOperationException;
  */
 public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
 
-  public void testAutomaticElseWrapping() throws Exception {
+  public void testAutomaticElseWrapping() {
     getSettings().ELSE_ON_NEW_LINE = true;
 
     doMethodTest(
@@ -43,7 +43,7 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testAutomaticElseUnwrapping() throws Exception {
+  public void testAutomaticElseUnwrapping() {
     getSettings().ELSE_ON_NEW_LINE = false;
     getSettings().KEEP_LINE_BREAKS = true;
 
@@ -60,7 +60,7 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testAutomaticCatchWrapping() throws Exception {
+  public void testAutomaticCatchWrapping() {
     getSettings().CATCH_ON_NEW_LINE = true;
 
     doMethodTest(
@@ -75,7 +75,7 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testAutomaticCatchUnwrapping() throws Exception {
+  public void testAutomaticCatchUnwrapping() {
     getSettings().CATCH_ON_NEW_LINE = false;
     getSettings().KEEP_LINE_BREAKS = true;
 
@@ -92,7 +92,7 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testAutomaticFinallyWrapping() throws Exception {
+  public void testAutomaticFinallyWrapping() {
     getSettings().FINALLY_ON_NEW_LINE = true;
 
     doMethodTest(
@@ -107,7 +107,7 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testAutomaticFinallyUnwrapping() throws Exception {
+  public void testAutomaticFinallyUnwrapping() {
     getSettings().FINALLY_ON_NEW_LINE = false;
     getSettings().KEEP_LINE_BREAKS = true;
 
@@ -124,7 +124,7 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testAutomaticCatchFinallyUnwrapping() throws Exception {
+  public void testAutomaticCatchFinallyUnwrapping() {
     // Inspired by IDEA-47809
     getSettings().CATCH_ON_NEW_LINE = false;
     getSettings().FINALLY_ON_NEW_LINE = false;
@@ -144,8 +144,8 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
-  
-  public void testClassInitializationBlockBracesPlacement() throws Exception {
+
+  public void testClassInitializationBlockBracesPlacement() {
     // Inspired by IDEA-54191
     getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
@@ -161,7 +161,7 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testBlockOfMethodWithAnnotatedParameter() throws Exception {
+  public void testBlockOfMethodWithAnnotatedParameter() {
     // Inspired by IDEA-17870
     doClassTest("public Test(@Qualifier(\"blah\") AType blah){}", "public Test(@Qualifier(\"blah\") AType blah) {\n" + "}");
   }
@@ -193,7 +193,7 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testSimpleAnnotatedMethodAndBraceOnNextLineStyle() throws Exception {
+  public void testSimpleAnnotatedMethodAndBraceOnNextLineStyle() {
     // Inspired by IDEA-53542
     getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;

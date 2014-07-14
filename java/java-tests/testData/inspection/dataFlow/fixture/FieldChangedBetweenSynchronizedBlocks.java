@@ -1,4 +1,4 @@
-public class Bar {
+class Bar {
   private Object field;
   private final Object lock = new Object();
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.tasks.doc;
 
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -55,7 +56,7 @@ public class TaskPsiElement extends FakePsiElement {
 
   @Override
   public PsiFile getContainingFile() {
-    return PsiFileFactory.getInstance(getProject()).createFileFromText("foo.txt", "");
+    return PsiFileFactory.getInstance(getProject()).createFileFromText("foo.txt", FileTypes.PLAIN_TEXT, "");
   }
 
   @Override

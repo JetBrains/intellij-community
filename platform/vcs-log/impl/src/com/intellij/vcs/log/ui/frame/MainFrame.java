@@ -16,14 +16,19 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.VcsLogSettings;
+import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.VcsLogUI;
+import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
-import com.intellij.vcs.log.ui.filter.VcsLogFilterUi;
+import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,51 +37,52 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author erokhins
- */
 public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
   @NotNull private final VcsLogDataHolder myLogDataHolder;
-  @NotNull private final VcsLogUI myUI;
+  @NotNull private final VcsLogUiImpl myUI;
   @NotNull private final Project myProject;
   @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLog myLog;
-  @NotNull private final VcsLogFilterUi myFilterUi;
+  @NotNull private final VcsLogClassicFilterUi myFilterUi;
 
   @NotNull private final JBLoadingPanel myChangesLoadingPane;
   @NotNull private final VcsLogGraphTable myGraphTable;
   @NotNull private final BranchesPanel myBranchesPanel;
   @NotNull private final DetailsPanel myDetailsPanel;
   @NotNull private final Splitter myDetailsSplitter;
-  private final JComponent myToolbar;
+  @NotNull private final JComponent myToolbar;
+  @NotNull private final RepositoryChangesBrowser myChangesBrowser;
 
-  public MainFrame(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI vcsLogUI, @NotNull Project project,
-                   @NotNull VcsLogSettings settings, @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLog log) {
+  public MainFrame(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiImpl vcsLogUI, @NotNull Project project,
+                   @NotNull VcsLogSettings settings, @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLog log,
+                   @NotNull DataPack initialDataPack) {
     // collect info
     myLogDataHolder = logDataHolder;
     myUI = vcsLogUI;
     myProject = project;
     myUiProperties = uiProperties;
     myLog = log;
-    myFilterUi = new VcsLogClassicFilterUi(myUI);
+    myFilterUi = new VcsLogClassicFilterUi(myUI, logDataHolder, uiProperties, initialDataPack);
 
     // initialize components
-    myGraphTable = new VcsLogGraphTable(vcsLogUI, logDataHolder);
-    myBranchesPanel = new BranchesPanel(logDataHolder, vcsLogUI);
+    myGraphTable = new VcsLogGraphTable(vcsLogUI, logDataHolder, initialDataPack);
+    myBranchesPanel = new BranchesPanel(logDataHolder, vcsLogUI, initialDataPack.getRefsModel());
     myBranchesPanel.setVisible(settings.isShowBranchesPanel());
-    myDetailsPanel = new DetailsPanel(logDataHolder, myGraphTable, vcsLogUI.getColorManager());
+    myDetailsPanel = new DetailsPanel(logDataHolder, myGraphTable, vcsLogUI.getColorManager(), initialDataPack);
 
-    final ChangesBrowser changesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
-    changesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), getGraphTable());
-    setDefaultEmptyText(changesBrowser);
+    myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
+    myChangesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), getGraphTable());
+    myChangesBrowser.getEditSourceAction().registerCustomShortcutSet(CommonShortcuts.getEditSource(), getGraphTable());
+    setDefaultEmptyText(myChangesBrowser);
     myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), project);
-    myChangesLoadingPane.add(changesBrowser);
+    myChangesLoadingPane.add(myChangesBrowser);
 
-    final CommitSelectionListener selectionChangeListener = new CommitSelectionListener(changesBrowser);
+    final CommitSelectionListener selectionChangeListener = new CommitSelectionListener(myChangesBrowser);
     myGraphTable.getSelectionModel().addListSelectionListener(selectionChangeListener);
     myGraphTable.getSelectionModel().addListSelectionListener(myDetailsPanel);
     updateWhenDetailsAreLoaded(selectionChangeListener);
@@ -108,6 +114,20 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
         changesBrowserSplitter.dispose();
       }
     });
+    myGraphTable.resetDefaultFocusTraversalKeys();
+    setFocusTraversalPolicyProvider(true);
+    setFocusTraversalPolicy(new MyFocusPolicy());
+  }
+
+  /**
+   * Informs components that the actual DataPack has been updated (e.g. due to a log refresh). <br/>
+   * Components may want to update their fields and/or rebuild.
+   * @param dataPack new data pack.
+   */
+  public void updateDataPack(@NotNull DataPack dataPack) {
+    myFilterUi.updateDataPack(dataPack);
+    myDetailsPanel.updateDataPack(dataPack);
+    myGraphTable.updateDataPack(dataPack);
   }
 
   private void updateWhenDetailsAreLoaded(final CommitSelectionListener selectionChangeListener) {
@@ -151,14 +171,16 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
   }
 
   private JComponent createActionsToolbar() {
-    AnAction hideBranchesAction = new DumbAwareAction("Collapse linear branches", "Collapse linear branches", VcsLogIcons.CollapseBranches) {
+    AnAction bekAction = new BekAction();
+
+    AnAction hideBranchesAction = new GraphAction("Collapse linear branches", "Collapse linear branches", VcsLogIcons.CollapseBranches) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         myUI.hideAll();
       }
     };
 
-    AnAction showBranchesAction = new DumbAwareAction("Expand all branches", "Expand all branches", VcsLogIcons.ExpandBranches) {
+    AnAction showBranchesAction = new GraphAction("Expand all branches", "Expand all branches", VcsLogIcons.ExpandBranches) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         myUI.showAll();
@@ -182,12 +204,12 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
     refreshAction.registerShortcutOn(this);
 
-    DefaultActionGroup toolbarGroup = new DefaultActionGroup(hideBranchesAction, showBranchesAction, showFullPatchAction, refreshAction,
+    DefaultActionGroup toolbarGroup = new DefaultActionGroup(bekAction, hideBranchesAction, showBranchesAction, showFullPatchAction, refreshAction,
                                                              showDetailsAction);
-    toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogUI.TOOLBAR_ACTION_GROUP));
+    toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogUiImpl.TOOLBAR_ACTION_GROUP));
 
     DefaultActionGroup mainGroup = new DefaultActionGroup();
-    mainGroup.add(myFilterUi.getFilterActionComponents());
+    mainGroup.add(myFilterUi.getActionGroup());
     mainGroup.addSeparator();
     mainGroup.add(toolbarGroup);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, mainGroup, true);
@@ -197,10 +219,6 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
   public JComponent getMainComponent() {
     return this;
-  }
-
-  public void refresh() {
-    myBranchesPanel.rebuild();
   }
 
   public void setBranchesPanelVisible(boolean visible) {
@@ -217,18 +235,26 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     if (VcsLogDataKeys.VSC_LOG == key) {
       sink.put(key, myLog);
     }
-    else if (VcsDataKeys.CHANGES.equals(key)) {
-      if (myGraphTable.getSelectedRowCount() == 1) {
-        List<Change> selectedChanges = getSelectedChanges();
-        if (selectedChanges != null) {
-          sink.put(VcsDataKeys.CHANGES, ArrayUtil.toObjectArray(selectedChanges, Change.class));
-        }
+    else if (VcsLogDataKeys.VCS_LOG_UI == key) {
+      sink.put(key, myUI);
+    }
+    else if (VcsLogDataKeys.VCS_LOG_DATA_PROVIDER == key) {
+      sink.put(key, myLogDataHolder);
+    }
+    else if (VcsDataKeys.CHANGES == key || VcsDataKeys.SELECTED_CHANGES == key) {
+      List<Change> selectedChanges = getSelectedChanges();
+      if (selectedChanges != null) {
+        sink.put(key, ArrayUtil.toObjectArray(selectedChanges, Change.class));
       }
     }
   }
 
   public Component getToolbar() {
     return myToolbar;
+  }
+
+  public boolean areGraphActionsEnabled() {
+    return myGraphTable.getModel() instanceof GraphTableModel && myGraphTable.getRowCount() > 0;
   }
 
   private class CommitSelectionListener implements ListSelectionListener {
@@ -257,6 +283,29 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
           myChangesLoadingPane.startLoading();
         }
       }
+    }
+  }
+
+  private class BekAction extends ToggleAction implements DumbAware {
+    public BekAction() {
+      super("BEK", "BEK", AllIcons.Actions.Lightning);
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myUI.isBek();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      myUI.setBek(state);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setVisible(BekSorter.isBekEnabled());
+      e.getPresentation().setEnabled(areGraphActionsEnabled());
     }
   }
 
@@ -294,5 +343,33 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     public void setSelected(AnActionEvent e, boolean state) {
       myUI.setLongEdgeVisibility(state);
     }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(areGraphActionsEnabled());
+    }
   }
+
+  private abstract class GraphAction extends DumbAwareAction {
+
+    public GraphAction(String text, String description, Icon icon) {
+      super(text, description, icon);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(areGraphActionsEnabled());
+    }
+  }
+
+  private class MyFocusPolicy extends ComponentsListFocusTraversalPolicy {
+    @NotNull
+    @Override
+    protected List<Component> getOrderedComponents() {
+      return ContainerUtil.concat(Arrays.<Component>asList(myGraphTable, myChangesBrowser.getPreferredFocusedComponent()),
+                                  myFilterUi.getComponents());
+    }
+  }
+
 }

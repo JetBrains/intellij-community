@@ -21,6 +21,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +83,7 @@ public class BooleanParameterInspection extends BaseInspection {
           return;
         }
       }
-      if (PropertyUtil.isSimpleSetter(method)) {
+      if (PropertyUtil.isSimpleSetter(method) || LibraryUtil.isOverrideOfLibraryMethod(method)) {
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();

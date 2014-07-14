@@ -28,7 +28,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.StringTokenizer;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -44,7 +43,9 @@ import java.util.regex.Pattern;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class BootstrapClassLoaderUtil extends ClassUtilCore {
-  @NonNls public static final String PROPERTY_IGNORE_CLASSPATH = "ignore.classpath";
+  private static final String PROPERTY_IGNORE_CLASSPATH = "ignore.classpath";
+  private static final String PROPERTY_ALLOW_BOOTSTRAP_RESOURCES = "idea.allow.bootstrap.resources";
+  private static final String PROPERTY_ADDITIONAL_CLASSPATH = "idea.additional.classpath";
 
   private BootstrapClassLoaderUtil() { }
 
@@ -60,9 +61,13 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     addParentClasspath(classpath);
     addIDEALibraries(classpath);
     addAdditionalClassPath(classpath);
-    UrlClassLoader newClassLoader = UrlClassLoader.build()
+    UrlClassLoader.Builder builder = UrlClassLoader.build()
       .urls(filterClassPath(classpath))
-      .allowLock().useCache().get();
+      .allowLock().useCache();
+    if (Boolean.valueOf(System.getProperty(PROPERTY_ALLOW_BOOTSTRAP_RESOURCES, "true"))) {
+      builder.allowBootstrapResources();
+    }
+    UrlClassLoader newClassLoader = builder.get();
 
     // prepare plugins
     if (updatePlugins && !isLoadingOfExternalPluginsDisabled()) {
@@ -182,7 +187,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
 
   private static void addAdditionalClassPath(List<URL> classPath) {
     try {
-      StringTokenizer tokenizer = new StringTokenizer(System.getProperty("idea.additional.classpath", ""), File.pathSeparator, false);
+      StringTokenizer tokenizer = new StringTokenizer(System.getProperty(PROPERTY_ADDITIONAL_CLASSPATH, ""), File.pathSeparator, false);
       while (tokenizer.hasMoreTokens()) {
         String pathItem = tokenizer.nextToken();
         classPath.add(new File(pathItem).toURI().toURL());

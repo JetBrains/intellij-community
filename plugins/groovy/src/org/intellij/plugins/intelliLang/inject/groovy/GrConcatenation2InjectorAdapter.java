@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ public class GrConcatenation2InjectorAdapter extends JavaConcatenationInjectorMa
     return LITERALS;
   }
 
+  @Override
   protected Pair<PsiElement,PsiElement[]> computeAnchorAndOperands(@NotNull PsiElement context) {
     PsiElement element = context;
     PsiElement parent = context.getParent();
@@ -119,7 +120,7 @@ public class GrConcatenation2InjectorAdapter extends JavaConcatenationInjectorMa
     else if (right instanceof GrString) {
       processGString((GrString)right, operands);
     }
-    else {
+    else if (right != null) {
       operands.add(right);
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -28,23 +29,21 @@ import java.io.IOException;
 * @author nik
 */
 public class ArtifactPackagingItemExternalizer implements DataExternalizer<ArtifactPackagingItemOutputState> {
-  private byte[] myBuffer = IOUtil.allocReadWriteUTFBuffer();
-
   @Override
-  public void save(DataOutput out, ArtifactPackagingItemOutputState value) throws IOException {
+  public void save(@NotNull DataOutput out, ArtifactPackagingItemOutputState value) throws IOException {
     out.writeInt(value.myDestinations.size());
     for (Pair<String, Long> pair : value.myDestinations) {
-      IOUtil.writeUTFFast(myBuffer, out, pair.getFirst());
+      IOUtil.writeUTF(out, pair.getFirst());
       out.writeLong(pair.getSecond());
     }
   }
 
   @Override
-  public ArtifactPackagingItemOutputState read(DataInput in) throws IOException {
+  public ArtifactPackagingItemOutputState read(@NotNull DataInput in) throws IOException {
     int size = in.readInt();
     SmartList<Pair<String, Long>> destinations = new SmartList<Pair<String, Long>>();
     while (size-- > 0) {
-      String path = IOUtil.readUTFFast(myBuffer, in);
+      String path = IOUtil.readUTF(in);
       long outputTimestamp = in.readLong();
       destinations.add(Pair.create(path, outputTimestamp));
     }

@@ -1,16 +1,34 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.refactoring;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.util.containers.MultiMap;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  *  @author dsl
@@ -26,7 +44,6 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
   public MockIntroduceVariableHandler(@NonNls final String name, final boolean replaceAll,
                                       final boolean declareFinal, final boolean replaceLValues,
                                       @NonNls final String expectedTypeCanonicalName) {
-
     this(name, replaceAll, declareFinal, replaceLValues, expectedTypeCanonicalName, false);
   }
 
@@ -52,7 +69,7 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
                                                PsiElement anchor, final OccurrencesChooser.ReplaceChoice replaceChoice) {
     final PsiType type = myLookForType ? findType(typeSelectorManager.getTypesForAll(), typeSelectorManager.getDefaultType())
                                        : typeSelectorManager.getDefaultType();
-    Assert.assertTrue(type.getInternalCanonicalText(), type.getInternalCanonicalText().equals(myExpectedTypeCanonicalName));
+    assertTrue(type.getInternalCanonicalText(), type.getInternalCanonicalText().equals(myExpectedTypeCanonicalName));
     IntroduceVariableSettings introduceVariableSettings = new IntroduceVariableSettings() {
       @Override
       public String getEnteredName() {
@@ -90,7 +107,7 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
   }
 
   protected void assertValidationResult(final boolean validationResult) {
-    Assert.assertTrue(validationResult);
+    assertTrue(validationResult);
   }
 
   @Override

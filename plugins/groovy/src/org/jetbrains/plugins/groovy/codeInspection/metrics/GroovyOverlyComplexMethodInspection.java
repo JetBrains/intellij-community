@@ -15,54 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.metrics;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.codeInspection.utils.InspectionUtil;
 
-public class GroovyOverlyComplexMethodInspection extends GroovyMethodMetricInspection {
+import javax.swing.*;
 
-  @NotNull
-  public String getDisplayName() {
-    return "Overly complex method";
-  }
+public class GroovyOverlyComplexMethodInspection extends GroovyOverlyComplexMethodInspectionBase {
 
-  @NotNull
-  public String getGroupDisplayName() {
-    return METHOD_METRICS;
-  }
-
-  protected int getDefaultLimit() {
-    return 10;
-  }
-
-  protected String getConfigurationLabel() {
-    return "Method complexity limit:";
-  }
-
-  public String buildErrorString(Object... args) {
-    return "Method '#ref' is overly complex ( cyclomatic complexity =" + args[0] + '>' + args[1] + ')';
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new Visitor();
-  }
-
-  private class Visitor extends BaseInspectionVisitor {
-    public void visitMethod(GrMethod grMethod) {
-      super.visitMethod(grMethod);
-      final int limit = getLimit();
-      final CyclomaticComplexityVisitor visitor = new CyclomaticComplexityVisitor();
-      final GrOpenBlock body = grMethod.getBlock();
-      if (body == null) {
-        return;
-      }
-      body.accept(visitor);
-      final int complexity = visitor.getComplexity();
-      if (complexity <= limit) {
-        return;
-      }
-      registerMethodError(grMethod, complexity, limit);
-    }
+  @Override
+  public JComponent createOptionsPanel() {
+    return InspectionUtil.createSingleIntegerFieldOptionsPanel(this, "m_limit", getConfigurationLabel());
   }
 }

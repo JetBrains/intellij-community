@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,22 +71,27 @@ public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
     return new JavaFindUsagesHandler(element, this);
   }
 
+  @NotNull
   public JavaClassFindUsagesOptions getFindClassOptions() {
     return myFindClassOptions;
   }
 
+  @NotNull
   public JavaMethodFindUsagesOptions getFindMethodOptions() {
     return myFindMethodOptions;
   }
 
+  @NotNull
   public JavaPackageFindUsagesOptions getFindPackageOptions() {
     return myFindPackageOptions;
   }
 
+  @NotNull
   public JavaThrowFindUsagesOptions getFindThrowOptions() {
     return myFindThrowOptions;
   }
 
+  @NotNull
   public JavaVariableFindUsagesOptions getFindVariableOptions() {
     return myFindVariableOptions;
   }

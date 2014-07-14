@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.impl.VcsGlobalMessageManager;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
@@ -101,6 +103,13 @@ public class GitPushDialog extends DialogWrapper {
     return repositories;
   }
 
+  @Nullable
+  @Override
+  protected JComponent createNorthPanel() {
+    final JComponent banner = VcsGlobalMessageManager.getInstance(myProject).getMessageBanner();
+    return banner != null ? banner : super.createNorthPanel();
+  }
+
   @Override
   protected JComponent createCenterPanel() {
     JPanel optionsPanel = new JPanel(new BorderLayout());
@@ -141,7 +150,7 @@ public class GitPushDialog extends DialogWrapper {
           error.set(collectInfoToPush());
         }
 
-        final Pair<String, String> remoteAndBranch = getRemoteAndTrackedBranchForCurrentBranch();
+        final Couple<String> remoteAndBranch = getRemoteAndTrackedBranchForCurrentBranch();
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
@@ -162,7 +171,7 @@ public class GitPushDialog extends DialogWrapper {
   }
 
   @NotNull
-  private Pair<String, String> getRemoteAndTrackedBranchForCurrentBranch() {
+  private Couple<String> getRemoteAndTrackedBranchForCurrentBranch() {
     if (myGitCommitsToPush != null) {
       Collection<GitRepository> repositories = myGitCommitsToPush.getRepositories();
       if (!repositories.isEmpty()) {
@@ -170,7 +179,7 @@ public class GitPushDialog extends DialogWrapper {
         GitBranch currentBranch = repository.getCurrentBranch();
         assert currentBranch != null;
         if (myGitCommitsToPush.get(repository).get(currentBranch).getDestBranch() == GitPusher.NO_TARGET_BRANCH) { // push to branch with the same name
-          return Pair.create(DEFAULT_REMOTE, currentBranch.getName());
+          return Couple.of(DEFAULT_REMOTE, currentBranch.getName());
         }
         String remoteName;
         try {
@@ -184,10 +193,10 @@ public class GitPushDialog extends DialogWrapper {
           remoteName = DEFAULT_REMOTE;
         }
         String targetBranch = myGitCommitsToPush.get(repository).get(currentBranch).getDestBranch().getNameForRemoteOperations();
-        return Pair.create(remoteName, targetBranch);
+        return Couple.of(remoteName, targetBranch);
       }
     }
-    return Pair.create(DEFAULT_REMOTE, "");
+    return Couple.of(DEFAULT_REMOTE, "");
   }
 
   @Nullable
@@ -210,7 +219,7 @@ public class GitPushDialog extends DialogWrapper {
   private static String logMessageForCommits(GitCommitsByRepoAndBranch commitsToPush) {
     StringBuilder logMessage = new StringBuilder();
     for (GitCommit commit : commitsToPush.getAllCommits()) {
-      logMessage.append(GitUtil.getShortHash(commit.getHash().toString()));
+      logMessage.append(GitUtil.getShortHash(commit.getId().toString()));
     }
     return logMessage.toString();
   }

@@ -43,25 +43,24 @@ public class ProgramParametersConfigurator {
     parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
 
     parameters.setupEnvs(configuration.getEnvs(), configuration.isPassParentEnvs());
-    if (parameters.getEnv() != null) {
-      Map<String, String> expanded = new HashMap<String, String>();
-      for (Map.Entry<String, String> each : parameters.getEnv().entrySet()) {
-        expanded.put(each.getKey(), expandPath(each.getValue(), module, project));
-      }
-      parameters.setEnv(expanded);
+
+    Map<String, String> expanded = new HashMap<String, String>();
+    for (Map.Entry<String, String> each : parameters.getEnv().entrySet()) {
+      expanded.put(each.getKey(), expandPath(each.getValue(), module, project));
     }
+    parameters.setEnv(expanded);
   }
 
   @Nullable
   public String getWorkingDir(CommonProgramRunConfigurationParameters configuration, Project project, Module module) {
     String workingDirectory = configuration.getWorkingDirectory();
     String defaultWorkingDir = getDefaultWorkingDir(project);
-
-    if (workingDirectory == null || workingDirectory.trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(workingDirectory)) {
       workingDirectory = defaultWorkingDir;
+      if (workingDirectory == null) {
+        return null;
+      }
     }
-    if (workingDirectory == null)
-      return null;
     workingDirectory = expandPath(workingDirectory, module, project);
     if (!FileUtil.isAbsolute(workingDirectory) && defaultWorkingDir != null) {
       if (("$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$").equals(workingDirectory)) {

@@ -33,7 +33,11 @@ public abstract class MavenDomWithIndicesTestCase extends MavenDomTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myIndicesFixture.tearDown();
-    super.tearDown();
+    try {
+      myIndicesFixture.tearDown();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import org.jetbrains.annotations.NotNull;
@@ -71,6 +72,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     return new GrControlFlowOwner[]{scope};
   }
 
+  @Override
   protected void checkExpression(@NotNull GrExpression selectedExpr) {
     // Cannot perform refactoring in parameter default values
 
@@ -120,16 +122,20 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   /**
    * Inserts new variable declarations and replaces occurrences
    */
+  @Override
   public GrVariable runRefactoring(@NotNull final GrIntroduceContext context, @NotNull final GroovyIntroduceVariableSettings settings) {
     // Generating variable declaration
 
     GrVariable insertedVar = processExpression(context, settings);
-
-    if (context.getEditor() != null && getPositionMarker() != null) {
-      context.getEditor().getCaretModel().moveToOffset(getPositionMarker().getEndOffset());
-      context.getEditor().getSelectionModel().removeSelection();
-    }
+    moveOffsetToPositionMarker(context.getEditor());
     return insertedVar;
+  }
+
+  private void moveOffsetToPositionMarker(Editor editor) {
+    if (editor != null && getPositionMarker() != null) {
+      editor.getSelectionModel().removeSelection();
+      editor.getCaretModel().moveToOffset(getPositionMarker().getEndOffset());
+    }
   }
 
   @Override
@@ -159,6 +165,12 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
           return addVariable(context, settings);
         }
       }
+
+      @Override
+      protected void performPostIntroduceTasks() {
+        super.performPostIntroduceTasks();
+        moveOffsetToPositionMarker(contextRef.get().getEditor());
+      }
     };
   }
 
@@ -166,7 +178,9 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     GrStatement anchor = findAnchor(context, settings.replaceAllOccurrences());
     PsiElement parent = anchor.getParent();
     assert parent instanceof GrStatementOwner;
-    GrStatement declaration = ((GrStatementOwner)parent).addStatementBefore(generateDeclaration(context, settings), anchor);
+    GrVariableDeclaration generated = generateDeclaration(context, settings);
+    GrStatement declaration = ((GrStatementOwner)parent).addStatementBefore(generated, anchor);
+    declaration = (GrStatement)JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(declaration);
 
     return ((GrVariableDeclaration)declaration).getVariables()[0];
   }
@@ -195,7 +209,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     GrVariableDeclaration varDecl = generateDeclaration(context, settings);
 
     if (context.getStringPart() != null) {
-      final GrExpression ref = processLiteral(DUMMY_NAME, context.getStringPart(), context.getProject());
+      final GrExpression ref = context.getStringPart().replaceLiteralWithConcatenation(DUMMY_NAME);
       return doProcessExpression(context, settings, varDecl, new PsiElement[]{ref}, ref, true);
     }
     else {
@@ -222,7 +236,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   private static GrExpression generateInitializer(@NotNull GrIntroduceContext context,
                                                   @NotNull GrVariable variable) {
     final GrExpression initializer = context.getStringPart() != null
-                                     ? GrIntroduceHandlerBase.generateExpressionFromStringPart(context.getStringPart(), context.getProject())
+                                     ? context.getStringPart().createLiteralFromSelected()
                                      : context.getExpression();
     final GrExpression dummyInitializer = variable.getInitializerGroovy();
     assert dummyInitializer != null;
@@ -249,6 +263,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     return HelpID.INTRODUCE_VARIABLE;
   }
 
+  @Override
   @NotNull
   protected GroovyIntroduceVariableDialog getDialog(@NotNull GrIntroduceContext context) {
     final GroovyVariableValidator validator = new GroovyVariableValidator(context);

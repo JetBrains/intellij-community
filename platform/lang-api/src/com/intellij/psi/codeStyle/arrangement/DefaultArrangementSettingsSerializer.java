@@ -16,20 +16,18 @@
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
-import com.intellij.psi.codeStyle.arrangement.match.DefaultArrangementEntryMatcherSerializer;
-import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
-import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
-import com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings;
-import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
-import com.intellij.psi.codeStyle.arrangement.std.StdRulePriorityAwareSettings;
+import com.intellij.psi.codeStyle.arrangement.match.*;
+import com.intellij.psi.codeStyle.arrangement.std.*;
+import com.intellij.util.containers.ContainerUtil;
+import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -40,14 +38,14 @@ import java.util.List;
  * @since 7/18/12 10:37 AM
  */
 public class DefaultArrangementSettingsSerializer implements ArrangementSettingsSerializer {
-
-  public static final ArrangementSettingsSerializer INSTANCE = new DefaultArrangementSettingsSerializer(Mixin.NULL);
-
   private static final Logger LOG = Logger.getInstance("#" + DefaultArrangementSettingsSerializer.class.getName());
 
   @NotNull @NonNls private static final String GROUPS_ELEMENT_NAME     = "groups";
   @NotNull @NonNls private static final String GROUP_ELEMENT_NAME      = "group";
   @NotNull @NonNls private static final String RULES_ELEMENT_NAME      = "rules";
+  @NotNull @NonNls private static final String SECTION_ELEMENT_NAME    = "section";
+  @NotNull @NonNls private static final String SECTION_START_ATTRIBUTE = "start_comment";
+  @NotNull @NonNls private static final String SECTION_END_ATTRIBUTE   = "end_comment";
   @NotNull @NonNls private static final String RULE_ELEMENT_NAME       = "rule";
   @NotNull @NonNls private static final String TYPE_ELEMENT_NAME       = "type";
   @NotNull @NonNls private static final String MATCHER_ELEMENT_NAME    = "match";
@@ -55,10 +53,16 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
 
   @NotNull private final DefaultArrangementEntryMatcherSerializer myMatcherSerializer;
   @NotNull private final Mixin                                    myMixin;
+  @NotNull private final ArrangementSettings                      myDefaultSettings;
 
-  public DefaultArrangementSettingsSerializer(@NotNull Mixin mixin) {
+  public DefaultArrangementSettingsSerializer(@NotNull StdArrangementSettings defaultSettings) {
+    this(Mixin.NULL, defaultSettings);
+  }
+
+  public DefaultArrangementSettingsSerializer(@NotNull Mixin mixin, @NotNull StdArrangementSettings defaultSettings) {
     myMixin = mixin;
     myMatcherSerializer = new DefaultArrangementEntryMatcherSerializer(mixin);
+    myDefaultSettings = defaultSettings;
   }
 
   @Override
@@ -68,9 +72,9 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
     }
 
     StdArrangementSettings settings = (StdArrangementSettings)s;
-
     List<ArrangementGroupingRule> groupings = settings.getGroupings();
-    if (!groupings.isEmpty()) {
+    final boolean isDefaultGroupings = groupings.equals(myDefaultSettings.getGroupings());
+    if (!isDefaultGroupings) {
       Element groupingsElement = new Element(GROUPS_ELEMENT_NAME);
       holder.addContent(groupingsElement);
       for (ArrangementGroupingRule group : groupings) {
@@ -81,12 +85,13 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
       }
     }
 
-    List<StdArrangementMatchRule> rules = settings.getRules();
-    if (!rules.isEmpty()) {
+    final List<ArrangementSectionRule> sections = settings.getSections();
+    final boolean isDefaultRules = sections.equals((myDefaultSettings).getSections());
+    if (!isDefaultRules) {
       Element rulesElement = new Element(RULES_ELEMENT_NAME);
       holder.addContent(rulesElement);
-      for (StdArrangementMatchRule rule : rules) {
-        rulesElement.addContent(serialize(rule));
+      for (ArrangementSectionRule section : sections) {
+        rulesElement.addContent(serialize(section));
       }
     }
   }
@@ -94,79 +99,116 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
   @Nullable
   @Override
   public ArrangementSettings deserialize(@NotNull Element element) {
-    StdArrangementSettings result = new StdRulePriorityAwareSettings();
-    Element groups = element.getChild(GROUPS_ELEMENT_NAME);
-    if (groups != null) {
-      for (Object group : groups.getChildren(GROUP_ELEMENT_NAME)) {
-        Element groupElement = (Element)group;
+    final List<ArrangementGroupingRule> groupingRules = deserializeGropings(element, myDefaultSettings);
+    final Element rulesElement = element.getChild(RULES_ELEMENT_NAME);
+    final List<ArrangementSectionRule> sectionRules = ContainerUtil.newArrayList();
+    if(rulesElement == null) {
+      sectionRules.addAll(myDefaultSettings.getSections());
+    }
+    else {
+      sectionRules.addAll(deserializeSectionRules(rulesElement));
+      if (sectionRules.isEmpty()) {
+        // for backward compatibility
+        final List<StdArrangementMatchRule> rules = deserializeRules(rulesElement);
+        return StdArrangementSettings.createByMatchRules(groupingRules, rules);
+      }
+    }
+    return new StdArrangementSettings(groupingRules, sectionRules);
+  }
 
-        // Grouping type.
-        String groupingTypeId = groupElement.getChildText(TYPE_ELEMENT_NAME);
-        ArrangementSettingsToken groupingType = StdArrangementTokens.byId(groupingTypeId);
-        if (groupingType == null) {
-          groupingType = myMixin.deserializeToken(groupingTypeId);
+  @NotNull
+  private List<ArrangementGroupingRule> deserializeGropings(@NotNull Element element, @Nullable ArrangementSettings defaultSettings) {
+    Element groups = element.getChild(GROUPS_ELEMENT_NAME);
+    if (groups == null) {
+      return defaultSettings == null ? ContainerUtil.<ArrangementGroupingRule>newSmartList() : defaultSettings.getGroupings();
+    }
+
+    final List<ArrangementGroupingRule> groupings = new ArrayList<ArrangementGroupingRule>();
+    for (Object group : groups.getChildren(GROUP_ELEMENT_NAME)) {
+      Element groupElement = (Element)group;
+
+      // Grouping type.
+      String groupingTypeId = groupElement.getChildText(TYPE_ELEMENT_NAME);
+      ArrangementSettingsToken groupingType = StdArrangementTokens.byId(groupingTypeId);
+      if (groupingType == null) {
+        groupingType = myMixin.deserializeToken(groupingTypeId);
+      }
+      if (groupingType == null) {
+        LOG.warn(String.format("Can't deserialize grouping type token by id '%s'", groupingTypeId));
+        continue;
+      }
+
+      // Order type.
+      String orderTypeId = groupElement.getChildText(ORDER_TYPE_ELEMENT_NAME);
+      ArrangementSettingsToken orderType = StdArrangementTokens.byId(orderTypeId);
+      if (orderType == null) {
+        orderType = myMixin.deserializeToken(orderTypeId);
+      }
+      if (orderType == null) {
+        LOG.warn(String.format("Can't deserialize grouping order type token by id '%s'", orderTypeId));
+        continue;
+      }
+      groupings.add(new ArrangementGroupingRule(groupingType, orderType));
+    }
+    return groupings;
+  }
+
+  @NotNull
+  private List<ArrangementSectionRule> deserializeSectionRules(@NotNull Element rulesElement) {
+    final List<ArrangementSectionRule> sectionRules = new ArrayList<ArrangementSectionRule>();
+    for (Object o : rulesElement.getChildren(SECTION_ELEMENT_NAME)) {
+      final Element sectionElement = (Element)o;
+      final List<StdArrangementMatchRule> rules = deserializeRules(sectionElement);
+      final Attribute start = sectionElement.getAttribute(SECTION_START_ATTRIBUTE);
+      final String startComment = start != null ? start.getValue().trim() : null;
+      final Attribute end = sectionElement.getAttribute(SECTION_END_ATTRIBUTE);
+      final String endComment = end != null ? end.getValue().trim() : null;
+      sectionRules.add(ArrangementSectionRule.create(startComment, endComment, rules));
+    }
+    return sectionRules;
+  }
+
+  @NotNull
+  private List<StdArrangementMatchRule> deserializeRules(@NotNull Element element) {
+    final List<StdArrangementMatchRule> rules = new ArrayList<StdArrangementMatchRule>();
+    for (Object o : element.getChildren(RULE_ELEMENT_NAME)) {
+      Element ruleElement = (Element)o;
+      Element matcherElement = ruleElement.getChild(MATCHER_ELEMENT_NAME);
+      if (matcherElement == null) {
+        continue;
+      }
+
+      StdArrangementEntryMatcher matcher = null;
+      for (Object c : matcherElement.getChildren()) {
+        matcher = myMatcherSerializer.deserialize((Element)c);
+        if (matcher != null) {
+          break;
         }
-        if (groupingType == null) {
-          LOG.warn(String.format("Can't deserialize grouping type token by id '%s'", groupingTypeId));
-          continue;
-        }
-        
-        // Order type.
-        String orderTypeId = groupElement.getChildText(ORDER_TYPE_ELEMENT_NAME);
-        ArrangementSettingsToken orderType = StdArrangementTokens.byId(orderTypeId);
+      }
+
+      if (matcher == null) {
+        return ContainerUtil.newSmartList();
+      }
+
+      Element orderTypeElement = ruleElement.getChild(ORDER_TYPE_ELEMENT_NAME);
+      ArrangementSettingsToken orderType = null;
+      if (orderTypeElement != null) {
+        String orderTypeId = orderTypeElement.getText();
+        orderType = StdArrangementTokens.byId(orderTypeId);
         if (orderType == null) {
           orderType = myMixin.deserializeToken(orderTypeId);
         }
         if (orderType == null) {
-          LOG.warn(String.format("Can't deserialize grouping order type token by id '%s'", orderTypeId));
-          continue;
+          LOG.warn(String.format("Can't deserialize matching rule order type for id '%s'. Falling back to default (%s)",
+                                 orderTypeId, ArrangementMatchRule.DEFAULT_ORDER_TYPE.getId()));
         }
-        result.addGrouping(new ArrangementGroupingRule(groupingType, orderType));
       }
-    }
-
-    Element rulesElement = element.getChild(RULES_ELEMENT_NAME);
-    if (rulesElement != null) {
-      for (Object o : rulesElement.getChildren(RULE_ELEMENT_NAME)) {
-        Element ruleElement = (Element)o;
-        Element matcherElement = ruleElement.getChild(MATCHER_ELEMENT_NAME);
-        if (matcherElement == null) {
-          continue;
-        }
-
-        StdArrangementEntryMatcher matcher = null;
-        for (Object c : matcherElement.getChildren()) {
-          matcher = myMatcherSerializer.deserialize((Element)c);
-          if (matcher != null) {
-            break;
-          }
-        }
-
-        if (matcher == null) {
-          return null;
-        }
-
-        Element orderTypeElement = ruleElement.getChild(ORDER_TYPE_ELEMENT_NAME);
-        ArrangementSettingsToken orderType = null;
-        if (orderTypeElement != null) {
-          String orderTypeId = orderTypeElement.getText();
-          orderType = StdArrangementTokens.byId(orderTypeId);
-          if (orderType == null) {
-            orderType = myMixin.deserializeToken(orderTypeId);
-          }
-          if (orderType == null) {
-            LOG.warn(String.format("Can't deserialize matching rule order type for id '%s'. Falling back to default (%s)",
-                                   orderTypeId, ArrangementMatchRule.DEFAULT_ORDER_TYPE.getId()));
-          }
-        }
-        if (orderType == null) {
-          orderType = ArrangementMatchRule.DEFAULT_ORDER_TYPE;
-        }
-        result.addRule(new StdArrangementMatchRule(matcher, orderType));
+      if (orderType == null) {
+        orderType = ArrangementMatchRule.DEFAULT_ORDER_TYPE;
       }
+      rules.add(new StdArrangementMatchRule(matcher, orderType));
     }
-    
-    return result;
+    return rules;
   }
 
   @Nullable
@@ -182,6 +224,29 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
       result.addContent(new Element(ORDER_TYPE_ELEMENT_NAME).setText(rule.getOrderType().getId()));
     }
     return result;
+  }
+
+  @Nullable
+  public Element serialize(@NotNull ArrangementSectionRule section) {
+    final Element sectionElement = new Element(SECTION_ELEMENT_NAME);
+    if (StringUtil.isNotEmpty(section.getStartComment())) {
+      // or only != null ?
+      sectionElement.setAttribute(SECTION_START_ATTRIBUTE, section.getStartComment());
+    }
+    if (StringUtil.isNotEmpty(section.getEndComment())) {
+      sectionElement.setAttribute(SECTION_END_ATTRIBUTE, section.getEndComment());
+    }
+
+    //TODO: serialize start & end comment as rule?
+    final List<StdArrangementMatchRule> rules = section.getMatchRules();
+    for (int i = 0; i < rules.size(); i++) {
+      StdArrangementMatchRule rule = rules.get(i);
+      if ((i != 0 || StringUtil.isEmpty(section.getStartComment())) &&
+          (i != rules.size() - 1 || StringUtil.isEmpty(section.getEndComment()))) {
+        sectionElement.addContent(serialize(rule));
+      }
+    }
+    return sectionElement;
   }
   
   public interface Mixin {

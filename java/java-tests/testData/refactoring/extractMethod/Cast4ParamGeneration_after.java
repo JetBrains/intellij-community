@@ -6,7 +6,7 @@ public class Test {
   }
 
     private void newMethod(A o) {
-        ((A)o).bar();
+        o.bar();
     }
 }
 

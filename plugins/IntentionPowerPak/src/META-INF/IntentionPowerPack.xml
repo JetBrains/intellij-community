@@ -184,6 +184,11 @@
       <categoryKey>intention.category.junit</categoryKey>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.siyeh.ipp.junit.DataPointHolderConversionIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.junit</categoryKey>
+    </intentionAction>
     <!-- Declaration -->
 
     <!--
@@ -603,6 +608,11 @@
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.unicode.ReplaceOctalEscapeWithUnicodeEscapeIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.asserttoif.ObjectsRequireNonNullIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>

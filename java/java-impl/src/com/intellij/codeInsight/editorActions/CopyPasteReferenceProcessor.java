@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,26 +29,30 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 
-public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> implements CopyPastePostProcessor<ReferenceTransferableData> {
+public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> extends CopyPastePostProcessor<ReferenceTransferableData> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.CopyPasteReferenceProcessor");
   
+  @NotNull
   @Override
-  public ReferenceTransferableData collectTransferableData(PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets) {
+  public List<ReferenceTransferableData> collectTransferableData(PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets) {
+    if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE == CodeInsightSettings.NO) {
+      return Collections.emptyList();
+    }
+
     if (file instanceof PsiCompiledFile) {
       file = ((PsiCompiledFile) file).getDecompiledPsiFile();
     }
     if (!(file instanceof PsiClassOwner)) {
-      return null;
+      return Collections.emptyList();
     }
 
     final ArrayList<ReferenceData> array = new ArrayList<ReferenceData>();
@@ -60,17 +64,17 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> imple
     }
 
     if (array.isEmpty()) {
-      return null;
+      return Collections.emptyList();
     }
     
-    return new ReferenceTransferableData(array.toArray(new ReferenceData[array.size()]));
+    return Collections.singletonList(new ReferenceTransferableData(array.toArray(new ReferenceData[array.size()])));
   }
 
   protected abstract void addReferenceData(PsiFile file, int startOffset, PsiElement element, ArrayList<ReferenceData> to);
 
+  @NotNull
   @Override
-  @Nullable
-  public ReferenceTransferableData extractTransferableData(final Transferable content) {
+  public List<ReferenceTransferableData> extractTransferableData(final Transferable content) {
     ReferenceTransferableData referenceData = null;
     if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE != CodeInsightSettings.NO) {
       try {
@@ -86,10 +90,10 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> imple
     }
 
     if (referenceData != null) { // copy to prevent changing of original by convertLineSeparators
-      return referenceData.clone();
+      return Collections.singletonList(referenceData.clone());
     }
 
-    return null;
+    return Collections.emptyList();
   }
 
   @Override
@@ -97,7 +101,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> imple
                                       final Editor editor,
                                       final RangeMarker bounds,
                                       int caretOffset,
-                                      Ref<Boolean> indented, final ReferenceTransferableData value) {
+                                      Ref<Boolean> indented, final List<ReferenceTransferableData> values) {
     if (DumbService.getInstance(project).isDumb()) {
       return;
     }
@@ -109,7 +113,8 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> imple
     }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    final ReferenceData[] referenceData = value.getData();
+    assert values.size() == 1;
+    final ReferenceData[] referenceData = values.get(0).getData();
     final TRef[] refs = findReferencesToRestore(file, bounds, referenceData);
     if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE == CodeInsightSettings.ASK) {
       askReferencesToRestore(project, refs, referenceData);

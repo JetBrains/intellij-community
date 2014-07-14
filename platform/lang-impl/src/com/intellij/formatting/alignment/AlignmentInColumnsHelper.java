@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.formatting.alignment;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
@@ -169,7 +169,7 @@ public class AlignmentInColumnsHelper {
     if (prev[0] == null) return null;
 
     // ensure there are no non-whitespace, non-comment elements on the top level between baseNode and the found one
-    Pair<ASTNode, ASTNode> siblingParents = TreeUtil.findTopmostSiblingParents(prev[0], baseNode);
+    Couple<ASTNode> siblingParents = TreeUtil.findTopmostSiblingParents(prev[0], baseNode);
     if (siblingParents.first != null && siblingParents.second != null) {
       for (ASTNode each = siblingParents.second.getTreePrev(); each != null && each != siblingParents.first; each = each.getTreePrev()) {
         IElementType eachType = each.getElementType();

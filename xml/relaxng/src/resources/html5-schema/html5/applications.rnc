@@ -1,0 +1,431 @@
+datatypes w = "http://whattf.org/datatype-draft"
+
+# #####################################################################
+##  RELAX NG Schema for HTML 5: Web Application Features              #
+# #####################################################################
+
+## Additions to Common Attributes
+
+	common.attrs.interact &=
+		(	common.attrs.contextmenu?
+		&	common.attrs.contenteditable?
+		&	common.attrs.draggable?
+		&	common.attrs.dropzone?
+		&	common.attrs.hidden?
+		&	common.attrs.spellcheck?
+		)
+		
+	common.attrs.other &= common.attrs.interact
+
+## Context Menu: contextmenu
+
+	common.attrs.contextmenu =
+		attribute contextmenu {
+			common.data.idref
+		}
+
+## Editable Content: contenteditable
+
+	common.attrs.contenteditable =
+		attribute contenteditable {
+			w:string "true" | w:string "false" | w:string ""
+		}
+
+## Draggable Element: draggable
+
+	common.attrs.draggable =
+		attribute draggable {
+			w:string "true" | w:string "false"
+		}
+
+## Dropzone: dropzone
+
+	common.attrs.dropzone =
+		attribute dropzone {
+			list {
+				(	xsd:string { pattern = "[sS][tT][rR][iI][nN][gG]:.+" }
+				|	xsd:string { pattern = "[fF][iI][lL][eE]:.+" }
+				)*
+				,
+				(	w:string "copy"
+				|	w:string "move"
+				|	w:string "link"
+				)?
+				,
+				(	xsd:string { pattern = "[sS][tT][rR][iI][nN][gG]:.+" }
+				|	xsd:string { pattern = "[fF][iI][lL][eE]:.+" }
+				)*
+			}
+		}
+
+## Hidden Element: hidden
+
+	common.attrs.hidden =
+		attribute hidden {
+			w:string "hidden" | w:string ""
+		}
+
+## Spellchecking and grammar checking: spellcheck
+
+	common.attrs.spellcheck =
+		attribute spellcheck{
+			w:string "true" | w:string "false" | w:string ""
+		}
+
+## Application Cache: manifest
+
+	html.attrs.manifest =
+		attribute manifest {
+			common.data.uri.non-empty
+		}
+		
+	html.attrs &= html.attrs.manifest?
+
+## Progess Indicator: <progress>
+
+	progress.elem =
+		element progress { progress.inner & progress.attrs }
+	progress.attrs =
+		(	common.attrs
+		&	progress.attrs.value?
+		&	progress.attrs.max?
+		&	(	common.attrs.aria.implicit.progressbar
+			|	common.attrs.aria.role.progressbar
+			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
+		)
+		progress.attrs.value =
+			attribute value {
+				common.data.float.non-negative
+			}
+		progress.attrs.max =
+			attribute max {
+				common.data.float.positive
+			}
+	progress.inner =
+		( common.inner.phrasing ) #Cannot enforce textContent format here
+
+	common.elem.phrasing |= progress.elem
+
+## Dialog box, inspector, or window: <dialog>
+	dialog.elem =
+		element dialog { dialog.inner & dialog.attrs }
+	dialog.attrs =
+		(	common.attrs
+		&	dialog.attrs.open?
+		&	(	common.attrs.aria.implicit.dialog
+			|	common.attrs.aria.role.alert
+			|	common.attrs.aria.role.alertdialog
+			|	common.attrs.aria.role.contentinfo
+			|	common.attrs.aria.role.dialog
+			|	common.attrs.aria.role.log
+			|	common.attrs.aria.role.marquee
+			|	common.attrs.aria.role.region
+			|	common.attrs.aria.role.status
+			|	common.attrs.aria.landmark.application
+			|	common.attrs.aria.landmark.document
+			|	common.attrs.aria.landmark.main
+			|	common.attrs.aria.landmark.search
+			)?
+		)
+		dialog.attrs.open =
+			attribute open {
+				w:string "open" | w:string ""
+			}
+	dialog.inner =
+		( common.inner.flow )
+	common.elem.flow |= dialog.elem
+
+## Toolbar: <menu type=toolbar>
+
+	menu.toolbar.elem =
+		element menu { menu.toolbar.inner & menu.toolbar.attrs }
+	menu.toolbar.attrs =
+		(	common.attrs
+		&	menu.toolbar.attrs.type?
+		&	(	common.attrs.aria.implicit.toolbar
+			|	common.attrs.aria.role.directory
+			|	common.attrs.aria.role.list
+			|	common.attrs.aria.role.listbox
+			|	common.attrs.aria.role.menu
+			|	common.attrs.aria.role.menubar
+			|	common.attrs.aria.role.tablist
+			|	common.attrs.aria.role.toolbar
+			|	common.attrs.aria.role.tree
+			|	common.attrs.aria.role.presentation
+			)?
+		)
+		menu.toolbar.attrs.type =
+			attribute type {
+				w:string "toolbar"
+			}
+	menu.toolbar.inner =
+		(	mli.elem*
+		|	common.inner.flow
+		)
+	menu.elem |= menu.toolbar.elem
+	
+## Toolbar item: <li>
+
+	mli.elem =
+		element li { mli.inner & mli.attrs }
+	mli.attrs =
+		(	common.attrs
+		&	(	(	common.attrs.aria.role.listitem
+				|	common.attrs.aria.role.menuitem
+				|	common.attrs.aria.role.menuitemcheckbox
+				|	common.attrs.aria.role.menuitemradio
+				|	common.attrs.aria.role.option
+				|	common.attrs.aria.role.tab
+				|	common.attrs.aria.role.treeitem
+				|	common.attrs.aria.role.presentation
+				)
+			)?
+		)
+	mli.inner =
+		( common.inner.flow )
+
+## Popup menu: <menu type=popup>
+
+	menu.popup.elem =
+		element menu { menu.popup.inner & menu.popup.attrs }
+	menu.popup.attrs =
+		(	common.attrs
+		&	menu.popup.attrs.type?
+		&	menu.attrs.label?
+		&	common.attrs.aria?
+		)
+		menu.popup.attrs.type =
+			attribute type {
+				w:string "popup"
+			}
+		menu.attrs.label =
+			attribute label {
+				string
+			}
+	menu.popup.inner =
+		(	menuitem.elem*
+		&	hr.elem*
+		&	menu.popup.elem*
+		&	common.elem.script-supporting*
+		)
+	menu.elem |= menu.popup.elem
+
+## Ambiguous menu: <menu> (with no "type" attribute)
+	menu.ambiguous.elem =
+		element menu { menu.ambiguous.inner & menu.ambiguous.attrs }
+	menu.ambiguous.attrs =
+		(	common.attrs
+		&	menu.attrs.label?
+		&	common.attrs.aria?
+		)
+	menu.ambiguous.inner =
+		(	(	menuitem.elem*
+			&	hr.elem*
+			&	menu.ambiguous.elem*
+			&	common.elem.script-supporting*
+			)
+		|	(	mli.elem*
+			|	common.inner.flow
+			)
+		)
+	menu.elem |= menu.ambiguous.elem
+
+	common.elem.flow |= menu.elem
+	# REVISIT allow nested menus
+
+## Explicit command in popup menu: <menuitem type=command>
+	menuitem.explicit.command.elem =
+		element menuitem { menuitem.inner & menuitem.explicit.command.attrs }
+	menuitem.explicit.command.attrs =
+		(	common.attrs
+		&	menuitem.explicit.command.attrs.type?
+		&	menuitem.attrs.label?
+		&	menuitem.attrs.icon?
+		&	menuitem.attrs.disabled?
+		&	menuitem.attrs.default?
+		&	common.attrs.aria?
+		)
+		menuitem.explicit.command.attrs.type =
+			attribute type {
+				w:string "command"
+			}
+		menuitem.attrs.label =
+			attribute label {
+				w:non-empty-string
+			}
+		menuitem.attrs.icon =
+			attribute icon {
+				common.data.uri.non-empty
+			}
+		menuitem.attrs.disabled =
+			attribute disabled {
+				w:string "" | w:string "disabled"
+			}
+		menuitem.attrs.default =
+			attribute default {
+				w:string "" | w:string "default"
+			}
+	menuitem.elem |= menuitem.explicit.command.elem
+
+## Checkbox in popup menu: <menuitem type=checkbox>
+	menuitem.checkbox.elem =
+		element menuitem { menuitem.inner & menuitem.checkbox.attrs }
+	menuitem.checkbox.attrs =
+		(	common.attrs
+		&	menuitem.checkbox.attrs.type
+		&	menuitem.attrs.label?
+		&	menuitem.attrs.icon?
+		&	menuitem.attrs.disabled?
+		&	menuitem.attrs.checked?
+		&	menuitem.attrs.radiogroup?
+		&	menuitem.attrs.default?
+		&	common.attrs.aria?
+		)
+		menuitem.checkbox.attrs.type =
+			attribute type {
+				w:string "checkbox"
+			}
+		menuitem.attrs.checked =
+			attribute checked {
+				w:string "checked" | w:string ""
+			}
+		menuitem.attrs.radiogroup =
+			attribute radiogroup {
+				string
+			}
+	menuitem.elem |= menuitem.checkbox.elem
+
+## Radio button in popup menu: <menuitem type=radio>
+	menuitem.radio.elem =
+		element menuitem { menuitem.inner & menuitem.radio.attrs }
+	menuitem.radio.attrs =
+		(	common.attrs
+		&	menuitem.radio.attrs.type
+		&	menuitem.attrs.label?
+		&	menuitem.attrs.icon?
+		&	menuitem.attrs.disabled?
+		&	menuitem.attrs.checked?
+		&	menuitem.attrs.radiogroup?
+		&	menuitem.attrs.default?
+		&	common.attrs.aria?
+		)
+		menuitem.radio.attrs.type =
+			attribute type {
+				w:string "radio"
+			}
+	menuitem.elem |= menuitem.radio.elem
+
+## Indirect command in popup menu: <menuitem command>
+	menuitem.indirect.command.elem =
+		element menuitem { menuitem.inner & menuitem.indirect.command.attrs }
+	menuitem.indirect.command.attrs =
+		(	common.attrs
+		&	menuitem.attrs.default?
+		&	menuitem.attrs.command
+		&	common.attrs.aria?
+		)
+		menuitem.attrs.command =
+			attribute command {
+				common.data.idref
+			}
+	menuitem.elem |= menuitem.indirect.command.elem
+
+	menuitem.inner =
+		( empty )
+
+## Canvas for Dynamic Graphics: <canvas>
+
+	canvas.elem.flow =
+		element canvas { canvas.inner.flow & canvas.attrs }
+	canvas.elem.phrasing =
+		element canvas { canvas.inner.phrasing & canvas.attrs }
+	canvas.attrs =
+		(	common.attrs
+		&	canvas.attrs.height?
+		&	canvas.attrs.width?
+		&	common.attrs.aria?
+		)
+		canvas.attrs.height =
+			attribute height {
+				common.data.integer.non-negative
+			}
+		canvas.attrs.width =
+			attribute width {
+				common.data.integer.non-negative
+			}
+	canvas.inner.flow =
+		( common.inner.transparent.flow )
+	canvas.inner.phrasing =
+		( common.inner.phrasing )
+	
+	common.elem.flow |= canvas.elem.flow
+	common.elem.phrasing |= canvas.elem.phrasing
+
+## Additional On-Demand Information: <details>
+
+	details.elem =
+		element details { details.inner & details.attrs }
+	details.attrs =
+		(	common.attrs
+		&	details.attrs.open?
+		&	(	common.attrs.aria.implicit.group # aria-expanded must be true if open attr present; check by assertions
+			|	common.attrs.aria.role.alertdialog
+			|	common.attrs.aria.role.banner
+			|	common.attrs.aria.role.button
+			|	common.attrs.aria.role.combobox
+			|	common.attrs.aria.role.dialog
+			|	common.attrs.aria.role.directory
+			|	common.attrs.aria.role.heading
+			|	common.attrs.aria.role.img
+			|	common.attrs.aria.role.link
+			|	common.attrs.aria.role.list
+			|	common.attrs.aria.role.listbox
+			|	common.attrs.aria.role.listitem
+			|	common.attrs.aria.role.log
+			|	common.attrs.aria.role.marquee
+			|	common.attrs.aria.role.menu
+			|	common.attrs.aria.role.menubar
+			|	common.attrs.aria.role.note
+			|	common.attrs.aria.role.status
+			|	common.attrs.aria.role.tab
+			|	common.attrs.aria.role.tablist
+			|	common.attrs.aria.role.tabpanel
+			|	common.attrs.aria.role.toolbar
+			|	common.attrs.aria.role.tree
+			|	common.attrs.aria.role.treeitem
+			|	common.attrs.aria.landmark.application
+			|	common.attrs.aria.landmark.article
+			|	common.attrs.aria.landmark.complementary
+			|	common.attrs.aria.landmark.contentinfo
+			|	common.attrs.aria.landmark.document
+			|	common.attrs.aria.landmark.form
+			|	common.attrs.aria.landmark.main
+			|	common.attrs.aria.landmark.navigation
+			|	common.attrs.aria.landmark.search
+			)?
+		)
+		details.attrs.open =
+			attribute open {
+				w:string "open" | w:string ""
+			}
+	details.inner =
+		(	summary.elem
+		,	common.inner.flow
+		)
+	
+	common.elem.flow |= details.elem
+
+## Caption/summary for details element: <summary>
+
+	summary.elem =
+		element summary { summary.inner & summary.attrs }
+	summary.attrs =
+		(	common.attrs
+		&	(	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
+		)
+	summary.inner =
+		( common.inner.phrasing )

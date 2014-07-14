@@ -29,6 +29,7 @@ import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.lang.manifest.ManifestFileTypeFactory;
 import org.jetbrains.lang.manifest.psi.HeaderValue;
 import org.jetbrains.lang.manifest.psi.HeaderValuePart;
@@ -39,7 +40,7 @@ import org.jetbrains.lang.manifest.psi.ManifestFile;
  */
 public class HeaderValuePartManipulator extends AbstractElementManipulator<HeaderValuePart> {
   @Override
-  public HeaderValuePart handleContentChange(HeaderValuePart element, TextRange range, String newContent) throws IncorrectOperationException {
+  public HeaderValuePart handleContentChange(@NotNull HeaderValuePart element, @NotNull TextRange range, String newContent) throws IncorrectOperationException {
     String text = "HeaderValuePartManipulator: " + range.replace(element.getText(), newContent);
     PsiFile file = PsiFileFactory.getInstance(element.getProject()).createFileFromText("DUMMY.MF", ManifestFileTypeFactory.MANIFEST, text);
     HeaderValue value = ((ManifestFile)file).getHeaders().get(0).getHeaderValue();

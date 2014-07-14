@@ -32,7 +32,7 @@ import static com.intellij.patterns.PsiJavaPatterns.literalExpression;
  */
 public final class LanguageReferenceProvider extends PsiReferenceContributor {
 
-  public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+  public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     final Configuration configuration = Configuration.getInstance();
     registrar.registerReferenceProvider(
       literalExpression().annotationParam(StandardPatterns.string().with(new PatternCondition<String>("isLanguageAnnotation") {

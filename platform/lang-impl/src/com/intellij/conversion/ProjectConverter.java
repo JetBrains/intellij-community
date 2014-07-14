@@ -23,6 +23,9 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
+ * Override some of 'create*Converter' methods to perform conversion. If none of these methods suits the needs,
+ * override {@link #isConversionNeeded()}, {@link #getAdditionalAffectedFiles()} and one of '*processingFinished' methods
+ *
  * @author nik
  */
 public abstract class ProjectConverter {
@@ -57,24 +60,44 @@ public abstract class ProjectConverter {
     return null;
   }
 
+  /**
+   * Override this method if conversion affects some configuration files not covered by provided {@link ConversionProcessor}s
+   */
   public Collection<File> getAdditionalAffectedFiles() {
     return Collections.emptyList();
   }
 
+  /**
+   * @return files created during conversion process
+   */
   public Collection<File> getCreatedFiles() {
     return Collections.emptyList();
   }
 
+  /**
+   * @return {@code true} if it's required to convert some files not covered by provided {@link ConversionProcessor}s
+   */
   public boolean isConversionNeeded() {
     return false;
   }
 
+  /**
+   * Performs conversion of files not covered by provided {@link ConversionProcessor}s. Override this method if conversion should be
+   * performed before {@link ConversionProcessor#process} for other converters is invoked
+   */
   public void preProcessingFinished() throws CannotConvertException {
   }
 
+  /**
+   * Performs conversion of files not covered by provided {@link ConversionProcessor}s
+   */
   public void processingFinished() throws CannotConvertException {
   }
 
+  /**
+   * Performs conversion of files not covered by provided {@link ConversionProcessor}s. Override this method if conversion should be
+   * performed after {@link ConversionProcessor#process} for other converters is invoked
+   */
   public void postProcessingFinished() throws CannotConvertException {
   }
 }

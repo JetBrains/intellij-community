@@ -16,16 +16,16 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ExceptionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
+import java.util.List;
 
 public class ExpectedExceptionNeverThrownInspection extends BaseInspection {
   @Nls
@@ -84,9 +84,12 @@ public class ExpectedExceptionNeverThrownInspection extends BaseInspection {
         InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_ERROR)) {
         return;
       }
-      final Set<PsiClassType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(body);
-      if (exceptionsThrown.contains(classType)) {
-        return;
+
+      final List<PsiClassType> exceptionsThrown = ExceptionUtil.getThrownExceptions(body);
+      for (PsiClassType psiClassType : exceptionsThrown) {
+        if (psiClassType.isAssignableFrom(classType)) {
+          return;
+        }
       }
       registerError(operand, method);
     }

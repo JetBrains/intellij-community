@@ -20,14 +20,14 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 public class ExceptionFilter implements Filter, DumbAware {
-  private final GlobalSearchScope myScope;
+  private final ExceptionInfoCache myCache;
 
   public ExceptionFilter(@NotNull final GlobalSearchScope scope) {
-    myScope = scope;
+    myCache = new ExceptionInfoCache(scope);
   }
 
   public Result applyFilter(final String line, final int textEndOffset) {
-    ExceptionWorker worker = new ExceptionWorker(myScope.getProject(), myScope);
+    ExceptionWorker worker = new ExceptionWorker(myCache);
     worker.execute(line, textEndOffset);
     return worker.getResult();
   }

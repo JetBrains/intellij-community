@@ -28,6 +28,7 @@ public interface XDebuggerActions {
 
   @NonNls String STEP_OVER = "StepOver";
   @NonNls String STEP_INTO = "StepInto";
+  @NonNls String SMART_STEP_INTO = "SmartStepInto";
   @NonNls String FORCE_STEP_INTO = "ForceStepInto";
   @NonNls String STEP_OUT = "StepOut";
 
@@ -49,6 +50,8 @@ public interface XDebuggerActions {
   @NonNls String VARIABLES_TREE_POPUP_GROUP = "XDebugger.Variables.Tree.Popup";
   @NonNls String WATCHES_TREE_POPUP_GROUP = "XDebugger.Watches.Tree.Popup";
   @NonNls String WATCHES_TREE_TOOLBAR_GROUP = "XDebugger.Watches.Tree.Toolbar";
+  @NonNls String FRAMES_TREE_POPUP_GROUP = "XDebugger.Frames.Tree.Popup";
+  @NonNls String FRAMES_TOP_TOOLBAR_GROUP = "XDebugger.Frames.TopToolbar";
 
   @NonNls String ADD_TO_WATCH = "Debugger.AddToWatch";
 
@@ -65,4 +68,6 @@ public interface XDebuggerActions {
 
   @NonNls String AUTO_TOOLTIP = "XDebugger.AutoTooltip";
   @NonNls String MARK_OBJECT = "Debugger.MarkObject";
+
+  @NonNls String FOCUS_ON_BREAKPOINT = "Debugger.FocusOnBreakpoint";
 }

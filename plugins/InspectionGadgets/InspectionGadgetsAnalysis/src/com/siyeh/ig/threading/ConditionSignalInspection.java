@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,12 +85,12 @@ public class ConditionSignalInspection extends BaseInspection {
         .getQualifierExpression();
       @NonNls final String signalAll = "signalAll";
       if (qualifier == null) {
-        replaceExpression(methodExpression, signalAll);
+        PsiReplacementUtil.replaceExpression(methodExpression, signalAll);
       }
       else {
         final String qualifierText = qualifier.getText();
-        replaceExpression(methodExpression,
-                          qualifierText + '.' + signalAll);
+        PsiReplacementUtil.replaceExpression(methodExpression,
+                                             qualifierText + '.' + signalAll);
       }
     }
   }

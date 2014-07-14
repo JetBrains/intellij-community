@@ -25,10 +25,10 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 
 /**
@@ -36,11 +36,12 @@ import java.awt.*;
  */
 public class EditorNotificationPanel extends JPanel {
   protected final JLabel myLabel = new JLabel();
+  protected final JLabel myGearLabel = new JLabel();
   protected final JPanel myLinksPanel;
 
   public EditorNotificationPanel() {
     super(new BorderLayout());
-    setBorder(BorderFactory.createEmptyBorder(1, 15, 1, 15));
+    setBorder(BorderFactory.createEmptyBorder(1, 10, 1, 10));
 
     setPreferredSize(new Dimension(-1, 24));
 
@@ -48,11 +49,27 @@ public class EditorNotificationPanel extends JPanel {
 
     myLinksPanel = new JPanel(new FlowLayout());
     myLinksPanel.setBackground(getBackground());
-    add(myLinksPanel, BorderLayout.EAST);
+
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.setBackground(getBackground());
+    myGearLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 3, 0, 0));
+    panel.add(myLinksPanel, BorderLayout.WEST);
+    panel.add(myGearLabel, BorderLayout.EAST);
+    add(panel, BorderLayout.EAST);
   }
 
   public void setText(String text) {
     myLabel.setText(text);
+  }
+
+  public EditorNotificationPanel text(@NotNull String text) {
+    myLabel.setText(text);
+    return this;
+  }
+
+  public EditorNotificationPanel icon(@NotNull Icon icon) {
+    myLabel.setIcon(icon);
+    return this;
   }
 
   @Override
@@ -63,6 +80,7 @@ public class EditorNotificationPanel extends JPanel {
 
   public HyperlinkLabel createActionLabel(final String text, @NonNls final String actionId) {
     return createActionLabel(text, new Runnable() {
+      @Override
       public void run() {
         executeAction(actionId);
       }
@@ -71,11 +89,10 @@ public class EditorNotificationPanel extends JPanel {
 
   public HyperlinkLabel createActionLabel(final String text, final Runnable action) {
     HyperlinkLabel label = new HyperlinkLabel(text, PlatformColors.BLUE, getBackground(), PlatformColors.BLUE);
-    label.addHyperlinkListener(new HyperlinkListener() {
-      public void hyperlinkUpdate(final HyperlinkEvent e) {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          action.run();
-        }
+    label.addHyperlinkListener(new HyperlinkAdapter() {
+      @Override
+      protected void hyperlinkActivated(HyperlinkEvent e) {
+        action.run();
       }
     });
     myLinksPanel.add(label);

@@ -44,6 +44,7 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.CompositeException;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
@@ -61,7 +62,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   private final SynchronizationBasedSemaphore myScriptRunnablesSema = new SynchronizationBasedSemaphore();
   protected static final int RATHER_LATER_INVOKES_N = 10;
   public DebugProcessImpl myDebugProcess = null;
-
+  private final CompositeException exception = new CompositeException();
 
   private class InvokeRatherLaterRequest {
     private final DebuggerCommandImpl myDebuggerCommand;
@@ -103,6 +104,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     });
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    super.tearDown();
+    if (!exception.isEmpty()) throw exception;
+  }
+
   protected void onBreakpoint(SuspendContextRunnable runnable) {
     if (myPauseScriptListener == null) {
       final DebugProcessImpl debugProcess = getDebugProcess();
@@ -124,7 +131,11 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
               suspendContextRunnable.run(suspendContext);
             }
             catch (Exception e) {
+              exception.add(e);
               error(e);
+            }
+            catch (AssertionError e) {
+              exception.add(e);
             }
 
             if (myScriptRunnables.isEmpty()) {
@@ -283,43 +294,53 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
           if (comment.indexOf("Method") != -1) {
             breakpoint = breakpointManager.addMethodBreakpoint(document, commentLine + 1);
-            println("MethodBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2), ProcessOutputTypes.SYSTEM);
+            if (breakpoint != null) {
+              println("MethodBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2),
+                      ProcessOutputTypes.SYSTEM);
+            }
           }
           else if (comment.indexOf("Field") != -1) {
             breakpoint = breakpointManager.addFieldBreakpoint(document, commentLine + 1, readValue(comment, "Field"));
-            println("FieldBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2), ProcessOutputTypes.SYSTEM);
+            if (breakpoint != null) {
+              println("FieldBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2), ProcessOutputTypes.SYSTEM);
+            }
           }
           else if (comment.indexOf("Exception") != -1) {
             breakpoint = breakpointManager.addExceptionBreakpoint(readValue(comment, "Exception"), "");
-            println("ExceptionBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2), ProcessOutputTypes.SYSTEM);
+            if (breakpoint != null) {
+              println("ExceptionBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2),
+                      ProcessOutputTypes.SYSTEM);
+            }
           }
           else {
             breakpoint = breakpointManager.addLineBreakpoint(document, commentLine + 1);
-            println("LineBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2), ProcessOutputTypes.SYSTEM);
+            if (breakpoint != null) {
+              println("LineBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2), ProcessOutputTypes.SYSTEM);
+            }
           }
 
           String suspendPolicy = readValue(comment, "suspendPolicy");
           if (suspendPolicy != null) {
-            breakpoint.SUSPEND = !DebuggerSettings.SUSPEND_NONE.equals(suspendPolicy);
-            breakpoint.SUSPEND_POLICY = suspendPolicy;
+            //breakpoint.setSuspend(!DebuggerSettings.SUSPEND_NONE.equals(suspendPolicy));
+            breakpoint.setSuspendPolicy(suspendPolicy);
             println("SUSPEND_POLICY = " + suspendPolicy, ProcessOutputTypes.SYSTEM);
           }
           String condition = readValue(comment, "Condition");
           if (condition != null) {
-            breakpoint.CONDITION_ENABLED = true;
+            //breakpoint.CONDITION_ENABLED = true;
             breakpoint.setCondition(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, condition));
             println("Condition = " + condition, ProcessOutputTypes.SYSTEM);
           }
           String passCount = readValue(comment, "Pass count");
           if (passCount != null) {
-            breakpoint.COUNT_FILTER_ENABLED = true;
-            breakpoint.COUNT_FILTER = Integer.parseInt(passCount);
+            breakpoint.setCountFilterEnabled(true);
+            breakpoint.setCountFilter(Integer.parseInt(passCount));
             println("Pass count = " + passCount, ProcessOutputTypes.SYSTEM);
           }
 
           String classFilters = readValue(comment, "Class filters");
           if (classFilters != null) {
-            breakpoint.CLASS_FILTERS_ENABLED = true;
+            breakpoint.setClassFiltersEnabled(true);
             StringTokenizer tokenizer = new StringTokenizer(classFilters, " ,");
             ArrayList<ClassFilter> lst = new ArrayList<ClassFilter>();
 

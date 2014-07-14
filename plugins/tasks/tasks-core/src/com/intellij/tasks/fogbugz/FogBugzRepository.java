@@ -219,7 +219,7 @@ public class FogBugzRepository extends BaseRepositoryImpl {
 
   @Nullable
   @Override
-  public Task findTask(String id) throws Exception {
+  public Task findTask(@NotNull String id) throws Exception {
     Task[] tasks = getCases(id);
     switch (tasks.length) {
       case 0:
@@ -232,6 +232,7 @@ public class FogBugzRepository extends BaseRepositoryImpl {
     }
   }
 
+  @NotNull
   @Override
   public BaseRepository clone() {
     return new FogBugzRepository(this);

@@ -1,0 +1,20 @@
+<idea-plugin version="2">
+
+  <id>org.jetbrains.java.decompiler</id>
+  <name>Java Bytecode Decompiler</name>
+  <description>
+    The plugin extends standard IDEA .class file viewer with powerful Fernflower decompiler -
+    no more dull "{ /* compiled code */ }" in method bodies!
+  </description>
+  <version>0.1</version>
+  <vendor email="support@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
+
+  <idea-version since-build="135"/>
+
+  <module value="com.intellij.modules.java"/>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <psi.classFileDecompiler implementation="org.jetbrains.java.decompiler.IdeaDecompiler" order="last"/>
+  </extensions>
+
+</idea-plugin>

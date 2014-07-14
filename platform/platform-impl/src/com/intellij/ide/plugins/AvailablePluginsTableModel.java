@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.ColumnInfo;
 
@@ -45,16 +46,18 @@ public class AvailablePluginsTableModel extends PluginTableModel {
 
   protected static final String STATUS = "Status";
 
-  public static final String JETBRAINS_REPO = "JetBrains";
+  public static final String JETBRAINS_REPO = "JetBrains Plugin Repository";
+  public static final String BUILTIN_REPO = "Built-in Plugin Repository";
   private String myRepository = ALL;
   private String myVendor = null;
 
   public AvailablePluginsTableModel() {
     super.columns = new ColumnInfo[] {
       new AvailablePluginColumnInfo(this),
-      new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_DOWNLOADS, this),
-      new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_RATE, this),
-      new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_DATE, this)/*,
+      //new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_DOWNLOADS, this),
+      //new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_RATE, this),
+      //new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_DATE, this)
+      /*,
       new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_CATEGORY, this)*/};
 
     setSortKey(new RowSorter.SortKey(getNameColumn(), SortOrder.ASCENDING));
@@ -94,10 +97,19 @@ public class AvailablePluginsTableModel extends PluginTableModel {
       }
     }
 
-    final String repositoryName = ((PluginNode)descriptor).getRepositoryName();
+    return isHostAccepted(((PluginNode)descriptor).getRepositoryName());
+  }
+
+  public boolean isHostAccepted(String repositoryName) {
     if (repositoryName != null) {
-      if (!ALL.equals(myRepository) && !repositoryName.equals(myRepository)) return false;
-    } else {
+      if (repositoryName.equals(ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl()) && myRepository.equals(BUILTIN_REPO)) {
+        return true;
+      }
+      else if (!ALL.equals(myRepository) && !repositoryName.equals(myRepository)) {
+        return false;
+      }
+    }
+    else {
       return ALL.equals(myRepository) || JETBRAINS_REPO.equals(myRepository);
     }
     return true;

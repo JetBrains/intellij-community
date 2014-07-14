@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,19 +23,22 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.util.text.UniqueNameGenerator;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.List;
 
 public class SaveSchemeDialog extends DialogWrapper {
   private final JTextField mySchemeName = new JTextField();
-  private final ArrayList myInvalidNames;
+  private final List<String> myExistingNames;
 
-  public SaveSchemeDialog(Component parent, String title, ArrayList invalidNames){
+  public SaveSchemeDialog(@NotNull Component parent, String title, @NotNull List<String> existingNames, @NotNull String selectedName) {
     super(parent, false);
-    myInvalidNames = invalidNames;
+    myExistingNames = existingNames;
     setTitle(title);
+    mySchemeName.setText(UniqueNameGenerator.generateUniqueName(selectedName + " copy", existingNames));
     init();
   }
 
@@ -43,6 +46,7 @@ public class SaveSchemeDialog extends DialogWrapper {
     return mySchemeName.getText();
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gc = new GridBagConstraints();
@@ -65,19 +69,19 @@ public class SaveSchemeDialog extends DialogWrapper {
     return panel;
   }
 
+  @Override
   protected void doOKAction() {
-    if (getSchemeName().trim().length()==0) {
+    if (getSchemeName().trim().isEmpty()) {
       Messages.showMessageDialog(getContentPane(), ApplicationBundle.message("error.scheme.must.have.a.name"),
                                  CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       return;
     }
-    else
-    //noinspection HardCodedStringLiteral
-    if ("default".equals(getSchemeName())) {
-      Messages.showMessageDialog(getContentPane(),ApplicationBundle.message("error.illegal.scheme.name"),
+    else if ("default".equals(getSchemeName())) {
+      Messages.showMessageDialog(getContentPane(), ApplicationBundle.message("error.illegal.scheme.name"),
                                  CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       return;
-    } else if (myInvalidNames.contains(getSchemeName())) {
+    }
+    else if (myExistingNames.contains(getSchemeName())) {
       Messages.showMessageDialog(
         getContentPane(),
         ApplicationBundle.message("error.a.scheme.with.this.name.already.exists.or.was.deleted.without.applying.the.changes"),
@@ -89,10 +93,12 @@ public class SaveSchemeDialog extends DialogWrapper {
     super.doOKAction();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return null;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return mySchemeName;
   }

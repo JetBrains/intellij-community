@@ -17,20 +17,39 @@ package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.xdebugger.impl.ui.XDebugSessionData;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
 */
 public class XDebuggerMuteBreakpointsHandler extends XDebuggerToggleActionHandler {
-  protected boolean isEnabled(final XDebugSession session, final AnActionEvent event) {
+  protected boolean isEnabled(@Nullable final XDebugSession session, final AnActionEvent event) {
     return true;
   }
 
-  protected boolean isSelected(final XDebugSession session, final AnActionEvent event) {
-    return session.areBreakpointsMuted();
+  protected boolean isSelected(@Nullable final XDebugSession session, final AnActionEvent event) {
+    if (session != null) {
+      return session.areBreakpointsMuted();
+    }
+    else {
+      XDebugSessionData data = event.getData(XDebugSessionData.DATA_KEY);
+      if (data != null) {
+        return data.isBreakpointsMuted();
+      }
+    }
+    return false;
   }
 
-  protected void setSelected(final XDebugSession session, final AnActionEvent event, final boolean state) {
-    session.setBreakpointMuted(state);
+  protected void setSelected(@Nullable final XDebugSession session, final AnActionEvent event, final boolean state) {
+    if (session != null) {
+      session.setBreakpointMuted(state);
+    }
+    else {
+      XDebugSessionData data = event.getData(XDebugSessionData.DATA_KEY);
+      if (data != null) {
+        data.setBreakpointsMuted(state);
+      }
+    }
   }
 }

@@ -54,7 +54,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                      "  </extensions>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "test", "org.apache.maven.plugins", "org.codehaus.mojo");
+    assertCompletionVariants(myProjectPom, "org.codehaus.plexus", "test", "org.apache.maven.plugins", "org.codehaus.mojo", "intellij.test");
   }
 
   public void testArtifactIdCompletion() throws Exception {

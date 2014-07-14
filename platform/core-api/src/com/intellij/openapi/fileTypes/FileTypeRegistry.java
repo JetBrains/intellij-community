@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,8 +76,10 @@ public abstract class FileTypeRegistry {
    * @return {@link com.intellij.openapi.fileTypes.PlainTextFileType} if file looks like text,
    *          or another file type if some file type detector identified the file
    *          or the {@link UnknownFileType} if file is binary or we are unable to detect.
+   * @deprecated use {@link VirtualFile#getFileType()} instead
    */
   @NotNull
+  @Deprecated
   public abstract FileType detectFileTypeFromContent(@NotNull VirtualFile file);
 
   /**
@@ -100,5 +102,7 @@ public abstract class FileTypeRegistry {
      */
     @Nullable
     FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText);
+
+    int getVersion();
   }
 }

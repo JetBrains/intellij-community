@@ -17,6 +17,9 @@ package com.intellij.lang.ant.config.impl;
 
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.lang.ant.AntBundle;
+import com.intellij.lang.ant.config.AntBuildFile;
+import com.intellij.lang.ant.config.AntBuildTarget;
+import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -29,6 +32,8 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.config.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -143,5 +148,31 @@ public class GlobalAntConfiguration implements ApplicationComponent, JDOMExterna
 
   public static MacroManager getMacroManager() {
     return MacroManager.getInstance();
+  }
+
+  public AntBuildTarget findTarget(Project project, String fileUrl, String targetName) {
+    if (fileUrl == null || targetName == null || project == null) {
+      return null;
+    }
+    final VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(fileUrl);
+    if (vFile == null) {
+      return null;
+    }
+    final AntConfigurationImpl antConfiguration = (AntConfigurationImpl)AntConfiguration.getInstance(project);
+    for (AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
+      if (vFile.equals(buildFile.getVirtualFile())) {
+        final AntBuildTarget target = buildFile.getModel().findTarget(targetName);
+        if (target != null) {
+          return target;
+        }
+        for (AntBuildTarget metaTarget : antConfiguration.getMetaTargets(buildFile)) {
+          if (targetName.equals(metaTarget.getName())) {
+            return metaTarget;
+          }
+        }
+        return null;
+      }
+    }
+    return null;
   }
 }

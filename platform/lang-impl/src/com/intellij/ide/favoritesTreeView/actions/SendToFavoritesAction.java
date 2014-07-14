@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 
 import java.util.Collections;
@@ -32,7 +33,7 @@ import java.util.Collections;
  * @author anna
  * @author Konstantin Bulenkov
  */
-public class SendToFavoritesAction extends AnAction {
+public class SendToFavoritesAction extends AnAction implements DumbAware {
   private final String toName;
 
   public SendToFavoritesAction(String name) {

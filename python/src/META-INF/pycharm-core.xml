@@ -1,5 +1,6 @@
 <idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- Components and extensions declared in this file work ONLY in PyCharm, not in Python plugin. -->
+  <xi:include href="/META-INF/IdeTipsAndTricks.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/PlatformLangPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/XmlPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/ImagesPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
@@ -24,14 +25,12 @@
   </project-components>
 
   <module value="com.intellij.modules.xml"/>
-  <module value="com.intellij.modules.python"/>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
 
     <projectAttachProcessor implementation="com.intellij.platform.ModuleAttachProcessor"/>
 
-    <!--<applicationConfigurable instance="com.jetbrains.python.configuration.PythonSdkConfigurable"/>-->
     <projectConfigurable instance="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"/>
     <projectConfigurable instance="com.jetbrains.python.buildout.BuildoutModulesConfigurable"/>
     <projectConfigurable instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"/>
@@ -72,6 +71,7 @@
     <bundledColorScheme path="/colorSchemes/monokai"/>
     <bundledColorScheme path="/colorSchemes/twilight"/>
     <bundledColorScheme path="/colorSchemes/WarmNeon"/>
+    <bundledColorScheme path="/colorSchemes/github"/>
 
     <renameHandler implementation="com.intellij.platform.renameProject.RenameProjectHandler"/>
     <renameHandler implementation="com.intellij.platform.renameProject.ProjectFolderRenameHandler"/>
@@ -79,8 +79,7 @@
 
   <actions>
     <group id="PlatformOpenProjectGroup">
-      <action id="NewDirectoryProject" class="com.jetbrains.python.newProject.PythonNewDirectoryProjectAction"/>
-      <action id="OpenDirectoryProject" class="com.intellij.platform.OpenDirectoryProjectAction"/>
+      <action id="NewDirectoryProject" class="com.jetbrains.python.newProject.PyCharmNewProjectAction"/>
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
 
@@ -96,8 +95,8 @@
             icon="AllIcons.RunConfigurations.RerunFailedTests"/>
 
     <group id="WelcomeScreen.Platform.NewProject">
-      <action id="WelcomeScreen.CreateDirectoryProject" class="com.jetbrains.python.newProject.PythonNewDirectoryProjectAction" icon="AllIcons.General.CreateNewProject"/>
-      <action id="WelcomeScreen.OpenDirectoryProject" class="com.intellij.platform.OpenDirectoryProjectAction" icon="AllIcons.General.OpenProject"/>
+      <action id="WelcomeScreen.CreateDirectoryProject" class="com.jetbrains.python.newProject.actions.PyCharmNewProjectStep" icon="AllIcons.General.CreateNewProject"/>
+      <action id="WelcomeScreen.OpenDirectoryProject" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.General.OpenProject"/>
 
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </group>

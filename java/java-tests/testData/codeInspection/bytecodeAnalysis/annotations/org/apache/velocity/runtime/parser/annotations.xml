@@ -1,0 +1,73 @@
+<root>
+  <item name="org.apache.velocity.runtime.parser.JJTParserState void closeNodeScope(org.apache.velocity.runtime.parser.node.Node, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.JJTParserState void openNodeScope(org.apache.velocity.runtime.parser.node.Node) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.ParseException java.lang.String add_escapes(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.ParseException java.lang.String add_escapes(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.Parser Parser(org.apache.velocity.runtime.RuntimeServices) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.Parser java.lang.String escapedDirective(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.Parser java.lang.String escapedDirective(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.Parser org.apache.velocity.runtime.parser.ParseException generateParseException()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.ParserTokenManager org.apache.velocity.runtime.parser.Token jjFillToken()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.TemplateParseException java.lang.String getMessage()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.TemplateParseException void appendTemplateInfo(java.lang.StringBuffer) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.Token org.apache.velocity.runtime.parser.Token newToken(int)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.TokenMgrError TokenMgrError(boolean, int, int, int, java.lang.String, char, int) 4">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.TokenMgrError java.lang.String LexicalError(boolean, int, int, int, java.lang.String, char) 4">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.TokenMgrError java.lang.String LexicalError(boolean, int, int, int, java.lang.String, char)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.TokenMgrError java.lang.String addEscapes(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.TokenMgrError java.lang.String addEscapes(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.VelocityCharStream VelocityCharStream(java.io.InputStream, int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.VelocityCharStream VelocityCharStream(java.io.InputStream, int, int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.VelocityCharStream char[] GetSuffix(int)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.VelocityCharStream java.lang.String GetImage()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.VelocityCharStream void ReInit(java.io.InputStream, int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.VelocityCharStream void ReInit(java.io.InputStream, int, int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+</root>

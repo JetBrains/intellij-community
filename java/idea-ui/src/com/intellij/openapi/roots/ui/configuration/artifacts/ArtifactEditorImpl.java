@@ -235,7 +235,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
         label.setBorder(HintUtil.createHintBorder());
         label.setBackground(HintUtil.INFORMATION_COLOR);
         label.setOpaque(true);
-        HintManager.getInstance().showHint(label, RelativePoint.getSouthEastOf(link), HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE, -1);
+        HintManager.getInstance().showHint(label, RelativePoint.getSouthWestOf(link), HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE, -1);
       }
     });
     labelPanel.add(link);
@@ -355,7 +355,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     }
     popupActionGroup.add(createAddNonCompositeElementGroup());
     final RemovePackagingElementAction removeAction = new RemovePackagingElementAction(this);
-    removeAction.registerCustomShortcutSet(CommonShortcuts.DELETE, tree);
+    removeAction.registerCustomShortcutSet(CommonShortcuts.getDelete(), tree);
     popupActionGroup.add(removeAction);
     popupActionGroup.add(new ExtractArtifactAction(this));
     popupActionGroup.add(new InlineArtifactAction(this));

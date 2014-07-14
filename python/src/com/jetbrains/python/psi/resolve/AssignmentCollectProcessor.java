@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
-import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.psi.impl.PyQualifiedNameFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -50,21 +49,19 @@ public class AssignmentCollectProcessor implements PsiScopeProcessor {
     mySeenNames = new HashSet<String>();
   }
 
-  public boolean execute(@NotNull final PsiElement element, final ResolveState state) {
+  @Override
+  public boolean execute(@NotNull final PsiElement element, @NotNull final ResolveState state) {
     if (element instanceof PyAssignmentStatement) {
       final PyAssignmentStatement assignment = (PyAssignmentStatement)element;
       for (PyExpression ex : assignment.getTargets()) {
         if (ex instanceof PyTargetExpression) {
           final PyTargetExpression target = (PyTargetExpression)ex;
-          List<PyExpression> qualsExpr = PyResolveUtil.unwindQualifiers(target);
-          QualifiedName qualifiedName = PyQualifiedNameFactory.fromReferenceChain(qualsExpr);
+          final QualifiedName qualifiedName = target.asQualifiedName();
           if (qualifiedName != null) {
             if (qualifiedName.getComponentCount() == myQualifier.getComponentCount() + 1 && qualifiedName.matchesPrefix(myQualifier)) {
-              // a new attribute follows last qualifier; collect it.
-              PyExpression last_elt = qualsExpr.get(qualsExpr.size() - 1); // last item is the outermost, new, attribute.
-              String last_elt_name = last_elt.getName();
+              String last_elt_name = target.getName();
               if (!mySeenNames.contains(last_elt_name)) { // no dupes, only remember the latest
-                myResult.add(last_elt);
+                myResult.add(target);
                 mySeenNames.add(last_elt_name);
               }
             }
@@ -85,11 +82,13 @@ public class AssignmentCollectProcessor implements PsiScopeProcessor {
     return myResult;
   }
 
+  @Override
   public <T> T getHint(@NotNull final Key<T> hintKey) {
     return null;
   }
 
-  public void handleEvent(final Event event, final Object associated) {
+  @Override
+  public void handleEvent(@NotNull final Event event, final Object associated) {
     // empty
   }
 

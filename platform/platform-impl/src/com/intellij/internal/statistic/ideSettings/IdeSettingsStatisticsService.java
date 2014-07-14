@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import java.net.URL;
 
 public class IdeSettingsStatisticsService extends SettingsConnectionService {
   private static final Logger LOG = Logger.getInstance("#com.intellij.internal.statistic.ideSettings.IdeSettingsUsagesCollector");
-  private static String FILE_NAME = "ide-settings-statistics.xml";
+  private static final String FILE_NAME = "ide-settings-statistics.xml";
 
   private static final IdeSettingsStatisticsService myInstance = new IdeSettingsStatisticsService();
   private IdeSettingsDescriptor[] myDescriptors;

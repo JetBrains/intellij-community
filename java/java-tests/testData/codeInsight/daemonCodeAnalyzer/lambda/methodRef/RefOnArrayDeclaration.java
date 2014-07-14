@@ -34,7 +34,7 @@ class OnArrayTest {
         Cln s =  int[]::clone;
         IA a =  int[]::new;
         <error descr="Incompatible types. Found: '<method reference>', required: 'OnArrayTest.I'">I i = int[]::new;</error>
-        <error descr="Incompatible types. Found: '<method reference>', required: 'OnArrayTest.Len<java.lang.String>'">Len<String> strLen = String[]::length;</error>
+        Len<String> strLen = String[]::<error descr="Cannot resolve method 'length'">length</error>;
         ToStr<Integer> toStr = Integer[]::toString;
 
         ArrayReturnType<String[]> a1 = String[]::new;

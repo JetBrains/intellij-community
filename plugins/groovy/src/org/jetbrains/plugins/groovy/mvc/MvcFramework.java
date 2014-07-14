@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryDescription;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 
 import javax.swing.*;
 import java.io.File;
@@ -141,6 +141,7 @@ public abstract class MvcFramework {
       if (commandLine == null) return;
 
       MvcConsole.executeProcess(module, commandLine, new Runnable() {
+        @Override
         public void run() {
           VirtualFile root = findAppRoot(module);
           if (root == null) return;
@@ -226,18 +227,25 @@ public abstract class MvcFramework {
 
   public abstract String getUserLibraryName();
 
+  protected abstract boolean isCoreJar(@NotNull VirtualFile localFile);
+
   @Nullable
   protected VirtualFile findCoreJar(@Nullable Module module) {
     if (module == null) return null;
 
     JavaPsiFacade javaFacade = JavaPsiFacade.getInstance(module.getProject());
-    PsiClass aClass = javaFacade.findClass(getSomeFrameworkClass(), GlobalSearchScope.moduleWithLibrariesScope(module));
-    if (aClass == null) return null;
 
-    VirtualFile virtualFile = aClass.getContainingFile().getVirtualFile();
-    if (virtualFile == null || !(virtualFile.getFileSystem() instanceof JarFileSystem)) return null;
+    for (PsiClass aClass : javaFacade.findClasses(getSomeFrameworkClass(), GlobalSearchScope.moduleWithLibrariesScope(module))) {
+      VirtualFile virtualFile = aClass.getContainingFile().getVirtualFile();
+      if (virtualFile != null && virtualFile.getFileSystem() instanceof JarFileSystem) {
+        VirtualFile localFile = PathUtil.getLocalFile(virtualFile);
+        if (isCoreJar(localFile)) {
+          return localFile;
+        }
+      }
+    }
 
-    return PathUtil.getLocalFile(virtualFile);
+    return null;
   }
 
   protected List<File> getImplicitClasspathRoots(@NotNull Module module) {
@@ -418,13 +426,7 @@ public abstract class MvcFramework {
     if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
       String path = StringUtil.trimEnd(sdk.getHomePath(), File.separator);
       if (StringUtil.isNotEmpty(path)) {
-        Map<String, String> env = params.getEnv();
-        if (env == null) {
-          env = new HashMap<String, String>();
-          params.setEnv(env);
-        }
-
-        env.put("JAVA_HOME", FileUtil.toSystemDependentName(path));
+        params.addEnv("JAVA_HOME", FileUtil.toSystemDependentName(path));
       }
     }
   }
@@ -627,7 +629,7 @@ public abstract class MvcFramework {
     if (res == null) return null;
 
     res = res.trim();
-    if (res.length() == 0) return null;
+    if (res.isEmpty()) return null;
 
     return res;
   }

@@ -16,14 +16,17 @@
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.actions.NewActionDialog;
+import org.jetbrains.idea.devkit.util.ActionData;
 import org.jetbrains.idea.devkit.util.ActionType;
-import org.jetbrains.annotations.NotNull;
 
 public class RegisterActionFix extends AbstractRegisterFix {
   private NewActionDialog myDialog;
@@ -37,6 +40,11 @@ public class RegisterActionFix extends AbstractRegisterFix {
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      super.applyFix(project, descriptor);
+      return;
+    }
+
     try {
       myDialog = new NewActionDialog(myClass);
       myDialog.show();
@@ -52,9 +60,20 @@ public class RegisterActionFix extends AbstractRegisterFix {
 
   public void patchPluginXml(XmlFile pluginXml, PsiClass aClass) throws IncorrectOperationException {
     if (ActionType.GROUP.isOfType(aClass)) {
-      ActionType.GROUP.patchPluginXml(pluginXml, aClass, myDialog);
-    } else {
-      ActionType.ACTION.patchPluginXml(pluginXml, aClass, myDialog);
+      ActionType.GROUP.patchPluginXml(pluginXml, aClass, getActionData());
     }
+    else {
+      ActionType.ACTION.patchPluginXml(pluginXml, aClass, getActionData());
+    }
+  }
+
+  @TestOnly
+  public static ActionData ourTestActionData = null;
+
+  private ActionData getActionData() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return ourTestActionData;
+    }
+    return myDialog;
   }
 }

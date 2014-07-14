@@ -1,4 +1,4 @@
-public class FooBar {
+class FooBar {
     private static final class Bar2 {
         private Bar2() {
         }

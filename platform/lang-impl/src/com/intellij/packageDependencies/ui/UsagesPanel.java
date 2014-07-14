@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
@@ -64,12 +65,12 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
     }
   }
 
-  protected void showUsages(@NotNull UsageInfoToUsageConverter.TargetElementsDescriptor descriptor, @NotNull UsageInfo[] usageInfos) {
+  protected void showUsages(@NotNull PsiElement[] primaryElements, @NotNull UsageInfo[] usageInfos) {
     if (myCurrentUsageView != null) {
       Disposer.dispose(myCurrentUsageView);
     }
     try {
-      Usage[] usages = UsageInfoToUsageConverter.convert(descriptor, usageInfos);
+      Usage[] usages = UsageInfoToUsageConverter.convert(primaryElements, usageInfos);
       UsageViewPresentation presentation = new UsageViewPresentation();
       presentation.setCodeUsagesString(getCodeUsagesString());
       myCurrentUsageView = UsageViewManager.getInstance(myProject).createUsageView(UsageTarget.EMPTY_ARRAY, usages, presentation, null);

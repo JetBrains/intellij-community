@@ -22,6 +22,7 @@ import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -80,5 +81,11 @@ public class InspectDialog extends DialogWrapper implements DebuggerContextListe
     if(event == DebuggerSession.EVENT_DETACHED) {
       close(CANCEL_EXIT_CODE);
     }
+  }
+
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myInspectView.getInspectTree();
   }
 }

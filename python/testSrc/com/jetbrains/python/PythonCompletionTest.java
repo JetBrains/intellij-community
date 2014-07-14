@@ -606,4 +606,23 @@ public class PythonCompletionTest extends PyTestCase {
     myFixture.checkResult("bar = {'a': '1'}\n" +
                           "print bar<caret>['a']");
   }
+
+  // PY-1860
+  public void testDunderMetaClass() {
+    doTestByText("class C(object):\n" +
+                 "    __meta<caret>\n");
+    myFixture.checkResult("class C(object):\n" +
+                          "    __metaclass__ = \n");
+
+  }
+
+  // PY-13140
+  public void testModulePrivateNamesCompletedInsideImport() {
+    myFixture.copyDirectoryToProject("completion/" + getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasic();
+    List<String> suggested = myFixture.getLookupElementStrings();
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "normal_name", "_private_name", "__magic_name__");
+  }
 }

@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -36,10 +37,7 @@ import org.jetbrains.idea.SvnTestCase;
 import org.jetbrains.idea.svn.branchConfig.InfoReliability;
 import org.jetbrains.idea.svn.branchConfig.InfoStorage;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
-import org.jetbrains.idea.svn.dialogs.MergeDialogI;
-import org.jetbrains.idea.svn.dialogs.QuickMerge;
-import org.jetbrains.idea.svn.dialogs.QuickMergeContentsVariants;
-import org.jetbrains.idea.svn.dialogs.WCInfo;
+import org.jetbrains.idea.svn.dialogs.*;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 import org.junit.Before;
@@ -103,12 +101,10 @@ public class SvnQuickMergeTest extends Svn17TestCase {
 
   @Test
   public void testSimpleMergeAllFromB1ToTrunk() throws Exception {
-    editFileInCommand(myProject, myBranchTree.myS1File, "edited in branch");
+    VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS1File, "edited in branch");
     runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in branch", myBranchTree.myS1File.getPath());
 
-    final WCInfo found = getWcInfo();
-    final QuickMerge quickMerge =
-      new QuickMerge(myProject, myBranchUrl, found, SVNPathUtil.tail(myBranchUrl), myWorkingCopyDir);
+    final QuickMerge quickMerge = newQuickMerge(myBranchUrl);
     // by default merges all
     final QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction() {
       @Override
@@ -158,7 +154,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
   @Test
   public void testSelectRevisionsWithQuickSelectCheckForLocalChanges() throws Exception {
     // get revision #
-    final SVNInfo info = myVcs.createWCClient().doInfo(new File(myBranchTree.myS1File.getPath()), SVNRevision.WORKING);
+    final SVNInfo info = myVcs.getSvnKitManager().createWCClient().doInfo(new File(myBranchTree.myS1File.getPath()), SVNRevision.WORKING);
     Assert.assertNotNull(info);
 
     final long numberBefore = info.getRevision().getNumber();
@@ -167,15 +163,13 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     final StringBuilder sb = new StringBuilder(FileUtil.loadFile(new File(myBranchTree.myS1File.getPath())));
     for (int i = 0; i < totalChanges; i++) {
       sb.append("\nedited in branch ").append(i);
-      editFileInCommand(myProject, myBranchTree.myS1File, sb.toString());
+      VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS1File, sb.toString());
       runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in branch " + i, myBranchTree.myS1File.getPath());
       Thread.sleep(10);
     }
 
     // we should get exactly 2 revisions for selection (copy and change in b2)
-    final WCInfo found = getWcInfo();
-    final QuickMerge quickMerge =
-      new QuickMerge(myProject, myBranchUrl, found, SVNPathUtil.tail(myBranchUrl), myWorkingCopyDir);
+    final QuickMerge quickMerge = newQuickMerge(myBranchUrl);
     // by default merges all
     final AtomicReference<String> selectionError = new AtomicReference<String>();
     final QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction() {
@@ -226,7 +220,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     Assert.assertNotNull(dirChange);
     Assert.assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
 
-    final SVNPropertyData data = myVcs.createWCClient()
+    final SVNPropertyData data = myVcs.getSvnKitManager().createWCClient()
       .doGetProperty(new File(myWorkingCopyDir.getPath()), "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
     System.out.println(data.getValue().getString());
     Assert.assertEquals("/branches/b1:" + (numberBefore + 1), data.getValue().getString());
@@ -237,7 +231,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
   @Test
   public void testSelectRevisionsWithQuickSelect() throws Exception {
     // get revision #
-    final SVNInfo info = myVcs.createWCClient().doInfo(new File(myBranchTree.myS1File.getPath()), SVNRevision.WORKING);
+    final SVNInfo info = myVcs.getSvnKitManager().createWCClient().doInfo(new File(myBranchTree.myS1File.getPath()), SVNRevision.WORKING);
     Assert.assertNotNull(info);
 
     final long numberBefore = info.getRevision().getNumber();
@@ -246,13 +240,13 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     final StringBuilder sb = new StringBuilder(FileUtil.loadFile(new File(myBranchTree.myS1File.getPath())));
     for (int i = 0; i < totalChanges; i++) {
       sb.append("\nedited in branch ").append(i);
-      editFileInCommand(myProject, myBranchTree.myS1File, sb.toString());
+      VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS1File, sb.toString());
       runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in branch " + i, myBranchTree.myS1File.getPath());
       Thread.sleep(10);
     }
 
     // before copy
-    final SVNInfo info2 = myVcs.createWCClient().doInfo(new File(myBranchTree.myS1File.getPath()), SVNRevision.WORKING);
+    final SVNInfo info2 = myVcs.getSvnKitManager().createWCClient().doInfo(new File(myBranchTree.myS1File.getPath()), SVNRevision.WORKING);
     Assert.assertNotNull(info2);
     final long numberBeforeCopy = info2.getRevision().getNumber();
 
@@ -263,13 +257,11 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     myBranchTree = new SubTree(myBranchVf); //reload
 
     // one commit in b2 in s2 file
-    editFileInCommand(myProject, myBranchTree.myS2File, "completely changed");
+    VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS2File, "completely changed");
     runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in b2", myBranchTree.myS2File.getPath());
 
     // we should get exactly 2 revisions for selection (copy and change in b2)
-    final WCInfo found = getWcInfo();
-    final QuickMerge quickMerge =
-      new QuickMerge(myProject, myRepoUrl + "/branches/b2", found, SVNPathUtil.tail(myRepoUrl + "/branches/b2"), myWorkingCopyDir);
+    final QuickMerge quickMerge = newQuickMerge(myRepoUrl + "/branches/b2");
     // by default merges all
     final AtomicReference<String> selectionError = new AtomicReference<String>();
     final QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction() {
@@ -320,7 +312,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     Assert.assertNotNull(dirChange);
     Assert.assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
 
-    final SVNPropertyData data = myVcs.createWCClient()
+    final SVNPropertyData data = myVcs.getSvnKitManager().createWCClient()
       .doGetProperty(new File(myWorkingCopyDir.getPath()), "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
     System.out.println(data.getValue().getString());
     Assert.assertEquals("/branches/b2:" + (numberBeforeCopy + 2), data.getValue().getString());
@@ -329,7 +321,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
   @Test
   public void testSelectRevisions() throws Exception {
     // get revision #
-    final SVNInfo info = myVcs.createWCClient().doInfo(new File(myBranchTree.myS1File.getPath()), SVNRevision.WORKING);
+    final SVNInfo info = myVcs.getSvnKitManager().createWCClient().doInfo(new File(myBranchTree.myS1File.getPath()), SVNRevision.WORKING);
     Assert.assertNotNull(info);
 
     final long numberBefore = info.getRevision().getNumber();
@@ -338,14 +330,12 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     final StringBuilder sb = new StringBuilder(FileUtil.loadFile(new File(myBranchTree.myS1File.getPath())));
     for (int i = 0; i < totalChanges; i++) {
       sb.append("\nedited in branch ").append(i);
-      editFileInCommand(myProject, myBranchTree.myS1File, sb.toString());
+      VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS1File, sb.toString());
       runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in branch " + i, myBranchTree.myS1File.getPath());
       Thread.sleep(10);
     }
 
-    final WCInfo found = getWcInfo();
-    final QuickMerge quickMerge =
-      new QuickMerge(myProject, myBranchUrl, found, SVNPathUtil.tail(myBranchUrl), myWorkingCopyDir);
+    final QuickMerge quickMerge = newQuickMerge(myBranchUrl);
     // by default merges all
     final QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction() {
       @Override
@@ -402,7 +392,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     Assert.assertNotNull(dirChange);
     Assert.assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
 
-    final SVNPropertyData data = myVcs.createWCClient()
+    final SVNPropertyData data = myVcs.getSvnKitManager().createWCClient()
       .doGetProperty(new File(myWorkingCopyDir.getPath()), "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
     System.out.println(data.getValue().getString());
     Assert.assertEquals("/branches/b1:" + (numberBefore + 1) + "-" + (numberBefore + 2), data.getValue().getString());
@@ -425,7 +415,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
   @Test
   public void testSimpleMergeFromTrunkToB1() throws Exception {
     // change in trunk
-    editFileInCommand(myProject, myTree.myS1File, "903403240328");
+    VcsTestUtil.editFileInCommand(myProject, myTree.myS1File, "903403240328");
     final File workingIoFile = new File(myWorkingCopyDir.getPath());
     runInAndVerifyIgnoreOutput(workingIoFile, "ci", "-m", "change in trunk", myTree.myS1File.getPath());
 
@@ -435,9 +425,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     myTree = new SubTree(myWorkingCopyDir); //reload
 
     refreshSvnMappingsSynchronously();
-    final WCInfo found = getWcInfo();
-    final QuickMerge quickMerge =
-      new QuickMerge(myProject, trunkUrl, found, SVNPathUtil.tail(trunkUrl), myWorkingCopyDir);
+    final QuickMerge quickMerge = newQuickMerge(trunkUrl);
     // by default merges all
     final QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction();
     final WaitingTaskDescriptor descriptor = new WaitingTaskDescriptor();
@@ -463,6 +451,12 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     final Change dirChange = myChangeListManager.getChange(myWorkingCopyDir);
     Assert.assertNotNull(dirChange);
     Assert.assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
+  }
+
+  private QuickMerge newQuickMerge(@NotNull String sourceUrl) {
+    MergeContext mergeContext = new MergeContext(myVcs, sourceUrl, getWcInfo(), SVNPathUtil.tail(sourceUrl), myWorkingCopyDir);
+
+    return new QuickMerge(mergeContext);
   }
 
   private static class WaitingTaskDescriptor extends TaskDescriptor {

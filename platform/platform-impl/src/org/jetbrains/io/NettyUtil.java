@@ -17,18 +17,20 @@ package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.util.SystemProperties;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.BootstrapUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
+import io.netty.channel.nio.NioEventLoop;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.oio.OioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.channel.socket.oio.OioSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpRequestDecoder;
-import io.netty.handler.codec.http.HttpResponseEncoder;
+import io.netty.handler.codec.http.HttpServerCodec;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
@@ -36,10 +38,21 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.Random;
 
 public final class NettyUtil {
-  public static final int DEFAULT_CONNECT_ATTEMPT_COUNT = 8;
+  public static final int MAX_CONTENT_LENGTH = 100 * 1024 * 1024;
+
+  public static final int DEFAULT_CONNECT_ATTEMPT_COUNT = 20;
   public static final int MIN_START_TIME = 100;
+
+  static {
+    // IDEA-120811
+    if (SystemProperties.getBooleanProperty("io.netty.random.id", true)) {
+      System.setProperty("io.netty.machineId", "9e43d860");
+      System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));
+    }
+  }
 
   public static void log(Throwable throwable, Logger log) {
     if (isAsWarning(throwable)) {
@@ -55,9 +68,29 @@ public final class NettyUtil {
   }
 
   @Nullable
-  public static Channel connect(Bootstrap bootstrap, InetSocketAddress remoteAddress, ActionCallback asyncResult, int maxAttemptCount) {
+  public static Channel connect(@NotNull Bootstrap bootstrap, @NotNull InetSocketAddress remoteAddress, @NotNull ActionCallback asyncResult, int maxAttemptCount) {
     try {
       int attemptCount = 0;
+
+      if (bootstrap.group() instanceof NioEventLoop) {
+        while (true) {
+          ChannelFuture future = bootstrap.connect(remoteAddress).awaitUninterruptibly();
+          if (future.isSuccess()) {
+            return future.channel();
+          }
+          else if (++attemptCount < maxAttemptCount) {
+            //noinspection BusyWait
+            Thread.sleep(attemptCount * MIN_START_TIME);
+          }
+          else {
+            @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+            Throwable cause = future.cause();
+            asyncResult.reject("Cannot connect: " + (cause == null ? "unknown error" : cause.getMessage()));
+            return null;
+          }
+        }
+      }
+
       Socket socket;
       while (true) {
         try {
@@ -68,21 +101,21 @@ public final class NettyUtil {
         catch (IOException e) {
           if (++attemptCount < maxAttemptCount) {
             //noinspection BusyWait
-            Thread.sleep(attemptCount * 100);
+            Thread.sleep(attemptCount * MIN_START_TIME);
           }
           else {
-            asyncResult.reject("cannot connect");
+            asyncResult.reject("Cannot connect: " + e.getMessage());
             return null;
           }
         }
       }
 
-      OioSocketChannel channel = new OioSocketChannel(bootstrap.group().next(), socket);
+      OioSocketChannel channel = new OioSocketChannel(socket);
       BootstrapUtil.initAndRegister(channel, bootstrap).awaitUninterruptibly();
       return channel;
     }
     catch (Throwable e) {
-      asyncResult.reject("cannot connect: " + e.getMessage());
+      asyncResult.reject("Cannot connect: " + e.getMessage());
       return null;
     }
   }
@@ -100,7 +133,7 @@ public final class NettyUtil {
   }
 
   // applicable only in case of ClientBootstrap&OioClientSocketChannelFactory
-  public static void closeAndReleaseFactory(Channel channel) {
+  public static void closeAndReleaseFactory(@NotNull Channel channel) {
     EventLoop channelFactory = channel.eventLoop();
     try {
       channel.close().awaitUninterruptibly();
@@ -111,7 +144,7 @@ public final class NettyUtil {
     }
   }
 
-  public static ServerBootstrap nioServerBootstrap(EventLoopGroup eventLoopGroup) {
+  public static ServerBootstrap nioServerBootstrap(@NotNull EventLoopGroup eventLoopGroup) {
     ServerBootstrap bootstrap = new ServerBootstrap().group(eventLoopGroup).channel(NioServerSocketChannel.class);
     bootstrap.childOption(ChannelOption.TCP_NODELAY, true).childOption(ChannelOption.SO_KEEPALIVE, true);
     return bootstrap;
@@ -125,12 +158,16 @@ public final class NettyUtil {
 
   @SuppressWarnings("UnusedDeclaration")
   public static Bootstrap nioClientBootstrap() {
-    Bootstrap bootstrap = new Bootstrap().group(new NioEventLoopGroup(1, PooledThreadExecutor.INSTANCE)).channel(NioSocketChannel.class);
+    return nioClientBootstrap(new NioEventLoopGroup(1, PooledThreadExecutor.INSTANCE));
+  }
+
+  public static Bootstrap nioClientBootstrap(@NotNull EventLoopGroup eventLoopGroup) {
+    Bootstrap bootstrap = new Bootstrap().group(eventLoopGroup).channel(NioSocketChannel.class);
     bootstrap.option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);
     return bootstrap;
   }
 
-  public static void initHttpHandlers(ChannelPipeline pipeline) {
-    pipeline.addLast(new HttpRequestDecoder(), new HttpObjectAggregator(1048576 * 10), new HttpResponseEncoder());
+  public static void addHttpServerCodec(ChannelPipeline pipeline) {
+    pipeline.addLast(new HttpServerCodec(), new HttpObjectAggregator(MAX_CONTENT_LENGTH));
   }
 }

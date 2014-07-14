@@ -205,12 +205,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
         final HashSet<FilePath> newFiles = new HashSet<FilePath>(files);
         newFiles.removeAll(dirs); // if the same dir is added recursively and not recursively, prefer recursive mark
 
-        final MultiMap<VirtualFile, FileOrDir> perRoot = new MultiMap<VirtualFile, FileOrDir>() {
-          @Override
-          protected Collection<FileOrDir> createCollection() {
-            return new THashSet<FileOrDir>();
-          }
-        };
+        final MultiMap<VirtualFile, FileOrDir> perRoot = MultiMap.createSet();
         for (Map.Entry<VirtualFile, THashSet<FilePath>> entry : myDirtyDirectoriesRecursively.entrySet()) {
           newFiles.removeAll(entry.getValue()); // if the same dir is added recursively and not recursively, prefer recursive mark
           for (FilePath path : entry.getValue()) {

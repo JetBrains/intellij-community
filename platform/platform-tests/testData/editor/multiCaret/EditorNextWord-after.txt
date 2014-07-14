@@ -1,0 +1,3 @@
+soMe <caret>text
+other line
+<caret>yet another <caret>line

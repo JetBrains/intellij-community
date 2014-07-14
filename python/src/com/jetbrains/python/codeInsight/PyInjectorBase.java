@@ -27,17 +27,19 @@ public abstract class PyInjectorBase implements MultiHostInjector {
   @Nullable
   public abstract Language getInjectedLanguage(@NotNull PsiElement context);
 
-  protected boolean registerInjection(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
+  protected PyInjectionUtil.InjectionResult registerInjection(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
     final Language language = getInjectedLanguage(context);
     if (language != null) {
       final PsiElement element = PyInjectionUtil.getLargestStringLiteral(context);
       if (element != null) {
         registrar.startInjecting(language);
-        PyInjectionUtil.registerStringLiteralInjection(element, registrar);
-        registrar.doneInjecting();
-        return true;
+        final PyInjectionUtil.InjectionResult result = PyInjectionUtil.registerStringLiteralInjection(element, registrar);
+        if (result.isInjected()) {
+          registrar.doneInjecting();
+        }
+        return result;
       }
     }
-    return false;
+    return PyInjectionUtil.InjectionResult.EMPTY;
   }
 }

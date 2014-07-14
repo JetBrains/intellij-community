@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,33 +57,41 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     g.setColor(new JBColor(Gray._240, Gray._128));
     int w = c.getWidth();
     int h = c.getPreferredSize().height;
-    g.fillRect(0, (c.getHeight() - h)/2, w, h);
+    if (c.isOpaque()) {
+      g.fillRect(0, (c.getHeight() - h)/2, w, h);
+    }
     g.setColor(new JBColor(Gray._165, Gray._88));
     GraphicsUtil.setupAAPainting(g);
-    Path2D.Double path = new Path2D.Double();
-    int ww = getPeriodLength() / 2;
-    g.translate(0, (c.getHeight() - h)/2);
-    path.moveTo(0, 0);
-    path.lineTo(ww, 0);
-    path.lineTo(ww - h / 2, h);
-    path.lineTo(-h / 2, h);
-    path.lineTo(0, 0);
-    path.closePath();
+    g.translate(0, (c.getHeight() - h) / 2);
     int x = -offset;
+    final Area aaa = new Area(new RoundRectangle2D.Double(1, 1, w - 2, h - 2, 8, 8));
     while (x < Math.max(c.getWidth(), c.getHeight())) {
-      g.translate(x, 0);
-      ((Graphics2D)g).fill(path);
-      g.translate(-x, 0);
+      Path2D.Double path = new Path2D.Double();
+      int ww = getPeriodLength() / 2;
+      path.moveTo(x, 0);
+      path.lineTo(x+ww, 0);
+      path.lineTo(x+ww - h / 2, h);
+      path.lineTo(x-h / 2, h);
+      path.lineTo(x, 0);
+      path.closePath();
+
+      final Area area = new Area(path);
+      area.intersect(aaa);
+      ((Graphics2D)g).fill(area);
       x+= getPeriodLength();
     }
     offset = (offset + 1) % getPeriodLength();
     Area area = new Area(new Rectangle2D.Double(0, 0, w, h));
     area.subtract(new Area(new RoundRectangle2D.Double(1,1,w-2, h-2, 8,8)));
     ((Graphics2D)g).setPaint(Gray._128);
-    ((Graphics2D)g).fill(area);
+    if (c.isOpaque()) {
+      ((Graphics2D)g).fill(area);
+    }
     area.subtract(new Area(new RoundRectangle2D.Double(0,0,w, h, 9,9)));
     ((Graphics2D)g).setPaint(c.getParent().getBackground());
-    ((Graphics2D)g).fill(area);
+    if (c.isOpaque()) {
+      ((Graphics2D)g).fill(area);
+    }
     g.drawRoundRect(1,1, w-3, h-3, 8,8);
     g.translate(0, -(c.getHeight() - h)/2);
 
@@ -123,7 +131,9 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
 
     g.setColor(c.getParent().getBackground());
     Graphics2D g2 = (Graphics2D)g;
-    g.fillRect(0, 0, w, h);
+    if (c.isOpaque()) {
+      g.fillRect(0, 0, w, h);
+    }
 
     g2.translate(0, (c.getHeight() - h)/2);
     g2.setColor(progressBar.getForeground());

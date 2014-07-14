@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Consumer;
-import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
+import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,7 +59,7 @@ public class AddIgnoredIdentifierQuickFix implements LocalQuickFix, LowPriorityA
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement context = descriptor.getPsiElement();
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile(context);
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     profile.modifyProfile(new Consumer<ModifiableModel>() {
       @Override
       public void consume(ModifiableModel model) {

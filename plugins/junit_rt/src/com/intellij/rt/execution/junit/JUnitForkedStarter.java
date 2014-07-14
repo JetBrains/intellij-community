@@ -57,7 +57,7 @@ public class JUnitForkedStarter {
       IdeaTestRunner testRunner = (IdeaTestRunner)JUnitStarter.getAgentClass(isJUnit4).newInstance();
       //noinspection IOResourceOpenedButNotSafelyClosed
       testRunner.setStreams(new SegmentedOutputStream(out, true), new SegmentedOutputStream(err, true), lastIdx);
-      System.exit(testRunner.startRunnerWithArgs(childTestDescription, listeners, false));
+      System.exit(testRunner.startRunnerWithArgs(childTestDescription, listeners, null, false));
     }
     finally {
       System.setOut(oldOut);
@@ -70,7 +70,7 @@ public class JUnitForkedStarter {
                             String[] args,
                             boolean isJUnit4,
                             List listeners,
-                            SegmentedOutputStream out,
+                            String params, SegmentedOutputStream out,
                             SegmentedOutputStream err,
                             String forkMode,
                             String path) throws Exception {
@@ -88,7 +88,7 @@ public class JUnitForkedStarter {
 
     IdeaTestRunner testRunner = (IdeaTestRunner)JUnitStarter.getAgentClass(isJUnit4).newInstance();
     testRunner.setStreams(out, err, 0);
-    final Object description = testRunner.getTestToStart(args);
+    final Object description = testRunner.getTestToStart(args, params);
     if (description == null) return -1;
 
     TreeSender.sendTree(testRunner, description, true);

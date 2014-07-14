@@ -69,4 +69,11 @@
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Malformed format string</problem_class>
         <description>Too few arguments for format string &quot;%s %s&quot; #loc</description>
     </problem>
+
+    <problem>
+        <file>MalformedFormatString.java</file>
+        <line>43</line>
+        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Malformed format string</problem_class>
+        <description>Format string &lt;code&gt;&quot;%1$c %1$d&quot;&lt;/code&gt; does not match the type of its arguments #loc</description>
+    </problem>
 </problems>

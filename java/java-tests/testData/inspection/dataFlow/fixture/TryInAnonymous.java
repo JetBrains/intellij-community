@@ -1,4 +1,4 @@
-public class Bar {
+class Bar {
 
     void submit(Runnable r) { }
     String[] foos() { return new String[0]; }

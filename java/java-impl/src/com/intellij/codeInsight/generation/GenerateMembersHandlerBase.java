@@ -15,12 +15,14 @@
  */
 package com.intellij.codeInsight.generation;
 
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -36,6 +38,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +72,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
       final ClassMember[] members = chooseOriginalMembers(aClass, project, editor);
       if (members == null) return;
 
-      WriteCommandAction.runWriteCommandAction(new Runnable() {
+      WriteCommandAction.runWriteCommandAction(project, new Runnable() {
         @Override
         public void run() {
           doGenerate(project, editor, aClass, members);
@@ -121,6 +124,19 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
         HintManager.getInstance().showErrorHint(editor, getNothingFoundMessage());
       }
       return;
+    } 
+    else {
+      final List<PsiElement> elements = new ArrayList<PsiElement>();
+      for (GenerationInfo member : newMembers) {
+        if (!(member instanceof TemplateGenerationInfo)) {
+          final PsiMember psiMember = member.getPsiMember();
+          if (psiMember != null) {
+            elements.add(psiMember);
+          }
+        }
+      }
+
+      GlobalInspectionContextBase.cleanupElements(project, null, elements.toArray(new PsiElement[elements.size()]));
     }
 
     final ArrayList<TemplateGenerationInfo> templates = new ArrayList<TemplateGenerationInfo>();

@@ -17,18 +17,28 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.TestTreeView;
+import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.util.ui.Tree;
 
+import javax.swing.*;
+import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -66,7 +76,7 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
     });
   }
 
-  static Set<PsiElement> collectTestMembers(PsiElement[] psiElements) {
+  static Set<PsiElement> collectTestMembers(PsiElement[] psiElements, boolean checkAbstract) {
     final Set<PsiElement> foundMembers = new LinkedHashSet<PsiElement>();
     for (PsiElement psiElement : psiElements) {
       if (psiElement instanceof PsiClassOwner) {
@@ -81,7 +91,7 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
           foundMembers.add(psiElement);
         }
       } else if (psiElement instanceof PsiMethod) {
-        if (JUnitUtil.getTestMethod(psiElement) != null) {
+        if (JUnitUtil.getTestMethod(psiElement, checkAbstract) != null) {
           foundMembers.add(psiElement);
         }
       } else if (psiElement instanceof PsiDirectory) {
@@ -95,9 +105,10 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
   }
 
   public static boolean isMultipleElementsSelected(ConfigurationContext context) {
+    if (TestsUIUtil.isMultipleSelectionImpossible(context.getDataContext())) return false;
     final LinkedHashSet<String> classes = new LinkedHashSet<String>();
     final PsiElement[] elements = collectPatternElements(context, classes);
-    if (elements != null && collectTestMembers(elements).size() > 1) {
+    if (elements != null && collectTestMembers(elements, false).size() > 1) {
       return true;
     }
     return false;
@@ -105,9 +116,19 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
   
   private static PsiElement[] collectPatternElements(ConfigurationContext context, LinkedHashSet<String> classes) {
     final DataContext dataContext = context.getDataContext();
+    final Location<?>[] locations = Location.DATA_KEYS.getData(dataContext);
+    if (locations != null) {
+      List<PsiElement> elements = new ArrayList<PsiElement>();
+      for (Location<?> location : locations) {
+        final PsiElement psiElement = location.getPsiElement();
+        classes.add(getQName(psiElement, location));
+        elements.add(psiElement);
+      }
+      return elements.toArray(new PsiElement[elements.size()]);
+    }
     PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (elements != null) {
-      for (PsiElement psiClass : collectTestMembers(elements)) {
+      for (PsiElement psiClass : collectTestMembers(elements, true)) {
         classes.add(getQName(psiClass));
       }
       return elements;
@@ -119,7 +140,7 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
         for (VirtualFile file : files) {
           final PsiFile psiFile = psiManager.findFile(file);
           if (psiFile instanceof PsiClassOwner) {
-            for (PsiElement psiMember : collectTestMembers(((PsiClassOwner)psiFile).getClasses())) {
+            for (PsiElement psiMember : collectTestMembers(((PsiClassOwner)psiFile).getClasses(), true)) {
               classes.add(((PsiClass)psiMember).getQualifiedName());
             }
             psiFiles.add(psiFile);
@@ -132,11 +153,17 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
   }
 
   public static String getQName(PsiElement psiMember) {
+    return getQName(psiMember, null);
+  }
+
+  public static String getQName(PsiElement psiMember, Location location) {
     if (psiMember instanceof PsiClass) {
       return ((PsiClass)psiMember).getQualifiedName();
     }
     else if (psiMember instanceof PsiMember) {
-      return ((PsiMember)psiMember).getContainingClass().getQualifiedName() + "," + ((PsiMember)psiMember).getName();
+      final PsiClass containingClass = location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass(): ((PsiMember)psiMember).getContainingClass();
+      assert containingClass != null;
+      return containingClass.getQualifiedName() + "," + ((PsiMember)psiMember).getName();
     } else if (psiMember instanceof PsiPackage) {
       return ((PsiPackage)psiMember).getQualifiedName();
     }

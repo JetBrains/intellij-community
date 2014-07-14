@@ -83,6 +83,7 @@ public interface XDebugSession extends AbstractDebuggerSession {
   /**
    * @deprecated use {@link #setCurrentStackFrame(com.intellij.xdebugger.frame.XExecutionStack, com.intellij.xdebugger.frame.XStackFrame)} instead
    */
+  @SuppressWarnings("UnusedDeclaration")
   void setCurrentStackFrame(@NotNull XStackFrame frame);
 
   /**
@@ -155,6 +156,11 @@ public interface XDebugSession extends AbstractDebuggerSession {
 
   void setPauseActionSupported(boolean isSupported);
 
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * @deprecated to remove in IDEA 14
+   */
   void setAutoInitBreakpoints(boolean value);
 
   void rebuildViews();

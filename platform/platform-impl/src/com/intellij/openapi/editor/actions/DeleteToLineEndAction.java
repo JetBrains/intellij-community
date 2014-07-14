@@ -17,11 +17,8 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 
-/**
- * @author yole
- */
 public class DeleteToLineEndAction extends EditorAction {
   public DeleteToLineEndAction() {
-    super(new CutLineEndAction.Handler(false));
+    super(new CutLineActionHandler(false, false, false));
   }
 }

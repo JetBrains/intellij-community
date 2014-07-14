@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ binding.setVariable("isEap", {
 binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=64m")
 binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=96m")
 binding.setVariable("common_vmoptions", "-ea -Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
+                                        "-Djsse.enableSNIExtension=false " +
                                         "-XX:+UseCodeCacheFlushing -XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50")
 
 binding.setVariable("vmOptions", { "$common_vmoptions ${isEap() ? '-XX:+HeapDumpOnOutOfMemoryError' : ''}".trim() })
@@ -63,7 +64,7 @@ binding.setVariable("vmOptions32", { "$mem32 ${vmOptions()}".trim() })
 binding.setVariable("vmOptions64", { "$mem64 ${vmOptions()}".trim() })
 
 binding.setVariable("yjpOptions", { String systemSelector, String platformSuffix = "" ->
-  "-agentlib:yjpagent$platformSuffix=disablej2ee,disablealloc,disabletracing,onlylocal,builtinprobes=none,disableexceptiontelemetry,delay=10000,sessionname=$systemSelector".trim()
+  "-agentlib:yjpagent$platformSuffix=probe_disable=*,disablealloc,disabletracing,onlylocal,disableexceptiontelemetry,delay=10000,sessionname=$systemSelector".trim()
 })
 binding.setVariable("vmOptions32yjp", { String systemSelector ->
   "${vmOptions32()} ${yjpOptions(systemSelector)}".trim()
@@ -225,6 +226,7 @@ binding.setVariable("wireBuildDate", { String buildNumber, String appInfoFile ->
 binding.setVariable("commonJvmArgs", {
   return [
    "-ea",
+   "-server",
    "-Didea.home.path=$home",
    "-Xbootclasspath/p:${projectBuilder.moduleOutput(findModule("boot"))}",
    "-XX:+HeapDumpOnOutOfMemoryError",
@@ -255,13 +257,18 @@ binding.setVariable("platformApiModules", [
   "lvcs-api",
   "projectModel-api",
   "platform-api",
+  "structure-view-api",
   "usageView",
   "vcs-api",
   "vcs-log-api",
+  "vcs-log-graph-api",
   "xdebugger-api",
+  "remote-servers-api",
+  "remote-servers-agent-rt",
   "xml-analysis-api",
   "xml-openapi",
   "xml-psi-api",
+  "xml-structure-view-api",
 ])
 
 
@@ -278,6 +285,7 @@ binding.setVariable("platformImplementationModules", [
   "lvcs-impl",
   "projectModel-impl",
   "platform-impl",
+  "structure-view-impl",
   "vcs-impl",
   "vcs-log-graph",
   "vcs-log-impl",
@@ -287,9 +295,14 @@ binding.setVariable("platformImplementationModules", [
   "RegExpSupport",
   "spellchecker",
   "xdebugger-impl",
+  "remote-servers-impl",
   "xml",
   "xml-analysis-impl",
   "xml-psi-impl",
+  "xml-structure-view-impl",
+  "protocol-reader-runtime",
+  "script-debugger-backend",
+  "script-debugger-ui"
 ])
 
 binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
@@ -298,7 +311,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   }
 
   ant.copy(todir: path) {
-    fileset(dir: "$ch/build/conf/mac")
+    fileset(dir: "$ch/build/conf/mac/Contents")
   }
 
   ant.tstamp() {
@@ -308,22 +321,19 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   String executable = args.executable != null ? args.executable : p("component.names.product").toLowerCase()
   String helpId = args.help_id != null ? args.help_id : "IJ"
   String icns = "idea.icns"
-  String helpIcns = "$path/Contents/Resources/${helpId}.help/Contents/Resources/Shared/product.icns"
+  String helpIcns = "$path/Resources/${helpId}.help/Contents/Resources/Shared/product.icns"
   if (args.icns != null) {
-    ant.delete(file: "$path/Contents/Resources/idea.icns")
-    ant.copy(file: args.icns, todir: "$path/Contents/Resources")
+    ant.delete(file: "$path/Resources/idea.icns")
+    ant.copy(file: args.icns, todir: "$path/Resources")
     ant.copy(file: args.icns, tofile: helpIcns)
     icns = new File((String)args.icns).getName();
   } else {
-    ant.copy(file: "$path/Contents/Resources/idea.icns", tofile: helpIcns)
+    ant.copy(file: "$path/Resources/idea.icns", tofile: helpIcns)
   }
 
   String fullName = args.fullName != null ? args.fullName : p("component.names.fullname")
 
   String vmOptions = "-Dfile.encoding=UTF-8 ${vmOptions()} -Xverify:none"
-  if (isEap() && !args.mac_no_yjp) {
-    vmOptions += " ${yjpOptions(args.system_selector)}"
-  }
 
   String minor = p("component.version.minor")
   String version = isEap() && !minor.contains("RC") && !minor.contains("Beta") ? "EAP $args.buildNumber" : "${p("component.version.major")}.${minor}"
@@ -342,10 +352,22 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   }
 
   new File("$path/bin/idea.properties").text = effectiveProperties.toString()
-  new File("$path/bin/idea.vmoptions").text = "$mem64 -XX:+UseCompressedOops".split(" ").join("\n")
+  String ideaVmOptions = "$mem64 -XX:+UseCompressedOops".split(" ").join("\n")
+  if (isEap() && !args.mac_no_yjp) {
+    ideaVmOptions += " ${yjpOptions(args.system_selector)}"
+  }
+  new File("$path/bin/idea.vmoptions").text = ideaVmOptions
 
-  String classPath = classPathLibs.collect {"\$APP_PACKAGE/lib/${it}" }.join(":")
+  String classPath = classPathLibs.collect {"\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
 
+  String archs = """
+    <key>LSArchitecturePriority</key>
+    <array>"""
+  (args.archs != null ? args.archs : ["x86_64", "i386"]).each {
+    archs += "<string>${it}</string>"
+  }
+  archs +="</array>\n"
+  
   String urlSchemes = ""
   if (args.urlSchemes != null) {
     urlSchemes += """
@@ -369,7 +391,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
 """
   }
 
-  ant.replace(file: "$path/Contents/Info.plist") {
+  ant.replace(file: "$path/Info.plist") {
     replacefilter(token: "@@build@@", value: args.buildNumber)
     replacefilter(token: "@@doc_types@@", value: ifNull(args.doc_types, ""))
     replacefilter(token: "@@executable@@", value: executable)
@@ -383,10 +405,12 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     replacefilter(token: "@@class_path@@", value: classPath)
     replacefilter(token: "@@help_id@@", value: helpId)
     replacefilter(token: "@@url_schemes@@", value: urlSchemes)
+    replacefilter(token: "@@archs@@", value: archs)
+    replacefilter(token: "@@min_osx@@", value: ifNull(args.min_osx, "10.6"))
   }
 
   if (executable != "idea") {
-    ant.move(file: "$path/Contents/MacOS/idea", tofile: "$path/Contents/MacOS/$executable")
+    ant.move(file: "$path/MacOS/idea", tofile: "$path/MacOS/$executable")
   }
 
   ant.replace(file: "$path/bin/inspect.sh") {
@@ -477,20 +501,26 @@ binding.setVariable("unixScripts", { String target, String home, String name, Ma
 })
 
 binding.setVariable("winVMOptions", { String target, String system_selector, String name, String name64 = null ->
-  def options = isEap() && system_selector != null ? vmOptions32yjp(system_selector) : vmOptions32()
-  ant.echo(file: "$target/bin/${name}.vmoptions", message: options.replace(' ', '\n'))
+  if (name != null) {
+    def options = isEap() && system_selector != null ? vmOptions32yjp(system_selector) : vmOptions32()
+    ant.echo(file: "$target/bin/${name}.vmoptions", message: options.replace(' ', '\n'))
+  }
 
   if (name64 != null) {
-    options = isEap() && system_selector != null ? vmOptions64yjp(system_selector) : vmOptions64()
+    def options = isEap() && system_selector != null ? vmOptions64yjp(system_selector) : vmOptions64()
     ant.echo(file: "$target/bin/${name64}.vmoptions", message: options.replace(' ', '\n'))
   }
 
   ant.fixcrlf(srcdir: "$target/bin", includes: "*.vmoptions", eol: "dos")
 })
 
-binding.setVariable("unixVMOptions", { String target, String name ->
-  ant.echo(file: "$target/bin/${name}.vmoptions", message: "${vmOptions32()} -Dawt.useSystemAAFontSettings=lcd".trim().replace(' ', '\n'))
-  ant.echo(file: "$target/bin/${name}64.vmoptions", message: "${vmOptions64()} -Dawt.useSystemAAFontSettings=lcd".trim().replace(' ', '\n'))
+binding.setVariable("unixVMOptions", { String target, String name, String name64 = (name + "64") ->
+  if (name != null) {
+    ant.echo(file: "$target/bin/${name}.vmoptions", message: "${vmOptions32()} -Dawt.useSystemAAFontSettings=lcd".trim().replace(' ', '\n'))
+  }
+  if (name64 != null) {
+    ant.echo(file: "$target/bin/${name64}.vmoptions", message: "${vmOptions64()} -Dawt.useSystemAAFontSettings=lcd".trim().replace(' ', '\n'))
+  }
   ant.fixcrlf(srcdir: "$target/bin", includes: "*.vmoptions", eol: "unix")
 })
 
@@ -682,7 +712,7 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
         exclude(name: "bin/*.py")
         exclude(name: "bin/fsnotifier")
         exclude(name: "bin/restarter")
-        exclude(name: "Contents/MacOS/*")
+        exclude(name: "MacOS/*")
         extraBins.each {
           exclude(name: it)
         }
@@ -696,7 +726,7 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
         include(name: "bin/*.py")
         include(name: "bin/fsnotifier")
         include(name: "bin/restarter")
-        include(name: "Contents/MacOS/*")
+        include(name: "MacOS/*")
         extraBins.each {
           include(name: it)
         }
@@ -707,7 +737,7 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
   }
 })
 
-binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths ->
+binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths, List extraBins = [] ->
   projectBuilder.stage(".tar.gz")
 
   fixIdeaPropertiesEol(paths, "unix")
@@ -717,6 +747,9 @@ binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths -
       tarfileset(dir: it, prefix: tarRoot) {
         exclude(name: "bin/*.sh")
         exclude(name: "bin/fsnotifier*")
+        extraBins.each {
+          exclude(name: it)
+        }
         type(type: "file")
       }
     }
@@ -725,6 +758,9 @@ binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths -
       tarfileset(dir: it, filemode: "755", prefix: tarRoot) {
         include(name: "bin/*.sh")
         include(name: "bin/fsnotifier*")
+        extraBins.each {
+          include(name: it)
+        }
         type(type: "file")
       }
     }
@@ -750,12 +786,14 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
   projectBuilder.stage("winLauncher")
 
   if (pathsSelector != null) {
-    ant.replace(file: launcherProperties) {
-      replacefilter(token: "__PRODUCT_PATHS_SELECTOR__", value: pathsSelector)
-    }
+    def paths = getProperty("paths")
+    def launcherPropertiesTemp = "${paths.sandbox}/launcher.properties"
+    copyAndPatchFile(launcherProperties, launcherPropertiesTemp, ["PRODUCT_PATHS_SELECTOR": pathsSelector])
+    launcherProperties = launcherPropertiesTemp
   }
 
   ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true") {
+    sysproperty(key: "java.awt.headless", value: "true")
     arg(value: inputPath)
     arg(value: appInfo)
     arg(value: "$ch/native/WinLauncher/WinLauncher/resource.h")
@@ -773,10 +811,6 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
       }
     }
   }
-  /*File outputFile = new File(outputPath)
-  def outputFileName = outputFile.getName()
-  def outputDir = outputPath.substring(0, outputPath.length() - outputFileName.length())
-  executeExternalAnt(["dirName": outputDir, "fileName": outputFileName], "$home/build/signBuild.xml")*/
 })
 
 binding.setVariable("collectUsedJars", { List modules, List approvedJars, List forbiddenJars, List modulesToBuild ->
@@ -850,3 +884,37 @@ binding.setVariable("buildSearchableOptions", { String target, List licenses, Cl
   ant.available(file: targetFile, property: "searchable.options.exists");
   ant.fail(unless: "searchable.options.exists", message: "Searchable options were not built.")
 })
+
+binding.setVariable("reassignAltClickToMultipleCarets", {String communityHome ->
+  String defaultKeymapContent = new File("$communityHome/platform/platform-resources/src/idea/Keymap_Default.xml").text
+  defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt button1\"/>", "")
+  defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt shift button1\"/>",
+                                                      "<mouse-shortcut keystroke=\"alt button1\"/>")
+  patchedKeymapFile = new File("${paths.sandbox}/classes/production/platform-resources/idea/Keymap_Default.xml")
+  patchedKeymapFile.write(defaultKeymapContent)
+})
+
+// modules used in Upsource and in Kotlin as an API to IDEA
+binding.setVariable("analysisApiModules", [
+    "analysis-api",
+    "boot",
+    "core-api",
+    "duplicates-analysis",
+    "editor-ui-api",
+    "editor-ui-ex",
+    "extensions",
+    "indexing-api",
+    "java-analysis-api",
+    "java-indexing-api",
+    "java-psi-api",
+    "java-structure-view",
+    "jps-model-api",
+    "jps-model-serialization",
+    "projectModel-api",
+    "structure-view-api",
+    "util",
+    "util-rt",
+    "xml-analysis-api",
+    "xml-psi-api",
+    "xml-structure-view-api",
+])

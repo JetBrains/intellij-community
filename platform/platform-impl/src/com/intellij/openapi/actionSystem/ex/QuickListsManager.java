@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,17 +65,17 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
     mySchemesManager = schemesManagerFactory.createSchemesManager(
         "$ROOT_CONFIG$/quicklists",
         new BaseSchemeProcessor<QuickList>(){
-          public QuickList readScheme(final Document schemeContent) throws InvalidDataException, IOException, JDOMException {
+          public QuickList readScheme(@NotNull final Document schemeContent) throws InvalidDataException, IOException, JDOMException {
             return loadListFromDocument(schemeContent);
           }
 
-          public Document writeScheme(final QuickList scheme) throws WriteExternalException {
+          public Document writeScheme(@NotNull final QuickList scheme) throws WriteExternalException {
             Element element = new Element(LIST_TAG);
             scheme.writeExternal(element);
             return new Document(element);
           }
 
-          public boolean shouldBeSaved(final QuickList scheme) {
+          public boolean shouldBeSaved(@NotNull final QuickList scheme) {
             return true;
           }
         },

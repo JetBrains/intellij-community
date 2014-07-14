@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,21 @@
  */
 package com.intellij.openapi.project;
 
+import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Locale;
 
 public class ProjectUtilCore {
   public static String displayUrlRelativeToProject(@NotNull VirtualFile file,
@@ -63,5 +69,34 @@ public class ProjectUtilCore {
     return !keepModuleAlwaysOnTheLeft && SystemInfo.isMac ?
            url + " - [" + module.getName() + "]" :
            "[" + module.getName() + "] - " + url;
+  }
+
+  @Nullable
+  public static String getPresentableName(@NotNull Project project) {
+    if (project.isDefault()) {
+      return project.getName();
+    }
+
+    String location = project.getPresentableUrl();
+    if (location == null) {
+      return null;
+    }
+
+    String projectName = FileUtil.toSystemIndependentName(location);
+    if (projectName.endsWith("/")) {
+      projectName = projectName.substring(0, projectName.length() - 1);
+    }
+
+    final int lastSlash = projectName.lastIndexOf('/');
+    if (lastSlash >= 0 && lastSlash + 1 < projectName.length()) {
+      projectName = projectName.substring(lastSlash + 1);
+    }
+
+    if (StringUtil.endsWithIgnoreCase(projectName, ProjectFileType.DOT_DEFAULT_EXTENSION)) {
+      projectName = projectName.substring(0, projectName.length() - ProjectFileType.DOT_DEFAULT_EXTENSION.length());
+    }
+
+    projectName = projectName.toLowerCase(Locale.US).replace(':', '_'); // replace ':' from windows drive names
+    return projectName;
   }
 }

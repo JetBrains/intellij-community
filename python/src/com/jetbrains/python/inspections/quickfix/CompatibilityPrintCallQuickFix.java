@@ -23,9 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -51,9 +49,9 @@ public class CompatibilityPrintCallQuickFix implements LocalQuickFix {
   }
 
   private static void replacePrint(PsiElement expression, PyElementGenerator elementGenerator) {
-    StringBuilder stringBuilder = new StringBuilder("print(");
-
-    PyExpression[] target = PsiTreeUtil.getChildrenOfType(expression, PyExpression.class);
+    final StringBuilder stringBuilder = new StringBuilder("print(");
+    final PyFile file = (PyFile)expression.getContainingFile();
+    final PyExpression[] target = PsiTreeUtil.getChildrenOfType(expression, PyExpression.class);
     if (target != null) {
       stringBuilder.append(StringUtil.join(target, new Function<PyExpression, String>() {
         @Override
@@ -62,9 +60,12 @@ public class CompatibilityPrintCallQuickFix implements LocalQuickFix {
         }
       }, ", "));
     }
-
     stringBuilder.append(")");
     expression.replace(elementGenerator.createFromText(LanguageLevel.forElement(expression), PyExpression.class,
                                                        stringBuilder.toString()));
+
+    final PyFromImportStatement statement = elementGenerator.createFromText(LanguageLevel.forElement(expression), PyFromImportStatement.class,
+                                                                      "from __future__ import print_function");
+    file.addBefore(statement, file.getStatements().get(0));
   }
 }

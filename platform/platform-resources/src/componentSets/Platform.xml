@@ -137,6 +137,15 @@
       <implementation-class>com.intellij.ide.SystemHealthMonitor</implementation-class>
       <headless-implementation-class/>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.diagnostic.DebugLogManager</implementation-class>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.openapi.editor.EditorLastActionTracker</interface-class>
+      <implementation-class>com.intellij.openapi.editor.impl.EditorLastActionTrackerImpl</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
@@ -168,7 +177,8 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.ui.EditorNotifications</implementation-class>
+      <interface-class>com.intellij.ui.EditorNotifications</interface-class>
+      <implementation-class>com.intellij.ui.EditorNotificationsImpl</implementation-class>
     </component>
 
     <component>

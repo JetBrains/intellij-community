@@ -37,7 +37,7 @@ public class HgCommitAndPushExecutor implements CommitExecutor {
 
   @NotNull
   public CommitSession createCommitSession() {
-    myCheckinEnvironment.setNextCommitIsPushed(true);
+    myCheckinEnvironment.setNextCommitIsPushed();
     return CommitSession.VCS_COMMIT;
   }
 }

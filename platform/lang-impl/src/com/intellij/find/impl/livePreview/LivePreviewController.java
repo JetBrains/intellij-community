@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -118,6 +119,8 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
       @Override
       public void run() {
         if (myDisposed) return;
+        Project project = mySearchResults.getProject();
+        if (project != null && project.isDisposed()) return;
         mySearchResults.updateThreadSafe(copy, allowedToChangedEditorSelection, null, stamp);
       }
     };

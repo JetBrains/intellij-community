@@ -32,14 +32,6 @@ public class ReformatCodeActionTest extends AbstractLayoutCodeProcessorTest {
 
   private static String[] classNames = {"Vasya", "Main", "Oiie", "Ololo"};
 
-  private TestFileStructure getThreeLevelDirectoryStructure() throws IOException {
-    TestFileStructure fileStructure = new TestFileStructure(getTempRootDirectory());
-    fileStructure.createDirectoryAndMakeItCurrent("dir").addTestFilesToCurrentDirectory(classNames)
-                 .createDirectoryAndMakeItCurrent("innerDir").addTestFilesToCurrentDirectory(classNames)
-                 .createDirectoryAndMakeItCurrent("innerInnerDir").addTestFilesToCurrentDirectory(classNames);
-    return fileStructure;
-  }
-
   public void testReformatAndOptimizeMultipleFiles() throws IOException {
     List<PsiFile> files = createTestFiles(getTempRootDirectory(), classNames);
     injectMockDialogFlags(new MockReformatFileSettings().setOptimizeImports(true));
@@ -118,4 +110,25 @@ public class ReformatCodeActionTest extends AbstractLayoutCodeProcessorTest {
     checkFormationAndImportsOptimizationFor(files);
   }
 
+  private TestFileStructure getThreeLevelDirectoryStructure() throws IOException {
+    TestFileStructure fileStructure = new TestFileStructure(getModule(), getTempRootDirectory());
+
+    fileStructure.createDirectoryAndMakeItCurrent("dir");
+    addFilesToCurrentDirectory(fileStructure);
+
+    fileStructure.createDirectoryAndMakeItCurrent("innerDir");
+    addFilesToCurrentDirectory(fileStructure);
+
+    fileStructure.createDirectoryAndMakeItCurrent("innerInnerDir");
+    addFilesToCurrentDirectory(fileStructure);
+
+    return fileStructure;
+  }
+
+  private void addFilesToCurrentDirectory(TestFileStructure fileStructure) throws IOException {
+    for (int i = 0; i < 5; i++) {
+      String className = "Test" + i;
+      fileStructure.addTestFile("Test" + i + ".java", getUntouchedJavaSourceForTotalProcessing(className));
+    }
+  }
 }

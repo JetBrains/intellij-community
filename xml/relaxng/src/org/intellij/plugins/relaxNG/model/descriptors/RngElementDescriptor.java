@@ -16,12 +16,14 @@
 
 package org.intellij.plugins.relaxNG.model.descriptors;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
@@ -31,6 +33,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
+import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.validation.RngSchemaValidator;
 import org.jetbrains.annotations.NonNls;
@@ -59,15 +62,18 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     myElementPattern = pattern;
   }
 
+  @Override
   public String getQualifiedName() {
     final QName qName = getQName();
     return qName != null ? format(qName, "") : "#unknown";
   }
 
+  @Override
   public String getDefaultName() {
     return getName();
   }
 
+  @Override
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
     if (context == null) {
       return EMPTY_ARRAY;
@@ -98,8 +104,10 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return getElementDescriptor(childTag, null);
   }
 
+  @Override
   public final XmlElementDescriptor getElementDescriptor(final XmlTag childTag, XmlTag contextTag) {
     final XmlElementDescriptor value = getCachedValue(childTag, this, DESCR_KEY, new ParameterizedCachedValueProvider<XmlElementDescriptor, RngElementDescriptor>() {
+      @Override
       public CachedValueProvider.Result<XmlElementDescriptor> compute(RngElementDescriptor p) {
         final XmlElementDescriptor descriptor = p.findElementDescriptor(childTag);
         return CachedValueProvider.Result.create(descriptor, p.getDependences(), childTag);
@@ -108,9 +116,11 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return value == NULL ? null : value;
   }
 
+  @Override
   public final XmlAttributeDescriptor[] getAttributesDescriptors(@Nullable final XmlTag context) {
     if (context != null) {
       return getCachedValue(context, this, ATTRS_KEY, new ParameterizedCachedValueProvider<XmlAttributeDescriptor[], RngElementDescriptor>() {
+        @Override
         public CachedValueProvider.Result<XmlAttributeDescriptor[]> compute(RngElementDescriptor p) {
           final XmlAttributeDescriptor[] value = p.collectAttributeDescriptors(context);
           return CachedValueProvider.Result.create(value, p.getDependences(), context);
@@ -152,10 +162,12 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return result.toArray(new RngXmlAttributeDescriptor[result.size()]);
   }
 
+  @Override
   public final XmlAttributeDescriptor getAttributeDescriptor(String attributeName, @Nullable XmlTag context) {
     return getAttributeDescriptor("", attributeName);
   }
 
+  @Override
   public final XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attribute) {
     return getAttributeDescriptor(attribute.getNamespace(), attribute.getLocalName());
   }
@@ -186,6 +198,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     }
   }
 
+  @Override
   public XmlNSDescriptor getNSDescriptor() {
     return myNsDescriptor;
   }
@@ -196,6 +209,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
   }
 
   // is this actually used anywhere?
+  @Override
   public int getContentType() {
     final DPattern child = myElementPattern.getChild();
     if (child instanceof DEmptyPattern) {
@@ -214,6 +228,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return null;
   }
 
+  @Override
   public PsiElement getDeclaration() {
     final SmartPsiElementPointer<? extends PsiElement> declaration = myDeclaration;
     if (declaration != null) {
@@ -270,7 +285,10 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     final PsiElement at;
     if (column > 0) {
       if (decl.getContainingFile().getFileType() == RncFileType.getInstance()) {
-        return file.findElementAt(startOffset + column);
+        final PsiElement rncElement = file.findElementAt(startOffset + column);
+        final ASTNode pattern = rncElement != null ? TreeUtil.findParent(rncElement.getNode(), RncElementTypes.PATTERN) : null;
+        final ASTNode nameClass = pattern != null ? pattern.findChildByType(RncElementTypes.NAME_CLASS) : null;
+        return nameClass != null ? nameClass.getPsi() : rncElement;
       }
       at = file.findElementAt(startOffset + column - 2);
     } else {
@@ -281,6 +299,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return PsiTreeUtil.getParentOfType(at, XmlTag.class);
   }
 
+  @Override
   @NonNls
   public String getName(PsiElement context) {
     final QName qName = getQName();
@@ -292,6 +311,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return format(qName, prefix != null ? prefix : qName.getPrefix());
   }
 
+  @Override
   @NonNls
   public String getName() {
     final QName qName = getQName();
@@ -315,6 +335,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return iterator.next();
   }
 
+  @Override
   public void init(PsiElement element) {
 
   }
@@ -334,6 +355,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return myElementPattern.hashCode();
   }
 
+  @Override
   public Object[] getDependences() {
     if (myDeclaration != null) {
       return ArrayUtil.append(myNsDescriptor.getDependences(), myDeclaration.getElement());
@@ -345,30 +367,37 @@ public class RngElementDescriptor implements XmlElementDescriptor {
   private static class MyNameClassVisitor implements NameClassVisitor<Integer> {
     public static final MyNameClassVisitor INSTANCE = new MyNameClassVisitor();
 
+    @Override
     public Integer visitAnyName() {
       return CONTENT_TYPE_ANY;
     }
 
+    @Override
     public Integer visitAnyNameExcept(NameClass nc) {
       return CONTENT_TYPE_ANY;
     }
 
+    @Override
     public Integer visitChoice(NameClass nc1, NameClass nc2) {
       return CONTENT_TYPE_CHILDREN;
     }
 
+    @Override
     public Integer visitName(QName name) {
       return CONTENT_TYPE_CHILDREN;
     }
 
+    @Override
     public Integer visitNsName(String ns) {
       return CONTENT_TYPE_CHILDREN;
     }
 
+    @Override
     public Integer visitNsNameExcept(String ns, NameClass nc) {
       return CONTENT_TYPE_CHILDREN;
     }
 
+    @Override
     public Integer visitNull() {
       return CONTENT_TYPE_EMPTY;
     }

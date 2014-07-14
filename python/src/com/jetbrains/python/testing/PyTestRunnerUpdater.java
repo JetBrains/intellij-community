@@ -24,6 +24,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -77,7 +78,10 @@ public class PyTestRunnerUpdater implements StartupActivity {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            if (!TestRunnerService.getInstance(module).getProjectConfiguration().isEmpty())
+            final TestRunnerService runnerService = TestRunnerService.getInstance(module);
+            if (runnerService == null) return;
+            final String configuration = runnerService.getProjectConfiguration();
+            if (!StringUtil.isEmptyOrSpaces(configuration))
               return;
 
             //check setup.py
@@ -116,9 +120,10 @@ public class PyTestRunnerUpdater implements StartupActivity {
               }
             }
 
-            if (testRunner.isEmpty()) testRunner = PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME;
+            if (StringUtil.isEmptyOrSpaces(testRunner))
+              testRunner = PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME;
 
-            TestRunnerService.getInstance(module).setProjectConfiguration(testRunner);
+            runnerService.setProjectConfiguration(testRunner);
             if (PyDocumentationSettings.getInstance(module).getFormat().isEmpty())
               PyDocumentationSettings.getInstance(module).setFormat(DocStringFormat.PLAIN);
           }

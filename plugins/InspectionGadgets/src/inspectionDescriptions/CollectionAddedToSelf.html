@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports any cases where a <b>java.util.Collection</b>
-or <b>java.util.Map</b> is added as an element of itself. While Bertrand Russell
-might approve of such a construct, the JVM will likely not, throwing a <b>java.lang.StackOverflowError</b>
-if <b>hashCode()</b> is ever called on the self-containing collection.
+Reports cases where the argument of a method call on a <b>java.util.Collection</b>
+or <b>java.util.Map</b> is the collection or map itself.
+This includes adding a collection to itself, which can lead to a <b>java.lang.StackOverflowError</b> when,
+for example, calling <b>hashCode()</b> on the self-containing collection.
 <!-- tooltip end -->
 <p>
 

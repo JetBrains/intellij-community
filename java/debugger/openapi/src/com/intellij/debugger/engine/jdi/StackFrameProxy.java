@@ -19,6 +19,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.sun.jdi.ClassLoaderReference;
 import com.sun.jdi.Location;
 import com.sun.jdi.StackFrame;
+import org.jetbrains.annotations.Nullable;
 
 public interface StackFrameProxy extends ObjectReferenceProxy{
   StackFrame getStackFrame() throws EvaluateException;
@@ -27,6 +28,7 @@ public interface StackFrameProxy extends ObjectReferenceProxy{
 
   VirtualMachineProxy getVirtualMachine();
 
+  @Nullable
   Location location() throws EvaluateException;
 
   ClassLoaderReference getClassLoader() throws EvaluateException;

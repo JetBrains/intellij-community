@@ -85,4 +85,9 @@ public class GitCommandResult {
   public static GitCommandResult error(@NotNull String error) {
     return new GitCommandResult(false, 1, Collections.singletonList(error), Collections.<String>emptyList(), null);
   }
+
+  public boolean cancelled() {
+    return false; // will be implemented later
+  }
+
 }

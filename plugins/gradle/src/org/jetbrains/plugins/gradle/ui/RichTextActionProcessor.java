@@ -58,7 +58,7 @@ public class RichTextActionProcessor implements RichTextControlBuilder.RichTextP
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         final AsyncResult<DataContext> callback = DataManager.getInstance().getDataContextFromFocus();
         final DataContext context = callback.getResult();
         if (context == null) {

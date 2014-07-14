@@ -99,7 +99,15 @@ public abstract class AbstractExternalSystemSettings<
 
   @Nullable
   public PS getLinkedProjectSettings(@NotNull String linkedProjectPath) {
-    return myLinkedProjectsSettings.get(linkedProjectPath);
+    PS ps = myLinkedProjectsSettings.get(linkedProjectPath);
+    if(ps == null) {
+      for (PS ps1 : myLinkedProjectsSettings.values()) {
+        for (String modulePath : ps1.getModules()) {
+          if(linkedProjectPath.equals(modulePath)) return ps1;
+        }
+      }
+    }
+    return ps;
   }
 
   public void linkProject(@NotNull PS settings) throws IllegalArgumentException {

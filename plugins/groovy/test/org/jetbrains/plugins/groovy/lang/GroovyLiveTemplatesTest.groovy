@@ -68,7 +68,7 @@ void usage(int num, boolean someBoolean, List<String> args){
   }
 
   public static void expandTemplate(final Editor editor) {
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       void run() {
         new ListTemplatesAction().actionPerformedImpl(editor.getProject(), editor);

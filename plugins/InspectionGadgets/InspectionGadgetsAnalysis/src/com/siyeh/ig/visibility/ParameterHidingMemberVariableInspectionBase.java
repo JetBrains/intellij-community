@@ -17,7 +17,7 @@ package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
-import com.siyeh.HardcodedMethodConstants;
+import com.intellij.psi.util.PropertyUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -111,12 +111,8 @@ public class ParameterHidingMemberVariableInspectionBase extends BaseInspection 
           return;
         }
       }
-      if (m_ignoreForPropertySetters) {
-        final String methodName = method.getName();
-        final PsiType returnType = method.getReturnType();
-        if (methodName.startsWith(HardcodedMethodConstants.SET) && PsiType.VOID.equals(returnType)) {
-          return;
-        }
+      if (m_ignoreForPropertySetters && PropertyUtil.isSimplePropertySetter(method)) {
+        return;
       }
       final PsiClass aClass = checkFieldName(variable, method);
       if (aClass ==  null) {

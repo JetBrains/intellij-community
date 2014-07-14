@@ -4,6 +4,7 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" generated="true" />
     </content>
     <content url="file://$MODULE_DIR$/../../plugins/InspectionGadgets">
       <sourceFolder url="file://$MODULE_DIR$/../../plugins/InspectionGadgets/src" isTestSource="false" />
@@ -16,7 +17,7 @@
     <content url="file://$MODULE_DIR$/../../plugins/generate-tostring">
       <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/testSrc" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/resources" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/resources" type="java-resource" />
     </content>
     <orderEntry type="module" module-name="boot" />
     <orderEntry type="inheritedJdk" />
@@ -47,11 +48,14 @@
     <orderEntry type="module" module-name="jps-model-impl" />
     <orderEntry type="module" module-name="java-analysis-impl" exported="" />
     <orderEntry type="module" module-name="external-system-api" />
-    <orderEntry type="library" name="asm4" level="project" />
+    <orderEntry type="library" name="asm5" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="Xerces" level="project" />
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
+    <orderEntry type="module" module-name="java-structure-view" exported="" />
+    <orderEntry type="module" module-name="spellchecker" />
+    <orderEntry type="library" name="nekohtml" level="project" />
   </component>
   <component name="copyright">
     <Base>

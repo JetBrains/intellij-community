@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,23 @@
  */
 package com.intellij.codeInsight.template.emmet.generators;
 
+import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.codeInsight.template.emmet.ZenCodingTemplate;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.openapi.util.Pair;
+import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +46,9 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
   @Override
   public TemplateImpl generateTemplate(@NotNull TemplateToken token, boolean hasChildren, @NotNull PsiElement context) {
     String s = toString(token, hasChildren, context);
-    TemplateImpl template = token.getTemplate().copy();
+    TemplateImpl tokenTemplate = token.getTemplate();
+    assert tokenTemplate != null;
+    TemplateImpl template = tokenTemplate.copy();
     template.setString(s);
     return template;
   }
@@ -65,15 +77,46 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
   }
 
   public abstract String toString(@NotNull XmlTag tag,
-                                  @NotNull List<Pair<String, String>> attribute2Value,
+                                  @NotNull List<Couple<String>> attribute2Value,
                                   boolean hasChildren,
                                   @NotNull PsiElement context);
 
   @NotNull
-  public abstract String buildAttributesString(@NotNull List<Pair<String, String>> attribute2value,
+  public abstract String buildAttributesString(@NotNull List<Couple<String>> attribute2value,
                                                boolean hasChildren,
                                                int numberInIteration,
                                                int totalIterations, @Nullable String surroundedText);
 
+  @Override
   public abstract boolean isMyContext(@NotNull PsiElement context, boolean wrapping);
+
+  @Nullable
+  @Override
+  public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
+    Editor editor = callback.getEditor();
+    int currentOffset = editor.getCaretModel().getOffset();
+    int startOffset = Math.min(editor.getDocument().getLineStartOffset(editor.getDocument().getLineNumber(currentOffset)), currentOffset);
+    CharSequence documentText = editor.getDocument().getCharsSequence();
+    PsiElement prevVisibleLeaf = callback.getContext();
+    while (prevVisibleLeaf != null) {
+      TextRange textRange = prevVisibleLeaf.getTextRange();
+      if (textRange.getEndOffset() <= startOffset) {
+        break;
+      }
+      IElementType prevType = prevVisibleLeaf.getNode().getElementType();
+      if (prevType == XmlTokenType.XML_TAG_END || prevType == XmlTokenType.XML_EMPTY_ELEMENT_END) {
+        startOffset = textRange.getEndOffset();
+        break;
+      }
+      prevVisibleLeaf = PsiTreeUtil.prevVisibleLeaf(prevVisibleLeaf);
+    }
+
+    if (startOffset < 0 || currentOffset > documentText.length() || currentOffset < startOffset) {
+      Logger.getInstance(getClass()).error("Error while calculating emmet abbreviation. Offset: " + currentOffset + "; Start: " + startOffset, 
+                                           AttachmentFactory.createAttachment(editor.getDocument()));
+      return null;
+    }
+    String key = computeKey(documentText.subSequence(startOffset, currentOffset));
+    return !StringUtil.isEmpty(key) && ZenCodingTemplate.checkTemplateKey(key, callback, this) ? key : null;
+  }
 }

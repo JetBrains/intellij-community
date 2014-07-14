@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,12 +63,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrDeclarationHolder;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -76,8 +76,6 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.NameValidator;
 
 import java.util.*;
-
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses;
 
 /**
  * Created by Max Medvedev on 10/29/13
@@ -96,7 +94,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     PsiType ltype = findLValueType(initializer);
     PsiType rtype = initializer.getType();
 
-    GrExpression rawExpr = (GrExpression)skipParentheses(initializer, false);
+    GrExpression rawExpr = (GrExpression)PsiUtil.skipParentheses(initializer, false);
 
     if (ltype == null || TypesUtil.isAssignableWithoutConversions(ltype, rtype, initializer) || !TypesUtil.isAssignable(ltype, rtype, initializer)) {
       return rawExpr;
@@ -187,6 +185,11 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }
     else if (context.getStringPart() != null) {
       map.put(OccurrencesChooser.ReplaceChoice.NO, Collections.<Object>singletonList(context.getStringPart()));
+      return map;
+    }
+    else if (context.getVar() != null) {
+      map.put(OccurrencesChooser.ReplaceChoice.ALL, Collections.<Object>singletonList(context.getVar()));
+      return map;
     }
 
     PsiElement[] occurrences = context.getOccurrences();
@@ -268,21 +271,15 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return null;
   }
 
-  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, final @Nullable DataContext dataContext) {
+  @Override
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, @Nullable final DataContext dataContext) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection()) {
       final int offset = editor.getCaretModel().getOffset();
 
       final List<GrExpression> expressions = collectExpressions(file, editor, offset, false);
       if (expressions.isEmpty()) {
-        final GrVariable variable = findVariableAtCaret(file, editor, offset);
-        if (variable == null || variable instanceof GrField || variable instanceof GrParameter) {
-          selectionModel.selectLineAtCaret();
-        }
-        else {
-          final TextRange textRange = variable.getTextRange();
-          selectionModel.setSelection(textRange.getStartOffset(), textRange.getEndOffset());
-        }
+        updateSelectionForVariable(editor, file, selectionModel, offset);
       }
       else if (expressions.size() == 1) {
         final TextRange textRange = expressions.get(0).getTextRange();
@@ -290,6 +287,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       }
       else {
         IntroduceTargetChooser.showChooser(editor, expressions, new Pass<GrExpression>() {
+          @Override
           public void pass(final GrExpression selectedValue) {
             invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
           }
@@ -298,6 +296,17 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       }
     }
     invoke(project, editor, file, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+  }
+
+  public static void updateSelectionForVariable(Editor editor, PsiFile file, SelectionModel selectionModel, int offset) {
+    final GrVariable variable = findVariableAtCaret(file, editor, offset);
+    if (variable == null || variable instanceof GrField || variable instanceof GrParameter) {
+      selectionModel.selectLineAtCaret();
+    }
+    else {
+      final TextRange textRange = variable.getTextRange();
+      selectionModel.setSelection(textRange.getStartOffset(), textRange.getEndOffset());
+    }
   }
 
   @Override
@@ -342,7 +351,10 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
           public void run() {
             GrIntroduceContext context = ref.get();
 
-            GrExpression expression = cutLiteral(context.getStringPart(), context.getProject());
+            StringPartInfo stringPart = context.getStringPart();
+            assert stringPart != null;
+
+            GrExpression expression = stringPart.replaceLiteralWithConcatenation(null);
 
             ref.set(new GrIntroduceContextImpl(context.getProject(), context.getEditor(), expression, null, null, new PsiElement[]{expression}, context.getScope()));
           }
@@ -390,7 +402,8 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
             PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
 
             Segment anchorSegment = anchorPointer.getRange();
-            PsiElement restoredAnchor = GroovyRefactoringUtil.findElementInRange(file, anchorSegment.getStartOffset(), anchorSegment.getEndOffset(), PsiElement.class);
+            PsiElement restoredAnchor = PsiImplUtil
+              .findElementInRange(file, anchorSegment.getStartOffset(), anchorSegment.getEndOffset(), PsiElement.class);
             GrCodeBlock block = (GrCodeBlock)restoredAnchor.getParent();
             CodeStyleManager.getInstance(context.getProject()).reformat(block.getRBrace());
             CodeStyleManager.getInstance(context.getProject()).reformat(block.getLBrace());
@@ -429,19 +442,8 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
                                        @Nullable StringPartInfo stringPart,
                                        @NotNull PsiElement scope) {
     if (variable != null) {
-      final List<PsiElement> list = Collections.synchronizedList(new ArrayList<PsiElement>());
-      ReferencesSearch.search(variable, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
-        @Override
-        public boolean process(PsiReference psiReference) {
-          final PsiElement element = psiReference.getElement();
-          if (element != null) {
-            list.add(element);
-          }
-          return true;
-        }
-      });
-      final PsiElement[] occurrences = list.toArray(new PsiElement[list.size()]);
-      return new GrIntroduceContextImpl(project, editor, variable.getInitializerGroovy(), variable, stringPart, occurrences, scope);
+      final PsiElement[] occurrences = collectVariableUsages(variable, scope);
+      return new GrIntroduceContextImpl(project, editor, null, variable, stringPart, occurrences, scope);
     }
     else if (expression != null ) {
       final PsiElement[] occurrences = findOccurrences(expression, scope);
@@ -453,6 +455,24 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }
   }
 
+  public static PsiElement[] collectVariableUsages(GrVariable variable, PsiElement scope) {
+    final List<PsiElement> list = Collections.synchronizedList(new ArrayList<PsiElement>());
+    if (scope instanceof GroovyScriptClass) {
+      scope = scope.getContainingFile();
+    }
+    ReferencesSearch.search(variable, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
+      @Override
+      public boolean process(PsiReference psiReference) {
+        final PsiElement element = psiReference.getElement();
+        if (element != null) {
+          list.add(element);
+        }
+        return true;
+      }
+    });
+    return list.toArray(new PsiElement[list.size()]);
+  }
+
   private boolean invokeImpl(final Project project, final GrIntroduceContext context, final Editor editor) {
     try {
       if (!CommonRefactoringUtil.checkReadOnlyStatus(project, context.getOccurrences())) {
@@ -462,21 +482,8 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
 
       if (isInplace(context.getEditor(), context.getPlace())) {
-        Map<OccurrencesChooser.ReplaceChoice, List<Object>> occurrencesMap = fillChoice(context);
-        new OccurrencesChooser<Object>(editor) {
-          @Override
-          protected TextRange getOccurrenceRange(Object occurrence) {
-            if (occurrence instanceof PsiElement) {
-              return ((PsiElement)occurrence).getTextRange();
-            }
-            else if (occurrence instanceof StringPartInfo) {
-              return ((StringPartInfo)occurrence).getRange();
-            }
-            else {
-              return null;
-            }
-          }
-        }.showChooser(new Pass<OccurrencesChooser.ReplaceChoice>() {
+        Map<OccurrencesChooser.ReplaceChoice, List<Object>> occurrencesMap = getOccurrenceOptions(context);
+        new IntroduceOccurrencesChooser(editor).showChooser(new Pass<OccurrencesChooser.ReplaceChoice>() {
           @Override
           public void pass(final OccurrencesChooser.ReplaceChoice choice) {
             getIntroducer(context, choice).startInplaceIntroduceTemplate();
@@ -509,8 +516,13 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   @NotNull
+  protected Map<OccurrencesChooser.ReplaceChoice, List<Object>> getOccurrenceOptions(@NotNull GrIntroduceContext context) {
+    return fillChoice(context);
+  }
+
+  @NotNull
   protected PsiElement[] findOccurrences(@NotNull GrExpression expression, @NotNull PsiElement scope) {
-    final PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(skipParentheses(expression, false), scope);
+    final PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(PsiUtil.skipParentheses(expression, false), scope);
     if (occurrences == null || occurrences.length == 0) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("no.occurrences.found"));
     }
@@ -585,10 +597,10 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   @Nullable
   public static GrVariable findVariable(@NotNull PsiFile file, int startOffset, int endOffset) {
-    GrVariable var = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, GrVariable.class);
+    GrVariable var = PsiImplUtil.findElementInRange(file, startOffset, endOffset, GrVariable.class);
     if (var == null) {
       final GrVariableDeclaration variableDeclaration =
-        GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, GrVariableDeclaration.class);
+        PsiImplUtil.findElementInRange(file, startOffset, endOffset, GrVariableDeclaration.class);
       if (variableDeclaration == null) return null;
       final GrVariable[] variables = variableDeclaration.getVariables();
       if (variables.length == 1) {
@@ -620,7 +632,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   @Nullable
   public static GrExpression findExpression(PsiFile file, int startOffset, int endOffset) {
-    GrExpression selectedExpr = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, GrExpression.class);
+    GrExpression selectedExpr = PsiImplUtil.findElementInRange(file, startOffset, endOffset, GrExpression.class);
     return findExpression(selectedExpr);
   }
 
@@ -720,7 +732,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return candidate;
   }
 
-  public static void assertStatement(@NotNull PsiElement anchor, @NotNull PsiElement scope) {
+  public static void assertStatement(@Nullable PsiElement anchor, @NotNull PsiElement scope) {
     if (!(anchor instanceof GrStatement)) {
       LogMessageEx.error(LOG, "cannot find anchor for variable", scope.getText());
     }
@@ -728,7 +740,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   @Nullable
   private static PsiElement findContainingStatement(@Nullable PsiElement candidate) {
-    while (candidate != null && !PsiUtil.isExpressionStatement(candidate)) {
+    while (candidate != null && (candidate.getParent() instanceof GrLabeledStatement || !(PsiUtil.isExpressionStatement(candidate)))) {
       candidate = candidate.getParent();
       if (candidate instanceof GrCaseLabel) candidate = candidate.getParent();
     }
@@ -747,19 +759,29 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }
   }
 
-  @NotNull
+  @Nullable
   public static GrVariable resolveLocalVar(@NotNull GrIntroduceContext context) {
     final GrVariable var = context.getVar();
     if (var != null) {
       return var;
     }
 
-    final GrReferenceExpression expression = (GrReferenceExpression)context.getExpression();
-    assert expression != null;
+    return resolveLocalVar(context.getExpression());
+  }
 
-    final PsiElement resolved = expression.resolve();
-    assert resolved instanceof GrVariable;
-    return (GrVariable)resolved;
+  @Nullable
+  public static GrVariable resolveLocalVar(@Nullable GrExpression expression) {
+    if (expression instanceof GrReferenceExpression) {
+      final GrReferenceExpression ref = (GrReferenceExpression)expression;
+
+      final PsiElement resolved = ref.resolve();
+      if (PsiUtil.isLocalVariable(resolved)) {
+        return (GrVariable)resolved;
+      }
+      return null;
+    }
+
+    return null;
   }
 
   public static boolean hasLhs(@NotNull final PsiElement[] occurrences) {
@@ -783,141 +805,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     throw new IncorrectOperationException();
   }
 
-  @NotNull
-  public static GrExpression generateExpressionFromStringPart(final StringPartInfo stringPart, final Project project) {
-    Data data = new Data(stringPart);
-    String startQuote = data.getStartQuote();
-    TextRange range = data.getRange();
-    String literalText = data.getText();
-    String endQuote = data.getEndQuote();
-
-    final String substringLiteral = startQuote + range.substring(literalText) + endQuote;
-    return GroovyPsiElementFactory.getInstance(project).createExpressionFromText(substringLiteral);
-  }
-
-  @NotNull
-  public static GrExpression processLiteral(final String varName, final StringPartInfo stringPart, final Project project) {
-    Data data = new Data(stringPart);
-    String startQuote = data.getStartQuote();
-    TextRange range = data.getRange();
-    String literalText = data.getText();
-    String endQuote = data.getEndQuote();
-
-    String prefix = literalText.substring(0, range.getStartOffset()) ;
-    String suffix =  literalText.substring(range.getEndOffset());
-
-    StringBuilder buffer = new StringBuilder();
-    if (!prefix.equals(startQuote)) {
-      buffer.append(prefix).append(endQuote).append('+');
-    }
-    buffer.append(varName);
-    if (!suffix.equals(endQuote)) {
-      buffer.append('+').append(startQuote).append(suffix);
-    }
-
-    final GrExpression concatenation = GroovyPsiElementFactory.getInstance(project).createExpressionFromText(buffer);
-
-    final GrExpression concat = stringPart.getLiteral().replaceWithExpression(concatenation, false);
-    if (concat instanceof GrReferenceExpression) {
-      return concat;
-    }
-    else {
-      assert concat instanceof GrBinaryExpression;
-      final GrExpression left = ((GrBinaryExpression)concat).getLeftOperand();
-      if (left instanceof GrReferenceExpression) {
-        return left;
-      }
-      else {
-        assert left instanceof GrBinaryExpression;
-        final GrExpression right = ((GrBinaryExpression)left).getRightOperand();
-        assert right != null;
-        return right;
-      }
-    }
-  }
-
-  @NotNull
-  public static GrExpression cutLiteral(final StringPartInfo stringPart, final Project project) {
-    Data data = new Data(stringPart);
-    String startQuote = data.getStartQuote();
-    TextRange range = data.getRange();
-    String literalText = data.getText();
-    String endQuote = data.getEndQuote();
-
-    String prefix = literalText.substring(0, range.getStartOffset()) ;
-    String suffix =  literalText.substring(range.getEndOffset());
-    String selected = literalText.substring(range.getStartOffset(), range.getEndOffset());
-
-    StringBuilder buffer = new StringBuilder();
-    if (!prefix.equals(startQuote)) {
-      buffer.append(prefix).append(endQuote).append('+');
-    }
-    buffer.append(startQuote).append(selected).append(endQuote);
-
-    if (!suffix.equals(endQuote)) {
-      buffer.append('+').append(startQuote).append(suffix);
-    }
-
-    final GrExpression concatenation = GroovyPsiElementFactory.getInstance(project).createExpressionFromText(buffer);
-
-    final GrExpression concat = stringPart.getLiteral().replaceWithExpression(concatenation, false);
-    if (concat instanceof GrReferenceExpression) {
-      return concat;
-    }
-    else {
-      assert concat instanceof GrBinaryExpression;
-      final GrExpression left = ((GrBinaryExpression)concat).getLeftOperand();
-      if (left instanceof GrReferenceExpression) {
-        return left;
-      }
-      else {
-        assert left instanceof GrBinaryExpression;
-        final GrExpression right = ((GrBinaryExpression)left).getRightOperand();
-        assert right != null;
-        return right;
-      }
-    }
-  }
-
-
   public interface Validator extends NameValidator {
     boolean isOK(GrIntroduceDialog dialog);
-  }
-
-  private static class Data {
-    private String myText;
-    private String myStartQuote;
-    private String myEndQuote;
-    private TextRange myRange;
-
-    public Data(final StringPartInfo stringPartInfo) {
-      assert stringPartInfo != null;
-
-      final GrLiteral literal = stringPartInfo.getLiteral();
-
-      myText = literal.getText();
-
-      myStartQuote = GrStringUtil.getStartQuote(myText);
-      myEndQuote = GrStringUtil.getEndQuote(myText);
-      final TextRange dataRange = new TextRange(myStartQuote.length(), myText.length() - myEndQuote.length());
-
-      myRange = stringPartInfo.getRange().intersection(dataRange);
-    }
-
-    public String getText() {
-      return myText;
-    }
-
-    public String getStartQuote() {
-      return myStartQuote;
-    }
-
-    public String getEndQuote() {
-      return myEndQuote;
-    }
-
-    public TextRange getRange() {
-      return myRange;
-    }
   }
 }

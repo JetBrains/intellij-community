@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,11 +28,6 @@ import java.util.*;
  * @author ilyas
  */
 public class GroovyFileTypeLoader extends FileTypeFactory{
-  public static final List<FileType> GROOVY_FILE_TYPES = new ArrayList<FileType>();
-
-  public static FileType[] getGroovyEnabledFileTypes() {
-    return GROOVY_FILE_TYPES.toArray(new FileType[GROOVY_FILE_TYPES.size()]);
-  }
 
   public static Set<String> getCustomGroovyScriptExtensions() {
     final LinkedHashSet<String> strings = new LinkedHashSet<String>();
@@ -53,8 +47,8 @@ public class GroovyFileTypeLoader extends FileTypeFactory{
     return strings;
   }
 
+  @Override
   public void createFileTypes(@NotNull FileTypeConsumer consumer) {
     consumer.consume(GroovyFileType.GROOVY_FILE_TYPE, StringUtil.join(getAllGroovyExtensions(), ";"));
-    GROOVY_FILE_TYPES.add(GroovyFileType.GROOVY_FILE_TYPE);
   }
 }

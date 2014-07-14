@@ -2,6 +2,6 @@
 class Test {
   {
     String o = "";
-    Comparable<String> c = o1 -> 0; 
+    Comparable<String> c = o1 -> o1.length(); 
   }
 }

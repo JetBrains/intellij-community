@@ -1,6 +1,6 @@
 import java.util.Comparator;
 
-public class Main2 {
+class Main2 {
     static class OfRef<T> {
         public OfRef() {
              this((Comparator<? super T>)  naturalOrder());

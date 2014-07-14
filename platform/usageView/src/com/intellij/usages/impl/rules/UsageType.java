@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,11 @@
  */
 package com.intellij.usages.impl.rules;
 
+import com.intellij.BundleBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usages.UsageViewPresentation;
+import org.jetbrains.annotations.NotNull;
 
 public final class UsageType {
   public static final UsageType CLASS_INSTANCE_OF = new UsageType(UsageViewBundle.message("usage.type.instanceof"));
@@ -43,6 +47,7 @@ public final class UsageType {
   public static final UsageType LITERAL_USAGE = new UsageType(UsageViewBundle.message("usage.type.string.constant"));
   public static final UsageType COMMENT_USAGE = new UsageType(UsageViewBundle.message("usage.type.comment"));
 
+  @SuppressWarnings("UnresolvedPropertyKey")
   public static final UsageType UNCLASSIFIED = new UsageType(UsageViewBundle.message("usage.type.unclassified"));
 
   public static final UsageType RECURSION = new UsageType("Recursion");
@@ -53,8 +58,15 @@ public final class UsageType {
 
   private final String myName;
 
-  public UsageType(String name) {
+  public UsageType(@NotNull String name) {
     myName = name;
+  }
+
+  @NotNull
+  public String toString(@NotNull UsageViewPresentation presentation) {
+    String word = presentation.getUsagesWord();
+    String usageWord = StringUtil.startsWithChar(myName, '{') ? StringUtil.capitalize(word) : word;
+    return BundleBase.format(myName, usageWord);
   }
 
   public String toString() {

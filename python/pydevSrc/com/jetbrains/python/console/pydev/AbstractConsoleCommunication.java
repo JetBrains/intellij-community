@@ -43,7 +43,7 @@ public abstract class AbstractConsoleCommunication implements ConsoleCommunicati
       more = false;
       errorContents = str;
     }
-    return new Pair<String, Boolean>(errorContents, more);
+    return Pair.create(errorContents, more);
   }
 
   @Override

@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -134,7 +135,7 @@ public class ForeachStatementInspection extends BaseInspection {
         newStatement.append(bodyText);
       }
       newStatement.append('}');
-      replaceStatementAndShortenClassNames(statement, newStatement.toString());
+      PsiReplacementUtil.replaceStatementAndShortenClassNames(statement, newStatement.toString());
     }
   }
 

@@ -42,7 +42,7 @@ import java.util.Map;
 @Tag("YouTrack")
 public class YouTrackRepository extends BaseRepositoryImpl {
 
-  private String myDefaultSearch = "for: me sort by: updated #Unresolved";
+  private String myDefaultSearch = "Assignee: me sort by: updated #Unresolved";
   private Map<TaskState, String> myCustomStateNames = new EnumMap<TaskState, String>(TaskState.class);
 
   // Default names for supported issues states
@@ -62,6 +62,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     super(type);
   }
 
+  @NotNull
   @Override
   public BaseRepository clone() {
     return new YouTrackRepository(this);
@@ -76,7 +77,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   public Task[] getIssues(@Nullable String request, int max, long since) throws Exception {
 
     String query = getDefaultSearch();
-    if (request != null) {
+    if (StringUtil.isNotEmpty(request)) {
       query += " " + request;
     }
     String requestUrl = "/rest/project/issues/?filter=" + encodeUrl(query) + "&max=" + max + "&updatedAfter" + since;
@@ -158,7 +159,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   }
 
   @Nullable
-  public Task findTask(String id) throws Exception {
+  public Task findTask(@NotNull String id) throws Exception {
     HttpMethod method = doREST("/rest/issue/byid/" + id, false);
     InputStream stream = method.getResponseBodyAsStream();
     Element element = new SAXBuilder(false).build(stream).getRootElement();
@@ -184,7 +185,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public void setTaskState(Task task, TaskState state) throws Exception {
+  public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
     String s = myCustomStateNames.get(state);
     if (StringUtil.isEmpty(s)) {
       s = state.name();
@@ -214,6 +215,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
 
     final Date updated = new Date(Long.parseLong(element.getAttributeValue("updated")));
     final Date created = new Date(Long.parseLong(element.getAttributeValue("created")));
+    final boolean resolved = element.getAttribute("resolved") != null;
 
     return new Task() {
       @Override
@@ -274,7 +276,8 @@ public class YouTrackRepository extends BaseRepositoryImpl {
 
       @Override
       public boolean isClosed() {
-        return false;
+        // IDEA-118605
+        return resolved;
       }
 
       @Override
@@ -307,7 +310,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.youtrack.YouTrackRepository");
 
   @Override
-  public void updateTimeSpent(final LocalTask task, final String timeSpent, final String comment) throws Exception {
+  public void updateTimeSpent(@NotNull LocalTask task, @NotNull String timeSpent, @NotNull String comment) throws Exception {
     checkVersion();
     final HttpMethod method = doREST("/rest/issue/execute/" + task.getId() + "?command=work+Today+" + timeSpent.replaceAll(" ", "+") + "+" + comment, true);
     if (method.getStatusCode() != 200) {
@@ -329,7 +332,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
 
   @Override
   protected int getFeatures() {
-    return super.getFeatures() | TIME_MANAGEMENT;
+    return super.getFeatures() | TIME_MANAGEMENT | STATE_UPDATING;
   }
 
   public void setCustomStateNames(Map<TaskState, String> customStateNames) {

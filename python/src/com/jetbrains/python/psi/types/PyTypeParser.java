@@ -450,7 +450,7 @@ public class PyTypeParser {
             break;
           }
           if (module instanceof PsiDirectory) {
-            module = PyUtil.getPackageElement((PsiDirectory)module);
+            module = PyUtil.getPackageElement((PsiDirectory)module, myAnchor);
           }
           if (module instanceof PyTypedElement) {
             final PyType moduleType = context.getType((PyTypedElement)module);

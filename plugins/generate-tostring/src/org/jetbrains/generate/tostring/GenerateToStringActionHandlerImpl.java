@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2012 the original author or authors.
+ * Copyright 2001-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,7 @@ import com.intellij.ide.util.MemberChooserBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
@@ -32,6 +31,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
@@ -74,12 +74,6 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
         doExecuteAction(project, clazz, null);
     }
 
-    /**
-     * Entry for performing the action and code generation.
-     *
-     * @param project      the project, must not be <tt>null<tt>
-     * @param clazz        the class, must not be <tt>null<tt>
-     */
     private static void doExecuteAction(@NotNull final Project project, @NotNull final PsiClass clazz, final Editor editor) {
         logger.debug("+++ doExecuteAction - START +++");
 
@@ -88,22 +82,19 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
         }
 
         final PsiElementClassMember[] dialogMembers = buildMembersToShow(clazz);
-        if (dialogMembers.length == 0) {
-          HintManager.getInstance().showErrorHint(editor, "No members to include in toString() have been found");
-          return;
-        }
 
         final MemberChooserBuilder<PsiElementClassMember> builder = new MemberChooserBuilder<PsiElementClassMember>(project);
         final MemberChooserHeaderPanel header = new MemberChooserHeaderPanel(clazz);
         builder.setHeaderPanel(header);
+        builder.allowEmptySelection(true);
         builder.overrideAnnotationVisible(PsiUtil.isLanguageLevel5OrHigher(clazz));
         builder.setTitle("Generate toString()");
 
         logger.debug("Displaying member chooser dialog");
-        SwingUtilities.invokeLater(new Runnable() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               if (project.isDisposed()) return;
-              final MemberChooser dialog = builder.createBuilder(dialogMembers);
+              final MemberChooser<PsiElementClassMember> dialog = builder.createBuilder(dialogMembers);
               dialog.setCopyJavadocVisible(false);
               dialog.selectElements(dialogMembers);
               header.setChooser(dialog);
@@ -116,7 +107,8 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
                     TemplatesManager.getInstance().setDefaultTemplate(template);
 
                     if (template.isValidTemplate()) {
-                        GenerateToStringWorker.executeGenerateActionLater(clazz, editor, selectedMembers, template, dialog.isInsertOverrideAnnotation());
+                        GenerateToStringWorker.executeGenerateActionLater(clazz, editor, selectedMembers, template,
+                                                                          dialog.isInsertOverrideAnnotation());
                     }
                     else {
                         HintManager.getInstance().showErrorHint(editor, "toString() template '" + template.getFileName() + "' is invalid");
@@ -175,7 +167,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
     }
 
     public static class MemberChooserHeaderPanel extends JPanel {
-        private MemberChooser chooser;
+        private MemberChooser<PsiElementClassMember> chooser;
         private final JComboBox comboBox;
 
         public void setChooser(MemberChooser chooser) {
@@ -183,7 +175,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
         }
 
         public MemberChooserHeaderPanel(final PsiClass clazz) {
-            super(new BorderLayout());
+            super(new GridBagLayout());
 
             final Collection<TemplateResource> templates = TemplatesManager.getInstance().getAllTemplates();
             final TemplateResource[] all = templates.toArray(new TemplateResource[templates.size()]);
@@ -191,7 +183,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
             final JButton settingsButton = new JButton("Settings");
             settingsButton.setMnemonic(KeyEvent.VK_S);
 
-            comboBox = new JComboBox(all);
+            comboBox = new ComboBox(all);
             settingsButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     final TemplatesPanel ui = new TemplatesPanel();
@@ -234,15 +226,23 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
                 }
             });
 
-            add(settingsButton, BorderLayout.EAST);
-            add(comboBox, BorderLayout.CENTER);
             comboBox.setSelectedItem(TemplatesManager.getInstance().getDefaultTemplate());
 
             final JLabel templatesLabel = new JLabel("Template: ");
             templatesLabel.setDisplayedMnemonic('T');
             templatesLabel.setLabelFor(comboBox);
 
-            add(templatesLabel, BorderLayout.WEST);
+            final GridBagConstraints constraints = new GridBagConstraints();
+            constraints.anchor = GridBagConstraints.BASELINE;
+            constraints.gridx = 0;
+            add(templatesLabel, constraints);
+            constraints.gridx = 1;
+            constraints.weightx = 1.0;
+            constraints.fill = GridBagConstraints.HORIZONTAL;
+            add(comboBox, constraints);
+            constraints.gridx = 2;
+            constraints.weightx = 0.0;
+            add(settingsButton, constraints);
         }
 
         public TemplateResource getSelectedTemplate() {

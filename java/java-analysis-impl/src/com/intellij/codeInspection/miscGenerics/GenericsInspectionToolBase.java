@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInspection.miscGenerics;
 
-import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,7 +28,7 @@ import java.util.List;
 /**
  * @author ven
  */
-public abstract class GenericsInspectionToolBase extends BaseJavaBatchLocalInspectionTool {
+public abstract class GenericsInspectionToolBase extends BaseJavaBatchLocalInspectionTool implements CleanupLocalInspectionTool {
   @Override
   public boolean isEnabledByDefault() {
     return true;

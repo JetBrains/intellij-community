@@ -17,6 +17,7 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessEvents;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -28,6 +29,7 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.breakpoints.*;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -238,8 +240,8 @@ public class PositionHighlighter {
         if (breakpoint instanceof BreakpointWithHighlighter) {
           if (((BreakpointWithHighlighter)breakpoint).isVisible() && breakpoint.isValid()) {
             breakpoint.reload();
-            final SourcePosition sourcePosition = ((BreakpointWithHighlighter)breakpoint).getSourcePosition();
-            if (sourcePosition == null || sourcePosition.getLine() != lineIndex) {
+            int bptLine = ((BreakpointWithHighlighter)breakpoint).getLineIndex();
+            if (bptLine < 0 || bptLine != lineIndex) {
               eventsOutOfLine.add(eventDescriptor);
             }
           }
@@ -421,11 +423,25 @@ public class PositionHighlighter {
       DefaultActionGroup group = new DefaultActionGroup();
       for (Pair<Breakpoint, Event> eventDescriptor : myEventsOutOfLine) {
         Breakpoint breakpoint = eventDescriptor.getFirst();
-        AnAction viewBreakpointsAction = new ViewBreakpointsAction(breakpoint.getDisplayName(), breakpoint);
+        AnAction viewBreakpointsAction = new ViewBreakpointsAction(breakpoint.getDisplayName(), breakpoint.getXBreakpoint());
         group.add(viewBreakpointsAction);
       }
 
       return group;
+    }
+
+    @Override
+    public AnAction getMiddleButtonClickAction() {
+      return new AnAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          if (myEventsOutOfLine.size() == 1) {
+            Breakpoint breakpoint = myEventsOutOfLine.get(0).getFirst();
+            breakpoint.setEnabled(!breakpoint.isEnabled());
+            DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().fireBreakpointChanged(breakpoint);
+          }
+        }
+      };
     }
 
     @Override

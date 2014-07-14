@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,22 @@ package com.intellij.openapi.editor.colors;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.*;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.ConcurrentMap;
+
 
 /**
  * A type of item with a distinct highlighting in an editor or in other views.
  */
-public final class TextAttributesKey implements Comparable<TextAttributesKey>, JDOMExternalizable {
+public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
-  private static final ConcurrentHashMap<String, TextAttributesKey> ourRegistry = new ConcurrentHashMap<String, TextAttributesKey>();
+  private static final ConcurrentMap<String, TextAttributesKey> ourRegistry = new ConcurrentHashMap<String, TextAttributesKey>();
   private static final NullableLazyValue<TextAttributeKeyDefaultsProvider> ourDefaultsProvider = new VolatileNullableLazyValue<TextAttributeKeyDefaultsProvider>() {
     @Nullable
     @Override
@@ -39,9 +42,8 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
     }
   };
 
-  public String myExternalName;
-  public TextAttributes myDefaultAttributes = NULL_ATTRIBUTES;
-
+  private final String myExternalName;
+  private TextAttributes myDefaultAttributes = NULL_ATTRIBUTES;
   private TextAttributesKey myFallbackAttributeKey;
 
   private TextAttributesKey(String externalName) {
@@ -49,11 +51,17 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
   }
 
   //read external only
-  public TextAttributesKey() {
+  public TextAttributesKey(@NotNull Element element) throws InvalidDataException {
+    this(JDOMExternalizerUtil.readField(element, "myExternalName"));
+    Element myDefaultAttributesElement = JDOMExternalizerUtil.getOption(element, "myDefaultAttributes");
+    if (myDefaultAttributesElement != null) {
+      myDefaultAttributes = new TextAttributes(myDefaultAttributesElement);
+    }
   }
 
-  @NotNull public static TextAttributesKey find(@NotNull @NonNls String externalName) {
-    return ourRegistry.cacheOrGet(externalName, new TextAttributesKey(externalName));
+  @NotNull
+  public static TextAttributesKey find(@NotNull @NonNls String externalName) {
+    return ConcurrencyUtil.cacheOrGet(ourRegistry, externalName, new TextAttributesKey(externalName));
   }
 
   public String toString() {
@@ -80,14 +88,13 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
     return find(externalName);
   }
 
-  @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+    JDOMExternalizerUtil.writeField(element, "myExternalName", myExternalName);
+
+    if (myDefaultAttributes != NULL_ATTRIBUTES) {
+      Element option = JDOMExternalizerUtil.writeOption(element, "myDefaultAttributes");
+      myDefaultAttributes.writeExternal(option);
+    }
   }
 
 
@@ -115,8 +122,9 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
     if (myDefaultAttributes == NULL_ATTRIBUTES) {
       myDefaultAttributes = null;
       final TextAttributeKeyDefaultsProvider provider = ourDefaultsProvider.getValue();
-      if (provider != null)
+      if (provider != null) {
         myDefaultAttributes = provider.getDefaultAttributes(this);
+      }
     }
     else if (myDefaultAttributes == null) {
       myDefaultAttributes = NULL_ATTRIBUTES;

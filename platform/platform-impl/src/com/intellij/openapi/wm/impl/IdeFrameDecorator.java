@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
@@ -36,7 +37,7 @@ public abstract class IdeFrameDecorator implements Disposable {
 
   public abstract boolean isInFullScreen();
 
-  public abstract void toggleFullScreen(boolean state);
+  public abstract ActionCallback toggleFullScreen(boolean state);
 
   @Override
   public void dispose() {
@@ -83,11 +84,11 @@ public abstract class IdeFrameDecorator implements Disposable {
     }
 
     @Override
-    public void toggleFullScreen(boolean state) {
-      if (myFrame == null) return;
+    public ActionCallback toggleFullScreen(boolean state) {
+      if (myFrame == null) return ActionCallback.REJECTED;
 
       GraphicsDevice device = ScreenUtil.getScreenDevice(myFrame.getBounds());
-      if (device == null) return;
+      if (device == null) return ActionCallback.REJECTED;
 
       try {
         myFrame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, Boolean.TRUE);
@@ -112,6 +113,7 @@ public abstract class IdeFrameDecorator implements Disposable {
 
         notifyFrameComponents(state);
       }
+      return ActionCallback.DONE;
     }
   }
 
@@ -138,11 +140,12 @@ public abstract class IdeFrameDecorator implements Disposable {
     }
 
     @Override
-    public void toggleFullScreen(boolean state) {
+    public ActionCallback toggleFullScreen(boolean state) {
       if (myFrame != null) {
         myRequestedState = state;
         X11UiUtil.toggleFullScreenMode(myFrame);
       }
+      return ActionCallback.DONE;
     }
   }
 }

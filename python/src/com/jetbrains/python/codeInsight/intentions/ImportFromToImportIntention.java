@@ -28,7 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +84,7 @@ public class ImportFromToImportIntention implements IntentionAction {
         ret.myModuleReference = ret.myFromImportStatement.getImportSource();
       }
       if (ret.myModuleReference != null) {
-        ret.myModuleName = PyResolveUtil.toPath(ret.myModuleReference);
+        ret.myModuleName = PyPsiUtils.toPath(ret.myModuleReference);
       }
       return ret;
     }
@@ -117,7 +117,7 @@ public class ImportFromToImportIntention implements IntentionAction {
     if (info.myModuleReference != null) {
       PyExpression remaining_module = info.myModuleReference.getQualifier();
       if (remaining_module instanceof PyQualifiedExpression) {
-        remaining_name = PyResolveUtil.toPath((PyQualifiedExpression)remaining_module);
+        remaining_name = PyPsiUtils.toPath((PyQualifiedExpression)remaining_module);
       }
       else remaining_name = ""; // unqualified name: "...module"
       separated_name = info.myModuleReference.getReferencedName();
@@ -169,7 +169,7 @@ public class ImportFromToImportIntention implements IntentionAction {
       }
     }
     if (info.myModuleReference != null) {
-      info.myModuleName = PyResolveUtil.toPath(info.myModuleReference);
+      info.myModuleName = PyPsiUtils.toPath(info.myModuleReference);
     }
     if (info.myModuleReference != null && info.myModuleName != null && info.myFromImportStatement != null) {
       myText = info.getText();
@@ -211,7 +211,7 @@ public class ImportFromToImportIntention implements IntentionAction {
         public boolean execute(@NotNull PsiElement element) {
           if (element instanceof PyReferenceExpression && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null && element.isValid()) {
             PyReferenceExpression ref = (PyReferenceExpression)element;
-            if (ref.getQualifier() == null) {
+            if (!ref.isQualified()) {
               ResolveResult[] resolved = ref.getReference().multiResolve(false);
               for (ResolveResult rr : resolved) {
                 if (rr.isValidResult()) {

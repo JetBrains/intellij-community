@@ -133,6 +133,13 @@ public class CommonProcessors {
       return myValue;
     }
 
+    @Nullable
+    public T reset() {
+      T prev = myValue;
+      myValue = null;
+      return prev;
+    }
+
     @Override
     public boolean process(T t) {
       if (accept(t)) {
@@ -148,6 +155,20 @@ public class CommonProcessors {
   public static class FindFirstProcessor<T> extends FindProcessor<T> {
     @Override
     protected boolean accept(T t) {
+      return true;
+    }
+  }
+
+  public static class FindFirstAndOnlyProcessor<T> extends FindFirstProcessor<T> {
+
+    @Override
+    public boolean process(T t) {
+      boolean firstFound = getFoundValue() != null;
+      boolean result = super.process(t);
+      if (!result) {
+        if (firstFound) reset();
+        return !firstFound;
+      }
       return true;
     }
   }

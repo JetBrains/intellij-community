@@ -1,9 +1,8 @@
-
 import static java.util.Arrays.asList;
 import static java.util.Arrays.sort;
 <warning descr="Unused import statement">import static java.util.Arrays.binarySearch;</warning>
 
-public class StaticImports {
+class StaticImports {
     {
         asList(new Object[]{});
     }

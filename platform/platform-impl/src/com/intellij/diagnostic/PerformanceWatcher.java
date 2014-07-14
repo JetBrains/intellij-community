@@ -45,7 +45,7 @@ public class PerformanceWatcher implements ApplicationComponent {
   private ThreadMXBean myThreadMXBean;
   private final DateFormat myDateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss");
   //private DateFormat myPrintDateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
-  private File myLogDir;
+  private File mySessionLogDir;
   private int myUnresponsiveDuration = 0;
   private File myCurHangLogDir;
   private List<StackTraceElement> myStacktraceCommonPart;
@@ -98,9 +98,9 @@ public class PerformanceWatcher implements ApplicationComponent {
       }
     });
 
-    myLogDir = new File(PathManager.getLogPath() + "/threadDumps-" + myDateFormat.format(new Date())
+    mySessionLogDir = new File(PathManager.getLogPath() + "/threadDumps-" + myDateFormat.format(new Date())
                         + "-" + ApplicationInfo.getInstance().getBuild().asString());
-    myCurHangLogDir = myLogDir;
+    myCurHangLogDir = mySessionLogDir;
 
     try {
       myShutdownSemaphore.acquire();
@@ -164,22 +164,22 @@ public class PerformanceWatcher implements ApplicationComponent {
       }
       if (mySwingThreadCounter != myLoopCounter) {
         myUnresponsiveDuration += UNRESPONSIVE_INTERVAL;
-        if (myUnresponsiveDuration == UNRESPONSIVE_THRESHOLD) {
-          //System.out.println("EDT is not responding at " + myPrintDateFormat.format(new Date()));
-          myCurHangLogDir = new File(myLogDir, myDateFormat.format(new Date()));
-        }
         if (myUnresponsiveDuration >= UNRESPONSIVE_THRESHOLD) {
+          if (myCurHangLogDir == mySessionLogDir) {
+            //System.out.println("EDT is not responding at " + myPrintDateFormat.format(new Date()));
+            myCurHangLogDir = new File(mySessionLogDir, myDateFormat.format(new Date()));
+          }
           dumpThreads(false);
         }
       }
       else {
         if (myUnresponsiveDuration >= UNRESPONSIVE_THRESHOLD) {
           //System.out.println("EDT was unresponsive for " + myUnresponsiveDuration + " seconds");
-          if (myCurHangLogDir.exists()) {
-            myCurHangLogDir.renameTo(new File(myLogDir, getLogDirForHang()));
+          if (myCurHangLogDir != mySessionLogDir && myCurHangLogDir.exists()) {
+            myCurHangLogDir.renameTo(new File(mySessionLogDir, getLogDirForHang()));
           }
           myUnresponsiveDuration = 0;
-          myCurHangLogDir = myLogDir;
+          myCurHangLogDir = mySessionLogDir;
 
           myStacktraceCommonPart = null;
         }

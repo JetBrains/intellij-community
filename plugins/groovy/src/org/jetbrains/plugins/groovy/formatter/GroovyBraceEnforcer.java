@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -43,10 +43,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 public class GroovyBraceEnforcer extends GroovyRecursiveElementVisitor {
   private static final Logger LOG = Logger.getInstance(GroovyBraceEnforcer.class);
 
-  private PostFormatProcessorHelper myPostProcessor;
+  private final PostFormatProcessorHelper myPostProcessor;
 
   public GroovyBraceEnforcer(CodeStyleSettings settings) {
-    myPostProcessor = new PostFormatProcessorHelper(settings.getCommonSettings(GroovyFileType.GROOVY_LANGUAGE));
+    myPostProcessor = new PostFormatProcessorHelper(settings.getCommonSettings(GroovyLanguage.INSTANCE));
   }
 
   public TextRange processText(final GroovyFile source, final TextRange rangeToReformat) {

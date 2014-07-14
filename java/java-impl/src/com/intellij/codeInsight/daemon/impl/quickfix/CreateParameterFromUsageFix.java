@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
@@ -89,7 +88,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
 
     final List<ParameterInfoImpl> parameterInfos =
       new ArrayList<ParameterInfoImpl>(Arrays.asList(ParameterInfoImpl.fromMethod(method)));
-    ParameterInfoImpl parameterInfo = new ParameterInfoImpl(-1, varName, type, PsiTypesUtil.getDefaultValueOfType(type), false);
+    ParameterInfoImpl parameterInfo = new ParameterInfoImpl(-1, varName, type, varName, false);
     if (!method.isVarArgs()) {
       parameterInfos.add(parameterInfo);
     }

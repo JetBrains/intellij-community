@@ -68,7 +68,7 @@ public class ProjectTypesList implements Disposable {
       }
     }.setComparator(new SpeedSearchComparator(false));
     List<TemplateItem> items = buildItems(map);
-    final TemplatesGroup samplesGroup = new TemplatesGroup("Loading Templates...", "", null, 0);
+    final TemplatesGroup samplesGroup = new TemplatesGroup("Loading Templates...", "", null, 0, null, null, null);
     myLoadingItem = new TemplateItem(new LoadingProjectTemplate(), samplesGroup) {
       @Override
       Icon getIcon() {
@@ -92,7 +92,7 @@ public class ProjectTypesList implements Disposable {
           String[] groups = factory.getGroups();
           final List<TemplateItem> items = new ArrayList<TemplateItem>();
           for (String group : groups) {
-            TemplatesGroup templatesGroup = new TemplatesGroup(group, "", factory.getGroupIcon(group), 0);
+            TemplatesGroup templatesGroup = new TemplatesGroup(group, "", factory.getGroupIcon(group), 0, null, null, null);
             ProjectTemplate[] templates = factory.createTemplates(group, context);
             for (ProjectTemplate template : templates) {
               items.add(new TemplateItem(template, templatesGroup));

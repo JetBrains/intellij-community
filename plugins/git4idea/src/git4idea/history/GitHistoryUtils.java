@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package git4idea.history;
 
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -34,18 +35,17 @@ import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vcs.history.VcsRevisionDescriptionImpl;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.AsynchConsumer;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.util.StopWatch;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
 import git4idea.config.GitConfigUtil;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.browser.SymbolicRefs;
@@ -69,7 +69,13 @@ import static git4idea.history.GitLogParser.GitLogOption.*;
  * A collection of methods for retrieving history information from native Git.
  */
 public class GitHistoryUtils {
-  private final static Logger LOG = Logger.getInstance("#git4idea.history.GitHistoryUtils");
+
+  /**
+   * A parameter to {@code git log} which is equivalent to {@code --all}, but doesn't show the stuff from index or stash.
+   */
+  public static final List<String> LOG_ALL = Arrays.asList("HEAD", "--branches", "--remotes", "--tags");
+
+  private static final Logger LOG = Logger.getInstance("#git4idea.history.GitHistoryUtils");
 
   private GitHistoryUtils() {
   }
@@ -197,9 +203,8 @@ public class GitHistoryUtils {
 
     final GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setSilent(true);
-    h.addParameters("HEAD", "--branches", "--remotes", "--tags",
-                    "--pretty=format:%H%x20%ct%x0A", "--date-order", "--reverse", "--encoding=UTF-8", "--full-history",
-                    "--sparse");
+    h.addParameters(LOG_ALL);
+    h.addParameters("--pretty=format:%H%x20%ct%x0A", "--date-order", "--reverse", "--encoding=UTF-8", "--full-history", "--sparse");
     h.endOptions();
 
     final OutputStream[] stream = new OutputStream[1];
@@ -351,11 +356,11 @@ public class GitHistoryUtils {
             revisionPath = currentPath.get();
           }
 
-          final Pair<String, String> authorPair = Pair.create(record.getAuthorName(), record.getAuthorEmail());
-          final Pair<String, String> committerPair =
-            record.getCommitterName() == null ? null : Pair.create(record.getCommitterName(), record.getCommitterEmail());
+          final Couple<String> authorPair = Couple.of(record.getAuthorName(), record.getAuthorEmail());
+          final Couple<String> committerPair =
+            record.getCommitterName() == null ? null : Couple.of(record.getCommitterName(), record.getCommitterEmail());
           Collection<String> parents = parentHashes == null ? Collections.<String>emptyList() : Arrays.asList(parentHashes);
-          consumer.consume(new GitFileRevision(project, revisionPath, revision, Pair.create(authorPair, committerPair), message, null,
+          consumer.consume(new GitFileRevision(project, revisionPath, revision, Couple.of(authorPair, committerPair), message, null,
                                                new Date(record.getAuthorTimeStamp()), parents));
           List<GitLogStatusInfo> statusInfos = record.getStatusInfos();
           if (statusInfos.isEmpty()) {
@@ -479,39 +484,16 @@ public class GitHistoryUtils {
     return null;
   }
 
-  public static List<? extends VcsShortCommitDetails> readAllMiniDetails(final Project project, final VirtualFile root) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME,
-                                           AUTHOR_EMAIL, AUTHOR_TIME, SUBJECT);
-    h.setStdoutSuppressed(true);
-    h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters("HEAD", "--branches", "--remotes", "--tags");
-    h.addParameters("--full-history", "--sparse");
-    h.endOptions();
-
-    String output = h.run();
-
-    List<GitLogRecord> records = parser.parse(output);
-
-    return ContainerUtil.mapNotNull(records, new Function<GitLogRecord, VcsShortCommitDetails>() {
-      @Override
-      public VcsShortCommitDetails fun(GitLogRecord record) {
-        List<Hash> parents = new SmartList<Hash>();
-        for (String parent : record.getParentsHashes()) {
-          parents.add(HashImpl.build(parent));
-        }
-
-        return vcsObjectsFactory(project).createShortDetails(HashImpl.build(record.getHash()), parents, record.getAuthorTimeStamp(), root,
-                                             record.getSubject(), record.getAuthorName(), record.getAuthorEmail());
-      }
-    });
-  }
-
   public static List<? extends VcsShortCommitDetails> readMiniDetails(final Project project, final VirtualFile root, List<String> hashes) throws VcsException {
+    final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
+    if (factory == null) {
+      return Collections.emptyList();
+    }
+
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME,
                                            AUTHOR_EMAIL, COMMIT_TIME, SUBJECT);
-    h.setStdoutSuppressed(true);
+    h.setSilent(true);
     // git show can show either -p, or --name-status, or --name-only, but we need nothing, just details => using git log --no-walk
     h.addParameters("--no-walk");
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
@@ -527,26 +509,31 @@ public class GitHistoryUtils {
         for (String parent : record.getParentsHashes()) {
           parents.add(HashImpl.build(parent));
         }
-        return vcsObjectsFactory(project).createShortDetails(HashImpl.build(record.getHash()), parents, record.getCommitTime(), root,
-                                             record.getSubject(), record.getAuthorName(), record.getAuthorEmail());
+        return factory.createShortDetails(HashImpl.build(record.getHash()), parents, record.getCommitTime(), root,
+                                          record.getSubject(), record.getAuthorName(), record.getAuthorEmail());
       }
     });
   }
 
   @NotNull
-  public static List<TimedVcsCommit> readAllHashes(@NotNull final Project project,
-                                                   @NotNull VirtualFile root,
-                                                   @NotNull final Consumer<VcsUser> userRegistry) throws VcsException {
-    final int COMMIT_BUFFER = 1000;
+  public static List<TimedVcsCommit> readCommits(@NotNull final Project project,
+                                                 @NotNull VirtualFile root,
+                                                 @NotNull final Consumer<VcsUser> userRegistry,
+                                                 @NotNull List<String> parameters) throws VcsException {
+    final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
+    if (factory == null) {
+      return Collections.emptyList();
+    }
 
+    final int COMMIT_BUFFER = 1000;
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     final GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, COMMIT_TIME,
                                                  AUTHOR_NAME, AUTHOR_EMAIL);
     h.setStdoutSuppressed(true);
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters("HEAD", "--branches", "--remotes", "--tags");
-    h.addParameters("--full-history", "--sparse");
+    h.addParameters("--full-history");
     h.addParameters("--date-order");
+    h.addParameters(parameters);
     h.endOptions();
 
     final List<TimedVcsCommit> commits = ContainerUtil.newArrayList();
@@ -573,7 +560,7 @@ public class GitHistoryUtils {
             afterParseRemainder = line.substring(recordEnd + 1);
           }
           if (afterParseRemainder != null && records.incrementAndGet() > COMMIT_BUFFER) { // null means can't parse now
-            commits.addAll(parseCommit(project, parser, record, userRegistry));
+            commits.addAll(parseCommit(parser, record, userRegistry, factory));
             record.setLength(0);
             record.append(afterParseRemainder);
           }
@@ -586,7 +573,7 @@ public class GitHistoryUtils {
       @Override
       public void processTerminated(int exitCode) {
         try {
-          commits.addAll(parseCommit(project, parser, record, userRegistry));
+          commits.addAll(parseCommit(parser, record, userRegistry, factory));
         }
         catch (Exception e) {
           ex.set(new VcsException(e));
@@ -605,8 +592,10 @@ public class GitHistoryUtils {
     return commits;
   }
 
-  private static List<TimedVcsCommit> parseCommit(final Project project, GitLogParser parser, StringBuilder record,
-                                                  final Consumer<VcsUser> userRegistry) {
+  @NotNull
+  private static List<TimedVcsCommit> parseCommit(@NotNull GitLogParser parser, @NotNull StringBuilder record,
+                                                  @NotNull final Consumer<VcsUser> userRegistry,
+                                                  @NotNull final VcsLogObjectsFactory factory) {
     List<GitLogRecord> rec = parser.parse(record.toString());
     return ContainerUtil.mapNotNull(rec, new Function<GitLogRecord, TimedVcsCommit>() {
       @Override
@@ -614,28 +603,30 @@ public class GitHistoryUtils {
         if (record == null) {
           return null;
         }
-        TimedVcsCommit commit = convert(project, record);
-        userRegistry.consume(vcsObjectsFactory(project).createUser(record.getAuthorName(), record.getAuthorEmail()));
+        TimedVcsCommit commit = convert(record, factory);
+        userRegistry.consume(factory.createUser(record.getAuthorName(), record.getAuthorEmail()));
         return commit;
       }
     });
   }
 
   @NotNull
-  private static TimedVcsCommit convert(Project project, GitLogRecord rec) {
-    VcsLogObjectsFactory factory = vcsObjectsFactory(project);
-    List<Hash> parents = ContainerUtil.map(rec.getParentsHashes(), new Function<String, Hash>() {
-      @Override
-      public Hash fun(String s) {
-        return HashImpl.build(s);
-      }
-    });
+  private static TimedVcsCommit convert(@NotNull GitLogRecord rec, @NotNull VcsLogObjectsFactory factory) {
+    List<Hash> parents = getParentHashes(factory, rec);
     return factory.createTimedCommit(HashImpl.build(rec.getHash()), parents, rec.getCommitTime());
   }
 
-  @NotNull
-  private static VcsLogObjectsFactory vcsObjectsFactory(@NotNull Project project) {
-    return ServiceManager.getService(project, VcsLogObjectsFactory.class);
+  @Nullable
+  private static VcsLogObjectsFactory getObjectsFactoryWithDisposeCheck(@NotNull final Project project) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<VcsLogObjectsFactory>() {
+      @Override
+      public VcsLogObjectsFactory compute() {
+        if (!project.isDisposed()) {
+          return ServiceManager.getService(project, VcsLogObjectsFactory.class);
+        }
+        return null;
+      }
+    });
   }
 
   private static class MyTokenAccumulator {
@@ -739,9 +730,29 @@ public class GitHistoryUtils {
     final List<Pair<SHAHash, Date>> rc = new ArrayList<Pair<SHAHash, Date>>();
     for (GitLogRecord record : parser.parse(output)) {
       record.setUsedHandler(h);
-      rc.add(new Pair<SHAHash, Date>(new SHAHash(record.getHash()), record.getDate()));
+      rc.add(Pair.create(new SHAHash(record.getHash()), record.getDate()));
     }
     return rc;
+  }
+
+  @NotNull
+  public static List<VcsCommitMetadata> loadMetadata(@NotNull Project project, @NotNull final VirtualFile root,
+                                                               @NotNull String... parameters) throws VcsException {
+
+    final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
+    if (factory == null) {
+      return Collections.emptyList();
+    }
+    return loadDetails(project, root, false, new NullableFunction<GitLogRecord, VcsCommitMetadata>() {
+      @Nullable
+      @Override
+      public VcsCommitMetadata fun(GitLogRecord record) {
+        return factory.createCommitMetadata(factory.createHash(record.getHash()), getParentHashes(factory, record), record.getCommitTime(), 
+                                            root, record.getSubject(), record.getAuthorName(), record.getAuthorEmail(),
+                                            record.getFullMessage(), record.getCommitterName(), record.getCommitterEmail(),
+                                            record.getAuthorTimeStamp());
+      }
+    }, parameters);
   }
 
   /**
@@ -753,46 +764,73 @@ public class GitHistoryUtils {
   @NotNull
   public static List<GitCommit> history(@NotNull final Project project, @NotNull final VirtualFile root, String... parameters)
                                         throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME,
-                                           AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS, SUBJECT, BODY, RAW_BODY);
-    h.setStdoutSuppressed(true);
-    h.addParameters(parameters);
-    h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters("--full-history", "--sparse");
-    h.endOptions();
-
-    String output = h.run();
-
-    List<GitLogRecord> records = parser.parse(output);
-
-    return ContainerUtil.mapNotNull(records, new Function<GitLogRecord, GitCommit>() {
+    final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
+    if (factory == null) {
+      return Collections.emptyList();
+    }
+    return loadDetails(project, root, true, new NullableFunction<GitLogRecord, GitCommit>() {
       @Override
+      @Nullable
       public GitCommit fun(GitLogRecord record) {
         try {
-          return createCommit(project, root, record);
+          return createCommit(project, root, record, factory);
         }
         catch (VcsException e) {
           LOG.error(e);
           return null;
         }
       }
-    });
+    }, parameters);
   }
 
-  private static GitCommit createCommit(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLogRecord record)
+  @NotNull
+  public static <T> List<T> loadDetails(@NotNull final Project project, @NotNull final VirtualFile root, boolean withChanges,
+                                        @NotNull NullableFunction<GitLogRecord, T> converter, String... parameters)
                                         throws VcsException {
-    List<Hash> parents = ContainerUtil.map(record.getParentsHashes(), new Function<String, Hash>() {
-      @Override
-      public Hash fun(String hash) {
-        return HashImpl.build(hash);
-      }
-    });
-    VcsLogObjectsFactory factory = vcsObjectsFactory(project);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+    GitLogParser.NameStatus status = withChanges ? GitLogParser.NameStatus.STATUS : GitLogParser.NameStatus.NONE;
+    GitLogParser parser = new GitLogParser(project, status, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME,
+                                           AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS, SUBJECT, BODY, RAW_BODY);
+    h.setStdoutSuppressed(true);
+    h.addParameters(parameters);
+    h.addParameters(parser.getPretty(), "--encoding=UTF-8");
+    h.addParameters("--full-history", "--sparse");
+    if (withChanges) {
+      h.addParameters("-M", "--name-status");
+    }
+    h.endOptions();
+
+    StopWatch sw = StopWatch.start("loading details");
+    String output = h.run();
+    sw.report();
+
+    sw = StopWatch.start("parsing");
+    List<GitLogRecord> records = parser.parse(output);
+    sw.report();
+
+    sw = StopWatch.start("Creating objects");
+    List<T> commits = ContainerUtil.mapNotNull(records, converter);
+    sw.report();
+    return commits;
+  }
+
+  private static GitCommit createCommit(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLogRecord record,
+                                        @NotNull VcsLogObjectsFactory factory) throws VcsException {
+    List<Hash> parents = getParentHashes(factory, record);
     return new GitCommit(project, HashImpl.build(record.getHash()), parents, record.getCommitTime(), root, record.getSubject(),
                          factory.createUser(record.getAuthorName(), record.getAuthorEmail()), record.getFullMessage(),
                          factory.createUser(record.getCommitterName(), record.getCommitterEmail()), record.getAuthorTimeStamp(),
-                         record.parseChanges(project, root));
+                         record.getStatusInfos());
+  }
+
+  @NotNull 
+  private static List<Hash> getParentHashes(@NotNull final VcsLogObjectsFactory factory, @NotNull GitLogRecord record) {
+    return ContainerUtil.map(record.getParentsHashes(), new Function<String, Hash>() {
+      @Override
+      public Hash fun(String hash) {
+        return factory.createHash(hash);
+      }
+    });
   }
 
   /**
@@ -948,7 +986,7 @@ public class GitHistoryUtils {
   }
 
   @Nullable
-  public static Pair<AbstractHash, AbstractHash> getStashTop(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+  public static Couple<AbstractHash> getStashTop(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.STASH.readLockingCommand());
     GitLogParser parser = new GitLogParser(project, HASH, PARENTS);
     h.setSilent(true);
@@ -988,7 +1026,7 @@ public class GitHistoryUtils {
           indexCommit = parentsShortHashes[0];
         }
       }
-      return new Pair<AbstractHash, AbstractHash>(AbstractHash.create(gitLogRecord.getHash()), indexCommit == null ? null : AbstractHash.create(indexCommit));
+      return Couple.of(AbstractHash.create(gitLogRecord.getHash()), indexCommit == null ? null : AbstractHash.create(indexCommit));
     }
     return null;
   }
@@ -1012,7 +1050,7 @@ public class GitHistoryUtils {
     for (GitLogRecord gitLogRecord : gitLogRecords) {
       ProgressManager.checkCanceled();
       final GitHeavyCommit gitCommit = createCommit(project, refs, root, gitLogRecord);
-      result.add(new Pair<String, GitHeavyCommit>(gitLogRecord.getShortenedRefLog(), gitCommit));
+      result.add(Pair.create(gitLogRecord.getShortenedRefLog(), gitCommit));
     }
     return result;
   }
@@ -1027,7 +1065,7 @@ public class GitHistoryUtils {
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
                                            HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
                                            COMMITTER_EMAIL, PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
-    h.setStdoutSuppressed(true);
+    h.setSilent(true);
     h.addParameters("--name-status", "-M", parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(new ArrayList<String>(commitsIds));
 
@@ -1043,37 +1081,33 @@ public class GitHistoryUtils {
   @NotNull
   public static List<GitCommit> commitsDetails(@NotNull Project project, @NotNull VirtualFile root,
                                                @NotNull final Collection<String> hashes) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
-                                           HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
-                                           COMMITTER_EMAIL, PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
-    h.setStdoutSuppressed(true);
-    h.addParameters("--name-status", "-M", parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters(new ArrayList<String>(hashes));
-
-    String output = h.run();
-    final List<GitCommit> rc = new ArrayList<GitCommit>();
-    for (GitLogRecord record : parser.parse(output)) {
-      rc.add(createCommit(project, root, record));
-    }
-    return rc;
+    List<String> params = new ArrayList<String>(hashes);
+    GitVcs vcs = GitVcs.getInstance(project);
+    String noWalk = vcs != null && GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(vcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
+    params.add(0, noWalk);
+    return getAllDetails(project, root, params);
   }
 
   @NotNull
   public static List<GitCommit> getAllDetails(@NotNull Project project, @NotNull VirtualFile root,
                                               @NotNull List<String> parameters) throws VcsException {
+    VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
+    if (factory == null) {
+      return Collections.emptyList();
+    }
+
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
                                            HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
                                            COMMITTER_EMAIL, PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
-    h.setStdoutSuppressed(true);
+    h.setSilent(true);
     h.addParameters("--name-status", "-M", parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(parameters);
 
     String output = h.run();
     final List<GitCommit> rc = new ArrayList<GitCommit>();
     for (GitLogRecord record : parser.parse(output)) {
-      rc.add(createCommit(project, root, record));
+      rc.add(createCommit(project, root, record, factory));
     }
     return rc;
   }
@@ -1093,6 +1127,7 @@ public class GitHistoryUtils {
     return logRecord.getAuthorTimeStamp();
   }
 
+  @Deprecated
   public static void hashesWithParents(Project project, FilePath path, final AsynchConsumer<CommitHashPlusParents> consumer,
                                        final Getter<Boolean> isCanceled,
                                        Collection<VirtualFile> paths, final String... parameters) throws VcsException {

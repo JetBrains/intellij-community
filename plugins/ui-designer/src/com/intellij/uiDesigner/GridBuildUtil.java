@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.uiDesigner;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Util;
@@ -295,7 +295,7 @@ public class GridBuildUtil {
    *
    * @return pair that says how many (rows, columns) are in the composed grid.
    */
-  public static Pair<Integer, Integer> layoutInGrid(
+  public static Couple<Integer> layoutInGrid(
     final int[] x,
     final int[] y,
     final int[] rowSpans,
@@ -320,7 +320,7 @@ public class GridBuildUtil {
     }
 
 
-    return new Pair<Integer, Integer>(
+    return Couple.of(
       new Integer(Util.eliminate(y, rowSpans, null)),
       new Integer(Util.eliminate(x, colSpans, null))
     );
@@ -339,7 +339,7 @@ public class GridBuildUtil {
       colSpans[i] = selection[i].getWidth();
     }
 
-    final Pair<Integer, Integer> pair = layoutInGrid(x, y, rowSpans, colSpans);
+    final Couple<Integer> pair = layoutInGrid(x, y, rowSpans, colSpans);
     for (int i = 0; i < selection.length; i++) {
       final RadComponent component = selection[i];
       final GridConstraints constraints = component.getConstraints();

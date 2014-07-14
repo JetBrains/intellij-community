@@ -27,7 +27,7 @@ import org.tmatesoft.svn.core.SVNURL;
 public class WCInfo implements WCPaths {
   private final boolean myIsWcRoot;
   private final SVNDepth myStickyDepth;
-  private final RootUrlInfo myRootInfo;
+  @NotNull private final RootUrlInfo myRootInfo;
 
   public WCInfo(@NotNull RootUrlInfo rootInfo, boolean isWcRoot, SVNDepth stickyDepth) {
     myRootInfo = rootInfo;
@@ -59,6 +59,7 @@ public class WCInfo implements WCPaths {
     return getRepositoryRoot();
   }
 
+  @NotNull
   public RootUrlInfo getRootInfo() {
     return myRootInfo;
   }
@@ -74,6 +75,7 @@ public class WCInfo implements WCPaths {
     return error != null ? error.getMessage() : "";
   }
 
+  @NotNull
   public WorkingCopyFormat getFormat() {
     return myRootInfo.getFormat();
   }

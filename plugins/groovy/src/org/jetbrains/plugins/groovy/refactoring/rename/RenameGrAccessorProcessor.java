@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import java.util.Map;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.isSimplePropertyAccessor;
-
 /**
  * @author Maxim.Medvedev
  */
@@ -40,7 +38,7 @@ public class RenameGrAccessorProcessor extends RenameJavaMethodProcessor {
   public boolean canProcessElement(@NotNull PsiElement element) {
     return element instanceof PsiMethod &&
            !(element instanceof GrAccessorMethod) &&
-           isSimplePropertyAccessor((PsiMethod)element);
+           GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)element);
   }
 
   @Override

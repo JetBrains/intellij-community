@@ -118,11 +118,19 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testCommentInEmptyTuple() { //PY-11904
+    doTest();
+  }
+
   public void testTwoLinesBetweenTopLevelClasses() { // PY-2765
     doTest();
   }
 
   public void testTwoLinesBetweenTopLevelFunctions() { // PY-2765
+    doTest();
+  }
+
+  public void testTwoLinesBetweenTopLevelDeclarationsWithComment() { // PY-9923
     doTest();
   }
 
@@ -199,6 +207,14 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testContinuationIndentInIndentingStatement() { // PY-9573
+    doTest();
+  }
+
+  public void testContinuationIndentInIndentingStatement2() { // PY-11868
+    doTest();
+  }
+
   public void testBlankLineAfterDecorator() {
     doTest();
   }
@@ -235,7 +251,7 @@ public class PyFormatterTest extends PyTestCase {
       " desired_response_parameters,\n" +
       " inverse_filter_length, \n" +
       " observed_impulse_response):\n" +
-      " #  Extract from here to ...\n" +
+      " # Extract from here to ...\n" +
       "   desired_impulse_response = {'dirac, 'gaussian', logistic_derivative'}\n" +
       "return desired,                o";
 
@@ -248,7 +264,7 @@ public class PyFormatterTest extends PyTestCase {
       "        desired_response_parameters,\n" +
       "        inverse_filter_length,\n" +
       "        observed_impulse_response):\n" +
-      "    #  Extract from here to ...\n" +
+      "    # Extract from here to ...\n" +
       "    desired_impulse_response = {'dirac, '\n" +
       "    gaussian\n" +
       "    ', logistic_derivative'}\n" +
@@ -283,6 +299,14 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testAlignInCallExpression() {
+    doTest();
+  }
+
+  public void _testAlignInNestedCallInWith() { //PY-11337 TODO:
+    doTest();
+  }
+
   public void testContinuationIndentForCallInStatementPart() {  // PY-8577
     doTest();
   }
@@ -290,8 +314,8 @@ public class PyFormatterTest extends PyTestCase {
   public void testIfConditionContinuation() {  // PY-8195
     doTest();
   }
-
-  public void _testIndentInNestedCall() {  // PY-8195
+  
+  public void _testIndentInNestedCall() {  // PY-11919 TODO: required changes in formatter to be able to make indent relative to block or alignment
     doTest();
   }
 
@@ -358,13 +382,33 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testIndentParensInImport() { // PY-9075
+    doTest();
+  }
+
+  public void testAlignInParenthesizedExpression() {
+    doTest();
+  }
+
+  public void testAlignInParameterList() {
+    doTest();
+  }
+
+  public void testAlignListComprehensionInDict() { //PY-10076
+    doTest();
+  }
+
+  public void testShebang() { //PY-12775
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
 
   private void doTest(final boolean reformatText) {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myFixture.getProject());

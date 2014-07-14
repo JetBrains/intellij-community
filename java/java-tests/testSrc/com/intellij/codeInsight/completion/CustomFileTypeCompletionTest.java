@@ -37,6 +37,11 @@ public class CustomFileTypeCompletionTest extends LightCompletionTestCase {
     testByCount(2, "case", "catch");
   }
 
+  public void testComment() throws Throwable {
+    configureByFile(BASE_PATH + "foo.cs");
+    testByCount(0, new String[] { null });
+  }
+
   public void testPlainTextSubstitution() throws IOException {
     FileTypeManagerEx.getInstanceEx().registerFileType(MockLanguageFileType.INSTANCE, "xxx");
     try {

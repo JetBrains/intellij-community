@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,8 @@ import static com.intellij.util.BitUtil.notSet;
  * @version 11.1
  */
 public class FileSystemUtil {
-  private static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
-  private static final String COARSE_TIMESTAMP = "idea.io.coarse.ts";
+  static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
+  static final String COARSE_TIMESTAMP = "idea.io.coarse.ts";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileSystemUtil");
 
@@ -424,8 +424,8 @@ public class FileSystemUtil {
         return new File(path).getCanonicalPath();
       }
       catch (IOException e) {
-        final String message = e.getMessage();
-        if (message != null && message.toLowerCase().contains("too many levels of symbolic links")) {
+        String message = e.getMessage();
+        if (message != null && message.toLowerCase(Locale.US).contains("too many levels of symbolic links")) {
           LOG.debug(e);
           return null;
         }

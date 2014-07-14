@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,10 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
   }
 
   private static class DefaultHandler extends EditorActionHandler {
+    private DefaultHandler() {
+      super(true);
+    }
+
     @Override
     public void execute(Editor editor, DataContext dataContext) {
       int lineNumber = editor.getCaretModel().getLogicalPosition().line;
@@ -94,6 +98,7 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
     private final EditorActionHandler myDefaultHandler;
 
     private Handler(EditorActionHandler defaultHandler) {
+      super(true);
       myDefaultHandler = defaultHandler;
     }
 

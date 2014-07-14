@@ -24,7 +24,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ModifiableRootModel;
 
-public class EmptyModuleBuilder extends ModuleBuilder{
+public class EmptyModuleBuilder extends ModuleBuilder {
   @Override
   public boolean isOpenProjectSettingsAfter() {
     return true;
@@ -43,5 +43,25 @@ public class EmptyModuleBuilder extends ModuleBuilder{
   @Override
   public ModuleType getModuleType() {
     return ModuleType.EMPTY;
+  }
+
+  @Override
+  public String getPresentableName() {
+    return "Empty Project";
+  }
+
+  @Override
+  public String getGroupName() {
+    return getPresentableName();
+  }
+
+  @Override
+  public boolean isTemplateBased() {
+    return true;
+  }
+
+  @Override
+  public String getDescription() {
+    return "Empty project without modules. Use it to create free-style module structure.";
   }
 }

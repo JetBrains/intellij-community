@@ -28,6 +28,7 @@ import java.util.List;
 /**
  * @author <a href="mailto:johnnyclark@gmail.com">Johnny Clark</a>
  *         Creation Date: 8/3/12
+ * todo remove in IDEA 15
  */
 @State(
   name = "ConditionCheckManager",

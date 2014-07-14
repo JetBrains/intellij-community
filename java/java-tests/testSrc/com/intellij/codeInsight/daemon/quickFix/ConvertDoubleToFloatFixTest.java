@@ -15,15 +15,22 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
+import com.intellij.pom.java.LanguageLevel;
+
 /**
  * @author cdr
  */
-public class ConvertDoubleToFloatFixTest extends LightQuickFix15TestCase {
+public class ConvertDoubleToFloatFixTest extends LightQuickFixParameterizedTestCase {
 
   public void test() throws Exception { doAllTests(); }
 
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/convertDoubleToFloat";
+  }
+
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_5;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,7 +117,7 @@ public class GitLogUI implements Disposable {
   private boolean myStarted;
   private String myPreviousFilter;
   private final CommentSearchContext myCommentSearchContext;
-  private List<String> myUsersSearchContext;
+  private final List<String> myUsersSearchContext;
   private String mySelectedBranch;
   private BranchSelectorAction myBranchSelectorAction;
   private final DescriptionRenderer myDescriptionRenderer;
@@ -159,7 +159,7 @@ public class GitLogUI implements Disposable {
   private JScrollPane myTableScrollPane;
   private GitLogUI.MyTextFieldAction myTextFieldAction;
   private DatesFilterI myDatesFilter;
-  private GitLogSettings mySettings;
+  private final GitLogSettings mySettings;
 
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
@@ -312,7 +312,7 @@ public class GitLogUI implements Disposable {
       }
 
       @Override
-      public void reportStash(VirtualFile root, @Nullable Pair<AbstractHash, AbstractHash> hash) {
+      public void reportStash(VirtualFile root, @Nullable Couple<AbstractHash> hash) {
         myTableModel.stashFor(root, hash);
       }
 
@@ -390,7 +390,7 @@ public class GitLogUI implements Disposable {
       for (int row : mySelectedRows) {
         final CommitI commitI = myModel.getCommitAt(row);
         if (commitI != null) {
-          myData.add(new Pair<Integer, AbstractHash>(commitI.selectRepository(SelectorList.getInstance()), commitI.getHash()));
+          myData.add(Pair.create(commitI.selectRepository(SelectorList.getInstance()), commitI.getHash()));
         }
       }
     }
@@ -402,7 +402,7 @@ public class GitLogUI implements Disposable {
         final CommitI commitI = myModel.getCommitAt(row);
         if (commitI != null) {
           final Pair<Integer, AbstractHash> pair =
-            new Pair<Integer, AbstractHash>(commitI.selectRepository(SelectorList.getInstance()), commitI.getHash());
+            Pair.create(commitI.selectRepository(SelectorList.getInstance()), commitI.getHash());
           if (myData.remove(pair)) {
             selectionModel.addSelectionInterval(row, row);
             if (myData.isEmpty()) return;
@@ -414,7 +414,7 @@ public class GitLogUI implements Disposable {
         final CommitI commitI = myModel.getCommitAt(i);
         if (commitI == null) continue;
         final Pair<Integer, AbstractHash> pair =
-          new Pair<Integer, AbstractHash>(commitI.selectRepository(SelectorList.getInstance()), commitI.getHash());
+          Pair.create(commitI.selectRepository(SelectorList.getInstance()), commitI.getHash());
         if (myData.remove(pair)) {
           selectionModel.addSelectionInterval(i, i);
           if (myData.isEmpty()) break;
@@ -481,7 +481,7 @@ public class GitLogUI implements Disposable {
     });
 
     myBranchesLoaderImpl = new Consumer<CommitI>() {
-      private Processor<AbstractHash> myRecheck;
+      private final Processor<AbstractHash> myRecheck;
 
       {
         myRecheck = new Processor<AbstractHash>() {
@@ -685,11 +685,7 @@ public class GitLogUI implements Disposable {
       protected Object tryGetTag(MouseEvent e, JTable table, int row, int column) {
         myDescriptionRenderer.getTableCellRendererComponent(table, table.getValueAt(row, column), false, false, row, column);
         final Rectangle rc = table.getCellRect(row, column, false);
-        int index = myDescriptionRenderer.myInner.findFragmentAt(e.getPoint().x - rc.x - myDescriptionRenderer.getCurrentWidth());
-        if (index >= 0) {
-          return myDescriptionRenderer.myInner.getFragmentTag(index);
-        }
-        return null;
+        return myDescriptionRenderer.myInner.getFragmentTag(e.getPoint().x - rc.x - myDescriptionRenderer.getCurrentWidth());
       }
     };
     final ActionToolbar actionToolbar = createToolbar();
@@ -1043,7 +1039,7 @@ public class GitLogUI implements Disposable {
 
   private class DataProviderPanel extends JPanel implements TypeSafeDataProvider {
 
-    private GitCommitDetailsProvider myCommitDetailsProvider;
+    private final GitCommitDetailsProvider myCommitDetailsProvider;
 
     private DataProviderPanel(LayoutManager layout) {
       super(layout);
@@ -1989,7 +1985,7 @@ public class GitLogUI implements Disposable {
     private final DumbAwareAction myMultiColorAction;
     private final DumbAwareAction myCalmAction;
     private final Icon myIcon;
-    private JLabel myLabel;
+    private final JLabel myLabel;
     private final GitLogUI.MySelectRootsForTreeAction myRootsForTreeAction;
     private final DumbAwareAction myDateOrder;
     private final DumbAwareAction myTopoOrder;
@@ -2102,7 +2098,7 @@ public class GitLogUI implements Disposable {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      final CheckBoxList checkBoxList = new CheckBoxList();
+      final CheckBoxList<String> checkBoxList = new CheckBoxList<String>();
 
       final List<VirtualFile> order = myTableModel.getOrder();
       final Set<VirtualFile> activeRoots = myTableModel.getActiveRoots();

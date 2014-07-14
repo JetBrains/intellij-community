@@ -17,7 +17,6 @@ package com.intellij.unscramble;
 
 import com.intellij.execution.filters.FileHyperlinkInfo;
 import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -64,7 +63,7 @@ import java.util.List;
 /**
 * @author Konstantin Bulenkov
 */
-class AnnotateStackTraceAction extends AnAction implements DumbAware {
+public class AnnotateStackTraceAction extends AnAction implements DumbAware {
   private final EditorHyperlinkSupport myHyperlinks;
   private Map<Integer, VcsFileRevision> cache;
   private int newestLine = -1;
@@ -73,10 +72,10 @@ class AnnotateStackTraceAction extends AnAction implements DumbAware {
   private boolean myGutterShowed = false;
   private final HashMap<VirtualFile, List<Integer>> files2lines = new HashMap<VirtualFile, List<Integer>>();
 
-  AnnotateStackTraceAction(@NotNull ConsoleViewImpl consoleView) {
+  public AnnotateStackTraceAction(@NotNull Editor editor, @NotNull EditorHyperlinkSupport hyperlinks) {
     super("Show files modification info", null, AllIcons.Actions.Annotate);
-    myHyperlinks = consoleView.getHyperlinks();
-    myEditor = consoleView.getEditor();
+    myHyperlinks = hyperlinks;
+    myEditor = editor;
     myEditor.getColorsScheme().setColor(
       EditorColors.CARET_ROW_COLOR, EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.CARET_ROW_COLOR));
   }
@@ -103,7 +102,8 @@ class AnnotateStackTraceAction extends AnAction implements DumbAware {
             final VcsFileRevision revision = cache.get(lineNum);
             final List<RangeHighlighter> links = myHyperlinks.findAllHyperlinksOnLine(lineNum);
             if (!links.isEmpty()) {
-              HyperlinkInfo info = myHyperlinks.getHyperlinks().get(links.get(links.size() - 1));
+              final RangeHighlighter key = links.get(links.size() - 1);
+              HyperlinkInfo info = EditorHyperlinkSupport.getHyperlinkInfo(key);
 
               if (info instanceof FileHyperlinkInfo) {
                 final VirtualFile file = ((FileHyperlinkInfo)info).getDescriptor().getFile();
@@ -196,7 +196,8 @@ class AnnotateStackTraceAction extends AnAction implements DumbAware {
           indicator.checkCanceled();
           final List<RangeHighlighter> links = myHyperlinks.findAllHyperlinksOnLine(line);
           if (links.size() > 0) {
-            final HyperlinkInfo info = myHyperlinks.getHyperlinks().get(links.get(links.size() - 1));
+            final RangeHighlighter key = links.get(links.size() - 1);
+            final HyperlinkInfo info = EditorHyperlinkSupport.getHyperlinkInfo(key);
             if (info instanceof FileHyperlinkInfo) {
               final OpenFileDescriptor fileDescriptor = ((FileHyperlinkInfo)info).getDescriptor();
               if (fileDescriptor != null) {

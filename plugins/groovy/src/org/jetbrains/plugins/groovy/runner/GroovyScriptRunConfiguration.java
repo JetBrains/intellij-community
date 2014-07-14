@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,10 +54,10 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyRunnerPsiUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -97,6 +97,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     return getConfigurationModule().getModule();
   }
 
+  @Override
   public Collection<Module> getValidModules() {
     Module[] modules = ModuleManager.getInstance(getProject()).getModules();
     final GroovyScriptRunner scriptRunner = findConfiguration();
@@ -129,9 +130,10 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
       return new DefaultGroovyScriptRunner();
     }
 
-    return GroovyScriptTypeDetector.getScriptType((GroovyFile)psiFile).getRunner();
+    return GroovyScriptUtil.getScriptType((GroovyFile)psiFile).getRunner();
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
@@ -148,6 +150,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     JDOMExternalizer.readMap(element, envs, null, "env");
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     writeModule(element);
@@ -160,6 +163,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
   }
 
+  @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
     final VirtualFile script = getScriptFile();
     if (script == null) {
@@ -198,6 +202,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
         return handler;
       }
 
+      @Override
       protected JavaParameters createJavaParameters() throws ExecutionException {
         JavaParameters params = createJavaParametersWithSdk(module);
         ProgramParametersUtil.configureConfiguration(params, GroovyScriptRunConfiguration.this);
@@ -218,7 +223,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
       return null;
     }
 
-    final PsiClass classToRun = GroovyRunnerUtil.getRunningClass(element);
+    final PsiClass classToRun = GroovyRunnerPsiUtil.getRunningClass(element);
 
     if (element instanceof GroovyFile) {
       return new RefactoringElementAdapter() {
@@ -288,9 +293,10 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     final VirtualFile scriptFile = getScriptFile();
     if (scriptFile == null) return null;
     final PsiFile file = PsiManager.getInstance(getProject()).findFile(scriptFile);
-    return GroovyRunnerUtil.getRunningClass(file);
+    return GroovyRunnerPsiUtil.getRunningClass(file);
   }
 
+  @Override
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new GroovyRunConfigurationEditor();
@@ -304,7 +310,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
       throw new RuntimeConfigurationWarning(GroovyBundle.message("class.does.not.exist"));
     }
     if (toRun instanceof GrTypeDefinition) {
-      if (!GroovyRunnerUtil.canBeRunByGroovy(toRun)) {
+      if (!GroovyRunnerPsiUtil.canBeRunByGroovy(toRun)) {
         throw new RuntimeConfigurationWarning(GroovyBundle.message("class.can't be executed"));
       }
     }

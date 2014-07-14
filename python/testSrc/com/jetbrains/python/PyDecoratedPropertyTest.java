@@ -35,7 +35,7 @@ public class PyDecoratedPropertyTest extends PyTestCase {
     Property p;
     Maybe<Callable> accessor;
     final String name = "w1";
-    p = myClass.findProperty(name);
+    p = myClass.findProperty(name, true);
     assertNotNull(p);
     assertNull(p.getDoc());
     assertNull(p.getDefinitionSite());
@@ -60,7 +60,7 @@ public class PyDecoratedPropertyTest extends PyTestCase {
     Property p;
     Maybe<Callable> accessor;
     final String name = "w2";
-    p = myClass.findProperty(name);
+    p = myClass.findProperty(name, true);
     assertNotNull(p);
     assertNull(p.getDoc());
     assertNull(p.getDefinitionSite());

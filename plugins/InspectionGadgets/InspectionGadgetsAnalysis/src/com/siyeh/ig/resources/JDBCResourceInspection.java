@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.resources;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NonNls;
@@ -90,14 +91,8 @@ public class JDBCResourceInspection extends ResourceInspection {
         continue;
       }
       final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
-        return false;
-      }
-      final String className = containingClass.getQualifiedName();
-      if (className == null) {
-        return false;
-      }
-      if (className.equals(creationMethodClassName[i])) {
+      final String expectedClassName = creationMethodClassName[i];
+      if (InheritanceUtil.isInheritor(containingClass, false, expectedClassName)) {
         return true;
       }
     }

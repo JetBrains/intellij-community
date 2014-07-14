@@ -39,7 +39,7 @@ import java.util.List;
  * </p>
  * <p>
  *   GitRemote instance constructed by {@link GitConfig#read(GitPlatformFacade, File)}} has all these rules applied.
- *   Thus, for example, if only one {@code url} and no {@code pushUrls} are defined for the remote, 
+ *   Thus, for example, if only one {@code url} and no {@code pushUrls} are defined for the remote,
  *   both {@link #getUrls()} and {@link #getPushUrls()} will return this url. <br/>
  *   This is made to avoid urls transformation logic from the code using GitRemote, leaving it all in GitConfig parsing.
  * </p>
@@ -47,14 +47,14 @@ import java.util.List;
  *   Same applies to fetch and push specs: {@link #getPushRefSpecs()} returns the spec,
  *   even if there are no separate record in {@code .git/config}
  * </p>
- * 
+ *
  * <p>
  *   NB: Not all remote preferences (defined in {@code .git/config} are stored in the object.
  *   If some additional data is needed, add the field, getter, constructor parameter and populate it in {@link GitConfig}.
  * </p>
- * 
+ *
  * <p>Remotes are compared (via equals, hashcode and compareTo) only by names.</p>
- * 
+ *
  * @author Kirill Likhodedov
  */
 public final class GitRemote implements Comparable<GitRemote> {
@@ -80,8 +80,8 @@ public final class GitRemote implements Comparable<GitRemote> {
   @NotNull  final List<String> myFetchRefSpecs;
   @NotNull private final List<String> myPushRefSpecs;
 
-  GitRemote(@NotNull String name, @NotNull List<String> urls, @NotNull Collection<String> pushUrls,
-            @NotNull List<String> fetchRefSpecs, @NotNull List<String> pushRefSpecs) {
+  public GitRemote(@NotNull String name, @NotNull List<String> urls, @NotNull Collection<String> pushUrls,
+                   @NotNull List<String> fetchRefSpecs, @NotNull List<String> pushRefSpecs) {
     myName = name;
     myUrls = urls;
     myPushUrls = pushUrls;

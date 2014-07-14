@@ -26,6 +26,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.Matcher
 import groovy.transform.CompileStatic
+import junit.framework.Assert
 import org.jetbrains.annotations.NonNls
 /**
  * @author max
@@ -120,7 +121,8 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertDoesntMatch("ARS.j", "activity_report_summary.xml");
     assertDoesntMatch("ARS.j", "activity_report_summary_justsometingwrong.xml");
 
-    assertDoesntMatch("foo.goo", "foo.bar.goo");
+    assertMatches("foo.goo", "foo.bar.goo");
+    assertDoesntMatch("*.ico", "sm.th.iks.concierge");
   }
 
   public void testSpaceForAnyWordsInBetween() {
@@ -177,7 +179,10 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertMatches("ja", "jquery.autocomplete.js");
     assertDoesntMatch("ja.js", "jquery.autocomplete.js");
     assertMatches("jajs", "jquery.autocomplete.js");
+    assertMatches("jjs", "jquery.autocomplete.js");
+    assertMatches("j.js", "jquery.autocomplete.js");
     assertDoesntMatch("j.ajs", "jquery.autocomplete.js");
+    assertMatches("oracle.bnf", "oracle-11.2.bnf");
   }
 
   public void testNoExtension() {
@@ -405,6 +410,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertMatches("foba", "Foo4Bar");
     assertMatches("*TEST-* ", "TEST-001");
     assertMatches("*TEST-0* ", "TEST-001");
+    assertMatches("*v2 ", "VARCHAR2");
   }
 
   public void testSpecialSymbols() {
@@ -516,12 +522,6 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertPreference("*e", "fileIndex", "file", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
-  public void "test first letter case match is important"() {
-    assertPreference("*pim", "PNGImageDecoder", "posIdMap", NameUtil.MatchingCaseSensitivity.NONE)
-    assertPreference("*pim", "PImageDecoder", "posIdMap", NameUtil.MatchingCaseSensitivity.NONE)
-    assertPreference("*er", "Error", "exchangeRequest", NameUtil.MatchingCaseSensitivity.NONE)
-  }
-
   public void testPreferences() {
     assertPreference(" fb", "FooBar", "_fooBar", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("*foo", "barFoo", "foobar");
@@ -563,6 +563,14 @@ public class NameUtilMatchingTest extends UsefulTestCase {
 
   public void testMatchStartDoesntMatterForDegree() {
     assertNoPreference(" path", "getAbsolutePath", "findPath", NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
+  }
+
+  public void testPreferStartMatching() {
+    assertPreference("*tree", "FooTree", "Tree", NameUtil.MatchingCaseSensitivity.NONE);
+  }
+
+  public void testPreferContiguousMatching() {
+    assertPreference("*mappablejs", "mappable-js.scope.js", "MappableJs.js", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   public void testMeaningfulMatchingDegree() {
@@ -636,11 +644,11 @@ public class NameUtilMatchingTest extends UsefulTestCase {
       public void run() {
         for (int i = 0; i < 100000; i++) {
           for (MinusculeMatcher matcher : matching) {
-            assertTrue(matcher.toString(), matcher.matches(longName));
+            Assert.assertTrue(matcher.toString(), matcher.matches(longName));
             matcher.matchingDegree(longName);
           }
           for (MinusculeMatcher matcher : nonMatching) {
-            assertFalse(matcher.toString(), matcher.matches(longName));
+            Assert.assertFalse(matcher.toString(), matcher.matches(longName));
           }
         }
       }

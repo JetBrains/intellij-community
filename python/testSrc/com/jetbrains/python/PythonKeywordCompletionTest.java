@@ -124,8 +124,8 @@ public class PythonKeywordCompletionTest extends PyTestCase {
 
   public void testNoElseBeforeExcept() {
     final List<String> lookupElementStrings = doTestByText("try:\n" +
-                                              "  a = 1\n" +
-                                              "<caret>");
+                                                           "  a = 1\n" +
+                                                           "<caret>");
     assertNotNull(lookupElementStrings);
     assertDoesntContain(lookupElementStrings, "else");
   }
@@ -169,6 +169,10 @@ public class PythonKeywordCompletionTest extends PyTestCase {
                             "el<caret>").contains("else"));
   }
 
+  public void testFinallyInElse() {  // PY-6755
+    doTest();
+  }
+
   public void testForInComprehension() {  // PY-3687
     assertContainsElements(doTestByText("L = [x fo<caret>]"), "for");
     assertContainsElements(doTestByText("L = [x <caret>]"), "for");
@@ -190,8 +194,26 @@ public class PythonKeywordCompletionTest extends PyTestCase {
   }
 
   public void testInInFor() {  // PY-10248
-    assertContainsElements(doTestByText("for x <caret>]"), "in");
-    assertContainsElements(doTestByText("for x i<caret>]"), "in");
+    assertContainsElements(doTestByText("for x <caret>"), "in");
+    assertContainsElements(doTestByText("for x i<caret>"), "in");
     assertContainsElements(doTestByText("for x i<caret>n y:\n  pass]"), "in");
+  }
+
+  public void testExceptAfterElse() {
+    assertDoesntContain(doTestByText("try:\n" +
+                                     "    pass\n" +
+                                     "except ArithmeticError:\n" +
+                                     "    pass\n" +
+                                     "else:\n" +
+                                     "    pass\n<caret>"), "except");
+  }
+
+  public void testExceptAfterFinally() {
+    assertDoesntContain(doTestByText("try:\n" +
+                                        "    pass\n" +
+                                        "except ArithmeticError:\n" +
+                                        "    pass\n" +
+                                        "finally:\n" +
+                                        "    pass\n<caret>"), "except");
   }
 }

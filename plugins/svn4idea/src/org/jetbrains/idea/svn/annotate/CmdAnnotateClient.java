@@ -42,7 +42,7 @@ public class CmdAnnotateClient extends BaseSvnClient implements AnnotateClient {
     CommandUtil.put(parameters, diffOptions);
     parameters.add("--xml");
 
-    CommandExecutor command = CommandUtil.execute(myVcs, target, SvnCommandName.blame, parameters, null);
+    CommandExecutor command = execute(myVcs, target, SvnCommandName.blame, parameters, null);
 
     parseOutput(command.getOutput(), handler);
   }

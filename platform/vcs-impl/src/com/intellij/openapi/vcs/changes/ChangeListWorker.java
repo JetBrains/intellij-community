@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -28,6 +29,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlusMinusModify;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,12 +107,9 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   private void checkForMultipleCopiesNotMove(boolean somethingChanged) {
     final MultiMap<FilePath, Pair<Change, String>> moves = new MultiMap<FilePath, Pair<Change, String>>() {
+      @NotNull
       protected Collection<Pair<Change, String>> createCollection() {
         return new LinkedList<Pair<Change, String>>();
-      }
-
-      protected Collection<Pair<Change, String>> createEmptyCollection() {
-        return Collections.emptyList();
       }
     };
 
@@ -118,7 +117,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       final Collection<Change> changes = changeList.getChanges();
       for (Change change : changes) {
         if (change.isMoved() || change.isRenamed()) {
-          moves.putValue(change.getBeforeRevision().getFile(), new Pair<Change, String>(change, changeList.getName()));
+          moves.putValue(change.getBeforeRevision().getFile(), Pair.create(change, changeList.getName()));
         }
       }
     }
@@ -437,7 +436,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   @NotNull
   public List<VirtualFile> getAffectedFiles() {
-    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    final Set<VirtualFile> result = ContainerUtil.newLinkedHashSet();
     for (LocalChangeList list : myMap.values()) {
       for (Change change : list.getChanges()) {
         final ContentRevision before = change.getBeforeRevision();
@@ -456,7 +455,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
         }
       }
     }
-    return result;
+    return new ArrayList<VirtualFile>(result);
   }
 
   public LocalChangeList getListCopy(@NotNull final VirtualFile file) {
@@ -551,23 +550,23 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   private abstract class ExternalVsInternalChangesIntersection {
     protected final Collection<Change> myInChanges;
-    protected final Map<Pair<String, String>, LocalChangeList> myInternalMap;
+    protected final Map<Couple<String>, LocalChangeList> myInternalMap;
     protected final LocalChangeList myDefaultCopy;
     protected final Map<String, LocalChangeList> myIncludedListsCopies;
 
     protected ExternalVsInternalChangesIntersection(final Collection<Change> inChanges) {
       myInChanges = inChanges;
-      myInternalMap = new HashMap<Pair<String, String>, LocalChangeList>();
+      myInternalMap = new HashMap<Couple<String>, LocalChangeList>();
       myDefaultCopy = myDefault.copy();
       myIncludedListsCopies = new HashMap<String, LocalChangeList>();
     }
 
-    private Pair<String, String> keyForChange(final Change change) {
+    private Couple<String> keyForChange(final Change change) {
       final FilePath beforePath = ChangesUtil.getBeforePath(change);
       final String beforeKey = beforePath == null ? null : beforePath.getIOFile().getAbsolutePath();
       final FilePath afterPath = ChangesUtil.getAfterPath(change);
       final String afterKey = afterPath == null ? null : afterPath.getIOFile().getAbsolutePath();
-      return new Pair<String, String>(beforeKey, afterKey);
+      return Couple.of(beforeKey, afterKey);
     }
 
     private void preparation() {
@@ -580,13 +579,13 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       }
     }
 
-    protected abstract void processInChange(final Pair<String, String> key, final Change change);
+    protected abstract void processInChange(final Couple<String> key, final Change change);
 
     public void run() {
       preparation();
 
       for (Change change : myInChanges) {
-        final Pair<String, String> key = keyForChange(change);
+        final Couple<String> key = keyForChange(change);
         processInChange(key, change);
       }
     }
@@ -604,7 +603,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       myListToChangesMap = new HashMap<String, List<Change>>();
     }
 
-    protected void processInChange(Pair<String, String> key, Change change) {
+    protected void processInChange(Couple<String> key, Change change) {
       LocalChangeList tmpList = myInternalMap.get(key);
       if (tmpList == null) {
         tmpList = myDefaultCopy;
@@ -632,7 +631,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       myValidChanges = new ArrayList<Change>();
     }
 
-    protected void processInChange(Pair<String, String> key, Change change) {
+    protected void processInChange(Couple<String> key, Change change) {
       final LocalChangeList list = myInternalMap.get(key);
       if (list != null) {
         myIncludedListsCopies.put(list.getName(), list);
@@ -693,8 +692,9 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return null;
   }
 
-  public ThreeState haveChangesUnder(final VirtualFile vf) {
-    final String absolutePath = new File(vf.getPath()).getAbsolutePath();
+  @NotNull
+  public ThreeState haveChangesUnder(@NotNull VirtualFile virtualFile) {
+    final String absolutePath = new File(virtualFile.getPath()).getAbsolutePath();
     final SortedSet<String> tailSet = myIdx.getAffectedPaths().tailSet(absolutePath);
     for (String path : tailSet) {
       return FileUtil.isAncestorThreeState(absolutePath, path, false);

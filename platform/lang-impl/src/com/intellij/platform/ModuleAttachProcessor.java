@@ -161,6 +161,11 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
     if (!canAttachToProject()) {
       return null;
     }
+    return findModuleInBaseDir(project);
+  }
+
+  @Nullable
+  public static Module findModuleInBaseDir(Project project) {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
       for (VirtualFile root : roots) {

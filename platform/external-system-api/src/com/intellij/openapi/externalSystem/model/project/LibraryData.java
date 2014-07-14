@@ -29,7 +29,7 @@ public class LibraryData extends AbstractNamedData implements Named {
   }
 
   public LibraryData(@NotNull ProjectSystemId owner, @NotNull String name, boolean unresolved) {
-    super(owner, name);
+    super(owner, name, String.format("%s: %s", owner.getReadableName(), name));
     myUnresolved = unresolved;
   }
 
@@ -73,6 +73,6 @@ public class LibraryData extends AbstractNamedData implements Named {
 
   @Override
   public String toString() {
-    return String.format("library %s%s", getName(), myUnresolved ? "(unresolved)" : "");
+    return String.format("library %s%s", getExternalName(), myUnresolved ? "(unresolved)" : "");
   }
 }

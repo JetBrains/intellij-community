@@ -1,12 +1,21 @@
 package com.siyeh.ig.migration;
 
-import com.siyeh.ig.IGInspectionTestCase;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
 
-public class ForCanBeForeachInspectionTest extends IGInspectionTestCase {
+public class ForCanBeForeachInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/migration/foreach",
-           new LocalInspectionToolWrapper(new ForCanBeForeachInspection()), "java 1.5");
+  public void testForCanBeForEach() {
+    doTest();
+  }
+
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new ForCanBeForeachInspection();
+  }
+
+  @Override
+  protected String getBasePath() {
+    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/migration/foreach";
   }
 }

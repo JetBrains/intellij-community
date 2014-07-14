@@ -36,6 +36,8 @@ public class InternalDomExtender {
 
     registrar.registerGenericAttributeValueChildExtension(new XmlName("internal"), clazz)
       .setConverter(BooleanValueConverter.getInstance(false));
+    registrar.registerGenericAttributeValueChildExtension(new XmlName("overrides"), clazz)
+      .setConverter(BooleanValueConverter.getInstance(false));
   }
 
   public static class ForAction extends DomExtender<Action> {
@@ -49,6 +51,8 @@ public class InternalDomExtender {
     @Override
     public void registerExtensions(@NotNull Group group, @NotNull DomExtensionsRegistrar registrar) {
       addInternalAttribute(registrar, Group.class);
+      registrar.registerGenericAttributeValueChildExtension(new XmlName("keep-content"), Group.class)
+        .setConverter(BooleanValueConverter.getInstance(false));
     }
   }
 }

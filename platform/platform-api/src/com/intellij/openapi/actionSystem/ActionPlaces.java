@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,9 @@ public abstract class ActionPlaces {
   public static final String USAGE_VIEW_TOOLBAR = "UsageViewToolbar";
   public static final String STRUCTURE_VIEW_POPUP = "StructureViewPopup";
   public static final String STRUCTURE_VIEW_TOOLBAR = "StructureViewToolbar";
-  public static final String NAVIGATION_BAR = "NavBar";
+  public static final String NAVIGATION_BAR_POPUP = "NavBar";
+  @Deprecated public static final String NAVIGATION_BAR = NAVIGATION_BAR_POPUP;
+  public static final String NAVIGATION_BAR_TOOLBAR = "NavBarToolbar";
 
   public static final String TODO_VIEW_POPUP = "TodoViewPopup";
   public static final String TODO_VIEW_TOOLBAR = "TodoViewToolbar";
@@ -109,7 +111,7 @@ public abstract class ActionPlaces {
   public static final String PHING_EXPLORER_POPUP = "PhingExplorerPopup";
   public static final String PHING_EXPLORER_TOOLBAR = "PhingExplorerToolbar";
   public static final String DOCK_MENU = "DockMenu";
-  public static String PHING_MESSAGES_TOOLBAR = "PhingMessagesToolbar";
+  public static final String PHING_MESSAGES_TOOLBAR = "PhingMessagesToolbar";
 
   public static final String CHANGES_LOCAL_DIFF_SETTINGS = "CHANGES_LOCAL_DIFF_SETTINGS";
 
@@ -131,7 +133,7 @@ public abstract class ActionPlaces {
     FILEVIEW_POPUP, CHECKOUT_POPUP, LVCS_DIRECTORY_HISTORY_POPUP, GUI_DESIGNER_EDITOR_POPUP, GUI_DESIGNER_COMPONENT_TREE_POPUP,
     GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP,
     CREATE_EJB_POPUP, CHANGES_VIEW_POPUP, REMOTE_HOST_VIEW_POPUP, REMOTE_HOST_DIALOG_POPUP, TFS_TREE_POPUP,
-    ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION, PHING_EXPLORER_POPUP, NAVIGATION_BAR
+    ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION, PHING_EXPLORER_POPUP, NAVIGATION_BAR_POPUP
   };
 
   public static boolean isPopupPlace(@NotNull String place) {

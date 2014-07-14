@@ -15,6 +15,8 @@
  */
 package org.jetbrains.jps.model.java;
 
+import com.intellij.openapi.util.Bitness;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.service.JpsServiceManager;
 
@@ -35,11 +37,38 @@ public abstract class JdkVersionDetector {
   public abstract String detectJdkVersion(String homePath, ActionRunner actionRunner);
 
   @Nullable
+  public abstract JdkVersionInfo detectJdkVersionInfo(String homePath);
+
+  @Nullable
+  public abstract JdkVersionInfo detectJdkVersionInfo(String homePath, ActionRunner actionRunner);
+
+  @Deprecated
+  @Nullable
   public abstract String readVersionFromProcessOutput(String homePath, String[] command, String versionLineMarker,
                                                       ActionRunner actionRunner);
 
   //todo[nik] replace with a service with difference implementation for IDEA and for JPS process (need to exclude jps-builders module from IDEA classpath)
   public interface ActionRunner {
     Future<?> run(Runnable runnable);
+  }
+
+  public static final class JdkVersionInfo {
+    private final String myVersion;
+    private final Bitness myBitness;
+
+    public JdkVersionInfo(@NotNull String version, @NotNull Bitness bitness) {
+      myVersion = version;
+      myBitness = bitness;
+    }
+
+    @NotNull
+    public String getVersion() {
+      return myVersion;
+    }
+
+    @NotNull
+    public Bitness getBitness() {
+      return myBitness;
+    }
   }
 }

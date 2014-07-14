@@ -18,12 +18,17 @@ package com.jetbrains.python.codeInsight.regexp;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl;
+import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.codeInsight.PyInjectionUtil;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
@@ -77,17 +82,32 @@ public class PythonRegexpInjector implements MultiHostInjector {
           final PsiPolyVariantReference ref = ((PyReferenceExpression)callee).getReference(PyResolveContext.noImplicits());
           if (ref != null) {
             final PsiElement element = ref.resolve();
-            if (element != null && PsiTreeUtil.getParentOfType(element, ScopeOwner.class) instanceof PyFile &&
+            if (element != null && ScopeUtil.getScopeOwner(element) instanceof PyFile &&
                 element.getContainingFile().getName().equals("re.py") && isRegexpMethod(element, index)) {
               final Language language = isVerbose(call) ? PythonVerboseRegexpLanguage.INSTANCE : PythonRegexpLanguage.INSTANCE;
               registrar.startInjecting(language);
-              PyInjectionUtil.registerStringLiteralInjection(context, registrar);
-              registrar.doneInjecting();
+              final PyInjectionUtil.InjectionResult result = PyInjectionUtil.registerStringLiteralInjection(context, registrar);
+              if (result.isInjected()) {
+                registrar.doneInjecting();
+                if (!result.isStrict()) {
+                  final PsiFile file = getInjectedFile(registrar);
+                  if (file != null) {
+                    file.putUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
+                  }
+                }
+              }
             }
           }
         }
       }
     }
+  }
+
+  @Nullable
+  private static PsiFile getInjectedFile(@NotNull MultiHostRegistrar registrar) {
+    // Don't add a dependency on IntelliLang here now, but this injector should become IntelliLang-based in the future
+    final List<Pair<Place,PsiFile>> result = ((MultiHostRegistrarImpl)registrar).getResult();
+    return result == null || result.isEmpty() ? null : result.get(result.size() - 1).second;
   }
 
   @NotNull

@@ -42,8 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -245,20 +243,14 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   @Nullable
-  public URL getURL() {
-    try {
-      final PsiElement element = getElement();
-      if (element == null) return null;
-      final PsiFile containingFile = element.getContainingFile();
-      if (containingFile == null) return null;
-      final VirtualFile virtualFile = containingFile.getVirtualFile();
-      if (virtualFile == null) return null;
-      return new URL(virtualFile.getUrl() + "#" + element.getTextOffset());
-    } catch (MalformedURLException e) {
-      LOG.error(e);
-    }
-
-    return null;
+  public String getURL() {
+    final PsiElement element = getElement();
+    if (element == null || !element.isPhysical()) return null;
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile == null) return null;
+    final VirtualFile virtualFile = containingFile.getVirtualFile();
+    if (virtualFile == null) return null;
+    return virtualFile.getUrl() + "#" + element.getTextOffset();
   }
 
   protected abstract void initialize();

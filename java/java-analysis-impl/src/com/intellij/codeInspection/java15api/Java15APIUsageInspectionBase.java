@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,14 +69,16 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_4, "1.5");
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_5, "1.6");
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_6, "1.7");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_1_7, "1.8");
 
     loadForbiddenApi("ignore16List.txt", ourIgnored16ClassesAPI);
   }
 
-  private static Set<String> ourGenerifiedClasses = new HashSet<String>();
+  private static final Set<String> ourGenerifiedClasses = new HashSet<String>();
   static {
     ourGenerifiedClasses.add("javax.swing.JComboBox");
     ourGenerifiedClasses.add("javax.swing.ListModel");
+    ourGenerifiedClasses.add("javax.swing.JList");
   }
 
   protected LanguageLevel myEffectiveLanguageLevel = null;
@@ -85,8 +87,8 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
   private static Set<String> getForbiddenApi(@NotNull LanguageLevel languageLevel) {
     if (!ourPresentableShortMessage.containsKey(languageLevel)) return null;
     Reference<Set<String>> ref = ourForbiddenAPI.get(languageLevel);
-    Set<String> result;
-    if (ref == null || (result = ref.get()) == null) {
+    Set<String> result = SoftReference.dereference(ref);
+    if (result == null) {
       result = new THashSet<String>(1000);
       loadForbiddenApi("api" + getShortName(languageLevel) + ".txt", result);
       ourForbiddenAPI.put(languageLevel, new SoftReference<Set<String>>(result));

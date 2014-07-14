@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.*;
 
 public class ExecUtil {
@@ -160,9 +161,24 @@ public class ExecUtil {
 
   @Nullable
   public static String execAndReadLine(final String... command) {
+    return execAndReadLine(null, command);
+  }
+
+  @Nullable
+  public static String execAndReadLine(@Nullable Charset charset, final String... command) {
     try {
-      final Process process = new GeneralCommandLine(command).createProcess();
-      final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+      return readFirstLine(new GeneralCommandLine(command).createProcess().getInputStream(), charset);
+    }
+    catch (Exception ignored) {
+      return null;
+    }
+  }
+
+  @Nullable
+  public static String readFirstLine(@NotNull InputStream inputStream, @Nullable Charset charset) {
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+    BufferedReader reader = new BufferedReader(charset == null ? new InputStreamReader(inputStream) : new InputStreamReader(inputStream, charset));
+    try {
       try {
         return reader.readLine();
       }
@@ -170,8 +186,9 @@ public class ExecUtil {
         reader.close();
       }
     }
-    catch (Exception ignored) { }
-    return null;
+    catch (IOException ignored) {
+      return null;
+    }
   }
 
   /**
@@ -312,11 +329,10 @@ public class ExecUtil {
       return Arrays.asList(getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(title), command);
     }
     else if (SystemInfo.isMac) {
-      return Arrays.asList(getOpenCommandPath(), "-a", "Terminal", command); // todo: title?
+      return Arrays.asList(getOpenCommandPath(), "-a", "Terminal", command);  // todo[r.sh] title?
     }
     else if (hasKdeTerminal.getValue()) {
-      return title != null ? Arrays.asList("/usr/bin/konsole", "-p", "tabtitle=\"" + title.replace("\"", "'") + "\"", "-e", command)
-                           : Arrays.asList("/usr/bin/konsole", "-e", command);
+      return Arrays.asList("/usr/bin/konsole", "-e", command);  // todo[r.sh] title?
     }
     else if (hasGnomeTerminal.getValue()) {
       return title != null ? Arrays.asList("/usr/bin/gnome-terminal", "-t", title, "-x", command)

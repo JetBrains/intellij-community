@@ -33,19 +33,23 @@ import static com.intellij.ui.mac.foundation.Foundation.nsString;
 /**
  * @author Dennis.Ushakov
  */
-public class MountainLionNotifications implements MacNotifications {
-  private static MountainLionNotifications ourNotifications;
+class MountainLionNotifications implements SystemNotificationsImpl.Notifier {
+  private static MountainLionNotifications ourInstance;
 
-  public MountainLionNotifications() {
+  public static synchronized MountainLionNotifications getInstance() {
+    if (ourInstance == null) {
+      ourInstance = new MountainLionNotifications();
+    }
+    return ourInstance;
+  }
+
+  private MountainLionNotifications() {
     final MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-    connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
+    connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener.Adapter() {
       @Override
       public void applicationActivated(IdeFrame ideFrame) {
         cleanupDeliveredNotifications();
       }
-
-      @Override
-      public void applicationDeactivated(IdeFrame ideFrame) {}
     });
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
       @Override
@@ -55,24 +59,16 @@ public class MountainLionNotifications implements MacNotifications {
     });
   }
 
-  public static synchronized MacNotifications getNotifications() {
-    if (ourNotifications == null) {
-      ourNotifications = new MountainLionNotifications();
-    }
-
-    return ourNotifications;
-  }
-
   @Override
-  public void notify(Set<String> allNotifications, @NotNull String notificationName, String title, String description) {
+  public void notify(@NotNull Set<String> allNames, @NotNull String name, @NotNull String title, @NotNull String description) {
     final ID notification = invoke(Foundation.getObjcClass("NSUserNotification"), "new");
-    invoke(notification, "setTitle:", nsString(StringUtil.stripHtml(title == null ? "" : title, true).replace("%", "%%")));
-    invoke(notification, "setInformativeText:", nsString(StringUtil.stripHtml(description == null ? "" : description, true).replace("%", "%%")));
+    invoke(notification, "setTitle:", nsString(StringUtil.stripHtml(title, true).replace("%", "%%")));
+    invoke(notification, "setInformativeText:", nsString(StringUtil.stripHtml(description, true).replace("%", "%%")));
     final ID center = invoke(Foundation.getObjcClass("NSUserNotificationCenter"), "defaultUserNotificationCenter");
     invoke(center, "deliverNotification:", notification);
   }
 
-  public static void cleanupDeliveredNotifications() {
+  private static void cleanupDeliveredNotifications() {
     final ID center = invoke(Foundation.getObjcClass("NSUserNotificationCenter"), "defaultUserNotificationCenter");
     invoke(center, "removeAllDeliveredNotifications");
   }

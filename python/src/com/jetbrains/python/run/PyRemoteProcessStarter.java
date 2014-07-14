@@ -23,8 +23,9 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.util.PathMappingSettings;
-import com.jetbrains.python.remote.PyRemoteSdkData;
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +68,17 @@ public class PyRemoteProcessStarter {
                                                 @Nullable PathMappingSettings settings)
     throws ExecutionException {
 
-    return manager.startRemoteProcess(project, (PyRemoteSdkData)sdk.getSdkAdditionalData(), commandLine,
-                                      settings);
+    SdkAdditionalData data = sdk.getSdkAdditionalData();
+    assert data instanceof PyRemoteSdkAdditionalDataBase;
+    PyRemoteSdkAdditionalDataBase pyRemoteSdkAdditionalDataBase = (PyRemoteSdkAdditionalDataBase)data;
+    try {
+      settings = manager.setupMappings(project, pyRemoteSdkAdditionalDataBase, settings);
+
+      return manager.startRemoteProcess(project, pyRemoteSdkAdditionalDataBase.getRemoteSdkCredentials(true), commandLine,
+                                        settings);
+    }
+    catch (InterruptedException e) {
+      throw new ExecutionException(e); //TODO: handle exception
+    }
   }
 }

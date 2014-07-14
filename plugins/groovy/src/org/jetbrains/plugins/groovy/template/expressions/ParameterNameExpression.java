@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,12 +36,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
  * @author ven
  */
 public class ParameterNameExpression extends Expression {
-  private final @Nullable String myDefaultName;
+  @Nullable private final String myDefaultName;
 
   public ParameterNameExpression(@Nullable String name) {
     myDefaultName = name;
   }
 
+  @Override
   public Result calculateResult(ExpressionContext context) {
     PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getEditor().getDocument());
     SuggestedNameInfo info = getNameInfo(context);
@@ -65,10 +66,12 @@ public class ParameterNameExpression extends Expression {
     return manager.suggestVariableName(VariableKind.PARAMETER, myDefaultName, null, parameter.getTypeGroovy());
   }
 
+  @Override
   public Result calculateQuickResult(ExpressionContext context) {
     return calculateResult(context);
   }
 
+  @Override
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
     SuggestedNameInfo info = getNameInfo(context);
     if (info == null) return null;

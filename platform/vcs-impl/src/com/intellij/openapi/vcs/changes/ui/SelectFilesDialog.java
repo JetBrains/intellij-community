@@ -88,12 +88,12 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
         }
       };
       defaultGroup.add(deleteAction);
-      deleteAction.registerCustomShortcutSet(CommonShortcuts.DELETE, this.getFileList());
+      deleteAction.registerCustomShortcutSet(CommonShortcuts.getDelete(), this.getFileList());
     }
     return defaultGroup;
   }
 
-  private static class VirtualFileList extends ChangesTreeList<VirtualFile> {
+  public static class VirtualFileList extends ChangesTreeList<VirtualFile> {
     private final Project myProject;
     @Nullable private final DeleteProvider myDeleteProvider;
 

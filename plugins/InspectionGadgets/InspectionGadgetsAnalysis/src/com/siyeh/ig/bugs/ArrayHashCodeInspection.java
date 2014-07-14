@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -112,8 +113,8 @@ public class ArrayHashCodeInspection extends BaseInspection {
       }
       newExpressionText.append(qualifier.getText());
       newExpressionText.append(')');
-      replaceExpressionAndShorten(methodCallExpression,
-                                  newExpressionText.toString());
+      PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression,
+                                                     newExpressionText.toString());
     }
   }
 

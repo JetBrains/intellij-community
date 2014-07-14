@@ -198,7 +198,7 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
   }
 
   private static String getHash(GitCommit commit) {
-    return GitUtil.getShortHash(commit.getHash().toString());
+    return GitUtil.getShortHash(commit.getId().toString());
   }
 
   private static String getAuthor(GitCommit commit) {
@@ -206,7 +206,7 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
   }
 
   private static String getTime(GitCommit commit) {
-    return DateFormatUtil.formatPrettyDateTime(commit.getTime());
+    return DateFormatUtil.formatPrettyDateTime(commit.getTimestamp());
   }
 
   private abstract static class GitCommitColumnInfo extends ColumnInfo<GitCommit, String> {

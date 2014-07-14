@@ -208,6 +208,8 @@ public class ExternalSystemTasksTree extends Tree implements Producer<ExternalTa
           taskExecutionSettings.setExternalProjectPath(executionSettings.getExternalProjectPath());
           taskExecutionSettings.setExternalSystemIdString(executionSettings.getExternalSystemIdString());
           taskExecutionSettings.setVmOptions(executionSettings.getVmOptions());
+          taskExecutionSettings.setScriptParameters(executionSettings.getScriptParameters());
+          taskExecutionSettings.setExecutionName(executionSettings.getExecutionName());
           executionInfo = new ExternalTaskExecutionInfo(taskExecutionSettings, taskExecutionInfo.getExecutorId());
           map.put(key, executionInfo);
         }
@@ -217,7 +219,7 @@ public class ExternalSystemTasksTree extends Tree implements Producer<ExternalTa
     }
 
     // Disable tasks execution if it comes from different projects
-    if(map.values().size() > 1) return null;
+    if(map.values().size() != 1) return null;
     return map.values().iterator().next();
   }
 }

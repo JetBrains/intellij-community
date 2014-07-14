@@ -18,45 +18,37 @@ package com.intellij.execution.junit2.segments;
 import com.intellij.execution.junit.SegmentedInputStreamReader;
 import com.intellij.execution.junit2.SegmentedInputStream;
 import com.intellij.execution.testframework.Printable;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ide.PooledThreadExecutor;
 
+import javax.swing.*;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author dyoma
  */
-public class Extractor implements Disposable {
+public class Extractor {
+  private static final int MAX_TASKS_TO_PROCESS_AT_ONCE = 100;
+  
   private DeferredActionsQueue myFulfilledWorkGate = null;
   private final SegmentedInputStream myStream;
   private OutputPacketProcessor myEventsDispatcher;
   private static final Logger LOG = Logger.getInstance("#" + Extractor.class.getName());
-  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("Test Extractor", 20, true, MergingUpdateQueue.ANY_COMPONENT);
-  private AtomicInteger myOrder = new AtomicInteger(-1);
+  private final Executor myExecutor = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
+  private final BlockingQueue<Runnable> myTaskQueue = new LinkedBlockingQueue<Runnable>();
 
   public Extractor(@NotNull InputStream stream, @NotNull Charset charset) {
     myStream = new SegmentedInputStream(stream, charset);
-    myQueue.setPassThrough(false);//should be updated in awt thread
-  }
-
-  @Override
-  public void dispose() {
-    myQueue.flush();
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        Disposer.dispose(myQueue);
-      }
-    });
   }
 
   public void setDispatchListener(final DispatchListener listener) {
@@ -67,7 +59,7 @@ public class Extractor implements Disposable {
     myFulfilledWorkGate = new DeferredActionsQueue() { //todo make it all later
       @Override
       public void addLast(final Runnable runnable) {
-        myQueue.queue(new MyUpdate(runnable, queue, myOrder.incrementAndGet()));
+        scheduleTask(queue, runnable);
       }
 
       @Override
@@ -100,6 +92,36 @@ public class Extractor implements Disposable {
     myStream.setEventsDispatcher(myEventsDispatcher);
   }
 
+  private void scheduleTask(final DeferredActionsQueue queue, final Runnable task) {
+    myTaskQueue.add(task);
+    myExecutor.execute(new Runnable() {
+      public void run() {
+        final List<Runnable> currentTasks = new ArrayList<Runnable>(MAX_TASKS_TO_PROCESS_AT_ONCE);
+        if (myTaskQueue.drainTo(currentTasks, MAX_TASKS_TO_PROCESS_AT_ONCE) > 0) {
+          // there is a requirement that these activities must be run from the swing thread
+          // will be blocking one of pooled threads here, which is ok
+          try {
+            SwingUtilities.invokeAndWait(new Runnable() {
+              public void run() {
+                for (Runnable task : currentTasks) {
+                  try {
+                    queue.addLast(task);
+                  }
+                  catch (Throwable e) {
+                    LOG.info(e);
+                  }
+                }
+              }
+            });
+          }
+          catch (Throwable e) {
+            LOG.info("Task rejected: " + currentTasks, e);
+          }
+        }
+      }
+    });
+  }
+
   public OutputPacketProcessor getEventsDispatcher() {
     return myEventsDispatcher;
   }
@@ -108,30 +130,7 @@ public class Extractor implements Disposable {
     return new SegmentedInputStreamReader(myStream);
   }
 
-  public void addRequest(Runnable runnable, final DeferredActionsQueue queue) {
-    myQueue.queue(new MyUpdate(runnable, queue, myOrder.incrementAndGet()));
-  }
-
-  private static class MyUpdate extends Update {
-    private final Runnable myRunnable;
-    private final DeferredActionsQueue myQueue;
-    private final int myOrder;
-
-    public MyUpdate(Runnable runnable, DeferredActionsQueue queue, int order) {
-      super(runnable);
-      myRunnable = runnable;
-      myQueue = queue;
-      myOrder = order;
-    }
-
-    @Override
-    public void run() {
-      myQueue.addLast(myRunnable);
-    }
-
-    @Override
-    public int compareTo(Object o) {
-      return myOrder - ((MyUpdate)o).myOrder;
-    }
+  public void addRequest(final Runnable runnable, final DeferredActionsQueue queue) {
+    scheduleTask(queue, runnable);
   }
 }

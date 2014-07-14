@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.mock;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -78,12 +93,7 @@ public class Mock {
     @Override
     @NotNull
     public FileEditorState getState(@NotNull FileEditorStateLevel level) {
-      return new FileEditorState() {
-            @Override
-            public boolean canBeMergedWith(FileEditorState fileEditorState, FileEditorStateLevel fileEditorStateLevel) {
-                return false;
-            }
-        };
+      return FileEditorState.INSTANCE;
     }
 
     @Override
@@ -140,6 +150,7 @@ public class Mock {
       return new ActionCallback.Done();
     }
 
+    @NotNull
     @Override
     public ActionCallback getReady(@NotNull Object requestor) {
       return new ActionCallback.Done();
@@ -316,10 +327,10 @@ public class Mock {
 
     @Override
     @NotNull
-    public Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                         boolean focusEditor,
-                                                                         boolean searchForSplitter) {
-      return Pair.create (new FileEditor[0], new FileEditorProvider [0]);
+    public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                          boolean focusEditor,
+                                                                          boolean searchForSplitter) {
+      return Pair.create(new FileEditor[0], new FileEditorProvider[0]);
     }
 
     @Override
@@ -387,11 +398,11 @@ public class Mock {
     }
 
     @Override
-    public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent) {
+    public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
     }
 
     @Override
-    public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent) {
+    public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
     }
 
     @Override
@@ -442,9 +453,10 @@ public class Mock {
       throw new UnsupportedOperationException();
     }
 
+    @NotNull
     @Override
     public String getPath() {
-      return null;
+      throw new UnsupportedOperationException();
     }
 
     @Override
@@ -482,14 +494,16 @@ public class Mock {
       return new VirtualFile[0];
     }
 
+    @NotNull
     @Override
-    public VirtualFile createChildDirectory(Object requestor, String name) throws IOException {
-      return null;
+    public VirtualFile createChildDirectory(Object requestor, @NotNull String name) throws IOException {
+      throw new IOException(name);
     }
 
+    @NotNull
     @Override
     public VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
-      return null;
+      throw new IOException(name);
     }
 
     @Override

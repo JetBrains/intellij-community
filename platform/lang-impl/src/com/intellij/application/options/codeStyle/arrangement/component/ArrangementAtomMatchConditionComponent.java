@@ -55,6 +55,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
 
   @NotNull
   private final SimpleColoredComponent myTextControl = new SimpleColoredComponent() {
+    @NotNull
     @Override
     public Dimension getMinimumSize() {
       return getPreferredSize();
@@ -65,6 +66,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
       return getPreferredSize();
     }
 
+    @NotNull
     @Override
     public Dimension getPreferredSize() {
       return myTextControlSize == null ? super.getPreferredSize() : myTextControlSize;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
@@ -28,10 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
 import java.awt.datatransfer.Transferable;
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -49,17 +47,14 @@ public class PluginTable extends JBTable {
       final ColumnInfo columnInfo = model.getColumnInfos()[i];
       column.setCellEditor(columnInfo.getEditor(null));
       if (columnInfo.getColumnClass() == Boolean.class) {
-        final int width = new JCheckBox().getPreferredSize().width;
-        column.setWidth(width);
-        column.setPreferredWidth(width);
-        column.setMaxWidth(width);
-        column.setMinWidth(width);
+        TableUtil.setupCheckboxColumn(column);
       }
     }
 
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     setShowGrid(false);
     setStriped(true);
+    this.setTableHeader(null);
     setTransferHandler(new TransferHandler() {
       @Nullable
       @Override
@@ -86,25 +81,18 @@ public class PluginTable extends JBTable {
         return COPY;
       }
     });
+    if (model.getColumnCount() > 1) {
+      setColumnWidth(1, new JCheckBox().getPreferredSize().width + 4);
+      if (SystemInfo.isMac && model.getColumnCount() == 3) {
+        setColumnWidth(2, 8);
+      }
+    }
   }
 
   public void setColumnWidth(final int columnIndex, final int width) {
     TableColumn column = getColumnModel().getColumn(columnIndex);
     column.setMinWidth(width);
     column.setMaxWidth(width);
-  }
-
-  @Override
-  protected TableRowSorter<TableModel> createRowSorter(TableModel model) {
-    return new DefaultColumnInfoBasedRowSorter(model){
-      @Override
-      public void setSortKeys(List<? extends SortKey> sortKeys) {
-        if (sortKeys != null && !sortKeys.isEmpty()) {
-          ((PluginTableModel)getModel()).setSortKey(sortKeys.get(0));
-        }
-        super.setSortKeys(sortKeys);
-      }
-    };
   }
 
   @Override

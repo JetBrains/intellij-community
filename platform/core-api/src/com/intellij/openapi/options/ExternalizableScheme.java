@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,5 +21,5 @@ public interface ExternalizableScheme extends Scheme{
   @NotNull
   ExternalInfo getExternalInfo();
 
-  void setName(String newName);
+  void setName(@NotNull String newName);
 }

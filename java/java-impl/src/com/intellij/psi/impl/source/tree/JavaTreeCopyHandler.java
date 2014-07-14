@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -200,7 +200,7 @@ public class JavaTreeCopyHandler implements TreeCopyHandler {
       }
     }
     else if (original.getElementType() == JavaElementType.JAVA_CODE_REFERENCE) {
-      switch (((PsiJavaCodeReferenceElementImpl)original).getKind()) {
+      switch (((PsiJavaCodeReferenceElementImpl)original).getKind(((PsiJavaCodeReferenceElementImpl)original).getContainingFile())) {
       case PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND:
       case PsiJavaCodeReferenceElementImpl.CLASS_OR_PACKAGE_NAME_KIND:
       case PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND:

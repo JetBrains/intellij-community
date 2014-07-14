@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,40 +58,18 @@ public class AlignmentProvider {
       }
 
       if (myAlignments.containsKey(set2)) {
-        for (Iterator<PsiElement> iterator = set1.iterator(); iterator.hasNext(); ) {
-          PsiElement element = iterator.next();
-          iterator.remove();
-
-          addInternal(set2, element);
-        }
+        addSet(set1, set2);
       }
       else {
         set1.addAll(set2);
-        for (Iterator<PsiElement> iterator = set2.iterator(); iterator.hasNext(); ) {
-          PsiElement element = iterator.next();
-          iterator.remove();
-
-          addInternal(set1, element);
-        }
+        addSet(set2, set1);
       }
     }
     else if (set1 != null) {
-      if (allowBackwardShift != null) {
-        assert myAllowBackwardShift.get(set1).booleanValue() == allowBackwardShift.booleanValue();
-      }
-      if (anchor != null) {
-        assert myAnchor.get(set1) == anchor;
-      }
-      addInternal(set1, e2);
+      addElement(e2, allowBackwardShift, anchor, set1);
     }
     else if (set2 != null) {
-      if (allowBackwardShift != null) {
-        assert(myAllowBackwardShift.get(set2).booleanValue() == allowBackwardShift.booleanValue());
-      }
-      if (anchor != null) {
-        assert(myAnchor.get(set2) == anchor);
-      }
-      addInternal(set2, e1);
+      addElement(e1, allowBackwardShift, anchor, set2);
     }
     else {
       final HashSet<PsiElement> set = createHashSet();
@@ -99,6 +77,25 @@ public class AlignmentProvider {
       addInternal(set, e2);
       myAllowBackwardShift.put(set, allowBackwardShift);
       myAnchor.put(set, anchor);
+    }
+  }
+
+  private void addElement(PsiElement e, Boolean allowBackwardShift, Alignment.Anchor anchor, Set<PsiElement> set) {
+    if (allowBackwardShift != null) {
+      assert myAllowBackwardShift.get(set).booleanValue() == allowBackwardShift.booleanValue();
+    }
+    if (anchor != null) {
+      assert myAnchor.get(set) == anchor;
+    }
+    addInternal(set, e);
+  }
+
+  private void addSet(Set<PsiElement> set1, Set<PsiElement> set2) {
+    for (Iterator<PsiElement> iterator = set1.iterator(); iterator.hasNext(); ) {
+      PsiElement element = iterator.next();
+      iterator.remove();
+
+      addInternal(set2, element);
     }
   }
 

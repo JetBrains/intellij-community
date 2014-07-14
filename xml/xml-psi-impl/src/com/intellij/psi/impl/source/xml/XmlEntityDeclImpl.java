@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     super(XML_ENTITY_DECL);
   }
 
+  @Override
   public PsiElement getNameElement() {
     for (ASTNode e = getFirstChildNode(); e != null; e = e.getTreeNext()) {
       if (e instanceof XmlTokenImpl) {
@@ -51,6 +52,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     return null;
   }
 
+  @Override
   public XmlAttributeValue getValueElement() {
     if (isInternalReference()) {
       for (ASTNode e = getFirstChildNode(); e != null; e = e.getTreeNext()) {
@@ -70,11 +72,13 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     return null;
   }
 
+  @Override
   public String getName() {
     PsiElement nameElement = getNameElement();
     return nameElement != null ? nameElement.getText() : "";
   }
 
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     final PsiElement nameElement = getNameElement();
 
@@ -88,6 +92,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     return null;
   }
 
+  @Override
   public PsiElement parse(PsiFile baseFile, EntityContextType contextType, final XmlEntityRef originalElement) {
     PsiElement dep = XmlElement.DEPENDING_ELEMENT.get(getParent());
     PsiElement dependsOnElement = getValueElement(dep instanceof PsiFile ? (PsiFile)dep : baseFile);
@@ -153,6 +158,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     return null;
   }
 
+  @Override
   public boolean isInternalReference() {
     for (ASTNode e = getFirstChildNode(); e != null; e = e.getTreeNext()) {
       if (e.getElementType() instanceof IXmlLeafElementType) {
@@ -167,22 +173,26 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     return true;
   }
 
+  @Override
   @NotNull
   public PsiElement getNavigationElement() {
     return getNameElement();
   }
 
+  @Override
   public int getTextOffset() {
     final PsiElement name = getNameElement();
     return name != null ? name.getTextOffset() : super.getTextOffset();
   }
 
+  @Override
   public boolean canNavigate() {
     if (isPhysical()) return super.canNavigate();
     final PsiNamedElement psiNamedElement = XmlUtil.findRealNamedElement(this);
     return psiNamedElement != null;
   }
 
+  @Override
   public void navigate(final boolean requestFocus) {
     if (!isPhysical()) {
       ((Navigatable)XmlUtil.findRealNamedElement(this)).navigate(requestFocus);

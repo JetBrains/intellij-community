@@ -199,6 +199,18 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
     }
 
     @Override
+    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      super.visitMethodReferenceExpression(expression);
+      if (IGNORE_UNCHECKED_CALL) return;
+      final JavaResolveResult result = expression.advancedResolve(false);
+      final String description = getUncheckedCallDescription(result);
+      if (description != null) {
+        final PsiElement referenceNameElement = expression.getReferenceNameElement();
+        registerProblem(description, referenceNameElement != null ? referenceNameElement : expression, myGenerifyFixes);
+      }
+    }
+
+    @Override
     public void visitCallExpression(PsiCallExpression callExpression) {
       super.visitCallExpression(callExpression);
       final JavaResolveResult result = callExpression.resolveMethodGenerics();
@@ -383,8 +395,9 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
 
     @Nullable
     private String getUncheckedCallDescription(JavaResolveResult resolveResult) {
-      final PsiMethod method = (PsiMethod)resolveResult.getElement();
-      if (method == null) return null;
+      final PsiElement element = resolveResult.getElement();
+      if (!(element instanceof PsiMethod)) return null;
+      final PsiMethod method = (PsiMethod)element;
       final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
       if (!PsiUtil.isRawSubstitutor(method, substitutor)) return null;
       final PsiParameter[] parameters = method.getParameterList().getParameters();

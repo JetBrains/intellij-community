@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,14 @@ package com.intellij.openapi.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,7 +46,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
    *
    *                          /-------/
    *                          |   |   |
-   * This is horihontal split | 1 | 2 |
+   * This is horizontal split | 1 | 2 |
    *                          |   |   |
    *                          /-------/
    */
@@ -409,7 +411,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
     private IdeGlassPane myGlassPane;
 
-    private final MouseAdapter myListener = new MouseAdapter() {
+    private class MyMouseAdapter extends MouseAdapter implements Weighted {
       @Override
       public void mousePressed(MouseEvent e) {
         _processMouseEvent(e);
@@ -429,33 +431,39 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       public void mouseDragged(MouseEvent e) {
         _processMouseMotionEvent(e);
       }
-    };
+      @Override
+      public double getWeight() {
+        return 1;
+      }
+      private void _processMouseMotionEvent(MouseEvent e) {
+        MouseEvent event = getTargetEvent(e);
+        if (event == null) {
+          myGlassPane.setCursor(null, myListener);
+          return;
+        }
 
-    private void _processMouseMotionEvent(MouseEvent e) {
-      MouseEvent event = getTargetEvent(e);
-      if (event == null) {
-        myGlassPane.setCursor(null, myListener);
-        return;
+        processMouseMotionEvent(event);
+        if (event.isConsumed()) {
+          e.consume();
+        }
       }
 
-      processMouseMotionEvent(event);
-      if (event.isConsumed()) {
-        e.consume();
+      private void _processMouseEvent(MouseEvent e) {
+        MouseEvent event = getTargetEvent(e);
+        if (event == null) {
+          myGlassPane.setCursor(null, myListener);
+          return;
+        }
+
+        processMouseEvent(event);
+        if (event.isConsumed()) {
+          e.consume();
+        }
       }
     }
 
-    private void _processMouseEvent(MouseEvent e) {
-      MouseEvent event = getTargetEvent(e);
-      if (event == null) {
-        myGlassPane.setCursor(null, myListener);
-        return;
-      }
+    private final MouseAdapter myListener = new MyMouseAdapter();
 
-      processMouseEvent(event);
-      if (event.isConsumed()) {
-        e.consume();
-      }
-    }
 
     private MouseEvent getTargetEvent(MouseEvent e) {
       return SwingUtilities.convertMouseEvent(e.getComponent(), e, this);
@@ -534,7 +542,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         .message("splitter.right.tooltip.text"));
       new ClickListener() {
         @Override
-        public boolean onClick(MouseEvent e, int clickCount) {
+        public boolean onClick(@NotNull MouseEvent e, int clickCount) {
           if (myInnerComponent != null) {
             final int income = myVerticalSplit ? myInnerComponent.getHeight() : myInnerComponent.getWidth();
             if (myIsFirst) {
@@ -560,7 +568,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       splitCenterlabel.setToolTipText(UIBundle.message("splitter.center.tooltip.text"));
       new ClickListener() {
         @Override
-        public boolean onClick(MouseEvent e, int clickCount) {
+        public boolean onClick(@NotNull MouseEvent e, int clickCount) {
           center();
           return true;
         }
@@ -576,7 +584,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         .message("splitter.left.tooltip.text"));
       new ClickListener() {
         @Override
-        public boolean onClick(MouseEvent e, int clickCount) {
+        public boolean onClick(@NotNull MouseEvent e, int clickCount) {
           if (myInnerComponent != null) {
             final int income = myVerticalSplit ? myInnerComponent.getHeight() : myInnerComponent.getWidth();
             if (myIsFirst) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,7 +180,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     else if (rhs != null) rhs_one = rhs;
     //
     if (lhs_one != null) { // single LHS, single RHS (direct mapping) or multiple RHS (packing)
-       map.add(new Pair<PyExpression, PyExpression>(lhs_one, rhs));
+       map.add(Pair.create(lhs_one, rhs));
     }
     else if (lhs_tuple != null && rhs_one != null) { // multiple LHS, single RHS: unpacking
       // PY-2648, PY-2649
@@ -190,7 +190,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
       for (PyExpression tuple_elt : lhs_tuple.getElements()) {
         try {
           final PyExpression expression = elementGenerator.createExpressionFromText(languageLevel, rhs_one.getText() + "[" + counter + "]");
-          map.add(new Pair<PyExpression, PyExpression>(tuple_elt, expression));
+          map.add(Pair.create(tuple_elt, expression));
         }
         catch (IncorrectOperationException e) {
           // not parsed, no problem
@@ -209,7 +209,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     final List<PyExpression> expressions = PyUtil.flattenedParensAndStars(getTargets());
     List<PyElement> result = new ArrayList<PyElement>();
     for (PyExpression expression : expressions) {
-      if (expression instanceof PyQualifiedExpression && ((PyQualifiedExpression)expression).getQualifier() != null) {
+      if (expression instanceof PyQualifiedExpression && ((PyQualifiedExpression)expression).isQualified()) {
         continue;
       }
       result.add(expression);
@@ -223,7 +223,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     PyExpression[] targets = getTargets();
     if (targets.length == 1 && targets[0] instanceof PyTargetExpression) {
       PyTargetExpression target = (PyTargetExpression)targets[0];
-      return target.getQualifier() == null && the_name.equals(target.getName()) ? target : null;
+      return !target.isQualified() && the_name.equals(target.getName()) ? target : null;
     }
     return IterHelper.findName(iterateNames(), the_name);
   }

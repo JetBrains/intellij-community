@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -68,11 +69,14 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
   };
 
+  private final FormatterTagHandler myTagHandler;
+
   private final Project myProject;
   @NonNls private static final String DUMMY_IDENTIFIER = "xxx";
 
   public CodeStyleManagerImpl(Project project) {
     myProject = project;
+    myTagHandler = new FormatterTagHandler(getSettings());
   }
 
   @Override
@@ -106,16 +110,26 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
   private PsiElement postProcessElement(@NotNull final PsiElement formatted) {
     PsiElement result = formatted;
-    for (PostFormatProcessor postFormatProcessor : Extensions.getExtensions(PostFormatProcessor.EP_NAME)) {
-      result = postFormatProcessor.processElement(result, getSettings());
+    if (getSettings().FORMATTER_TAGS_ENABLED && formatted instanceof PsiFile) {
+      postProcessEnabledRanges((PsiFile) formatted, formatted.getTextRange(), getSettings());
+    }
+    else {
+      for (PostFormatProcessor postFormatProcessor : Extensions.getExtensions(PostFormatProcessor.EP_NAME)) {
+        result = postFormatProcessor.processElement(result, getSettings());
+      }
     }
     return result;
   }
 
   private void postProcessText(@NotNull final PsiFile file, @NotNull final TextRange textRange) {
-    TextRange currentRange = textRange;
-    for (final PostFormatProcessor myPostFormatProcessor : Extensions.getExtensions(PostFormatProcessor.EP_NAME)) {
-      currentRange = myPostFormatProcessor.processText(file, currentRange, getSettings());
+    if (!getSettings().FORMATTER_TAGS_ENABLED) {
+      TextRange currentRange = textRange;
+      for (final PostFormatProcessor myPostFormatProcessor : Extensions.getExtensions(PostFormatProcessor.EP_NAME)) {
+        currentRange = myPostFormatProcessor.processText(file, currentRange, getSettings());
+      }
+    }
+    else {
+      postProcessEnabledRanges(file, textRange, getSettings());
     }
   }
 
@@ -178,9 +192,13 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       caretKeeper = new CaretPositionKeeper(editor);
     }
 
+    Collection<TextRange> correctedRanges = FormatterUtil.isFormatterCalledExplicitly()
+                                            ? removeEndingWhiteSpaceFromEachRange(file, ranges)
+                                            : ranges;
+
     final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(getProject());
     List<RangeFormatInfo> infos = new ArrayList<RangeFormatInfo>();
-    for (TextRange range : ranges) {
+    for (TextRange range : correctedRanges) {
       final PsiElement start = findElementInTreeWithFormatterEnabled(file, range.getStartOffset());
       final PsiElement end = findElementInTreeWithFormatterEnabled(file, range.getEndOffset());
       if (start != null && !start.isValid()) {
@@ -200,7 +218,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
 
     FormatTextRanges formatRanges = new FormatTextRanges();
-    for (TextRange range : ranges) {
+    for (TextRange range : correctedRanges) {
       formatRanges.add(range, true);
     }
     codeFormatter.processText(file, formatRanges, true);
@@ -218,6 +236,30 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     if (caretKeeper != null) {
       caretKeeper.restoreCaretPosition();
     }
+  }
+
+  @NotNull
+  private Collection<TextRange> removeEndingWhiteSpaceFromEachRange(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) {
+    Collection<TextRange> result = new ArrayList<TextRange>();
+
+    for (TextRange range : ranges) {
+      int rangeStart = range.getStartOffset();
+      int rangeEnd = range.getEndOffset();
+
+      PsiElement lastElementInRange = findElementInTreeWithFormatterEnabled(file, range.getEndOffset());
+      if (lastElementInRange instanceof PsiWhiteSpace
+          && rangeStart < lastElementInRange.getTextRange().getStartOffset())
+      {
+        PsiElement prev = lastElementInRange.getPrevSibling();
+        if (prev != null) {
+          rangeEnd = prev.getTextRange().getEndOffset();
+        }
+      }
+
+      result.add(new TextRange(rangeStart, rangeEnd));
+    }
+
+    return result;
   }
 
   private PsiElement reformatRangeImpl(final PsiElement element,
@@ -521,7 +563,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     if (node == null || node.getElementType() != TokenType.WHITE_SPACE) {
       return new Pair<PsiElement, CharTable>(null, charTable);
     }
-    return new Pair<PsiElement, CharTable>(elementAt, charTable);
+    return Pair.create(elementAt, charTable);
   }
 
   @Override
@@ -803,5 +845,20 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     private int getCurrentCaretLine() {
       return myDocument.getLineNumber(myCaretModel.getOffset());
     }
+  }
+
+  private TextRange postProcessEnabledRanges(@NotNull final PsiFile file, @NotNull TextRange range, CodeStyleSettings settings) {
+    TextRange result = TextRange.create(range.getStartOffset(), range.getEndOffset());
+    List<TextRange> enabledRanges = myTagHandler.getEnabledRanges(file.getNode(), result);
+    int delta = 0;
+    for (TextRange enabledRange : enabledRanges) {
+      enabledRange = enabledRange.shiftRight(delta);
+      for (PostFormatProcessor processor : Extensions.getExtensions(PostFormatProcessor.EP_NAME)) {
+        TextRange processedRange = processor.processText(file, enabledRange, settings);
+        delta += processedRange.getLength() - enabledRange.getLength();
+      }
+    }
+    result = result.grown(delta);
+    return result;
   }
 }

@@ -19,12 +19,12 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
 class PairElementsFMap implements KeyFMap {
-  private final int key1;
-  private final int key2;
+  private final Key key1;
+  private final Key key2;
   private final Object value1;
   private final Object value2;
 
-  PairElementsFMap(int key1, @NotNull Object value1, int key2, @NotNull Object value2) {
+  PairElementsFMap(@NotNull Key key1, @NotNull Object value1, @NotNull Key key2, @NotNull Object value2) {
     this.key1 = key1;
     this.value1 = value1;
     this.key2 = key2;
@@ -35,31 +35,28 @@ class PairElementsFMap implements KeyFMap {
   @NotNull
   @Override
   public <V> KeyFMap plus(@NotNull Key<V> key, @NotNull V value) {
-    int keyCode = key.hashCode();
-    if (keyCode == key1) return new PairElementsFMap(keyCode, value, key2, value2);
-    if (keyCode == key2) return new PairElementsFMap(keyCode, value, key1, value1);
-    return new ArrayBackedFMap(new int[]{key1, key2, keyCode}, new Object[]{value1, value2, value});
+    if (key == key1) return new PairElementsFMap(key, value, key2, value2);
+    if (key == key2) return new PairElementsFMap(key, value, key1, value1);
+    return new ArrayBackedFMap(new int[]{key1.hashCode(), key2.hashCode(), key.hashCode()}, new Object[]{value1, value2, value});
   }
 
   @NotNull
   @Override
   public KeyFMap minus(@NotNull Key<?> key) {
-    int keyCode = key.hashCode();
-    if (keyCode == key1) return new OneElementFMap<Object>(key2, value2);
-    if (keyCode == key2) return new OneElementFMap<Object>(key1, value1);
+    if (key == key1) return new OneElementFMap<Object>(key2, value2);
+    if (key == key2) return new OneElementFMap<Object>(key1, value1);
     return this;
   }
 
   @Override
   public <V> V get(@NotNull Key<V> key) {
-    int keyCode = key.hashCode();
     //noinspection unchecked
-    return keyCode == key1 ? (V)value1 : keyCode == key2 ? (V)value2 : null;
+    return key == key1 ? (V)value1 : key == key2 ? (V)value2 : null;
   }
 
   @Override
   public String toString() {
-    return "Pair: ("+ Key.getKeyByIndex(key1) + " -> " + value1+"; "+Key.getKeyByIndex(key2) + " -> " + value2 + ")";
+    return "Pair: (" + key1 + " -> " + value1 + "; " + key2 + " -> " + value2 + ")";
   }
 
   @Override

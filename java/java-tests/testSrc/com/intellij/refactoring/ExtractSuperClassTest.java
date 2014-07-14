@@ -104,6 +104,10 @@ public class ExtractSuperClassTest extends RefactoringTestCase {
     doTest("Test", "TestSubclass", new RefactoringTestUtil.MemberDescriptor("a", PsiField.class));
   }
 
+  public void testSameTypeParameterName() throws Exception {
+    doTest("Test", "TestSubclass", new RefactoringTestUtil.MemberDescriptor("A", PsiClass.class), new RefactoringTestUtil.MemberDescriptor("B", PsiClass.class));
+  }
+
   public void testExtendsLibraryClass() throws Exception {
     doTest("Test", "TestSubclass");
   }

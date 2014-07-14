@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.updateSettings.impl.CheckForUpdateAction;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.IconLoader;
@@ -47,7 +47,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   }
 
   private static WelcomePane createInnerPanel(WelcomeScreen screen) {
-    WelcomeScreenGroup root = new WelcomeScreenGroup(null, "Root");
+    WelcomeScreenGroup root = new WelcomeScreenGroup(null, "Quick Start");
 
     ActionManager actionManager = ActionManager.getInstance();
     ActionGroup quickStart = (ActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
@@ -58,6 +58,11 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     root.add(buildRootGroup(AllIcons.General.Configure, "Configure", IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE));
     root.add(buildRootGroup(AllIcons.General.ReadHelp, "Docs and How-Tos", IdeActions.GROUP_WELCOME_SCREEN_DOC));
 
+    // so, we sure this is the last action
+    final AnAction register = actionManager.getAction("WelcomeScreen.Register");
+    if (register != null) {
+      root.add(register);
+    }
     return new WelcomePane(root, screen);
   }
 
@@ -93,7 +98,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     footerPanel.add(makeSmallFont(new LinkLabel("Check", null, new LinkListener() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        CheckForUpdateAction.actionPerformed(null, true, null, UpdateSettings.getInstance());
+        UpdateChecker.updateAndShowResult(null, false, UpdateSettings.getInstance());
       }
     })));
     footerPanel.add(makeSmallFont(new JLabel(" for updates now.")));
@@ -108,7 +113,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   private static JPanel createHeaderPanel() {
     JPanel header = new JPanel(new BorderLayout());
     JLabel welcome = new JLabel("Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName(),
-                                IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getWelcomeScreenLogoUrl()), 
+                                IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getWelcomeScreenLogoUrl()),
                                 SwingConstants.LEFT);
     welcome.setBorder(new EmptyBorder(10, 15, 10, 15));
     welcome.setFont(welcome.getFont().deriveFont((float) 32));

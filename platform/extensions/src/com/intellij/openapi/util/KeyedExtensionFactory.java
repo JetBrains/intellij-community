@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.picocontainer.PicoContainer;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
@@ -93,6 +94,12 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
           if (result != null) {
             break;
           }
+        }
+        catch (InvocationTargetException e) {
+          if (e.getCause() instanceof RuntimeException) {
+            throw (RuntimeException)e.getCause();
+          }
+          throw new RuntimeException(e);
         }
         catch (RuntimeException e) {
           throw e;

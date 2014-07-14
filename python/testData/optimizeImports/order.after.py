@@ -8,3 +8,4 @@ from bar import *
 
 sys.path
 datetime.datetime
+foo.bar()

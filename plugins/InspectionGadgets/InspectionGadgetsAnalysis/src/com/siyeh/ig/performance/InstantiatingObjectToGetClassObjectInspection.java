@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.StringUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -86,8 +87,8 @@ public class InstantiatingObjectToGetClassObjectInspection
       if (type == null) {
         return;
       }
-      replaceExpression(expression,
-                        getTypeText(type, new StringBuilder()) + ".class");
+      PsiReplacementUtil.replaceExpression(expression,
+                                           getTypeText(type, new StringBuilder()) + ".class");
     }
 
     private static StringBuilder getTypeText(PsiType type,

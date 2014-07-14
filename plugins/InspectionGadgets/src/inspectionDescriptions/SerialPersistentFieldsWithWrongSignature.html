@@ -1,7 +1,9 @@
 <html>
 <body>
 Reports <b>Serializable</b> classes whose <b>serialPersistentFields</b> field.
-is not declared <b>private static final ObjectStreamField</font ></b>.
+is not declared <b>private static final ObjectStreamField[]</b>.
+If the <b>serialPersistentFields</b> field does not have these modifiers,
+the serialization behavior will be as if the field were not declared at all.
 <!-- tooltip end -->
 <p>
 

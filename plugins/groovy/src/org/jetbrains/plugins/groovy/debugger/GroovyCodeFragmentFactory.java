@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -45,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -68,23 +70,21 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
            "}\n";
   }
 
+  @Override
   public JavaCodeFragment createCodeFragment(TextWithImports textWithImports, PsiElement context, Project project) {
-    String text = textWithImports.getText();
-    String imports = textWithImports.getImports();
-
-    final Pair<Map<String, String>, GroovyFile> pair = externalParameters(text, context);
+    final Pair<Map<String, String>, GroovyFile> pair = externalParameters(textWithImports.getText(), context);
     GroovyFile toEval = pair.second;
     final Map<String, String> parameters = pair.first;
 
     List<String> names = new ArrayList<String>(parameters.keySet());
     List<String> values = ContainerUtil.map(names, new Function<String, String>() {
+      @Override
       public String fun(String name) {
         return parameters.get(name);
       }
     });
 
-
-    text = toEval.getText();
+    String text = toEval.getText();
     final String groovyText = StringUtil.join(names, ", ") + "->" + stripImports(text, toEval);
 
     PsiClass contextClass = PsiUtil.getContextClass(context);
@@ -97,41 +97,32 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     if (!isStatic) {
       javaText.append("java.lang.Object |thiz0;\n");
 
-      String fileName;
+      PsiFile containingFile = context.getContainingFile();
 
-      PsiElement originalContext = context.getContainingFile().getContext();
-      if (originalContext == null) {
-        fileName = null; // The class is not reloaded by springloaded if context is in physical file.
-      }
-      else {
-        fileName = originalContext.getContainingFile().getOriginalFile().getName();
+      if (containingFile.getContext() != null) {
+        containingFile = containingFile.getContext().getContainingFile();
       }
 
-      if (fileName == null) {
-        // The class could not be reloaded by springloaded
-        javaText.append("|thiz0 = this;\n");
-      }
-      else {
-        // Class could be reloaded by springloaded
+      String fileName = containingFile.getOriginalFile().getName();
 
-        String s = StringUtil.escapeStringCharacters(Pattern.quote(fileName));
-        // We believe what class is reloaded if stacktrace matches one of two patterns:
-        // 1.) [com.package.Foo$$ENLbVXwm.methodName(FileName.groovy:12), com.package.Foo$$DNLbVXwm.methodName(Unknown Source), *
-        // 2.) [com.package.Foo$$ENLbVXwm.methodName(FileName.groovy:12), * com.springsource.loaded. *
-        // Pattern below test this.
+      String s = StringUtil.escapeStringCharacters(Pattern.quote(fileName));
+      // We believe what class is reloaded if stacktrace matches one of two patterns:
+      // 1.) [com.package.Foo$$ENLbVXwm.methodName(FileName.groovy:12), com.package.Foo$$DNLbVXwm.methodName(Unknown Source), *
+      // 2.) [com.package.Foo$$ENLbVXwm.methodName(FileName.groovy:12), * com.springsource.loaded. *
+      // Pattern below test this.
 
-        //javaText.append("System.out.println(java.util.Arrays.toString(new Exception().getStackTrace()));\n");
-        //javaText.append("System.out.println(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(" + s + ":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), |.+(?:com|org)\\\\.springsource\\\\.loaded\\\\.).+\")\n");
+      //javaText.append("System.out.println(java.util.Arrays.toString(new Exception().getStackTrace()));\n");
+      //javaText.append("System.out.println(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(" + s + ":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), |.+(?:com|org)\\\\.springsource\\\\.loaded\\\\.).+\")\n");
 
-        javaText.append(
-          "if (java.util.Arrays.toString(new Exception().getStackTrace()).matches(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(")
-          .append(s)
-          .append(":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), $OR$.+(?:com$OR$org)\\\\.springsource\\\\.loaded\\\\.).+\")) {\n");
-        javaText.append("  |thiz0 = thiz;\n");
-        javaText.append(" } else {\n");
-        javaText.append("  |thiz0 = this;\n");
-        javaText.append(" }\n");
-      }
+      javaText.append(
+        "if (java.util.Arrays.toString(new Exception().getStackTrace()).matches(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(")
+        .append(s)
+        .append(
+          ":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), $OR$.+(?:com$OR$org)\\\\.springsource\\\\.loaded\\\\.).+\")) {\n");
+      javaText.append("  |thiz0 = thiz;\n");
+      javaText.append(" } else {\n");
+      javaText.append("  |thiz0 = this;\n");
+      javaText.append(" }\n");
     }
 
     if (!isStatic) {
@@ -175,7 +166,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
 
     String hiddenJavaVars = StringUtil.replace(javaText.toString(), "|", "_$_" + new Random().nextInt(42));
     hiddenJavaVars = hiddenJavaVars.replaceAll("\\$OR\\$", "|");
-    final String finalText = StringUtil.replace(StringUtil.replace(hiddenJavaVars, TEXT, groovyText), IMPORTS, imports);
+    final String finalText = StringUtil.replace(StringUtil.replace(hiddenJavaVars, TEXT, groovyText), IMPORTS, textWithImports.getImports());
     JavaCodeFragment result = JavaCodeFragmentFactory.getInstance(project).createCodeBlockCodeFragment(finalText, null, true);
     if (contextClass != null) {
       result.setThisType(factory.createType(contextClass));
@@ -191,6 +182,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     final Map<String, String> parameters = new THashMap<String, String>();
     final Map<GrExpression, String> replacements = new HashMap<GrExpression, String>();
     toEval.accept(new GroovyRecursiveElementVisitor() {
+      @Override
       public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
 
@@ -218,6 +210,11 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
           if (resolved instanceof ClosureSyntheticParameter && PsiTreeUtil.isAncestor(toEval, ((ClosureSyntheticParameter) resolved).getClosure(), false)) {
             return;
           }
+
+          if (resolved instanceof GrBindingVariable && !PsiTreeUtil.isAncestor(resolved.getContainingFile(), toEval, false)) {
+            return;
+          }
+
           String value;
           if (closure != null &&
               PsiTreeUtil.findCommonParent(resolved, closure) != closure &&
@@ -256,6 +253,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
         replacements.put(expr, exprText);
       }
 
+      @Override
       public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
         super.visitCodeReferenceElement(refElement);
         if (refElement.getQualifier() == null) {
@@ -289,6 +287,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     return StringUtil.escapeStringCharacters(text);
   }
 
+  @Override
   public JavaCodeFragment createPresentationCodeFragment(TextWithImports item, PsiElement context, Project project) {
     GroovyCodeFragment result = new GroovyCodeFragment(project, item.getText());
     result.setContext(context);
@@ -310,10 +309,12 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     return false;
   }
 
+  @Override
   public boolean isContextAccepted(PsiElement context) {
-    return context != null && context.getLanguage().equals(GroovyFileType.GROOVY_LANGUAGE);
+    return context != null && context.getLanguage().equals(GroovyLanguage.INSTANCE);
   }
 
+  @Override
   public LanguageFileType getFileType() {
     return GroovyFileType.GROOVY_FILE_TYPE;
   }

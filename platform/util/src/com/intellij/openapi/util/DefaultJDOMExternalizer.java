@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,8 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +55,10 @@ public class DefaultJDOMExternalizer {
     for (Field field : fields) {
       if (field.getName().indexOf('$') >= 0) continue;
       int modifiers = field.getModifiers();
-      if ((modifiers & Modifier.PUBLIC) == 0 || (modifiers & Modifier.STATIC) != 0) continue;
+      if (!(Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers) &&
+          /*!Modifier.isFinal(modifiers) &&*/ !Modifier.isTransient(modifiers) &&
+          field.getAnnotation(Transient.class) == null)) continue;
+
       field.setAccessible(true); // class might be non-public
       Class type = field.getType();
       if (filter != null && !filter.isAccept(field)) {
@@ -100,7 +104,7 @@ public class DefaultJDOMExternalizer {
             value = Integer.toString(color.getRGB() & 0xFFFFFF, 16);
           }
         }
-        else if (ReflectionCache.isAssignable(JDOMExternalizable.class, type)) {
+        else if (ReflectionUtil.isAssignable(JDOMExternalizable.class, type)) {
           Element element = new Element("option");
           parentNode.addContent(element);
           element.setAttribute("name", field.getName());
@@ -173,7 +177,7 @@ public class DefaultJDOMExternalizer {
         if ((modifiers & Modifier.FINAL) != 0) {
           // read external contents of final field
           Object value = field.get(data);
-          if (ReflectionCache.isInstance(value, JDOMExternalizable.class)) {
+          if (JDOMExternalizable.class.isInstance(value)) {
             final List children = e.getChildren("value");
             for (Object child : children) {
               Element valueTag = (Element)child;
@@ -202,12 +206,8 @@ public class DefaultJDOMExternalizer {
               }
             }
             else if (type.equals(int.class)) {
-              try {
-                field.setInt(data, Integer.parseInt(value));
-              }
-              catch (NumberFormatException ex) {
-                throw new InvalidDataException();
-              }
+              int i = toInt(value);
+              field.setInt(data, i);
             }
             else if (type.equals(long.class)) {
               try {
@@ -259,21 +259,10 @@ public class DefaultJDOMExternalizer {
           field.set(data, value);
         }
         else if (type.equals(Color.class)) {
-          if (value != null) {
-            try {
-              int rgb = Integer.parseInt(value, 16);
-              field.set(data, new Color(rgb));
-            }
-            catch (NumberFormatException ex) {
-              LOG.debug("Wrong color value: " + value, ex);
-              throw new InvalidDataException();
-            }
-          }
-          else {
-            field.set(data, null);
-          }
+          Color color = toColor(value);
+          field.set(data, color);
         }
-        else if (ReflectionCache.isAssignable(JDOMExternalizable.class, type)) {
+        else if (ReflectionUtil.isAssignable(JDOMExternalizable.class, type)) {
           final List children = e.getChildren("value");
           if (!children.isEmpty()) {
             // compatibility with Selena's serialization which writes an empty tag for a bean which has a default value
@@ -304,5 +293,34 @@ public class DefaultJDOMExternalizer {
         throw new InvalidDataException();
       }
     }
+  }
+
+  public static int toInt(@NotNull String value) throws InvalidDataException {
+    int i;
+    try {
+      i = Integer.parseInt(value);
+    }
+    catch (NumberFormatException ex) {
+      throw new InvalidDataException(value, ex);
+    }
+    return i;
+  }
+
+  public static Color toColor(@Nullable String value) throws InvalidDataException {
+    Color color;
+    if (value == null) {
+      color = null;
+    }
+    else {
+      try {
+        int rgb = Integer.parseInt(value, 16);
+        color = new Color(rgb);
+      }
+      catch (NumberFormatException ex) {
+        LOG.debug("Wrong color value: " + value, ex);
+        throw new InvalidDataException("Wrong color value: " + value, ex);
+      }
+    }
+    return color;
   }
 }

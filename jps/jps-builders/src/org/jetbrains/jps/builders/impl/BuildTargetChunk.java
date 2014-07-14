@@ -37,4 +37,10 @@ public class BuildTargetChunk {
   public String toString() {
     return myTargets.toString();
   }
+  
+  public String getPresentableName() {
+    final String name = myTargets.iterator().next().getPresentableName();
+    final int size = myTargets.size();
+    return size > 1 ? name + " and " + (size - 1) + " more" : name;
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 public class GroovyVariableTypeCalculator extends VariableTypeCalculator {
   @Override
   public PsiType inferVarTypeAt(@NotNull PsiVariable var, @NotNull PsiElement place) {
-    if (!(var instanceof GrVariable) || !(place.getLanguage() == GroovyFileType.GROOVY_LANGUAGE)) return null;
+    if (!(var instanceof GrVariable) || !(place.getLanguage() == GroovyLanguage.INSTANCE)) return null;
     if (var instanceof GrField) return var.getType();
 
     return TypeInferenceHelper.getInferredType(place, var.getName());

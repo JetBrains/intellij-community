@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,9 @@ import com.sun.jdi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.Iterator;
+import java.util.List;
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 public class ToStringRenderer extends NodeRendererImpl {
   public static final @NonNls String UNIQUE_ID = "ToStringRenderer";
@@ -76,7 +78,8 @@ public class ToStringRenderer extends NodeRendererImpl {
     BatchEvaluator.getBatchEvaluator(evaluationContext.getDebugProcess()).invoke(new ToStringCommand(evaluationContext, value) {
       public void evaluationResult(String message) {
         valueDescriptor.setValueLabel(
-          message == null? "" : "\"" + DebuggerUtils.convertToPresentationString(DebuggerUtilsEx.truncateString(message)) + "\""
+          // no need to add quotes and escape characters here, XValueTextRendererImpl handles the presentation
+          message == null? "" : /*"\"" + DebuggerUtils.convertToPresentationString(*/DebuggerUtilsEx.truncateString(message)/*) + "\""*/
         );
         labelListener.labelChanged();
       }
@@ -103,7 +106,7 @@ public class ToStringRenderer extends NodeRendererImpl {
       return false;
     }
 
-    if(type.name().equals("java.lang.String")) {
+    if(JAVA_LANG_STRING.equals(type.name())) {
       return false; // do not render 'String' objects for performance reasons
     }
 
@@ -123,14 +126,10 @@ public class ToStringRenderer extends NodeRendererImpl {
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static boolean overridesToString(Type type) {
     if(type instanceof ClassType) {
-      final ClassType classType = (ClassType)type;
-      final java.util.List methods = classType.methodsByName("toString", "()Ljava/lang/String;");
-      if (methods.size() > 0) {
-        for (Iterator iterator = methods.iterator(); iterator.hasNext();) {
-          final Method method = (Method)iterator.next();
-          if(!(method.declaringType().name()).equals(CommonClassNames.JAVA_LANG_OBJECT)){
-            return true;
-          }
+      final List<Method> methods = ((ClassType)type).methodsByName("toString", "()Ljava/lang/String;");
+      for (Method method : methods) {
+        if (!(method.declaringType().name()).equals(CommonClassNames.JAVA_LANG_OBJECT)) {
+          return true;
         }
       }
     }
@@ -179,7 +178,7 @@ public class ToStringRenderer extends NodeRendererImpl {
   private boolean isFiltered(Type t) {
     if (t instanceof ReferenceType) {
       for (ClassFilter classFilter : myClassFilters) {
-        if (classFilter.isEnabled() && DebuggerUtilsEx.getSuperType(t, classFilter.getPattern()) != null) {
+        if (classFilter.isEnabled() && DebuggerUtils.getSuperType(t, classFilter.getPattern()) != null) {
           return true;
         }
       }

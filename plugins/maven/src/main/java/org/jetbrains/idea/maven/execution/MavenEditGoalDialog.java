@@ -25,6 +25,7 @@ import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.StringComboboxEditor;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
@@ -74,8 +75,7 @@ public class MavenEditGoalDialog extends DialogWrapper {
       goalsLabel.setLabelFor(goalsEditor);
     }
     else {
-      //noinspection SSBasedInspection
-      goalsComboBox = new ComboBox(myHistory.toArray(new String[myHistory.size()]), -1);
+      goalsComboBox = new ComboBox(ArrayUtilRt.toStringArray(myHistory));
       goalComponent = goalsComboBox;
 
       goalsLabel.setLabelFor(goalsComboBox);
@@ -138,9 +138,8 @@ public class MavenEditGoalDialog extends DialogWrapper {
     if (goalsComboBox != null) {
       goalsComboBox.setSelectedItem(goals);
     }
-    else {
-      goalsEditor.setText(goals);
-    }
+
+    goalsEditor.setText(goals);
   }
 
   @NotNull

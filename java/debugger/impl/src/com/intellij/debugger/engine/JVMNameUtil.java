@@ -259,9 +259,6 @@ public class JVMNameUtil {
 
   @Nullable
   public static JVMName getContextClassJVMQualifiedName(@Nullable SourcePosition pos) {
-    if (pos == null) {
-      return null;
-    }
     final PsiClass psiClass = getClassAt(pos);
     if (psiClass == null) {
       return null;
@@ -319,13 +316,16 @@ public class JVMNameUtil {
   }
 
   @Nullable
-  public static PsiClass getClassAt(SourcePosition position) {
+  public static PsiClass getClassAt(@Nullable SourcePosition position) {
+    if (position == null) {
+      return null;
+    }
     final PsiElement element = position.getElementAt();
     return (element != null) ? PsiTreeUtil.getParentOfType(element, PsiClass.class, false) : null;
   }
 
   @Nullable
-  public static String getSourcePositionClassDisplayName(DebugProcessImpl debugProcess, SourcePosition position) {
+  public static String getSourcePositionClassDisplayName(DebugProcessImpl debugProcess, @Nullable SourcePosition position) {
     if (position == null) {
       return null;
     }
@@ -391,7 +391,7 @@ public class JVMNameUtil {
   }
 
   @Nullable
-  public static String getSourcePositionPackageDisplayName(DebugProcessImpl debugProcess, SourcePosition position) {
+  public static String getSourcePositionPackageDisplayName(DebugProcessImpl debugProcess, @Nullable SourcePosition position) {
     if (position == null) {
       return null;
     }

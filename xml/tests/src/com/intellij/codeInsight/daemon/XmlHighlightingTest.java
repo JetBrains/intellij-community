@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -388,7 +388,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
     try {
       doDoTest(true,true);
-      WriteCommandAction.runWriteCommandAction(new Runnable() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable() {
         @Override
         public void run() {
           myEditor.getDocument().insertString(myEditor.getDocument().getCharsSequence().toString().indexOf("?>") + 2, "\n");
@@ -548,7 +548,9 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       final XmlAttribute attribute = t.getAttribute("name", null);
       final XmlAttributeValue valueElement = attribute.getValueElement();
       final PsiReference nameReference = valueElement.getReferences()[0];
-      WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+        @Override
+        public void run() {
           nameReference.handleElementRename("zzz");
         }
       });
@@ -561,7 +563,9 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testExternalValidatorOnValidXmlWithNamespacesNotSetup() throws Exception {
     final ExternalResourceManagerEx instanceEx = ExternalResourceManagerEx.getInstanceEx();
-    WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         instanceEx.addIgnoredResource("http://xml.apache.org/axis/wsdd2/");
         instanceEx.addIgnoredResource("http://xml.apache.org/axis/wsdd2/providers/java");
         instanceEx.addIgnoredResource("http://soapinterop.org/xsd2");
@@ -575,14 +579,18 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testExternalValidatorOnValidXmlWithNamespacesNotSetup2() throws Exception {
     final ExternalResourceManagerEx instanceEx = ExternalResourceManagerEx.getInstanceEx();
     try {
-      WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+        @Override
+        public void run() {
           instanceEx.addIgnoredResource("");
         }
       });
 
       doTest(getFullRelativeTestName(".xml"), true, false);
     } finally {
-      WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+        @Override
+        public void run() {
           instanceEx.removeIgnoredResource("");
         }
       });
@@ -1057,7 +1065,9 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testIgnoredNamespaceHighlighting() throws Exception {
-    WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("http://ignored/uri");
       }
     });
@@ -1233,7 +1243,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
 
     final String text = myEditor.getDocument().getText();
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+      @Override
       public void run() {
         myEditor.getSelectionModel().setSelection(0, myEditor.getDocument().getTextLength());
       }
@@ -1409,7 +1420,9 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     final Editor schemaEditor = allEditors[0] == myEditor ? allEditors[1]:allEditors[0];
     final String text = schemaEditor.getDocument().getText();
     final String newText = text.replaceAll("xsd","xs");
-    WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         schemaEditor.getDocument().replaceString(0, text.length(), newText);
       }
     });
@@ -1437,7 +1450,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     ExternalResourceManagerExImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
     configureByFiles(null, getVirtualFile(getFullRelativeTestName()), getVirtualFile(BASE_PATH + location));
 
-    doDoTest(true,false);
+    doDoTest(true, false);
 
   }
 
@@ -1528,7 +1541,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testEncoding() throws Exception { doTest(true); }
 
   public void testSchemaImportHighlightingAndResolve() throws Exception {
-    doTestWithLocations(new String[][] { {"http://www.springframework.org/schema/beans", "ComplexSchemaValidation11.xsd"} },"xsd");
+    doTestWithLocations(new String[][]{{"http://www.springframework.org/schema/beans", "ComplexSchemaValidation11.xsd"}}, "xsd");
   }
 
   public void testDocBookV5() throws Exception {
@@ -1550,7 +1563,6 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     );
   }
 
-  @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testDocBook5() throws Exception {
     doTestWithLocations(
       new String[][] {
@@ -1567,7 +1579,9 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     Collection<HighlightInfo> infos = filterInfos(doHighlighting());
     assertEquals(2, infos.size());
 
-    WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         EditorModificationUtil.deleteSelectedText(myEditor);
       }
     });
@@ -1576,7 +1590,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
     assertEquals(11, infos.size());
 
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+      @Override
       public void run() {
         EditorModificationUtil.insertStringAtCaret(myEditor, "<");
       }
@@ -1731,7 +1746,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       {"http://extended", testName + ".xsd"},
       {"http://simple", testName + "_2.xsd"}
     };
-    doTestWithLocations(urls,"xml");
+    doTestWithLocations(urls, "xml");
   }
 
   public void testComplexRedefine6() throws Exception {
@@ -1839,7 +1854,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     Collection<HighlightInfo> infos = doDoTest(true, false);
 
     findAndInvokeIntentionAction(infos, "Change Root Tag Name to xxx", myEditor, myFile);
-    checkResultByFile(BASE_PATH + testName+"_after.xml");
+    checkResultByFile(BASE_PATH + testName + "_after.xml");
   }
 
   public void testUnqualifiedAttributePsi() throws Exception {
@@ -1847,7 +1862,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     final List<XmlAttribute> attrs = new ArrayList<XmlAttribute>(2);
 
     myFile.acceptChildren(new XmlRecursiveElementVisitor() {
-      @Override public void visitXmlAttribute(final XmlAttribute attribute) {
+      @Override
+      public void visitXmlAttribute(final XmlAttribute attribute) {
         if (!attribute.isNamespaceDeclaration()) attrs.add(attribute);
       }
     });
@@ -1876,7 +1892,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     final String testName = getTestName(false);
 
     doTest(
-      new VirtualFile[] {
+      new VirtualFile[]{
         getVirtualFile(BASE_PATH + testName + ".xml"),
         getVirtualFile(BASE_PATH + testName + ".xsd")
       },
@@ -1921,7 +1937,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testProblemWithImportedNsReference() throws Exception {
-    doTestWithLocations(null,"xsd");
+    doTestWithLocations(null, "xsd");
   }
 
   public void testBadXmlns() throws Exception {
@@ -1930,7 +1946,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testProblemWithMemberTypes() throws Exception {
-    doTestWithLocations(null,"xsd");
+    doTestWithLocations(null, "xsd");
   }
 
   public void testDtdHighlighting() throws Exception {
@@ -1948,7 +1964,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     final String testName = getTestName(false);
 
     doTest(
-      new VirtualFile[] {
+      new VirtualFile[]{
         getVirtualFile(BASE_PATH + testName + ".xml"),
         getVirtualFile(BASE_PATH + testName + ".xsd")
       },
@@ -1978,13 +1994,13 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testMappedSchemaLocation() throws Exception {
     doTestWithLocations(new String[][]{
-      { "schemas/Forms.xsd", "Forms.xsd"}
+      {"schemas/Forms.xsd", "Forms.xsd"}
     }, "xml");
   }
 
   public void testMuleConfigValidation() throws Exception {
     doSchemaTestWithManyFilesFromSeparateDir(
-      new String[][] {
+      new String[][]{
         {"http://www.springframework.org/schema/tool", "spring-tool-2.5.xsd"},
         {"http://www.springframework.org/schema/beans/spring-beans-2.5.xsd", "spring-beans-2.5.xsd"},
         {"http://www.mulesource.org/schema/mule/core/2.2/mule.xsd", "mule.xsd"},
@@ -2014,6 +2030,14 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     }, true, false);
   }
 
+  public void testPrefixedSubstitution() throws Exception {
+    doTest(new VirtualFile[]{
+      getVirtualFile(BASE_PATH + "Substitute/prefixed.xml"),
+      getVirtualFile(BASE_PATH + "Substitute/schema-b.xsd"),
+      getVirtualFile(BASE_PATH + "Substitute/schema-a.xsd")
+    }, true, false);
+  }
+
   public void testDtdWithXsd() throws Exception {
     doTest(
       new VirtualFile[] {
@@ -2024,6 +2048,26 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       true,
       false
     );
+  }
+
+  public void testAnyAttributeNavigation() throws Exception {
+    doTest(
+      new VirtualFile[] {
+        getVirtualFile(BASE_PATH + "AnyAttributeNavigation/test.xml"),
+        getVirtualFile(BASE_PATH + "AnyAttributeNavigation/test.xsd"),
+        getVirtualFile(BASE_PATH + "AnyAttributeNavigation/library.xsd")
+      },
+      true,
+      false
+    );
+    PsiReference at = getFile().findReferenceAt(getEditor().getCaretModel().getOffset());
+    PsiElement resolve = at.resolve();
+    assertTrue(resolve instanceof XmlTag);
+  }
+
+  public void testQualifiedAttributeReference() throws Exception {
+    configureByFiles(null, BASE_PATH + "qualified.xml", BASE_PATH + "qualified.xsd");
+    doDoTest(true, false);
   }
 
   @Override

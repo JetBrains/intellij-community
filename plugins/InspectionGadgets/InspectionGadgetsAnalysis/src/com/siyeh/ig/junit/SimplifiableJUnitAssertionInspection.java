@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -109,7 +110,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         newExpression.append(message.getText());
       }
       newExpression.append(')');
-      replaceExpressionAndShorten(callExpression, newExpression.toString());
+      PsiReplacementUtil.replaceExpressionAndShorten(callExpression, newExpression.toString());
     }
 
     private static void replaceAssertTrueWithAssertEquals(PsiMethodCallExpression callExpression) throws IncorrectOperationException {
@@ -170,7 +171,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         newExpression.append(",0.0");
       }
       newExpression.append(')');
-      replaceExpressionAndShorten(callExpression, newExpression.toString());
+      PsiReplacementUtil.replaceExpressionAndShorten(callExpression, newExpression.toString());
     }
 
     private static void replaceAssertWithAssertNull(PsiMethodCallExpression callExpression) throws IncorrectOperationException {
@@ -222,7 +223,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         newExpression.append(message.getText()).append(',');
       }
       newExpression.append(rhs.getText()).append(')');
-      replaceExpressionAndShorten(callExpression, newExpression.toString());
+      PsiReplacementUtil.replaceExpressionAndShorten(callExpression, newExpression.toString());
     }
 
     private static void replaceAssertWithAssertSame(PsiMethodCallExpression callExpression) throws IncorrectOperationException {
@@ -276,7 +277,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         newExpression.append(message.getText()).append(',');
       }
       newExpression.append(lhs.getText()).append(',').append(rhs.getText()).append(')');
-      replaceExpressionAndShorten(callExpression, newExpression.toString());
+      PsiReplacementUtil.replaceExpressionAndShorten(callExpression, newExpression.toString());
     }
 
     private static void replaceAssertEqualsWithAssertLiteral(
@@ -328,7 +329,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         newExpression.append(message.getText()).append(',');
       }
       newExpression.append(compareValue).append(')');
-      replaceExpressionAndShorten(callExpression, newExpression.toString());
+      PsiReplacementUtil.replaceExpressionAndShorten(callExpression, newExpression.toString());
     }
   }
 

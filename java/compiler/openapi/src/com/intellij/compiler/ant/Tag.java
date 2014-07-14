@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.intellij.compiler.ant;
 
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -78,10 +79,10 @@ public class Tag extends CompositeGenerator {
   }
 
   @Nullable
-  protected static Pair<String, String> pair(@NonNls String v1, @Nullable @NonNls String v2) {
+  protected static Couple<String> pair(@NonNls String v1, @Nullable @NonNls String v2) {
     if (v2 == null) {
       return null;
     }
-    return new Pair<String, String>(v1, v2);
+    return Couple.of(v1, v2);
   }
 }

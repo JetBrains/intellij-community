@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.project.ProjectRenameAware;
 import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemAutoImporter;
@@ -51,7 +52,16 @@ public class ExternalSystemStartupActivity implements StartupActivity {
         }
         if (project.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) != Boolean.TRUE) {
           for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
-            ExternalSystemUtil.refreshProjects(project, manager.getSystemId(), false);
+            if (project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE) {
+              ExternalSystemUtil.refreshProjects(
+                new ImportSpecBuilder(project, manager.getSystemId())
+              );
+            }
+            else {
+              ExternalSystemUtil.refreshProjects(
+                new ImportSpecBuilder(project, manager.getSystemId()).whenAutoImportEnabled()
+              );
+            }
           }
         }
         ExternalSystemAutoImporter.letTheMagicBegin(project);

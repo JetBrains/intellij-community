@@ -31,6 +31,7 @@ public class RncCompletionTest extends HighlightingTestBase {
     CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
   }
 
+  @Override
   public String getTestDataPath() {
     return "completion/rnc";
   }

@@ -37,7 +37,7 @@ import java.util.List;
        storages = {@Storage(file = "$MODULE_FILE$")}
 )
 public class PyDocumentationSettings implements PersistentStateComponent<PyDocumentationSettings> {
-  public String myDocStringFormat = "";
+  public String myDocStringFormat = DocStringFormat.REST;
   public boolean analyzeDoctest = true;
 
   public boolean isEpydocFormat(PsiFile file) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,11 +115,12 @@ public interface RunConfiguration extends RunProfile, JDOMExternalizable, Clonea
 
   /**
    * Checks whether the run configuration settings are valid.
+   * Note that this check may be invoked on every change (i.e. after each character typed in an input field).
    *
    * @throws RuntimeConfigurationException if the configuration settings contain a non-fatal problem which the user should be warned about
-   * but the execution should still be allowed
-   * @throws RuntimeConfigurationError if the configuration settings contain a fatal problem which makes it impossible to execute the run
-   * configuration.
+   *                                       but the execution should still be allowed.
+   * @throws RuntimeConfigurationError     if the configuration settings contain a fatal problem which makes it impossible
+   *                                       to execute the run configuration.
    */
   void checkConfiguration() throws RuntimeConfigurationException;
 }

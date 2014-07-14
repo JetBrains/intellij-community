@@ -18,8 +18,6 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.startup.StartupActionScriptManager;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,6 +25,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.io.ZipUtil;
+import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +44,6 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.URLEncoder;
 import java.util.List;
 
 /**
@@ -83,17 +82,27 @@ public class PluginDownloader {
     myPluginName = pluginName;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
   public boolean prepareToInstall() throws IOException {
     return prepareToInstall(new ProgressIndicatorBase());
   }
 
   public boolean prepareToInstall(ProgressIndicator pi) throws IOException {
+    return prepareToInstall(pi, null);
+  }
+
+  public boolean prepareToInstall(@Nullable ProgressIndicator pi, @Nullable BuildNumber forBuildNumber) throws IOException {
+    if (myFile != null) {
+      return true;
+    }
+
     IdeaPluginDescriptor descriptor = null;
-    if (PluginManager.isPluginInstalled(PluginId.getId(myPluginId))) {
+    if (!Boolean.getBoolean(StartupActionScriptManager.STARTUP_WIZARD_MODE) && PluginManager.isPluginInstalled(PluginId.getId(myPluginId))) {
       //store old plugins file
       descriptor = PluginManager.getPlugin(PluginId.getId(myPluginId));
       LOG.assertTrue(descriptor != null);
-      if (myPluginVersion != null && StringUtil.compareVersionNumbers(descriptor.getVersion(), myPluginVersion) >= 0) {
+      if (myPluginVersion != null && compareVersionsSkipBroken(descriptor, myPluginVersion) <= 0) {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
         return false;
       }
@@ -110,14 +119,16 @@ public class PluginDownloader {
       errorMessage = ex.getMessage();
     }
     if (myFile == null) {
-      final String text = IdeBundle.message("error.plugin.was.not.installed", getPluginName(), errorMessage);
-      final String title = IdeBundle.message("title.failed.to.download");
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          Messages.showErrorDialog(text, title);
-        }
-      });
+      if (ApplicationManager.getApplication() != null) {
+        final String text = IdeBundle.message("error.plugin.was.not.installed", getPluginName(), errorMessage);
+        final String title = IdeBundle.message("title.failed.to.download");
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            Messages.showErrorDialog(text, title);
+          }
+        });
+      }
       return false;
     }
 
@@ -128,19 +139,27 @@ public class PluginDownloader {
       }
 
       myPluginVersion = actualDescriptor.getVersion();
-      if (descriptor != null && StringUtil.compareVersionNumbers(descriptor.getVersion(), actualDescriptor.getVersion()) >= 0) {
+      if (descriptor != null && compareVersionsSkipBroken(descriptor, myPluginVersion) <= 0) {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
         return false; //was not updated
       }
 
-      if (PluginManagerCore.isIncompatible(actualDescriptor)) {
-        LOG.info("Plugin " + myPluginId + " is incompatible with current installation (since: " + actualDescriptor.getSinceBuild() + ", until: " + actualDescriptor.getUntilBuild()+ ")");
-        return false; //shouldn't happen
-      }
-
       setDescriptor(actualDescriptor);
+
+      if (PluginManagerCore.isIncompatible(actualDescriptor, forBuildNumber)) {
+        LOG.info("Plugin " + myPluginId + " is incompatible with current installation (since: " + actualDescriptor.getSinceBuild() + ", until: " + actualDescriptor.getUntilBuild()+ ")");
+        return false; //host outdated plugins, no compatible plugin for new version
+      }
     }
     return true;
+  }
+
+  public static int compareVersionsSkipBroken(IdeaPluginDescriptor descriptor, String newPluginVersion) {
+    int state = StringUtil.compareVersionNumbers(newPluginVersion, descriptor.getVersion());
+    if (PluginManagerCore.isBrokenPlugin(descriptor) && state < 0) {
+      state = 1;
+    }
+    return state;
   }
 
   @Nullable
@@ -211,27 +230,35 @@ public class PluginDownloader {
     }
   }
 
-  private File downloadPlugin(final ProgressIndicator pi) throws IOException {
+  private File downloadPlugin(@Nullable final ProgressIndicator pi) throws IOException {
     final File pluginsTemp = new File(PathManager.getPluginTempPath());
     if (!pluginsTemp.exists() && !pluginsTemp.mkdirs()) {
       throw new IOException(IdeBundle.message("error.cannot.create.temp.dir", pluginsTemp));
     }
     final File file = FileUtil.createTempFile(pluginsTemp, "plugin_", "_download", true, false);
 
-    pi.setText(IdeBundle.message("progress.connecting"));
+    if (pi != null) {
+      pi.setText(IdeBundle.message("progress.connecting"));
+    }
 
     URLConnection connection = null;
     try {
       connection = openConnection(myPluginUrl);
 
-      final InputStream is = UrlConnectionUtil.getConnectionInputStream(connection, pi);
+      final InputStream is = (ApplicationManager.getApplication() != null)
+                              ? UrlConnectionUtil.getConnectionInputStream(connection, pi)
+                              : connection.getInputStream();
       if (is == null) {
         throw new IOException("Failed to open connection");
       }
 
-      pi.setText(IdeBundle.message("progress.downloading.plugin", getPluginName()));
+      if (ApplicationManager.getApplication() != null && pi != null) {
+        pi.setText(IdeBundle.message("progress.downloading.plugin", getPluginName()));
+      }
       final int contentLength = connection.getContentLength();
-      pi.setIndeterminate(contentLength == -1);
+      if (pi != null) {
+        pi.setIndeterminate(contentLength == -1);
+      }
 
       try {
         final OutputStream fos = new BufferedOutputStream(new FileOutputStream(file, false));
@@ -262,7 +289,9 @@ public class PluginDownloader {
   }
 
   private URLConnection openConnection(final String url) throws IOException {
-    final URLConnection connection = new URL(url).openConnection();
+    final URLConnection connection = ApplicationManager.getApplication() != null
+                                     ? HttpConfigurable.getInstance().openConnection(url)
+                                     : new URL(url).openConnection();
     if (connection instanceof HttpURLConnection) {
       final int responseCode = ((HttpURLConnection)connection).getResponseCode();
       if (responseCode != HttpURLConnection.HTTP_OK) {
@@ -356,18 +385,9 @@ public class PluginDownloader {
   }
 
   public static PluginDownloader createDownloader(IdeaPluginDescriptor descriptor) throws UnsupportedEncodingException {
-    String url = null;
-    if (descriptor instanceof PluginNode) {
-      url = ((PluginNode)descriptor).getDownloadUrl();
-    }
-    if (url == null) {
-      String uuid = UpdateChecker.getInstallationUID(PropertiesComponent.getInstance());
-      String buildNumber = ApplicationInfo.getInstance().getApiVersion();
-      url = RepositoryHelper.getDownloadUrl() + URLEncoder.encode(descriptor.getPluginId().getIdString(), "UTF8") +
-            "&build=" + buildNumber + "&uuid=" + URLEncoder.encode(uuid, "UTF8");
-    }
-
-    PluginDownloader downloader = new PluginDownloader(descriptor.getPluginId().getIdString(), url, null, null, descriptor.getName());
+    PluginDownloader downloader = new PluginDownloader(descriptor.getPluginId().getIdString(), 
+                                                       UpdateChecker.getDownloadUrl(descriptor), 
+                                                       descriptor.getVersion(), null, descriptor.getName());
     downloader.setDescriptor(descriptor);
     return downloader;
   }

@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class DuplicateThrowsInspection extends BaseJavaBatchLocalInspectionTool {
+public class DuplicateThrowsInspection extends BaseJavaBatchLocalInspectionTool implements CleanupLocalInspectionTool {
   @SuppressWarnings("PublicField")
   public boolean ignoreSubclassing = false;
 

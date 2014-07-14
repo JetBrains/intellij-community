@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2013 Bas Leijdekkers
+ * Copyright 2008-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -417,11 +417,18 @@ public class WeakestTypeFinder {
         final PsiClass aClass2 = method2.getContainingClass();
         if (aClass1 == null || aClass2 == null || aClass1.equals(aClass2)) {
           return 0;
+        } else if (aClass1.isInterface() && !aClass2.isInterface()) {
+          return -1;
+        } else if (!aClass1.isInterface() && aClass2.isInterface()) {
+          return 1;
         } else if (aClass1.isInheritor(aClass2, true)) {
           return 1;
-        } else {
+        } else if (aClass2.isInheritor(aClass1, true)) {
           return -1;
         }
+        final String name1 = aClass1.getName();
+        final String name2 = aClass2.getName();
+        return name1.compareTo(name2);
       }
     });
     return result;

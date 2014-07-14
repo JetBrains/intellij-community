@@ -17,14 +17,17 @@ package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Lists;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -37,10 +40,10 @@ import java.util.Set;
 /**
  * @author yole
  */
-public class DocStringParameterReference extends PsiReferenceBase<PsiElement> implements PsiReferenceEx {
-  private final String myType;
+public class DocStringParameterReference extends PsiReferenceBase<PyStringLiteralExpression> implements PsiReferenceEx {
+  private final StructuredDocStringBase.ReferenceType myType;
 
-  public DocStringParameterReference(PsiElement element, TextRange range, String refType) {
+  public DocStringParameterReference(PyStringLiteralExpression element, TextRange range, StructuredDocStringBase.ReferenceType refType) {
     super(element, range);
     myType = refType;
   }
@@ -55,26 +58,42 @@ public class DocStringParameterReference extends PsiReferenceBase<PsiElement> im
       final PyFunction init = ((PyClass)owner).findMethodByName(PyNames.INIT, false);
       if (init != null) {
         PsiElement element = resolveParameter(init);
-        if (element == null)
-          element = resolveClassVariable(owner);
+        if (element == null && (myType.equals(StructuredDocStringBase.ReferenceType.CLASS_VARIABLE) ||
+                                myType.equals(StructuredDocStringBase.ReferenceType.PARAMETER_TYPE)))
+          element = resolveClassVariable((PyClass)owner);
+        if (element == null && (myType.equals(StructuredDocStringBase.ReferenceType.INSTANCE_VARIABLE) ||
+                                myType.equals(StructuredDocStringBase.ReferenceType.PARAMETER_TYPE)))
+          element = resolveInstanceVariable((PyClass)owner);
         return element;
       }
       else {
-        return resolveClassVariable(owner);
+        if (myType.equals(StructuredDocStringBase.ReferenceType.CLASS_VARIABLE) ||
+                                myType.equals(StructuredDocStringBase.ReferenceType.PARAMETER_TYPE))
+          return resolveClassVariable((PyClass)owner);
+        if (myType.equals(StructuredDocStringBase.ReferenceType.INSTANCE_VARIABLE) ||
+                                myType.equals(StructuredDocStringBase.ReferenceType.PARAMETER_TYPE))
+          return resolveInstanceVariable((PyClass)owner);
       }
     }
     return null;
   }
 
   @Nullable
-  private PsiElement resolveClassVariable(final PyDocStringOwner owner) {
-    final PyStatementList statementList = ((PyClass)owner).getStatementList();
-    for (PsiElement element : statementList.getChildren()) {
-      if (element instanceof PyAssignmentStatement) {
-        final PyExpression[] targets = ((PyAssignmentStatement)element).getTargets();
-        if (targets.length > 0 && targets[0].getText().equals(getCanonicalText()))
-          return targets[0];
-      }
+  private PsiElement resolveInstanceVariable(final PyClass owner) {
+    final List<PyTargetExpression> attributes = owner.getInstanceAttributes();
+    for (PyTargetExpression element : attributes) {
+      if (getCanonicalText().equals(element.getName()))
+        return element;
+    }
+    return null;
+  }
+
+  @Nullable
+  private PsiElement resolveClassVariable(@NotNull final PyClass owner) {
+    final List<PyTargetExpression> attributes = owner.getClassAttributes();
+    for (PyTargetExpression element : attributes) {
+      if (getCanonicalText().equals(element.getName()))
+        return element;
     }
     return null;
   }
@@ -123,7 +142,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PsiElement> im
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
   
-  public String getType() {
+  public StructuredDocStringBase.ReferenceType getType() {
     return myType;
   }
 
@@ -142,5 +161,19 @@ public class DocStringParameterReference extends PsiReferenceBase<PsiElement> im
       return "Function '" + function.getName() + "' does not have a parameter '" + getCanonicalText() + "'";
     }
     return null;
+  }
+
+  @Override
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    TextRange range = getRangeInElement();
+    Pair<String, String> quotes = PythonStringUtil.getQuotes(range.substring(myElement.getText()));
+
+    if (quotes != null) {
+      range = TextRange.create(range.getStartOffset() + quotes.first.length(), range.getEndOffset() - quotes.second.length());
+    }
+
+    String newName = range.replace(myElement.getText(), newElementName);
+    myElement.updateText(newName);
+    return myElement;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.completion
-
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
-
+import com.intellij.psi.PsiReference
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlText
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry
-import org.jetbrains.plugins.groovy.GroovyFileType
-
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
-
+import org.jetbrains.plugins.groovy.GroovyLanguage
 /**
  * @author peter
  */
@@ -37,7 +35,7 @@ s.codePo<caret>charAt(0)
 </groovy>""")
 
     def host = PsiTreeUtil.findElementOfClassAtOffset(myFixture.file, myFixture.editor.caretModel.offset, XmlText, false)
-    TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(GroovyFileType.GROOVY_LANGUAGE, host);
+    TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(GroovyLanguage.INSTANCE, host);
 
     myFixture.completeBasic()
     myFixture.type('\t')
@@ -64,6 +62,25 @@ s.codePointAt(<caret>0)
 
     assert InjectedLanguageUtil.findInjectedPsiNoCommit(psiFile, psiFile.getText().indexOf('blah') + 1)
     assert InjectedLanguageUtil.findInjectedPsiNoCommit(psiFile, psiFile.getText().indexOf('injected') + 1)
+  }
+
+  public void testResolveAnnotationsInInjectedCode() {
+    myFixture.addClass("package foo; @interface Bar{}")
+
+    myFixture.addClass("package groovy.lang; public class GroovyShell { public void evaluate(String s) { }}");
+    final PsiFile psiFile = myFixture.configureByText("script.groovy", """
+new groovy.lang.GroovyShell().evaluate('''
+import foo.Bar
+
+@Ba<caret>r
+def abc = null
+''')
+""");
+    assertNotNull(psiFile);
+    PsiReference ref = psiFile.findReferenceAt(myFixture.editor.caretModel.offset)
+    assert ref.resolve() instanceof PsiClass
+    assert ref.resolve().qualifiedName == 'foo.Bar'
+
   }
 
 }

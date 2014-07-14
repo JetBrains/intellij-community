@@ -148,6 +148,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     pyVisitor.visitPyClass(this);
   }
 
+  @Override
   @NotNull
   public PyStatementList getStatementList() {
     final PyStatementList statementList = childToPsi(PyElementTypes.STATEMENT_LIST);
@@ -380,6 +381,13 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   @Override
+  @NotNull
+  public Map<String, Property> getProperties() {
+    initProperties();
+    return new HashMap<String, Property>(myPropertyCache);
+  }
+
+  @Override
   public PyClass[] getNestedClasses() {
     return getClassChildren(TokenSet.create(PyElementTypes.CLASS_DECLARATION), PyClass.ARRAY_FACTORY);
   }
@@ -585,7 +593,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @Nullable
   @Override
-  public Property findProperty(@NotNull final String name) {
+  public Property findProperty(@NotNull final String name, boolean inherited) {
     Property property = findLocalProperty(name);
     if (property != null) {
       return property;
@@ -593,10 +601,12 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (findMethodByName(name, false) != null || findClassAttribute(name, false) != null) {
       return null;
     }
-    for (PyClass aClass : getAncestorClasses()) {
-      final Property ancestorProperty = ((PyClassImpl)aClass).findLocalProperty(name);
-      if (ancestorProperty != null) {
-        return ancestorProperty;
+    if (inherited) {
+      for (PyClass aClass : getAncestorClasses()) {
+        final Property ancestorProperty = ((PyClassImpl)aClass).findLocalProperty(name);
+        if (ancestorProperty != null) {
+          return ancestorProperty;
+        }
       }
     }
     return null;
@@ -604,9 +614,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @Override
   public Property findPropertyByCallable(Callable callable) {
-    if (myPropertyCache == null) {
-      myPropertyCache = initializePropertyCache();
-    }
+    initProperties();
     for (Property property : myPropertyCache.values()) {
       if (property.getGetter().valueOrNull() == callable ||
           property.getSetter().valueOrNull() == callable ||
@@ -618,10 +626,14 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   private Property findLocalProperty(String name) {
+    initProperties();
+    return myPropertyCache.get(name);
+  }
+
+  private synchronized void initProperties() {
     if (myPropertyCache == null) {
       myPropertyCache = initializePropertyCache();
     }
-    return myPropertyCache.get(name);
   }
 
   private Map<String, Property> initializePropertyCache() {
@@ -651,10 +663,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     // EA-32381: A tree-based instance may not have a parent element somehow, so getContainingFile() may be not appropriate
     final PsiFile file = getParentByStub() != null ? getContainingFile() : null;
     if (file != null) {
-      final VirtualFile vfile = file.getVirtualFile();
-      if (vfile != null) {
-        level = LanguageLevel.forFile(vfile);
-      }
+      level = LanguageLevel.forElement(file);
     }
     final boolean useAdvancedSyntax = level.isAtLeast(LanguageLevel.PYTHON26);
     final Property local = processPropertiesInClass(name, filter, useAdvancedSyntax);
@@ -747,7 +756,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         if (!(callable instanceof StubBasedPsiElement) && !context.maySwitchToAST(callable)) {
           return null;
         }
-        return callable.getReturnType(context, null);
+        return context.getReturnType(callable);
       }
       return null;
     }
@@ -956,20 +965,18 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     else {
       final PyStatementList statementList = function.getStatementList();
       final List<PyTargetExpression> result = new ArrayList<PyTargetExpression>();
-      if (statementList != null) {
-        statementList.accept(new PyRecursiveElementVisitor() {
-          @Override
-          public void visitPyClass(PyClass node) {}
+      statementList.accept(new PyRecursiveElementVisitor() {
+        @Override
+        public void visitPyClass(PyClass node) {}
 
-          public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
-            for (PyExpression expression : node.getTargets()) {
-              if (expression instanceof PyTargetExpression) {
-                result.add((PyTargetExpression)expression);
-              }
+        public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
+          for (PyExpression expression : node.getTargets()) {
+            if (expression instanceof PyTargetExpression) {
+              result.add((PyTargetExpression)expression);
             }
           }
-        });
-      }
+        }
+      });
       return result;
     }
   }
@@ -1146,7 +1153,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       }
     }
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(this);
-    if (result.isEmpty() && isValid() && !builtinCache.hasInBuiltins(this)) {
+    if (result.isEmpty() && isValid() && !builtinCache.isBuiltin(this)) {
       final String implicitSuperName = LanguageLevel.forElement(this).isPy3K() ? PyNames.OBJECT : PyNames.FAKE_OLD_BASE;
       final PyClass implicitSuper = builtinCache.getClass(implicitSuperName);
       if (implicitSuper != null) {
@@ -1165,6 +1172,67 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     // TODO: Return different cached copies depending on the type eval context parameters
     final CachedValuesManager manager = CachedValuesManager.getManager(getProject());
     return manager.getParameterizedCachedValue(this, myCachedValueKey, myCachedAncestorsProvider, false, context);
+  }
+
+  @Nullable
+  @Override
+  public PyType getMetaClassType(@NotNull TypeEvalContext context) {
+    if (context.maySwitchToAST(this)) {
+      final PyExpression expression = getMetaClassExpression();
+      if (expression != null) {
+        final PyType type = context.getType(expression);
+        if (type != null) {
+          return type;
+        }
+      }
+    }
+    else {
+      final PyClassStub stub = getStub();
+      final QualifiedName name = stub != null ? stub.getMetaClass() : PyPsiUtils.asQualifiedName(getMetaClassExpression());
+      final PsiFile file = getContainingFile();
+      if (file instanceof PyFile) {
+        final PyFile pyFile = (PyFile)file;
+        if (name != null) {
+          return classTypeFromQName(name, pyFile, context);
+        }
+      }
+    }
+    final LanguageLevel level = LanguageLevel.forElement(this);
+    if (level.isOlderThan(LanguageLevel.PYTHON30)) {
+      final PsiFile file = getContainingFile();
+      if (file instanceof PyFile) {
+        final PyFile pyFile = (PyFile)file;
+        final PsiElement element = pyFile.getElementNamed(PyNames.DUNDER_METACLASS);
+        if (element instanceof PyTypedElement) {
+          return context.getType((PyTypedElement)element);
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public PyExpression getMetaClassExpression() {
+    final LanguageLevel level = LanguageLevel.forElement(this);
+    if (level.isAtLeast(LanguageLevel.PYTHON30)) {
+      // Requires AST access
+      for (PyExpression expression : getSuperClassExpressions()) {
+        if (expression instanceof PyKeywordArgument) {
+          final PyKeywordArgument argument = (PyKeywordArgument)expression;
+          if (PyNames.METACLASS.equals(argument.getKeyword())) {
+            return argument.getValueExpression();
+          }
+        }
+      }
+    }
+    else {
+      final PyTargetExpression attribute = findClassAttribute(PyNames.DUNDER_METACLASS, false);
+      if (attribute != null) {
+        return attribute;
+      }
+    }
+    return null;
   }
 
   @NotNull

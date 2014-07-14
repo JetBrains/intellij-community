@@ -50,7 +50,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   private final PsiParameter myParameter;
   private PsiExpression myInitializer;
   private final boolean mySameClass;
-  private final PsiMethod myCallingMethod;
+  private final PsiCodeBlock myCallingBlock;
   private final boolean myCreateLocal;
 
   public InlineParameterExpressionProcessor(final PsiCallExpression methodCall,
@@ -67,7 +67,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
 
     PsiClass callingClass = PsiTreeUtil.getParentOfType(methodCall, PsiClass.class);
     mySameClass = (callingClass == myMethod.getContainingClass());
-    myCallingMethod = PsiTreeUtil.getParentOfType(myMethodCall, PsiMethod.class);
+    myCallingBlock = PsiTreeUtil.getTopmostParentOfType(myMethodCall, PsiCodeBlock.class);
   }
 
   @Override
@@ -110,7 +110,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
         final PsiElement element = expression.resolve();
         if (element instanceof PsiLocalVariable) {
           final PsiLocalVariable localVariable = (PsiLocalVariable)element;
-          final PsiElement[] elements = DefUseUtil.getDefs(myCallingMethod.getBody(), localVariable, expression);
+          final PsiElement[] elements = DefUseUtil.getDefs(myCallingBlock, localVariable, expression);
           if (elements.length == 1) {
             PsiExpression localInitializer = null;
             if (elements[0] instanceof PsiLocalVariable) {
@@ -342,7 +342,15 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
           myConflicts.putValue(expression, "Parameter initializer depends on value which is not available inside method");
         }
       } else if (element instanceof PsiParameter) {
-        myConflicts.putValue(expression, "Parameter initializer depends on callers parameter");
+        boolean bound = false;
+        for (PsiParameter parameter : myMethod.getParameterList().getParameters()) {
+          if (parameter.getType().equals(((PsiParameter)element).getType()) && parameter.getName().equals(((PsiParameter)element).getName())) {
+            bound = true;
+          }
+        }
+        if (!bound) {
+          myConflicts.putValue(expression, "Parameter initializer depends on callers parameter");
+        }
       }
     }
 

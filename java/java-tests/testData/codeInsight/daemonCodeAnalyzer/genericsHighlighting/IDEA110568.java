@@ -1,6 +1,6 @@
 import java.util.Collection;
 
-public class IncorrectError extends NarrowClass {
+class IncorrectError extends NarrowClass {
     public Collection<String> bar() {
         return super.doStuff();
     }

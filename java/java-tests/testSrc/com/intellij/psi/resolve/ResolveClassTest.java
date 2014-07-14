@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,7 +162,7 @@ public class ResolveClassTest extends ResolveTestCase {
     configureDependency();
     PsiReference ref = configure();
     PsiElement target = ((PsiJavaReference)ref).advancedResolve(true).getElement();
-    assertTrue(target instanceof PsiClass);
+    assertTrue(String.valueOf(target), target instanceof PsiClass);
   }
 
   public void testTwoModules2() throws Exception {
@@ -203,12 +203,13 @@ public class ResolveClassTest extends ResolveTestCase {
     PsiReference ref = configure();
     long start = System.currentTimeMillis();
     assertNull(ref.resolve());
-    PlatformTestUtil.assertTiming("exponent?", 200, System.currentTimeMillis() - start);
+    long elapsed = System.currentTimeMillis() - start;
+    PlatformTestUtil.assertTiming("exponent?", 500, elapsed);
   }
 
   public void testStaticImportNetwork() throws Exception {
     PsiReference ref = configure();
-    int count = 20;
+    int count = 15;
 
     String imports = "";
     for (int i = 0; i < count; i++) {
@@ -219,6 +220,7 @@ public class ResolveClassTest extends ResolveTestCase {
       createFile(myModule, "Foo" + i + ".java", imports + "class Foo" + i + " extends Bar1, Bar2, Bar3 {}");
     }
 
+    System.gc();
     long start = System.currentTimeMillis();
     assertNull(ref.resolve());
     PlatformTestUtil.assertTiming("exponent?", 20000, System.currentTimeMillis() - start);

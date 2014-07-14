@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,14 +43,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
 
 import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static java.util.Arrays.asList;
 
 public class CreateDesktopEntryAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CreateDesktopEntryAction");
-
-  private static final int MIN_ICON_SIZE = 32;
 
   public static boolean isAvailable() {
     return SystemInfo.isUnix && SystemInfo.hasXdgOpen();
@@ -131,14 +130,14 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
 
   private static File prepare() throws IOException {
     final String homePath = PathManager.getHomePath();
-    assert homePath != null && new File(homePath).isDirectory() : "Invalid home path: '" + homePath + "'";
+    assert new File(homePath).isDirectory() : "Invalid home path: '" + homePath + "'";
     final String binPath = homePath + "/bin";
-    assert new File(binPath).isDirectory() : "Invalid bin/ path: '" + binPath + "'";
+    assert new File(binPath).isDirectory() : "Invalid bin path: '" + binPath + "'";
 
     String name = ApplicationNamesInfo.getInstance().getFullProductName();
-    if (PlatformUtils.isCommunity()) name += " Community Edition";
+    if (PlatformUtils.isIdeaCommunity()) name += " Community Edition";
 
-    final String iconPath = findIcon(binPath);
+    final String iconPath = AppUIUtil.findIcon(binPath);
     if (iconPath == null) {
       throw new RuntimeException(ApplicationBundle.message("desktop.entry.icon.missing", binPath));
     }
@@ -162,41 +161,17 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static String findIcon(final String iconsPath) {
-    final File iconsDir = new File(iconsPath);
-
-    // 1. look for .svg icon
-    for (String child : iconsDir.list()) {
-      if (child.endsWith(".svg")) {
-        return iconsPath + '/' + child;
-      }
-    }
-
-    // 2. look for .png icon of max size
-    int max = 0;
-    String iconPath = null;
-    for (String child : iconsDir.list()) {
-      if (!child.endsWith(".png")) continue;
-      final String path = iconsPath + '/' + child;
-      final Icon icon = new ImageIcon(path);
-      final int size = icon.getIconHeight();
-      if (size >= MIN_ICON_SIZE && size > max && size == icon.getIconWidth()) {
-        max = size;
-        iconPath = path;
-      }
-    }
-
-    return iconPath;
-  }
-
-  @Nullable
-  private static String findScript(final String binPath) {
-    final String productName = ApplicationNamesInfo.getInstance().getProductName();
+  private static String findScript(String binPath) {
+    String productName = ApplicationNamesInfo.getInstance().getProductName();
 
     String execPath = binPath + '/' + productName + ".sh";
     if (new File(execPath).canExecute()) return execPath;
 
-    execPath = binPath + '/' + productName.toLowerCase() + ".sh";
+    execPath = binPath + '/' + productName.toLowerCase(Locale.US) + ".sh";
+    if (new File(execPath).canExecute()) return execPath;
+
+    String scriptName = ApplicationNamesInfo.getInstance().getScriptName();
+    execPath = binPath + '/' + scriptName + ".sh";
     if (new File(execPath).canExecute()) return execPath;
 
     return null;

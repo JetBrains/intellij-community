@@ -16,14 +16,12 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,10 +37,6 @@ import java.util.concurrent.TimeUnit;
 
 public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
   @NonNls public static final String WIDGET_ID = "Memory";
-
-  // todo: drop unless J. will insist to keep old style look
-  private static final boolean FRAMED_STYLE = SystemInfo.isMac || !SystemProperties.getBooleanProperty("idea.ui.old.mem.use", false);
-
   private static final int MEGABYTE = 1024 * 1024;
   @NonNls private static final String SAMPLE_STRING;
   
@@ -113,8 +107,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
   }
 
   private static Font getWidgetFont() {
-    final Font font = UIUtil.getLabelFont();
-    return FRAMED_STYLE ? font.deriveFont(11.0f) : font;
+    return UIUtil.getLabelFont().deriveFont(11.0f);
   }
 
   @Override
@@ -130,7 +123,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
 
     if (myBufferedImage == null || stateChanged) {
       final Dimension size = getSize();
-      final Insets insets = FRAMED_STYLE ? getInsets() : new Insets(0, 0, 0, 0);
+      final Insets insets = getInsets();
 
       myBufferedImage = UIUtil.createImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
       final Graphics2D g2 = (Graphics2D)myBufferedImage.getGraphics().create();
@@ -144,7 +137,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       final int totalBarLength = size.width - insets.left - insets.right;
       final int usedBarLength = (int)(totalBarLength * usedMem / maxMem);
       final int unusedBarLength = (int)(totalBarLength * unusedMem / maxMem);
-      final int barHeight = FRAMED_STYLE ? HEIGHT : size.height;
+      final int barHeight = HEIGHT;
       final int yOffset = (size.height - barHeight) / 2;
       final int xOffset = insets.left;
 
@@ -170,7 +163,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       }
 
       // frame
-      if (FRAMED_STYLE && !UIUtil.isUnderDarcula()) {
+      if (!UIUtil.isUnderDarcula()) {
         g2.setColor(USED_COLOR_2);
         g2.drawRect(xOffset, yOffset, totalBarLength - 1, barHeight - 1);
       }

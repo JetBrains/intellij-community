@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class UnnecessaryConstructorInspection extends BaseInspection {
+public class UnnecessaryConstructorInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NonNls
   private static final String SUPER_CALL_TEXT = PsiKeyword.SUPER + "();";
@@ -110,6 +111,9 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
         return;
       }
       final PsiMethod constructor = constructors[0];
+      if (!constructor.isPhysical()) {
+        return;
+      }
       if (!constructor.hasModifierProperty(PsiModifier.PRIVATE) &&
           aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;

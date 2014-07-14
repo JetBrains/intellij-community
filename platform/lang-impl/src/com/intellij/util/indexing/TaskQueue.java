@@ -1,10 +1,25 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Computable;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -15,8 +30,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 class TaskQueue {
   private final AtomicInteger myDoWorkRequest = new AtomicInteger();
   private final AtomicInteger myUpdatesCount = new AtomicInteger();
-  private final LinkedBlockingQueue<Runnable> myPendingWriteRequestsQueue = new LinkedBlockingQueue<Runnable>();
-  private final LinkedBlockingQueue<Runnable> myTimestampUpdates = new LinkedBlockingQueue<Runnable>();
+  private final BlockingQueue<Runnable> myPendingWriteRequestsQueue = new LinkedBlockingQueue<Runnable>();
+  private final BlockingQueue<Runnable> myTimestampUpdates = new LinkedBlockingQueue<Runnable>();
   private final int myLimit;
   private final int myStealLimit;
   private final int myTimeStampUpdateSizeLimit;
@@ -27,7 +42,7 @@ class TaskQueue {
     myTimeStampUpdateSizeLimit = 32;
   }
 
-  void submit(final Computable<Boolean> update, final Runnable successRunnable) {
+  void submit(@NotNull final Computable<Boolean> update, @NotNull final Runnable successRunnable) {
     int currentTasksCount = myUpdatesCount.incrementAndGet();
 
     myPendingWriteRequestsQueue.add(new Runnable() {
@@ -61,20 +76,19 @@ class TaskQueue {
     }
   }
 
-  private void applyTimeStamps(int max) {
-    Runnable runnable = myTimestampUpdates.poll();
+  private void applyTimeStamps(final int max) {
+    final Runnable runnable = myTimestampUpdates.poll();
     if (runnable == null) return;
-    int updates = 0;
-    AccessToken accessToken = ReadAction.start();
-    try {
-      while(runnable != null) {
-        runnable.run();
-        if (++updates == max) break;
-        runnable = myTimestampUpdates.poll();
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        int updates = 0;
+        for (Runnable r = runnable; r != null; r = myTimestampUpdates.poll()) {
+          r.run();
+          if (++updates == max) break;
+        }
       }
-    } finally {
-      accessToken.finish();
-    }
+    });
   }
 
   public void ensureUpToDate() {
@@ -84,7 +98,8 @@ class TaskQueue {
         if (runnable != null) runnable.run();
       }
       applyTimeStamps(Integer.MAX_VALUE);
-    } catch (Exception e) {
+    }
+    catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
   }

@@ -50,6 +50,7 @@ public class OpenProjectAction extends AnAction implements DumbAware {
     extensions.add(ProjectFileType.DOT_DEFAULT_EXTENSION);
     final ProjectOpenProcessor[] openProcessors = Extensions.getExtensions(ProjectOpenProcessor.EXTENSION_POINT_NAME);
     for (ProjectOpenProcessor openProcessor : openProcessors) {
+      if (!(openProcessor instanceof ProjectOpenProcessorBase)) continue;
       final String[] supportedExtensions = ((ProjectOpenProcessorBase)openProcessor).getSupportedExtensions();
       if (supportedExtensions != null) {
         Collections.addAll(extensions, supportedExtensions);

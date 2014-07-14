@@ -1,4 +1,4 @@
-public class InspectorTest {
+class InspectorTest {
     interface Stream<T> {
         <A> A[] toArray(IntFunction<A[]> generator);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,8 @@ import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.asm4.Opcodes;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.*;
 import java.lang.annotation.RetentionPolicy;
@@ -270,7 +271,7 @@ public class ClassRepr extends Proto {
       myUsages =(Set<UsageRepr.Usage>)RW.read(UsageRepr.externalizer(context), new THashSet<UsageRepr.Usage>(), in);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -294,7 +295,7 @@ public class ClassRepr extends Proto {
       RW.save(myUsages, UsageRepr.externalizer(myContext), out);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -379,12 +380,12 @@ public class ClassRepr extends Proto {
   public static DataExternalizer<ClassRepr> externalizer(final DependencyContext context) {
     return new DataExternalizer<ClassRepr>() {
       @Override
-      public void save(final DataOutput out, final ClassRepr value) throws IOException {
+      public void save(@NotNull final DataOutput out, final ClassRepr value) throws IOException {
         value.save(out);
       }
 
       @Override
-      public ClassRepr read(final DataInput in) throws IOException {
+      public ClassRepr read(@NotNull final DataInput in) throws IOException {
         return new ClassRepr(context, in);
       }
     };
@@ -507,8 +508,8 @@ public class ClassRepr extends Proto {
       try {
         bas.close();
       }
-      catch (final Exception e) {
-        throw new RuntimeException(e);
+      catch (final IOException e) {
+        throw new BuildDataCorruptedException(e);
       }
 
       usages.add(bas.toString());

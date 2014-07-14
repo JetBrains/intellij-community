@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -25,5 +26,5 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface TypeDeclarationPlaceAwareProvider extends TypeDeclarationProvider {
   @Nullable
-  PsiElement[] getSymbolTypeDeclarations(PsiElement symbol, Editor editor, int offset);
+  PsiElement[] getSymbolTypeDeclarations(@NotNull PsiElement symbol, Editor editor, int offset);
 }

@@ -43,6 +43,8 @@ import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.openapi.vcs.changes.ui.RollbackProgressModifier;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -81,8 +83,9 @@ public class RollbackAction extends AnAction implements DumbAware {
     final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (files != null) {
       ChangeListManager clManager = ChangeListManager.getInstance(project);
+      Set<VirtualFile> modifiedWithoutEditing = ContainerUtil.newHashSet(clManager.getModifiedWithoutEditing());
       for (VirtualFile file : files) {
-        if (!clManager.getChangesIn(file).isEmpty()) {
+        if (!clManager.getChangesIn(file).isEmpty() || modifiedWithoutEditing.contains(file)) {
           return true;
         }
       }
@@ -108,13 +111,14 @@ public class RollbackAction extends AnAction implements DumbAware {
       new RollbackDeletionAction().actionPerformed(e);
     }
 
+    List<Change> changes = getChanges(project, e);
+
     LinkedHashSet<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(e, project);
     if (modifiedWithoutEditing != null && !modifiedWithoutEditing.isEmpty()) {
       hasChanges = true;
       rollbackModifiedWithoutEditing(project, modifiedWithoutEditing);
     }
 
-    List<Change> changes = getChanges(project, e);
     if (changes != null) {
       if (modifiedWithoutEditing != null) {
         for (Iterator<Change> iterator = changes.iterator(); iterator.hasNext(); ) {
@@ -242,6 +246,9 @@ public class RollbackAction extends AnAction implements DumbAware {
           AbstractVcsHelper.getInstance(project).showErrors(exceptions, VcsBundle.message("rollback.modified.without.checkout.error.tab",
                                                                                           operationName));
         }
+
+        VfsUtil.markDirty(true, false, VfsUtilCore.toVirtualFileArray(modifiedWithoutEditing));
+        
         VirtualFileManager.getInstance().asyncRefresh(new Runnable() {
           public void run() {
             for (VirtualFile virtualFile : modifiedWithoutEditing) {

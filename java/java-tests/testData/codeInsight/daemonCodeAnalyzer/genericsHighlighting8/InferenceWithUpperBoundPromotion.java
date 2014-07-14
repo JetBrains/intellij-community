@@ -1,5 +1,4 @@
-
-public class NestedGenericGoodCodeIsRed {
+class NestedGenericGoodCodeIsRed {
 
     public void main( String[] args ) {
         satisfiesAllOf(isPositive(), isEqualTo(10.9));

@@ -1,27 +1,45 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataOutputStream;
-import gnu.trove.TIntHashSet;
+import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.util.Iterator;
 
 /**
  * @author Dmitry Avdeev
  *         Date: 8/10/11
  */
 class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContainer<Value>> {
-  @NotNull private final ValueContainerExternalizer<Value> myValueContainerExternalizer;
+  @NotNull private final DataExternalizer<Value> myValueExternalizer;
+  private final boolean myKeyIsUniqueForIndexedFile;
 
   ValueContainerMap(@NotNull final File file,
                     @NotNull KeyDescriptor<Key> keyKeyDescriptor,
-                    @NotNull DataExternalizer<Value> valueExternalizer) throws IOException {
-
+                    @NotNull DataExternalizer<Value> valueExternalizer,
+                    boolean keyIsUniqueForIndexedFile
+                    ) throws IOException {
     super(file, keyKeyDescriptor, new ValueContainerExternalizer<Value>(valueExternalizer));
-    myValueContainerExternalizer = (ValueContainerExternalizer<Value>)myValueExternalizer;
+    myValueExternalizer = valueExternalizer;
+    myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
   }
 
   @NotNull
@@ -33,21 +51,15 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
   protected void doPut(Key key, ValueContainer<Value> container) throws IOException {
     synchronized (myEnumerator) {
       ChangeTrackingValueContainer<Value> valueContainer = (ChangeTrackingValueContainer<Value>)container;
-      if (!valueContainer.needsCompacting()) {
+
+      // try to accumulate index value calculated for particular key to avoid fragmentation: usually keys are scattered across many files
+      // note that keys unique for indexed file have their value calculated at once (e.g. key is file id, index calculates something for particular
+      // file) and there is no benefit to accumulate values for particular key because only one value exists
+      if (!valueContainer.needsCompacting() && !myKeyIsUniqueForIndexedFile) {
         final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
         //noinspection IOResourceOpenedButNotSafelyClosed
         final DataOutputStream _out = new DataOutputStream(bytes);
-        final TIntHashSet set = valueContainer.getInvalidated();
-        if (set != null && set.size() > 0) {
-          for (int inputId : set.toArray()) {
-            ValueContainerExternalizer.saveInvalidateCommand(_out, inputId);
-          }
-        }
-
-        final ValueContainer<Value> toAppend = valueContainer.getAddedDelta();
-        if (toAppend != null && toAppend.size() > 0) {
-          myValueContainerExternalizer.save(_out, toAppend);
-        }
+        valueContainer.saveTo(_out, myValueExternalizer);
 
         appendData(key, new PersistentHashMap.ValueDataAppender() {
           @Override
@@ -64,67 +76,24 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
   }
 
   private static final class ValueContainerExternalizer<T> implements DataExternalizer<ValueContainer<T>> {
-    @NotNull private final DataExternalizer<T> myExternalizer;
+    @NotNull private final DataExternalizer<T> myValueExternalizer;
 
-    private ValueContainerExternalizer(@NotNull DataExternalizer<T> externalizer) {
-      myExternalizer = externalizer;
+    private ValueContainerExternalizer(@NotNull DataExternalizer<T> valueExternalizer) {
+      myValueExternalizer = valueExternalizer;
     }
 
     @Override
-    public void save(final DataOutput out, @NotNull final ValueContainer<T> container) throws IOException {
-      saveImpl(out, container);
-    }
-
-    public static void saveInvalidateCommand(final DataOutput out, int inputId) throws IOException {
-      DataInputOutputUtil.writeSINT(out, -inputId);
-    }
-
-    private void saveImpl(final DataOutput out, @NotNull final ValueContainer<T> container) throws IOException {
-      DataInputOutputUtil.writeSINT(out, container.size());
-      for (final Iterator<T> valueIterator = container.getValueIterator(); valueIterator.hasNext();) {
-        final T value = valueIterator.next();
-        myExternalizer.save(out, value);
-
-        final ValueContainer.IntIterator ids = container.getInputIdsIterator(value);
-        if (ids != null) {
-          DataInputOutputUtil.writeSINT(out, ids.size());
-          while (ids.hasNext()) {
-            final int id = ids.next();
-            DataInputOutputUtil.writeSINT(out, id);
-          }
-        }
-        else {
-          DataInputOutputUtil.writeSINT(out, 0);
-        }
-      }
+    public void save(@NotNull final DataOutput out, @NotNull final ValueContainer<T> container) throws IOException {
+      container.saveTo(out, myValueExternalizer);
     }
 
     @NotNull
     @Override
-    public ValueContainerImpl<T> read(final DataInput in) throws IOException {
-      DataInputStream stream = (DataInputStream)in;
+    public ValueContainerImpl<T> read(@NotNull final DataInput in) throws IOException {
       final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<T>();
 
-      while (stream.available() > 0) {
-        final int valueCount = DataInputOutputUtil.readSINT(in);
-        if (valueCount < 0) {
-          valueContainer.removeAssociatedValue(-valueCount);
-          valueContainer.setNeedsCompacting(true);
-        }
-        else {
-          for (int valueIdx = 0; valueIdx < valueCount; valueIdx++) {
-            final T value = myExternalizer.read(in);
-            final int idCount = DataInputOutputUtil.readSINT(in);
-            valueContainer.ensureFileSetCapacityForValue(value, idCount);
-            for (int i = 0; i < idCount; i++) {
-              final int id = DataInputOutputUtil.readSINT(in);
-              valueContainer.addValue(id, value);
-            }
-          }
-        }
-      }
+      valueContainer.readFrom((DataInputStream)in, myValueExternalizer);
       return valueContainer;
     }
   }
-
 }

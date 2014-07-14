@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,6 +90,7 @@ public class ConfigFilesTreeBuilder {
     final HashSet<PsiFile> psiFiles = new HashSet<PsiFile>();
     final List<Module> modules = new ArrayList<Module>(files.keySet());
     Collections.sort(modules, new Comparator<Module>() {
+      @Override
       public int compare(final Module o1, final Module o2) {
         return o1.getName().compareTo(o2.getName());
       }
@@ -158,6 +159,7 @@ public class ConfigFilesTreeBuilder {
   }
 
   private static final Comparator<PsiFile> FILE_COMPARATOR = new Comparator<PsiFile>() {
+    @Override
     public int compare(final PsiFile o1, final PsiFile o2) {
       return o1.getName().compareTo(o2.getName());
     }
@@ -210,6 +212,7 @@ public class ConfigFilesTreeBuilder {
 
   public static void installSearch(JTree tree) {
     new TreeSpeedSearch(tree, new Convertor<TreePath, String>() {
+      @Override
       public String convert(final TreePath treePath) {
         final Object object = ((DefaultMutableTreeNode)treePath.getLastPathComponent()).getUserObject();
         if (object instanceof Module) {

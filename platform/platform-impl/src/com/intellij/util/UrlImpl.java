@@ -37,7 +37,7 @@ public final class UrlImpl implements Url {
     this(null, null, path, null);
   }
 
-  public UrlImpl(@NotNull String scheme, @Nullable String authority, @Nullable String path) {
+  UrlImpl(@NotNull String scheme, @Nullable String authority, @Nullable String path) {
     this(scheme, authority, path, null);
   }
 
@@ -147,26 +147,27 @@ public final class UrlImpl implements Url {
       return true;
     }
     if (!(o instanceof UrlImpl)) {
-      if (o instanceof Url && isInLocalFileSystem()) {
-        Url url = (Url)o;
-        if (url.isInLocalFileSystem()) {
-          return url.getPath().equals(path);
-        }
-      }
       return false;
     }
 
     UrlImpl url = (UrlImpl)o;
-    if (scheme == null ? url.scheme == null : !scheme.equals(url.scheme)) {
+    return StringUtil.equals(scheme, url.scheme) && StringUtil.equals(authority, url.authority) && getPath().equals(url.getPath()) && StringUtil.equals(parameters, url.parameters);
+  }
+
+  @Override
+  public boolean equalsIgnoreCase(@Nullable Url o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof UrlImpl)) {
       return false;
     }
-    if (authority == null ? url.authority != null : !authority.equals(url.authority)) {
-      return false;
-    }
-    if (!getPath().equals(url.getPath())) {
-      return false;
-    }
-    return parameters == null ? url.parameters == null : parameters.equals(url.parameters);
+
+    UrlImpl url = (UrlImpl)o;
+    return StringUtil.equalsIgnoreCase(scheme, url.scheme) &&
+           StringUtil.equalsIgnoreCase(authority, url.authority) &&
+           getPath().equalsIgnoreCase(url.getPath()) &&
+           StringUtil.equalsIgnoreCase(parameters, url.parameters);
   }
 
   @Override
@@ -174,13 +175,25 @@ public final class UrlImpl implements Url {
     return url != null && equals(url.trimParameters());
   }
 
+  private int computeHashCode(boolean caseSensitive) {
+    int result = stringHashCode(scheme, caseSensitive);
+    result = 31 * result + stringHashCode(authority, caseSensitive);
+    result = 31 * result + stringHashCode(getPath(), caseSensitive);
+    result = 31 * result + stringHashCode(parameters, caseSensitive);
+    return result;
+  }
+
+  private static int stringHashCode(@Nullable CharSequence string, boolean caseSensitive) {
+    return string == null ? 0 : (caseSensitive ? string.hashCode() : StringUtil.stringHashCodeInsensitive(string));
+  }
+
   @Override
   public int hashCode() {
-    int result = scheme == null ? 0 : scheme.hashCode();
-    result = 31 * result + (authority != null ? authority.hashCode() : 0);
-    String decodedPath = getPath();
-    result = 31 * result + decodedPath.hashCode();
-    result = 31 * result + (parameters != null ? parameters.hashCode() : 0);
-    return result;
+    return computeHashCode(true);
+  }
+
+  @Override
+  public int hashCodeCaseInsensitive() {
+    return computeHashCode(false);
   }
 }

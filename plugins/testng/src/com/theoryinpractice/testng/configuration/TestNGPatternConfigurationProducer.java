@@ -21,17 +21,17 @@
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.Location;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
@@ -39,8 +39,8 @@ import com.intellij.psi.*;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
 import com.theoryinpractice.testng.util.TestNGUtil;
-import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -86,16 +86,32 @@ public class TestNGPatternConfigurationProducer extends TestNGConfigurationProdu
     return foundMembers;
   }
 
+  public static boolean isMultipleElementsSelected(ConfigurationContext context) {
+    if (TestsUIUtil.isMultipleSelectionImpossible(context.getDataContext())) return false;
+    final LinkedHashSet<String> classes = new LinkedHashSet<String>();
+    final PsiElement[] elements = collectPatternElements(context, classes);
+    if (elements != null && collectTestMembers(elements).size() > 1) {
+      return true;
+    }
+    return false;
+  }
+
   private static PsiElement[] collectPatternElements(ConfigurationContext context, LinkedHashSet<String> classes) {
     final DataContext dataContext = context.getDataContext();
+    final Location<?>[] locations = Location.DATA_KEYS.getData(dataContext);
+    if (locations != null) {
+      List<PsiElement> elements = new ArrayList<PsiElement>();
+      for (Location<?> location : locations) {
+        final PsiElement psiElement = location.getPsiElement();
+        classes.add(getQName(psiElement, location));
+        elements.add(psiElement);
+      }
+      return elements.toArray(new PsiElement[elements.size()]);
+    }
     PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (elements != null) {
       for (PsiMember psiMember : collectTestMembers(elements)) {
-        if (psiMember instanceof PsiClass) {
-          classes.add(((PsiClass)psiMember).getQualifiedName());
-        } else {
-          classes.add(psiMember.getContainingClass().getQualifiedName() + "," + psiMember.getName());
-        }
+        classes.add(getQName(psiMember, null));
       }
       return elements;
     } else {
@@ -107,6 +123,22 @@ public class TestNGPatternConfigurationProducer extends TestNGConfigurationProdu
         return new PsiElement[]{file};
       }
     }
+    return null;
+  }
+
+  public static String getQName(PsiElement psiMember, Location location) {
+    if (psiMember instanceof PsiClass) {
+      return ((PsiClass)psiMember).getQualifiedName();
+    }
+    else if (psiMember instanceof PsiMember) {
+      final PsiClass containingClass = location instanceof MethodLocation
+                                       ? ((MethodLocation)location).getContainingClass(): ((PsiMember)psiMember).getContainingClass();
+      assert containingClass != null;
+      return containingClass.getQualifiedName() + "," + ((PsiMember)psiMember).getName();
+    } else if (psiMember instanceof PsiPackage) {
+      return ((PsiPackage)psiMember).getQualifiedName();
+    }
+    assert false;
     return null;
   }
 

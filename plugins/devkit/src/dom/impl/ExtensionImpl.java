@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package org.jetbrains.idea.devkit.dom.impl;
 
-import com.intellij.pom.PomTarget;
-import com.intellij.pom.PomTargetPsiElement;
-import com.intellij.psi.PsiElement;
-import com.intellij.util.xml.DomTarget;
+import com.intellij.util.xml.DomElement;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 
@@ -30,10 +27,9 @@ public abstract class ExtensionImpl implements Extension {
 
   @Override
   public ExtensionPoint getExtensionPoint() {
-    PsiElement declaration = getChildDescription().getDeclaration(getManager().getProject());
-    if (declaration instanceof PomTargetPsiElement) {
-      PomTarget target = ((PomTargetPsiElement)declaration).getTarget();
-      return target instanceof DomTarget ? (ExtensionPoint)((DomTarget)target).getDomElement() : null;
+    final DomElement domDeclaration = getChildDescription().getDomDeclaration();
+    if (domDeclaration instanceof ExtensionPoint) {
+      return (ExtensionPoint)domDeclaration;
     }
     return null;
   }

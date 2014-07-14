@@ -1,6 +1,6 @@
 public class a {
   <error descr="'f(int)' is already defined in 'a'">void f(int i)</error> { }
-  <error descr="'f(int)' is already defined in 'a'">void f(int i)</error> {
+  void f(int i) {
 
     new c1() {
       <error descr="'f1()' is already defined in 'Anonymous class derived from c1'">public void f1()</error> {}

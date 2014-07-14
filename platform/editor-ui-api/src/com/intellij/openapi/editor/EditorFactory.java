@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileTypes.FileType;
@@ -29,8 +28,10 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Provides services for creating document and editor instances.
+ *
+ * Creating and releasing of editors must be done from EDT.
  */
-public abstract class EditorFactory implements ApplicationComponent {
+public abstract class EditorFactory {
   /**
    * Returns the editor factory instance.
    *
@@ -62,6 +63,8 @@ public abstract class EditorFactory implements ApplicationComponent {
   /**
    * Creates an editor for the specified document.
    *
+   * Must be invoked in EDT.
+   *
    * @param document the document to create the editor for.
    * @return the editor instance.
    * @see #releaseEditor(Editor)
@@ -71,6 +74,8 @@ public abstract class EditorFactory implements ApplicationComponent {
   /**
    * Creates a read-only editor for the specified document.
    *
+   * Must be invoked in EDT.
+   *
    * @param document the document to create the editor for.
    * @return the editor instance.
    * @see #releaseEditor(Editor)
@@ -79,6 +84,8 @@ public abstract class EditorFactory implements ApplicationComponent {
 
   /**
    * Creates an editor for the specified document associated with the specified project.
+   *
+   * Must be invoked in EDT.
    *
    * @param document the document to create the editor for.
    * @param project  the project with which the editor is associated.
@@ -90,6 +97,8 @@ public abstract class EditorFactory implements ApplicationComponent {
 
   /**
    * Creates an editor for the specified document associated with the specified project.
+   *
+   * Must be invoked in EDT.
    *
    * @param document the document to create the editor for.
    * @param project  the project for which highlighter should be created
@@ -104,6 +113,8 @@ public abstract class EditorFactory implements ApplicationComponent {
   /**
    * Creates an editor for the specified document associated with the specified project.
    *
+   * Must be invoked in EDT.
+   *
    * @param document the document to create the editor for.
    * @param project  the project for which highlighter should be created
    * @param file     the file according to which the editor contents is highlighted.
@@ -117,6 +128,8 @@ public abstract class EditorFactory implements ApplicationComponent {
   /**
    * Creates a read-only editor for the specified document associated with the specified project.
    *
+   * Must be invoked in EDT.
+   *
    * @param document the document to create the editor for.
    * @param project  the project with which the editor is associated.
    * @return the editor instance.
@@ -127,6 +140,8 @@ public abstract class EditorFactory implements ApplicationComponent {
 
   /**
    * Disposes of the specified editor instance.
+   *
+   * Must be invoked in EDT.
    *
    * @param editor the editor instance to release.
    */

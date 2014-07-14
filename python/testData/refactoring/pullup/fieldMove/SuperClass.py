@@ -1,0 +1,2 @@
+class SuperClass(object):
+   pass

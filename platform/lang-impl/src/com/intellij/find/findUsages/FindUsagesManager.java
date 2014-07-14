@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.FindBundle;
+import com.intellij.find.FindSettings;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -49,7 +50,6 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
@@ -57,22 +57,24 @@ import com.intellij.usageView.UsageViewManager;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * see {@link com.intellij.find.impl.FindManagerImpl#getFindUsagesManager()}
+ */
 public class FindUsagesManager implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.findParameterUsages.FindUsagesManager");
 
@@ -89,27 +91,8 @@ public class FindUsagesManager implements JDOMExternalizable {
   private final com.intellij.usages.UsageViewManager myAnotherManager;
   private boolean myToOpenInNewTab = true;
 
-  public static class SearchData {
-    public SmartPsiElementPointer[] myElements = null;
-    public FindUsagesOptions myOptions = null;
-
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      final SearchData that = (SearchData)o;
-
-      return Arrays.equals(myElements, that.myElements)
-             && (myOptions != null ? myOptions.equals(that.myOptions) : that.myOptions == null);
-    }
-
-    public int hashCode() {
-      return myElements != null ? Arrays.hashCode(myElements) : 0;
-    }
-  }
-
-  private SearchData myLastSearchInFileData = new SearchData();
-  private final List<SearchData> myFindUsagesHistory = ContainerUtil.createLockFreeCopyOnWriteList();
+  private PsiElement2UsageTargetComposite myLastSearchInFileData; // EDT only
+  private final UsageHistory myHistory = new UsageHistory();
 
   public FindUsagesManager(@NotNull Project project, @NotNull com.intellij.usages.UsageViewManager anotherManager) {
     myProject = project;
@@ -134,15 +117,15 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   public void clearFindingNextUsageInFile() {
-    myLastSearchInFileData.myOptions = null;
-    myLastSearchInFileData.myElements = null;
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myLastSearchInFileData = null;
   }
 
-  public boolean findNextUsageInFile(FileEditor editor) {
+  public boolean findNextUsageInFile(@NotNull FileEditor editor) {
     return findUsageInFile(editor, FileSearchScope.AFTER_CARET);
   }
 
-  public boolean findPreviousUsageInFile(FileEditor editor) {
+  public boolean findPreviousUsageInFile(@NotNull FileEditor editor) {
     return findUsageInFile(editor, FileSearchScope.BEFORE_CARET);
   }
 
@@ -157,11 +140,18 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   private boolean findUsageInFile(@NotNull FileEditor editor, @NotNull FileSearchScope direction) {
-    PsiElement[] elements = restorePsiElements(myLastSearchInFileData, true);
-    if (elements == null) return false;
-    if (elements.length == 0) return true;//all elements have invalidated
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
-    UsageInfoToUsageConverter.TargetElementsDescriptor descriptor = new UsageInfoToUsageConverter.TargetElementsDescriptor(elements);
+    if (myLastSearchInFileData == null) return false;
+    PsiElement[] primaryElements = myLastSearchInFileData.getPrimaryElements();
+    PsiElement[] secondaryElements = myLastSearchInFileData.getSecondaryElements();
+    if (primaryElements.length == 0) {//all elements have been invalidated
+        Messages.showMessageDialog(myProject, FindBundle.message("find.searched.elements.have.been.changed.error"),
+                                   FindBundle.message("cannot.search.for.usages.title"), Messages.getInformationIcon());
+        // SCR #10022
+        //clearFindingNextUsageInFile();
+        return false;
+    }
 
     //todo
     TextEditor textEditor = (TextEditor)editor;
@@ -169,53 +159,23 @@ public class FindUsagesManager implements JDOMExternalizable {
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (psiFile == null) return false;
 
-    final FindUsagesHandler handler = getFindUsagesHandler(elements[0], false);
+    final FindUsagesHandler handler = getFindUsagesHandler(primaryElements[0], false);
     if (handler == null) return false;
-    findUsagesInEditor(descriptor, handler, psiFile, direction, myLastSearchInFileData.myOptions, textEditor);
+    findUsagesInEditor(primaryElements, secondaryElements, handler, psiFile, direction, myLastSearchInFileData.myOptions, textEditor);
     return true;
   }
 
-  // returns null if cannot find, empty Pair if all elements have been changed
-  @Nullable
-  private PsiElement[] restorePsiElements(SearchData searchData, final boolean showErrorMessage) {
-    if (searchData == null) return null;
-    SmartPsiElementPointer[] lastSearchElements = searchData.myElements;
-    if (lastSearchElements == null) return null;
-    List<PsiElement> elements = new ArrayList<PsiElement>();
-    for (SmartPsiElementPointer pointer : lastSearchElements) {
-      PsiElement element = pointer.getElement();
-      if (element != null) elements.add(element);
-    }
-    if (elements.isEmpty() && showErrorMessage) {
-      Messages.showMessageDialog(myProject, FindBundle.message("find.searched.elements.have.been.changed.error"),
-                                 FindBundle.message("cannot.search.for.usages.title"), Messages.getInformationIcon());
-      // SCR #10022
-      //clearFindingNextUsageInFile();
-      return PsiElement.EMPTY_ARRAY;
-    }
 
-    return PsiUtilCore.toPsiElementArray(elements);
-  }
+  private void initLastSearchElement(@NotNull FindUsagesOptions findUsagesOptions,
+                                     @NotNull PsiElement[] primaryElements,
+                                     @NotNull PsiElement[] secondaryElements) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
-  private void initLastSearchElement(final FindUsagesOptions findUsagesOptions,
-                                     UsageInfoToUsageConverter.TargetElementsDescriptor descriptor) {
-    myLastSearchInFileData = createSearchData(descriptor.getAllElements(), findUsagesOptions);
-  }
-
-  private SearchData createSearchData(@NotNull List<? extends PsiElement> psiElements, final FindUsagesOptions findUsagesOptions) {
-    SearchData data = new SearchData();
-
-    data.myElements = new SmartPsiElementPointer[psiElements.size()];
-    int idx = 0;
-    for (PsiElement psiElement : psiElements) {
-      data.myElements[idx++] = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(psiElement);
-    }
-    data.myOptions = findUsagesOptions;
-    return data;
+    myLastSearchInFileData = new PsiElement2UsageTargetComposite(primaryElements, secondaryElements, findUsagesOptions);
   }
 
   @Nullable
-  public FindUsagesHandler getFindUsagesHandler(PsiElement element, final boolean forHighlightUsages) {
+  public FindUsagesHandler getFindUsagesHandler(@NotNull PsiElement element, final boolean forHighlightUsages) {
     for (FindUsagesHandlerFactory factory : Extensions.getExtensions(FindUsagesHandlerFactory.EP_NAME, myProject)) {
       if (factory.canFindUsages(element)) {
         final FindUsagesHandler handler = factory.createFindUsagesHandler(element, forHighlightUsages);
@@ -245,16 +205,8 @@ public class FindUsagesManager implements JDOMExternalizable {
     return null;
   }
 
-  public void findUsages(@NotNull PsiElement psiElement, final PsiFile scopeFile, final FileEditor editor, boolean showDialog) {
-    doShowDialogAndStartFind(psiElement, scopeFile, editor, showDialog, true);
-  }
-
-  private void doShowDialogAndStartFind(@NotNull PsiElement psiElement,
-                                        PsiFile scopeFile,
-                                        FileEditor editor,
-                                        boolean showDialog,
-                                        boolean useMaximalScope) {
-    FindUsagesHandler handler = getNewFindUsagesHandler(psiElement, false);
+  public void findUsages(@NotNull PsiElement psiElement, final PsiFile scopeFile, final FileEditor editor, boolean showDialog, @Nullable("null means default (stored in options)") SearchScope searchScope) {
+    FindUsagesHandler handler = getFindUsagesHandler(psiElement, false);
     if (handler == null) return;
 
     boolean singleFile = scopeFile != null;
@@ -270,9 +222,29 @@ public class FindUsagesManager implements JDOMExternalizable {
     setOpenInNewTab(dialog.isShowInSeparateWindow());
 
     FindUsagesOptions findUsagesOptions = dialog.calcFindUsagesOptions();
-    if (!showDialog && useMaximalScope) {
-      findUsagesOptions.searchScope = getMaximalScope(handler);
+    if (searchScope != null)  {
+      findUsagesOptions.searchScope = searchScope;
     }
+
+    clearFindingNextUsageInFile();
+
+    startFindUsages(findUsagesOptions, handler, scopeFile, editor);
+  }
+
+  void startFindUsages(@NotNull PsiElement psiElement,
+                       @NotNull FindUsagesOptions findUsagesOptions,
+                       PsiFile scopeFile,
+                       FileEditor editor) {
+    FindUsagesHandler handler = getFindUsagesHandler(psiElement, false);
+    if (handler == null) return;
+    startFindUsages(findUsagesOptions, handler, scopeFile, editor);
+  }
+
+  private void startFindUsages(@NotNull FindUsagesOptions findUsagesOptions,
+                               @NotNull FindUsagesHandler handler,
+                               PsiFile scopeFile,
+                               FileEditor editor) {
+    boolean singleFile = scopeFile != null;
 
     clearFindingNextUsageInFile();
     LOG.assertTrue(handler.getPsiElement().isValid());
@@ -280,76 +252,42 @@ public class FindUsagesManager implements JDOMExternalizable {
     checkNotNull(primaryElements, handler, "getPrimaryElements()");
     PsiElement[] secondaryElements = handler.getSecondaryElements();
     checkNotNull(secondaryElements, handler, "getSecondaryElements()");
-    UsageInfoToUsageConverter.TargetElementsDescriptor descriptor =
-      new UsageInfoToUsageConverter.TargetElementsDescriptor(primaryElements, secondaryElements);
     if (singleFile) {
-      findUsagesOptions = findUsagesOptions.clone();
       editor.putUserData(KEY_START_USAGE_AGAIN, null);
-      findUsagesInEditor(descriptor, handler, scopeFile, FileSearchScope.FROM_START, findUsagesOptions, editor);
+      findUsagesInEditor(primaryElements, secondaryElements, handler, scopeFile, FileSearchScope.FROM_START, findUsagesOptions.clone(), editor);
     }
     else {
-      findUsages(descriptor, handler, dialog.isSkipResultsWhenOneUsage(), dialog.isShowInSeparateWindow(), findUsagesOptions);
+      boolean skipResultsWithOneUsage = FindSettings.getInstance().isSkipResultsWithOneUsage();
+      findUsages(primaryElements, secondaryElements, handler, findUsagesOptions, skipResultsWithOneUsage);
     }
   }
 
-  public void showSettingsAndFindUsages(@NotNull NavigationItem[] targets) {
-    UsageTarget[] usageTargets = (UsageTarget[])targets;
-    PsiElement[] elements = getPsiElements(usageTargets);
-    if (elements.length == 0) return;
-    PsiElement psiElement = elements[0];
-    doShowDialogAndStartFind(psiElement, null, null, true, false);
+  public static void showSettingsAndFindUsages(@NotNull NavigationItem[] targets) {
+    if (targets.length == 0) return;
+    NavigationItem target = targets[0];
+    if (!(target instanceof ConfigurableUsageTarget)) return;
+    ((ConfigurableUsageTarget)target).showSettings();
   }
 
-  private static void checkNotNull(@NotNull PsiElement[] primaryElements,
+  private static void checkNotNull(@NotNull PsiElement[] elements,
                                    @NotNull FindUsagesHandler handler,
                                    @NonNls @NotNull String methodName) {
-    for (PsiElement element : primaryElements) {
+    for (PsiElement element : elements) {
       if (element == null) {
-        LOG.error(handler + "." + methodName + " has returned array with null elements: " + Arrays.asList(primaryElements));
+        LOG.error(handler + "." + methodName + " has returned array with null elements: " + Arrays.asList(elements));
       }
     }
   }
 
-  public boolean isUsed(@NotNull PsiElement element, @NotNull FindUsagesOptions findUsagesOptions) {
-    FindUsagesHandler handler = getFindUsagesHandler(element, true);
-    if (handler == null) return false;
-    UsageInfoToUsageConverter.TargetElementsDescriptor descriptor = new UsageInfoToUsageConverter.TargetElementsDescriptor(element);
-    UsageSearcher usageSearcher = createUsageSearcher(descriptor, handler, findUsagesOptions, null);
-    final AtomicBoolean used = new AtomicBoolean();
-    usageSearcher.generate(new Processor<Usage>() {
-      @Override
-      public boolean process(final Usage usage) {
-        if (isInComment(usage)) return true;
-        used.set(true);
-        return false;
-      }
-    });
-    return used.get();
-  }
-
-  private static boolean isInComment(Usage usage) {
-    if (!(usage instanceof UsageInfo2UsageAdapter)) return false;
-    UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
-    if (!usageInfo.isNonCodeUsage()) return false;
-    SmartPsiFileRange psiRangePointer = usageInfo.getPsiFileRange();
-    if (psiRangePointer == null) return false;
-    Segment range = psiRangePointer.getRange();
-    PsiFile file = psiRangePointer.getContainingFile();
-    if (file == null || range == null) return false;
-    PsiElement element = file.findElementAt(range.getStartOffset());
-    return element instanceof PsiComment;
-  }
 
   @NotNull
-  public static ProgressIndicator startProcessUsages(@NotNull FindUsagesHandler handler,
-                                                     @NotNull UsageInfoToUsageConverter.TargetElementsDescriptor descriptor,
+  public static ProgressIndicator startProcessUsages(@NotNull final FindUsagesHandler handler,
+                                                     @NotNull final PsiElement[] primaryElements,
+                                                     @NotNull final PsiElement[] secondaryElements,
                                                      @NotNull final Processor<Usage> processor,
-                                                     @NotNull FindUsagesOptions findUsagesOptions,
+                                                     @NotNull final FindUsagesOptions findUsagesOptions,
                                                      @NotNull final Runnable onComplete) {
-    final UsageSearcher usageSearcher = createUsageSearcher(descriptor, handler, findUsagesOptions, null);
-
     final ProgressIndicatorBase indicator = new ProgressIndicatorBase();
-    dropResolveCacheRegularly(indicator, handler.getProject());
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
@@ -357,6 +295,7 @@ public class FindUsagesManager implements JDOMExternalizable {
           ProgressManager.getInstance().runProcess(new Runnable() {
             @Override
             public void run() {
+              final UsageSearcher usageSearcher = createUsageSearcher(primaryElements, secondaryElements, handler, findUsagesOptions, null);
               usageSearcher.generate(processor);
             }
           }, indicator);
@@ -393,16 +332,26 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
 
-  private static UsageSearcher createUsageSearcher(@NotNull final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor,
+  @NotNull
+  private static UsageSearcher createUsageSearcher(@NotNull final PsiElement[] primaryElements,
+                                                   @NotNull final PsiElement[] secondaryElements,
                                                    @NotNull final FindUsagesHandler handler,
-                                                   @NotNull FindUsagesOptions _options,
+                                                   @NotNull FindUsagesOptions options,
                                                    final PsiFile scopeFile) {
-    final FindUsagesOptions options = _options.clone();
+    final FindUsagesOptions optionsClone = options.clone();
     return new UsageSearcher() {
       @Override
       public void generate(@NotNull final Processor<Usage> processor) {
+        Project project = ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
+          @Override
+          public Project compute() {
+            return scopeFile != null ? scopeFile.getProject() : primaryElements[0].getProject();
+          }
+        });
+        dropResolveCacheRegularly(ProgressManager.getInstance().getProgressIndicator(), project);
+        
         if (scopeFile != null) {
-          options.searchScope = new LocalSearchScope(scopeFile);
+          optionsClone.searchScope = new LocalSearchScope(scopeFile);
         }
         final Processor<UsageInfo> usageInfoProcessor = new CommonProcessors.UniqueProcessor<UsageInfo>(new Processor<UsageInfo>() {
           @Override
@@ -410,22 +359,19 @@ public class FindUsagesManager implements JDOMExternalizable {
             Usage usage = ApplicationManager.getApplication().runReadAction(new Computable<Usage>() {
               @Override
               public Usage compute() {
-                return UsageInfoToUsageConverter.convert(descriptor, usageInfo);
+                return UsageInfoToUsageConverter.convert(primaryElements, usageInfo);
               }
             });
             return processor.process(usage);
           }
         });
-        final List<? extends PsiElement> elements =
-          ApplicationManager.getApplication().runReadAction(new Computable<List<? extends PsiElement>>() {
-            @Override
-            public List<? extends PsiElement> compute() {
-              return descriptor.getAllElements();
-            }
-          });
+        final Iterable<PsiElement> elements = ContainerUtil.concat(primaryElements, secondaryElements);
 
-        options.fastTrack = new SearchRequestCollector(new SearchSession());
-
+        optionsClone.fastTrack = new SearchRequestCollector(new SearchSession());
+        if (optionsClone.searchScope instanceof GlobalSearchScope) {
+          // we will search in project scope always but warn if some usage is out of scope
+          optionsClone.searchScope = optionsClone.searchScope.union(GlobalSearchScope.projectScope(project));
+        }
         try {
           for (final PsiElement element : elements) {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -434,10 +380,10 @@ public class FindUsagesManager implements JDOMExternalizable {
                 LOG.assertTrue(element.isValid());
               }
             });
-            handler.processElementUsages(element, usageInfoProcessor, options);
+            handler.processElementUsages(element, usageInfoProcessor, optionsClone);
             for (CustomUsageSearcher searcher : Extensions.getExtensions(CustomUsageSearcher.EP_NAME)) {
               try {
-                searcher.processElementUsages(element, processor, options);
+                searcher.processElementUsages(element, processor, optionsClone);
               }
               catch (IndexNotReadyException e) {
                 DumbService.getInstance(element.getProject()).showDumbModeNotification("Find usages is not available during indexing");
@@ -448,14 +394,8 @@ public class FindUsagesManager implements JDOMExternalizable {
             }
           }
 
-          Project project = ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
-            @Override
-            public Project compute() {
-              return scopeFile != null ? scopeFile.getProject() : !elements.isEmpty() ? elements.get(0).getProject() : handler.getProject();
-            }
-          });
           PsiSearchHelper.SERVICE.getInstance(project)
-            .processRequests(options.fastTrack, new Processor<PsiReference>() {
+            .processRequests(optionsClone.fastTrack, new Processor<PsiReference>() {
               @Override
               public boolean process(final PsiReference ref) {
                 UsageInfo info = ApplicationManager.getApplication().runReadAction(new Computable<UsageInfo>() {
@@ -470,42 +410,45 @@ public class FindUsagesManager implements JDOMExternalizable {
             });
         }
         finally {
-          options.fastTrack = null;
+          optionsClone.fastTrack = null;
         }
       }
     };
   }
 
-
-  private static PsiElement2UsageTargetAdapter[] convertToUsageTargets(final List<? extends PsiElement> elementsToSearch) {
-    final ArrayList<PsiElement2UsageTargetAdapter> targets = new ArrayList<PsiElement2UsageTargetAdapter>(elementsToSearch.size());
-    for (PsiElement element : elementsToSearch) {
-      convertToUsageTarget(targets, element);
-    }
+  @NotNull
+  private static PsiElement2UsageTargetAdapter[] convertToUsageTargets(@NotNull Iterable<PsiElement> elementsToSearch,
+                                                                       @NotNull final FindUsagesOptions findUsagesOptions) {
+    final List<PsiElement2UsageTargetAdapter> targets = ContainerUtil.map(elementsToSearch,
+                                                                          new Function<PsiElement, PsiElement2UsageTargetAdapter>() {
+                                                                            @Override
+                                                                            public PsiElement2UsageTargetAdapter fun(PsiElement element) {
+                                                                              return convertToUsageTarget(element, findUsagesOptions);
+                                                                            }
+                                                                          });
     return targets.toArray(new PsiElement2UsageTargetAdapter[targets.size()]);
   }
 
-  private void findUsages(@NotNull final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor,
-                          @NotNull final FindUsagesHandler handler,
-                          final boolean toSkipUsagePanelWhenOneUsage,
-                          final boolean toOpenInNewTab,
-                          @NotNull final FindUsagesOptions findUsagesOptions) {
-    List<? extends PsiElement> elements = descriptor.getAllElements();
-    if (elements.isEmpty()) {
+  public void findUsages(@NotNull final PsiElement[] primaryElements,
+                         @NotNull final PsiElement[] secondaryElements,
+                         @NotNull final FindUsagesHandler handler,
+                         @NotNull final FindUsagesOptions findUsagesOptions,
+                         final boolean toSkipUsagePanelWhenOneUsage) {
+    if (primaryElements.length == 0) {
       throw new AssertionError(handler + " " + findUsagesOptions);
     }
-    final UsageTarget[] targets = convertToUsageTargets(elements);
+    Iterable<PsiElement> allElements = ContainerUtil.concat(primaryElements, secondaryElements);
+    final PsiElement2UsageTargetAdapter[] targets = convertToUsageTargets(allElements, findUsagesOptions);
     myAnotherManager.searchAndShowUsages(targets, new Factory<UsageSearcher>() {
       @Override
       public UsageSearcher create() {
-        dropResolveCacheRegularly(ProgressManager.getInstance().getProgressIndicator(), myProject);
-        return createUsageSearcher(descriptor, handler, findUsagesOptions, null);
+        return createUsageSearcher(primaryElements, secondaryElements, handler, findUsagesOptions, null);
       }
-    }, !toSkipUsagePanelWhenOneUsage, true, createPresentation(elements.get(0), findUsagesOptions, toOpenInNewTab), null);
-    addToHistory(elements, findUsagesOptions);
+    }, !toSkipUsagePanelWhenOneUsage, true, createPresentation(primaryElements[0], findUsagesOptions, shouldOpenInNewTab()), null);
+    myHistory.add(targets[0]);
   }
 
-  private static void dropResolveCacheRegularly(ProgressIndicator indicator, final Project project) {
+  private static void dropResolveCacheRegularly(ProgressIndicator indicator, @NotNull final Project project) {
     if (indicator instanceof ProgressIndicatorEx) {
       ((ProgressIndicatorEx)indicator).addStateDelegate(new ProgressIndicatorBase() {
         volatile long lastCleared = System.currentTimeMillis();
@@ -527,17 +470,15 @@ public class FindUsagesManager implements JDOMExternalizable {
 
   @NotNull
   private static UsageViewPresentation createPresentation(@NotNull PsiElement psiElement,
-                                                          @NotNull FindUsagesOptions findUsagesOptions,
+                                                          @NotNull FindUsagesOptions options,
                                                           boolean toOpenInNewTab) {
     UsageViewPresentation presentation = new UsageViewPresentation();
-    String scopeString = findUsagesOptions.searchScope == null ? null : findUsagesOptions.searchScope.getDisplayName();
+    String scopeString = options.searchScope.getDisplayName();
     presentation.setScopeText(scopeString);
-    String usagesString = generateUsagesString(findUsagesOptions);
+    String usagesString = generateUsagesString(options);
     presentation.setUsagesString(usagesString);
-    String title = scopeString == null
-                   ? FindBundle.message("find.usages.of.element.panel.title", usagesString, UsageViewUtil.getLongName(psiElement))
-                   : FindBundle.message("find.usages.of.element.in.scope.panel.title", usagesString, UsageViewUtil.getLongName(psiElement),
-                                        scopeString);
+    String title = FindBundle.message("find.usages.of.element.in.scope.panel.title", usagesString, UsageViewUtil.getLongName(psiElement),
+                         scopeString);
     presentation.setTabText(title);
     presentation.setTabName(FindBundle.message("find.usages.of.element.tab.name", usagesString, UsageViewUtil.getShortName(psiElement)));
     presentation.setTargetsNodeText(StringUtil.capitalize(UsageViewUtil.getType(psiElement)));
@@ -545,19 +486,20 @@ public class FindUsagesManager implements JDOMExternalizable {
     return presentation;
   }
 
-  private void findUsagesInEditor(@NotNull UsageInfoToUsageConverter.TargetElementsDescriptor descriptor,
+  private void findUsagesInEditor(@NotNull final PsiElement[] primaryElements,
+                                  @NotNull final PsiElement[] secondaryElements,
                                   @NotNull FindUsagesHandler handler,
                                   @NotNull PsiFile scopeFile,
                                   @NotNull FileSearchScope direction,
                                   @NotNull final FindUsagesOptions findUsagesOptions,
                                   @NotNull FileEditor fileEditor) {
-    initLastSearchElement(findUsagesOptions, descriptor);
+    initLastSearchElement(findUsagesOptions, primaryElements, secondaryElements);
 
     clearStatusBar();
 
     final FileEditorLocation currentLocation = fileEditor.getCurrentLocation();
 
-    final UsageSearcher usageSearcher = createUsageSearcher(descriptor, handler, findUsagesOptions, scopeFile);
+    final UsageSearcher usageSearcher = createUsageSearcher(primaryElements, secondaryElements, handler, findUsagesOptions, scopeFile);
     AtomicBoolean usagesWereFound = new AtomicBoolean();
 
     Usage fUsage = findSiblingUsage(usageSearcher, direction, currentLocation, usagesWereFound, fileEditor);
@@ -567,12 +509,12 @@ public class FindUsagesManager implements JDOMExternalizable {
       fUsage.selectInEditor();
     }
     else if (!usagesWereFound.get()) {
-      String message = getNoUsagesFoundMessage(descriptor.getPrimaryElements()[0]) + " in " + scopeFile.getName();
+      String message = getNoUsagesFoundMessage(primaryElements[0]) + " in " + scopeFile.getName();
       showHintOrStatusBarMessage(message, fileEditor);
     }
     else {
       fileEditor.putUserData(KEY_START_USAGE_AGAIN, VALUE_START_USAGE_AGAIN);
-      showHintOrStatusBarMessage(getSearchAgainMessage(descriptor.getPrimaryElements()[0], direction), fileEditor);
+      showHintOrStatusBarMessage(getSearchAgainMessage(primaryElements[0], direction), fileEditor);
     }
   }
 
@@ -674,16 +616,16 @@ public class FindUsagesManager implements JDOMExternalizable {
     return foundUsage.get();
   }
 
-  private static void convertToUsageTarget(@NotNull List<PsiElement2UsageTargetAdapter> targets, @NotNull PsiElement elementToSearch) {
+  private static PsiElement2UsageTargetAdapter convertToUsageTarget(@NotNull PsiElement elementToSearch,
+                                                                    @NotNull FindUsagesOptions findUsagesOptions) {
     if (elementToSearch instanceof NavigationItem) {
-      targets.add(new PsiElement2UsageTargetAdapter(elementToSearch));
+      return new PsiElement2UsageTargetAdapter(elementToSearch,findUsagesOptions);
     }
-    else {
-      throw new IllegalArgumentException("Wrong usage target:" + elementToSearch + "; " + elementToSearch.getClass());
-    }
+    throw new IllegalArgumentException("Wrong usage target:" + elementToSearch + "; " + elementToSearch.getClass());
   }
 
-  private static String generateUsagesString(final FindUsagesOptions selectedOptions) {
+  @NotNull
+  private static String generateUsagesString(@NotNull FindUsagesOptions selectedOptions) {
     return selectedOptions.generateUsagesString();
   }
 
@@ -700,54 +642,20 @@ public class FindUsagesManager implements JDOMExternalizable {
     return LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage()).getHelpId(element);
   }
 
-  private void addToHistory(final List<? extends PsiElement> elements, final FindUsagesOptions findUsagesOptions) {
-    SearchData data = createSearchData(elements, findUsagesOptions);
-    myFindUsagesHistory.remove(data);
-    myFindUsagesHistory.add(data);
-
-    // todo configure history depth limit
-    if (myFindUsagesHistory.size() > 15) {
-      myFindUsagesHistory.remove(0);
-    }
+  public void rerunAndRecallFromHistory(@NotNull ConfigurableUsageTarget usageTarget) {
+    usageTarget.findUsages();
+    addToHistory(usageTarget);
   }
 
-  public void rerunAndRecallFromHistory(@NotNull SearchData searchData) {
-    myFindUsagesHistory.remove(searchData);
-    PsiElement[] elements = restorePsiElements(searchData, true);
-    if (elements == null || elements.length == 0) return;
-    UsageInfoToUsageConverter.TargetElementsDescriptor descriptor = new UsageInfoToUsageConverter.TargetElementsDescriptor(elements);
-    final FindUsagesHandler handler = getFindUsagesHandler(elements[0], false);
-    if (handler == null) return;
-    findUsages(descriptor, handler, false, false, searchData.myOptions);
+  public void addToHistory(@NotNull ConfigurableUsageTarget usageTarget) {
+    myHistory.add(usageTarget);
   }
-
-  // most recent entry is at the end of the list
-  public List<SearchData> getFindUsageHistory() {
-    removeInvalidElementsFromHistory();
-    return Collections.unmodifiableList(myFindUsagesHistory);
-  }
-
-  private void removeInvalidElementsFromHistory() {
-    for (SearchData data : myFindUsagesHistory) {
-      PsiElement[] elements = restorePsiElements(data, false);
-      if (elements == null || elements.length == 0) myFindUsagesHistory.remove(data);
-    }
-  }
-
 
   @NotNull
-  private static PsiElement[] getPsiElements(@NotNull UsageTarget[] targets) {
-    List<PsiElement> result = new ArrayList<PsiElement>();
-    for (UsageTarget target : targets) {
-      if (target instanceof PsiElementUsageTarget) {
-        PsiElement element = ((PsiElementUsageTarget)target).getElement();
-        if (element != null) {
-          result.add(element);
-        }
-      }
-    }
-    return PsiUtilCore.toPsiElementArray(result);
+  public UsageHistory getHistory() {
+    return myHistory;
   }
+
 
   @NotNull
   public static GlobalSearchScope getMaximalScope(@NotNull FindUsagesHandler handler) {

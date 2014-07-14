@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ public class AddImportActionTest extends LightCodeInsightFixtureTestCase {
       myFixture.configureByText 'a.java', '''\
 public class Foo {
     void foo() {
-        Ma<caret>p<> l;
+        Ma<caret>p l;
     }
 }
 '''
@@ -34,7 +34,7 @@ public class Foo {
 
 public class Foo {
     void foo() {
-        Ma<caret>p<> l;
+        Ma<caret>p l;
     }
 }
 '''
@@ -45,7 +45,7 @@ public class Foo {
     myFixture.configureByText 'a.java', '''\
 public class Foo {
     void foo() {
-        Ma<caret>p<> l;
+        Ma<caret>p l;
     }
 }
 '''
@@ -54,7 +54,7 @@ public class Foo {
 
 public class Foo {
     void foo() {
-        Ma<caret>p<> l;
+        Ma<caret>p l;
     }
 }
 '''
@@ -133,8 +133,7 @@ import java.util.Collection;
 @Target(ElementType.TYPE_USE) @interface TA { }
 
 class Test {
-    @TA
-    Collection<caret> c;
+    @TA Collection<caret> c;
 }
 '''
   }
@@ -157,8 +156,7 @@ import java.util.Collection;
 @Target(ElementType.TYPE_USE) @interface TA { }
 
 class Test {
-    @TA
-    Collection<caret> c;
+    @TA Collection<caret> c;
 }
 '''
   }
@@ -177,6 +175,66 @@ class Test {
     Collection<caret> c;
 }
 '''
+  }
+
+  public void "test import class in class reference expression"() {
+    myFixture.configureByText 'a.java', '''
+class Test {
+    {
+      equals(Co<caret>llection.class);
+    }
+}
+'''
+    importClass();
+    myFixture.checkResult '''import java.util.Collection;
+
+class Test {
+    {
+      equals(Co<caret>llection.class);
+    }
+}
+'''
+  }
+
+  public void "test import class in qualifier expression"() {
+    myFixture.configureByText 'a.java', '''
+class Test {
+    {
+      equals(Co<caret>llections.emptySet());
+    }
+}
+'''
+    importClass();
+    myFixture.checkResult '''import java.util.Collections;
+
+class Test {
+    {
+      equals(Co<caret>llections.emptySet());
+    }
+}
+'''
+  }
+
+  public void "test don't import class in method call argument"() {
+    myFixture.configureByText 'a.java', '''
+class Test {
+    {
+      equals(Co<caret>llection);
+    }
+}
+'''
+    assert !myFixture.filterAvailableIntentions("Import Class")
+  }
+
+  public void "test don't import class in assignment"() {
+    myFixture.configureByText 'a.java', '''
+class Test {
+    {
+      Co<caret>llection = 2;
+    }
+}
+'''
+    assert !myFixture.filterAvailableIntentions("Import Class")
   }
 
   private def importClass() {

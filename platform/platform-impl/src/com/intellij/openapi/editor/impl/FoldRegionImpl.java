@@ -91,7 +91,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
 
   @Override
   public boolean isValid() {
-    return super.isValid() && intervalStart() + 1 < intervalEnd();
+    return super.isValid() && intervalStart() < intervalEnd();
   }
 
   public void setExpandedInternal(boolean toExpand) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,19 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.sorters.SortByDownloadsAction;
+import com.intellij.ide.plugins.sorters.SortByRatingAction;
+import com.intellij.ide.plugins.sorters.SortByUpdatedAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TableUtil;
 import com.intellij.util.net.HTTPProxySettingsDialog;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -84,6 +88,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
       }
     });
     myActionsPanel.add(httpProxySettingsButton, BorderLayout.WEST);
+    myPanelDescription.setVisible(false);
   }
 
   @Override
@@ -92,17 +97,12 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     model.setVendor(myVendorFilter);
     pluginsModel = model;
     pluginTable = new PluginTable(pluginsModel);
-    pluginTable.getTableHeader().setReorderingAllowed(false);
-    pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_DOWNLOADS, 70);
-    pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_DATE, 80);
-    pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_RATE, 80);
-
     return ScrollPaneFactory.createScrollPane(pluginTable);
   }
 
   @Override
-  protected void installTableActions(final PluginTable pluginTable) {
-    super.installTableActions(pluginTable);
+  protected void installTableActions() {
+    super.installTableActions();
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
@@ -140,7 +140,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
         }
       }
       if (enabled) {
-        new ActionInstallPlugin(this, installed).install();
+        new ActionInstallPlugin(this, installed).install(null);
       }
       return true;
     }
@@ -159,29 +159,49 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
   }
 
   @Override
+  protected PluginManagerMain getAvailable() {
+    return this;
+  }
+
+  @Override
+  protected PluginManagerMain getInstalled() {
+    return installed;
+  }
+
+  @Override
   protected ActionGroup getActionGroup(boolean inToolbar) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(new RefreshAction());
-    actionGroup.add(Separator.getInstance());
-    actionGroup.add(new ActionInstallPlugin(this, installed));
+
     if (inToolbar) {
-      actionGroup.add(new SortByStatusAction("Sort Installed First"));
       actionGroup.add(new MyFilterRepositoryAction());
       actionGroup.add(new MyFilterCategoryAction());
+    }
+    else {
+      actionGroup.add(createSortersGroup());
+      actionGroup.add(Separator.getInstance());
+      actionGroup.add(new ActionInstallPlugin(getAvailable(), getInstalled()));
     }
     return actionGroup;
   }
 
   @Override
   protected boolean acceptHost(String host) {
-    final String repository = ((AvailablePluginsTableModel)pluginsModel).getRepository();
-    if (AvailablePluginsTableModel.ALL.equals(repository)) return true;
-    return Comparing.equal(host, repository);
+    return ((AvailablePluginsTableModel)pluginsModel).isHostAccepted(host);
   }
 
   @Override
   protected void propagateUpdates(List<IdeaPluginDescriptor> list) {
     installed.modifyPluginsList(list); //propagate updates
+  }
+
+  @Override
+  protected DefaultActionGroup createSortersGroup() {
+    final DefaultActionGroup group = super.createSortersGroup();
+    group.addAction(new SortByDownloadsAction(pluginTable, pluginsModel));
+    group.addAction(new SortByRatingAction(pluginTable, pluginsModel));
+    group.addAction(new SortByUpdatedAction(pluginTable, pluginsModel));
+    return group;
   }
 
   private class MyFilterCategoryAction extends ComboBoxAction implements DumbAware{
@@ -229,7 +249,8 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setVisible(!UpdateSettings.getInstance().myPluginHosts.isEmpty());
+      boolean empty = UpdateSettings.getInstance().myPluginHosts.isEmpty();
+      e.getPresentation().setVisible(!empty || ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl() != null);
       String repository = ((AvailablePluginsTableModel)pluginsModel).getRepository();
       if (repository.length() > LENGTH) {
         repository = repository.substring(0, LENGTH) + "...";
@@ -243,6 +264,9 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
       final DefaultActionGroup gr = new DefaultActionGroup();
       gr.add(createFilterByRepositoryAction(AvailablePluginsTableModel.ALL));
       gr.add(createFilterByRepositoryAction(AvailablePluginsTableModel.JETBRAINS_REPO));
+      if (ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl() != null) {
+        gr.add(createFilterByRepositoryAction(AvailablePluginsTableModel.BUILTIN_REPO));
+      }
       for (final String host : UpdateSettings.getInstance().myPluginHosts) {
         gr.add(createFilterByRepositoryAction(host));
       }
@@ -255,6 +279,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
         public void actionPerformed(AnActionEvent e) {
           final String filter = myFilter.getFilter().toLowerCase();
           ((AvailablePluginsTableModel)pluginsModel).setRepository(host, filter);
+          TableUtil.ensureSelectionExists(getPluginTable());
         }
       };
     }

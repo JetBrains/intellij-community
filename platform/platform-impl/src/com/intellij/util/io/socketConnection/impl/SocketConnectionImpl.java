@@ -18,6 +18,7 @@ package com.intellij.util.io.socketConnection.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.socketConnection.*;
+import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -71,7 +72,7 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
         host = InetAddress.getLocalHost();
       }
       catch (UnknownHostException ignored) {
-        host = InetAddress.getByName(null);
+        host = NetUtils.getLoopbackAddress();
       }
     }
 
@@ -87,6 +88,56 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
       }
     }
     throw exc;
+  }
+
+  public void connect() {
+    setStatus(ConnectionStatus.WAITING_FOR_CONNECTION, null);
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        Exception exception = null;
+        InetAddress host = myHost;
+        if (host == null) {
+          host = NetUtils.getLoopbackAddress();
+        }
+
+        for (int attempt = 0; attempt < MAX_CONNECTION_ATTEMPTS; attempt++) {
+          for (int i = 0; i < myPortsNumberToTry; i++) {
+            Socket socket;
+            try {
+              //noinspection SocketOpenedButNotSafelyClosed
+              socket = new Socket(host, myInitialPort + i);
+            }
+            catch (IOException e) {
+              LOG.debug(e);
+              exception = e;
+              continue;
+            }
+
+            setPort(socket.getPort());
+            try {
+              attachToSocket(socket);
+            }
+            catch (IOException e) {
+              LOG.info(e);
+            }
+            return;
+          }
+
+          try {
+            //noinspection BusyWait
+            Thread.sleep(CONNECTION_ATTEMPT_DELAY);
+          }
+          catch (InterruptedException e) {
+            exception = e;
+            break;
+          }
+        }
+
+        setStatus(ConnectionStatus.CONNECTION_FAILED,
+                  exception == null ? "Connection failed" : "Connection failed: " + exception.getMessage());
+      }
+    });
   }
 
   @Override

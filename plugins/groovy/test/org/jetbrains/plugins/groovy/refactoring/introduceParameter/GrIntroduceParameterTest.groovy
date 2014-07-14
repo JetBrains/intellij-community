@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,10 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.refactoring.IntroduceParameterRefactoring
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import gnu.trove.TIntArrayList
 import gnu.trove.TObjectIntHashMap
-import junit.framework.Assert
 import org.jetbrains.annotations.Nullable
+import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
@@ -37,10 +36,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.*
 import org.jetbrains.plugins.groovy.util.TestUtils
+import org.junit.Assert
+
 /**
  * @author Maxim.Medvedev
  */
-public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
+public class GrIntroduceParameterTest extends LightGroovyTestCase {
 
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "refactoring/introduceParameterGroovy/" + getTestName(true) + '/';
@@ -122,37 +123,32 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
                       final Project project,
                       final Editor editor,
                       final PsiFile file) {
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              final GrIntroduceParameterHandler hackedHandler = new GrIntroduceParameterHandler() {
-                @Override
-                protected void showDialog(IntroduceParameterInfo info) {
-                  final GrIntroduceParameterSettings hackedSettings = GrIntroduceParameterTest.getSettings(info, removeUnusedParameters, replaceFieldsWithGetters, declareFinal, generateDelegate);
-                  if (info.getToReplaceIn() instanceof GrMethod) {
-                    new GrIntroduceParameterProcessor(hackedSettings).run();
-                  }
-                  else {
-                    new GrIntroduceClosureParameterProcessor(hackedSettings).run();
-                  }
-                }
-              };
-              hackedHandler.invoke(project, editor, file, null);
-              if (conflicts != null) fail("Conflicts were expected");
-            }
-            catch (Exception e) {
-              if (conflicts == null) {
-                e.printStackTrace();
-                fail("Conflicts were not expected");
+    CommandProcessor.instance.executeCommand(project, {
+      ApplicationManager.application.runWriteAction {
+        try {
+          final GrIntroduceParameterHandler hackedHandler = new GrIntroduceParameterHandler() {
+            @Override
+            protected void showDialog(IntroduceParameterInfo info) {
+              final GrIntroduceParameterSettings hackedSettings =
+                getSettings(info, removeUnusedParameters, replaceFieldsWithGetters, declareFinal, generateDelegate);
+              if (info.getToReplaceIn() instanceof GrMethod) {
+                new GrIntroduceParameterProcessor(hackedSettings).run();
               }
-              Assert.assertEquals(conflicts, e.getMessage());
+              else {
+                new GrIntroduceClosureParameterProcessor(hackedSettings).run();
+              }
             }
+          };
+          hackedHandler.invoke(project, editor, file, null);
+          if (conflicts != null) fail("Conflicts were expected");
+        }
+        catch (Exception e) {
+          if (conflicts == null) {
+            e.printStackTrace();
+            fail("Conflicts were not expected");
           }
-        });
+          Assert.assertEquals(conflicts, e.getMessage());
+        }
       }
     }, "introduce Parameter", null);
   }
@@ -173,11 +169,10 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
 
     final GrStatement[] statements = context.getStatements()
     GrExpression expr = statements.length == 1 ? GrIntroduceHandlerBase.findExpression(statements[0]) : null;
-    GrVariable var = statements.length == 1 ? GrIntroduceHandlerBase.findVariable(context.getStatements()[0]) : null;
-    final PsiType type = TypesUtil.
-      unboxPrimitiveTypeWrapper(var != null ? var.getType() : expr != null ? expr.getType() : context.stringPartInfo.literal.type);
+    GrVariable var = context.var
+    final PsiType type = TypesUtil.unboxPrimitiveTypeWrapper(var != null ? var.getType() : expr != null ? expr.getType() : context.stringPartInfo.literal.type);
     return new GrIntroduceExpressionSettingsImpl(context, "anObject", declareFinal, toRemove, generateDelegate, replaceFieldsWithGetters,
-                                                 expr, var, type, true);
+                                                 expr, var, type, var !=null, var != null, true);
   }
   
   
@@ -355,6 +350,44 @@ class X {
 
 print new X(2) {
 }
+''')
+  }
+
+
+  void testNullType() {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false, '''\
+def foo() {
+    def a = '4'
+    <selection>print a</selection>
+}
+
+foo()
+''', '''\
+def foo(anObject) {
+    def a = '4'
+    anObject
+}
+
+foo(print(a))
+''')
+  }
+
+  void testIntroduceFromLocalVar() {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false, '''\
+def foo() {
+    def <selection>var = 5</selection>
+
+    print var + var
+}
+
+foo()
+''', '''\
+def foo(anObject) {
+
+    print anObject + anObject
+}
+
+foo(5)
 ''')
   }
 }

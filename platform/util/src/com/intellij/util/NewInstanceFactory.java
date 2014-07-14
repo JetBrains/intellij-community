@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Factory;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Constructor;
 
@@ -25,7 +26,7 @@ public class NewInstanceFactory<T> implements Factory<T> {
   private final Constructor myConstructor;
   private final Object[] myArgs;
 
-  private NewInstanceFactory(Constructor constructor, Object[] args) {
+  private NewInstanceFactory(@NotNull Constructor constructor, @NotNull Object[] args) {
     myConstructor = constructor;
     myArgs = args;
   }
@@ -41,7 +42,7 @@ public class NewInstanceFactory<T> implements Factory<T> {
     }
   }
 
-  public static <T> Factory<T> fromClass(final Class<T> clazz) {
+  public static <T> Factory<T> fromClass(@NotNull final Class<T> clazz) {
     try {
       return new NewInstanceFactory<T>(clazz.getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY), ArrayUtil.EMPTY_OBJECT_ARRAY);
     }

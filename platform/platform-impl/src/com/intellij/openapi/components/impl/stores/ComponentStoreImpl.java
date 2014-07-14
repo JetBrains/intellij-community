@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashMap;
@@ -281,7 +280,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
 
     nextSuperClass:
     while (true) {
-      final Class[] interfaces = ReflectionCache.getInterfaces(componentClass);
+      final Class[] interfaces = componentClass.getInterfaces();
 
       for (Class anInterface : interfaces) {
         if (anInterface.equals(persistentStateComponentClass)) {

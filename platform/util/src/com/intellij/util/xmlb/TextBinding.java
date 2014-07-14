@@ -32,6 +32,7 @@ public class TextBinding implements Binding {
   @Override
   public Object serialize(Object o, Object context, SerializationFilter filter) {
     final Object v = myAccessor.read(o);
+    if (v == null) return context;
     final Object node = myBinding.serialize(v, context, filter);
 
     return new Text(((Content)node).getValue());

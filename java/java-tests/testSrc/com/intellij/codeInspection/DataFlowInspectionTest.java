@@ -16,17 +16,10 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.ConditionCheckManager;
-import com.intellij.codeInsight.ConditionChecker;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
 
 /**
  * @author peter
@@ -78,7 +71,11 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testGeneratedEquals() throws Throwable { doTest(); }
 
   public void testIDEA84489() throws Throwable { doTest(); }
+  public void testComparingNullToNotNull() { doTest(); }
+  public void testComparingNullableToNullable() { doTest(); }
+  public void testComparingNullableToUnknown() { doTest(); }
   public void testComparingToNotNullShouldNotAffectNullity() throws Throwable { doTest(); }
+  public void testComparingToNullableShouldNotAffectNullity() throws Throwable { doTest(); }
   public void testStringTernaryAlwaysTrue() throws Throwable { doTest(); }
   public void testStringConcatAlwaysNotNull() throws Throwable { doTest(); }
 
@@ -104,6 +101,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testChainedFinalFieldAccessorsDfa() throws Throwable { doTest(); }
   public void testAccessorPlusMutator() throws Throwable { doTest(); }
   public void testClosureVariableField() throws Throwable { doTest(); }
+  public void testOptionalThis() { doTest(); }
 
   public void testAssigningNullableToNotNull() throws Throwable { doTest(); }
   public void testAssigningUnknownToNullable() throws Throwable { doTest(); }
@@ -125,7 +123,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testPrimitiveCastMayChangeValue() throws Throwable { doTest(); }
 
   public void testPassingNullableIntoVararg() throws Throwable { doTest(); }
-  public void testEqualsImpliesNotNull() throws Throwable { doTest(); }
+  public void testEqualsImpliesNotNull() throws Throwable { doTestReportConstantReferences(); }
   public void testEffectivelyUnqualified() throws Throwable { doTest(); }
 
   public void testSkipAssertions() {
@@ -177,6 +175,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testConstantDoubleComparisons() { doTest(); }
+  public void testInherentNumberRanges() { doTest(); }
 
   public void testMutableNullableFieldsTreatment() { doTest(); }
   public void testMutableVolatileNullableFieldsTreatment() { doTest(); }
@@ -186,9 +185,11 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
 
   public void testMethodCallFlushesField() { doTest(); }
   public void testUnknownFloatMayBeNaN() { doTest(); }
+  public void testFloatEquality() { doTest(); }
   public void testLastConstantConditionInAnd() { doTest(); }
 
   public void testTransientFinalField() { doTest(); }
+  public void testFinalFieldDuringInitialization() { doTest(); }
   public void _testSymmetricUncheckedCast() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEABKL-6871
   public void testNullCheckDoesntAffectUncheckedCast() { doTest(); }
   public void testThrowNull() { doTest(); }
@@ -201,65 +202,6 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
 
   public void testHonorGetterAnnotation() { doTest(); }
 
-  public void testIsNullCheck() throws Exception {
-    ConditionCheckManager.getInstance(myModule.getProject()).getIsNullCheckMethods().add(
-      buildConditionChecker("Value", "isNull", ConditionChecker.Type.IS_NULL_METHOD,
-                            "public class Value { public static boolean isNull(Value o) {if (o == null) return true; else return false;} }"));
-    doTest();
-  }
-
-  public void testIsNotNullCheck() throws Exception {
-    ConditionCheckManager.getInstance(myModule.getProject()).getIsNotNullCheckMethods().add(
-      buildConditionChecker("Value", "isNotNull", ConditionChecker.Type.IS_NOT_NULL_METHOD,
-                            "public class Value { public static boolean isNotNull(Value o) {if (o == null) return false; else return true;} }"));
-    doTest();
-  }
-
-  public void testAssertTrue() throws Exception {
-    ConditionCheckManager.getInstance(myModule.getProject()).getAssertTrueMethods().add(
-      buildConditionChecker("Assertions", "assertTrue", ConditionChecker.Type.ASSERT_TRUE_METHOD,
-                            "public class Assertions { public static boolean assertTrue(boolean b) {if(!b) throw new Exception();} }"));
-    doTest();
-  }
-
-  public void testAssertFalse() throws Exception {
-    ConditionCheckManager.getInstance(myModule.getProject()).getAssertFalseMethods().add(
-      buildConditionChecker("Assertions", "assertFalse", ConditionChecker.Type.ASSERT_FALSE_METHOD,
-                            "public class Assertions { public static boolean assertFalse(boolean b) {if(b) throw new Exception();} }"));
-    doTest();
-  }
-
-  public void testAssertIsNull() throws Exception {
-    ConditionCheckManager.getInstance(myModule.getProject()).getAssertIsNullMethods().add(
-      buildConditionChecker("Assertions", "assertIsNull", ConditionChecker.Type.ASSERT_IS_NULL_METHOD,
-                            "public class Assertions { public static boolean assertIsNull(Object o) {if(o != null) throw new Exception();} }"));
-    doTest();
-  }
-
-  public void testAssertIsNotNull() throws Exception {
-    ConditionCheckManager.getInstance(myModule.getProject()).getAssertIsNotNullMethods().add(
-      buildConditionChecker("Assertions", "assertIsNotNull", ConditionChecker.Type.ASSERT_IS_NOT_NULL_METHOD,
-                            "public class Assertions { public static boolean assertIsNotNull(Object o) {if(o == null) throw new Exception();} }"));
-    doTest();
-  }
-
-  @Nullable
-  private ConditionChecker buildConditionChecker(String className, String methodName, ConditionChecker.Type type, String classText)
-    throws IOException {
-    myFixture.addClass(classText);
-    PsiClass psiClass = myFixture.findClass(className);
-    PsiMethod psiMethod = null;
-    PsiMethod[] methods = psiClass.getMethods();
-    for (PsiMethod tempPsiMethod : methods) {
-      if (tempPsiMethod.getName().equals(methodName)) {
-        psiMethod = tempPsiMethod;
-        break;
-      }
-    }
-    assert psiMethod != null;
-    return new ConditionChecker.FromPsiBuilder(psiMethod, psiMethod.getParameterList().getParameters()[0], type).build();
-  }
-
   public void testIgnoreAssertions() {
     final DataFlowInspection inspection = new DataFlowInspection();
     inspection.IGNORE_ASSERT_STATEMENTS = true;
@@ -268,10 +210,13 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testContractAnnotation() { doTest(); }
+  public void testContractInapplicableComparison() { doTest(); }
   public void testContractInLoopNotTooComplex() { doTest(); }
   public void testContractWithNullable() { doTest(); }
+  public void testContractWithNotNull() { doTest(); }
   public void testContractPreservesUnknownNullability() { doTest(); }
   public void testContractSeveralClauses() { doTest(); }
+  public void testContractVarargs() { doTest(); }
 
   public void testBoxingImpliesNotNull() { doTest(); }
   public void testLargeIntegersAreNotEqualWhenBoxed() { doTest(); }
@@ -283,11 +228,17 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testNoConfusionWithAnonymousConstantInitializer() { doTest(); }
   public void testForeachOverWildcards() { doTest(); }
   public void testFinalGetter() { doTest(); }
-  
+
+  public void testByteBufferGetter() {
+    myFixture.addClass("package java.nio; public class MappedByteBuffer { public int getInt() {} }");
+    doTest();
+  }
+
   public void testManySequentialIfsNotComplex() { doTest(); }
   public void testManySequentialInstanceofsNotComplex() { doTest(); }
   public void testLongDisjunctionsNotComplex() { doTest(); }
   public void testWhileNotComplex() { doTest(); }
+  public void testAssertTrueNotComplex() { doTest(); }
   public void testManyDisjunctiveFieldAssignmentsInLoopNotComplex() { doTest(); }
   public void testManyContinuesNotComplex() { doTest(); }
   public void testFinallyNotComplex() { doTest(); }
@@ -297,6 +248,38 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testDontForgetInstanceofInfoWhenMerging() { doTest(); }
   public void testDontForgetEqInfoWhenMergingByType() { doTest(); }
   public void testDontMakeNullableAfterInstanceof() { doTest(); }
+  public void testDontMakeUnrelatedVariableNotNullWhenMerging() { doTest(); }
+  public void testDontMakeUnrelatedVariableFalseWhenMerging() { doTest(); }
+  public void testDontLoseInequalityInformation() { doTest(); }
+  
+  public void testNotEqualsTypo() { doTest(); }
+  public void testAndEquals() { doTest(); }
+
+  public void testUnusedCallDoesNotMakeUnknown() { doTest(); }
+  public void testGettersAndPureNoFlushing() { doTest(); }
+  
+  public void testNotNullAfterDereference() { doTest(); }
+
+  public void testNullableBoolean() { doTest(); }
+
+  public void testSameComparisonTwice() { doTest(); }
+  public void testRootThrowableCause() { doTest(); }
+
+  public void testParametersAreNonnullByDefault() {
+    myFixture.addClass("package javax.annotation; public @interface ParametersAreNonnullByDefault {}");
+    myFixture.addClass("package javax.annotation; public @interface ParametersAreNullableByDefault {}");
+    
+    myFixture.addClass("package foo; public class AnotherPackageNotNull { public static void foo(String s) {}}");
+    myFixture.addFileToProject("foo/package-info.java", "@javax.annotation.ParametersAreNonnullByDefault package foo;");
+    
+    doTest(); 
+  }
+
+  public void testTrueOrEqualsSomething() {
+    doTest();
+    myFixture.launchAction(myFixture.findSingleIntention("Remove redundant assignment"));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
   
   public void _testNullCheckBeforeInstanceof() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEA-113220
 }

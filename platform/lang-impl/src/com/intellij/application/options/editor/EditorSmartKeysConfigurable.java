@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,8 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
   private JCheckBox myCbInsertPairCurlyBraceOnEnter;
   private JCheckBox myCbInsertJavadocStubOnEnter;
   private JCheckBox myCbSurroundSelectionOnTyping;
+  private JCheckBox myCbReformatBlockOnTypingRBrace;
+  private JCheckBox myCbIndentingBackspace;
   private boolean myAddonsInitialized = false;
 
   private static final String NO_REFORMAT = ApplicationBundle.message("combobox.paste.reformat.none");
@@ -154,9 +156,12 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
 
     myCbInsertPairBracket.setSelected(codeInsightSettings.AUTOINSERT_PAIR_BRACKET);
     myCbInsertPairQuote.setSelected(codeInsightSettings.AUTOINSERT_PAIR_QUOTE);
+    myCbReformatBlockOnTypingRBrace.setSelected(codeInsightSettings.REFORMAT_BLOCK_ON_RBRACE);
     myCbCamelWords.setSelected(editorSettings.isCamelWords());
 
     myCbSurroundSelectionOnTyping.setSelected(codeInsightSettings.SURROUND_SELECTION_ON_QUOTE_TYPED);
+
+    myCbIndentingBackspace.setSelected(codeInsightSettings.SMART_BACKSPACE == CodeInsightSettings.AUTOINDENT);
 
     super.reset();
   }
@@ -173,9 +178,11 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     codeInsightSettings.JAVADOC_STUB_ON_ENTER = myCbInsertJavadocStubOnEnter.isSelected();
     codeInsightSettings.AUTOINSERT_PAIR_BRACKET = myCbInsertPairBracket.isSelected();
     codeInsightSettings.AUTOINSERT_PAIR_QUOTE = myCbInsertPairQuote.isSelected();
+    codeInsightSettings.REFORMAT_BLOCK_ON_RBRACE = myCbReformatBlockOnTypingRBrace.isSelected();
     codeInsightSettings.SURROUND_SELECTION_ON_QUOTE_TYPED = myCbSurroundSelectionOnTyping.isSelected();
     editorSettings.setCamelWords(myCbCamelWords.isSelected());
     codeInsightSettings.REFORMAT_ON_PASTE = getReformatPastedBlockValue();
+    codeInsightSettings.SMART_BACKSPACE = myCbIndentingBackspace.isSelected() ? CodeInsightSettings.AUTOINDENT : CodeInsightSettings.OFF;
 
     super.apply();
   }
@@ -196,9 +203,12 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
 
     isModified |= isModified(myCbInsertPairBracket, codeInsightSettings.AUTOINSERT_PAIR_BRACKET);
     isModified |= isModified(myCbInsertPairQuote, codeInsightSettings.AUTOINSERT_PAIR_QUOTE);
+    isModified |= isModified(myCbReformatBlockOnTypingRBrace, codeInsightSettings.REFORMAT_BLOCK_ON_RBRACE);
     isModified |= isModified(myCbCamelWords, editorSettings.isCamelWords());
 
     isModified |= isModified(myCbSurroundSelectionOnTyping, codeInsightSettings.SURROUND_SELECTION_ON_QUOTE_TYPED);
+
+    isModified |= isModified(myCbIndentingBackspace, codeInsightSettings.SMART_BACKSPACE == CodeInsightSettings.AUTOINDENT);
 
     return isModified;
 

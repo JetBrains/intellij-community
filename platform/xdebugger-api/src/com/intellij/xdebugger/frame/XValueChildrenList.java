@@ -33,17 +33,25 @@ public class XValueChildrenList {
   public static final XValueChildrenList EMPTY = new XValueChildrenList(Collections.<String>emptyList(), Collections.<XValue>emptyList());
   private final List<String> myNames;
   private final List<XValue> myValues;
-  private List<XValueGroup> myTopGroups = new SmartList<XValueGroup>();
-  private List<XValueGroup> myBottomGroups = new SmartList<XValueGroup>();
+  private final List<XValueGroup> myTopGroups;
+  private final List<XValueGroup> myBottomGroups = new SmartList<XValueGroup>();
 
   public XValueChildrenList(int initialCapacity) {
-    myNames = new ArrayList<String>(initialCapacity);
-    myValues = new ArrayList<XValue>(initialCapacity);
+    this(new ArrayList<String>(initialCapacity), new ArrayList<XValue>(initialCapacity), new SmartList<XValueGroup>());
   }
 
   public XValueChildrenList() {
-    myNames = new SmartList<String>();
-    myValues = new SmartList<XValue>();
+    this(new SmartList<String>(), new SmartList<XValue>(), new SmartList<XValueGroup>());
+  }
+
+  private XValueChildrenList(@NotNull List<String> names, @NotNull List<XValue> values, @NotNull List<XValueGroup> topGroups) {
+    myNames = names;
+    myValues = values;
+    myTopGroups = topGroups;
+  }
+
+  private XValueChildrenList(List<String> names, List<XValue> values) {
+    this(names, values, new SmartList<XValueGroup>());
   }
 
   public static XValueChildrenList singleton(String name, @NotNull XValue value) {
@@ -60,9 +68,8 @@ public class XValueChildrenList {
     return list;
   }
 
-  private XValueChildrenList(List<String> names, List<XValue> values) {
-    myNames = names;
-    myValues = values;
+  public static XValueChildrenList topGroups(@NotNull List<XValueGroup> topGroups) {
+    return new XValueChildrenList(Collections.<String>emptyList(), Collections.<XValue>emptyList(), topGroups);
   }
 
   public void add(@NonNls String name, @NotNull XValue value) {

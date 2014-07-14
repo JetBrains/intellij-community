@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,12 @@ public class PsiElementMemberChooserObject extends MemberChooserObjectBase {
     myPsiElement = psiElement;
   }
 
-  public PsiElementMemberChooserObject(final PsiElement psiElement, final String text, @Nullable final Icon icon) {
+  public PsiElementMemberChooserObject(@NotNull PsiElement psiElement, final String text, @Nullable final Icon icon) {
     super(text, icon);
     myPsiElement = psiElement;
   }
 
+  @NotNull
   public PsiElement getPsiElement() {
     return myPsiElement;
   }

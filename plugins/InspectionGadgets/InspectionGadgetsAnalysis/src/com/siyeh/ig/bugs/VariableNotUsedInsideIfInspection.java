@@ -17,6 +17,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -56,7 +57,7 @@ public class VariableNotUsedInsideIfInspection extends BaseInspection {
     @Override
     public void visitConditionalExpression(PsiConditionalExpression expression) {
       super.visitConditionalExpression(expression);
-      final PsiExpression condition = expression.getCondition();
+      final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(expression.getCondition());
       if (!(condition instanceof PsiBinaryExpression)) {
         return;
       }

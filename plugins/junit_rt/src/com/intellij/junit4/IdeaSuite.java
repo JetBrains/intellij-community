@@ -52,9 +52,9 @@ class IdeaSuite extends Suite {
     try {
       final Method getFilteredChildrenMethod = ParentRunner.class.getDeclaredMethod("getFilteredChildren", new Class[0]);
       getFilteredChildrenMethod.setAccessible(true);
-      List filteredChildren = (List)getFilteredChildrenMethod.invoke(this, new Object[0]);
-      for (int i = 0, filteredChildrenSize = filteredChildren.size(); i < filteredChildrenSize; i++) {
-        Object child = filteredChildren.get(i);
+      Collection filteredChildren = (Collection)getFilteredChildrenMethod.invoke(this, new Object[0]);
+      for (Iterator iterator = filteredChildren.iterator(); iterator.hasNext();) {
+        Object child = iterator.next();
         description.addChild(describeChild((Runner)child));
       }
     }
@@ -78,7 +78,7 @@ class IdeaSuite extends Suite {
   }
 
   protected List getChildren() {
-    final List children = super.getChildren();
+    final List children = new ArrayList(super.getChildren());
     final Set allNames = new HashSet();
     for (Iterator iterator = children.iterator(); iterator.hasNext();) {
       final Object child = iterator.next();

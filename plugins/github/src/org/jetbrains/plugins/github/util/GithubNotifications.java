@@ -15,64 +15,52 @@
  */
 package org.jetbrains.plugins.github.util;
 
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import git4idea.Notificator;
+import com.intellij.openapi.vcs.VcsNotifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 
 import java.awt.*;
 
 import static org.jetbrains.plugins.github.util.GithubUtil.getErrorTextFromException;
 
-/**
- * @author Aleksey Pivovarov
- */
 public class GithubNotifications {
   private static final Logger LOG = GithubUtil.LOG;
 
-  private static final String GITHUB_NOTIFICATION_GROUP = "github";
-
   public static void showInfo(@NotNull Project project, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
-    Notification notification = new Notification(GITHUB_NOTIFICATION_GROUP, title, message, NotificationType.INFORMATION);
-    Notificator.getInstance(project).notify(notification);
+    VcsNotifier.getInstance(project).notifyImportantInfo(title, message);
   }
 
   public static void showWarning(@NotNull Project project, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
-    Notification notification = new Notification(GITHUB_NOTIFICATION_GROUP, title, message, NotificationType.WARNING);
-    Notificator.getInstance(project).notify(notification);
+    VcsNotifier.getInstance(project).notifyImportantWarning(title, message);
   }
 
   public static void showError(@NotNull Project project, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
-    Notification notification = new Notification(GITHUB_NOTIFICATION_GROUP, title, message, NotificationType.ERROR);
-    Notificator.getInstance(project).notify(notification);
+    VcsNotifier.getInstance(project).notifyError(title, message);
   }
 
   public static void showError(@NotNull Project project, @NotNull String title, @NotNull String message, @NotNull String logDetails) {
     LOG.warn(title + "; " + message + "; " + logDetails);
-    Notification notification = new Notification(GITHUB_NOTIFICATION_GROUP, title, message, NotificationType.ERROR);
-    Notificator.getInstance(project).notify(notification);
+    VcsNotifier.getInstance(project).notifyError(title, message);
   }
 
   public static void showError(@NotNull Project project, @NotNull String title, @NotNull Exception e) {
     LOG.warn(title + "; ", e);
-    Notification notification = new Notification(GITHUB_NOTIFICATION_GROUP, title, getErrorTextFromException(e), NotificationType.ERROR);
-    Notificator.getInstance(project).notify(notification);
+    if (e instanceof GithubOperationCanceledException) return;
+    VcsNotifier.getInstance(project).notifyError(title, getErrorTextFromException(e));
   }
 
   public static void showInfoURL(@NotNull Project project, @NotNull String title, @NotNull String message, @NotNull String url) {
     LOG.info(title + "; " + message + "; " + url);
-    Notification notification =
-      new Notification(GITHUB_NOTIFICATION_GROUP, title, "<a href='" + url + "'>" + message + "</a>", NotificationType.INFORMATION,
-                       NotificationListener.URL_OPENING_LISTENER);
-    Notificator.getInstance(project).notify(notification);
+    VcsNotifier.getInstance(project)
+      .notifyImportantInfo(title, "<a href='" + url + "'>" + message + "</a>", NotificationListener.URL_OPENING_LISTENER);
   }
 
   public static void showWarningURL(@NotNull Project project,
@@ -82,10 +70,8 @@ public class GithubNotifications {
                                     @NotNull String postfix,
                                     @NotNull String url) {
     LOG.info(title + "; " + prefix + highlight + postfix + "; " + url);
-    Notification notification =
-      new Notification(GITHUB_NOTIFICATION_GROUP, title, prefix + "<a href='" + url + "'>" + highlight + "</a>" + postfix,
-                       NotificationType.WARNING, NotificationListener.URL_OPENING_LISTENER);
-    Notificator.getInstance(project).notify(notification);
+    VcsNotifier.getInstance(project).notifyImportantWarning(title, prefix + "<a href='" + url + "'>" + highlight + "</a>" + postfix,
+                                                            NotificationListener.URL_OPENING_LISTENER);
   }
 
   public static void showErrorURL(@NotNull Project project,
@@ -95,54 +81,54 @@ public class GithubNotifications {
                                   @NotNull String postfix,
                                   @NotNull String url) {
     LOG.info(title + "; " + prefix + highlight + postfix + "; " + url);
-    Notification notification =
-      new Notification(GITHUB_NOTIFICATION_GROUP, title, prefix + "<a href='" + url + "'>" + highlight + "</a>" + postfix,
-                       NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER);
-    Notificator.getInstance(project).notify(notification);
+    VcsNotifier.getInstance(project).notifyError(title, prefix + "<a href='" + url + "'>" + highlight + "</a>" + postfix,
+                                                 NotificationListener.URL_OPENING_LISTENER);
   }
 
-  public static void showInfoDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {
+  public static void showInfoDialog(@Nullable Project project, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
     Messages.showInfoMessage(project, message, title);
   }
 
-  public static void showInfoDialog(final @NotNull Component component, final @NotNull String title, final @NotNull String message) {
+  public static void showInfoDialog(@NotNull Component component, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
     Messages.showInfoMessage(component, message, title);
   }
 
-  public static void showWarningDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {
+  public static void showWarningDialog(@Nullable Project project, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
     Messages.showWarningDialog(project, message, title);
   }
 
-  public static void showWarningDialog(final @NotNull Component component, final @NotNull String title, final @NotNull String message) {
+  public static void showWarningDialog(@NotNull Component component, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
     Messages.showWarningDialog(component, message, title);
   }
 
-  public static void showErrorDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {
+  public static void showErrorDialog(@Nullable Project project, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
     Messages.showErrorDialog(project, message, title);
   }
 
-  public static void showErrorDialog(final @Nullable Project project, final @NotNull String title, final @NotNull Exception e) {
+  public static void showErrorDialog(@Nullable Project project, @NotNull String title, @NotNull Exception e) {
     LOG.warn(title, e);
+    if (e instanceof GithubOperationCanceledException) return;
     Messages.showErrorDialog(project, getErrorTextFromException(e), title);
   }
 
-  public static void showErrorDialog(final @NotNull Component component, final @NotNull String title, final @NotNull String message) {
+  public static void showErrorDialog(@NotNull Component component, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
     Messages.showErrorDialog(component, message, title);
   }
 
-  public static void showErrorDialog(final @NotNull Component component, final @NotNull String title, final @NotNull Exception e) {
+  public static void showErrorDialog(@NotNull Component component, @NotNull String title, @NotNull Exception e) {
     LOG.info(title, e);
-    Messages.showInfoMessage(component, getErrorTextFromException(e), title);
+    if (e instanceof GithubOperationCanceledException) return;
+    Messages.showErrorDialog(component, getErrorTextFromException(e), title);
   }
 
   @Messages.YesNoResult
-  public static int showYesNoDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {
+  public static int showYesNoDialog(@Nullable Project project, @NotNull String title, @NotNull String message) {
     return Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon());
   }
 }

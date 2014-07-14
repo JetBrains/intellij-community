@@ -81,11 +81,6 @@ public class OldFrameworkSupportProviderWrapper extends FrameworkSupportInModule
     return myProvider.isSupportAlreadyAdded(module, facetsProvider);
   }
 
-  @NotNull
-  public String[] getProjectCategories() {
-    return myProvider.getProjectCategories();
-  }
-
   @Override
   public FrameworkRole[] getRoles() {
     return myProvider.getRoles();

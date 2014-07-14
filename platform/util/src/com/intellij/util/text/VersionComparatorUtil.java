@@ -130,6 +130,8 @@ public class VersionComparatorUtil {
    * @return 0 if ver1 equals ver2, positive value if ver1 > ver2, negative value if ver1 < ver2
    */
   public static int compare(String ver1, String ver2) {
+    // todo duplicates com.intellij.openapi.util.text.StringUtil.compareVersionNumbers()
+    // todo please refactor next time you make changes here
     if (ver1 == null) {
       return (ver2 == null) ? 0 : -1;
     } else if (ver2 == null) {
@@ -169,14 +171,7 @@ public class VersionComparatorUtil {
   }
 
   private static int comparePriorities(VersionTokenType t1, VersionTokenType t2) {
-    final int p1 = t1.getPriority();
-    final int p2 = t2.getPriority();
-
-    if (p1 == p2) {
-      return 0;
-    } else {
-      return p1 > p2 ? 1 : -1;
-    }
+    return Integer.signum(t1.getPriority() - t2.getPriority());
   }
 
   private static int compareNumbers(String n1, String n2) {

@@ -24,17 +24,22 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
+import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.LocalVariableDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
-import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.treeStructure.Tree;
 import com.sun.jdi.Value;
 
-import java.util.*;
+import javax.swing.tree.TreeNode;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public abstract class DescriptorTestCase extends DebuggerTestCase {
   private final List<Pair<NodeDescriptorImpl,List<String>>> myDescriptorLog = new ArrayList<Pair<NodeDescriptorImpl, List<String>>>();
@@ -51,10 +56,9 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
     return getAlternateCollectionRenderer("Map");
   }
 
-  private NodeRenderer getAlternateCollectionRenderer(final String name) {
+  private static NodeRenderer getAlternateCollectionRenderer(final String name) {
     final NodeRenderer[] renderers = NodeRendererSettings.getInstance().getAlternateCollectionRenderers();
-    for (int idx = 0; idx < renderers.length; idx++) {
-      NodeRenderer renderer = renderers[idx];
+    for (NodeRenderer renderer : renderers) {
       if (name.equals(renderer.getName())) {
         return renderer;
       }
@@ -105,9 +109,8 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
 
   private Pair<NodeDescriptorImpl, List<String>> findDescriptorLog(final NodeDescriptorImpl descriptor) {
     Pair<NodeDescriptorImpl, List<String>> descriptorText = null;
-    for (Iterator<Pair<NodeDescriptorImpl, List<String>>> iterator = myDescriptorLog.iterator(); iterator.hasNext();) {
-      Pair<NodeDescriptorImpl, List<String>> pair = iterator.next();
-      if(pair.getFirst() == descriptor) {
+    for (Pair<NodeDescriptorImpl, List<String>> pair : myDescriptorLog) {
+      if (pair.getFirst() == descriptor) {
         descriptorText = pair;
         break;
       }
@@ -115,24 +118,15 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
     return descriptorText;
   }
 
-  protected void flushDescriptor(final NodeDescriptorImpl descriptor) {
-    Pair<NodeDescriptorImpl, List<String>> descriptorLog = findDescriptorLog(descriptor);
-    if(descriptorLog != null) {
-      printDescriptorLog(descriptorLog);
-      myDescriptorLog.remove(descriptorLog);
-    }
-  }
-
   protected void flushDescriptors() {
-    for (Iterator<Pair<NodeDescriptorImpl, List<String>>> iterator = myDescriptorLog.iterator(); iterator.hasNext();) {
-      printDescriptorLog(iterator.next());
+    for (Pair<NodeDescriptorImpl, List<String>> aMyDescriptorLog : myDescriptorLog) {
+      printDescriptorLog(aMyDescriptorLog);
     }
     myDescriptorLog.clear();
   }
 
   private void printDescriptorLog(Pair<NodeDescriptorImpl, List<String>> pair) {
-    for (Iterator<String> it = pair.getSecond().iterator(); it.hasNext();) {
-      String text =  it.next();
+    for (String text : pair.getSecond()) {
       print(text, ProcessOutputTypes.SYSTEM);
     }
   }
@@ -150,6 +144,7 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
                                                String name) {
     try {
       StackFrameProxy frameProxy = evaluationContext.getFrameProxy();
+      assert frameProxy != null;
       LocalVariableDescriptorImpl local = frameTree.getNodeFactory().getLocalVariableDescriptor(null, frameProxy.visibleVariableByName(name));
       local.setContext(evaluationContext);
       return local;
@@ -166,46 +161,52 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
   }
 
   protected void expandAll(final DebuggerTree tree, final Runnable runnable) {
-    doExpandAll(tree, runnable, new HashSet<Value>(), null);
+    expandAll(tree, runnable, new HashSet<Value>(), null);
   }
 
-  protected static interface NodeFilter {
-    boolean shouldExpand(DebuggerTreeNode node);
-  }
-  
-  protected void expandAll(final DebuggerTree tree, final Runnable runnable, NodeFilter filter) {
-    doExpandAll(tree, runnable, new HashSet<Value>(), filter);
+  protected interface NodeFilter {
+    boolean shouldExpand(TreeNode node);
   }
 
-  private void doExpandAll(final DebuggerTree tree, final Runnable runnable, final Set<Value> alreadyExpanded, final NodeFilter filter) {
-    invokeRatherLater(tree.getDebuggerContext().getSuspendContext(), new Runnable() {
+  protected void expandAll(final DebuggerTree tree, final Runnable runnable, final Set<Value> alreadyExpanded, final NodeFilter filter) {
+    expandAll(tree, runnable, alreadyExpanded, filter, tree.getDebuggerContext().getSuspendContext());
+  }
+
+  protected void expandAll(final Tree tree,
+                           final Runnable runnable,
+                           final Set<Value> alreadyExpanded,
+                           final NodeFilter filter,
+                           final SuspendContextImpl context) {
+    invokeRatherLater(context, new Runnable() {
       @Override
       public void run() {
         boolean anyCollapsed = false;
         for(int i = 0; i < tree.getRowCount(); i++) {
-          final DebuggerTreeNode treeNode = (DebuggerTreeNode)tree.getPathForRow(i).getLastPathComponent();
+          final TreeNode treeNode = (TreeNode)tree.getPathForRow(i).getLastPathComponent();
           if(tree.isCollapsed(i) && !treeNode.isLeaf()) {
-            final NodeDescriptor nodeDescriptor = treeNode.getDescriptor();
-            boolean shouldExpand = filter == null? true : filter.shouldExpand(treeNode);
-            if (shouldExpand) {
-              // additional checks to prevent infinite expand
-              if (nodeDescriptor instanceof ValueDescriptor) {
-                final Value value = ((ValueDescriptor)nodeDescriptor).getValue();
-                shouldExpand = !alreadyExpanded.contains(value);
-                if (shouldExpand) {
-                  alreadyExpanded.add(value);
+            if (treeNode instanceof DebuggerTreeNodeImpl) {
+              final NodeDescriptor nodeDescriptor = ((DebuggerTreeNodeImpl)treeNode).getDescriptor();
+              boolean shouldExpand = filter == null || filter.shouldExpand(treeNode);
+              if (shouldExpand) {
+                // additional checks to prevent infinite expand
+                if (nodeDescriptor instanceof ValueDescriptor) {
+                  final Value value = ((ValueDescriptor)nodeDescriptor).getValue();
+                  shouldExpand = !alreadyExpanded.contains(value);
+                  if (shouldExpand) {
+                    alreadyExpanded.add(value);
+                  }
                 }
               }
-            }
-            if (shouldExpand) {
-              anyCollapsed = true;
-              tree.expandRow(i);
+              if (shouldExpand) {
+                anyCollapsed = true;
+                tree.expandRow(i);
+              }
             }
           }
         }
 
         if (anyCollapsed) {
-          doExpandAll(tree, runnable, alreadyExpanded, filter);
+          expandAll(tree, runnable, alreadyExpanded, filter, context);
         }
         else {
           runnable.run();

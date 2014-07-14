@@ -15,8 +15,6 @@
  */
 package org.intellij.plugins.intelliLang.inject.config.ui;
 
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
@@ -73,7 +71,6 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
       final InjectionPanel p = getField(panel);
       p.init(copy);
     }
-    reset();
   }
 
   public final boolean isModified() {
@@ -89,23 +86,28 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
 
   @SuppressWarnings({"unchecked"})
   public final void apply() {
-    apply(myOrigInjection);
-
     for (Field panel : myOtherPanels) {
       getField(panel).apply();
     }
-    myOrigInjection.generatePlaces();
-    myEditCopy.copyFrom(myOrigInjection);
+
+    // auto-generated name should go last
+    apply(myOrigInjection);
+    if (!myOtherPanels.isEmpty()) {
+      myOrigInjection.generatePlaces();
+      myEditCopy.copyFrom(myOrigInjection);
+    }
   }
 
   protected abstract void apply(T other);
 
   @SuppressWarnings({"unchecked"})
   public final void reset() {
+    if (!myOtherPanels.isEmpty()) {
+      myEditCopy.copyFrom(myOrigInjection);
+    }
     for (Field panel : myOtherPanels) {
       getField(panel).reset();
     }
-    myEditCopy.copyFrom(myOrigInjection);
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       public void run() {
         resetImpl();
@@ -136,12 +138,6 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
     apply(myEditCopy);
     for (Runnable updater : myUpdaters) {
       updater.run();
-    }
-  }
-
-  protected class TreeUpdateListener extends DocumentAdapter {
-    public void documentChanged(DocumentEvent e) {
-      updateTree();
     }
   }
 }

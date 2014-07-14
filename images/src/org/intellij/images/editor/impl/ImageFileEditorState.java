@@ -43,6 +43,7 @@ public class ImageFileEditorState implements TransferableFileEditorState, Serial
     this.zoomFactor = zoomFactor;
   }
 
+  @Override
   public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
     return otherState instanceof ImageFileEditorState;
   }

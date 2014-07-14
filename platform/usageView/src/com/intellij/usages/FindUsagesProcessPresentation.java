@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,15 +33,17 @@ import java.util.List;
 public class FindUsagesProcessPresentation {
   @NonNls
   public static final String NAME_WITH_MNEMONIC_KEY = "NameWithMnemonic";
+  private final UsageViewPresentation myUsageViewPresentation;
 
   private List<Action> myNotFoundActions;
   private boolean myShowPanelIfOnlyOneUsage;
   private boolean myShowNotFoundMessage;
   private Factory<ProgressIndicator> myProgressIndicatorFactory;
   private Collection<PsiFile> myLargeFiles;
-  private boolean myShowFindOptionsPrompt = true; // in the case of find in path, "find options" does not make sense
+  private boolean myShowFindOptionsPrompt = true;
 
-  public FindUsagesProcessPresentation() {
+  public FindUsagesProcessPresentation(@NotNull UsageViewPresentation presentation) {
+    myUsageViewPresentation = presentation;
   }
 
   public void addNotFoundAction(@NotNull Action action) {
@@ -91,8 +93,14 @@ public class FindUsagesProcessPresentation {
     return myShowFindOptionsPrompt;
   }
 
+  @NotNull
+  public UsageViewPresentation getUsageViewPresentation() {
+    return myUsageViewPresentation;
+  }
+
   public void setShowFindOptionsPrompt(boolean showFindOptionsPrompt) {
     myShowFindOptionsPrompt = showFindOptionsPrompt;
   }
 }
+
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ abstract class GotoBookmarkActionBase extends EditorAction {
 
         LogicalPosition pos = new LogicalPosition(line, 0);
         editor.getSelectionModel().removeSelection();
+        editor.getCaretModel().removeSecondaryCarets();
         editor.getCaretModel().moveToLogicalPosition(pos);
         editor.getScrollingModel().scrollTo(new LogicalPosition(line, 0), ScrollType.CENTER);
       }

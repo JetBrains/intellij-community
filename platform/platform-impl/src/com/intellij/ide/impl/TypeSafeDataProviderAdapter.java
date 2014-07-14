@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TypeSafeDataProviderAdapter implements DataProvider, DataSink {
@@ -34,10 +35,11 @@ public class TypeSafeDataProviderAdapter implements DataProvider, DataSink {
   private DataKey myLastKey = null;
   private Object myValue = null;
 
-  public TypeSafeDataProviderAdapter(final TypeSafeDataProvider provider) {
+  public TypeSafeDataProviderAdapter(@NotNull TypeSafeDataProvider provider) {
     myProvider = provider;
   }
 
+  @Override
   @Nullable
   public synchronized Object getData(@NonNls String dataId) {
     myValue = null;
@@ -46,6 +48,7 @@ public class TypeSafeDataProviderAdapter implements DataProvider, DataSink {
     return myValue;
   }
 
+  @Override
   public synchronized <T> void put(DataKey<T> key, T data) {
     if (key == myLastKey) {
       myValue = data;

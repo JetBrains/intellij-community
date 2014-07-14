@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.google.common.collect.Maps;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
@@ -143,9 +142,12 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     return getRequiredStubOrPsiChild(PyElementTypes.PARAMETER_LIST);
   }
 
-  @Nullable
+  @Override
+  @NotNull
   public PyStatementList getStatementList() {
-    return childToPsi(PyElementTypes.STATEMENT_LIST);
+    final PyStatementList statementList = childToPsi(PyElementTypes.STATEMENT_LIST);
+    assert statementList != null : "Statement list missing for function " + getText();
+    return statementList;
   }
 
   public PyClass getContainingClass() {
@@ -173,48 +175,105 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   @Nullable
   @Override
-  public PyType getReturnType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
-    final PyType type = getGenericReturnType(context, callSite);
-
-    if (callSite == null) {
-      return type;
+  public PyType getReturnType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+    for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+      final PyType returnType = typeProvider.getReturnType(this, context);
+      if (returnType != null) {
+        returnType.assertValid(typeProvider.toString());
+        return returnType;
+      }
     }
-    final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, context);
-
-    if (PyTypeChecker.hasGenerics(type, context)) {
-      if (results != null) {
-        final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(this, results.getReceiver(), results.getArguments(),
-                                                                                        context);
-        if (substitutions != null) {
-          return PyTypeChecker.substitute(type, substitutions, context);
+    if (context.maySwitchToAST(this) && LanguageLevel.forElement(this).isAtLeast(LanguageLevel.PYTHON30)) {
+      PyAnnotation anno = getAnnotation();
+      if (anno != null) {
+        PyClass pyClass = anno.resolveToClass();
+        if (pyClass != null) {
+          return new PyClassTypeImpl(pyClass, false);
         }
       }
-      return null;
     }
-    if (results != null && isDynamicallyEvaluated(results.getArguments().values(), context)) {
-      return PyUnionType.createWeakType(type);
+    final PyType docStringType = getReturnTypeFromDocString();
+    if (docStringType != null) {
+      docStringType.assertValid("from docstring");
+      return docStringType;
     }
-    else {
-      return type;
+    if (context.allowReturnTypes(this)) {
+      final Ref<? extends PyType> yieldTypeRef = getYieldStatementType(context);
+      if (yieldTypeRef != null) {
+        return yieldTypeRef.get();
+      }
+      return getReturnStatementType(context);
     }
+    return null;
   }
 
   @Nullable
-  /**
-   * Suits when there is no call site(e.g. implicit __iter__ call in statement for)
-   */
-  public PyType getReturnTypeWithoutCallSite(@NotNull TypeEvalContext context,
-                                             @Nullable PyExpression receiver) {
-    final PyType type = getGenericReturnType(context, null);
-    if (PyTypeChecker.hasGenerics(type, context)) {
-      final Map<PyGenericType, PyType> substitutions =
-        PyTypeChecker.unifyGenericCall(this, receiver, Maps.<PyExpression, PyNamedParameter>newHashMap(), context);
-      if (substitutions != null) {
-        return PyTypeChecker.substitute(type, substitutions, context);
+  @Override
+  public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
+    PyType type = null;
+    for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+      type = typeProvider.getCallType(this, callSite, context);
+      if (type != null) {
+        type.assertValid(typeProvider.toString());
+        break;
       }
-      return null;
+    }
+    if (type == null) {
+      type = context.getReturnType(this);
+    }
+    final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, context);
+    if (results != null) {
+      return analyzeCallType(type, results.getReceiver(), results.getArguments(), context);
     }
     return type;
+  }
+
+  @Nullable
+  @Override
+  public PyType getCallType(@Nullable PyExpression receiver,
+                            @NotNull Map<PyExpression, PyNamedParameter> parameters,
+                            @NotNull TypeEvalContext context) {
+    return analyzeCallType(context.getReturnType(this), receiver, parameters, context);
+  }
+
+  @Nullable
+  private PyType analyzeCallType(@Nullable PyType type,
+                                 @Nullable PyExpression receiver,
+                                 @NotNull Map<PyExpression, PyNamedParameter> parameters,
+                                 @NotNull TypeEvalContext context) {
+    if (PyTypeChecker.hasGenerics(type, context)) {
+      final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, parameters, context);
+      if (substitutions != null) {
+        type = PyTypeChecker.substitute(type, substitutions, context);
+      }
+      else {
+        type = null;
+      }
+    }
+    if (receiver != null) {
+      type = replaceSelf(type, receiver, context);
+    }
+    if (type != null && isDynamicallyEvaluated(parameters.values(), context)) {
+      type = PyUnionType.createWeakType(type);
+    }
+    return type;
+  }
+
+  @Nullable
+  private PyType replaceSelf(@Nullable PyType returnType, @Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
+    if (receiver != null) {
+      // TODO: Currently we substitute only simple subclass types, but we could handle union and collection types as well
+      if (returnType instanceof PyClassType) {
+        final PyClassType returnClassType = (PyClassType)returnType;
+        if (returnClassType.getPyClass() == getContainingClass()) {
+          final PyType receiverType = context.getType(receiver);
+          if (receiverType instanceof PyClassType && PyTypeChecker.match(returnType, receiverType, context)) {
+            return returnClassType.isDefinition() ? receiverType : ((PyClassType)receiverType).toInstance();
+          }
+        }
+      }
+    }
+    return returnType;
   }
 
   private static boolean isDynamicallyEvaluated(@NotNull Collection<PyNamedParameter> parameters, @NotNull TypeEvalContext context) {
@@ -228,46 +287,12 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   @Nullable
-  private PyType getGenericReturnType(@NotNull TypeEvalContext typeEvalContext, @Nullable PyQualifiedExpression callSite) {
-    if (typeEvalContext.maySwitchToAST(this) && LanguageLevel.forElement(this).isAtLeast(LanguageLevel.PYTHON30)) {
-      PyAnnotation anno = getAnnotation();
-      if (anno != null) {
-        PyClass pyClass = anno.resolveToClass();
-        if (pyClass != null) {
-          return new PyClassTypeImpl(pyClass, false);
-        }
-      }
-    }
-    for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-      final PyType returnType = typeProvider.getReturnType(this, callSite, typeEvalContext);
-      if (returnType != null) {
-        returnType.assertValid(typeProvider.toString());
-        return returnType;
-      }
-    }
-    final PyType docStringType = getReturnTypeFromDocString();
-    if (docStringType != null) {
-      docStringType.assertValid("from docstring");
-      return docStringType;
-    }
-    if (typeEvalContext.allowReturnTypes(this)) {
-      final PyType yieldType = getYieldStatementType(typeEvalContext);
-      if (yieldType != null) {
-        return yieldType;
-      }
-      return getReturnStatementType(typeEvalContext);
-    }
-    return null;
-  }
-
-  @Nullable
-  private PyType getYieldStatementType(@NotNull final TypeEvalContext context) {
+  private Ref<? extends PyType> getYieldStatementType(@NotNull final TypeEvalContext context) {
     Ref<PyType> elementType = null;
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
-    final PyClass listClass = cache.getClass("list");
     final PyStatementList statements = getStatementList();
     final Set<PyType> types = new LinkedHashSet<PyType>();
-    if (statements != null && listClass != null) {
+    if (statements != null) {
       statements.accept(new PyRecursiveElementVisitor() {
         @Override
         public void visitPyYieldExpression(PyYieldExpression node) {
@@ -297,8 +322,11 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     if (elementType != null) {
       final PyClass generator = cache.getClass(PyNames.FAKE_GENERATOR);
       if (generator != null) {
-        return new PyCollectionTypeImpl(generator, false, elementType.get());
+        return Ref.create(new PyCollectionTypeImpl(generator, false, elementType.get()));
       }
+    }
+    if (!types.isEmpty()) {
+      return Ref.create(null);
     }
     return null;
   }
@@ -362,8 +390,9 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
         return type;
       }
     }
+    final boolean hasCustomDecorators = PyUtil.hasCustomDecorators(this) && !PyUtil.isDecoratedAsAbstract(this) && getProperty() == null;
     final PyFunctionType type = new PyFunctionType(this);
-    if (getDecoratorList() != null) {
+    if (hasCustomDecorators) {
       return PyUnionType.createWeakType(type);
     }
     return type;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,8 +37,8 @@ public class CollectionAddedToSelfInspection extends BaseInspection {
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "collection.added.to.self.problem.descriptor");
+    final String methodName = (String)infos[0];
+    return InspectionGadgetsBundle.message("collection.added.to.self.problem.descriptor", methodName);
   }
 
   @Override
@@ -49,22 +50,16 @@ public class CollectionAddedToSelfInspection extends BaseInspection {
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
       final PsiReferenceExpression methodExpression =
         call.getMethodExpression();
-      @NonNls final String methodName =
-        methodExpression.getReferenceName();
-      if (!"put".equals(methodName) && !"set".equals(methodName) &&
-          !"add".equals(methodName)) {
-        return;
+      @NonNls final String methodName = methodExpression.getReferenceName();
+      if ("equals".equals(methodName)) {
+        return; // object method
       }
       final PsiExpression qualifier =
         methodExpression.getQualifierExpression();
-      if (qualifier == null) {
-        return;
-      }
       if (!(qualifier instanceof PsiReferenceExpression)) {
         return;
       }
@@ -73,32 +68,30 @@ public class CollectionAddedToSelfInspection extends BaseInspection {
         return;
       }
       final PsiExpressionList argumentList = call.getArgumentList();
-      boolean hasMatchingArg = false;
-      final PsiExpression[] args = argumentList.getExpressions();
-      for (PsiExpression arg : args) {
-        if (EquivalenceChecker.expressionsAreEquivalent(qualifier, arg)) {
-          hasMatchingArg = true;
+      PsiExpression selfArgument = null;
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      for (PsiExpression argument : arguments) {
+        if (EquivalenceChecker.expressionsAreEquivalent(qualifier, argument)) {
+          selfArgument = argument;
         }
       }
-      if (!hasMatchingArg) {
+      if (selfArgument == null) {
         return;
       }
       final PsiType qualifierType = qualifier.getType();
-      if (!(qualifierType instanceof PsiClassType)) {
+      if (!InheritanceUtil.isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_COLLECTION) &&
+          !InheritanceUtil.isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_MAP)) {
         return;
       }
-      final PsiClassType classType = (PsiClassType)qualifierType;
-      final PsiClass qualifierClass = classType.resolve();
-      if (qualifierClass == null) {
+      final PsiMethod method = call.resolveMethod();
+      if (method == null) {
         return;
       }
-      if (!InheritanceUtil.isInheritor(qualifierClass,
-                                       CommonClassNames.JAVA_UTIL_COLLECTION) &&
-          !InheritanceUtil.isInheritor(qualifierClass,
-                                       CommonClassNames.JAVA_UTIL_MAP)) {
+      final PsiClass aClass = method.getContainingClass();
+      if (!CollectionUtils.isCollectionClassOrInterface(aClass)) {
         return;
       }
-      registerError(qualifier);
+      registerError(selfArgument, methodName);
     }
   }
 }

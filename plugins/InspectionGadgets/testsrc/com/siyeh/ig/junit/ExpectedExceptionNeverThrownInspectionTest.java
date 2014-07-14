@@ -27,6 +27,16 @@ public class ExpectedExceptionNeverThrownInspectionTest extends LightInspectionT
            "}");
   }
 
+  public void testInheritance() {
+    doTest("class X {" +
+           "    @org.junit.Test(expected=java.io.EOFException.class)" +
+           "    public void test() throws Exception {" +
+           "      foo();" +
+           "    }" +
+           "    void foo() throws java.io.IOException {}" +
+           "}");
+  }
+
   public void testError() {
     doTest("class X {" +
            "    @org.junit.Test(expected = Error.class)" +

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class LineMarkerProviders extends LanguageExtension<LineMarkerProvider> {
 
   @NotNull
   @Override
-  public List<LineMarkerProvider> allForLanguage(Language l) {
+  public List<LineMarkerProvider> allForLanguage(@NotNull Language l) {
     //TODO[kb] make this for all Language Extensions
     List<LineMarkerProvider> providers = super.allForLanguage(l);
     if (l == Language.ANY) return providers;

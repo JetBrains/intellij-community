@@ -18,7 +18,6 @@ package com.intellij.psi.impl.include;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -38,6 +37,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +56,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
   private final IncludeCacheHolder myIncludedHolder = new IncludeCacheHolder("compile time includes", "runtime includes") {
     @Override
     protected VirtualFile[] computeFiles(final PsiFile file, final boolean compileTimeOnly) {
-      final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
+      final Set<VirtualFile> files = new THashSet<VirtualFile>();
       processIncludes(file, new Processor<FileIncludeInfo>() {
         @Override
         public boolean process(FileIncludeInfo info) {
@@ -87,7 +87,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
   private final IncludeCacheHolder myIncludingHolder = new IncludeCacheHolder("compile time contexts", "runtime contexts") {
     @Override
     protected VirtualFile[] computeFiles(PsiFile context, boolean compileTimeOnly) {
-      final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
+      final Set<VirtualFile> files = new THashSet<VirtualFile>();
       processIncludingFiles(context, new Processor<Pair<VirtualFile, FileIncludeInfo>>() {
         @Override
         public boolean process(Pair<VirtualFile, FileIncludeInfo> virtualFileFileIncludeInfoPair) {
@@ -136,8 +136,13 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
 
   @Override
   public VirtualFile[] getIncludedFiles(@NotNull VirtualFile file, boolean compileTimeOnly) {
+    return getIncludedFiles(file, compileTimeOnly, false);
+  }
+
+  @Override
+  public VirtualFile[] getIncludedFiles(@NotNull VirtualFile file, boolean compileTimeOnly, boolean recursively) {
     if (file instanceof VirtualFileWithId) {
-      return myIncludedHolder.getAllFiles(file, compileTimeOnly);
+      return myIncludedHolder.getAllFiles(file, compileTimeOnly, recursively);
     }
     else {
       return VirtualFile.EMPTY_ARRAY;
@@ -146,7 +151,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
 
   @Override
   public VirtualFile[] getIncludingFiles(@NotNull VirtualFile file, boolean compileTimeOnly) {
-    return myIncludingHolder.getAllFiles(file, compileTimeOnly);
+    return myIncludingHolder.getAllFiles(file, compileTimeOnly, false);
   }
 
   @Override
@@ -190,25 +195,35 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
       RUNTIME_KEY = Key.create(runtimeKey);
     }
 
-    private VirtualFile[] getAllFiles(@NotNull VirtualFile file, boolean compileTimeOnly) {
-      Set<VirtualFile> result = new HashSet<VirtualFile>();
-      getFilesRecursively(file, compileTimeOnly, result);
-      return VfsUtilCore.toVirtualFileArray(result);
+    @NotNull
+    private VirtualFile[] getAllFiles(@NotNull VirtualFile file, boolean compileTimeOnly, boolean recursively) {
+      if (recursively) {
+        Set<VirtualFile> result = new HashSet<VirtualFile>();
+        getAllFilesRecursively(file, compileTimeOnly, result);
+        return VfsUtilCore.toVirtualFileArray(result);
+      }
+      return getFiles(file, compileTimeOnly);
     }
 
-    private void getFilesRecursively(@NotNull VirtualFile file, boolean compileTimeOnly, Set<VirtualFile> result) {
-      if (result.contains(file)) return;
-      PsiFile psiFile = myPsiManager.findFile(file);
-      if (psiFile == null) return;
-      VirtualFile[] includes = compileTimeOnly
-                               ? myCachedValuesManager.getParameterizedCachedValue(psiFile, COMPILE_TIME_KEY, COMPILE_TIME_PROVIDER, false, psiFile)
-                               : myCachedValuesManager.getParameterizedCachedValue(psiFile, RUNTIME_KEY, RUNTIME_PROVIDER, false, psiFile);
+    private void getAllFilesRecursively(@NotNull VirtualFile file, boolean compileTimeOnly, Set<VirtualFile> result) {
+      if (!result.add(file)) return;
+      VirtualFile[] includes = getFiles(file, compileTimeOnly);
       if (includes.length != 0) {
-        result.addAll(Arrays.asList(includes));
         for (VirtualFile include : includes) {
-          getFilesRecursively(include, compileTimeOnly, result);
+          getAllFilesRecursively(include, compileTimeOnly, result);
         }
       }
+    }
+
+    private VirtualFile[] getFiles(@NotNull VirtualFile file, boolean compileTimeOnly) {
+      PsiFile psiFile = myPsiManager.findFile(file);
+      if (psiFile == null) {
+        return VirtualFile.EMPTY_ARRAY;
+      }
+      if (compileTimeOnly) {
+        return myCachedValuesManager.getParameterizedCachedValue(psiFile, COMPILE_TIME_KEY, COMPILE_TIME_PROVIDER, false, psiFile);
+      }
+      return myCachedValuesManager.getParameterizedCachedValue(psiFile, RUNTIME_KEY, RUNTIME_PROVIDER, false, psiFile);
     }
 
     protected abstract VirtualFile[] computeFiles(PsiFile file, boolean compileTimeOnly);

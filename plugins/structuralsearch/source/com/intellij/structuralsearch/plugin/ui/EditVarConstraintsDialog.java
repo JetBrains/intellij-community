@@ -1,0 +1,635 @@
+package com.intellij.structuralsearch.plugin.ui;
+
+import com.intellij.codeInsight.template.impl.Variable;
+import com.intellij.find.impl.RegExHelpPopup;
+import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.structuralsearch.MatchVariableConstraint;
+import com.intellij.structuralsearch.NamedScriptableDefinition;
+import com.intellij.structuralsearch.ReplacementVariableDefinition;
+import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
+import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
+import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.labels.LinkListener;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.text.BadLocationException;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
+/**
+ * @author Maxim.Mossienko
+ * Date: Mar 25, 2004
+ * Time: 1:52:18 PM
+ */
+class EditVarConstraintsDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.structuralsearch.plugin.ui.EditVarConstraintsDialog");
+
+  private JTextField maxoccurs;
+  private JCheckBox applyWithinTypeHierarchy;
+  private JCheckBox notRegexp;
+  private EditorTextField regexp;
+  private JTextField minoccurs;
+  private JPanel mainForm;
+  private JCheckBox notWrite;
+  private JCheckBox notRead;
+  private JCheckBox write;
+  private JCheckBox read;
+  private JList parameterList;
+  private JCheckBox partOfSearchResults;
+  private JCheckBox notExprType;
+  private EditorTextField regexprForExprType;
+  private final SearchModel model;
+  private JCheckBox exprTypeWithinHierarchy;
+
+  private final List<Variable> variables;
+  private Variable current;
+  private JCheckBox wholeWordsOnly;
+  private JCheckBox formalArgTypeWithinHierarchy;
+  private JCheckBox invertFormalArgType;
+  private EditorTextField formalArgType;
+  private ComponentWithBrowseButton<EditorTextField> customScriptCode;
+  private JCheckBox maxoccursUnlimited;
+
+  private ComboboxWithBrowseButton withinCombo;
+  private JPanel containedInConstraints;
+  private JCheckBox invertWithinIn;
+  private JPanel expressionConstraints;
+  private JPanel occurencePanel;
+  private JPanel textConstraintsPanel;
+  private JLabel myRegExHelpLabel;
+
+  private static Project myProject;
+
+  EditVarConstraintsDialog(final Project project,SearchModel _model,List<Variable> _variables, boolean replaceContext, FileType fileType) {
+    super(project, false);
+
+    variables = _variables;
+    model = _model;
+
+    setTitle(SSRBundle.message("editvarcontraints.edit.variables"));
+
+    regexp.getDocument().addDocumentListener(new MyDocumentListener(notRegexp, applyWithinTypeHierarchy, wholeWordsOnly));
+    read.addChangeListener(new MyChangeListener(notRead, false));
+    write.addChangeListener(new MyChangeListener(notWrite, false));
+    regexprForExprType.getDocument().addDocumentListener(new MyDocumentListener(exprTypeWithinHierarchy, notExprType));
+    formalArgType.getDocument().addDocumentListener(new MyDocumentListener(formalArgTypeWithinHierarchy, invertFormalArgType));
+
+    partOfSearchResults.setEnabled(!replaceContext); // todo: this doesn't do anything
+    containedInConstraints.setVisible(false);
+    withinCombo.getComboBox().setEditable(true);
+
+    withinCombo.getButton().addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        final SelectTemplateDialog dialog = new SelectTemplateDialog(project, false, false);
+        dialog.show();
+        if (dialog.getExitCode() == OK_EXIT_CODE) {
+          final Configuration[] selectedConfigurations = dialog.getSelectedConfigurations();
+          if (selectedConfigurations.length == 1) {
+            withinCombo.getComboBox().getEditor().setItem(selectedConfigurations[0].getMatchOptions().getSearchPattern()); // TODO:
+          }
+        }
+      }
+    });
+
+    boolean hasContextVar = false;
+    for(Variable var:variables) {
+      if (Configuration.CONTEXT_VAR_NAME.equals(var.getName())) {
+        hasContextVar = true; break;
+      }
+    }
+
+    if (!hasContextVar) {
+      variables.add(new Variable(Configuration.CONTEXT_VAR_NAME, "", "", true));
+    }
+
+    if (fileType == StdFileTypes.JAVA) {
+
+      formalArgTypeWithinHierarchy.setEnabled(true);
+      invertFormalArgType.setEnabled(true);
+      formalArgType.setEnabled(true);
+
+      exprTypeWithinHierarchy.setEnabled(true);
+      notExprType.setEnabled(true);
+      regexprForExprType.setEnabled(true);
+
+      read.setEnabled(true);
+      notRead.setEnabled(false);
+      write.setEnabled(true);
+      notWrite.setEnabled(false);
+
+      applyWithinTypeHierarchy.setEnabled(true);
+    } else {
+      formalArgTypeWithinHierarchy.setEnabled(false);
+      invertFormalArgType.setEnabled(false);
+      formalArgType.setEnabled(false);
+
+      exprTypeWithinHierarchy.setEnabled(false);
+      notExprType.setEnabled(false);
+      regexprForExprType.setEnabled(false);
+
+      read.setEnabled(false);
+      notRead.setEnabled(false);
+      write.setEnabled(false);
+      notWrite.setEnabled(false);
+
+      applyWithinTypeHierarchy.setEnabled(false);
+    }
+
+    parameterList.setModel(
+      new AbstractListModel() {
+        public Object getElementAt(int index) {
+          return variables.get(index);
+        }
+
+        public int getSize() {
+          return variables.size();
+        }
+      }
+    );
+
+    parameterList.setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
+
+    parameterList.getSelectionModel().addListSelectionListener(
+      new ListSelectionListener() {
+        boolean rollingBackSelection;
+
+        public void valueChanged(ListSelectionEvent e) {
+          if (e.getValueIsAdjusting()) return;
+          if (rollingBackSelection) {
+            rollingBackSelection=false;
+            return;
+          }
+          final Variable var = variables.get(parameterList.getSelectedIndex());
+          if (validateParameters()) {
+            if (current!=null) copyValuesFromUI(current);
+            ApplicationManager.getApplication().runWriteAction(new Runnable() { public void run() { copyValuesToUI(var); }});
+            current = var;
+          } else {
+            rollingBackSelection = true;
+            parameterList.setSelectedIndex(e.getFirstIndex()==parameterList.getSelectedIndex()?e.getLastIndex():e.getFirstIndex());
+          }
+        }
+      }
+    );
+
+    parameterList.setCellRenderer(
+      new DefaultListCellRenderer() {
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+          String name = ((Variable)value).getName();
+          if (Configuration.CONTEXT_VAR_NAME.equals(name)) name = SSRBundle.message("complete.match.variable.name");
+          if (isReplacementVariable(name)) {
+            name = stripReplacementVarDecoration(name);
+          }
+          return super.getListCellRendererComponent(list, name, index, isSelected, cellHasFocus);
+        }
+      }
+    );
+
+    maxoccursUnlimited.addChangeListener(new MyChangeListener(maxoccurs, true));
+
+    customScriptCode.getButton().addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        final EditScriptDialog dialog = new EditScriptDialog(project, customScriptCode.getChildComponent().getText());
+        dialog.show();
+        if (dialog.getExitCode() == OK_EXIT_CODE) {
+          customScriptCode.getChildComponent().setText(dialog.getScriptText());
+        }
+      }
+    });
+    init();
+
+    if (variables.size() > 0) parameterList.setSelectedIndex(0);
+  }
+
+  private static String stripReplacementVarDecoration(String name) {
+    name = name.substring(0, name.length() - ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX.length());
+    return name;
+  }
+
+  private static boolean isReplacementVariable(String name) {
+    return name.endsWith(ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX);
+  }
+
+  private boolean validateParameters() {
+    return validateRegExp(regexp) && validateRegExp(regexprForExprType) &&
+           validateIntOccurence(minoccurs) &&
+           validateScript(customScriptCode.getChildComponent()) &&
+           (maxoccursUnlimited.isSelected() || validateIntOccurence(maxoccurs));
+  }
+
+  protected JComponent createCenterPanel() {
+    return mainForm;
+  }
+
+  protected void doOKAction() {
+    if(validateParameters()) {
+      if (current!=null) copyValuesFromUI(current);
+      super.doOKAction();
+    }
+  }
+
+  void copyValuesFromUI(Variable var) {
+    String varName = var.getName();
+    Configuration configuration = model.getConfig();
+
+    if (isReplacementVariable(varName)) {
+      saveScriptInfo(getOrAddReplacementVariableDefinition(varName, configuration));
+      return;
+    }
+
+    MatchVariableConstraint varInfo = getOrAddVariableConstraint(varName, configuration);
+
+    varInfo.setInvertReadAccess(notRead.isSelected());
+    varInfo.setReadAccess(read.isSelected());
+    varInfo.setInvertWriteAccess(notWrite.isSelected());
+    varInfo.setWriteAccess(write.isSelected());
+    varInfo.setRegExp(regexp.getDocument().getText());
+    varInfo.setInvertRegExp(notRegexp.isSelected());
+
+    int minCount = Integer.parseInt( minoccurs.getText() );
+    varInfo.setMinCount(minCount);
+
+    int maxCount;
+    if (maxoccursUnlimited.isSelected()) maxCount = Integer.MAX_VALUE;
+    else maxCount = Integer.parseInt( maxoccurs.getText() );
+
+    varInfo.setMaxCount(maxCount);
+    varInfo.setWithinHierarchy(applyWithinTypeHierarchy.isSelected());
+    varInfo.setInvertRegExp(notRegexp.isSelected());
+
+    varInfo.setPartOfSearchResults(partOfSearchResults.isEnabled() && partOfSearchResults.isSelected());
+
+    varInfo.setInvertExprType(notExprType.isSelected());
+    varInfo.setNameOfExprType(regexprForExprType.getDocument().getText());
+    varInfo.setExprTypeWithinHierarchy(exprTypeWithinHierarchy.isSelected());
+    varInfo.setWholeWordsOnly(wholeWordsOnly.isSelected());
+    varInfo.setInvertFormalType(invertFormalArgType.isSelected());
+    varInfo.setFormalArgTypeWithinHierarchy(formalArgTypeWithinHierarchy.isSelected());
+    varInfo.setNameOfFormalArgType(formalArgType.getDocument().getText());
+    saveScriptInfo(varInfo);
+
+    final String withinConstraint = (String)withinCombo.getComboBox().getEditor().getItem();
+    varInfo.setWithinConstraint(withinConstraint.length() > 0 ? "\"" + withinConstraint +"\"":"");
+    varInfo.setInvertWithinConstraint(invertWithinIn.isSelected());
+  }
+
+  private static MatchVariableConstraint getOrAddVariableConstraint(String varName, Configuration configuration) {
+    MatchVariableConstraint varInfo = configuration.getMatchOptions().getVariableConstraint(varName);
+
+    if (varInfo == null) {
+      varInfo = new MatchVariableConstraint();
+      varInfo.setName(varName);
+      configuration.getMatchOptions().addVariableConstraint(varInfo);
+    }
+    return varInfo;
+  }
+
+  private static ReplacementVariableDefinition getOrAddReplacementVariableDefinition(String varName, Configuration configuration) {
+    ReplaceOptions replaceOptions = ((ReplaceConfiguration)configuration).getOptions();
+    String realVariableName = stripReplacementVarDecoration(varName);
+    ReplacementVariableDefinition variableDefinition = replaceOptions.getVariableDefinition(realVariableName);
+
+    if (variableDefinition == null) {
+      variableDefinition = new ReplacementVariableDefinition();
+      variableDefinition.setName(realVariableName);
+      replaceOptions.addVariableDefinition(variableDefinition);
+    }
+    return variableDefinition;
+  }
+
+  private void saveScriptInfo(NamedScriptableDefinition varInfo) {
+    varInfo.setScriptCodeConstraint("\"" + customScriptCode.getChildComponent().getText() + "\"");
+  }
+
+  private void copyValuesToUI(Variable var) {
+    Configuration configuration = model.getConfig();
+    String varName = var.getName();
+
+    if (isReplacementVariable(varName)) {
+      ReplacementVariableDefinition definition = ((ReplaceConfiguration)configuration).getOptions().getVariableDefinition(
+        stripReplacementVarDecoration(varName)
+      );
+
+      restoreScriptCode(definition);
+      setSearchConstraintsVisible(false);
+      return;
+    } else {
+      setSearchConstraintsVisible(true);
+    }
+
+    MatchVariableConstraint varInfo = configuration.getMatchOptions().getVariableConstraint(varName);
+
+    if (varInfo == null) {
+      notRead.setSelected(false);
+      notRegexp.setSelected(false);
+      read.setSelected(false);
+      notWrite.setSelected(false);
+      write.setSelected(false);
+      regexp.getDocument().setText("");
+
+      minoccurs.setText("1");
+      maxoccurs.setText("1");
+      maxoccursUnlimited.setSelected(false);
+      applyWithinTypeHierarchy.setSelected(false);
+      partOfSearchResults.setSelected(false);
+
+      regexprForExprType.getDocument().setText("");
+      notExprType.setSelected(false);
+      exprTypeWithinHierarchy.setSelected(false);
+      wholeWordsOnly.setSelected(false);
+
+      invertFormalArgType.setSelected(false);
+      formalArgTypeWithinHierarchy.setSelected(false);
+      formalArgType.getDocument().setText("");
+      customScriptCode.getChildComponent().setText("");
+
+      withinCombo.getComboBox().getEditor().setItem("");
+      invertWithinIn.setSelected(false);
+    } else {
+      notRead.setSelected(varInfo.isInvertReadAccess());
+      read.setSelected(varInfo.isReadAccess());
+      notWrite.setSelected(varInfo.isInvertWriteAccess());
+      write.setSelected(varInfo.isWriteAccess());
+      
+      applyWithinTypeHierarchy.setSelected(varInfo.isWithinHierarchy());
+      regexp.getDocument().setText(varInfo.getRegExp());
+      //doProcessing(applyWithinTypeHierarchy,regexp);
+      
+      notRegexp.setSelected(varInfo.isInvertRegExp());
+      minoccurs.setText(Integer.toString(varInfo.getMinCount()));
+
+      if(varInfo.getMaxCount() == Integer.MAX_VALUE) {
+        maxoccursUnlimited.setSelected(true);
+        maxoccurs.setText("");
+      } else {
+        maxoccursUnlimited.setSelected(false);
+        maxoccurs.setText(Integer.toString(varInfo.getMaxCount()));
+      }
+
+      partOfSearchResults.setSelected( partOfSearchResults.isEnabled() && varInfo.isPartOfSearchResults() );
+
+      exprTypeWithinHierarchy.setSelected(varInfo.isExprTypeWithinHierarchy());
+      regexprForExprType.getDocument().setText(varInfo.getNameOfExprType());
+
+      notExprType.setSelected( varInfo.isInvertExprType() );
+      wholeWordsOnly.setSelected( varInfo.isWholeWordsOnly() );
+
+      invertFormalArgType.setSelected( varInfo.isInvertFormalType() );
+      formalArgTypeWithinHierarchy.setSelected(varInfo.isFormalArgTypeWithinHierarchy());
+      formalArgType.getDocument().setText(varInfo.getNameOfFormalArgType());
+      restoreScriptCode(varInfo);
+
+      withinCombo.getComboBox().getEditor().setItem(StringUtil.stripQuotesAroundValue(varInfo.getWithinConstraint()));
+      invertWithinIn.setSelected(varInfo.isInvertWithinConstraint());
+    }
+
+    boolean isExprContext = true;
+    final boolean contextVar = Configuration.CONTEXT_VAR_NAME.equals(var.getName());
+    if (contextVar) isExprContext = false;
+    containedInConstraints.setVisible(contextVar);
+    expressionConstraints.setVisible(isExprContext);
+    partOfSearchResults.setEnabled(!contextVar); //?
+
+    occurencePanel.setVisible(!contextVar);
+  }
+
+  private void setSearchConstraintsVisible(boolean b) {
+    textConstraintsPanel.setVisible(b);
+    occurencePanel.setVisible(b);
+    expressionConstraints.setVisible(b);
+    partOfSearchResults.setVisible(b);
+    containedInConstraints.setVisible(b);
+    pack();
+  }
+
+  private void restoreScriptCode(NamedScriptableDefinition varInfo) {
+    customScriptCode.getChildComponent().setText(
+      varInfo != null ? StringUtil.stripQuotesAroundValue(varInfo.getScriptCodeConstraint()) : "");
+  }
+
+  protected String getDimensionServiceKey() {
+    return "#com.intellij.structuralsearch.plugin.ui.EditVarConstraintsDialog";
+  }
+
+  private static boolean validateRegExp(EditorTextField field) {
+    try {
+      final String s = field.getDocument().getText();
+      if (s.length() > 0) {
+        Pattern.compile(s);
+      }
+    } catch(PatternSyntaxException ex) {
+      Messages.showErrorDialog(SSRBundle.message("invalid.regular.expression"), SSRBundle.message("invalid.regular.expression"));
+      field.requestFocus();
+      return false;
+    }
+    return true;
+  }
+
+  private static boolean validateScript(EditorTextField field) {
+    final String text = field.getText();
+
+    if (text.length() > 0) {
+      final String message = ScriptSupport.checkValidScript(text);
+
+      if (message != null) {
+        Messages.showErrorDialog(message, SSRBundle.message("invalid.groovy.script"));
+        field.requestFocus();
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static boolean validateIntOccurence(JTextField field) {
+    try {
+      int a = Integer.parseInt(field.getText());
+      if (a==-1) throw new NumberFormatException();
+    } catch(NumberFormatException ex) {
+      Messages.showErrorDialog(SSRBundle.message("invalid.occurence.count"), SSRBundle.message("invalid.occurence.count"));
+      field.requestFocus();
+      return false;
+    }
+    return true;
+  }
+
+  @NotNull
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp("reference.dialogs.search.replace.structural.editvariable");
+  }
+
+  private void createUIComponents() {
+    regexp = createRegexComponent();
+    regexprForExprType = createRegexComponent();
+    formalArgType = createRegexComponent();
+    customScriptCode = new ComponentWithBrowseButton<EditorTextField>(createScriptComponent(), null);
+
+    myRegExHelpLabel = new LinkLabel(SSRBundle.message("regular.expression.help.label"), null, new LinkListener() {
+      public void linkSelected(LinkLabel aSource, Object aLinkData) {
+        try {
+          final JBPopup helpPopup = RegExHelpPopup.createRegExHelpPopup();
+          helpPopup.showInCenterOf(mainForm);
+        }
+        catch (BadLocationException e) {
+          LOG.info(e);
+        }
+      }
+    });
+
+    myRegExHelpLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
+  }
+
+  private static EditorTextField createRegexComponent() {
+    @NonNls final String fileName = "1.regexp";
+    final FileType fileType = getFileType(fileName);
+    final Document doc = createDocument(fileName, fileType, "");
+    return new EditorTextField(doc, myProject, fileType);
+  }
+
+  private static EditorTextField createScriptComponent() {
+    @NonNls final String fileName = "1.groovy";
+    final FileType fileType = getFileType(fileName);
+    final Document doc = createDocument(fileName, fileType, "");
+    return new EditorTextField(doc, myProject, fileType);
+  }
+
+  private static Document createDocument(final String fileName, final FileType fileType, String text) {
+    final PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText(fileName, fileType, text, -1, true);
+
+    return PsiDocumentManager.getInstance(myProject).getDocument(file);
+  }
+
+  private static FileType getFileType(final String fileName) {
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
+    if (fileType == FileTypes.UNKNOWN) fileType = FileTypes.PLAIN_TEXT;
+    return fileType;
+  }
+
+  public static void setProject(final Project project) {
+    myProject = project;
+  }
+
+  private static class MyChangeListener implements ChangeListener {
+    private final JComponent component;
+    private final boolean inverted;
+
+    MyChangeListener(JComponent _component, boolean _inverted) {
+      component = _component;
+      inverted = _inverted;
+    }
+
+    public void stateChanged(ChangeEvent e) {
+      final JCheckBox jCheckBox = (JCheckBox)e.getSource();
+      component.setEnabled(inverted ^ jCheckBox.isSelected());
+    }
+  }
+
+  private static class MyDocumentListener extends DocumentAdapter {
+    private final JComponent[] components;
+
+    private MyDocumentListener(JComponent... _components) {
+      components = _components;
+    }
+
+    @Override
+    public void documentChanged(DocumentEvent e) {
+      final boolean enable = e.getDocument().getTextLength() > 0;
+      for (JComponent component : components) {
+        component.setEnabled(enable);
+      }
+    }
+  }
+
+  private static Editor createEditor(final Project project, final String text, final String fileName) {
+    final FileType fileType = getFileType(fileName);
+    final Document doc = createDocument(fileName, fileType, text);
+    final Editor editor = EditorFactory.getInstance().createEditor(doc, project);
+
+    ((EditorEx)editor).setEmbeddedIntoDialogWrapper(true);
+    final EditorSettings settings = editor.getSettings();
+    settings.setLineNumbersShown(false);
+    settings.setFoldingOutlineShown(false);
+    settings.setRightMarginShown(false);
+    settings.setLineMarkerAreaShown(false);
+    settings.setIndentGuidesShown(false);
+    ((EditorEx)editor).setHighlighter(HighlighterFactory.createHighlighter(fileType, DefaultColorSchemesManager.getInstance().getAllSchemes()[0], project));
+
+    return editor;
+  }
+
+  private static class EditScriptDialog extends DialogWrapper {
+    private final Editor editor;
+
+    public EditScriptDialog(final Project project, String text) {
+      super(project, true);
+      setTitle(SSRBundle.message("edit.groovy.script.constraint.title"));
+      editor = createEditor(project, text, "1.groovy");
+      init();
+    }
+
+    @Override
+    protected String getDimensionServiceKey() {
+      return getClass().getName();
+    }
+
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return editor.getContentComponent();
+    }
+
+    protected JComponent createCenterPanel() {
+      return editor.getComponent();
+    }
+
+    String getScriptText() {
+      return editor.getDocument().getText();
+    }
+
+    @Override
+    protected void dispose() {
+      EditorFactory.getInstance().releaseEditor(editor);
+      super.dispose();
+    }
+  }
+}

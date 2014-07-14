@@ -31,7 +31,9 @@ public enum JavaSdkVersion {
   JDK_1_5(LanguageLevel.JDK_1_5, "1.5"),
   JDK_1_6(LanguageLevel.JDK_1_6, "1.6"),
   JDK_1_7(LanguageLevel.JDK_1_7, "1.7"),
-  JDK_1_8(LanguageLevel.JDK_1_8, "1.8");
+  JDK_1_8(LanguageLevel.JDK_1_8, "1.8"),
+  JDK_1_9(LanguageLevel.JDK_1_9, "1.9");
+  
   private final LanguageLevel myMaxLanguageLevel;
   private final String myDescription;
 

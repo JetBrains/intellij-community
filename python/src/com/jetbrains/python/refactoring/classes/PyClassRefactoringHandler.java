@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -31,6 +32,7 @@ import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -68,7 +70,27 @@ public abstract class PyClassRefactoringHandler implements RefactoringActionHand
     doRefactor(project, elements[0], elements[elements.length - 1], editor, file, dataContext);
   }
 
-  protected abstract void doRefactor(Project project, PsiElement element1, PsiElement element2, Editor editor, PsiFile file, DataContext dataContext);
+  private void doRefactor(Project project, PsiElement element1, PsiElement element2, Editor editor, PsiFile file, DataContext dataContext) {
+    if (ApplicationManagerEx.getApplicationEx().isUnitTestMode()) return;
+
+    CommonRefactoringUtil.checkReadOnlyStatus(project, file);
+
+    final PyClass clazz = PyUtil.getContainingClassOrSelf(element1);
+    if (!inClass(clazz, project, editor, "refactoring.pull.up.error.cannot.perform.refactoring.not.inside.class")) return;
+    assert clazz != null;
+
+    final PyMemberInfoStorage infoStorage = PyClassMembersRefactoringSupport.getSelectedMemberInfos(clazz, element1, element2);
+
+    doRefactorImpl(project, clazz, infoStorage, editor);
+  }
+
+
+  protected abstract void doRefactorImpl(@NotNull final Project project,
+                                         @NotNull final PyClass classUnderRefactoring,
+                                         @NotNull final PyMemberInfoStorage infoStorage,
+                                         @NotNull final Editor editor);
+
+
 
   protected boolean inClass(PyClass clazz, Project project, Editor editor, String errorMessageId) {
     if (clazz == null) {

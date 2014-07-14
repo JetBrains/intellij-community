@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,20 +31,20 @@ import java.util.ResourceBundle;
  */
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public class CommonBundle extends BundleBase {
-  @NonNls private static final String BUNDLE = "messages.CommonBundle";
-  private static Reference<ResourceBundle> ourBundle;
 
-  private CommonBundle() {}
-
-  @NotNull
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
     return message(getCommonBundle(), key, params);
   }
 
+  @NonNls private static final String BUNDLE = "messages.CommonBundle";
+  private static Reference<ResourceBundle> ourBundle;
+
+  private CommonBundle() {
+  }
+
   @NotNull
   private static ResourceBundle getCommonBundle() {
-    ResourceBundle bundle = null;
-    if (ourBundle != null) bundle = ourBundle.get();
+    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
     if (bundle == null) {
       bundle = ResourceBundle.getBundle(BUNDLE);
       ourBundle = new SoftReference<ResourceBundle>(bundle);
@@ -53,9 +53,9 @@ public class CommonBundle extends BundleBase {
   }
 
   public static String messageOrDefault(@Nullable final ResourceBundle bundle,
-                                        final String key,
+                                        @NotNull String key,
                                         @Nullable final String defaultValue,
-                                        final Object... params) {
+                                        @NotNull Object... params) {
     return BundleBase.messageOrDefault(bundle, key, defaultValue, params);
   }
 
@@ -89,22 +89,21 @@ public class CommonBundle extends BundleBase {
     return message("tree.node.loading");
   }
 
-  public static String getOkButtonText(){
+  public static String getOkButtonText() {
     return message("button.ok");
   }
 
-  public static String getYesButtonText(){
+  public static String getYesButtonText() {
     return message("button.yes");
   }
 
-  public static String getNoButtonText(){
+  public static String getNoButtonText() {
     return message("button.no");
   }
 
-  public static String getContinueButtonText(){
+  public static String getContinueButtonText() {
     return message("button.continue");
   }
-
 
   public static String getYesForAllButtonText() {
     return message("button.yes.for.all");

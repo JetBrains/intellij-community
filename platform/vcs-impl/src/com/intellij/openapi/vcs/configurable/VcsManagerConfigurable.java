@@ -78,6 +78,11 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
   }
 
   @Override
+  public boolean isVisible() {
+    return ProjectLevelVcsManager.getInstance(myProject).getAllVcss().length > 0;
+  }
+
+  @Override
   public void disposeUIResources() {
     super.disposeUIResources();
     if (myMappings != null) {

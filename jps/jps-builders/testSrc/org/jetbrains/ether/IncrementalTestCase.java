@@ -23,9 +23,9 @@ import com.intellij.util.Processor;
 import org.jetbrains.jps.builders.BuildResult;
 import org.jetbrains.jps.builders.CompileScopeTestBuilder;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
-import org.jetbrains.jps.cmdline.ProjectDescriptor;
-import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.builders.impl.logging.ProjectBuilderLoggerBase;
+import org.jetbrains.jps.builders.logging.BuildLoggingManager;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -231,7 +231,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     }
   }
 
-  private JpsSdk<JpsDummyElement> getOrCreateJdk() {
+  protected JpsSdk<JpsDummyElement> getOrCreateJdk() {
     if (myJdk == null) {
       myJdk = addJdk("IDEA jdk");
     }

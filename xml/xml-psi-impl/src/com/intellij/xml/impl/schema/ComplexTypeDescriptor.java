@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,14 +49,17 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   private static final FieldCache<XmlElementDescriptor[],ComplexTypeDescriptor,Object, XmlElement> myElementDescriptorsCache =
     new FieldCache<XmlElementDescriptor[],ComplexTypeDescriptor,Object, XmlElement>() {
 
+    @Override
     protected XmlElementDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor, final XmlElement p) {
       return complexTypeDescriptor.doCollectElements(p);
     }
 
+    @Override
     protected XmlElementDescriptor[] getValue(final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
       return complexTypeDescriptor.myElementDescriptors;
     }
 
+    @Override
     protected void putValue(final XmlElementDescriptor[] xmlElementDescriptors,
                             final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
       complexTypeDescriptor.myElementDescriptors = xmlElementDescriptors;
@@ -65,14 +68,17 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
   private static final FieldCache<XmlAttributeDescriptor[], ComplexTypeDescriptor, Object, XmlElement> myAttributeDescriptorsCache =
     new FieldCache<XmlAttributeDescriptor[], ComplexTypeDescriptor, Object, XmlElement>() {
+    @Override
     protected final XmlAttributeDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor, XmlElement p) {
       return complexTypeDescriptor.doCollectAttributes(p);
     }
 
+    @Override
     protected final XmlAttributeDescriptor[] getValue(final ComplexTypeDescriptor complexTypeDescriptor, Object o) {
       return complexTypeDescriptor.myAttributeDescriptors;
     }
 
+    @Override
     protected final void putValue(final XmlAttributeDescriptor[] xmlAttributeDescriptors,
                             final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
       complexTypeDescriptor.myAttributeDescriptors = xmlAttributeDescriptors;
@@ -233,6 +239,9 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
           else {
             XmlAttributeDescriptorImpl descriptor = myDocumentDescriptor.createAttributeDescriptor(tag);
             descriptor.myUse = use;
+            if (ref != null) {
+              descriptor.myReferenceName = ref.getAttributeValue(REF_ATTR_NAME);
+            }
             addAttributeDescriptor(result, descriptor);
           }
         }

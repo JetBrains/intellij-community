@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ public class ThreeStateCheckBox extends JCheckBox {
   private State myState;
   private boolean myThirdStateEnabled = true;
 
-  public static enum State {
+  public enum State {
     SELECTED, NOT_SELECTED, DONT_CARE
   }
 
@@ -118,7 +118,9 @@ public class ThreeStateCheckBox extends JCheckBox {
         if (icon == null) {
           icon = UIManager.getIcon("CheckBox.icon");
         }
-
+        if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+          icon = EmptyIcon.create(20, 18);
+        }
         if (icon != null) {
           final Insets i = getInsets();
           final Rectangle r = getBounds();

@@ -14,13 +14,9 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.Executor.cd;
-import static com.intellij.openapi.vcs.Executor.echo;
+import static com.intellij.openapi.vcs.Executor.*;
 import static hg4idea.test.HgExecutor.hg;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgAnnotationTest extends HgPlatformTest {
   String firstCreatedFile = "file.txt";
   static final String author1 = "a.bacaba@jetbrains.com";
@@ -52,5 +48,33 @@ public class HgAnnotationTest extends HgPlatformTest {
       assertEquals(users.get(i), line.get(HgAnnotation.FIELD.USER));
       assertEquals(date, line.get(HgAnnotation.FIELD.DATE));
     }
+  }
+
+  public void testAnnotationWithIgnoredWhitespaces() {
+    annotationWithWhitespaceOption(true);
+  }
+
+  public void testAnnotationWithoutIgnoredWhitespaces() {
+    annotationWithWhitespaceOption(false);
+  }
+
+  private void annotationWithWhitespaceOption(boolean ignoreWhitespaces) {
+    cd(myRepository);
+    String whitespaceFile = "whitespaces.txt";
+    touch(whitespaceFile, "not whitespaces");
+    myRepository.refresh(false, true);
+    String whiteSpaceAuthor = "Mr.Whitespace";
+    final VirtualFile file = myRepository.findFileByRelativePath(whitespaceFile);
+    assert file != null;
+    hg("add " + whitespaceFile);
+    hg("commit -m modify -u '" + defaultAuthor + "'");
+    echo(whitespaceFile, "    ");//add several whitespaces
+    hg("commit -m whitespaces -u '" + whiteSpaceAuthor + "'");
+    final HgFile hgFile = new HgFile(myRepository, VfsUtilCore.virtualToIoFile(file));
+    myVcs.getProjectSettings().setIgnoreWhitespacesInAnnotations(ignoreWhitespaces);
+    List<HgAnnotationLine> annotationLines =
+      new HgAnnotateCommand(myProject).execute(hgFile, null);
+    HgAnnotationLine line = annotationLines.get(0);
+    assertEquals(ignoreWhitespaces ? defaultAuthor : whiteSpaceAuthor, line.get(HgAnnotation.FIELD.USER));
   }
 }

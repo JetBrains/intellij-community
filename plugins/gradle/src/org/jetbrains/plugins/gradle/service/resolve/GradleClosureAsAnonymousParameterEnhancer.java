@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.resolve;
 
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiWildcardType;
@@ -33,9 +34,7 @@ public class GradleClosureAsAnonymousParameterEnhancer extends ClosureAsAnonymou
   protected PsiType getClosureParameterType(GrClosableBlock closure, int index) {
 
     PsiFile file = closure.getContainingFile();
-    if (file == null || !file.getName().endsWith(GradleConstants.EXTENSION)) {
-      return null;
-    }
+    if (file == null || !FileUtilRt.extensionEquals(file.getName(), GradleConstants.EXTENSION)) return null;
 
     PsiType psiType = super.getClosureParameterType(closure, index);
     if (psiType instanceof PsiWildcardType) {

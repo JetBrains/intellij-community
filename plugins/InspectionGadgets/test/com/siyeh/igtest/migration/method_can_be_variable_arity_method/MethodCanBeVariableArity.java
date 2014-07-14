@@ -7,7 +7,7 @@ public class MethodCanBeVariableArity {
 
     public void method(String... s) {}
 
-    public void convertMe(String[] ss) {}
+    public void <warning descr="'convertMe()' can be converted to variable arity method">convertMe</warning>(String[] ss) {}
 
     public void convertMeNot(byte[] bs) {}
 }
@@ -27,4 +27,12 @@ class Sub extends MethodCanBeVariableArity {
 }
 class Annotated {
   public void nullable(@org.jetbrains.annotations.Nullable String[] ss) {}
+
+  void m(String[] ss) {}
+}
+interface X {
+  void <warning descr="'m()' can be converted to variable arity method">m</warning>(String[] ss);
+}
+class Yes {
+  void m(int[] is, int[] js) {}
 }

@@ -9,5 +9,7 @@
                     interface="com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtension"/>
     <extensionPoint name="externalSystemTaskNotificationListener"
                     interface="com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener"/>
+    <extensionPoint name="externalSystemExecutionConsoleManager"
+                    interface="com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager"/>
   </extensionPoints>
 </idea-plugin>

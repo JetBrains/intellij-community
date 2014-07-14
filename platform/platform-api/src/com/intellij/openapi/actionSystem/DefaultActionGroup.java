@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,13 @@ import java.util.List;
  * to implement your own <code>ActionGroup</code>.
  *
  * @see Constraints
+ *
+ * @see com.intellij.openapi.actionSystem.ComputableActionGroup
+ *
+ * @see com.intellij.ide.actions.NonEmptyActionGroup
+ * @see com.intellij.ide.actions.NonTrivialActionGroup
+ * @see com.intellij.ide.actions.SmartPopupActionGroup
+ *
  */
 public class DefaultActionGroup extends ActionGroup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.DefaultActionGroup");
@@ -69,6 +76,15 @@ public class DefaultActionGroup extends ActionGroup {
    */
   public DefaultActionGroup(@NotNull List<? extends AnAction> actions) {
     this(null, false);
+    addActions(actions);
+  }
+
+  public DefaultActionGroup(@NotNull String name, @NotNull List<? extends AnAction> actions) {
+    this(name, false);
+    addActions(actions);
+  }
+
+  private void addActions(@NotNull List<? extends AnAction> actions) {
     for (AnAction action : actions) {
       add(action);
     }
@@ -85,15 +101,15 @@ public class DefaultActionGroup extends ActionGroup {
    * @param actionManager ActionManager instance
    */
   public final void add(@NotNull AnAction action, @NotNull ActionManager actionManager) {
-    add(action, new Constraints(Anchor.LAST, null), actionManager);
+    add(action, Constraints.LAST, actionManager);
   }
 
   public final void add(@NotNull AnAction action) {
-    addAction(action, new Constraints(Anchor.LAST, null));
+    addAction(action, Constraints.LAST);
   }
 
   public final ActionInGroup addAction(@NotNull AnAction action) {
-    return addAction(action, new Constraints(Anchor.LAST, null));
+    return addAction(action, Constraints.LAST);
   }
 
   /**
@@ -154,7 +170,7 @@ public class DefaultActionGroup extends ActionGroup {
         actionAdded(action, actionManager);
       }
       else {
-        myPairs.add(new Pair<AnAction, Constraints>(action, constraint));
+        myPairs.add(Pair.create(action, constraint));
       }
     }
 
@@ -234,6 +250,43 @@ public class DefaultActionGroup extends ActionGroup {
   public final void removeAll() {
     mySortedChildren.clear();
     myPairs.clear();
+  }
+
+
+  /**
+   * Replaces specified action with the a one.
+   */
+  public boolean replaceAction(@NotNull AnAction oldAction, @NotNull AnAction newAction) {
+    int index = mySortedChildren.indexOf(oldAction);
+    if (index >= 0) {
+      mySortedChildren.set(index, newAction);
+      return true;
+    }
+    else {
+      for (int i = 0; i < myPairs.size(); i++) {
+        Pair<AnAction, Constraints> pair = myPairs.get(i);
+        if (pair.first.equals(newAction)) {
+          myPairs.set(i, Pair.create(newAction, pair.second));
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Copies content from <code>group</code>.
+   * @param other group to copy from
+   */
+  public void copyFromGroup(@NotNull DefaultActionGroup other) {
+    copyFrom(other);
+    setPopup(other.isPopup());
+
+    mySortedChildren.clear();
+    mySortedChildren.addAll(other.mySortedChildren);
+
+    myPairs.clear();
+    myPairs.addAll(other.myPairs);
   }
 
   /**

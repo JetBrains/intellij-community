@@ -17,6 +17,7 @@ package com.intellij.remotesdk;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.remote.RemoteSdkException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ import java.awt.*;
 import java.util.Collection;
 
 /**
+ * @deprecated Remove in IDEA 14
  * @author traff
  */
 public interface RemoteSdkFactory<T extends RemoteSdkAdditionalData> {

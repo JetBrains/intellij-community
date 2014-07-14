@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValue;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vcs.persistent.SmallMapSerializer;
@@ -28,11 +29,11 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.CopyData;
 import org.jetbrains.idea.svn.history.FirstInBranch;
-import org.tmatesoft.svn.core.SVNException;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -42,7 +43,7 @@ import java.util.*;
 
 public class SvnBranchPointsCalculator {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator");
-  private FactsCalculator<KeyData, WrapperInvertor<BranchCopyData>, SVNException> myCalculator;
+  private FactsCalculator<KeyData, WrapperInvertor, VcsException> myCalculator;
   private PersistentHolder myPersistentHolder;
   private File myFile;
   private final Project myProject;
@@ -57,19 +58,19 @@ public class SvnBranchPointsCalculator {
   }
 
   public void activate() {
-    ValueHolder<WrapperInvertor<BranchCopyData>, KeyData> cache = null;
+    ValueHolder<WrapperInvertor, KeyData> cache = null;
 
     myPersistentHolder = new PersistentHolder(myFile);
-    cache = new ValueHolder<WrapperInvertor<BranchCopyData>, KeyData>() {
-      public WrapperInvertor<BranchCopyData> getValue(KeyData dataHolder) {
-        final WrapperInvertor<BranchCopyData> result =
+    cache = new ValueHolder<WrapperInvertor, KeyData>() {
+      public WrapperInvertor getValue(KeyData dataHolder) {
+        final WrapperInvertor result =
           myPersistentHolder.getBestHit(dataHolder.getRepoUrl(), dataHolder.getSourceUrl(), dataHolder.getTargetUrl());
         if (LOG.isDebugEnabled()) {
           LOG.debug("Persistent for: " + dataHolder.toString() + " returned: " + (result == null ? null : result.toString()));
         }
         return result;
       }
-      public void setValue(WrapperInvertor<BranchCopyData> value, KeyData dataHolder) {
+      public void setValue(WrapperInvertor value, KeyData dataHolder) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Put into persistent: key: " + dataHolder.toString() + " value: " + value.toString());
         }
@@ -77,7 +78,7 @@ public class SvnBranchPointsCalculator {
       }
     };
 
-    myCalculator = new FactsCalculator<KeyData, WrapperInvertor<BranchCopyData>, SVNException>(
+    myCalculator = new FactsCalculator<KeyData, WrapperInvertor, VcsException>(
       myProject, "Looking for branch origin", cache, new Loader(myProject));
   }
 
@@ -88,7 +89,7 @@ public class SvnBranchPointsCalculator {
   }
 
   private static class BranchDataExternalizer implements DataExternalizer<TreeMap<String,BranchCopyData>> {
-    public void save(DataOutput out, TreeMap<String,BranchCopyData> value) throws IOException {
+    public void save(@NotNull DataOutput out, TreeMap<String,BranchCopyData> value) throws IOException {
       out.writeInt(value.size());
       for (Map.Entry<String, BranchCopyData> entry : value.entrySet()) {
         out.writeUTF(entry.getKey());
@@ -100,7 +101,7 @@ public class SvnBranchPointsCalculator {
       }
     }
 
-    public TreeMap<String,BranchCopyData> read(DataInput in) throws IOException {
+    public TreeMap<String,BranchCopyData> read(@NotNull DataInput in) throws IOException {
       final TreeMap<String,BranchCopyData> result = new TreeMap<String, BranchCopyData>();
 
       final int num = in.readInt();
@@ -117,11 +118,11 @@ public class SvnBranchPointsCalculator {
     }
   }
 
-  public static class WrapperInvertor<T extends Invertor<T>> {
-    private final T myWrapped;
+  public static class WrapperInvertor {
+    private final BranchCopyData myWrapped;
     private final boolean myInvertedSense;
 
-    public WrapperInvertor(boolean invertedSense, T wrapped) {
+    public WrapperInvertor(boolean invertedSense, BranchCopyData wrapped) {
       myInvertedSense = invertedSense;
       myWrapped = wrapped;
     }
@@ -130,15 +131,15 @@ public class SvnBranchPointsCalculator {
       return myInvertedSense;
     }
 
-    public T getWrapped() {
+    public BranchCopyData getWrapped() {
       return myWrapped;
     }
 
-    public T getTrue() {
+    public BranchCopyData getTrue() {
       return myInvertedSense ? myWrapped.invertSelf() : myWrapped;
     }
 
-    public T inverted() {
+    public BranchCopyData inverted() {
       return myWrapped.invertSelf();
     }
 
@@ -199,7 +200,7 @@ public class SvnBranchPointsCalculator {
     }
 
     @Nullable
-    public WrapperInvertor<BranchCopyData> getBestHit(final String repoUrl, final String source, final String target) {
+    public WrapperInvertor getBestHit(final String repoUrl, final String source, final String target) {
       final List<String> keys;
       synchronized (myLock) {
         keys = (List<String>) myForSearchMap.get(repoUrl);
@@ -216,14 +217,14 @@ public class SvnBranchPointsCalculator {
         final boolean sourceIsOut = sourceMatching == null;
         if (sourceIsOut || targetMatching == null) {
           // if found by "target" url - we correctly thought that target of copy is target
-          return sourceIsOut ? new WrapperInvertor<BranchCopyData>(false, map.get(targetMatching)) :
-                 new WrapperInvertor<BranchCopyData>(true, map.get(sourceMatching));
+          return sourceIsOut ? new WrapperInvertor(false, map.get(targetMatching)) :
+                 new WrapperInvertor(true, map.get(sourceMatching));
         }
         final BranchCopyData sourceData = map.get(sourceMatching);
         final BranchCopyData targetData = map.get(targetMatching);
 
         final boolean inverted = sourceData.getTargetRevision() > targetData.getTargetRevision();
-        return new WrapperInvertor<BranchCopyData>(inverted, inverted ? sourceData : targetData);
+        return new WrapperInvertor(inverted, inverted ? sourceData : targetData);
       }
     }
 
@@ -239,7 +240,7 @@ public class SvnBranchPointsCalculator {
     }
   }
 
-  private static class Loader implements ThrowableConvertor<KeyData, WrapperInvertor<BranchCopyData>, SVNException> {
+  private static class Loader implements ThrowableConvertor<KeyData, WrapperInvertor, VcsException> {
     private SvnVcs myVcs;
 
     private Loader(final Project project) {
@@ -247,8 +248,8 @@ public class SvnBranchPointsCalculator {
     }
 
     @Override
-    public WrapperInvertor<BranchCopyData> convert(final KeyData keyData) throws SVNException {
-      final TransparentlyFailedValue<CopyData, SVNException> consumer = new TransparentlyFailedValue<CopyData, SVNException>();
+    public WrapperInvertor convert(final KeyData keyData) throws VcsException {
+      final TransparentlyFailedValue<CopyData, VcsException> consumer = new TransparentlyFailedValue<CopyData, VcsException>();
       new FirstInBranch(myVcs, keyData.getRepoUrl(), keyData.getTargetUrl(), keyData.getSourceUrl(), consumer).run();
 
       final CopyData copyData = consumer.get();
@@ -262,7 +263,7 @@ public class SvnBranchPointsCalculator {
           branchCopyData = new BranchCopyData(keyData.getTargetUrl(), copyData.getCopySourceRevision(), keyData.getSourceUrl(),
                                               copyData.getCopyTargetRevision());
         }
-        WrapperInvertor<BranchCopyData> invertor = new WrapperInvertor<BranchCopyData>(! correct, branchCopyData);
+        WrapperInvertor invertor = new WrapperInvertor(! correct, branchCopyData);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Loader17 returned: for key: " + keyData.toString() + " result: " + (invertor.toString()));
         }
@@ -304,7 +305,7 @@ public class SvnBranchPointsCalculator {
     }
   }
 
-  public static class BranchCopyData implements Invertor<BranchCopyData> {
+  public static class BranchCopyData {
     private final String mySource;
     private final String myTarget;
     private final long mySourceRevision;
@@ -343,12 +344,8 @@ public class SvnBranchPointsCalculator {
     }
   }
 
-  private interface Invertor<T> {
-    T invertSelf();
-  }
-
   public TaskDescriptor getFirstCopyPointTask(final String repoUID, final String sourceUrl, final String targetUrl,
-                                          final Consumer<TransparentlyFailedValueI<WrapperInvertor<BranchCopyData>, SVNException>> consumer) {
-    return myCalculator.getTask(new KeyData(repoUID, sourceUrl, targetUrl), consumer, SVNException.class);
+                                          final Consumer<TransparentlyFailedValueI<WrapperInvertor, VcsException>> consumer) {
+    return myCalculator.getTask(new KeyData(repoUID, sourceUrl, targetUrl), consumer, VcsException.class);
   }
 }

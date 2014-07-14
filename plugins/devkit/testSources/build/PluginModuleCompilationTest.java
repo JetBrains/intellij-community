@@ -68,11 +68,6 @@ public class PluginModuleCompilationTest extends BaseCompilerTestCase {
   }
 
   @Override
-  protected boolean useExternalCompiler() {
-    return true;
-  }
-
-  @Override
   protected void tearDown() throws Exception {
     new WriteAction() {
       protected void run(final Result result) {

@@ -16,7 +16,11 @@
 package com.intellij.xdebugger.impl.evaluate;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
@@ -35,7 +39,7 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
   private final JPanel myMainPanel;
 
   public ExpressionInputComponent(final @NotNull Project project, @NotNull XDebuggerEditorsProvider editorsProvider, final @Nullable XSourcePosition sourcePosition,
-                                  @Nullable String expression) {
+                                  @Nullable XExpression expression) {
     super(XDebuggerBundle.message("xdebugger.dialog.title.evaluate.expression"));
     myMainPanel = new JPanel(new BorderLayout());
     myMainPanel.add(new JLabel(XDebuggerBundle.message("xdebugger.evaluate.label.expression")), BorderLayout.WEST);
@@ -43,7 +47,7 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
     myExpressionComboBox.getComboBox().setMinimumAndPreferredWidth(250);
     myMainPanel.add(myExpressionComboBox.getComponent(), BorderLayout.CENTER);
     if (expression != null) {
-      myExpressionComboBox.setText(expression);
+      myExpressionComboBox.setExpression(expression);
     }
     myExpressionComboBox.selectAll();
   }
@@ -52,6 +56,11 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
   public void addComponent(JPanel contentPanel, JPanel resultPanel) {
     contentPanel.add(resultPanel, BorderLayout.CENTER);
     contentPanel.add(myMainPanel, BorderLayout.NORTH);
+    final JBLabel hint = new JBLabel(XDebuggerBundle.message("xdebugger.evaluate.addtowatches.hint"), SwingConstants.RIGHT);
+    hint.setBorder(IdeBorderFactory.createEmptyBorder(2, 0, 6, 0));
+    hint.setComponentStyle(UIUtil.ComponentStyle.SMALL);
+    hint.setFontColor(UIUtil.FontColor.BRIGHTER);
+    contentPanel.add(hint, BorderLayout.SOUTH);
   }
 
   protected XDebuggerEditorBase getInputEditor() {

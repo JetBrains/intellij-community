@@ -103,20 +103,25 @@ public class DefinitionResolver extends CommonElement.Visitor implements
     ContainerUtil.getOrCreate(myDefines.get(), def.getName(), this).add(def);
   }
 
+  @Override
   public void visitPattern(Pattern pattern) {
   }
 
+  @Override
   public void visitGrammar(Grammar pattern) {
   }
 
+  @Override
   public void visitRef(Ref ref) {
   }
 
 
+  @Override
   public Set<Define> create() {
     return new THashSet<Define>();
   }
 
+  @Override
   public Result<Map<String, Set<Define>>> compute() {
     try {
       myScope.acceptChildren(this);
@@ -193,6 +198,7 @@ public class DefinitionResolver extends CommonElement.Visitor implements
       myValue = value;
     }
 
+    @Override
     public boolean execute(@NotNull XmlFile element) {
       final Grammar g = GrammarFactory.getGrammar(element);
       if (g != null) {

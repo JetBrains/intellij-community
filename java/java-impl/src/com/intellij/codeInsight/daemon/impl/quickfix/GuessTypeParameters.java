@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,13 +81,13 @@ public class GuessTypeParameters {
     if (infos.length == 1 && substitutor != null && substitutor != PsiSubstitutor.EMPTY) {
       ExpectedTypeInfo info = infos[0];
       Map<PsiTypeParameter, PsiType> map = substitutor.getSubstitutionMap();
-      PsiType[] vals = map.values().toArray(new PsiType[map.size()]);
+      PsiType[] vals = map.values().toArray(PsiType.createArray(map.size()));
       PsiTypeParameter[] params = map.keySet().toArray(new PsiTypeParameter[map.size()]);
 
       List<PsiType> types = matchingTypeParameters(vals, params, info);
       if (!types.isEmpty()) {
         ContainerUtil.addAll(types, ExpectedTypesProvider.processExpectedTypes(infos, new MyTypeVisitor(manager, scope), project));
-        builder.replaceElement(typeElement, new TypeExpression(project, types.toArray(new PsiType[types.size()])));
+        builder.replaceElement(typeElement, new TypeExpression(project, types.toArray(PsiType.createArray(types.size()))));
         return;
       }
       else {
@@ -180,8 +180,8 @@ public class GuessTypeParameters {
       if (!CommonClassNames.JAVA_LANG_OBJECT.equals(substituted.getCanonicalText()) && (toplevel || substituted.equals(type))) {
         types.add(substituted);
       }
-      
-      builder.replaceElement(typeElement, new TypeExpression(project, types.toArray(new PsiType[types.size()])));
+
+      builder.replaceElement(typeElement, new TypeExpression(project, types.toArray(PsiType.createArray(types.size()))));
       return toplevel ? SUBSTITUTED_IN_REF : SUBSTITUTED_IN_PARAMETERS;
     }
 

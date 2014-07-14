@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.codeInsight.lookup.InsertHandlerDecorator;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.codeInsight.template.emmet.completion.XmlEmmetAbbreviationCompletionProvider;
+import com.intellij.codeInsight.template.emmet.completion.EmmetAbbreviationCompletionProvider;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -56,6 +56,7 @@ public class XmlCompletionContributor extends CompletionContributor {
 
   @NonNls public static final String TAG_NAME_COMPLETION_FEATURE = "tag.name.completion";
   private static final InsertHandlerDecorator<LookupElement> QUOTE_EATER = new InsertHandlerDecorator<LookupElement>() {
+    @Override
     public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
       final char completionChar = context.getCompletionChar();
       if (completionChar == '\'' || completionChar == '\"') {
@@ -78,7 +79,7 @@ public class XmlCompletionContributor extends CompletionContributor {
   };
 
   public XmlCompletionContributor() {
-    extend(CompletionType.BASIC, psiElement().inside(XmlPatterns.xmlFile()), new XmlEmmetAbbreviationCompletionProvider());
+    extend(CompletionType.BASIC, psiElement().inside(XmlPatterns.xmlFile()), new EmmetAbbreviationCompletionProvider());
     extend(CompletionType.BASIC,
            psiElement().inside(XmlPatterns.xmlAttributeValue()),
            new CompletionProvider<CompletionParameters>() {
@@ -95,6 +96,7 @@ public class XmlCompletionContributor extends CompletionContributor {
                final Set<String> usedWords = new THashSet<String>();
                final Ref<Boolean> addWordVariants = Ref.create(true);
                result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
+                 @Override
                  public void consume(CompletionResult r) {
                    if (r.getLookupElement().getUserData(WORD_COMPLETION_COMPATIBLE) == null) {
                      addWordVariants.set(false);
@@ -119,7 +121,8 @@ public class XmlCompletionContributor extends CompletionContributor {
     return node != null && node.getElementType() == XmlTokenType.XML_NAME;
   }
 
-  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+  @Override
+  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     super.fillCompletionVariants(parameters, result);
     if (result.isStopped()) {
       return;
@@ -195,6 +198,7 @@ public class XmlCompletionContributor extends CompletionContributor {
     return super.advertise(parameters);
   }
 
+  @Override
   public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
     final int offset = context.getStartOffset();
     final PsiFile file = context.getFile();

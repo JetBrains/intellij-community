@@ -15,47 +15,22 @@
  */
 package com.intellij.openapi.diff.impl.incrementalMerge;
 
-import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-/**
- * Represents one fragment in the 3-way merge, i.e. an insertion, a deletion, a modification or a conflict.
- * Holds information about the {@link TextRange TextRanges} of changed fragments.<br/>
- * One and only one left or right fragment is null for all cases, except for the conflict, when both are not null.
- */
 final class MergeFragment {
 
-  @Nullable private final TextRange myLeft;
+  @NotNull private final TextRange myLeft;
   @NotNull private final TextRange myBase;
-  @Nullable private final TextRange myRight;
+  @NotNull private final TextRange myRight;
 
-  MergeFragment(@Nullable TextRange left, @NotNull TextRange base, @Nullable TextRange right) {
+  MergeFragment(@NotNull TextRange left, @NotNull TextRange base, @NotNull TextRange right) {
     myLeft = left;
     myBase = base;
     myRight = right;
   }
 
-  /**
-   * Creates a non-conflicting MergeFragment, given one of TextRanges and the FragmentSide to identify which range is it: right or left.
-   */
   @NotNull
-  static MergeFragment notConflict(@NotNull TextRange baseChange, @NotNull TextRange versionChange, @NotNull FragmentSide versionSide) {
-    TextRange left;
-    TextRange right;
-    if (versionSide == FragmentSide.SIDE1) {
-      left = versionChange;
-      right = null;
-    }
-    else {
-      left = null;
-      right = versionChange;
-    }
-    return new MergeFragment(left, baseChange, right);
-  }
-
-  @Nullable
   TextRange getLeft() {
     return myLeft;
   }
@@ -65,7 +40,7 @@ final class MergeFragment {
     return myBase;
   }
 
-  @Nullable
+  @NotNull
   TextRange getRight() {
     return myRight;
   }
@@ -77,38 +52,21 @@ final class MergeFragment {
 
     MergeFragment fragment = (MergeFragment)o;
 
-    // suppressing unnecessary check for null, because myBase may occasionally become nullable
-    //noinspection ConstantConditions
-    if (myBase != null ? !myBase.equals(fragment.myBase) : fragment.myBase != null) return false;
-    if (myLeft != null ? !myLeft.equals(fragment.myLeft) : fragment.myLeft != null) return false;
-    if (myRight != null ? !myRight.equals(fragment.myRight) : fragment.myRight != null) return false;
-
+    if (!myBase.equals(fragment.myBase)) return false;
+    if (!myLeft.equals(fragment.myLeft)) return false;
+    if (!myRight.equals(fragment.myRight)) return false;
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myLeft != null ? myLeft.hashCode() : 0;
-    // suppressing unnecessary check for null, because myBase may occasionally become nullable
-    // noinspection ConstantConditions
-    result = 31 * result + (myBase != null ? myBase.hashCode() : 0);
-    result = 31 * result + (myRight != null ? myRight.hashCode() : 0);
+    int result = myLeft.hashCode();
+    result = 31 * result + myBase.hashCode();
+    result = 31 * result + myRight.hashCode();
     return result;
   }
 
   public String toString() {
-    StringBuilder buffer = new StringBuilder();
-    buffer.append("<");
-    buffer.append(range2String(myLeft)).append(", ");
-    buffer.append(range2String(myBase)).append(", ");
-    buffer.append(range2String(myRight));
-    buffer.append(">");
-    return buffer.toString();
+    return "<" + myLeft.toString() + ", " + myBase.toString() + ", " + myRight.toString() + ">";
   }
-
-  @NotNull
-  private static String range2String(@Nullable TextRange left) {
-    return left != null ? left.toString() : "-----";
-  }
-
 }

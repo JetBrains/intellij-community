@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,11 +39,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
-
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.LOG;
 
 /**
  * @author Max Medvedev
@@ -58,13 +57,14 @@ public class GrVariableInliner implements InlineHandler.Inliner {
     }
     else {
       initializer = variable.getInitializerGroovy();
-      LOG.assertTrue(initializer != null);
+      PsiUtil.LOG.assertTrue(initializer != null);
     }
 
     myTempExpr = GrIntroduceHandlerBase.insertExplicitCastIfNeeded(variable, initializer);
 
   }
 
+  @Override
   @Nullable
   public MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
     MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
@@ -90,6 +90,7 @@ public class GrVariableInliner implements InlineHandler.Inliner {
     return conflicts;
   }
 
+  @Override
   public void inlineUsage(@NotNull final UsageInfo usage, @NotNull final PsiElement referenced) {
     inlineReference(usage, referenced, myTempExpr);
   }

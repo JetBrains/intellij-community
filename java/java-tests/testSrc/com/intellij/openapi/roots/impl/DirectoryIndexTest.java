@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
@@ -31,6 +32,8 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -38,9 +41,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static java.util.Collections.singletonList;
 
@@ -204,6 +205,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfo(myLibDir, myModule, false, false, null, null);
     checkInfo(myLibSrcDir, myModule, false, true, "", null, myModule2, myModule3);
     checkInfo(myLibClsDir, myModule, true, false, "", null, myModule2, myModule3);
+    
+    assertEquals(myLibSrcDir, checkInfoNotNull(myLibSrcDir).getSourceRoot());
 
     checkInfo(myModule2Dir, myModule2, false, false, null, null);
     checkInfo(mySrcDir2, myModule2, false, false, "", JavaSourceRootType.SOURCE, myModule2, myModule3);
@@ -222,8 +225,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
   }
 
   public void testDirsByPackageName() throws IOException {
-    checkPackage("", true, myFileLibSrc, myFileLibCls, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myLibSrcDir, myLibClsDir, mySrcDir2);
-    checkPackage("", false, myFileLibCls, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myLibClsDir, mySrcDir2);
+    checkPackage("", true, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myFileLibSrc, myFileLibCls, mySrcDir2, myLibSrcDir, myLibClsDir);
+    checkPackage("", false, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myFileLibCls, mySrcDir2, myLibClsDir);
     
     checkPackage("pack1", true, myPack1Dir);
     checkPackage("pack1", false, myPack1Dir);
@@ -233,6 +236,25 @@ public class DirectoryIndexTest extends IdeaTestCase {
     
     checkPackage(".pack2", false);
     checkPackage(".pack2", true);
+
+    VirtualFile libClsPack = myLibClsDir.createChildDirectory(this, "pack1");
+    VirtualFile libSrcPack = myLibSrcDir.createChildDirectory(this, "pack1");
+    fireRootsChanged();
+    checkPackage("pack1", true, myPack1Dir, libSrcPack, libClsPack);
+    checkPackage("pack1", false, myPack1Dir, libClsPack);
+  }
+
+  public void testDirectoriesWithPackagePrefix() {
+    PsiTestUtil.addSourceRoot(myModule3, myModule3Dir);
+    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
+      @Override
+      public void run() {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(myModule3).getModifiableModel();
+        model.getContentEntries()[0].getSourceFolders()[0].setPackagePrefix("pack1");
+        model.commit();
+      }
+    });
+    checkPackage("pack1", true, myPack1Dir, myModule3Dir);
   }
 
   public void testCreateDir() throws Exception {
@@ -307,9 +329,10 @@ public class DirectoryIndexTest extends IdeaTestCase {
   }
 
   public void testChangeIgnoreList() throws Exception {
-    myModule1Dir.createChildDirectory(this, "newDir");
-
+    VirtualFile newDir = myModule1Dir.createChildDirectory(this, "newDir");
+    
     myIndex.checkConsistency();
+    checkInfoNotNull(newDir);
 
     final FileTypeManagerEx fileTypeManager = (FileTypeManagerEx)FileTypeManager.getInstance();
     final String list = fileTypeManager.getIgnoredFilesList();
@@ -321,8 +344,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
           fileTypeManager.setIgnoredFilesList(list1);
         }
       });
-
       myIndex.checkConsistency();
+      checkInfoNull(newDir);
     }
     finally {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -331,6 +354,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
           fileTypeManager.setIgnoredFilesList(list);
         }
       });
+      checkInfoNotNull(newDir);
     }
   }
 
@@ -350,6 +374,45 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
 
     myIndex.checkConsistency();
+  }
+
+  public void testModuleUnderIgnoredDir() throws IOException {
+    final VirtualFile ignored = myRootVFile.createChildDirectory(this, "RCS");
+    assertTrue(FileTypeManager.getInstance().isFileIgnored(ignored));
+    final VirtualFile module4 = ignored.createChildDirectory(this, "module4");
+    assertFalse(FileTypeManager.getInstance().isFileIgnored(module4));
+    
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+        Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", StdModuleTypes.JAVA.getId());
+        PsiTestUtil.addContentRoot(module, module4);
+        checkInfoNull(ignored);
+        checkInfo(module4, module, false, false, null, null);
+      }
+    }.execute().throwException();
+
+  }
+
+  public void testModuleInIgnoredDir() throws IOException {
+    final VirtualFile ignored = myRootVFile.createChildDirectory(this, "RCS");
+    assertTrue(FileTypeManager.getInstance().isFileIgnored(ignored));
+    
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+        ModifiableModuleModel model = moduleManager.getModifiableModel();
+        model.disposeModule(myModule);
+        model.disposeModule(myModule2);
+        model.disposeModule(myModule3);
+        model.commit();
+        Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", StdModuleTypes.JAVA.getId());
+        PsiTestUtil.addContentRoot(module, ignored);
+        checkInfo(ignored, module, false, false, null, null);
+      }
+    }.execute().throwException();
   }
 
   public void testExcludedDirsInLibraries() {
@@ -393,6 +456,56 @@ public class DirectoryIndexTest extends IdeaTestCase {
     ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.getInstance(), false, true);
   }
 
+  public void testModuleSourceAsLibrarySource() throws Exception {
+    ModuleRootModificationUtil.addModuleLibrary(myModule, "someLib", Collections.<String>emptyList(), Arrays.asList(mySrcDir1.getUrl()));
+    
+    checkInfo(mySrcDir1, myModule, false, true, "", JavaSourceRootType.SOURCE, myModule, myModule);
+    OrderEntry[] entries = myIndex.getInfoForDirectory(mySrcDir1).getOrderEntries();
+    assertInstanceOf(entries[0], LibraryOrderEntry.class);
+    assertInstanceOf(entries[1], ModuleSourceOrderEntry.class);
+
+    checkInfo(myTestSrc1, myModule, false, true, "testSrc", JavaSourceRootType.TEST_SOURCE, myModule, myModule);
+    entries = myIndex.getInfoForDirectory(myTestSrc1).getOrderEntries();
+    assertInstanceOf(entries[0], LibraryOrderEntry.class);
+    assertInstanceOf(entries[1], ModuleSourceOrderEntry.class);
+  }
+
+  public void testModuleSourceAsLibraryClasses() throws Exception {
+    ModuleRootModificationUtil.addModuleLibrary(myModule, "someLib", Arrays.asList(mySrcDir1.getUrl()), Collections.<String>emptyList());
+    checkInfo(mySrcDir1, myModule, true, false, "", JavaSourceRootType.SOURCE, myModule);
+    assertInstanceOf(assertOneElement(checkInfoNotNull(mySrcDir1).getOrderEntries()), ModuleSourceOrderEntry.class);
+  }
+
+  public void testModulesWithSameSourceContentRoot() {
+    // now our API allows this (ReformatCodeActionTest), although UI doesn't. Maybe API shouldn't allow it as well?
+    PsiTestUtil.addContentRoot(myModule2, myModule1Dir);
+    PsiTestUtil.addSourceRoot(myModule2, mySrcDir1);
+
+    checkInfo(myModule1Dir, myModule, false, false, null, null);
+    checkInfo(mySrcDir1, myModule, false, false, "", JavaSourceRootType.SOURCE, myModule3, myModule);
+    checkInfo(myTestSrc1, myModule, false, false, "", JavaSourceRootType.TEST_SOURCE, myModule3, myModule);
+    checkInfo(myResDir, myModule, false, false, "", JavaResourceRootType.RESOURCE, myModule);
+
+    checkInfo(mySrcDir2, myModule2, false, false, "", JavaSourceRootType.SOURCE, myModule2, myModule3);
+    assertEquals(myModule2Dir, myIndex.getInfoForDirectory(mySrcDir2).getContentRoot());
+  }
+
+  public void testModuleWithSameSourceRoot() {
+    PsiTestUtil.addSourceRoot(myModule2, mySrcDir1);
+    checkInfo(mySrcDir1, myModule2, false, false, "", JavaSourceRootType.SOURCE, myModule2, myModule3);
+    checkInfo(myTestSrc1, myModule2, false, false, "testSrc", JavaSourceRootType.SOURCE, myModule2, myModule3);
+  }
+
+  public void testModuleContentUnderSourceRoot() {
+    PsiTestUtil.addContentRoot(myModule2, myPack1Dir);
+    checkInfo(myPack1Dir, myModule2, false, false, null, null);
+  }
+
+  public void testSameSourceAndOutput() {
+    PsiTestUtil.setCompilerOutputPath(myModule, mySrcDir1.getUrl(), false);
+    checkInfoNull(mySrcDir1);
+  }
+
   public void testExcludedDirShouldBeExcludedRightAfterItsCreation() throws Exception {
     VirtualFile excluded = myModule1Dir.createChildDirectory(this, "excluded");
     VirtualFile projectOutput = myModule1Dir.createChildDirectory(this, "projectOutput");
@@ -417,8 +530,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfoNull(module2TestOutput);
     
     assertFalse(myIndex.isProjectExcludeRoot(excluded));
-    assertTrue(myIndex.isProjectExcludeRoot(projectOutput));
-    assertTrue(myIndex.isProjectExcludeRoot(module2Output));
+    assertFalse(myIndex.isProjectExcludeRoot(projectOutput));
+    assertFalse(myIndex.isProjectExcludeRoot(module2Output));
     assertFalse(myIndex.isProjectExcludeRoot(module2TestOutput));
 
     excluded.delete(this);
@@ -429,19 +542,17 @@ public class DirectoryIndexTest extends IdeaTestCase {
     final List<VirtualFile> created = new ArrayList<VirtualFile>();
     VirtualFileListener l = new VirtualFileAdapter() {
       @Override
-      public void fileCreated(VirtualFileEvent e) {
+      public void fileCreated(@NotNull VirtualFileEvent e) {
         VirtualFile file = e.getFile();
         checkInfoNull(file);
         created.add(file);
         
         String fileName = e.getFileName();
         if (fileName.equals("projectOutput")) {
-          //todo fix and uncomment
-//          assertTrue(myIndex.isProjectExcludeRoot(file));
+          assertFalse(myIndex.isProjectExcludeRoot(file));
         }
         if (fileName.equals("module2Output")) {
-          //todo fix and uncomment
-//          assertTrue(myIndex.isProjectExcludeRoot(file));
+          assertFalse(myIndex.isProjectExcludeRoot(file));
         }
         if (fileName.equals("module2TestOutput")) {
           assertFalse(myIndex.isProjectExcludeRoot(file));
@@ -454,10 +565,10 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertFalse(myIndex.isProjectExcludeRoot(excluded));
     
     projectOutput = myModule1Dir.createChildDirectory(this, projectOutput.getName());
-    assertTrue(myIndex.isProjectExcludeRoot(projectOutput));
+    assertFalse(myIndex.isProjectExcludeRoot(projectOutput));
     
     module2Output = myModule1Dir.createChildDirectory(this, module2Output.getName());
-    assertTrue(myIndex.isProjectExcludeRoot(module2Output));
+    assertFalse(myIndex.isProjectExcludeRoot(module2Output));
     
     module2TestOutput = myModule2Dir.createChildDirectory(this, module2TestOutput.getName());
     assertFalse(myIndex.isProjectExcludeRoot(module2TestOutput));
@@ -470,8 +581,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertEquals(created.toString(), 4, created.size());
 
     assertFalse(myIndex.isProjectExcludeRoot(excluded));
-    assertTrue(myIndex.isProjectExcludeRoot(projectOutput));
-    assertTrue(myIndex.isProjectExcludeRoot(module2Output));
+    assertFalse(myIndex.isProjectExcludeRoot(projectOutput));
+    assertFalse(myIndex.isProjectExcludeRoot(module2Output));
     assertFalse(myIndex.isProjectExcludeRoot(module2TestOutput));
   }
 
@@ -492,7 +603,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
     VirtualFileListener l = new VirtualFileAdapter() {
       @Override
-      public void fileCreated(VirtualFileEvent e) {
+      public void fileCreated(@NotNull VirtualFileEvent e) {
         assertEquals("dir", e.getFileName());
 
         VirtualFile file = e.getFile();
@@ -539,6 +650,10 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfo(myModule1Dir, myModule, true, false, "", null, myModule);
     checkInfo(mySrcDir1, myModule, true, false, "", JavaSourceRootType.SOURCE, myModule);
 
+    checkInfo(myModule2Dir, myModule2, true, false, "module2", null, myModule);
+    checkInfo(mySrcDir2, myModule2, true, false, "", JavaSourceRootType.SOURCE, myModule2, myModule3);
+    checkInfo(myExcludeDir, null, true, false, "module2.src2.excluded", null, myModule3);
+
     checkInfo(myLibDir, myModule, true, false, "lib", null, myModule);
     checkInfo(myLibClsDir, myModule, true, false, "", null, myModule2, myModule3);
 
@@ -546,9 +661,19 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfo(myLibSrcDir, myModule, true, true, "", null, myModule, myModule3);
     
     checkInfo(myResDir, myModule, true, false, "", JavaResourceRootType.RESOURCE, myModule);
+    assertInstanceOf(assertOneElement(checkInfoNotNull(myResDir).getOrderEntries()), ModuleSourceOrderEntry.class);
 
     checkInfo(myExcludedLibSrcDir, null, true, false, "lib.src.exc", null, myModule3, myModule);
     checkInfo(myExcludedLibClsDir, null, true, false, "lib.cls.exc", null, myModule3);
+
+    checkPackage("lib.src.exc", true, myExcludedLibSrcDir);
+    checkPackage("lib.cls.exc", true, myExcludedLibClsDir);
+    
+    checkPackage("lib.src", true);
+    checkPackage("lib.cls", true);
+    
+    checkPackage("exc", false);
+    checkPackage("exc", true);
   }
 
   public void testExcludeCompilerOutputOutsideOfContentRoot() throws Exception {
@@ -585,12 +710,209 @@ public class DirectoryIndexTest extends IdeaTestCase {
     fireRootsChanged();
 
     assertFalse(myIndex.isProjectExcludeRoot(myOutputDir));
-    //todo uncomment assertFalse(myIndex.isProjectExcludeRoot(projectOutputUnderContent));
+    assertFalse(myIndex.isProjectExcludeRoot(projectOutputUnderContent));
     
     projectOutputUnderContent.delete(this);
     projectOutputUnderContent = myModule1Dir.createChildDirectory(this, "projectOutputUnderContent");
     assertFalse(myIndex.isProjectExcludeRoot(myOutputDir));
-    //todo uncomment assertFalse(myIndex.isProjectExcludeRoot(projectOutputUnderContent));
+    assertFalse(myIndex.isProjectExcludeRoot(projectOutputUnderContent));
+  }
+
+  public void testFileContentAndSourceRoots() throws IOException {
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+
+    VirtualFile fileRoot = myRootVFile.createChildData(this, "fileRoot.txt");
+    VirtualFile fileSourceRoot = myRootVFile.createChildData(this, "fileSourceRoot.txt");
+    VirtualFile fileTestSourceRoot = myRootVFile.createChildData(this, "fileTestSourceRoot.txt");
+
+    checkInfoNull(fileRoot);
+    assertFalse(fileIndex.isInContent(fileRoot));
+    assertIteratedContent(fileIndex, null, Arrays.asList(fileRoot, fileSourceRoot, fileTestSourceRoot));
+
+    ContentEntry contentEntry = PsiTestUtil.addContentRoot(myModule, fileRoot);
+    assertEquals(fileRoot, contentEntry.getFile());
+    checkInfo(fileRoot, myModule, false, false, "", null);
+    assertTrue(fileIndex.isInContent(fileRoot));
+    assertFalse(fileIndex.isInSource(fileRoot));
+ 
+    PsiTestUtil.addContentRoot(myModule, fileSourceRoot);
+    PsiTestUtil.addSourceRoot(myModule, fileSourceRoot);
+    checkInfo(fileSourceRoot, myModule, false, false, "", JavaSourceRootType.SOURCE, myModule);
+    assertTrue(fileIndex.isInContent(fileSourceRoot));
+    assertTrue(fileIndex.isInSource(fileSourceRoot));
+ 
+    PsiTestUtil.addContentRoot(myModule, fileTestSourceRoot);
+    PsiTestUtil.addSourceRoot(myModule, fileTestSourceRoot, true);
+    checkInfo(fileTestSourceRoot, myModule, false, false, "", JavaSourceRootType.TEST_SOURCE, myModule);
+    assertTrue(fileIndex.isInContent(fileTestSourceRoot));
+    assertTrue(fileIndex.isInSource(fileTestSourceRoot));
+
+    assertIteratedContent(fileIndex, Arrays.asList(fileRoot, fileSourceRoot, fileTestSourceRoot), null);
+
+    // removing file source root
+    PsiTestUtil.removeSourceRoot(myModule, fileTestSourceRoot);
+    checkInfo(fileTestSourceRoot, myModule, false, false, "", null);
+    assertTrue(fileIndex.isInContent(fileTestSourceRoot));
+    assertFalse(fileIndex.isInSource(fileTestSourceRoot));
+    assertIteratedContent(fileIndex, Arrays.asList(fileRoot, fileSourceRoot, fileTestSourceRoot), null);
+ 
+    // removing file content root
+    PsiTestUtil.removeContentEntry(myModule, contentEntry);
+    checkInfoNull(fileRoot);
+    assertFalse(fileIndex.isInContent(fileRoot));
+    assertFalse(fileIndex.isInSource(fileRoot));
+    assertIteratedContent(fileIndex, Arrays.asList(fileSourceRoot, fileTestSourceRoot), Arrays.asList(fileRoot));
+  }
+
+  private void assertIteratedContent(ProjectFileIndex fileIndex,
+                                     @Nullable List<VirtualFile> contains,
+                                     @Nullable List<VirtualFile> doesntContain) {
+    final Set<VirtualFile> collected = new THashSet<VirtualFile>();
+    fileIndex.iterateContent(new ContentIterator() {
+      @Override
+      public boolean processFile(VirtualFile fileOrDir) {
+        collected.add(fileOrDir);
+        return true;
+      }
+    });
+    if (contains != null) assertContainsElements(collected, contains);
+    if (doesntContain != null) assertDoesntContain(collected, doesntContain);
+  }
+
+  public void testFileSourceRootsUnderDirContentRoot() throws IOException {
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+
+    VirtualFile fileSourceRoot = myModule1Dir.createChildData(this, "fileSourceRoot.txt");
+    assertTrue(fileIndex.isInContent(fileSourceRoot));
+    assertFalse(fileIndex.isInSource(fileSourceRoot));
+    checkInfoNull(fileSourceRoot);
+
+    PsiTestUtil.addSourceRoot(myModule, fileSourceRoot);
+    assertTrue(fileIndex.isInContent(fileSourceRoot));
+    assertTrue(fileIndex.isInSource(fileSourceRoot));
+    checkInfo(fileSourceRoot, myModule, false, false, "", JavaSourceRootType.SOURCE, myModule);
+
+    // removing file source root
+    PsiTestUtil.removeSourceRoot(myModule, fileSourceRoot);
+    assertTrue(fileIndex.isInContent(fileSourceRoot));
+    assertFalse(fileIndex.isInSource(fileSourceRoot));
+    checkInfoNull(fileSourceRoot);
+  }
+
+  public void testFileModuleExcludeRootUnderDirectoryRoot() throws IOException {
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+
+    VirtualFile fileExcludeRoot = mySrcDir1.createChildData(this, "fileExcludeRoot.txt");
+    assertTrue(fileIndex.isInContent(fileExcludeRoot));
+    assertTrue(fileIndex.isInSource(fileExcludeRoot));
+    checkInfoNull(fileExcludeRoot);
+    assertIteratedContent(fileIndex, Arrays.asList(fileExcludeRoot), null);
+
+    PsiTestUtil.addExcludedRoot(myModule, fileExcludeRoot);
+    assertFalse(fileIndex.isInContent(fileExcludeRoot));
+    assertFalse(fileIndex.isInSource(fileExcludeRoot));
+    checkInfoNull(fileExcludeRoot);
+    assertIteratedContent(fileIndex, null, Arrays.asList(fileExcludeRoot));
+
+    // removing file exclude root
+    PsiTestUtil.removeExcludedRoot(myModule, fileExcludeRoot);
+    assertTrue(fileIndex.isInContent(fileExcludeRoot));
+    assertTrue(fileIndex.isInSource(fileExcludeRoot));
+    checkInfoNull(fileExcludeRoot);
+    assertIteratedContent(fileIndex, Arrays.asList(fileExcludeRoot), null);
+  }
+
+  public void testFileModuleExcludeRootUnderFileRoot() throws IOException {
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+
+    VirtualFile fileRoot = myRootVFile.createChildData(this, "fileRoot.txt");
+    PsiTestUtil.addContentRoot(myModule, fileRoot);
+    checkInfo(fileRoot, myModule, false, false, "", null);
+    assertTrue(fileIndex.isInContent(fileRoot));
+    assertIteratedContent(fileIndex, Arrays.asList(fileRoot), null);
+    
+    PsiTestUtil.addExcludedRoot(myModule, fileRoot);
+    assertFalse(fileIndex.isInContent(fileRoot));
+    checkInfoNull(fileRoot);
+    assertIteratedContent(fileIndex, null, Arrays.asList(fileRoot));
+ 
+    // removing file exclude root
+    PsiTestUtil.removeExcludedRoot(myModule, fileRoot);
+    checkInfo(fileRoot, myModule, false, false, "", null);
+    assertTrue(fileIndex.isInContent(fileRoot));
+    assertIteratedContent(fileIndex, Arrays.asList(fileRoot), null);
+  }
+
+  public void testFileLibraryInsideFolderLibrary() throws IOException {
+    VirtualFile file = myLibSrcDir.createChildData(this, "empty.txt");
+    ModuleRootModificationUtil.addModuleLibrary(myModule2, "lib2",
+                                                Collections.<String>emptyList(), singletonList(file.getUrl()),
+                                                Collections.<String>emptyList(), DependencyScope.COMPILE, true);
+
+    // same for the dir and for the file
+    checkInfo(file, myModule, false, true, "", null, myModule2, myModule3);
+    checkInfo(myLibSrcDir, myModule, false, true, "", null, myModule2, myModule3);
+  }
+
+  public void testFileContentRootsModifications() throws IOException {
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+
+    VirtualFile temp = myRootVFile.createChildDirectory(this, "temp");
+
+    VirtualFile fileSourceRoot = myRootVFile.createChildData(this, "fileSourceRoot.txt");
+    checkInfoNull(fileSourceRoot);
+
+    PsiTestUtil.addContentRoot(myModule, fileSourceRoot);
+    PsiTestUtil.addSourceRoot(myModule, fileSourceRoot);
+    checkInfo(fileSourceRoot, myModule, false, false, "", JavaSourceRootType.SOURCE, myModule);
+    assertTrue(fileIndex.isInContent(fileSourceRoot));
+    assertTrue(fileIndex.isInSource(fileSourceRoot));
+
+    // delete and recreate
+    fileSourceRoot.delete(this);
+    checkInfoNull(fileSourceRoot);
+    assertFalse(fileIndex.isInContent(fileSourceRoot));
+    assertFalse(fileIndex.isInSource(fileSourceRoot));
+    fileSourceRoot = myRootVFile.createChildData(this, "fileSourceRoot.txt");
+    checkInfo(fileSourceRoot, myModule, false, false, "", JavaSourceRootType.SOURCE, myModule);
+    assertTrue(fileIndex.isInContent(fileSourceRoot));
+    assertTrue(fileIndex.isInSource(fileSourceRoot));
+
+    // delete and move from another dir 
+    fileSourceRoot.delete(this);
+    checkInfoNull(fileSourceRoot);
+    assertFalse(fileIndex.isInContent(fileSourceRoot));
+    assertFalse(fileIndex.isInSource(fileSourceRoot));
+    fileSourceRoot = temp.createChildData(this, "fileSourceRoot.txt");
+    checkInfoNull(fileSourceRoot);
+    fileSourceRoot.move(this, myRootVFile);
+    checkInfo(fileSourceRoot, myModule, false, false, "", JavaSourceRootType.SOURCE, myModule);
+    assertTrue(fileIndex.isInContent(fileSourceRoot));
+    assertTrue(fileIndex.isInSource(fileSourceRoot));
+
+    // delete and copy from another dir 
+    fileSourceRoot.delete(this);
+    checkInfoNull(fileSourceRoot);
+    assertFalse(fileIndex.isInContent(fileSourceRoot));
+    assertFalse(fileIndex.isInSource(fileSourceRoot));
+    fileSourceRoot = temp.createChildData(this, "fileSourceRoot.txt");
+    checkInfoNull(fileSourceRoot);
+    fileSourceRoot = fileSourceRoot.copy(this, myRootVFile, "fileSourceRoot.txt");
+    checkInfo(fileSourceRoot, myModule, false, false, "", JavaSourceRootType.SOURCE, myModule);
+    assertTrue(fileIndex.isInContent(fileSourceRoot));
+    assertTrue(fileIndex.isInSource(fileSourceRoot));
+    
+    // delete and rename from another file
+    fileSourceRoot.delete(this);
+    checkInfoNull(fileSourceRoot);
+    assertFalse(fileIndex.isInContent(fileSourceRoot));
+    assertFalse(fileIndex.isInSource(fileSourceRoot));
+    fileSourceRoot = myRootVFile.createChildData(this, "temp_file.txt");
+    checkInfoNull(fileSourceRoot);
+    fileSourceRoot.rename(this, "fileSourceRoot.txt");
+    checkInfo(fileSourceRoot, myModule, false, false, "", JavaSourceRootType.SOURCE, myModule);
+    assertTrue(fileIndex.isInContent(fileSourceRoot));
+    assertTrue(fileIndex.isInSource(fileSourceRoot));
   }
 
   private void checkInfo(VirtualFile dir,
@@ -603,11 +925,11 @@ public class DirectoryIndexTest extends IdeaTestCase {
     DirectoryInfo info = checkInfoNotNull(dir);
     assertEquals(module, info.getModule());
     if (moduleSourceRootType != null) {
-      assertTrue(info.isInModuleSource());
+      assertTrue("isInModuleSource", info.isInModuleSource());
       assertEquals(moduleSourceRootType, myIndex.getSourceRootType(info));
     }
     else {
-      assertFalse(info.isInModuleSource());
+      assertFalse("isInModuleSource", info.isInModuleSource());
     }
     assertEquals(isInLibrary, info.hasLibraryClassRoot());
     assertEquals(isInLibrarySource, info.isInLibrarySource());
@@ -620,7 +942,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertEquals(Arrays.toString(info.getOrderEntries()), modulesOfOrderEntries.length, info.getOrderEntries().length);
     for (Module aModule : modulesOfOrderEntries) {
       OrderEntry found = info.findOrderEntryWithOwnerModule(aModule);
-      assertNotNull("not found: " + aModule, found);
+      assertNotNull("not found: " + aModule + " in " + Arrays.toString(info.getOrderEntries()), found);
     }
   }
 
@@ -637,6 +959,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
   private void checkPackage(String packageName, boolean includeLibrarySources, VirtualFile... expectedDirs) {
     VirtualFile[] actualDirs = myIndex.getDirectoriesByPackageName(packageName, includeLibrarySources).toArray(VirtualFile.EMPTY_ARRAY);
     assertNotNull(actualDirs);
-    assertSameElements(actualDirs, expectedDirs);
+    assertOrderedEquals(actualDirs, expectedDirs);
   }
+
 }

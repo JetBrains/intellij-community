@@ -26,7 +26,6 @@ import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -305,11 +304,6 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
       myTemplate.setText(myTemplateEditor.getDocument().getText());
       String name = myNameField.getText();
       String extension = myExtensionField.getText();
-      int lastDotIndex = extension.lastIndexOf(".");
-      if (lastDotIndex >= 0) {
-        name += extension.substring(0, lastDotIndex + 1);
-        extension = extension.substring(lastDotIndex + 1);
-      }
       if (name.length() == 0 || !isValidFilename(name + "." + extension)) {
         throw new ConfigurationException(IdeBundle.message("error.invalid.template.file.name.or.extension"));
       }

@@ -25,6 +25,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,7 +41,10 @@ import com.intellij.ui.content.MessageView;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MutableErrorTreeView;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +58,7 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.Collections;
 import java.util.List;
 
 public class NewErrorTreeViewPanel extends JPanel implements DataProvider, OccurenceNavigator, MutableErrorTreeView, CopyProvider {
@@ -184,22 +190,31 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   @Override
   public void performCopy(@NotNull DataContext dataContext) {
-    final ErrorTreeNodeDescriptor descriptor = getSelectedNodeDescriptor();
-    if (descriptor != null) {
-      final String[] lines = descriptor.getElement().getText();
-      CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(lines, "\n")));
+    List<ErrorTreeNodeDescriptor> descriptors = getSelectedNodeDescriptors();
+    if (!descriptors.isEmpty()) {
+      CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(descriptors, new Function<ErrorTreeNodeDescriptor, String>() {
+        @Override
+        public String fun(ErrorTreeNodeDescriptor descriptor) {
+          ErrorTreeElement element = descriptor.getElement();
+          return NewErrorTreeRenderer.calcPrefix(element) + StringUtil.join(element.getText(), "\n");
+        }
+      }, "\n")));
     }
   }
 
   @Override
   public boolean isCopyEnabled(@NotNull DataContext dataContext) {
-    return getSelectedNodeDescriptor() != null;
+    return !getSelectedNodeDescriptors().isEmpty();
   }
 
   @Override
   public boolean isCopyVisible(@NotNull DataContext dataContext) {
     return true;
   }
+  
+  @NotNull public StatusText getEmptyText() {
+    return myTree.getEmptyText();
+  } 
 
   @Override
   public Object getData(String dataId) {
@@ -257,11 +272,6 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   protected boolean shouldShowFirstErrorInEditor() {
     return false;
-  }
-
-  public void clearMessages() {
-    myErrorViewStructure.clear();
-    myBuilder.updateTree();
   }
 
   public void updateTree() {
@@ -346,16 +356,24 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   @Nullable
   public ErrorTreeNodeDescriptor getSelectedNodeDescriptor() {
-    TreePath path = myTree.getSelectionPath();
-    if (path == null) {
-      return null;
+    List<ErrorTreeNodeDescriptor> descriptors = getSelectedNodeDescriptors();
+    return descriptors.size() == 1 ? descriptors.get(0) : null;
+  }
+
+  private List<ErrorTreeNodeDescriptor> getSelectedNodeDescriptors() {
+    TreePath[] paths = myTree.getSelectionPaths();
+    if (paths == null) {
+      return Collections.emptyList();
     }
-    DefaultMutableTreeNode lastPathNode = (DefaultMutableTreeNode)path.getLastPathComponent();
-    Object userObject = lastPathNode.getUserObject();
-    if (!(userObject instanceof ErrorTreeNodeDescriptor)) {
-      return null;
+    List<ErrorTreeNodeDescriptor> result = ContainerUtil.newArrayList();
+    for (TreePath path : paths) {
+      DefaultMutableTreeNode lastPathNode = (DefaultMutableTreeNode)path.getLastPathComponent();
+      Object userObject = lastPathNode.getUserObject();
+      if (userObject instanceof ErrorTreeNodeDescriptor) {
+        result.add((ErrorTreeNodeDescriptor)userObject);
+      }
     }
-    return (ErrorTreeNodeDescriptor)userObject;
+    return result;
   }
 
   private void navigateToSource(final boolean focusEditor) {
@@ -577,7 +595,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     return myOccurrenceNavigatorSupport.getPreviousOccurenceActionName();
   }
 
-  private class RerunAction extends AnAction {
+  private class RerunAction extends DumbAwareAction {
     private final Runnable myRerunAction;
     private final AnAction myCloseAction;
 
@@ -600,7 +618,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
   }
 
-  private class StopAction extends AnAction {
+  private class StopAction extends DumbAwareAction {
     public StopAction() {
       super(IdeBundle.message("action.stop"), null, AllIcons.Actions.Suspend);
     }
@@ -626,7 +644,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     return true;
   }
 
-  private class HideWarningsAction extends ToggleAction {
+  private class HideWarningsAction extends ToggleAction implements DumbAware {
     public HideWarningsAction() {
       super(IdeBundle.message("action.hide.warnings"), null, AllIcons.General.HideWarnings);
     }

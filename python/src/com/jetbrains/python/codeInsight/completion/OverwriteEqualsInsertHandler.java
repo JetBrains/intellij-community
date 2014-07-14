@@ -34,7 +34,7 @@ public class OverwriteEqualsInsertHandler implements InsertHandler<LookupElement
     }
     Document doc = context.getDocument();
     int tailOffset = context.getTailOffset();
-    if (doc.getCharsSequence().charAt(tailOffset) == '=') {
+    if (tailOffset < doc.getCharsSequence().length() && doc.getCharsSequence().charAt(tailOffset) == '=') {
       doc.deleteString(tailOffset, tailOffset+1);
     }
   }

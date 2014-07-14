@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.Function
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
+import org.jetbrains.plugins.groovy.intentions.base.Intention
 
 /**
  * @author Maxim.Medvedev
@@ -39,6 +40,11 @@ public abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCas
     myHint = hint
   }
 
+  GrIntentionTestCase(@NotNull Class<? extends IntentionAction> intention) {
+    myInspections = []
+    myHint = intention.newInstance().text
+  }
+
   protected void doTest(@NotNull String hint = myHint, boolean intentionExists) {
     assertNotNull(hint)
     myFixture.configureByFile(getTestName(false) + ".groovy");
@@ -48,8 +54,8 @@ public abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCas
       PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
       myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
     }
-    else if (list.size() > 0) {
-      fail StringUtil.join(list, {it.familyName} as Function<IntentionAction, String>, ',')
+    else if (!list.empty) {
+      fail StringUtil.join(list, {IntentionAction it -> it.familyName}, ',')
     }
   }
 

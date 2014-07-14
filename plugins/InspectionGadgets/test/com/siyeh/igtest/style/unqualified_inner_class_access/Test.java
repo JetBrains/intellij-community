@@ -1,7 +1,7 @@
 package com.siyeh.igtest.style.unqualified_inner_class_access;
 
 import java.util.Map.Entry;
-
+import com.siyeh.igtest.style.unqualified_inner_class_access.A.X;
 public class Test<T> {
     private Class<Entry> entryClass;
 
@@ -22,4 +22,9 @@ class A {
 }
 class B extends A {
   void foo(X x) {}
+}
+class C {
+  void m(X x) {
+    new A().new X();
+  }
 }

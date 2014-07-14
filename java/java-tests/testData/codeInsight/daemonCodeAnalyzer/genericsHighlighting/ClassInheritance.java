@@ -12,7 +12,7 @@ abstract class CCC2<T> extends DT<T> implements I<T> {
 }
 
 class a extends b<d, c> implements c<d, c<c,c>>, d<b<c<c,c>,d>> {}
-public class b<K,V> implements c<K, c<V,V>> { }
+class b<K,V> implements c<K, c<V,V>> { }
 interface c<K,V> extends d<b<V,K>> {}
 interface d<K> {}
 
@@ -28,7 +28,7 @@ class GenericExtendItself<T, U extends T>
 
 
 ////////////////////
-public abstract class ZZZZ<E> {
+abstract class ZZZZ<E> {
     public abstract E getElement();
 }
 abstract class Z<E> extends ZZZZ<E> {}

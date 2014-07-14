@@ -28,8 +28,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
@@ -60,7 +60,7 @@ public class PositionManagerImpl implements PositionManager {
   }
 
   @NotNull
-  public List<Location> locationsOfLine(ReferenceType type, SourcePosition position) throws NoDataException {
+  public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
     try {
       final int line = position.getLine() + 1;
       return type.locationsOfLine(DebugProcess.JAVA_STRATUM, null, line);
@@ -70,7 +70,7 @@ public class PositionManagerImpl implements PositionManager {
     return Collections.emptyList();
   }
 
-  public ClassPrepareRequest createPrepareRequest(final ClassPrepareRequestor requestor, final SourcePosition position) throws NoDataException {
+  public ClassPrepareRequest createPrepareRequest(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position) throws NoDataException {
     final Ref<String> waitPrepareFor = new Ref<String>(null);
     final Ref<ClassPrepareRequestor> waitRequestor = new Ref<ClassPrepareRequestor>(null);
     ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -179,24 +179,38 @@ public class PositionManagerImpl implements PositionManager {
     }
 
     final String originalQName = refType.name();
-    int dollar = originalQName.indexOf('$');
-    final String qName = dollar >= 0 ? originalQName.substring(0, dollar) : originalQName;
     final GlobalSearchScope searchScope = myDebugProcess.getSearchScope();
-    PsiClass psiClass = DebuggerUtils.findClass(qName, project, searchScope);
-    if (psiClass == null && dollar >= 0 /*originalName and qName really differ*/) {
-      psiClass = DebuggerUtils.findClass(originalQName, project, searchScope); // try to lookup original name
+    PsiClass psiClass = DebuggerUtils.findClass(originalQName, project, searchScope); // try to lookup original name first
+    if (psiClass == null) {
+      int dollar = originalQName.indexOf('$');
+      if (dollar > 0) {
+        final String qName = originalQName.substring(0, dollar);
+        psiClass = DebuggerUtils.findClass(qName, project, searchScope);
+      }
     }
-    
+
     if (psiClass != null) {
       final PsiElement element = psiClass.getNavigationElement();
       return element.getContainingFile();
+    }
+    else {
+      // for now just take the first file with the required name
+      // TODO: if there are more than one, we can try matching package name and sourcePath if available
+      try {
+        PsiFile[] files = FilenameIndex.getFilesByName(project, refType.sourceName(), GlobalSearchScope.allScope(project));
+        if (files.length > 0) {
+          return files[0];
+        }
+      }
+      catch (AbsentInformationException ignore) {
+      }
     }
 
     return null;
   }
 
   @NotNull
-  public List<ReferenceType> getAllClasses(final SourcePosition position) throws NoDataException {
+  public List<ReferenceType> getAllClasses(@NotNull final SourcePosition position) throws NoDataException {
     final Ref<String> baseClassNameRef = new Ref<String>(null);
     final Ref<PsiClass> classAtPositionRef = new Ref<PsiClass>(null);
     final Ref<Boolean> isLocalOrAnonymous = new Ref<Boolean>(Boolean.FALSE);
@@ -256,12 +270,41 @@ public class PositionManagerImpl implements PositionManager {
 
   private static int getNestingDepth(PsiClass aClass) {
     int depth = 0;
-    PsiClass enclosing = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
+    PsiClass enclosing = getEnclosingClass(aClass);
     while (enclosing != null) {
       depth++;
-      enclosing = PsiTreeUtil.getParentOfType(enclosing, PsiClass.class, true);
+      enclosing = getEnclosingClass(enclosing);
     }
     return depth;
+  }
+
+  /**
+   * See IDEA-121739
+   * Anonymous classes inside other anonymous class parameters list should belong to parent class
+   * Inner in = new Inner(new Inner2(){}) {};
+   * Parent of Inner2 sub class here is not Inner sub class
+   */
+  private static PsiClass getEnclosingClass(PsiElement element) {
+    if (element == null) {
+      return null;
+    }
+
+    element = element.getParent();
+    PsiElement previous = null;
+
+    while (element != null) {
+      if (PsiClass.class.isInstance(element) && !(previous instanceof PsiExpressionList)) {
+        //noinspection unchecked
+        return (PsiClass)element;
+      }
+      if (element instanceof PsiFile) {
+        return null;
+      }
+      previous = element;
+      element = element.getParent();
+    }
+
+    return null;
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,6 +41,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author cdr
  */
 abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
+  private static final boolean CHECK_DOCUMENT_CONSISTENCY = ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isUnitTestMode();
   private static final Logger LOG = Logger.getInstance("#" + CharArray.class.getName());
 
   @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
@@ -77,7 +80,7 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
   private final boolean myDebug = isDebug();
 
   boolean isDebug() {
-    return DEBUG_DEFERRED_PROCESSING || DocumentImpl.CHECK_DOCUMENT_CONSISTENCY;
+    return DEBUG_DEFERRED_PROCESSING || CHECK_DOCUMENT_CONSISTENCY && !ApplicationInfoImpl.isInPerformanceTest();
   }
 
   /**
@@ -188,7 +191,7 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
     }
     CharSequence originalSequence = myOriginalSequence;
     int origLen = originalSequence == null ? -1 : originalSequence.length();
-    String string = myStringRef == null ? null : myStringRef.get();
+    String string = com.intellij.reference.SoftReference.dereference(myStringRef);
     int stringLen = string == null ? -1 : string.length();
     assert origLen == stringLen || origLen==-1 || stringLen==-1;
 
@@ -219,7 +222,7 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
 
     myDebugArray.assertConsistency();
 
-    CharSequence str = myStringRef == null ? null : myStringRef.get();
+    CharSequence str = com.intellij.reference.SoftReference.dereference(myStringRef);
     if (str == null) {
       if (myHasDeferredChanges) {
         str = doSubString(0, myCount + myDeferredShift).toString();
@@ -388,7 +391,7 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
   @NotNull
   public String toString() {
     assertConsistency();
-    String str = myStringRef == null ? null : myStringRef.get();
+    String str = com.intellij.reference.SoftReference.dereference(myStringRef);
     if (str == null) {
       if (myHasDeferredChanges) {
         str = substring(0, length()).toString();

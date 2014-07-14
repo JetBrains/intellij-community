@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
-import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassActionBase;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -77,13 +77,13 @@ public class MoveClassToNewFileIntention extends Intention {
       docComment.delete();
     }
     psiClass.delete();
-    CreateClassActionBase.putCursor(project, newClass.getContainingFile(), newClass.getNavigationElement());
+    IntentionUtils.positionCursor(project, newClass.getContainingFile(), newClass.getNavigationElement());
   }
 
 
   @NotNull
   @Override
   protected PsiElementPredicate getElementPredicate() {
-    return new ClassNameDiffersFromFileNamePredicate(true);
+    return new ClassNameDiffersFromFileNamePredicate(null, true);
   }
 }

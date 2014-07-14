@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.ui.MessageType;
@@ -34,6 +36,7 @@ import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.ui.Gray;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
@@ -168,7 +171,6 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     setRefreshVisible(false);
     InlineProgressIndicator[] indicators = getCurrentInlineIndicators().toArray(new InlineProgressIndicator[0]);
     for (InlineProgressIndicator indicator : indicators) {
-      System.out.println("Disposing "+indicator);
       Disposer.dispose(indicator);
     }
     myInline2Original.clear();
@@ -343,7 +345,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     repaint();
   }
 
-  private void buildInInlineIndicator(@NotNull InlineProgressIndicator inline) {
+  private void buildInInlineIndicator(@NotNull final InlineProgressIndicator inline) {
     removeAll();
     setLayout(new InlineLayout());
     add(myRefreshAndInfoPanel);
@@ -365,16 +367,56 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     myRefreshAndInfoPanel.revalidate();
     myRefreshAndInfoPanel.repaint();
+
+    if (UISettings.getInstance().PRESENTATION_MODE) {
+      final JRootPane pane = myInfoPanel.getRootPane();
+      final RelativePoint point = new RelativePoint(pane, new Point(pane.getWidth() - 250, 60));
+      final PresentationModeProgressPanel panel = new PresentationModeProgressPanel(inline);
+      final MyInlineProgressIndicator delegate = new MyInlineProgressIndicator(true, inline.getInfo(), inline) {
+        @Override
+        protected void updateProgress() {
+          super.updateProgress();
+          panel.update();
+        }
+      };
+
+      Disposer.register(inline, delegate);
+
+      JBPopupFactory.getInstance().createBalloonBuilder(panel.getRootPanel())
+        .setFadeoutTime(0)
+        .setFillColor(Gray.TRANSPARENT)
+        .setShowCallout(false)
+        .setBorderColor(Gray.TRANSPARENT)
+        .setBorderInsets(new Insets(0, 0, 0, 0))
+        .setAnimationCycle(0)
+        .setCloseButtonEnabled(false)
+        .setHideOnClickOutside(false)
+        .setDisposable(inline)
+        .setHideOnFrameResize(false)
+        .setHideOnKeyOutside(false)
+        .setBlockClicksThroughBalloon(true)
+        .setHideOnAction(false)
+        .createBalloon().show(new PositionTracker<Balloon>(pane) {
+        @Override
+        public RelativePoint recalculateLocation(Balloon object) {
+          final EditorComponentImpl editorComponent = UIUtil.findComponentOfType(pane, EditorComponentImpl.class);
+          if (editorComponent != null) {
+            return new RelativePoint(editorComponent.getParent().getParent(), new Point(editorComponent.getParent().getParent().getWidth() - 150, editorComponent.getParent().getParent().getHeight() - 70));
+          }
+          return point;
+        }
+      }, Balloon.Position.above);
+    }
   }
 
-  public Pair<String, String> setText(@Nullable final String text, @Nullable final String requestor) {
+  public Couple<String> setText(@Nullable final String text, @Nullable final String requestor) {
     if (StringUtil.isEmpty(text) && !Comparing.equal(requestor, myCurrentRequestor) && !EventLog.LOG_REQUESTOR.equals(requestor)) {
-      return Pair.create(myInfoPanel.getText(), myCurrentRequestor);
+      return Couple.of(myInfoPanel.getText(), myCurrentRequestor);
     }
 
     boolean logMode = myInfoPanel.updateText(EventLog.LOG_REQUESTOR.equals(requestor) ? "" : text);
     myCurrentRequestor = logMode ? EventLog.LOG_REQUESTOR : requestor;
-    return Pair.create(text, requestor);
+    return Couple.of(text, requestor);
   }
 
   public void setRefreshVisible(final boolean visible) {
@@ -607,7 +649,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       myUpdateQueue.queue(new Update(MyInlineProgressIndicator.this, false, 1) {
         @Override
         public void run() {
-          ApplicationManager.getApplication().invokeLater(update);
+          update.run();
         }
       });
     }

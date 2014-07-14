@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
-import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.template.emmet.nodes.GenerationNode;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
@@ -50,6 +50,8 @@ import static com.google.common.collect.Lists.newLinkedList;
  * And documentation here: http://docs.emmet.io/filters/bem/
  */
 public class BemEmmetFilter extends ZenCodingFilter {
+  public static final String SUFFIX = "bem";
+
   private static final Key<BemState> BEM_STATE = Key.create("BEM_STATE");
 
   private static final String ELEMENT_SEPARATOR = "__";
@@ -94,13 +96,14 @@ public class BemEmmetFilter extends ZenCodingFilter {
 
   @NotNull
   @Override
-  public String getSuffix() {
-    return "bem";
+  public String getDisplayName() {
+    return "BEM";
   }
 
+  @NotNull
   @Override
-  public boolean isAppliedByDefault(@NotNull PsiElement context) {
-    return EmmetOptions.getInstance().isBemFilterEnabledByDefault();
+  public String getSuffix() {
+    return SUFFIX;
   }
 
   @Override
@@ -111,8 +114,8 @@ public class BemEmmetFilter extends ZenCodingFilter {
   @NotNull
   @Override
   public GenerationNode filterNode(@NotNull final GenerationNode node) {
-    final List<Pair<String, String>> attribute2Value = node.getTemplateToken().getAttribute2Value();
-    Pair<String, String> classNamePair = getClassPair(attribute2Value);
+    final List<Couple<String>> attribute2Value = node.getTemplateToken().getAttribute2Value();
+    Couple<String> classNamePair = getClassPair(attribute2Value);
     if (classNamePair != null) {
       Iterable<String> classNames = extractClasses(classNamePair.second);
       BEM_STATE.set(node, new BemState(suggestBlockName(classNames), null, null));
@@ -122,7 +125,7 @@ public class BemEmmetFilter extends ZenCodingFilter {
           return processClassName(className, node);
         }
       })));
-      attribute2Value.add(Pair.create("class", CLASS_NAME_JOINER.join(newClassNames)));
+      attribute2Value.add(Couple.of("class", CLASS_NAME_JOINER.join(newClassNames)));
     }
     return node;
   }
@@ -281,9 +284,9 @@ public class BemEmmetFilter extends ZenCodingFilter {
    * @return pointer to pair
    */
   @Nullable
-  private static Pair<String, String> getClassPair(@NotNull List<Pair<String, String>> attribute2Value) {
+  private static Couple<String> getClassPair(@NotNull List<Couple<String>> attribute2Value) {
     for (int i = 0; i < attribute2Value.size(); i++) {
-      Pair<String, String> pair = attribute2Value.get(i);
+      Couple<String> pair = attribute2Value.get(i);
       if ("class".equals(pair.first) && !isNullOrEmpty(pair.second)) {
         return attribute2Value.remove(i);
       }

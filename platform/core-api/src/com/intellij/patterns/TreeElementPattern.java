@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
     return withSuperParent(level, StandardPatterns.instanceOf(aClass));
   }
   public Self withSuperParent(final int level, @NotNull final ElementPattern<? extends ParentType> pattern) {
-    return with(new PatternConditionPlus<T, ParentType>("withSuperParent", pattern) {
+    return with(new PatternConditionPlus<T, ParentType>(level == 1 ? "withParent" : "withSuperParent", pattern) {
 
       @Override
       public boolean processValues(T t,

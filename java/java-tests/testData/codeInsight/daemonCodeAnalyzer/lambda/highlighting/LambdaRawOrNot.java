@@ -12,7 +12,7 @@ class Test1 {
 
 class Test2 {
   protected <T, U> U exerciseOps(TestData<T> data, TerminalOp<T, U> terminal, IntermediateOp... ops) {
-    <error descr="Incompatible types. Found: 'java.lang.Object', required: 'U'">return exerciseOps(data, (u, v) -> u.equals(v), terminal);</error>
+    return exerciseOps(data, (u, v) -> u.equals(v), terminal);
   }
 }
 

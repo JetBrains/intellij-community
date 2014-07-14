@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -157,6 +158,7 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
     super.setOpaque(false);
   }
 
+  @NotNull
   @Override
   public Dimension getPreferredSize() {
     final Dimension size = super.getPreferredSize();
@@ -164,6 +166,7 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
     return new Dimension(size.width + offsets.width, size.height + offsets.height);
   }
 
+  @NotNull
   @Override
   public Dimension getMinimumSize() {
     return getPreferredSize();

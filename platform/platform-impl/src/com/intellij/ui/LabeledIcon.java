@@ -28,7 +28,7 @@ public class LabeledIcon implements Icon {
   private final Icon myIcon;
   private final String myMnemonic;
   private final String[] myStrings;
-  private int myIconTextGap = 0;
+  private int myIconTextGap = 5;
 
   private Font myFont = UIUtil.getLabelFont();
 

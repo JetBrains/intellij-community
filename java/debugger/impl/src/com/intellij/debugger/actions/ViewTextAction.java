@@ -15,18 +15,12 @@
  */
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
-import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
-import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
+import com.intellij.xdebugger.impl.ui.TextViewer;
+import com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,19 +29,27 @@ import java.awt.*;
 /*
  * @author Jeka
  */
-public class ViewTextAction extends BaseValueAction {
-  protected void processText(final Project project, final String text, DebuggerTreeNodeImpl node, DebuggerContextImpl debuggerContext) {
-    final NodeDescriptorImpl descriptor = node.getDescriptor();
-    final String labelText = descriptor instanceof ValueDescriptorImpl? ((ValueDescriptorImpl)descriptor).getValueLabel() : null;
+public class ViewTextAction extends XFetchValueActionBase {
+  @Override
+  protected void handle(Project project, String value) {
     final MyDialog dialog = new MyDialog(project);
-    dialog.setTitle(labelText != null? "View Text for: " + labelText : "View Text");
-    dialog.setText(text);
+    dialog.setTitle("View Text");
+    dialog.setText(StringUtil.unquoteString(value));
     dialog.show();
   }
 
-  private static class MyDialog extends DialogWrapper {
+  //@Override
+  //protected void processText(final Project project, final String text, DebuggerTreeNodeImpl node, DebuggerContextImpl debuggerContext) {
+  //  final NodeDescriptorImpl descriptor = node.getDescriptor();
+  //  final String labelText = descriptor instanceof ValueDescriptorImpl? ((ValueDescriptorImpl)descriptor).getValueLabel() : null;
+  //  final MyDialog dialog = new MyDialog(project);
+  //  dialog.setTitle(labelText != null? "View Text for: " + labelText : "View Text");
+  //  dialog.setText(text);
+  //  dialog.show();
+  //}
 
-    private EditorTextField myTextViewer;
+  private static class MyDialog extends DialogWrapper {
+    private final EditorTextField myTextViewer;
 
     private MyDialog(Project project) {
       super(project, false);
@@ -55,7 +57,7 @@ public class ViewTextAction extends BaseValueAction {
       setCancelButtonText("Close");
       setCrossClosesWindow(true);
 
-      myTextViewer = new TextViewer(project);
+      myTextViewer = new TextViewer(project, true, true);
       init();
     }
 
@@ -63,48 +65,23 @@ public class ViewTextAction extends BaseValueAction {
       myTextViewer.setText(text);
     }
 
+    @Override
     @NotNull
     protected Action[] createActions() {
       return new Action[] {getCancelAction()};
     }
 
+    @Override
     protected String getDimensionServiceKey() {
       return "#com.intellij.debugger.actions.ViewTextAction";
     }
 
+    @Override
     protected JComponent createCenterPanel() {
       final JPanel panel = new JPanel(new BorderLayout());
       panel.add(myTextViewer, BorderLayout.CENTER);
       panel.setPreferredSize(new Dimension(300, 200));
       return panel;
     }
-
   }
-
-
-  private static class TextViewer extends EditorTextField {
-
-    private TextViewer(Project project) {
-      super(createDocument(), project, FileTypes.PLAIN_TEXT, true, false);
-    }
-
-    private static Document createDocument() {
-      final Document document = EditorFactory.getInstance().createDocument("");
-      if (document instanceof DocumentImpl) {
-        ((DocumentImpl)document).setAcceptSlashR(true);
-      }
-      return document;
-    }
-
-    protected EditorEx createEditor() {
-      final EditorEx editor = super.createEditor();
-      editor.setHorizontalScrollbarVisible(true);
-      editor.setVerticalScrollbarVisible(true);
-      editor.setEmbeddedIntoDialogWrapper(true);
-      editor.getComponent().setPreferredSize(null);
-      editor.getSettings().setUseSoftWraps(true);
-      return editor;
-    }
-  }
-
 }

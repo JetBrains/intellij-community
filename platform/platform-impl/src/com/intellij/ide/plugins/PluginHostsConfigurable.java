@@ -16,6 +16,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -27,13 +28,13 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -42,6 +43,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 public class PluginHostsConfigurable extends BaseConfigurable {
@@ -158,7 +160,7 @@ public class PluginHostsConfigurable extends BaseConfigurable {
   private static String correctRepositoryRule(String input) {
     String protocol = VirtualFileManager.extractProtocol(input);
     if (protocol == null) {
-      input = VirtualFileManager.constructUrl(HttpFileSystem.PROTOCOL, input);
+      input = VirtualFileManager.constructUrl(URLUtil.HTTP_PROTOCOL, input);
     }
     return input;
   }
@@ -187,7 +189,7 @@ public class PluginHostsConfigurable extends BaseConfigurable {
               public void run() {
                 try {
                   result[0] =
-                    UpdateChecker.checkPluginsHost(correctRepositoryRule(getTextField().getText()), new ArrayList<PluginDownloader>());
+                    UpdateChecker.checkPluginsHost(correctRepositoryRule(getTextField().getText()), new HashMap<PluginId, PluginDownloader>(), true, ProgressManager.getInstance().getProgressIndicator());
                 }
                 catch (Exception e1) {
                   ex[0] = e1;

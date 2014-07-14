@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,13 +66,13 @@ public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiM
               if (superClass != null && !superClass.isInheritor(psiClass, true)) {
                 inInheritor = MethodSignatureUtil.findMethodInSuperClassBySignatureInDerived(inheritor, superClass, signature, true);
                 if (inInheritor != null && !inInheritor.hasModifierProperty(PsiModifier.STATIC)) {
-                  if (!consumer.process(new Pair<PsiMethod, PsiMethod>(method, inInheritor))) return false;
+                  if (!consumer.process(Pair.create(method, inInheritor))) return false;
                 }
               }
             }
             continue;
           }
-          if (!consumer.process(new Pair<PsiMethod, PsiMethod>(method, inInheritor))) return false;
+          if (!consumer.process(Pair.create(method, inInheritor))) return false;
         }
 
         return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.cvsSupport2.actions;
 import com.intellij.CommonBundle;
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
-import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
@@ -26,6 +25,7 @@ import com.intellij.cvsSupport2.ui.Options;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -62,7 +62,7 @@ public class RemoveLocallyFileOrDirectoryAction extends ActionOnSelectedElement 
   }
 
   public static CvsHandler getDefaultHandler(Project project, Collection<File> files) {
-    return getCvsHandler(project, files, true);
+    return getCvsHandler(project, files, false);
   }
 
   private static CvsHandler getCvsHandler(final Project project,
@@ -88,7 +88,7 @@ public class RemoveLocallyFileOrDirectoryAction extends ActionOnSelectedElement 
                                                             null,
                                                             CvsBundle.message("dialog.title.delete.file.from.cvs"),
                                                             CvsBundle.message("confirmation.text.delete.file.from.cvs"),
-                                                            CvsVcs2.getInstance(project).getRemoveConfirmation(),
+                                                            VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION,
                                                             CvsBundle.message("button.text.delete.from.cvs"),
                                                             CommonBundle.getCancelButtonText());
       if (filesToBeRemoved == null || filesToBeRemoved.isEmpty()) return CvsHandler.NULL;

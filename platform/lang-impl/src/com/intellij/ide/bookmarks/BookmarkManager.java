@@ -409,6 +409,12 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(bookmark);
   }
 
+  public void colorsChanged() {
+    for (Bookmark bookmark : myBookmarks) {
+      bookmark.updateHighlighter();
+    }
+  }
+
 
   private class MyEditorMouseListener extends EditorMouseAdapter {
     @Override

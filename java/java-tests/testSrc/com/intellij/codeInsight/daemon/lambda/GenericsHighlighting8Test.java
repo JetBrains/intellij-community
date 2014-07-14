@@ -25,10 +25,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiGraphInferenceHelper;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +42,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
 
   @Override
   protected Sdk getProjectJDK() {
-    return getTestName(false).contains("Jdk14") ? IdeaTestUtil.getMockJdk14() : super.getProjectJDK();
+    return IdeaTestUtil.getMockJdk18();
   }
 
   public void testReferenceTypeParams() {
@@ -246,7 +244,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA66311_16() {
     doTest();
   }
-  public void _testIDEA76283() {//todo bounds
+  public void testIDEA76283() {
     doTest();
   }
   public void testIDEA74899() {
@@ -737,6 +735,30 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIDEA114797() throws Exception {
+    doTest();
+  }
+
+  public void testCastToIntersectionType() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA122401() throws Exception {
+    doTest();
+  }
+
+  public void testCaptureInsideNestedCalls() throws Exception {
+    doTest();
+  }
+
+  public void testSuperWildcardWithBoundPromotion() { doTest();}
+
+  public void testErasure() throws Exception { doTest(); }
+
+  public void testWildcardBoundsCombination() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
@@ -762,19 +784,4 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  public void testJavaUtilCollections_NoVerify() throws Exception {
-    PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
-    assertNotNull(collectionsClass);
-    collectionsClass = (PsiClass)collectionsClass.getNavigationElement();
-    final String text = collectionsClass.getContainingFile().getText();
-    configureFromFileText("Collections.java", text.replaceAll("\r", "\n"));
-    final PsiResolveHelperImpl helper = (PsiResolveHelperImpl)JavaPsiFacade.getInstance(getProject()).getResolveHelper();
-    helper.setTestHelper(new PsiGraphInferenceHelper(getPsiManager()));
-    try {
-      doTestConfiguredFile(false, false, null);
-    }
-    finally {
-      helper.setTestHelper(null);
-    }
-  }
 }

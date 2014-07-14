@@ -57,22 +57,26 @@ import org.jetbrains.annotations.NotNull;
  * Date: 26.07.2007
  */
 public class UnusedDefineInspection extends BaseInspection {
+  @Override
   public boolean isEnabledByDefault() {
     return false;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Unused Define";
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getShortName() {
     return "UnusedDefine";
   }
 
+  @Override
   @NotNull
   public RncElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new MyElementVisitor(holder);
@@ -92,6 +96,7 @@ public class UnusedDefineInspection extends BaseInspection {
       myHolder = holder;
     }
 
+    @Override
     protected void superVisitElement(PsiElement element) {
       element.accept(myXmlVisitor);
     }
@@ -205,16 +210,19 @@ public class UnusedDefineInspection extends BaseInspection {
         myTag = tag;
       }
 
+      @Override
       @NotNull
       public String getName() {
         return "Remove Define";
       }
 
+      @Override
       @NotNull
       public String getFamilyName() {
         return getName();
       }
 
+      @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         try {
           if (myTag.isValid()) {

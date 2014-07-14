@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,11 +37,10 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ControlFlowFactory {
   // psiElements hold weakly, controlFlows softly
-  private final ConcurrentMap<PsiElement, Reference<CopyOnWriteArrayList<ControlFlowContext>>> cachedFlows = new ConcurrentWeakHashMap<PsiElement, Reference<CopyOnWriteArrayList<ControlFlowContext>>>();
+  private final ConcurrentMap<PsiElement, Reference<ConcurrentList<ControlFlowContext>>> cachedFlows = new ConcurrentWeakHashMap<PsiElement, Reference<ConcurrentList<ControlFlowContext>>>();
 
   private static final NotNullLazyKey<ControlFlowFactory, Project> INSTANCE_KEY = ServiceManager.createLazyKey(ControlFlowFactory.class);
 
@@ -127,7 +127,7 @@ public class ControlFlowFactory {
                                     boolean enableShortCircuit,
                                     boolean evaluateConstantIfCondition) throws AnalysisCanceledException {
     final long modificationCount = element.getManager().getModificationTracker().getModificationCount();
-    CopyOnWriteArrayList<ControlFlowContext> cached = getOrCreateCachedFlowsForElement(element);
+    ConcurrentList<ControlFlowContext> cached = getOrCreateCachedFlowsForElement(element);
     for (ControlFlowContext context : cached) {
       if (context.isFor(policy, evaluateConstantIfCondition,modificationCount)) return context.controlFlow;
     }
@@ -152,17 +152,17 @@ public class ControlFlowFactory {
     final long modificationCount = element.getManager().getModificationTracker().getModificationCount();
     ControlFlowContext controlFlowContext = createContext(evaluateConstantIfCondition, policy, flow, modificationCount);
 
-    CopyOnWriteArrayList<ControlFlowContext> cached = getOrCreateCachedFlowsForElement(element);
+    ConcurrentList<ControlFlowContext> cached = getOrCreateCachedFlowsForElement(element);
     cached.addIfAbsent(controlFlowContext);
   }
 
   @NotNull
-  private CopyOnWriteArrayList<ControlFlowContext> getOrCreateCachedFlowsForElement(@NotNull PsiElement element) {
-    Reference<CopyOnWriteArrayList<ControlFlowContext>> cachedRef = cachedFlows.get(element);
-    CopyOnWriteArrayList<ControlFlowContext> cached = cachedRef == null ? null : cachedRef.get();
+  private ConcurrentList<ControlFlowContext> getOrCreateCachedFlowsForElement(@NotNull PsiElement element) {
+    Reference<ConcurrentList<ControlFlowContext>> cachedRef = cachedFlows.get(element);
+    ConcurrentList<ControlFlowContext> cached = com.intellij.reference.SoftReference.dereference(cachedRef);
     if (cached == null) {
-      cached = ContainerUtil.createEmptyCOWList();
-      cachedFlows.put(element, new SoftReference<CopyOnWriteArrayList<ControlFlowContext>>(cached));
+      cached = ContainerUtil.createConcurrentList();
+      cachedFlows.put(element, new SoftReference<ConcurrentList<ControlFlowContext>>(cached));
     }
     return cached;
   }

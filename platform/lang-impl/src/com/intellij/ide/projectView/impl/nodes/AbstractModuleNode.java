@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> impleme
     return "Module";
   }
 
+  @NotNull
   @Override
   public Collection<VirtualFile> getRoots() {
     return Arrays.asList(ModuleRootManager.getInstance(getValue()).getContentRoots());

@@ -16,7 +16,7 @@
 package org.jetbrains.ide;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import io.netty.channel.ChannelInboundHandler;
+import io.netty.channel.ChannelHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
@@ -30,5 +30,5 @@ public abstract class BinaryRequestHandler {
    */
   public abstract UUID getId();
 
-  public abstract ChannelInboundHandler getInboundHandler();
+  public abstract ChannelHandler getInboundHandler();
 }

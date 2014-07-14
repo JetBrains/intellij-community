@@ -1,6 +1,6 @@
 import org.jetbrains.annotations.NotNull;
 
-public class BrokenAlignment {
+class BrokenAlignment {
 
   @NotNull
   Object test1() {

@@ -17,6 +17,7 @@ package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -29,6 +30,7 @@ import java.util.Map;
 public class PyPackageManagersImpl extends PyPackageManagers {
   private final Map<String, PyPackageManagerImpl> myInstances = new HashMap<String, PyPackageManagerImpl>();
 
+  @NotNull
   @Override
   public synchronized PyPackageManager forSdk(Sdk sdk) {
     final String name = sdk.getName();

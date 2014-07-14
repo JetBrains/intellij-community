@@ -15,7 +15,9 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-public class CreatePropertyFromUsageTest extends LightQuickFix15TestCase {
+import com.intellij.pom.java.LanguageLevel;
+
+public class CreatePropertyFromUsageTest extends LightQuickFixParameterizedTestCase {
   public void test() throws Exception { doAllTests(); }
 
   @Override
@@ -23,4 +25,8 @@ public class CreatePropertyFromUsageTest extends LightQuickFix15TestCase {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/createPropertyFromUsage";
   }
 
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_5;
+  }
 }

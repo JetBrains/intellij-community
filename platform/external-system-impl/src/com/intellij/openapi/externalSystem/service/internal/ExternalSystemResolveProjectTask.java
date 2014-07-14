@@ -5,7 +5,6 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver;
@@ -19,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Thread-safe.
- * 
+ *
  * @author Denis Zhdanov
  * @since 1/24/12 7:21 AM
  */
@@ -27,14 +26,13 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
 
   private final AtomicReference<DataNode<ProjectData>> myExternalProject = new AtomicReference<DataNode<ProjectData>>();
 
-  @NotNull private final String  myProjectPath;
-  private final          boolean myIsPreviewMode;
+  @NotNull private final String myProjectPath;
+  private final boolean myIsPreviewMode;
 
   public ExternalSystemResolveProjectTask(@NotNull ProjectSystemId externalSystemId,
                                           @NotNull Project project,
                                           @NotNull String projectPath,
-                                          boolean isPreviewMode)
-  {
+                                          boolean isPreviewMode) {
     super(externalSystemId, ExternalSystemTaskType.RESOLVE_PROJECT, project, projectPath);
     myProjectPath = projectPath;
     myIsPreviewMode = isPreviewMode;
@@ -45,35 +43,22 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
     Project ideProject = getIdeProject();
     RemoteExternalSystemProjectResolver resolver = manager.getFacade(ideProject, myProjectPath, getExternalSystemId()).getResolver();
-    
-    setState(ExternalSystemTaskState.IN_PROGRESS);
-    try {
-      ExternalSystemExecutionSettings settings = ExternalSystemApiUtil
-        .getExecutionSettings(ideProject, myProjectPath, getExternalSystemId());
-      DataNode<ProjectData> project = resolver.resolveProjectInfo(getId(), myProjectPath, myIsPreviewMode, settings);
+    ExternalSystemExecutionSettings settings = ExternalSystemApiUtil.getExecutionSettings(ideProject, myProjectPath, getExternalSystemId());
 
-      if (project == null) {
-        return;
-      }
-      myExternalProject.set(project);
+    DataNode<ProjectData> project = resolver.resolveProjectInfo(getId(), myProjectPath, myIsPreviewMode, settings);
+
+    if (project == null) {
+      return;
     }
-    finally {
-      setState(ExternalSystemTaskState.FINISHED);
-    }
+    myExternalProject.set(project);
   }
 
-  protected void doCancel() throws Exception {
+  protected boolean doCancel() throws Exception {
     final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
     Project ideProject = getIdeProject();
     RemoteExternalSystemProjectResolver resolver = manager.getFacade(ideProject, myProjectPath, getExternalSystemId()).getResolver();
 
-    setState(ExternalSystemTaskState.CANCELING);
-    try {
-      resolver.cancelTask(getId());
-    }
-    finally {
-      setState(ExternalSystemTaskState.CANCELED);
-    }
+    return resolver.cancelTask(getId());
   }
 
   @Nullable

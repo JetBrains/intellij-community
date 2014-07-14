@@ -24,7 +24,7 @@ public abstract class OverridingTester extends LightCodeInsightFixtureTestCase {
     final List<String> strings = TestUtils.readInput(getTestDataPath() + "/" + testFile);
     GroovyFileBase psiFile = (GroovyFileBase) myFixture.addFileToProject("foo.groovy", strings.get(0));
 
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
 
     GrTypeDefinition[] grTypeDefinitions = psiFile.getTypeDefinitions();
     GrTypeDefinition lastTypeDefinition = psiFile.getTypeDefinitions()[grTypeDefinitions.length - 1];
@@ -33,7 +33,7 @@ public abstract class OverridingTester extends LightCodeInsightFixtureTestCase {
 
     for (PsiMethod method : psiMethods) {
       PsiMethod[] superMethods = findMethod(method);
-      String[] classes = sortUseContaingClass(superMethods);
+      String[] classes = sortUseContainingClass(superMethods);
 
       for (String classAsString : classes) {
         buffer.append(classAsString);
@@ -41,12 +41,12 @@ public abstract class OverridingTester extends LightCodeInsightFixtureTestCase {
       }
       buffer.append("\n");   //between different methods
     }
-    buffer.append("\n");  //metween class definitions
+    buffer.append("\n");  //between class definitions
 
     assertEquals(strings.get(1), buffer.toString().trim());
   }
 
-  private String[] sortUseContaingClass(PsiMethod[] psiMethods) {
+  private static String[] sortUseContainingClass(PsiMethod[] psiMethods) {
     String[] classes = new String[psiMethods.length];
 
     for (int i = 0; i < psiMethods.length; i++) {

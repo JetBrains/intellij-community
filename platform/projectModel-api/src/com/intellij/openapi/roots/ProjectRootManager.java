@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,16 +30,16 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Allows to query and modify the list of root directories belonging to a project.
+ * Allows to query and modify the list of root files and directories belonging to a project.
  */
-public abstract class ProjectRootManager implements ModificationTracker {
+public abstract class ProjectRootManager extends SimpleModificationTracker {
   /**
    * Returns the project root manager instance for the specified project.
    *
    * @param project the project for which the instance is requested.
    * @return the instance.
    */
-  public static ProjectRootManager getInstance(Project project) {
+  public static ProjectRootManager getInstance(@NotNull Project project) {
     final ProjectRootManager service = ServiceManager.getService(project, ProjectRootManager.class);
     if (service != null) return service;
     return project.getComponent(ProjectRootManager.class);
@@ -72,7 +72,6 @@ public abstract class ProjectRootManager implements ModificationTracker {
   /**
    * Unlike getContentRoots(), this includes the project base dir. Is this really necessary?
    * TODO: remove this method?
-   * @return
    */
   public abstract VirtualFile[] getContentRootsFromAllModules();
 

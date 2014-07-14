@@ -37,7 +37,7 @@ public class ContextUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.PositionUtil");
 
   @Nullable
-  public static SourcePosition getSourcePosition(final StackFrameContext context) {
+  public static SourcePosition getSourcePosition(@Nullable final StackFrameContext context) {
     if (context == null) {
       return null;
     }
@@ -53,8 +53,8 @@ public class ContextUtil {
     try {
       location = frameProxy.location();
     }
-    catch (Throwable th) {
-      LOG.debug(th);
+    catch (Throwable e) {
+      LOG.debug(e);
     }
     final CompoundPositionManager positionManager = debugProcess.getPositionManager();
     if (positionManager == null) {
@@ -63,7 +63,8 @@ public class ContextUtil {
     }
     try {
       return positionManager.getSourcePosition(location);
-    } catch (IndexNotReadyException e) {
+    }
+    catch (IndexNotReadyException ignored) {
       return null;
     }
   }
@@ -124,10 +125,10 @@ public class ContextUtil {
       }
       return codeBlockFromText;
     }
-    catch (IncorrectOperationException e) {
+    catch (IncorrectOperationException ignored) {
       return element;
     }
-    catch (EvaluateException e) {
+    catch (EvaluateException ignored) {
       return element;
     }
     finally {
@@ -136,8 +137,8 @@ public class ContextUtil {
   }
 
   @Nullable
-  public static PsiElement getContextElement(final SourcePosition position) {
-    return position == null ? null :position.getElementAt();
+  public static PsiElement getContextElement(@Nullable SourcePosition position) {
+    return position == null ? null : position.getElementAt();
   }
 
   public static boolean isJspImplicit(PsiElement element) {

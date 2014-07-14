@@ -23,6 +23,7 @@ import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.ResourceRootDescriptor;
 import org.jetbrains.jps.builders.java.ResourcesTargetType;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.ResourcesTarget;
@@ -95,6 +96,9 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
       context.checkCanceled();
 
       context.processMessage(new ProgressMessage(""));
+    }
+    catch(BuildDataCorruptedException e) {
+      throw e;
     }
     catch(ProjectBuildException e) {
       throw e;

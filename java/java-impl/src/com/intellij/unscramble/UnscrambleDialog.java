@@ -84,7 +84,7 @@ public class UnscrambleDialog extends DialogWrapper {
   protected AnalyzeStacktraceUtil.StacktraceEditorPanel myStacktraceEditorPanel;
   private VcsContentAnnotationConfigurable myConfigurable;
 
-  public UnscrambleDialog(Project project) {
+  public UnscrambleDialog(@NotNull Project project) {
     super(false);
     myProject = project;
 
@@ -124,7 +124,7 @@ public class UnscrambleDialog extends DialogWrapper {
     myLogFile.setHistorySize(10);
     myLogFile.setHistory(savedUrls);
 
-    String lastUrl = getLastUsedLogUrl();
+    String lastUrl = getPropertyValue(PROPERTY_LOG_FILE_LAST_URL);
     if (lastUrl == null && !savedUrls.isEmpty()) {
       lastUrl = savedUrls.get(savedUrls.size() - 1);
     }
@@ -167,14 +167,10 @@ public class UnscrambleDialog extends DialogWrapper {
     }
   }
 
-  public static String getLastUsedLogUrl() {
-    return PropertiesComponent.getInstance().getValue(PROPERTY_LOG_FILE_LAST_URL);
-  }
-
   @Nullable
-  public static UnscrambleSupport getSavedUnscrambler() {
+  private UnscrambleSupport getSavedUnscrambler() {
     final List<UnscrambleSupport> registeredUnscramblers = getRegisteredUnscramblers();
-    final String savedUnscramblerName = PropertiesComponent.getInstance().getValue(PROPERTY_UNSCRAMBLER_NAME_USED);
+    final String savedUnscramblerName = getPropertyValue(PROPERTY_UNSCRAMBLER_NAME_USED);
     UnscrambleSupport selectedUnscrambler = null;
     for (final UnscrambleSupport unscrambleSupport : registeredUnscramblers) {
       if (Comparing.strEqual(unscrambleSupport.getPresentableName(), savedUnscramblerName)) {
@@ -256,24 +252,27 @@ public class UnscrambleDialog extends DialogWrapper {
 
   public void dispose() {
     if (isOK()){
-      final List list = myLogFile.getHistory();
-      String res = null;
-      for (Object aList : list) {
-        final String s = (String)aList;
-        if (res == null) {
-          res = s;
-        }
-        else {
-          res = res + ":::" + s;
-        }
-      }
-      PropertiesComponent.getInstance().setValue(PROPERTY_LOG_FILE_HISTORY_URLS, res);
+      final List<String> list = myLogFile.getHistory();
+      PropertiesComponent.getInstance().setValue(PROPERTY_LOG_FILE_HISTORY_URLS, StringUtil.join(list, ":::"));
       UnscrambleSupport selectedUnscrambler = getSelectedUnscrambler();
-      PropertiesComponent.getInstance().setValue(PROPERTY_UNSCRAMBLER_NAME_USED, selectedUnscrambler == null ? null : selectedUnscrambler.getPresentableName());
+      saveProperty(PROPERTY_UNSCRAMBLER_NAME_USED, selectedUnscrambler == null ? null : selectedUnscrambler.getPresentableName());
 
-      PropertiesComponent.getInstance().setValue(PROPERTY_LOG_FILE_LAST_URL, myLogFile.getText());
+      saveProperty(PROPERTY_LOG_FILE_LAST_URL, myLogFile.getText());
     }
     super.dispose();
+  }
+
+  private void saveProperty(String name, String value) {
+    PropertiesComponent.getInstance().setValue(name, value);
+    PropertiesComponent.getInstance(myProject).setValue(name, value);
+  }
+
+  private String getPropertyValue(String name) {
+    String projectValue = PropertiesComponent.getInstance(myProject).getValue(name);
+    if (projectValue != null) {
+      return projectValue;
+    }
+    return PropertiesComponent.getInstance().getValue(name);
   }
 
   public void setText(String trace) {

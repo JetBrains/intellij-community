@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.contentAnnotation;
 
+import com.intellij.execution.filters.ExceptionInfoCache;
 import com.intellij.execution.filters.ExceptionWorker;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.FilterMixin;
@@ -54,15 +55,15 @@ import java.util.*;
 public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
   private final Project myProject;
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationExceptionFilter");
-  private final GlobalSearchScope myScope;
   private final VcsContentAnnotationSettings mySettings;
-  private Map<VirtualFile,VcsRevisionNumber> myRevNumbersCache;
+  private final Map<VirtualFile,VcsRevisionNumber> myRevNumbersCache;
+  private final ExceptionInfoCache myCache;
 
   public VcsContentAnnotationExceptionFilter(@NotNull GlobalSearchScope scope) {
-    myScope = scope;
     myProject = scope.getProject();
     mySettings = VcsContentAnnotationSettings.getInstance(myProject);
     myRevNumbersCache = new HashMap<VirtualFile, VcsRevisionNumber>();
+    myCache = new ExceptionInfoCache(scope);
   }
 
   private static class MyAdditionalHighlight extends AdditionalHighlight {
@@ -75,10 +76,10 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
       EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
       final TextAttributes changedColor = globalScheme.getAttributes(DiffColors.DIFF_MODIFIED);
       if (source == null) {
-        TextAttributes atts =
+        TextAttributes attrs =
           globalScheme.getAttributes(CodeInsightColors.CLASS_NAME_ATTRIBUTES).clone();
-        atts.setBackgroundColor(changedColor.getBackgroundColor());
-        return atts;
+        attrs.setBackgroundColor(changedColor.getBackgroundColor());
+        return attrs;
       }
       TextAttributes clone = source.clone();
       clone.setBackgroundColor(changedColor.getBackgroundColor());
@@ -103,7 +104,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
     for (int i = 0; i < copiedFragment.getLineCount(); i++) {
       final int lineStartOffset = copiedFragment.getLineStartOffset(i);
       final int lineEndOffset = copiedFragment.getLineEndOffset(i);
-      final ExceptionWorker worker = new ExceptionWorker(myProject, myScope);
+      final ExceptionWorker worker = new ExceptionWorker(myCache);
       final String[] lineText = new String[1];
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
@@ -216,7 +217,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
     }
   }
 
-  private Document getDocumentForFile(final ExceptionWorker worker) {
+  private static Document getDocumentForFile(final ExceptionWorker worker) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
       @Override
       public Document compute() {
@@ -231,7 +232,9 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
   }
 
   // line numbers
-  private List<TextRange> findMethodRange(final ExceptionWorker worker, final Document document, final Trinity<PsiClass, PsiFile, String> previousLineResult) {
+  private static List<TextRange> findMethodRange(final ExceptionWorker worker,
+                                                 final Document document,
+                                                 final Trinity<PsiClass, PsiFile, String> previousLineResult) {
     return ApplicationManager.getApplication().runReadAction(new Computable<List<TextRange>>() {
       @Override
       public List<TextRange> compute() {
@@ -249,7 +252,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
 
   // null - check all
   @Nullable
-  private List<PsiMethod> selectMethod(final PsiMethod[] methods, final Trinity<PsiClass, PsiFile, String> previousLineResult) {
+  private static List<PsiMethod> selectMethod(final PsiMethod[] methods, final Trinity<PsiClass, PsiFile, String> previousLineResult) {
     if (previousLineResult == null || previousLineResult.getThird() == null) return null;
 
     final List<PsiMethod> result = new SmartList<PsiMethod>();
@@ -270,7 +273,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
     return result;
   }
 
-  private List<TextRange> getTextRangeForMethod(final ExceptionWorker worker, Trinity<PsiClass, PsiFile, String> previousLineResult) {
+  private static List<TextRange> getTextRangeForMethod(final ExceptionWorker worker, Trinity<PsiClass, PsiFile, String> previousLineResult) {
     String method = worker.getMethod();
     PsiClass psiClass = worker.getPsiClass();
     PsiMethod[] methods;

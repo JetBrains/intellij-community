@@ -53,10 +53,6 @@ public interface ExtensionsArea  {
 
   void registerExtension(@NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionElement);
 
-  void unregisterExtensionPoint(@NotNull String pluginName, @NotNull Element extensionPointElement);
-
-  void unregisterExtension(@NotNull String pluginName, @NotNull Element extensionElement);
-
   @NotNull
   PicoContainer getPluginContainer(@NotNull String pluginName);
 

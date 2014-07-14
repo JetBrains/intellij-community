@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -249,5 +249,10 @@ private String '-'() {
     return 'b'
 }
 ''')
+  }
+
+  void testClassVsDefaultGDKClass() {
+    myFixture.addClass('package javax.sound.midi; public class Sequence { }')
+    doTest()
   }
 }

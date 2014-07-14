@@ -8,9 +8,11 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
-import com.intellij.util.Function;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -18,10 +20,11 @@ import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.graph.render.PrintParameters;
+import com.intellij.vcs.log.printer.idea.PrintParameters;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.RefPainter;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
+import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,31 +51,52 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
   @NotNull private final RefsPanel myRefsPanel;
   @NotNull private final DataPanel myDataPanel;
+  @NotNull private final ContainingBranchesPanel myContainingBranchesPanel;
   @NotNull private final MessagePanel myMessagePanel;
   @NotNull private final JBLoadingPanel myLoadingPanel;
 
-  DetailsPanel(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogGraphTable graphTable, @NotNull VcsLogColorManager colorManager) {
+  @NotNull private DataPack myDataPack;
+
+  DetailsPanel(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogGraphTable graphTable, @NotNull VcsLogColorManager colorManager,
+               @NotNull DataPack initialDataPack) {
     super(new CardLayout());
     myLogDataHolder = logDataHolder;
     myGraphTable = graphTable;
+    myDataPack = initialDataPack;
 
     myRefsPanel = new RefsPanel(colorManager);
     myDataPanel = new DataPanel(logDataHolder.getProject());
+    myContainingBranchesPanel = new ContainingBranchesPanel();
     myMessagePanel = new MessagePanel();
 
-    Box content = Box.createVerticalBox();
-    content.add(myRefsPanel);
-    content.add(myDataPanel);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane();
+    JPanel content = new JPanel(new MigLayout("flowy, ins 0, fill, hidemode 3")) {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+        size.width = scrollPane.getViewport().getWidth() - 5;
+        return size;
+      }
+    };
+    content.setOpaque(false);
+    scrollPane.setViewportView(content);
+    content.add(myRefsPanel, "shrinky, pushx, growx");
+    content.add(myDataPanel, "growy, push");
+    content.add(myContainingBranchesPanel, "shrinky, pushx, growx");
     content.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), logDataHolder, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
-    myLoadingPanel.add(ScrollPaneFactory.createScrollPane(content));
+    myLoadingPanel.add(scrollPane);
 
     add(myLoadingPanel, STANDARD_LAYER);
     add(myMessagePanel, MESSAGE_LAYER);
 
     setBackground(UIUtil.getTableBackground());
     showMessage("No commits selected");
+  }
+
+  void updateDataPack(@NotNull DataPack dataPack) {
+    myDataPack = dataPack;
   }
 
   @Override
@@ -87,25 +111,29 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     else {
       ((CardLayout)getLayout()).show(this, STANDARD_LAYER);
       int row = rows[0];
-      Hash hash = ((AbstractVcsLogTableModel)myGraphTable.getModel()).getHashAtRow(row);
-      if (hash == null) {
+      AbstractVcsLogTableModel<?> tableModel = (AbstractVcsLogTableModel)myGraphTable.getModel();
+      Hash hash = tableModel.getHashAtRow(row);
+      VcsFullCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(row, tableModel);
+      if (commitData == null || hash == null) {
         showMessage("No commits selected");
         return;
       }
-
-      VcsFullCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(hash);
-      DataPack dataPack = myLogDataHolder.getDataPack();
-      List<VcsRef> branches = myLogDataHolder.getContainingBranchesGetter().requestContainingBranches(dataPack, dataPack.getNode(row));
-      if (commitData instanceof LoadingDetails || branches == null) {
+      if (commitData instanceof LoadingDetails) {
         myLoadingPanel.startLoading();
-        myDataPanel.setData(null, null);
+        myDataPanel.setData(null);
         myRefsPanel.setRefs(Collections.<VcsRef>emptyList());
       }
       else {
         myLoadingPanel.stopLoading();
-        myDataPanel.setData(commitData, branches);
+        myDataPanel.setData(commitData);
         myRefsPanel.setRefs(sortRefs(hash, commitData.getRoot()));
       }
+
+      List<String> branches = null;
+      if (!(commitData instanceof LoadingDetails)) {
+        branches = myLogDataHolder.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), hash);
+      }
+      myContainingBranchesPanel.setBranches(branches);
     }
   }
 
@@ -117,7 +145,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
   @NotNull
   private List<VcsRef> sortRefs(@NotNull Hash hash, @NotNull VirtualFile root) {
-    Collection<VcsRef> refs = myLogDataHolder.getDataPack().getRefsModel().refsToCommit(hash);
+    Collection<VcsRef> refs = myDataPack.getRefsModel().refsToCommit(hash);
     return myLogDataHolder.getLogProvider(root).getReferenceManager().sort(refs);
   }
 
@@ -130,58 +158,94 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       setEditable(false);
       myProject = project;
       addHyperlinkListener(new BrowserHyperlinkListener());
-      setPreferredSize(new Dimension(150, 100));
+      setOpaque(false);
     }
 
-    void setData(@Nullable VcsFullCommitDetails commit, @Nullable List<VcsRef> branches) {
-      if (commit == null || branches == null) {
+    void setData(@Nullable VcsFullCommitDetails commit) {
+      if (commit == null) {
         setText("");
       }
       else {
-        String body = getHashText(commit) + "<br/>" + getAuthorText(commit) + "<p>" + getMessageText(commit) + "</p>" +
-                      "<p>" + getContainedBranchesText(branches) + "</p>";
+        String body = getHashText(commit) + "<br/>" + getAuthorText(commit) + "<p>" + getMessageText(commit) + "</p>";
         setText("<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" + body + "</body></html>");
         setCaretPosition(0);
       }
     }
 
-    private static String getContainedBranchesText(List<VcsRef> branches) {
-      return "<i>Contained in branches:</i> " + StringUtil.join(branches, new Function<VcsRef, String>() {
-        @Override
-        public String fun(VcsRef ref) {
-          return ref.getName();
-        }
-      }, ", ");
-    }
-
     private String getMessageText(VcsFullCommitDetails commit) {
-      String subject = commit.getSubject();
-      String description = subject.length() < commit.getFullMessage().length() ? commit.getFullMessage().substring(subject.length()) : "";
+      String fullMessage = commit.getFullMessage();
+      int separator = fullMessage.indexOf("\n\n");
+      String subject = separator > 0 ? fullMessage.substring(0, separator) : fullMessage;
+      String description = fullMessage.substring(subject.length());
       return "<b>" + IssueLinkHtmlRenderer.formatTextWithLinks(myProject, subject) + "</b>" +
              IssueLinkHtmlRenderer.formatTextWithLinks(myProject, description);
     }
 
     private static String getHashText(VcsFullCommitDetails commit) {
-      return commit.getHash().asString();
+      return commit.getId().asString();
     }
 
     private static String getAuthorText(VcsFullCommitDetails commit) {
       String authorText = commit.getAuthor().getName() + " at " + DateFormatUtil.formatDateTime(commit.getAuthorTime());
       if (!commit.getAuthor().equals(commit.getCommitter())) {
         String commitTime;
-        if (commit.getAuthorTime() != commit.getTime()) {
-          commitTime = " at " + DateFormatUtil.formatDateTime(commit.getTime());
+        if (commit.getAuthorTime() != commit.getTimestamp()) {
+          commitTime = " at " + DateFormatUtil.formatDateTime(commit.getTimestamp());
         }
         else {
           commitTime = "";
         }
         authorText += " (committed by " + commit.getCommitter().getName() + commitTime + ")";
       }
-      else if (commit.getAuthorTime() != commit.getTime()) {
-        authorText += " (committed at " + DateFormatUtil.formatDateTime(commit.getTime()) + ")";
+      else if (commit.getAuthorTime() != commit.getTimestamp()) {
+        authorText += " (committed at " + DateFormatUtil.formatDateTime(commit.getTimestamp()) + ")";
       }
       return authorText;
     }
+  }
+
+  private static class ContainingBranchesPanel extends JPanel {
+
+    private final JComponent myLoadingIcon;
+    private final JTextField myBranchesList;
+
+    ContainingBranchesPanel() {
+      JLabel label = new JBLabel("Contained in branches: ") {
+        @Override
+        public Font getFont() {
+          return UIUtil.getLabelFont().deriveFont(Font.ITALIC);
+        }
+      };
+      myLoadingIcon = new AsyncProcessIcon("Loading...");
+      myBranchesList = new JBTextField("");
+      myBranchesList.setEditable(false);
+      myBranchesList.setBorder(null);
+
+      setOpaque(false);
+      setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+      add(label);
+      add(myLoadingIcon);
+      add(myBranchesList);
+      add(Box.createHorizontalGlue());
+    }
+
+    void setBranches(@Nullable List<String> branches) {
+      if (branches == null) {
+        myLoadingIcon.setVisible(true);
+        myBranchesList.setVisible(false);
+      }
+      else {
+        myLoadingIcon.setVisible(false);
+        myBranchesList.setVisible(true);
+        myBranchesList.setText(getContainedBranchesText(branches));
+      }
+    }
+
+    @NotNull
+    private static String getContainedBranchesText(@NotNull List<String> branches) {
+      return StringUtil.join(branches, ", ");
+    }
+
   }
 
   private static class RefsPanel extends JPanel {

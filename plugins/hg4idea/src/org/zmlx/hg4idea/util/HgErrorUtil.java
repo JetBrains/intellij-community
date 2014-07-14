@@ -24,6 +24,8 @@ import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class HgErrorUtil {
 
@@ -104,5 +106,17 @@ public final class HgErrorUtil {
     }
     String line = errorLines.get(0);
     return !StringUtil.isEmptyOrSpaces(line) && (line.contains("abort") && line.contains("unknown encoding"));
+  }
+
+  //during update  or revert action with  uncommitted merges/changes
+  public static boolean hasUncommittedChangesConflict(@Nullable HgCommandResult result) {
+    if (result == null) {
+      return false;
+    }
+    // error messages from mercurial after update command failed: "abort: outstanding uncommitted merges", "abort: uncommitted changes";
+    //after revert command failed: abort: "uncommitted merge"
+    final Pattern UNCOMMITTED_PATTERN = Pattern.compile(".*abort.*uncommitted\\s*(change|merge).*", Pattern.DOTALL);
+    Matcher matcher = UNCOMMITTED_PATTERN.matcher(result.getRawError());
+    return matcher.matches();
   }
 }

@@ -21,15 +21,16 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import org.jetbrains.annotations.NotNull;
 
+@Deprecated
 /**
- * @author oleg
+ * @deprecated Use {@link com.intellij.execution.configuration.EmptyRunProfileState} (to remove in IDEA 15)
  */
-
 public class MockCommandLineState extends CommandLineState {
   public MockCommandLineState(@NotNull final ExecutionEnvironment env) {
     super(env);
   }
 
+  @NotNull
   @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
     return null;

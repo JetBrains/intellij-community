@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.suggestMethodName;
-
 class ExpressionContext implements Cloneable {
   List<String> myStatements = new ArrayList<String>();
   Set<String> myUsedVarNames;
@@ -35,13 +33,13 @@ class ExpressionContext implements Cloneable {
   TypeProvider typeProvider;
 
   Project project;
-  private Map<String, Boolean> myProps = new HashMap<String, Boolean>();
+  private final Map<String, Boolean> myProps = new HashMap<String, Boolean>();
   private static final String myShouldInsertCurlyBrackets = "shouldInsertCurly";
   private static final String myInAnonymousContext = "inAnonymousContext";
   private Ref<String> myRefSetterName = new Ref<String>(null);
 
-  private Map<PsiMethod, String> setters;
-  private Set<PsiClass> myClasses;
+  private final Map<PsiMethod, String> setters;
+  private final Set<PsiClass> myClasses;
 
   private ExpressionContext(Project project, Set<String> usedVarNames, Map<PsiMethod, String> setters, Set<PsiClass> myClasses) {
     this.project = project;
@@ -114,7 +112,7 @@ class ExpressionContext implements Cloneable {
 
   public String getRefSetterName(GroovyPsiElement context) {
     if (myRefSetterName.isNull()) {
-      myRefSetterName.set(suggestMethodName(context, "setGroovyRef", this));
+      myRefSetterName.set(GenerationUtil.suggestMethodName(context, "setGroovyRef", this));
     }
     return myRefSetterName.get();
   }

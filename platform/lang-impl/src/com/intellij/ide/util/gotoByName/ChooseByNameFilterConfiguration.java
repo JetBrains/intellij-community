@@ -50,7 +50,7 @@ public abstract class ChooseByNameFilterConfiguration<T> implements PersistentSt
   /**
    * Set filtering state for file type
    *
-   * @param type  a type of the file to duptate
+   * @param type  a type of the file to update
    * @param value if false, a file type will be filtered out
    */
   public void setVisible(T type, boolean value) {
@@ -68,14 +68,14 @@ public abstract class ChooseByNameFilterConfiguration<T> implements PersistentSt
    * Check if file type should be filtered out
    *
    * @param type a file type to check
-   * @return false if file of the sepecified type should be filtered out
+   * @return false if file of the specified type should be filtered out
    */
   public boolean isFileTypeVisible(T type) {
     return !items.getFilteredOutFileTypeNames().contains(nameForElement(type));
   }
 
   /**
-   * A state for this configuraiton
+   * A state for this configuration
    */
   public static class Items {
     /**
@@ -95,7 +95,7 @@ public abstract class ChooseByNameFilterConfiguration<T> implements PersistentSt
     /**
      * Set file type names
      *
-     * @param a new collection for file type names
+     * @param fileTypeNames a new collection for file type names
      */
     public void setFilteredOutFileTypeNames(final Set<String> fileTypeNames) {
       this.filteredOutFileTypeNames = fileTypeNames;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 
 package com.intellij.codeInsight.generation.actions;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.actions.BaseCodeInsightAction;
+import com.intellij.codeInsight.actions.MultiCaretCodeInsightAction;
+import com.intellij.codeInsight.actions.MultiCaretCodeInsightActionHandler;
 import com.intellij.codeInsight.generation.CommentByLineCommentHandler;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -28,19 +29,19 @@ import com.intellij.psi.PsiFile;
 import com.intellij.lang.LanguageCommenters;
 import org.jetbrains.annotations.NotNull;
 
-public class CommentByLineCommentAction extends BaseCodeInsightAction implements DumbAware {
+public class CommentByLineCommentAction extends MultiCaretCodeInsightAction implements DumbAware {
   public CommentByLineCommentAction() {
     setEnabledInModalContext(true);
   }
 
   @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected MultiCaretCodeInsightActionHandler getHandler() {
     return new CommentByLineCommentHandler();
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
+  protected boolean isValidFor(@NotNull Project project, @NotNull Editor editor, @NotNull Caret caret, @NotNull final PsiFile file) {
     final FileType fileType = file.getFileType();
     if (fileType instanceof AbstractFileType) {
       return ((AbstractFileType)fileType).getCommenter() != null;

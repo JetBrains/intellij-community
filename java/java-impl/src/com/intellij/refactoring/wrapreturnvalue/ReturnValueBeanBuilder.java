@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,117 +22,113 @@ import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 class ReturnValueBeanBuilder {
-    private String className = null;
-    private String packageName = null;
-    private final List<PsiTypeParameter> typeParams = new ArrayList<PsiTypeParameter>();
-    private Project myProject = null;
-    private PsiType valueType = null;
+  private final List<PsiTypeParameter> myTypeParams = new ArrayList<PsiTypeParameter>();
+  private String myClassName = null;
+  private String myPackageName = null;
+  private Project myProject = null;
+  private PsiType myValueType = null;
   private boolean myStatic;
 
   public void setClassName(String className) {
-        this.className = className;
+    myClassName = className;
+  }
+
+  public void setPackageName(String packageName) {
+    myPackageName = packageName;
+  }
+
+  public void setTypeArguments(List<PsiTypeParameter> typeParams) {
+    myTypeParams.clear();
+    myTypeParams.addAll(typeParams);
+  }
+
+  public void setProject(Project project) {
+    myProject = project;
+  }
+
+  public void setValueType(PsiType valueType) {
+    myValueType = valueType;
+  }
+
+  public void setStatic(boolean isStatic) {
+    myStatic = isStatic;
+  }
+
+  public String buildBeanClass() throws IOException {
+    final StringBuilder out = new StringBuilder(1024);
+
+    if (myPackageName.length() > 0) {
+      out.append("package ").append(myPackageName).append(";\n\n");
     }
 
-    public void setPackageName(String packageName) {
-        this.packageName = packageName;
-    }
-
-    public void setTypeArguments(List<PsiTypeParameter> typeParams) {
-        this.typeParams.clear();
-        this.typeParams.addAll(typeParams);
-    }
-
-    public void setCodeStyleSettings(Project settings) {
-        this.myProject = settings;
-    }
-
-    public String buildBeanClass() throws IOException {
-        @NonNls final StringBuffer out = new StringBuffer(1024);
-       
-        if (packageName.length() > 0) out.append("package " + packageName + ';');
-        out.append('\n');
-      out.append("public ");
-      if (myStatic) out.append("static ");
-      out.append("class ").append(className);
-        if (!typeParams.isEmpty()) {
-            out.append('<');
-            boolean first = true;
-            for (PsiTypeParameter typeParam : typeParams) {
-                if (!first) {
-                    out.append(',');
-                }
-                final String parameterText = typeParam.getText();
-                out.append(parameterText);
-                first = false;
-            }
-            out.append('>');
+    out.append("public ");
+    if (myStatic) out.append("static ");
+    out.append("class ").append(myClassName);
+    if (!myTypeParams.isEmpty()) {
+      out.append('<');
+      boolean first = true;
+      for (PsiTypeParameter typeParam : myTypeParams) {
+        if (!first) {
+          out.append(',');
         }
-        out.append('\n');
-
-        out.append('{');
-        outputField(out);
-        out.append('\n');
-        outputConstructor(out);
-        out.append('\n');
-        outputGetter(out);
-        out.append("}\n");
-        return out.toString();
+        final String parameterText = typeParam.getText();
+        out.append(parameterText);
+        first = false;
+      }
+      out.append('>');
     }
 
-    private void outputGetter(@NonNls StringBuffer out) {
-        final String typeText = valueType.getCanonicalText();
-        @NonNls final String name = "value";
-        final String capitalizedName = StringUtil.capitalize(name);
-        out.append("\tpublic " + typeText + " get" + capitalizedName + "()\n");
-        out.append("\t{\n");
-      final String fieldName = getFieldName(name);
-      out.append("\t\treturn " + fieldName + ";\n");
-        out.append("\t}\n");
-        out.append('\n');
-    }
+    out.append(" {\n");
+    outputField(out);
+    out.append("\n\n");
+    outputConstructor(out);
+    out.append("\n\n");
+    outputGetter(out);
+    out.append("\n}\n");
 
-    private void outputField(@NonNls StringBuffer out) {
-        final String typeText = valueType.getCanonicalText();
-      out.append('\t' + "private final " + typeText + ' ' + getFieldName("value") + ";\n");
-    }
+    return out.toString();
+  }
 
-    private void outputConstructor(@NonNls StringBuffer out) {
-        out.append("\tpublic " + className + '(');
-        final String typeText = valueType.getCanonicalText();
-        @NonNls final String name = "value";
-        final String parameterName =
-                JavaCodeStyleManager.getInstance(myProject).propertyNameToVariableName(name, VariableKind.PARAMETER);
-        out.append(CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS ? "final " : "");
-        out.append(typeText + ' ' + parameterName);
-        out.append(")\n");
-        out.append("\t{\n");
-      final String fieldName = getFieldName(name);
-      if (fieldName.equals(parameterName)) {
-            out.append("\t\tthis." + fieldName + " = " + parameterName + ";\n");
-        } else {
-            out.append("\t\t" + fieldName + " = " + parameterName + ";\n");
-        }
-        out.append("\t}\n");
-        out.append('\n');
+  private void outputField(StringBuilder out) {
+    final String typeText = myValueType.getCanonicalText(false);
+    out.append('\t' + "private final ").append(typeText).append(' ').append(getFieldName("value")).append(";");
+  }
+
+  private void outputConstructor(StringBuilder out) {
+    final String typeText = myValueType.getCanonicalText(true);
+    final String name = "value";
+    final String parameterName = JavaCodeStyleManager.getInstance(myProject).propertyNameToVariableName(name, VariableKind.PARAMETER);
+    final String fieldName = getFieldName(name);
+    out.append("\tpublic ").append(myClassName).append('(');
+    out.append(CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS ? "final " : "");
+    out.append(typeText).append(' ').append(parameterName);
+    out.append(") {\n");
+    if (fieldName.equals(parameterName)) {
+      out.append("\t\tthis.").append(fieldName).append(" = ").append(parameterName).append(";\n");
     }
+    else {
+      out.append("\t\t").append(fieldName).append(" = ").append(parameterName).append(";\n");
+    }
+    out.append("\t}");
+  }
+
+  private void outputGetter(StringBuilder out) {
+    final String typeText = myValueType.getCanonicalText(true);
+    final String name = "value";
+    final String capitalizedName = StringUtil.capitalize(name);
+    final String fieldName = getFieldName(name);
+    out.append("\tpublic ").append(typeText).append(" get").append(capitalizedName).append("() {\n");
+    out.append("\t\treturn ").append(fieldName).append(";\n");
+    out.append("\t}");
+  }
 
   private String getFieldName(final String name) {
     return JavaCodeStyleManager.getInstance(myProject).propertyNameToVariableName(name, VariableKind.FIELD);
   }
-
-  public void setValueType(PsiType valueType) {
-        this.valueType = valueType;
-    }
-
-  public void setStatic(final boolean isStatic) {
-    myStatic = isStatic;
-  }
 }
-

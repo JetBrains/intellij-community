@@ -28,6 +28,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
@@ -93,7 +94,7 @@ public class SizeReplaceableByIsEmptyInspectionBase extends BaseInspection {
         newExpression = '!' + newExpression;
       }
       newExpression += ".isEmpty()";
-      replaceExpression(binaryExpression, newExpression);
+      PsiReplacementUtil.replaceExpression(binaryExpression, newExpression);
     }
   }
 

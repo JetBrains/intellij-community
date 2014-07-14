@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,9 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -90,7 +92,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       final NamedConfigurable configurable1 = o1.getConfigurable();
       final NamedConfigurable configurable2 = o2.getConfigurable();
       if (configurable1.getClass() == configurable2.getClass()) {
-        return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
+        return StringUtil.naturalCompare(o1.getDisplayName(), o2.getDisplayName());
       }
       final Object editableObject1 = configurable1.getEditableObject();
       final Object editableObject2 = configurable2.getEditableObject();
@@ -149,7 +151,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     final ArrayList<AnAction> result = super.createActions(fromPopup);
     result.add(Separator.getInstance());
     result.add(new MyGroupAction());
-    addCollapseExpandActions(result);
+    if (fromPopup || !(SystemInfo.isMac && Registry.is("ide.new.project.settings"))) {
+      addCollapseExpandActions(result);
+    }
     return result;
   }
 

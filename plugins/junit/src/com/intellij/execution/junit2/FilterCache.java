@@ -45,9 +45,13 @@ class FilterCache {
     return Collections.unmodifiableList(myList);
   }
 
-  public void add(final TestProxy test) {
-    myList.add(test);
-    mySet.add(test);
+  public void insert(TestProxy child, int idx) {
+    if (idx >= 0) {
+      myList.add(idx, child);
+    } else {
+      myList.add(child);
+    }
+    mySet.add(child);
     resetCache();
   }
 

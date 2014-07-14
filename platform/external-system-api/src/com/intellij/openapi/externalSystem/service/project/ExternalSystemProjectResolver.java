@@ -35,17 +35,17 @@ public interface ExternalSystemProjectResolver<S extends ExternalSystemExecution
   /**
    * Builds object-level representation of the external system config file contained at the given path.
    *
-   * @param id                id of the current 'resolve project info' task
-   * @param projectPath       absolute path to the target external system config file
-   * @param isPreviewMode     Indicates, that an implementation can not provide/resolve any external dependencies.
-   *                          Only project dependencies and local file dependencies may included on the modules' classpath.
-   *                          And should not include any 'heavy' tasks like not trivial code generations.
-   *                          It is supposed to be fast.
-   * @param settings          settings to use for the project resolving;
-   *                          <code>null</code> as indication that no specific settings are required
-   * @param listener          callback to be notified about the execution
+   * @param id            id of the current 'resolve project info' task
+   * @param projectPath   absolute path to the target external system config file
+   * @param isPreviewMode Indicates, that an implementation can not provide/resolve any external dependencies.
+   *                      Only project dependencies and local file dependencies may included on the modules' classpath.
+   *                      And should not include any 'heavy' tasks like not trivial code generations.
+   *                      It is supposed to be fast.
+   * @param settings      settings to use for the project resolving;
+   *                      <code>null</code> as indication that no specific settings are required
+   * @param listener      callback to be notified about the execution
    * @return object-level representation of the target external system project;
-   *         <code>null</code> if it's not possible to resolve the project due to the objective reasons
+   * <code>null</code> if it's not possible to resolve the project due to the objective reasons
    * @throws ExternalSystemException  in case when unexpected exception occurs during project info construction
    * @throws IllegalArgumentException if given path is invalid
    * @throws IllegalStateException    if it's not possible to resolve target project info
@@ -57,5 +57,12 @@ public interface ExternalSystemProjectResolver<S extends ExternalSystemExecution
                                            @Nullable S settings,
                                            @NotNull ExternalSystemTaskNotificationListener listener)
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException;
+
+  /**
+   * @param taskId   id of the 'resolve project info' task
+   * @param listener callback to be notified about the cancellation
+   * @return true if the task execution was successfully stopped, false otherwise or if target external system does not support the task cancellation
+   */
+  boolean cancelTask(@NotNull ExternalSystemTaskId taskId, @NotNull ExternalSystemTaskNotificationListener listener);
 }
 

@@ -47,6 +47,7 @@ public class ScopeImpl implements Scope {
   private volatile Map<String, PsiNamedElement> myNamedElements;
   private volatile List<PyImportedNameDefiner> myImportedNameDefiners;  // Declarations which declare unknown set of imported names
   private volatile Set<String> myAugAssignments;
+  private List<PyTargetExpression> myTargetExpressions;
 
   public ScopeImpl(final ScopeOwner flowOwner) {
     myFlowOwner = flowOwner;
@@ -170,6 +171,15 @@ public class ScopeImpl implements Scope {
     return myNamedElements.values();
   }
 
+  @NotNull
+  @Override
+  public Collection<PyTargetExpression> getTargetExpressions() {
+    if (myTargetExpressions == null) {
+      collectDeclarations();
+    }
+    return myTargetExpressions;
+  }
+
   private void collectDeclarations() {
     final Map<String, PsiNamedElement> namedElements = new HashMap<String, PsiNamedElement>();
     final List<PyImportedNameDefiner> importedNameDefiners = new ArrayList<PyImportedNameDefiner>();
@@ -177,11 +187,13 @@ public class ScopeImpl implements Scope {
     final Set<String> globals = new HashSet<String>();
     final Set<String> nonlocals = new HashSet<String>();
     final Set<String> augAssignments = new HashSet<String>();
+    final List<PyTargetExpression> targetExpressions = new ArrayList<PyTargetExpression>();
     myFlowOwner.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyTargetExpression(PyTargetExpression node) {
+        targetExpressions.add(node);
         final PsiElement parent = node.getParent();
-        if (node.getQualifier() == null && !(parent instanceof PyImportElement)) {
+        if (!node.isQualified() && !(parent instanceof PyImportElement)) {
           super.visitPyTargetExpression(node);
         }
       }
@@ -249,5 +261,6 @@ public class ScopeImpl implements Scope {
     myGlobals = globals;
     myNonlocals = nonlocals;
     myAugAssignments = augAssignments;
+    myTargetExpressions = targetExpressions;
   }
 }

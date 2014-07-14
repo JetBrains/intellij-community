@@ -27,4 +27,8 @@ public interface ChildrenBuilder {
   ValueDescriptor getParentDescriptor();
 
   void setChildren(List<DebuggerTreeNode> children);
+
+  void setRemaining(int remaining);
+
+  void initChildrenArrayRenderer(ArrayRenderer renderer);
 }

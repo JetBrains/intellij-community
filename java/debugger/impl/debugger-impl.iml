@@ -18,6 +18,8 @@
     <orderEntry type="module" module-name="java-runtime" />
     <orderEntry type="module" module-name="jsp-openapi" />
     <orderEntry type="module" module-name="java-impl" />
+    <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="util" />
   </component>
   <component name="copyright">
     <Base>

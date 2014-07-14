@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,11 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -43,9 +44,6 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 
 import java.util.ArrayList;
-
-import static org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase.deleteLocalVar;
-import static org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase.processLiteral;
 
 /**
  * @author Max Medvedev
@@ -72,28 +70,40 @@ public class GrIntroduceConstantProcessor {
     final GrVariableDeclaration declaration = addDeclaration(targetClass);
     final GrField field = (GrField)declaration.getVariables()[0];
 
-    if (context.getVar() != null) {
-      deleteLocalVar(context.getVar());
-    }
+    GrVariable localVar = GrIntroduceHandlerBase.resolveLocalVar(context);
+    if (localVar != null) {
+      assert localVar.getInitializerGroovy() != null : "initializer should exist: " + localVar.getText();
+      GrIntroduceHandlerBase.deleteLocalVar(localVar);
 
-    if (context.getStringPart() != null) {
-      final GrExpression ref = processLiteral(field.getName(), context.getStringPart(), context.getProject());
+      if (settings.replaceAllOccurrences()) {
+        processOccurrences(field);
+      }
+      else {
+        replaceOccurrence(field, localVar.getInitializerGroovy(), isEscalateVisibility());
+      }
+    }
+    else if (context.getStringPart() != null) {
+      final GrExpression ref = context.getStringPart().replaceLiteralWithConcatenation(field.getName());
       final PsiElement element = replaceOccurrence(field, ref, isEscalateVisibility());
       updateCaretPosition(element);
     }
-    else {
+    else if (context.getExpression() != null) {
       if (settings.replaceAllOccurrences()) {
-        final PsiElement[] occurrences = context.getOccurrences();
-        GroovyRefactoringUtil.sortOccurrences(occurrences);
-        for (PsiElement occurrence : occurrences) {
-          replaceOccurrence(field, occurrence, isEscalateVisibility());
-        }
+        processOccurrences(field);
       }
       else {
         replaceOccurrence(field, context.getExpression(), isEscalateVisibility());
       }
     }
     return field;
+  }
+
+  private void processOccurrences(GrField field) {
+    final PsiElement[] occurrences = context.getOccurrences();
+    GroovyRefactoringUtil.sortOccurrences(occurrences);
+    for (PsiElement occurrence : occurrences) {
+      replaceOccurrence(field, occurrence, isEscalateVisibility());
+    }
   }
 
   private void updateCaretPosition(PsiElement element) {
@@ -141,7 +151,7 @@ public class GrIntroduceConstantProcessor {
 
   @Nullable
   private  String check(@NotNull PsiClass targetClass, @Nullable final String fieldName) {
-    if (!GroovyFileType.GROOVY_LANGUAGE.equals(targetClass.getLanguage())) {
+    if (!GroovyLanguage.INSTANCE.equals(targetClass.getLanguage())) {
       return GroovyRefactoringBundle.message("class.language.is.not.groovy");
     }
 
@@ -185,7 +195,9 @@ public class GrIntroduceConstantProcessor {
   private static GrReferenceExpression createRefExpression(@NotNull GrField field, @NotNull PsiElement place) {
     final PsiClass containingClass = field.getContainingClass();
     assert containingClass != null;
-    final String refText = containingClass.getQualifiedName() != null ? containingClass.getQualifiedName() + "." + field.getName() : field.getName();
+    final String qname = containingClass.getQualifiedName();
+    final String fieldName = field.getName();
+    final String refText = qname != null && !qname.equals(fieldName) ? qname + "." + fieldName : fieldName;
     return GroovyPsiElementFactory.getInstance(place.getProject()).createReferenceExpressionFromText(refText, place);
   }
 
@@ -202,12 +214,17 @@ public class GrIntroduceConstantProcessor {
 
   @NotNull
   protected GrExpression getInitializer() {
-    final GrExpression expression = context.getExpression();
-    if (expression != null) {
+    GrVariable var = GrIntroduceHandlerBase.resolveLocalVar(context);
+    GrExpression expression = context.getExpression();
+
+    if (var != null) {
+      return var.getInitializerGroovy();
+    }
+    else if (expression != null) {
       return expression;
     }
     else {
-      return GrIntroduceHandlerBase.generateExpressionFromStringPart(context.getStringPart(), context.getProject());
+      return context.getStringPart().createLiteralFromSelected();
     }
   }
 

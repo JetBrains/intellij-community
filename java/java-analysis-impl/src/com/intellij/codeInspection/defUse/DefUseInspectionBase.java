@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -89,19 +90,24 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
           }
           else {
             if (REPORT_REDUNDANT_INITIALIZER) {
+              List<LocalQuickFix> fixes = ContainerUtil.createMaybeSingletonList(isOnTheFly ? createRemoveInitializerFix() : null);
               holder.registerProblem(psiVariable.getInitializer(),
                                      InspectionsBundle.message("inspection.unused.assignment.problem.descriptor2",
                                                                "<code>" + psiVariable.getName() + "</code>", "<code>#ref</code> #loc"),
                                      ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                     createRemoveInitializerFix());
+                                     fixes.toArray(new LocalQuickFix[fixes.size()])
+              );
             }
           }
         }
         else if (context instanceof PsiAssignmentExpression) {
           final PsiAssignmentExpression assignment = (PsiAssignmentExpression)context;
+          List<LocalQuickFix> fixes = ContainerUtil.createMaybeSingletonList(isOnTheFly ? createRemoveAssignmentFix() : null);
           holder.registerProblem(assignment.getLExpression(),
                                  InspectionsBundle.message("inspection.unused.assignment.problem.descriptor3",
-                                                           assignment.getRExpression().getText(), "<code>#ref</code>" + " #loc"), ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+                                                           assignment.getRExpression().getText(), "<code>#ref</code>" + " #loc"), 
+                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, fixes.toArray(new LocalQuickFix[fixes.size()])
+          );
         }
         else {
           if (context instanceof PsiPrefixExpression && REPORT_PREFIX_EXPRESSIONS ||
@@ -124,32 +130,14 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
                                  ProblemHighlightType.LIKE_UNUSED_SYMBOL);
         }
       }
-
-      @Override public void visitAssignmentExpression(PsiAssignmentExpression expression) {
-        PsiExpression lExpression = expression.getLExpression();
-        PsiExpression rExpression = expression.getRExpression();
-
-        if (lExpression instanceof PsiReferenceExpression && rExpression instanceof PsiReferenceExpression) {
-          PsiReferenceExpression lRef = (PsiReferenceExpression)lExpression;
-          PsiReferenceExpression rRef = (PsiReferenceExpression)rExpression;
-
-          if (lRef.resolve() != rRef.resolve()) return;
-          PsiExpression lQualifier = lRef.getQualifierExpression();
-          PsiExpression rQualifier = rRef.getQualifierExpression();
-
-          if ((lQualifier == null && rQualifier == null ||
-               lQualifier instanceof PsiThisExpression && rQualifier instanceof PsiThisExpression ||
-               lQualifier instanceof PsiThisExpression && rQualifier == null ||
-               lQualifier == null && rQualifier instanceof PsiThisExpression) && !isOnTheFly) {
-            holder.registerProblem(expression,
-                                   InspectionsBundle.message("inspection.unused.assignment.problem.descriptor6", "<code>#ref</code>"));
-          }
-        }
-      }
     });
   }
 
   protected LocalQuickFix createRemoveInitializerFix() {
+    return null;
+  }
+
+  protected LocalQuickFix createRemoveAssignmentFix() {
     return null;
   }
 

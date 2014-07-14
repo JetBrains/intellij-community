@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrShiftExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 
@@ -49,8 +49,8 @@ public class GradleTaskContributor implements GradleMethodContextContributor {
     if (methodCallInfo.isEmpty()) return;
 
     if (methodCallInfo.size() == 1) {
-      if (place.getParent() instanceof GrShiftExpressionImpl) {
-        GradleResolverUtil.addImplicitVariable(processor, state, place, CommonClassNames.JAVA_LANG_VOID);
+      if(GradleResolverUtil.isLShiftElement(place.getParent())) {
+        GradleResolverUtil.addImplicitVariable(processor, state, place, GradleCommonClassNames.GRADLE_API_TASK);
       }
     }
     else if (methodCallInfo.size() == 2) {
@@ -98,7 +98,7 @@ public class GradleTaskContributor implements GradleMethodContextContributor {
               PsiImmediateClassType immediateClassType = (PsiImmediateClassType)psiType;
               for (PsiType type : immediateClassType.getParameters()) {
                 GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
-                GradleResolverUtil.processDeclarations(methodCall, psiManager, processor, state, place, type.getCanonicalText());
+                GradleResolverUtil.processDeclarations(methodCall, psiManager, processor, state, place, TypesUtil.getQualifiedName(type));
               }
             }
           }

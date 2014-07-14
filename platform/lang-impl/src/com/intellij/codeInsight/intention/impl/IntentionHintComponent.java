@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
@@ -57,6 +58,7 @@ import com.intellij.ui.RowIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,11 +106,10 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
   private static final int DELAY = 500;
   private final MyComponentHint myComponentHint;
-  private boolean myPopupShown = false;
+  private volatile boolean myPopupShown = false;
   private boolean myDisposed = false;
-  private ListPopup myPopup;
+  private volatile ListPopup myPopup;
   private final PsiFile myFile;
-  private static final int LIGHTBULB_OFFSET = 20;
 
   private PopupMenuListener myOuterComboboxPopupListener;
 
@@ -118,6 +119,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
                                                          @NotNull Editor editor,
                                                          @NotNull ShowIntentionsPass.IntentionsInfo intentions,
                                                          boolean showExpanded) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final Point position = getHintPosition(editor);
     return showIntentionHint(project, file, editor, intentions, showExpanded, position);
   }
@@ -129,6 +131,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
                                                          @NotNull ShowIntentionsPass.IntentionsInfo intentions,
                                                          boolean showExpanded,
                                                          @NotNull Point position) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final IntentionHintComponent component = new IntentionHintComponent(project, file, editor, intentions);
 
     component.showIntentionHintImpl(!showExpanded, position);
@@ -177,7 +180,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   //true if actions updated, there is nothing to do
   //false if has to recreate popup, no need to reshow
   //null if has to reshow
-  public synchronized Boolean updateActions(ShowIntentionsPass.IntentionsInfo intentions) {
+  public Boolean updateActions(@NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     if (myPopup.isDisposed()) return null;
     if (!myFile.isValid()) return null;
     IntentionListStep step = (IntentionListStep)myPopup.getListStep();
@@ -204,7 +207,8 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     return values.get(index).getAction();
   }
 
-  public synchronized void recreate() {
+  public void recreate() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     IntentionListStep step = (IntentionListStep)myPopup.getListStep();
     recreateMyPopup(step);
   }
@@ -298,31 +302,25 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
                                  @NotNull PsiFile file,
                                  @NotNull final Editor editor,
                                  @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myFile = file;
     myEditor = editor;
 
     setLayout(new BorderLayout());
     setOpaque(false);
 
-    boolean showRefactoringsBulb = false;
-    for (HighlightInfo.IntentionActionDescriptor descriptor : intentions.inspectionFixesToShow) {
-      if (descriptor.getAction() instanceof BaseRefactoringIntentionAction) {
-        showRefactoringsBulb = true;
-        break;
+    boolean showRefactoringsBulb = ContainerUtil.exists(intentions.inspectionFixesToShow, new Condition<HighlightInfo.IntentionActionDescriptor>() {
+      @Override
+      public boolean value(HighlightInfo.IntentionActionDescriptor descriptor) {
+        return descriptor.getAction() instanceof BaseRefactoringIntentionAction;
       }
-    }
-    boolean showFix = false;
-    if (!showRefactoringsBulb) {
-      showFix = false;
-      for (final HighlightInfo.IntentionActionDescriptor pairs : intentions.errorFixesToShow) {
-        IntentionAction fix = pairs.getAction();
-        if (IntentionManagerSettings.getInstance().isShowLightBulb(fix)) {
-          showFix = true;
-          break;
-        }
+    });
+    boolean showFix = !showRefactoringsBulb && ContainerUtil.exists(intentions.errorFixesToShow, new Condition<HighlightInfo.IntentionActionDescriptor>() {
+      @Override
+      public boolean value(HighlightInfo.IntentionActionDescriptor descriptor) {
+        return IntentionManagerSettings.getInstance().isShowLightBulb(descriptor.getAction());
       }
-    }
+    });
 
     Icon smartTagIcon = showRefactoringsBulb ? AllIcons.Actions.RefactoringBulb : showFix ? AllIcons.Actions.QuickfixBulb : AllIcons.Actions.IntentionBulb;
 
@@ -404,11 +402,13 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   }
 
   private void closePopup() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myPopup.cancel();
     myPopupShown = false;
   }
 
   private void showPopup() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myPopup == null || myPopup.isDisposed()) return;
 
     if (isShowing()) {
@@ -424,6 +424,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   }
 
   private void recreateMyPopup(@NotNull IntentionListStep step) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myPopup != null) {
       Disposer.dispose(myPopup);
     }
@@ -468,7 +469,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     });
   }
 
-  void canceled(IntentionListStep intentionListStep) {
+  void canceled(@NotNull IntentionListStep intentionListStep) {
     if (myPopup.getListStep() != intentionListStep || myDisposed) {
       return;
     }

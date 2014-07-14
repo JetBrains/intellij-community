@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.ui;
 
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,7 +51,7 @@ public abstract class ComponentTreeWatcher {
       return true;
     }
     for (Class aClass : myControlsToIgnore) {
-      if (ReflectionCache.isAssignable(aClass, object.getClass())) {
+      if (ReflectionUtil.isAssignable(aClass, object.getClass())) {
         return true;
       }
     }
@@ -63,7 +63,7 @@ public abstract class ComponentTreeWatcher {
       return;
     }
 
-    if (parentComponent instanceof Container) {
+    if (parentComponent instanceof Container && processChildren((Container)parentComponent)) {
       Container container = (Container)parentComponent;
       for (int i = 0; i < container.getComponentCount(); i++) {
         register(container.getComponent(i));
@@ -74,11 +74,15 @@ public abstract class ComponentTreeWatcher {
     processComponent(parentComponent);
   }
 
+  protected boolean processChildren(Container container) {
+    return true;
+  }
+
   protected abstract void processComponent(Component parentComponent);
 
   private void unregister(Component component) {
 
-    if (component instanceof Container) {
+    if (component instanceof Container && processChildren((Container)component)) {
       Container container = (Container)component;
       for (int i = 0; i < container.getComponentCount(); i++) {
         unregister(container.getComponent(i));

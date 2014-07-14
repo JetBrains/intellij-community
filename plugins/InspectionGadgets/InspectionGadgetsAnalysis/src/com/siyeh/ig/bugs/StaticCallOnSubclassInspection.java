@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -23,10 +24,10 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class StaticCallOnSubclassInspection extends BaseInspection {
+public class StaticCallOnSubclassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
@@ -61,8 +62,7 @@ public class StaticCallOnSubclassInspection extends BaseInspection {
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "static.method.via.subclass.rationalize.quickfix");
+      return InspectionGadgetsBundle.message("static.method.via.subclass.rationalize.quickfix");
     }
     @Override
     @NotNull
@@ -73,15 +73,12 @@ public class StaticCallOnSubclassInspection extends BaseInspection {
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
-      final PsiIdentifier name =
-        (PsiIdentifier)descriptor.getPsiElement();
-      final PsiReferenceExpression expression =
-        (PsiReferenceExpression)name.getParent();
+      final PsiIdentifier name = (PsiIdentifier)descriptor.getPsiElement();
+      final PsiReferenceExpression expression = (PsiReferenceExpression)name.getParent();
       if (expression == null) {
         return;
       }
-      final PsiMethodCallExpression call =
-        (PsiMethodCallExpression)expression.getParent();
+      final PsiMethodCallExpression call = (PsiMethodCallExpression)expression.getParent();
       final String methodName = expression.getReferenceName();
       if (call == null) {
         return;
@@ -95,11 +92,9 @@ public class StaticCallOnSubclassInspection extends BaseInspection {
       if (containingClass == null) {
         return;
       }
-      final String containingClassName =
-        containingClass.getQualifiedName();
+      final String containingClassName = containingClass.getQualifiedName();
       final String argText = argumentList.getText();
-      replaceExpressionAndShorten(call, containingClassName + '.' +
-                                        methodName + argText);
+      PsiReplacementUtil.replaceExpressionAndShorten(call, containingClassName + '.' + call.getTypeArgumentList().getText() + methodName + argText);
     }
   }
 
@@ -140,10 +135,8 @@ public class StaticCallOnSubclassInspection extends BaseInspection {
       if (declaringClass.equals(referencedClass)) {
         return;
       }
-      final PsiClass containingClass =
-        ClassUtils.getContainingClass(call);
-      if (!ClassUtils.isClassVisibleFromClass(containingClass,
-                                              declaringClass)) {
+      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(call.getProject()).getResolveHelper();
+      if (!resolveHelper.isAccessible(declaringClass, call, null)) {
         return;
       }
       registerMethodCallError(call, declaringClass, referencedClass);

@@ -34,7 +34,7 @@ import com.intellij.util.ui.UIUtil;
 import com.sun.tools.javac.Main;
 import gnu.trove.TIntObjectHashMap;
 import junit.framework.TestCase;
-import org.jetbrains.asm4.ClassWriter;
+import org.jetbrains.org.objectweb.asm.ClassWriter;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;

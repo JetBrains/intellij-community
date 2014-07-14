@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
@@ -107,7 +108,7 @@ public class ComparisonToNaNInspection extends BaseInspection {
         negationText = "!";
       }
       @NonNls final String newExpressionText = negationText + typeText + ".isNaN(" + operandText + ')';
-      replaceExpression(comparison, newExpressionText);
+      PsiReplacementUtil.replaceExpression(comparison, newExpressionText);
     }
   }
 

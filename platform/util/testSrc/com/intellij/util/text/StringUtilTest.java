@@ -147,8 +147,52 @@ public class StringUtilTest extends TestCase {
     assertEquals("foo\\\"bar'\\\"", StringUtil.escapeQuotes("foo\"bar'\""));
   }
 
+  public void testUnqote() {
+    assertEquals("", StringUtil.unquoteString(""));
+    assertEquals("\"", StringUtil.unquoteString("\""));
+    assertEquals("", StringUtil.unquoteString("\"\""));
+    assertEquals("\"", StringUtil.unquoteString("\"\"\""));
+    assertEquals("foo", StringUtil.unquoteString("\"foo\""));
+    assertEquals("\"foo", StringUtil.unquoteString("\"foo"));
+    assertEquals("foo\"", StringUtil.unquoteString("foo\""));
+    assertEquals("", StringUtil.unquoteString(""));
+    assertEquals("\'", StringUtil.unquoteString("\'"));
+    assertEquals("", StringUtil.unquoteString("\'\'"));
+    assertEquals("\'", StringUtil.unquoteString("\'\'\'"));
+    assertEquals("foo", StringUtil.unquoteString("\'foo\'"));
+    assertEquals("\'foo", StringUtil.unquoteString("\'foo"));
+    assertEquals("foo\'", StringUtil.unquoteString("foo\'"));
+
+    assertEquals("\'\"", StringUtil.unquoteString("\'\""));
+    assertEquals("\"\'", StringUtil.unquoteString("\"\'"));
+    assertEquals("\"foo\'", StringUtil.unquoteString("\"foo\'"));
+  }
+
+  public void testUnqoteWithQuotationChar() {
+    assertEquals("", StringUtil.unquoteString("", '|'));
+    assertEquals("|", StringUtil.unquoteString("|", '|'));
+    assertEquals("", StringUtil.unquoteString("||", '|'));
+    assertEquals("|", StringUtil.unquoteString("|||", '|'));
+    assertEquals("foo", StringUtil.unquoteString("|foo|", '|'));
+    assertEquals("|foo", StringUtil.unquoteString("|foo", '|'));
+    assertEquals("foo|", StringUtil.unquoteString("foo|", '|'));
+  }
+
   public void testJoin() {
     assertEquals("foo,,bar", StringUtil.join(Arrays.asList("foo", "", "bar"), ","));
     assertEquals("foo,,bar", StringUtil.join(new String[]{"foo", "", "bar"}, ","));
+  }
+
+  public void testSplitByLineKeepingSeparators() {
+    assertEquals(Arrays.asList(""), Arrays.asList(StringUtil.splitByLinesKeepSeparators("")));
+    assertEquals(Arrays.asList("aa"), Arrays.asList(StringUtil.splitByLinesKeepSeparators("aa")));
+    assertEquals(Arrays.asList("\n", "\n", "aa\n", "\n", "bb\n", "cc\n", "\n"),
+                 Arrays.asList(StringUtil.splitByLinesKeepSeparators("\n\naa\n\nbb\ncc\n\n")));
+    
+    assertEquals(Arrays.asList("\r", "\r\n", "\r"), Arrays.asList(StringUtil.splitByLinesKeepSeparators("\r\r\n\r")));
+    assertEquals(Arrays.asList("\r\n", "\r", "\r\n"), Arrays.asList(StringUtil.splitByLinesKeepSeparators("\r\n\r\r\n")));
+
+    assertEquals(Arrays.asList("\n", "\r\n", "\n", "\r\n", "\r", "\r", "aa\r", "bb\r\n", "cc\n", "\r", "dd\n", "\n", "\r\n", "\r"),
+                 Arrays.asList(StringUtil.splitByLinesKeepSeparators("\n\r\n\n\r\n\r\raa\rbb\r\ncc\n\rdd\n\n\r\n\r")));
   }
 }

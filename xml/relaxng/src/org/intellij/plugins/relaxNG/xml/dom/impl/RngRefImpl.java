@@ -35,6 +35,7 @@ public abstract class RngRefImpl extends RngDomElementBase implements RngRef {
     visitor.visitRef(this);
   }
 
+  @Override
   public Define getPattern() {
     final XmlAttributeValue value = getName().getXmlAttributeValue();
     if (value == null) return null;
@@ -59,6 +60,7 @@ public abstract class RngRefImpl extends RngDomElementBase implements RngRef {
     return getParentOfType(RngGrammar.class, true);
   }
 
+  @Override
   public String getReferencedName() {
     return getName().getValue();
   }

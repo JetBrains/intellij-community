@@ -20,7 +20,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.*;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,17 +34,7 @@ import static com.intellij.util.containers.ContainerUtil.newIdentityTroveSet;
 */
 public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   private final TreeSet<String> mySortedStrings = new TreeSet<String>();
-  private final MultiMap<String, LookupElement> myElements = new MultiMap<String, LookupElement>() {
-    @Override
-    protected Map<String, Collection<LookupElement>> createMap() {
-      return new THashMap<String, Collection<LookupElement>>();
-    }
-
-    @Override
-    protected Collection<LookupElement> createCollection() {
-      return new ArrayList<LookupElement>(1);
-    }
-  };
+  private final MultiMap<String, LookupElement> myElements = MultiMap.createSmartList();
   private final Map<LookupElement, FList<LookupElement>> myToLift = newIdentityHashMap();
   private final IdentityHashMap<FList<LookupElement>, IdentityHashMap<LookupElement, FList<LookupElement>>> myPrepends = newIdentityHashMap();
   private final String myName;
@@ -62,7 +51,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   }
 
   @Override
-  public void addElement(LookupElement added) {
+  public void addElement(LookupElement added, ProcessingContext context) {
     myCount++;
 
     final Set<String> strings = added.getAllLookupStrings();
@@ -81,7 +70,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
         }
       }
     }
-    myNext.addElement(added);
+    myNext.addElement(added, context);
 
     calculateToLift(added);
   }

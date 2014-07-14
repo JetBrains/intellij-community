@@ -47,8 +47,8 @@ public class MavenModelPropertiesPatcher {
     for (MavenPluginDescriptor descriptor : descriptors) {
       if (descriptor.properties != null) {
         for (MavenPluginDescriptor.ModelProperty property : descriptor.properties) {
-          if (StringUtil.isNotEmpty(property.name)) {
-            modelProperties.setProperty(property.name, "");
+          if (!property.insideConfigurationOnly && StringUtil.isNotEmpty(property.name)) {
+            modelProperties.setProperty(property.name, StringUtil.notNullize(property.value));
           }
         }
       }

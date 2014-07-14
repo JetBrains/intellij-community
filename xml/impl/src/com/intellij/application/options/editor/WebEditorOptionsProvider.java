@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,60 +31,69 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
   private JCheckBox myAutomaticallyInsertRequiredAttributesCheckBox;
   private JCheckBox myAutomaticallyInsertRequiredSubTagsCheckBox;
   private JCheckBox myAutomaticallyStartAttributeAfterCheckBox;
-  private JBCheckBox mySelectWholeSelectorOnDoubleClick;
+  private JBCheckBox mySelectWholeCssIdentifierOnDoubleClick;
   private JBCheckBox myAddQuotasForAttributeValue;
 
 
+  @Override
   public String getDisplayName() {
     return XmlBundle.message("web.editor.configuration.title");
   }
 
+  @Override
   public String getHelpTopic() {
     return null;
   }
 
+  @Override
   public JComponent createComponent() {
     return myWholePanel;
   }
 
+  @Override
   public boolean isModified() {
     final WebEditorOptions xmlEditorOptions = WebEditorOptions.getInstance();
     return xmlEditorOptions.isAutomaticallyInsertClosingTag() != myAutomaticallyInsertClosingTagCheckBox.isSelected() ||
            xmlEditorOptions.isAutomaticallyInsertRequiredAttributes() != myAutomaticallyInsertRequiredAttributesCheckBox.isSelected() ||
            xmlEditorOptions.isAutomaticallyStartAttribute() != myAutomaticallyStartAttributeAfterCheckBox.isSelected() ||
-           xmlEditorOptions.isSelectWholeCssSelectorSuffixOnDoubleClick() != mySelectWholeSelectorOnDoubleClick.isSelected() ||
+           xmlEditorOptions.isSelectWholeCssIdentifierOnDoubleClick() != mySelectWholeCssIdentifierOnDoubleClick.isSelected() ||
            xmlEditorOptions.isAutomaticallyInsertRequiredSubTags() != myAutomaticallyInsertRequiredSubTagsCheckBox.isSelected() ||
            xmlEditorOptions.isInsertQuotesForAttributeValue() != myAddQuotasForAttributeValue.isSelected();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     final WebEditorOptions xmlEditorOptions = WebEditorOptions.getInstance();
     xmlEditorOptions.setAutomaticallyInsertClosingTag(myAutomaticallyInsertClosingTagCheckBox.isSelected());
     xmlEditorOptions.setAutomaticallyInsertRequiredAttributes(myAutomaticallyInsertRequiredAttributesCheckBox.isSelected());
     xmlEditorOptions.setAutomaticallyInsertRequiredSubTags(myAutomaticallyInsertRequiredSubTagsCheckBox.isSelected());
     xmlEditorOptions.setAutomaticallyStartAttribute(myAutomaticallyStartAttributeAfterCheckBox.isSelected());
-    xmlEditorOptions.setSelectWholeCssSelectorSuffixOnDoubleClick(mySelectWholeSelectorOnDoubleClick.isSelected());
+    xmlEditorOptions.setSelectWholeCssIdentifierOnDoubleClick(mySelectWholeCssIdentifierOnDoubleClick.isSelected());
     xmlEditorOptions.setInsertQuotesForAttributeValue(myAddQuotasForAttributeValue.isSelected());
   }
 
+  @Override
   public void reset() {
     final WebEditorOptions xmlEditorOptions = WebEditorOptions.getInstance();
     myAutomaticallyInsertClosingTagCheckBox.setSelected(xmlEditorOptions.isAutomaticallyInsertClosingTag());
     myAutomaticallyInsertRequiredAttributesCheckBox.setSelected(xmlEditorOptions.isAutomaticallyInsertRequiredAttributes());
     myAutomaticallyInsertRequiredSubTagsCheckBox.setSelected(xmlEditorOptions.isAutomaticallyInsertRequiredSubTags());
     myAutomaticallyStartAttributeAfterCheckBox.setSelected(xmlEditorOptions.isAutomaticallyStartAttribute());
-    mySelectWholeSelectorOnDoubleClick.setSelected(xmlEditorOptions.isSelectWholeCssSelectorSuffixOnDoubleClick());
+    mySelectWholeCssIdentifierOnDoubleClick.setSelected(xmlEditorOptions.isSelectWholeCssIdentifierOnDoubleClick());
     myAddQuotasForAttributeValue.setSelected(xmlEditorOptions.isInsertQuotesForAttributeValue());
   }
 
+  @Override
   public void disposeUIResources() {
   }
 
+  @Override
   @NotNull
   public String getId() {
     return "editor.preferences.webOptions";
   }
 
+  @Override
   public Runnable enableSearch(final String option) {
     return null;
   }

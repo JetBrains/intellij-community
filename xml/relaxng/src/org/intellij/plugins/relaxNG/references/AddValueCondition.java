@@ -35,6 +35,7 @@ class AddValueCondition<T> extends PatternCondition<T> {
     return new AddValueCondition<T>(key);
   }
 
+  @Override
   public boolean accepts(@NotNull T value, ProcessingContext context) {
     context.get(myKey).add(value);
     return true;

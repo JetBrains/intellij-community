@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class ColorSettingsPagesImpl extends ColorSettingsPages {
       for (ColorSettingsPage page : getRegisteredPages()) {
         for (AttributesDescriptor descriptor : page.getAttributeDescriptors()) {
           if (descriptor.getKey() == key) {
-            Pair<ColorSettingsPage,AttributesDescriptor> result = new Pair<ColorSettingsPage, AttributesDescriptor>(page, descriptor);
+            Pair<ColorSettingsPage,AttributesDescriptor> result = Pair.create(page, descriptor);
             myKeyToDescriptorMap.put(key, result);
             return result;
           }

@@ -16,10 +16,7 @@
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
-import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModuleType;
@@ -73,7 +70,12 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     final VirtualFile root = createAndGetContentEntry();
     rootModel.addContentEntry(root);
 
-    rootModel.inheritSdk();
+    // todo this should be moved to generic ModuleBuilder
+    if (myJdk != null){
+      rootModel.setSdk(myJdk);
+    } else {
+      rootModel.inheritSdk();
+    }
 
     MavenUtil.runWhenInitialized(project, new DumbAwareRunnable() {
       public void run() {
@@ -95,6 +97,16 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   @Override
   public String getPresentableName() {
     return "Maven";
+  }
+
+  @Override
+  public String getParentGroup() {
+    return JavaModuleType.BUILD_TOOLS_GROUP;
+  }
+
+  @Override
+  public int getWeight() {
+    return JavaModuleBuilder.BUILD_SYSTEM_WEIGHT;
   }
 
   @Override
@@ -128,17 +140,6 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
       new MavenModuleWizardStep(this, wizardContext, !wizardContext.isNewWizard()),
       new SelectPropertiesStep(wizardContext.getProject(), this)
     };
-  }
-
-  public MavenProject findPotentialParentProject(Project project) {
-    if (!MavenProjectsManager.getInstance(project).isMavenizedProject()) return null;
-
-    File parentDir = new File(getContentEntryPath()).getParentFile();
-    if (parentDir == null) return null;
-    VirtualFile parentPom = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(parentDir, "pom.xml"));
-    if (parentPom == null) return null;
-
-    return MavenProjectsManager.getInstance(project).findProject(parentPom);
   }
 
   private VirtualFile createAndGetContentEntry() {
@@ -220,18 +221,14 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
   @Override
   public String getGroupName() {
-    return JavaModuleType.JAVA_GROUP;
+    return "Maven";
   }
-
-  private MavenArchetypesPanel myPanel;
 
   @Nullable
   @Override
-  public JComponent getCustomOptionsPanel(Disposable parentDisposable) {
-    if (myPanel == null) {
-      myPanel = new MavenArchetypesPanel(this, null);
-      Disposer.register(parentDisposable, myPanel);
-    }
-    return myPanel.getMainPanel();
+  public ModuleWizardStep getCustomOptionsStep(WizardContext context, Disposable parentDisposable) {
+    MavenArchetypesStep step = new MavenArchetypesStep(this, null);
+    Disposer.register(parentDisposable, step);
+    return step;
   }
 }

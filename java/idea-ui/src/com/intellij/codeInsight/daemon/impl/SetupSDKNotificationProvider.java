@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootAdapter;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,13 +53,14 @@ public class SetupSDKNotificationProvider extends EditorNotifications.Provider<E
     });
   }
 
+  @NotNull
   @Override
   public Key<EditorNotificationPanel> getKey() {
     return KEY;
   }
 
   @Override
-  public EditorNotificationPanel createNotificationPanel(VirtualFile file, FileEditor fileEditor) {
+  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
     if (file.getFileType() == JavaClassFileType.INSTANCE) return null;
 
     final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
@@ -74,7 +72,13 @@ public class SetupSDKNotificationProvider extends EditorNotifications.Provider<E
       return null;
     }
 
-    if (ProjectRootManager.getInstance(myProject).getProjectSdk() != null) {
+    Module module = ModuleUtilCore.findModuleForPsiElement(psiFile);
+    if (module == null) {
+      return null;
+    }
+
+    Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+    if (sdk != null) {
       return null;
     }
 

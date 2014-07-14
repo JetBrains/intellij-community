@@ -25,6 +25,7 @@ import com.intellij.ui.wizard.WizardNavigationState;
 import com.intellij.ui.wizard.WizardStep;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -98,7 +99,7 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
     final int clickableArea = new JCheckBox("").getMinimumSize().width;
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (e.getX() < clickableArea) {
           toggleSelection();
         }

@@ -220,7 +220,7 @@ public abstract class ReorderableListController <T> {
         }
       };
       final BaseAction action = createAction(behaviour);
-      action.registerCustomShortcutSet(CommonShortcuts.DELETE, component);
+      action.registerCustomShortcutSet(CommonShortcuts.getDelete(), component);
       return action;
     }
 

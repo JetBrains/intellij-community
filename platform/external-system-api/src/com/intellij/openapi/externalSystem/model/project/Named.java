@@ -12,18 +12,24 @@ import java.util.Comparator;
  */
 public interface Named {
 
-  /** Key of the {@link #getName() name} property to use with {@link PropertyChangeListener#propertyChange(PropertyChangeEvent)}. */
-  String NAME_PROPERTY = "Name";
-  
-  Comparator<Named> COMPARATOR = new Comparator<Named>() {
-    @Override
-    public int compare(Named o1, Named o2) {
-      return o1.getName().compareTo(o2.getName());
-    }
-  };
-  
+  /**
+   * please use {@link #getExternalName()} or {@link #getInternalName()} instead
+   */
   @NotNull
+  @Deprecated
   String getName();
 
+  /**
+   * please use {@link #setExternalName(String)} or {@link #setInternalName(String)} instead
+   */
+  @Deprecated
   void setName(@NotNull String name);
+
+  @NotNull
+  String getExternalName();
+  void setExternalName(@NotNull String name);
+
+  @NotNull
+  String getInternalName();
+  void setInternalName(@NotNull String name);
 }

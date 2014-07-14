@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -284,6 +284,7 @@ public class XmlUtil {
       resources = XmlNamespaceIndex.getResourcesByNamespace(namespace, project, module);
     final PsiManager psiManager = PsiManager.getInstance(project);
     return ContainerUtil.mapNotNull(resources, new NullableFunction<IndexedRelevantResource<String, XsdNamespaceBuilder>, XmlFile>() {
+      @Override
       public XmlFile fun(IndexedRelevantResource<String, XsdNamespaceBuilder> resource) {
         PsiFile file = psiManager.findFile(resource.getFile());
         return file instanceof XmlFile ? (XmlFile)file : null;
@@ -427,6 +428,7 @@ public class XmlUtil {
         final XmlTag[] simpleContent = new XmlTag[1];
 
         processXmlElements(((ComplexTypeDescriptor)type).getDeclaration(), new PsiElementProcessor() {
+          @Override
           public boolean execute(@NotNull final PsiElement element) {
             if (element instanceof XmlTag) {
               final XmlTag tag = (XmlTag)element;
@@ -848,6 +850,7 @@ public class XmlUtil {
       final XmlAttribute[] attributes = tag.getAttributes();
       ContainerUtil.sort(list);
       Arrays.sort(attributes, new Comparator<XmlAttribute>() {
+        @Override
         public int compare(XmlAttribute attr1, XmlAttribute attr2) {
           return attr1.getName().compareTo(attr2.getName());
         }
@@ -890,6 +893,7 @@ public class XmlUtil {
     tagsMap.put(tagName, tags);
     PsiFile file = tag.isValid() ? tag.getContainingFile() : null;
     processXmlElements(tag, new FilterElementProcessor(XmlTagFilter.INSTANCE) {
+      @Override
       public void add(PsiElement element) {
         XmlTag tag = (XmlTag)element;
         if (!tags.contains(tag.getName())) {
@@ -953,6 +957,7 @@ public class XmlUtil {
 
   public static boolean collectEnumerationValues(final XmlTag element, final HashSet<String> variants) {
     return processEnumerationValues(element, new Processor<XmlTag>() {
+      @Override
       public boolean process(XmlTag xmlTag) {
         variants.add(xmlTag.getAttributeValue(VALUE_ATTR_NAME));
         return true;
@@ -1096,7 +1101,7 @@ public class XmlUtil {
       }
     }
 
-    return new Pair<XmlTagChild, XmlTagChild>(first, last);
+    return Pair.create(first, last);
   }
 
   public static boolean isSimpleValue(@NotNull final String unquotedValue, final PsiElement context) {
@@ -1146,6 +1151,7 @@ public class XmlUtil {
       final PsiNamedElement[] result = new PsiNamedElement[1];
 
       processXmlElements((XmlFile)currentElement, new PsiElementProcessor() {
+        @Override
         public boolean execute(@NotNull final PsiElement element) {
           if (element instanceof PsiNamedElement) {
             final String elementName = ((PsiNamedElement)element).getName();
@@ -1196,6 +1202,7 @@ public class XmlUtil {
       myRequired = flag;
     }
 
+    @Override
     public int compareTo(Object o) {
       if (o instanceof MyAttributeInfo) {
         return myName.compareTo(((MyAttributeInfo)o).myName);

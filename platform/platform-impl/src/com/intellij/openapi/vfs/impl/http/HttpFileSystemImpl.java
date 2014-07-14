@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,18 @@
  */
 package com.intellij.openapi.vfs.impl.http;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.io.URLUtil;
 
 /**
  * @author nik
  */
 public class HttpFileSystemImpl extends HttpFileSystemBase {
   public HttpFileSystemImpl() {
-    super(PROTOCOL);
+    super(URLUtil.HTTP_PROTOCOL);
   }
 
   public static HttpFileSystemImpl getInstanceImpl() {
     return (HttpFileSystemImpl)getInstance();
   }
 
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "HttpFileSystem";
-  }
 }

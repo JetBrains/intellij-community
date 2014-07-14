@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ public class DynamicMethodDialog extends DynamicDialog {
     myParametersTable.setDefaultEditor(String.class, suggestedNameCellEditor);
 
     suggestedNameCellEditor.addCellEditorListener(new CellEditorListener() {
+      @Override
       public void editingStopped(ChangeEvent e) {
         final int editingColumn = myParametersTable.getSelectedColumn();
         if (editingColumn != 0) return;
@@ -73,6 +74,7 @@ public class DynamicMethodDialog extends DynamicDialog {
         editingPair.name = newNameValue;
       }
 
+      @Override
       public void editingCanceled(ChangeEvent e) {
       }
     });
@@ -106,14 +108,17 @@ public class DynamicMethodDialog extends DynamicDialog {
       super(GroovyBundle.message("dynamic.type"));
     }
 
+    @Override
     public String valueOf(ParamInfo pair) {
       return pair.type;
     }
 
+    @Override
     public boolean isCellEditable(ParamInfo stringPsiTypeMyPair) {
       return false;
     }
 
+    @Override
     public void setValue(ParamInfo pair, String value) {
       PsiType type;
       try {
@@ -132,10 +137,12 @@ public class DynamicMethodDialog extends DynamicDialog {
       super(GroovyBundle.message("dynamic.name"));
     }
 
+    @Override
     public boolean isCellEditable(ParamInfo myPair) {
       return true;
     }
 
+    @Override
     public String valueOf(ParamInfo pair) {
       return pair.name;
     }
@@ -148,14 +155,17 @@ public class DynamicMethodDialog extends DynamicDialog {
       myNameField = names.length == 0 ? new JTextField() : new JTextField(names[0]);
     }
 
+    @Override
     public String getCellEditorValue() {
       return myNameField.getText();
     }
 
+    @Override
     public boolean isCellEditable(EventObject e) {
       return true;
     }
 
+    @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       if (value instanceof String) {
         myNameField.setText((String)value);

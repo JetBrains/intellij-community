@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicComboBoxRenderer;
 import java.awt.*;
 
 /**
@@ -42,8 +44,12 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
 
   @SuppressWarnings("UndesirableClassUsage")
   public ListCellRendererWrapper() {
-    myDefaultRenderer = new JComboBox().getRenderer();
-    assert myDefaultRenderer != null : "LaF: " + UIManager.getLookAndFeel();
+    ListCellRenderer renderer = new JComboBox().getRenderer();
+    if (renderer == null) {
+      renderer = new BasicComboBoxRenderer();
+      Logger.getInstance(this.getClass()).error("LaF: " + UIManager.getLookAndFeel());
+    }
+    myDefaultRenderer = renderer;
   }
 
   public final Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {

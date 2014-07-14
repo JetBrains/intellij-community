@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.PsiExpressionPattern;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.psi.*;
@@ -48,10 +49,14 @@ public class ColorChooserIntentionAction extends BaseColorIntentionAction {
   private static final PsiMethodPattern DECODE_METHOD = PsiJavaPatterns.psiMethod()
     .definedInClass(JAVA_AWT_COLOR)
     .withName("decode");
+  private static final PsiExpressionPattern.Capture<PsiExpression> DECODE_METHOD_CALL_PARAMETER =
+    PsiJavaPatterns.psiExpression().methodCallParameter(0, DECODE_METHOD);
 
   private static final PsiMethodPattern GET_COLOR_METHOD = PsiJavaPatterns.psiMethod()
     .definedInClass(JAVA_AWT_COLOR)
     .withName("getColor");
+  private static final PsiExpressionPattern.Capture<PsiExpression> GET_METHOD_CALL_PARAMETER =
+    PsiJavaPatterns.psiExpression().methodCallParameter(0, GET_COLOR_METHOD);
 
 
   public ColorChooserIntentionAction() {
@@ -68,8 +73,8 @@ public class ColorChooserIntentionAction extends BaseColorIntentionAction {
       element = element.getParent();
     }
 
-    return PsiJavaPatterns.psiExpression().methodCallParameter(0, DECODE_METHOD).accepts(element) ||
-           PsiJavaPatterns.psiExpression().methodCallParameter(0, GET_COLOR_METHOD).accepts(element);
+    return DECODE_METHOD_CALL_PARAMETER.accepts(element) ||
+           GET_METHOD_CALL_PARAMETER.accepts(element);
   }
 
   @Override
@@ -191,7 +196,7 @@ public class ColorChooserIntentionAction extends BaseColorIntentionAction {
       final PsiManager manager = expression.getManager();
       final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
       final PsiExpression newCall = factory.createExpressionFromText(
-        "new " + JAVA_AWT_COLOR + "("
+        "new " + getFqn(expression.getClassOrAnonymousClassReference()) + "("
         + color.getRed() + ", "
         + color.getGreen() + ", "
         + color.getBlue()

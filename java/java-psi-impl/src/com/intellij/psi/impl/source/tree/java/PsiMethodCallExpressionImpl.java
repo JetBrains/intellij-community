@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -208,6 +209,12 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
                                           PsiSubstitutor substitutor) {
     PsiType substitutedReturnType = substitutor.substitute(ret);
     if (substitutedReturnType == null) return TypeConversionUtil.erasure(ret);
+    if (InferenceSession.wasUncheckedConversionPerformed(call)) {
+      // 18.5.2
+      // if unchecked conversion was necessary, then this substitution provides the parameter types of the invocation type, 
+      // while the return type and thrown types are given by the erasure of m's type (without applying θ').
+      return TypeConversionUtil.erasure(substitutedReturnType);
+    }
     if (PsiUtil.isRawSubstitutor(method, substitutor)) {
       final PsiType returnTypeErasure = TypeConversionUtil.erasure(ret);
       if (Comparing.equal(TypeConversionUtil.erasure(substitutedReturnType), returnTypeErasure)) {

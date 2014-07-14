@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.openapi.vfs.ex.http.HttpVirtualFileListener;
+import com.intellij.util.Urls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -40,13 +41,7 @@ public abstract class HttpFileSystemBase extends HttpFileSystem {
   }
 
   public VirtualFile findFileByPath(@NotNull String path, boolean isDirectory) {
-    try {
-      String url = VirtualFileManager.constructUrl(myProtocol, path);
-      return getRemoteFileManager().getOrCreateFile(url, path, isDirectory);
-    }
-    catch (IOException e) {
-      return null;
-    }
+    return getRemoteFileManager().getOrCreateFile(null, Urls.newFromIdea(VirtualFileManager.constructUrl(myProtocol, path)), path, isDirectory);
   }
 
   @Override
@@ -70,21 +65,21 @@ public abstract class HttpFileSystemBase extends HttpFileSystem {
   }
 
   @Override
-  public void disposeComponent() {
+  @NotNull
+  public VirtualFile createChild(@NotNull VirtualFile parent, @NotNull String name, boolean isDirectory) {
+    return getRemoteFileManager().getOrCreateFile((VirtualFileImpl)parent, Urls.newFromIdea(parent.getUrl() + '/' + name), parent.getPath() + '/' + name, isDirectory);
   }
-
-  @Override
-  public void initComponent() { }
 
   @Override
   @NotNull
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
-    throw new UnsupportedOperationException();
+    return createChild(vDir, dirName, true);
   }
 
+  @NotNull
   @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
-    throw new UnsupportedOperationException();
+    return createChild(vDir, fileName, false);
   }
 
   @Override
@@ -97,6 +92,7 @@ public abstract class HttpFileSystemBase extends HttpFileSystem {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull final String copyName) throws IOException {
     throw new UnsupportedOperationException();

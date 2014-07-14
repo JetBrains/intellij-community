@@ -55,15 +55,14 @@ public final class Settings {
   }
 
 
-  public Settings(boolean replaceUsages, String classParameterName,
-                  VariableData[] variableDatum) {
+  public Settings(boolean replaceUsages, @Nullable String classParameterName, @Nullable VariableData[] variableDatum) {
     myReplaceUsages = replaceUsages;
     myMakeClassParameter = classParameterName != null;
     myClassParameterName = classParameterName;
     myMakeFieldParameters = variableDatum != null;
     myFieldToNameList = new ArrayList<FieldParameter>();
     if(myMakeFieldParameters) {
-      myFieldToNameMapping = new com.intellij.util.containers.HashMap<PsiField, String>();
+      myFieldToNameMapping = new HashMap<PsiField, String>();
       for (VariableData data : variableDatum) {
         if (data.passAsParameter) {
           myFieldToNameMapping.put((PsiField)data.variable, data.name);

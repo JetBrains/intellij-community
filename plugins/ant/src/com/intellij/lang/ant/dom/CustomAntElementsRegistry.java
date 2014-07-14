@@ -27,7 +27,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -366,15 +365,8 @@ public class CustomAntElementsRegistry {
   }
 
   private static URL toLocalURL(final File file) throws MalformedURLException {
-    String path = FileUtil.toSystemIndependentName(file.getPath());
-    if (!(StringUtil.endsWithIgnoreCase(path, ".jar") || StringUtil.endsWithIgnoreCase(path, ".zip")) && file.isDirectory()) {
-      if (!path.endsWith("/")) {
-        path = path + "/";
-      }
-    }
-    return new URL("file", "", path);
+    return file.toURI().toURL();
   }
-
 
   private class CustomTagDefinitionFinder extends AntDomRecursiveVisitor {
     private final Set<AntDomElement> myElementsOnThePath = new HashSet<AntDomElement>();

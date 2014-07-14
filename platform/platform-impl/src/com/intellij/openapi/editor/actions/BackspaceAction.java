@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,14 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.util.ui.MacUIUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class BackspaceAction extends EditorAction {
   public BackspaceAction() {
@@ -37,10 +39,19 @@ public class BackspaceAction extends EditorAction {
   }
 
   private static class Handler extends EditorWriteActionHandler {
+    private Handler() {
+      super(true);
+    }
+
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       MacUIUtil.hideCursor();
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
+      if (editor instanceof EditorWindow) {
+        // manipulate actual document/editor instead of injected
+        // since the latter have trouble finding the right location of caret movement in the case of multi-shred injected fragments
+        editor = ((EditorWindow)editor).getDelegate();
+      }
       final SelectionModel selectionModel = editor.getSelectionModel();
       if (selectionModel.hasBlockSelection()) {
         final LogicalPosition start = selectionModel.getBlockStart();
@@ -65,14 +76,9 @@ public class BackspaceAction extends EditorAction {
     }
   }
 
-  private static void doBackSpaceAtCaret(Editor editor) {
+  private static void doBackSpaceAtCaret(@NotNull Editor editor) {
     if(editor.getSelectionModel().hasSelection()) {
-      int newOffset = editor.getSelectionModel().getSelectionStart();
-      if (EditorActionUtil.canEditAtOffset(editor, newOffset)) {
-        editor.getCaretModel().moveToOffset(newOffset);
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-        EditorModificationUtil.deleteSelectedText(editor);
-      }
+      doBackspaceAction(editor);
       return;
     }
 
@@ -83,42 +89,40 @@ public class BackspaceAction extends EditorAction {
     if(colNumber > 0) {
       if(EditorModificationUtil.calcAfterLineEnd(editor) > 0) {
         int columnShift = -1;
-        if (EditorActionUtil.canEditAtOffset(editor, offset - 1)) {
-          editor.getCaretModel().moveCaretRelatively(columnShift, 0, false, false, true);
-        }
+        editor.getCaretModel().moveCaretRelatively(columnShift, 0, false, false, true);
       }
       else {
-
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         editor.getSelectionModel().removeSelection();
 
         FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(offset - 1);
         if (region != null && region.shouldNeverExpand()) {
-          if (EditorActionUtil.canEditAtOffset(editor, region.getStartOffset())) {
-            document.deleteString(region.getStartOffset(), region.getEndOffset());
-            editor.getCaretModel().moveToOffset(region.getStartOffset());
-          }
+          document.deleteString(region.getStartOffset(), region.getEndOffset());
+          editor.getCaretModel().moveToOffset(region.getStartOffset());
         }
         else {
-          if (EditorActionUtil.canEditAtOffset(editor, offset - 1)) {
-           document.deleteString(offset - 1, offset);
-           editor.getCaretModel().moveToOffset(offset - 1, true);
-          }
+          document.deleteString(offset - 1, offset);
+          editor.getCaretModel().moveToOffset(offset - 1, true);
         }
       }
     }
     else if(lineNumber > 0) {
       int separatorLength = document.getLineSeparatorLength(lineNumber - 1);
       int lineEnd = document.getLineEndOffset(lineNumber - 1) + separatorLength;
-      if (EditorActionUtil.canEditAtOffset(editor, lineEnd - separatorLength)) {
-        document.deleteString(lineEnd - separatorLength, lineEnd);
-        editor.getCaretModel().moveToOffset(lineEnd - separatorLength);
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-        editor.getSelectionModel().removeSelection();
-        // Do not group delete newline and other deletions.
-        CommandProcessor commandProcessor = CommandProcessor.getInstance();
-        commandProcessor.setCurrentCommandGroupId(null);
-      }
+      document.deleteString(lineEnd - separatorLength, lineEnd);
+      editor.getCaretModel().moveToOffset(lineEnd - separatorLength);
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      editor.getSelectionModel().removeSelection();
+      // Do not group delete newline and other deletions.
+      CommandProcessor commandProcessor = CommandProcessor.getInstance();
+      commandProcessor.setCurrentCommandGroupId(null);
     }
+  }
+
+  static void doBackspaceAction(@NotNull Editor editor) {
+    int newOffset = editor.getSelectionModel().getSelectionStart();
+    editor.getCaretModel().moveToOffset(newOffset);
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    EditorModificationUtil.deleteSelectedText(editor);
   }
 }

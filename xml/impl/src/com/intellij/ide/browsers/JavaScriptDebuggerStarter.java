@@ -40,15 +40,17 @@ public interface JavaScriptDebuggerStarter<RC extends RunConfiguration, U> {
     }
 
     public static <RC extends RunConfiguration> void startDebugOrLaunchBrowser(@NotNull RC runConfiguration, @NotNull StartBrowserSettings settings) {
-      startDebugOrLaunchBrowser(runConfiguration, settings.getUrl(), settings.getBrowser(), settings.isStartJavaScriptDebugger());
+      String url = settings.getUrl();
+      assert url != null;
+      startDebugOrLaunchBrowser(runConfiguration, url, settings.getBrowser(), settings.isStartJavaScriptDebugger());
     }
 
     public static <RC extends RunConfiguration> void startDebugOrLaunchBrowser(@NotNull RC runConfiguration,
-                                                                                  @NotNull String url,
-                                                                                  @Nullable BrowsersConfiguration.BrowserFamily browser,
-                                                                                  boolean startDebugger) {
+                                                                               @NotNull String url,
+                                                                               @Nullable WebBrowser browser,
+                                                                               boolean startDebugger) {
       if (!startDebugger || !start(runConfiguration, url)) {
-        UrlOpener.launchBrowser(browser, url);
+        BrowserLauncher.getInstance().browse(url, browser, runConfiguration.getProject());
       }
     }
   }

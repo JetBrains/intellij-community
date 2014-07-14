@@ -22,9 +22,6 @@ import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Kirill Likhodedov
- */
 public interface GitPlatformFacade extends DvcsPlatformFacade {
 
   @NotNull
@@ -32,8 +29,4 @@ public interface GitPlatformFacade extends DvcsPlatformFacade {
 
   @NotNull
   GitVcsSettings getSettings(Project project);
-
-  @NotNull
-  Notificator getNotificator(@NotNull Project project);
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
-import org.jetbrains.plugins.groovy.lang.psi.util.StaticChecker;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
 
 /**
  * @author ven
@@ -36,6 +36,7 @@ public class CreateFieldFromUsageFix extends GrCreateFromUsageBaseFix {
     super(refExpression);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return GroovyBundle.message("create.from.usage.family.name");
@@ -48,7 +49,7 @@ public class CreateFieldFromUsageFix extends GrCreateFromUsageBaseFix {
 
   private String[] generateModifiers(@NotNull PsiClass targetClass) {
     final GrReferenceExpression myRefExpression = getRefExpr();
-    if (myRefExpression != null && StaticChecker.isInStaticContext(myRefExpression, targetClass)) {
+    if (myRefExpression != null && GrStaticChecker.isInStaticContext(myRefExpression, targetClass)) {
       return new String[]{PsiModifier.STATIC};
     }
     return ArrayUtil.EMPTY_STRING_ARRAY;
@@ -58,6 +59,7 @@ public class CreateFieldFromUsageFix extends GrCreateFromUsageBaseFix {
     return GroovyExpectedTypesProvider.calculateTypeConstraints(getRefExpr());
   }
 
+  @Override
   @NotNull
   public String getText() {
     return GroovyBundle.message("create.field.from.usage", getFieldName());

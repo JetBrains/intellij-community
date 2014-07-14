@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.IdeBorderFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -53,6 +54,7 @@ public abstract class TextFieldAction extends AnAction implements CustomComponen
   @Override
   public abstract void actionPerformed(@Nullable AnActionEvent e);
 
+  @Override
   public JComponent createCustomComponent(Presentation presentation) {
     // honestly borrowed from SearchTextField
     
@@ -80,7 +82,7 @@ public abstract class TextFieldAction extends AnAction implements CustomComponen
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         actionPerformed(null);
         return true;
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.DomCustomAnnotationChecker;
@@ -168,8 +168,8 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
 
   private static boolean isPsiClassType(GenericDomValue element) {
     final Class genericValueParameter = DomUtil.getGenericValueParameter(element.getDomElementType());
-    if (genericValueParameter != null && (ReflectionCache.isAssignable(genericValueParameter, PsiClass.class) ||
-                                          ReflectionCache.isAssignable(genericValueParameter, PsiType.class))) {
+    if (genericValueParameter != null && (ReflectionUtil.isAssignable(genericValueParameter, PsiClass.class) ||
+                                          ReflectionUtil.isAssignable(genericValueParameter, PsiType.class))) {
       return true;
     }
     return false;

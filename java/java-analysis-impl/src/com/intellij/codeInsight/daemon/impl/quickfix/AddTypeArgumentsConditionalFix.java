@@ -75,7 +75,7 @@ public class AddTypeArgumentsConditionalFix implements IntentionAction {
       public String fun(PsiTypeParameter parameter) {
         final PsiType substituteTypeParam = mySubstitutor.substitute(parameter);
         LOG.assertTrue(substituteTypeParam != null);
-        return substituteTypeParam.getCanonicalText();
+        return GenericsUtil.eliminateWildcards(substituteTypeParam).getCanonicalText();
       }
     }, ", ") + ">";
     final PsiExpression expression = myExpression.getMethodExpression().getQualifierExpression();

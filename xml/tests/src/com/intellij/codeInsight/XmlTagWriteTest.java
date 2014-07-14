@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public class XmlTagWriteTest extends LightCodeInsightTestCase{
   public void test1() throws IncorrectOperationException {
     XmlElementFactory elementFactory = XmlElementFactory.getInstance(getProject());
     final XmlTag xmlTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<tag1/>");
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         xmlTag.add(xmlTag.createChildTag("tag2", XmlUtil.EMPTY_URI, null, false));
@@ -48,7 +48,9 @@ public class XmlTagWriteTest extends LightCodeInsightTestCase{
 
   public void test2() throws IncorrectOperationException {
     final XmlTag xmlTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<tag1></tag1>");
-    WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         xmlTag.add(xmlTag.createChildTag("tag2", XmlUtil.EMPTY_URI, null, false));
       }
     });

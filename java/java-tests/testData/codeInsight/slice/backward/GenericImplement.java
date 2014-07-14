@@ -1,4 +1,4 @@
-public class X {
+class X {
     {
         Proc<String> procs = new Proc<String>() {
             public void f(String <caret>s) {

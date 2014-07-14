@@ -25,5 +25,5 @@ import java.util.List;
  */
 public interface ConstraintFormula {
   boolean reduce(InferenceSession session, List<ConstraintFormula> constraints);
-  void apply(PsiSubstitutor substitutor);
+  void apply(PsiSubstitutor substitutor, boolean cache);
 }

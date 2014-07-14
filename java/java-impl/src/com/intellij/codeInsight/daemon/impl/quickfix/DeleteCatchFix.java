@@ -53,7 +53,7 @@ public class DeleteCatchFix implements IntentionAction {
     if (!FileModificationService.getInstance().prepareFileForWrite(myCatchParameter.getContainingFile())) return;
 
     final PsiTryStatement tryStatement = ((PsiCatchSection)myCatchParameter.getDeclarationScope()).getTryStatement();
-    if (tryStatement.getCatchBlocks().length == 1 && tryStatement.getFinallyBlock() == null) {
+    if (tryStatement.getCatchBlocks().length == 1 && tryStatement.getFinallyBlock() == null && tryStatement.getResourceList() == null) {
       // unwrap entire try statement
       final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
       PsiElement lastAddedStatement = null;

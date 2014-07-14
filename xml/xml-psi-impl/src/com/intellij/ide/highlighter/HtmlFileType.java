@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public class HtmlFileType extends XmlLikeFileType {
   }
 
   @Override
-  public String getCharset(@NotNull final VirtualFile file, final byte[] content) {
+  public String getCharset(@NotNull final VirtualFile file, @NotNull final byte[] content) {
     String charset = XmlCharsetDetector.extractXmlEncodingFromProlog(content);
     if (charset != null) return charset;
     @NonNls String strContent;
@@ -79,7 +79,7 @@ public class HtmlFileType extends XmlLikeFileType {
     catch (UnsupportedEncodingException e) {
       return null;
     }
-    Charset c = HtmlUtil.detectCharsetFromMetaHttpEquiv(strContent);
+    Charset c = HtmlUtil.detectCharsetFromMetaTag(strContent);
     return c == null ? null : c.name();
   }
 
@@ -91,6 +91,6 @@ public class HtmlFileType extends XmlLikeFileType {
     if (charset != null) {
       return charset;
     }
-    return HtmlUtil.detectCharsetFromMetaHttpEquiv(content);
+    return HtmlUtil.detectCharsetFromMetaTag(content);
   }
 }

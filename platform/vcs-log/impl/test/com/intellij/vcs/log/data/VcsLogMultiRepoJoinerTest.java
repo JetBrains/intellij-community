@@ -22,7 +22,7 @@ public class VcsLogMultiRepoJoinerTest {
 
     List<TimedVcsCommit> expected = log("7|-c1|-c0", "6|-a2|-a0", "5|-c0|-", "4|-b1|-b0", "3|-a1|-a0", "2|-b0|-", "1|-a0|-");
 
-    List<TimedVcsCommit> joined = new VcsLogMultiRepoJoiner().join(Arrays.asList(first, second, third));
+    List<? extends TimedVcsCommit> joined = new VcsLogMultiRepoJoiner().join(Arrays.asList(first, second, third));
 
     assertEquals(expected, joined);
   }

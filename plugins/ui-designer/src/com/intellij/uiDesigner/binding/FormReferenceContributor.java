@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,15 @@ package com.intellij.uiDesigner.binding;
 import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.PsiPlainTextFile;
+import org.jetbrains.annotations.NotNull;
+
 import static com.intellij.patterns.PlatformPatterns.psiFile;
 
 /**
  * @author yole
  */
 public class FormReferenceContributor extends PsiReferenceContributor {
-  public void registerReferenceProviders(final PsiReferenceRegistrar registrar) {
+  public void registerReferenceProviders(@NotNull final PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(psiFile(PsiPlainTextFile.class), new FormReferenceProvider());
   }
 }

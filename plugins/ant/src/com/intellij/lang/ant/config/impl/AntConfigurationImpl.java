@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -73,7 +72,7 @@ import java.util.*;
       @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/ant.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class AntConfigurationImpl extends AntConfigurationBase implements PersistentStateComponent<Element>, ModificationTracker {
+public class AntConfigurationImpl extends AntConfigurationBase implements PersistentStateComponent<Element> {
 
   public static final ValueProperty<AntReference> DEFAULT_ANT = new ValueProperty<AntReference>("defaultAnt", AntReference.BUNDLED_ANT);
   public static final ValueProperty<AntConfiguration> INSTANCE = new ValueProperty<AntConfiguration>("$instance", null);
@@ -119,7 +118,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   private final AntWorkspaceConfiguration myAntWorkspaceConfiguration;
   private final StartupManager myStartupManager;
   private boolean myInitializing;
-  private volatile long myModificationCount = 0;
 
   public AntConfigurationImpl(final Project project, final AntWorkspaceConfiguration antWorkspaceConfiguration, final DaemonCodeAnalyzer daemon) {
     super(project);
@@ -157,7 +155,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       }
     });
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
-      public void beforeFileDeletion(final VirtualFileEvent event) {
+      public void beforeFileDeletion(@NotNull final VirtualFileEvent event) {
         final VirtualFile vFile = event.getFile();
         // cleanup
         for (AntBuildFile file : getBuildFiles()) {
@@ -233,7 +231,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         indicator.pushState();
         try {
           indicator.setText(title);
-          myModificationCount++;
+          incModificationCount();
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               try {
@@ -265,7 +263,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   public void removeBuildFile(final AntBuildFile file) {
-    myModificationCount++;
+    incModificationCount();
     removeBuildFileImpl(file);
     updateRegisteredActions();
   }
@@ -350,7 +348,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   public void setTargetForEvent(final AntBuildFile buildFile, final String targetName, final ExecutionEvent event) {
     synchronized (myEventToTargetMap) {
-      myEventToTargetMap.put(event, new Pair<AntBuildFile, String>(buildFile, targetName));
+      myEventToTargetMap.put(event, Pair.create(buildFile, targetName));
     }
   }
 
@@ -365,14 +363,14 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       for (Map.Entry<ExecutionEvent, Pair<AntBuildFile, String>> entry : myEventToTargetMap.entrySet()) {
         final Pair<AntBuildFile, String> pair = entry.getValue();
         if (pair != null && Comparing.equal(pair.getSecond(), oldTargetName)) {
-          entry.setValue(new Pair<AntBuildFile, String>(pair.getFirst(), newTargetName));
+          entry.setValue(Pair.create(pair.getFirst(), newTargetName));
         }
       }
     }
   }
 
   public void updateBuildFile(final AntBuildFile buildFile) {
-    myModificationCount++;
+    incModificationCount();
     myEventDispatcher.getMulticaster().buildFileChanged(buildFile);
     updateRegisteredActions();
   }
@@ -397,10 +395,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       }
     }
     return getModel(buildFile);
-  }
-
-  public long getModificationCount() {
-    return myModificationCount;
   }
 
   private void readExternal(final Element parentNode) throws InvalidDataException {
@@ -644,32 +638,32 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   public static boolean executeTargetSynchronously(final DataContext dataContext, final AntBuildTarget target, final List<BuildFileProperty> additionalProperties) {
     final Semaphore targetDone = new Semaphore();
-    final boolean[] result = new boolean[1];
-    try {
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-
-        public void run() {
-          Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    targetDone.down();
+    final Ref<Boolean> result = Ref.create(Boolean.FALSE);
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        try {
+          final Project project = CommonDataKeys.PROJECT.getData(dataContext);
           if (project == null || project.isDisposed()) {
-            result[0] = false;
-            return;
+            targetDone.up();
           }
-          targetDone.down();
-          target.run(dataContext, additionalProperties, new AntBuildListener() {
-            public void buildFinished(int state, int errorCount) {
-              result[0] = (state == AntBuildListener.FINISHED_SUCCESSFULLY) && (errorCount == 0);
-              targetDone.up();
-            }
-          });
+          else {
+            target.run(dataContext, additionalProperties, new AntBuildListener() {
+              public void buildFinished(int state, int errorCount) {
+                result.set((state == AntBuildListener.FINISHED_SUCCESSFULLY) && (errorCount == 0));
+                targetDone.up();
+              }
+            });
+          }
         }
-      }, ModalityState.NON_MODAL);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-      return false;
-    }
+        catch (Throwable e) {
+          targetDone.up();
+          LOG.error(e);
+        }
+      }
+    });
     targetDone.waitFor();
-    return result[0];
+    return result.get();
   }
 
   private List<ExecutionEvent> getEventsByClass(Class eventClass) {
@@ -692,7 +686,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       final Element element = (Element)o;
       final String url = element.getAttributeValue(URL);
       if (url != null) {
-        files.add(new Pair<Element, String>(element, url));
+        files.add(Pair.create(element, url));
       }
     }
     
@@ -739,7 +733,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
                   try {
                     final AntBuildFileBase buildFile = addBuildFileImpl(file);
                     buildFile.readProperties(element);
-                    buildFiles.add(new Pair<Element, AntBuildFileBase>(element, buildFile));
+                    buildFiles.add(Pair.create(element, buildFile));
                   }
                   catch (AntNoFileException ignored) {
                   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ public class ClasspathStorage implements StateStorage {
           final Listener listener = messageBus.syncPublisher(STORAGE_TOPIC);
           virtualFileTracker.addTracker(file.getUrl(), new VirtualFileAdapter() {
             @Override
-            public void contentsChanged(final VirtualFileEvent event) {
+            public void contentsChanged(@NotNull final VirtualFileEvent event) {
               listener.storageFileChanged(event, ClasspathStorage.this);
             }
           }, true, module);

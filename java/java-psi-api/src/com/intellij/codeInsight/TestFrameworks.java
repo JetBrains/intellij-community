@@ -16,8 +16,10 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testIntegration.TestFramework;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -29,6 +31,7 @@ public abstract class TestFrameworks {
   }
 
   public abstract boolean isTestClass(PsiClass psiClass);
+  public abstract boolean isPotentialTestClass(PsiClass psiClass);
 
   @Nullable
   public abstract PsiMethod findOrCreateSetUpMethod(PsiClass psiClass);
@@ -40,8 +43,20 @@ public abstract class TestFrameworks {
   public abstract PsiMethod findTearDownMethod(PsiClass psiClass);
 
   protected abstract boolean hasConfigMethods(PsiClass psiClass);
+  
+  public abstract boolean isTestMethod(PsiMethod method);
 
   public boolean isTestOrConfig(PsiClass psiClass) {
     return isTestClass(psiClass) || hasConfigMethods(psiClass);
+  }
+  
+  @Nullable
+  public static TestFramework detectFramework(PsiClass psiClass) {
+    for (TestFramework framework : Extensions.getExtensions(TestFramework.EXTENSION_NAME)) {
+      if (framework.isTestClass(psiClass)) {
+        return framework;
+      }
+    }
+    return null;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class ArrowSoftWrapPainter implements SoftWrapPainter {
 
   public ArrowSoftWrapPainter(Editor editor) {
     myEditor = editor;
-    myArrowPainter = new ArrowPainter(ColorProvider.byColor(myEditor.getColorsScheme().getDefaultForeground()), myHeightProvider);
+    myArrowPainter = new ArrowPainter(ColorProvider.byColor(myEditor.getColorsScheme().getDefaultForeground()), new WidthProvider(), myHeightProvider);
   }
 
   @Override
@@ -100,6 +100,13 @@ public class ArrowSoftWrapPainter implements SoftWrapPainter {
     @Override
     public Integer compute() {
       return myHeight;
+    }
+  }
+
+  private class WidthProvider implements Computable<Integer> {
+    @Override
+    public Integer compute() {
+      return EditorUtil.getSpaceWidth(Font.PLAIN, myEditor);
     }
   }
 }

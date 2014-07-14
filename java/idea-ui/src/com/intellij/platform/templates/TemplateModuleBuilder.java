@@ -53,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.zip.ZipInputStream;
@@ -85,7 +84,6 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
     ModuleBuilder builder = myType.createModuleBuilder();
-    builder.setAvailableFrameworks(Collections.<String, Boolean>emptyMap());
     return builder.createWizardSteps(wizardContext, modulesProvider);
   }
 
@@ -154,6 +152,11 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   @Override
   public Icon getNodeIcon() {
     return myTemplate.getIcon();
+  }
+
+  @Override
+  public boolean isTemplateBased() {
+    return true;
   }
 
   @NotNull

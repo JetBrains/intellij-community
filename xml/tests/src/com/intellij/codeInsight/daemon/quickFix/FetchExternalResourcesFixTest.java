@@ -14,7 +14,7 @@ import java.io.File;
  * Time: 19:32:51
  * To change this template use Options | File Templates.
  */
-public class FetchExternalResourcesFixTest extends LightQuickFixTestCase {
+public class FetchExternalResourcesFixTest extends LightQuickFixParameterizedTestCase {
   public void test() throws Exception { doAllTests(); }
 
   @Override

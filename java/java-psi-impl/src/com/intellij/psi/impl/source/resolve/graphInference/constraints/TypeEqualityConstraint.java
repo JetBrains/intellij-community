@@ -16,11 +16,11 @@
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -32,15 +32,49 @@ public class TypeEqualityConstraint implements ConstraintFormula {
   private PsiType myT;
   private PsiType myS;
 
-  public TypeEqualityConstraint(@NotNull PsiType t, @NotNull PsiType s) {
+  public TypeEqualityConstraint(PsiType t, PsiType s) {
     myT = t;
     myS = s;
   }
 
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
+    if (myT instanceof PsiWildcardType && myS instanceof PsiWildcardType) {
+      final PsiType tBound = ((PsiWildcardType)myT).getBound();
+      final PsiType sBound = ((PsiWildcardType)myS).getBound();
+
+      if (tBound == null && sBound == null) return true;
+
+      if (sBound == null && ((PsiWildcardType)myT).isExtends()) {
+        //extends bound of "?" (Object)
+        constraints.add(new TypeEqualityConstraint(((PsiWildcardType)myS).getExtendsBound(), tBound));
+        return true;
+      }
+
+      if (tBound == null && ((PsiWildcardType)myS).isExtends()) {
+        //extends bound of "?" (Object)
+        constraints.add(new TypeEqualityConstraint(((PsiWildcardType)myT).getExtendsBound(), sBound));
+        return true;
+      }
+
+      if (((PsiWildcardType)myT).isExtends() && ((PsiWildcardType)myS).isExtends() ||
+          ((PsiWildcardType)myT).isSuper() && ((PsiWildcardType)myS).isSuper()) {
+
+        LOG.assertTrue(tBound != null);
+        LOG.assertTrue(sBound != null);
+        constraints.add(new TypeEqualityConstraint(tBound, sBound));
+        return true;
+      }
+    }
+
+    if (myT instanceof PsiWildcardType || myS instanceof PsiWildcardType) {
+      return false;
+    }
+
     if (session.isProperType(myT) && session.isProperType(myS)) {
-      return myT.equals(myS);
+      if (myT == null) return myS == null || myS.equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
+      if (myS == null) return true;
+      return Comparing.equal(myT, myS);
     }
     InferenceVariable inferenceVariable = session.getInferenceVariable(myS);
     if (inferenceVariable != null) {
@@ -55,11 +89,12 @@ public class TypeEqualityConstraint implements ConstraintFormula {
     if (myT instanceof PsiClassType && myS instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult tResult = ((PsiClassType)myT).resolveGenerics();
       final PsiClassType.ClassResolveResult sResult = ((PsiClassType)myS).resolveGenerics();
-      final PsiClass C = tResult.getElement();
-      if (C == sResult.getElement() && C != null) {
+      final PsiClass tClass = tResult.getElement();
+      //equal erasure
+      if (tClass != null && tClass.equals(sResult.getElement())) {
         final PsiSubstitutor tSubstitutor = tResult.getSubstitutor();
         final PsiSubstitutor sSubstitutor = sResult.getSubstitutor();
-        for (PsiTypeParameter typeParameter : C.getTypeParameters()) {
+        for (PsiTypeParameter typeParameter : tClass.getTypeParameters()) {
           final PsiType tSubstituted = tSubstitutor.substitute(typeParameter);
           final PsiType sSubstituted = sSubstitutor.substitute(typeParameter);
           if (tSubstituted != null && sSubstituted != null) {
@@ -73,37 +108,17 @@ public class TypeEqualityConstraint implements ConstraintFormula {
       constraints.add(new TypeEqualityConstraint(((PsiArrayType)myT).getComponentType(), ((PsiArrayType)myS).getComponentType()));
       return true;
     }
-    if (myT instanceof PsiIntersectionType && myS instanceof PsiIntersectionType) {
-      final PsiType[] tConjuncts = ((PsiIntersectionType)myT).getConjuncts();
-      final PsiType[] sConjuncts = ((PsiIntersectionType)myS).getConjuncts();
-      if (sConjuncts.length == tConjuncts.length) {
-        for (int i = 0; i < sConjuncts.length; i++) {
-          constraints.add(new TypeEqualityConstraint(tConjuncts[i], sConjuncts[i]));
-        }
-        return true;
-      }
+
+    if (myT instanceof PsiCapturedWildcardType && myS instanceof PsiCapturedWildcardType) {
+      return new TypeEqualityConstraint(((PsiCapturedWildcardType)myT).getWildcard(), 
+                                        ((PsiCapturedWildcardType)myS).getWildcard()).reduce(session, constraints);
     }
 
-    if (myT instanceof PsiWildcardType && myS instanceof PsiWildcardType) {
-      final PsiType tBound = ((PsiWildcardType)myT).getBound();
-      final PsiType sBound = ((PsiWildcardType)myS).getBound();
-
-      if (tBound == null && sBound == null) return true;
-
-      if (((PsiWildcardType)myT).isExtends() && ((PsiWildcardType)myS).isExtends() || 
-          ((PsiWildcardType)myT).isSuper() && ((PsiWildcardType)myS).isSuper()) {
-
-        LOG.assertTrue(tBound != null);
-        LOG.assertTrue(sBound != null);
-        constraints.add(new TypeEqualityConstraint(tBound, sBound));
-        return true;
-      }
-    }
     return false;
   }
 
   @Override
-  public void apply(PsiSubstitutor substitutor) {
+  public void apply(PsiSubstitutor substitutor, boolean cache) {
     myT = substitutor.substitute(myT);
     myS = substitutor.substitute(myS);
   }
@@ -115,16 +130,24 @@ public class TypeEqualityConstraint implements ConstraintFormula {
 
     TypeEqualityConstraint that = (TypeEqualityConstraint)o;
 
-    if (!myS.equals(that.myS)) return false;
-    if (!myT.equals(that.myT)) return false;
+    if (myS instanceof PsiCapturedWildcardType && myS != that.myS) return false;
+    if (myT instanceof PsiCapturedWildcardType && myT != that.myT) return false;
+
+    if (myS != null ? !myS.equals(that.myS) : that.myS != null) return false;
+    if (myT != null ? !myT.equals(that.myT) : that.myT != null) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myT.hashCode();
-    result = 31 * result + myS.hashCode();
+    int result = myT != null ? myT.hashCode() : 0;
+    result = 31 * result + (myS != null ? myS.hashCode() : 0);
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return myT.getPresentableText() + " == " + myS.getPresentableText();
   }
 }

@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.xdebugger.evaluation.EvaluationMode;
 
 /**
  * @author nik

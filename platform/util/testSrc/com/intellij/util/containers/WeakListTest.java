@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.containers;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -24,60 +23,54 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-public class WeakListTest extends TestCase {
+import static org.junit.Assert.*;
+
+public class WeakListTest {
+  private static final String HARD_REFERENCED = "xxx";
+
   private final WeakList<Object> myWeakList = new WeakList<Object>();
-  protected final List<Object> myHolder = new ArrayList<Object>();
+  private final List<Object> myHolder = new ArrayList<Object>();
 
-  private void addElement(Object element) {
-    myWeakList.add(element);
-    myHolder.add(element);
-  }
-
+  @Test
   public void testCompresses() {
-    for (int i = 0; i < 20; i++) {
-      addElement(new Object());
-    }
+    fillWithObjects(20);
     assertEquals(20, myWeakList.listSize());
-    String obj = "xxx";
-    addElement(obj);
+    addElement(HARD_REFERENCED);
+    assertEquals(21, myWeakList.listSize());
     myHolder.clear();
-    gc();
-    myWeakList.remove(new Object()); // invoke processQueue()
-    //obj is held here in the codeblock
+    while (myWeakList.toStrongList().size() == 21) {
+      synchronized (myWeakList) {
+        gc();
+      }
+    }
+    synchronized (myWeakList) {
+      boolean processed = myWeakList.processQueue();
+      assertTrue(processed); // some refs must be in the queue
+    }
+    //HARD_REFERENCED is held there
     assertEquals(1, myWeakList.listSize());
   }
 
-  private static void gc() {
-    ConcurrentMapsTest.tryGcSoftlyReachableObjects();
-    WeakReference<Object> weakReference = new WeakReference<Object>(new Object());
-    do {
-      System.gc();
-    }
-    while (weakReference.get() != null);
-  }
-
+  @Test
   public void testClear() {
-    for (int i = 0; i < 20; i++) {
-      addElement(new Object());
-    }
+    fillWithObjects(20);
     assertEquals(20, myWeakList.listSize());
     myHolder.clear();
     gc();
     myWeakList.clear();
     assertFalse(myWeakList.iterator().hasNext());
   }
-  
+
+  @Test
   public void testIterator() {
     int N = 10;
-    for (int i=0; i< N;i++) {
-      addElement(i);
-    }
+    fillWithInts(N);
     gc();
-    Iterator<Integer> iterator = (Iterator)myWeakList.iterator();
-    for (int i=0; i< N;i++) {
+    Iterator<?> iterator = myWeakList.iterator();
+    for (int i = 0; i < N; i++) {
       assertTrue(iterator.hasNext());
       assertTrue(iterator.hasNext());
-      int element = iterator.next();
+      int element = (Integer)iterator.next();
       assertEquals(i, element);
     }
     assertFalse(iterator.hasNext());
@@ -89,7 +82,8 @@ public class WeakListTest extends TestCase {
     }
     assertEquals(N, elementCount);
   }
-  
+
+  @Test
   public void testRemoveViaIterator() {
     addElement(new Object());
     addElement(new Object());
@@ -107,14 +101,13 @@ public class WeakListTest extends TestCase {
     myHolder.remove(1);
   }
 
+  @Test
   public void testRemoveAllViaIterator() {
     int N = 10;
-    for (int i=0; i< N;i++) {
-      addElement(i);
-    }
+    fillWithInts(N);
     gc();
     Iterator<Object> iterator = myWeakList.iterator();
-    for (int i=0; i< N;i++) {
+    for (int i = 0; i < N; i++) {
       assertTrue(iterator.hasNext());
       int element = (Integer)iterator.next();
       assertEquals(i, element);
@@ -124,6 +117,7 @@ public class WeakListTest extends TestCase {
     assertTrue(myWeakList.toStrongList().isEmpty());
   }
 
+  @Test
   public void testRemoveLastViaIterator() {
     addElement(new Object());
     addElement(new Object());
@@ -135,6 +129,7 @@ public class WeakListTest extends TestCase {
     iterator.remove();
   }
 
+  @Test
   public void testIteratorKeepsFirstElement() {
     addElement(new Object());
     addElement(new Object());
@@ -145,7 +140,8 @@ public class WeakListTest extends TestCase {
     assertNotNull(iterator.next());
     assertFalse(iterator.hasNext());
   }
-  
+
+  @Test
   public void testIteratorKeepsNextElement() {
     addElement(new Object());
     addElement(new Object());
@@ -159,6 +155,7 @@ public class WeakListTest extends TestCase {
     assertFalse(iterator.hasNext());
   }
 
+  @Test
   public void testIteratorRemoveEmpty() {
     Iterator<Object> iterator = myWeakList.iterator();
     assertFalse(iterator.hasNext());
@@ -166,30 +163,31 @@ public class WeakListTest extends TestCase {
       iterator.next();
       fail("must not allow to next");
     }
-    catch (NoSuchElementException e) {
+    catch (NoSuchElementException ignored) {
     }
     try {
       iterator.remove();
       fail("must not allow to remove");
     }
-    catch (NoSuchElementException e) {
+    catch (NoSuchElementException ignored) {
     }
   }
 
-  public void testElementGetsGcedInTheMiddleAndListRebuildsItself() {
+  @Test
+  public void testElementGetsCollectedInTheMiddleAndListRebuildsItself() {
     int N = 200;
-    for (int i = 0; i < N; i++) {
-      addElement(new Object());
-    }
+    fillWithObjects(N);
     String x = new String("xxx");
     addElement(x);
-    for (int i = 0; i < N; i++) {
-      addElement(new Object());
-    }
+    fillWithObjects(N);
     gc();
     assertEquals(N + 1 + N, myWeakList.listSize());
     myHolder.clear();
-    gc();
+    while (myWeakList.toStrongList().size() == N + 1 + N) {
+      synchronized (myWeakList) {
+        gc();
+      }
+    }
     boolean removed = myWeakList.remove("zzz");
     assertFalse(removed);
     assertEquals(1, myWeakList.listSize());
@@ -197,6 +195,7 @@ public class WeakListTest extends TestCase {
     assertSame(x, element);
   }
 
+  @Test
   public void testIsEmpty() {
     assertTrue(myWeakList.isEmpty());
     addElement(new Object());
@@ -205,5 +204,31 @@ public class WeakListTest extends TestCase {
     gc();
     assertEquals(1, myWeakList.listSize());
     assertTrue(myWeakList.isEmpty());
+  }
+
+  private void addElement(Object element) {
+    myWeakList.add(element);
+    myHolder.add(element);
+  }
+
+  private void fillWithObjects(int n) {
+    for (int i = n - 1; i >= 0; i--) {
+      addElement(new Object());
+    }
+  }
+
+  private void fillWithInts(int n) {
+    for (int i = 0; i < n; i++) {
+      addElement(i);
+    }
+  }
+
+  private static void gc() {
+    ConcurrentMapsTest.tryGcSoftlyReachableObjects();
+    WeakReference<Object> weakReference = new WeakReference<Object>(new Object());
+    do {
+      System.gc();
+    }
+    while (weakReference.get() != null);
   }
 }

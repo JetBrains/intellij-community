@@ -1,5 +1,6 @@
 package com.intellij.ide.fileTemplates
 import com.intellij.ide.fileTemplates.impl.CustomFileTemplate
+import com.intellij.ide.fileTemplates.impl.FileTemplateTestUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.roots.ModuleRootManager
@@ -16,6 +17,16 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.properties.EncodingAwareProperties
 
 public class FileTemplatesTest extends IdeaTestCase {
+  private File myTestConfigDir;
+
+  @Override
+  protected void tearDown() throws Exception {
+    super.tearDown();
+    if (myTestConfigDir !=null && myTestConfigDir.exists()) {
+      FileUtil.delete(myTestConfigDir);
+    }
+  }
+
   public void testAllTemplates() throws Exception {
     final File testsDir = new File(PathManagerEx.getTestDataPath()+"/ide/fileTemplates");
 
@@ -129,5 +140,39 @@ public class FileTemplatesTest extends IdeaTestCase {
     disposeOnTearDown({ FileTemplateManager.getInstance().removeTemplate(template) } as Disposable)
     template.setText(text);
     template
+  }
+
+  public void doTestSaveLoadTemplate(String name, String ext) {
+    FileTemplateTestUtil.TestFTManager templateManager = new FileTemplateTestUtil.TestFTManager("test", "testTemplates",
+                                                                                                getTestConfigRoot());
+    FileTemplate template = templateManager.addTemplate(name, ext);
+    String qName = template.getQualifiedName();
+    templateManager.saveTemplates();
+    templateManager.removeTemplate(qName);
+    FileTemplateTestUtil.loadCustomizedContent(templateManager);
+    FileTemplate loadedTemplate = templateManager.findTemplateByName(name);
+    assertNotNull("Template '" + qName + "' was not found", loadedTemplate);
+    assertEquals(name, loadedTemplate.getName());
+    assertEquals(ext, loadedTemplate.getExtension());
+    assertTrue(template != loadedTemplate);
+  }
+
+  private File getTestConfigRoot() throws Exception {
+    if (myTestConfigDir == null) {
+      myTestConfigDir = FileUtil.createTempDirectory(getTestName(true), "config");
+    }
+    return myTestConfigDir;
+  }
+
+  public void testSaveLoadCustomTemplate() throws Exception {
+    doTestSaveLoadTemplate("name", "ext");
+  }
+
+  public void testSaveLoadCustomTemplateDottedName() throws Exception {
+    doTestSaveLoadTemplate("name.has.dots", "ext");
+  }
+
+  public void testSaveLoadCustomTemplateDottedExt() throws Exception {
+    doTestSaveLoadTemplate("name", "ext.has.dots");
   }
 }

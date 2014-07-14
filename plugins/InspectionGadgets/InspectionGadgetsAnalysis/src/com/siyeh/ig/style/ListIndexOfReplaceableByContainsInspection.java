@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
@@ -102,7 +103,7 @@ public class ListIndexOfReplaceableByContainsInspection
           createContainsExpressionText(callExpression, true,
                                        expression.getOperationTokenType());
       }
-      replaceExpression(expression, newExpressionText);
+      PsiReplacementUtil.replaceExpression(expression, newExpressionText);
     }
 
     @Override

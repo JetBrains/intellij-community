@@ -19,8 +19,6 @@ import com.intellij.CommonBundle;
 import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -184,7 +182,7 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
     }
 
     public Object createObject(Class<?> aClass, FList<Type> processedTypes) throws Exception {
-      final Object o = aClass.newInstance();
+      final Object o = aClass.getDeclaredConstructor().newInstance();
       for (Accessor accessor : XmlSerializerUtil.getAccessors(aClass)) {
         final Type type = accessor.getGenericType();
         Object value = createValue(type, processedTypes);

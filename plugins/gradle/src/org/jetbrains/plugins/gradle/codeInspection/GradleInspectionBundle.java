@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.codeInspection;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
@@ -29,25 +30,21 @@ import java.util.ResourceBundle;
  */
 public class GradleInspectionBundle {
 
-  private static Reference<ResourceBundle> ourBundle;
-
-  @NonNls
-  private static final String BUNDLE = "org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle";
-
-  public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
 
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = null;
+  private static Reference<ResourceBundle> ourBundle;
+  @NonNls
+  private static final String BUNDLE = "org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle";
 
-    if (ourBundle != null) bundle = ourBundle.get();
+  private static ResourceBundle getBundle() {
+    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
 
     if (bundle == null) {
       bundle = ResourceBundle.getBundle(BUNDLE);
-      ourBundle = new SoftReference<ResourceBundle  >(bundle);
+      ourBundle = new SoftReference<ResourceBundle>(bundle);
     }
     return bundle;
   }
-
 }

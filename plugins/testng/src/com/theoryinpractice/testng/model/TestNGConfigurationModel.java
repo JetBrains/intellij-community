@@ -18,6 +18,7 @@ package com.theoryinpractice.testng.model;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -204,9 +205,10 @@ public class TestNGConfigurationModel
             throw new RuntimeException(e);
         }
       }  else {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        WriteCommandAction.runWriteCommandAction(project, new Runnable() {
           public void run() {
-            ((com.intellij.openapi.editor.Document)document).replaceString(0, ((com.intellij.openapi.editor.Document)document).getTextLength(), value);
+            ((com.intellij.openapi.editor.Document)document)
+              .replaceString(0, ((com.intellij.openapi.editor.Document)document).getTextLength(), value);
           }
         });
       }

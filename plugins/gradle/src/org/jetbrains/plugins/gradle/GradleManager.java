@@ -49,8 +49,11 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.PathUtil;
+import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.messages.MessageBusConnection;
 import icons.GradleIcons;
@@ -72,10 +75,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Denis Zhdanov
@@ -177,7 +177,8 @@ public class GradleManager
         GradleExecutionSettings result = new GradleExecutionSettings(localGradlePath,
                                                                      settings.getServiceDirectoryPath(),
                                                                      distributionType,
-                                                                     settings.getGradleVmOptions());
+                                                                     settings.getGradleVmOptions(),
+                                                                     settings.isOfflineWork());
 
         for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
           result.addResolverExtensionClass(ClassHolder.from(extension.getClass()));
@@ -194,9 +195,20 @@ public class GradleManager
 
   @Override
   public void enhanceRemoteProcessing(@NotNull SimpleJavaParameters parameters) throws ExecutionException {
+    final Set<String> additionalEntries = ContainerUtilRt.newHashSet();
     for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
+      ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(extension.getClass()));
+      for (Class aClass : extension.getExtraProjectModelClasses()) {
+        ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(aClass));
+      }
       extension.enhanceRemoteProcessing(parameters);
     }
+
+    final PathsList classPath = parameters.getClassPath();
+    for (String entry : additionalEntries) {
+      classPath.add(entry);
+    }
+
     parameters.getVMParametersList().addProperty(
       ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, GradleConstants.SYSTEM_ID.getId());
   }
@@ -263,9 +275,20 @@ public class GradleManager
     // We want to automatically refresh linked projects on gradle service directory change.
     MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(GradleSettings.getInstance(project).getChangesTopic(), new GradleSettingsListenerAdapter() {
+
       @Override
       public void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) {
-        ExternalSystemUtil.refreshProjects(project, GradleConstants.SYSTEM_ID, true);
+        ensureProjectsRefresh();
+      }
+
+      @Override
+      public void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath, @NotNull String linkedProjectPath) {
+        ensureProjectsRefresh();
+      }
+
+      @Override
+      public void onGradleDistributionTypeChange(DistributionType currentValue, @NotNull String linkedProjectPath) {
+        ensureProjectsRefresh();
       }
 
       @Override
@@ -299,6 +322,10 @@ public class GradleManager
             }, false, ProgressExecutionMode.MODAL_SYNC);
         }
       }
+
+      private void ensureProjectsRefresh() {
+        ExternalSystemUtil.refreshProjects(project, GradleConstants.SYSTEM_ID, true);
+      }
     });
 
     // We used to assume that gradle scripts are always named 'build.gradle' and kept path to that build.gradle file at ide settings.
@@ -323,7 +350,7 @@ public class GradleManager
     Map<String/* old path */, String/* new path */> adjustedPaths = ContainerUtilRt.newHashMap();
     for (GradleProjectSettings projectSettings : settings.getLinkedProjectsSettings()) {
       String oldPath = projectSettings.getExternalProjectPath();
-      if (!new File(oldPath).isDirectory()) {
+      if (oldPath != null && new File(oldPath).isFile() && FileUtilRt.extensionEquals(oldPath, GradleConstants.EXTENSION)) {
         try {
           String newPath = new File(oldPath).getParentFile().getCanonicalPath();
           projectSettings.setExternalProjectPath(newPath);

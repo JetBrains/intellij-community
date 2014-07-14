@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.stubs;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -30,6 +31,8 @@ import java.util.List;
  */
 public class StubParentStrategy implements DomParentStrategy {
 
+  private final static Logger LOG = Logger.getInstance(StubParentStrategy.class);
+
   public static StubParentStrategy createAttributeStrategy(@Nullable AttributeStub stub, @NotNull final DomStub parent) {
     if (stub == null) {
       return new Empty(parent);
@@ -39,10 +42,16 @@ public class StubParentStrategy implements DomParentStrategy {
         @Override
         public XmlElement getXmlElement() {
           DomInvocationHandler parentHandler = getParentHandler();
-          assert parentHandler != null;
+          if (parentHandler == null) {
+            LOG.error("no parent handler for " + this);
+            return null;
+          }
           XmlTag tag = parentHandler.getXmlTag();
           if (tag == null) {
-            throw new AssertionError("can't find tag for " + parentHandler);
+            LOG.error("can't find tag for " + parentHandler + "\n" +
+                      "parent stub: " + myStub.getParentStub() + "\n" +
+                      "parent's children: " + myStub.getParentStub().getChildrenStubs());
+            return null;
           }
           return tag.getAttribute(myStub.getName());
         }

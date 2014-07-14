@@ -15,9 +15,12 @@
  */
 package org.jetbrains.idea.devkit;
 
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.projectWizard.ProjectWizardTestCase;
-import com.intellij.openapi.module.JavaModuleType;
+import com.intellij.ide.projectWizard.NewProjectWizardTestCase;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,21 +29,29 @@ import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 11/8/12
  */
-public class PluginProjectWizardTest extends ProjectWizardTestCase {
+public class PluginProjectWizardTest extends NewProjectWizardTestCase {
 
   public void testPluginProject() throws Exception {
     createSdk("devkit", IdeaJdk.getInstance());
-    Project project = createProjectFromTemplate(JavaModuleType.JAVA_GROUP, PluginModuleType.getInstance().getName(), null);
+    Project project = createProjectFromTemplate(PluginModuleType.getInstance().getName(), null, null);
     VirtualFile baseDir = project.getBaseDir();
     VirtualFile virtualFile = VfsUtilCore.findRelativeFile("META-INF/plugin.xml", baseDir);
     assertNotNull(virtualFile);
+
+    RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
+    assertNotNull(configuration);
+    ConfigurationType type = configuration.getType();
+    assertNotNull(type);
+    assertEquals(DevKitBundle.message("run.configuration.title"), type.getDisplayName());
+
+    VirtualFile[] files = FileEditorManager.getInstance(project).getOpenFiles();
+    assertEquals(1, files.length);
   }
 
   public void testProjectWithoutSdk() throws Exception {
     try {
-      createProjectFromTemplate(JavaModuleType.JAVA_GROUP, PluginModuleType.getInstance().getName(), null);
+      createProjectFromTemplate(PluginModuleType.getInstance().getName(), null, null);
       fail("Exception should be thrown");
     }
     catch (Exception e) {

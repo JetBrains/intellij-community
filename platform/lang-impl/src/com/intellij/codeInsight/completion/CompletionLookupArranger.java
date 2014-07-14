@@ -62,6 +62,7 @@ public class CompletionLookupArranger extends LookupArranger {
     }
   };
   private static final int MAX_PREFERRED_COUNT = 5;
+  public static final Key<WeighingContext> WEIGHING_CONTEXT = Key.create("WEIGHING_CONTEXT");
   public static final Key<Boolean> PURE_RELEVANCE = Key.create("PURE_RELEVANCE");
   public static final Key<Integer> PREFIX_CHANGES = Key.create("PREFIX_CHANGES");
   private static final UISettings ourUISettings = UISettings.getInstance();
@@ -89,12 +90,7 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   private MultiMap<CompletionSorterImpl, LookupElement> groupItemsBySorter(List<LookupElement> source) {
-    MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = new MultiMap<CompletionSorterImpl, LookupElement>() {
-      @Override
-      protected Map<CompletionSorterImpl, Collection<LookupElement>> createMap() {
-        return ContainerUtil.newLinkedHashMap();
-      }
-    };
+    MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = MultiMap.createLinked();
     for (LookupElement element : source) {
       inputBySorter.putValue(obtainSorter(element), element);
     }
@@ -145,9 +141,9 @@ public class CompletionLookupArranger extends LookupArranger {
     CompletionSorterImpl sorter = obtainSorter(element);
     Classifier<LookupElement> classifier = myClassifiers.get(sorter);
     if (classifier == null) {
-      myClassifiers.put(sorter, classifier = sorter.buildClassifier(new AlphaClassifier(lookup)));
+      myClassifiers.put(sorter, classifier = sorter.buildClassifier(new AlphaClassifier((LookupImpl)lookup)));
     }
-    classifier.addElement(element);
+    classifier.addElement(element, createContext(true));
 
     super.addElement(lookup, element, presentation);
   }
@@ -158,7 +154,7 @@ public class CompletionLookupArranger extends LookupArranger {
     return tailText == null || tailText.isEmpty() ? " " : tailText;
   }
 
-  private static List<LookupElement> sortByPresentation(Iterable<LookupElement> source, Lookup lookup) {
+  private static List<LookupElement> sortByPresentation(Iterable<LookupElement> source, LookupImpl lookup) {
     ArrayList<LookupElement> startMatches = ContainerUtil.newArrayList();
     ArrayList<LookupElement> middleMatches = ContainerUtil.newArrayList();
     for (LookupElement element : source) {
@@ -180,11 +176,12 @@ public class CompletionLookupArranger extends LookupArranger {
     MultiMap<CompletionSorterImpl, LookupElement> itemsBySorter = groupItemsBySorter(items);
 
     LookupElement relevantSelection = findMostRelevantItem(itemsBySorter);
+    LookupImpl lookupImpl = (LookupImpl)lookup;
     List<LookupElement> listModel = isAlphaSorted() ?
-                                    sortByPresentation(items, lookup) :
-                                    fillModelByRelevance((LookupImpl)lookup, items, itemsBySorter, relevantSelection);
+                                    sortByPresentation(items, lookupImpl) :
+                                    fillModelByRelevance(lookupImpl, items, itemsBySorter, relevantSelection);
 
-    int toSelect = getItemToSelect((LookupImpl)lookup, listModel, onExplicitAction, relevantSelection);
+    int toSelect = getItemToSelect(lookupImpl, listModel, onExplicitAction, relevantSelection);
     LOG.assertTrue(toSelect >= 0);
 
     addDummyItems(items.size() - listModel.size(), listModel);
@@ -300,6 +297,7 @@ public class CompletionLookupArranger extends LookupArranger {
   private ProcessingContext createContext(boolean pureRelevance) {
     ProcessingContext context = new ProcessingContext();
     context.put(PREFIX_CHANGES, myPrefixChanges);
+    context.put(WEIGHING_CONTEXT, myProcess.getLookup());
     if (pureRelevance) {
       context.put(PURE_RELEVANCE, Boolean.TRUE);
     }
@@ -344,7 +342,7 @@ public class CompletionLookupArranger extends LookupArranger {
     for (int i = 0; i < items.size(); i++) {
       LookupElement item = items.get(i);
       boolean isTemplate = isLiveTemplate(item);
-      if (isAlphaSorted() && isPrefixItem(lookup, item, true) && !isTemplate ||
+      if (isPrefixItem(lookup, item, true) && !isTemplate ||
           item.getLookupString().equals(selectedText)) {
         return i;
       }
@@ -494,7 +492,7 @@ public class CompletionLookupArranger extends LookupArranger {
     public void addSparedChars(CompletionProgressIndicator indicator, LookupElement item, InsertionContext context, char completionChar) {
       String textInserted;
       if (context.getStartOffset() >= 0 && context.getTailOffset() >= context.getStartOffset()) {
-        textInserted = context.getDocument().getText().substring(context.getStartOffset(), context.getTailOffset());
+        textInserted = context.getDocument().getImmutableCharSequence().subSequence(context.getStartOffset(), context.getTailOffset()).toString();
       } else {
         textInserted = item.getLookupString();
       }
@@ -510,14 +508,14 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   private static class AlphaClassifier extends Classifier<LookupElement> {
-    private final Lookup myLookup;
+    private final LookupImpl myLookup;
 
-    private AlphaClassifier(Lookup lookup) {
+    private AlphaClassifier(LookupImpl lookup) {
       myLookup = lookup;
     }
 
     @Override
-    public void addElement(LookupElement element) {
+    public void addElement(LookupElement element, ProcessingContext context) {
     }
 
     @Override

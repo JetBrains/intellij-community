@@ -15,19 +15,18 @@
  */
 package git4idea.branch;
 
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import git4idea.GitPlatformFacade;
-import git4idea.GitVcs;
+import git4idea.GitUtil;
 import git4idea.commands.*;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
-import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,7 +91,7 @@ class GitCheckoutOperation extends GitBranchOperation {
         }
       }
       else if (untrackedOverwrittenByCheckout.wasMessageDetected()) {
-        fatalUntrackedFilesError(untrackedOverwrittenByCheckout.getFiles());
+        fatalUntrackedFilesError(repository.getRoot(), untrackedOverwrittenByCheckout.getRelativeFilePaths());
         fatalErrorHappened = true;
       }
       else {
@@ -114,7 +113,8 @@ class GitCheckoutOperation extends GitBranchOperation {
     List<GitRepository> allConflictingRepositories = conflictingRepositoriesAndAffectedChanges.getFirst();
     List<Change> affectedChanges = conflictingRepositoriesAndAffectedChanges.getSecond();
 
-    int smartCheckoutDecision = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, "checkout", true);
+    Collection<String> absolutePaths = GitUtil.toAbsolute(repository.getRoot(), localChangesOverwrittenByCheckout.getRelativeFilePaths());
+    int smartCheckoutDecision = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths, "checkout", true);
     if (smartCheckoutDecision == GitSmartOperationDialog.SMART_EXIT_CODE) {
       boolean smartCheckedOutSuccessfully = smartCheckout(allConflictingRepositories, myStartPointReference, myNewBranch, getIndicator());
       if (smartCheckedOutSuccessfully) {
@@ -184,8 +184,8 @@ class GitCheckoutOperation extends GitBranchOperation {
         message.append("Errors during deleting ").append(code(myNewBranch)).append(": ");
         message.append(deleteResult.getErrorOutputWithReposIndication());
       }
-      GitUIUtil.notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, myProject, "Error during rollback",
-                       message.toString(), NotificationType.ERROR, null);
+      VcsNotifier.getInstance(myProject).notifyError("Error during rollback",
+                                                     message.toString());
     }
   }
 

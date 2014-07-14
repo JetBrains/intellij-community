@@ -41,7 +41,8 @@ public class IconDeferrerImpl extends IconDeferrer {
     }
   };
   private long myLastClearTimestamp = 0;
-  @SuppressWarnings("UnusedDeclaration") private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
+  @SuppressWarnings("UnusedDeclaration")
+  private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
     @Override
     public void run() {
       clear();
@@ -73,6 +74,15 @@ public class IconDeferrerImpl extends IconDeferrer {
 
   @Override
   public <T> Icon defer(final Icon base, final T param, @NotNull final Function<T, Icon> f) {
+    return deferImpl(base, param, f, false);
+  }
+
+  @Override
+  public <T> Icon deferAutoUpdatable(Icon base, T param, @NotNull Function<T, Icon> f) {
+    return deferImpl(base, param, f, true);
+  }
+
+  private <T> Icon deferImpl(Icon base, T param, @NotNull Function<T, Icon> f, final boolean autoupdatable) {
     if (myEvaluationIsInProgress.get().booleanValue()) {
       return f.fun(param);
     }
@@ -81,17 +91,17 @@ public class IconDeferrerImpl extends IconDeferrer {
       Icon result = myIconsCache.get(param);
       if (result == null) {
         final long started = myLastClearTimestamp;
-        result = new DeferredIconImpl<T>(base, param, f).setDoneListener(new DeferredIconImpl.IconListener<T>() {
+        result = new DeferredIconImpl<T>(base, param, f, new DeferredIconImpl.IconListener<T>() {
           @Override
-          public void evalDone(T key, @NotNull Icon r) {
+          public void evalDone(DeferredIconImpl<T> source, T key, @NotNull Icon r) {
             synchronized (LOCK) {
               // check if our results is not outdated yet
               if (started == myLastClearTimestamp) {
-                myIconsCache.put(key, r);
+                myIconsCache.put(key, autoupdatable ? source: r);
               }
             }
           }
-        });
+        }, autoupdatable);
         myIconsCache.put(param, result);
       }
 
@@ -106,7 +116,7 @@ public class IconDeferrerImpl extends IconDeferrer {
     }
   };
 
-  public static void evaluateDeferred(@NotNull Runnable runnable) {
+  static void evaluateDeferred(@NotNull Runnable runnable) {
     try {
       myEvaluationIsInProgress.set(Boolean.TRUE);
       runnable.run();

@@ -41,37 +41,43 @@ private pass(String prop) {
 target('run_tests': 'Run java tests') {
   depends([compile])
 
-  ant.junit(fork: "yes", showoutput: "true", logfailedtests:false) {
-    pass("idea.test.group")
-    pass("idea.test.patterns")
-    pass("idea.fast.only")
-    pass("teamcity.build.tempDir")
-    pass("teamcity.tests.recentlyFailedTests.file")
-    jvmarg (value: "-Didea.platform.prefix=Idea")
-    jvmarg (value: "-Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader")
+  def classpathFile = "$home/junit.classpath"
+  List<String> testRuntimeClasspath = projectBuilder.moduleRuntimeClasspath(findModule("community-main"), true)
+  new File(classpathFile).text = testRuntimeClasspath.findAll({ new File((String)it).exists() }).join('\n')
 
-    System.getProperties().entrySet().each {
-      if (it.key.startsWith("pass.")) {
-        def trimmed = it.key.substring("pass.".length());
-        jvmarg(value: "-D${trimmed}=${it.value}");
-      };
-    }
+  testcases.each { testCase ->
+    ant.junit(fork: "yes", showoutput: "true", logfailedtests: false) {
+      jvmarg(value: "-Dclasspath.file=${classpathFile}")
+      pass("idea.test.group")
+      pass("idea.test.patterns")
+      pass("idea.fast.only")
+      pass("teamcity.build.tempDir")
+      pass("teamcity.tests.recentlyFailedTests.file")
+      jvmarg(value: "-Didea.platform.prefix=Idea")
 
-    commonJvmArgs().each { jvmarg(value: it) }
-
-    if (isDefined("jvm_args")) {
-      jvm_args.each { jvmarg(value: it) }
-    }
-
-    classpath {
-      projectBuilder.moduleRuntimeClasspath(findModule("community-main"), true).each {
-        pathelement(location: it)
+      System.getProperties().entrySet().each {
+        if (it.key.startsWith("pass.")) {
+          def trimmed = it.key.substring("pass.".length());
+          jvmarg(value: "-D${trimmed}=${it.value}");
+        };
       }
-      pathelement(location: "${jdkHome}/lib/tools.jar")
-    }
 
-    testcases.each {
-      test (name: it)
+      commonJvmArgs().each { jvmarg(value: it) }
+
+      jvmarg(value: "-Dbootstrap.testcases=$testCase")
+
+      if (isDefined("jvm_args")) {
+        jvm_args.each { jvmarg(value: it) }
+      }
+
+      classpath {
+        projectBuilder.moduleRuntimeClasspath(findModule("tests_bootstrap"), false).each {
+          pathelement(location: it)
+        }
+        pathelement(location: "${jdkHome}/lib/tools.jar")
+      }
+
+      test(name: 'com.intellij.tests.BootstrapTests')
     }
   }
 }

@@ -33,7 +33,7 @@ import java.util.Set;
  * @author anna
  * @since 15-Nov-2005
  */
-public class RedundantThrowsDeclaration extends BaseJavaBatchLocalInspectionTool {
+public class RedundantThrowsDeclaration extends BaseJavaBatchLocalInspectionTool implements CleanupLocalInspectionTool {
   @Override
   @NotNull
   public String getGroupDisplayName() {

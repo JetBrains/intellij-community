@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
@@ -44,8 +45,13 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
 
   private final List<Indent> myIndentsBefore = new ArrayList<Indent>();
 
-  public BlockContainingJavaBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, final Indent indent, CommonCodeStyleSettings settings) {
-    super(node, wrap, alignment, indent, settings);
+  public BlockContainingJavaBlock(ASTNode node,
+                                  Wrap wrap,
+                                  Alignment alignment,
+                                  Indent indent,
+                                  CommonCodeStyleSettings settings,
+                                  JavaCodeStyleSettings javaSettings) {
+    super(node, wrap, alignment, indent, settings, javaSettings);
   }
   @Override
   protected List<Block> buildChildren() {

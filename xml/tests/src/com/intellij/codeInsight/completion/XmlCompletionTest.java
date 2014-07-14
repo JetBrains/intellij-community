@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -17,6 +32,7 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -67,7 +83,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
   protected void runTest() throws Throwable {
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         XmlCompletionTest.super.runTest();
       }
     }.execute();
@@ -200,7 +216,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.type(c);
   }
 
-  private void doCompletionTest(final String ext, final String url, final String location) throws Exception {
+  private void doCompletionTest(final String ext, final String url, final String location) {
     final String testName = getTestName(false);
     addResource(url, location);
 
@@ -411,7 +427,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     basicDoTest("");
   }
 
-  private void basicDoTest(String ext) throws Exception {
+  private void basicDoTest(String ext) {
     final String testName = getTestName(false) + ext;
     configureByFile(testName + ".xml");
     checkResultByFile(testName + "_after.xml");
@@ -518,7 +534,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     checkResultByFile(testName + "_after.xml");
   }
 
-  public void _testIDEADEV_32773() throws Exception {
+  public void _testIDEADEV_32773() {
     final String testName = getTestName(false);
 
     configureByFiles(testName + ".xml",
@@ -677,10 +693,24 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.testCompletionVariants("Substitute/test.xml", "b:instance", "instance");
   }
 
+  public void testAfterPrefix() throws Exception {
+    myFixture.testCompletion("Substitute/testAfterPrefix.xml", "Substitute/testAfterPrefix_after.xml", "Substitute/schema-a.xsd", "Substitute/schema-b.xsd");
+  }
+
   public void testEnumeratedTagValue() throws Exception {
     myFixture.configureByFile("tagValue/enumerated.xsd");
     myFixture.testCompletionVariants("tagValue/completeEnum.xml", "none", "standard");
     myFixture.testCompletionVariants("tagValue/completeBoolean.xml", "false", "true");
+  }
+
+  public void testInheritedAttribute() throws Exception {
+    myFixture.configureByFiles("InheritedAttr/test.xsd", "InheritedAttr/library.xsd");
+    myFixture.testCompletionVariants("InheritedAttr/test.xml", "buz",
+    "library:boo",
+    "xml:base",
+    "xml:id",
+    "xml:lang",
+    "xml:space");
   }
 }
 

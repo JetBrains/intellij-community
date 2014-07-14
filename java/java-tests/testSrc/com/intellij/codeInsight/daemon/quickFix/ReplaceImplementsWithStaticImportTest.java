@@ -23,7 +23,7 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.JavaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceImplementsWithStaticImportTest extends LightQuickFixTestCase {
+public class ReplaceImplementsWithStaticImportTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {

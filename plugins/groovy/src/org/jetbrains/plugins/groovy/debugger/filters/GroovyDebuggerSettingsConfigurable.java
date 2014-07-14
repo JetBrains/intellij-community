@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ public class GroovyDebuggerSettingsConfigurable implements SearchableConfigurabl
     myIgnoreGroovyMethods.setSelected(mySettings.ENABLE_GROOVY_HOTSWAP);
 
     ActionListener listener = new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         isModified = mySettings.DEBUG_DISABLE_SPECIFIC_GROOVY_METHODS.booleanValue() != myIgnoreGroovyMethods.isSelected() ||
                      mySettings.ENABLE_GROOVY_HOTSWAP != myEnableHotSwap.isSelected();
@@ -51,32 +52,39 @@ public class GroovyDebuggerSettingsConfigurable implements SearchableConfigurabl
     myEnableHotSwap.addActionListener(listener);
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return GroovyBundle.message("groovy.debug.caption");
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.idesettings.debugger.groovy";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   public Runnable enableSearch(String option) {
     return null;
   }
 
+  @Override
   public JComponent createComponent() {
     return myPanel;
   }
 
+  @Override
   public boolean isModified() {
     return isModified;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     if (isModified) {
       mySettings.DEBUG_DISABLE_SPECIFIC_GROOVY_METHODS = myIgnoreGroovyMethods.isSelected();
@@ -85,12 +93,14 @@ public class GroovyDebuggerSettingsConfigurable implements SearchableConfigurabl
     isModified = false;
   }
 
+  @Override
   public void reset() {
     final Boolean flag = mySettings.DEBUG_DISABLE_SPECIFIC_GROOVY_METHODS;
     myIgnoreGroovyMethods.setSelected(flag == null || flag.booleanValue());
     myEnableHotSwap.setSelected(mySettings.ENABLE_GROOVY_HOTSWAP);
   }
 
+  @Override
   public void disposeUIResources() {
   }
 }

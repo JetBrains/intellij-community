@@ -20,10 +20,9 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
 public class GotoLambdaParameterHandler extends GotoDeclarationHandlerBase {
-
   @Override
   @Nullable
-  public PsiElement getGotoDeclarationTarget(final PsiElement elementAt, Editor editor) {
+  public PsiElement getGotoDeclarationTarget(@Nullable PsiElement elementAt, Editor editor) {
     if (elementAt instanceof PsiIdentifier) {
       PsiElement parent = elementAt.getParent();
       if (parent instanceof PsiParameter && ((PsiParameter)parent).getTypeElement() == null) {
@@ -33,6 +32,7 @@ public class GotoLambdaParameterHandler extends GotoDeclarationHandlerBase {
         }
       }
     }
+
     return null;
   }
 }

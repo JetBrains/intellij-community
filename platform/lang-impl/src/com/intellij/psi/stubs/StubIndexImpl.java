@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
@@ -26,16 +27,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.CommonProcessors;
@@ -50,12 +56,8 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 
@@ -125,7 +127,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     final boolean versionFileExisted = versionFile.exists();
     final File indexRootDir = IndexInfrastructure.getIndexRootDir(indexKey);
     boolean needRebuild = false;
-    if (forceClean || IndexInfrastructure.versionDiffers(versionFile, version)) {
+    if (forceClean || IndexingStamp.versionDiffers(versionFile, version)) {
       final String[] children = indexRootDir.list();
       // rebuild only if there exists what to rebuild
       needRebuild = !forceClean && (versionFileExisted || children != null && children.length > 0);
@@ -133,7 +135,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         LOG.info("Version has changed for stub index " + extension.getKey() + ". The index will be rebuilt.");
       }
       FileUtil.delete(indexRootDir);
-      IndexInfrastructure.rewriteVersion(versionFile, version);
+      IndexingStamp.rewriteVersion(versionFile, version); // todo snapshots indices
     }
 
     for (int attempt = 0; attempt < 2; attempt++) {
@@ -155,7 +157,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         LOG.info(e);
         needRebuild = true;
         FileUtil.delete(indexRootDir);
-        IndexInfrastructure.rewriteVersion(versionFile, version);
+        IndexingStamp.rewriteVersion(versionFile, version); // todo snapshots indices
       }
     }
     return needRebuild;
@@ -163,7 +165,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
   private static class StubIdExternalizer implements DataExternalizer<StubIdList> {
     @Override
-    public void save(final DataOutput out, @NotNull final StubIdList value) throws IOException {
+    public void save(@NotNull final DataOutput out, @NotNull final StubIdList value) throws IOException {
       int size = value.size();
       if (size == 0) {
         DataInputOutputUtil.writeINT(out, Integer.MAX_VALUE);
@@ -181,7 +183,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
     @NotNull
     @Override
-    public StubIdList read(final DataInput in) throws IOException {
+    public StubIdList read(@NotNull final DataInput in) throws IOException {
       int size = DataInputOutputUtil.readINT(in);
       if (size == Integer.MAX_VALUE) {
         return new StubIdList();
@@ -205,7 +207,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull final StubIndexKey<Key, Psi> indexKey,
                                                            @NotNull final Key key,
                                                            @NotNull final Project project,
-                                                           final GlobalSearchScope scope) {
+                                                           @Nullable final GlobalSearchScope scope) {
     return get(indexKey, key, project, scope, null);
   }
 
@@ -213,7 +215,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull StubIndexKey<Key, Psi> indexKey,
                                                            @NotNull Key key,
                                                            @NotNull Project project,
-                                                           GlobalSearchScope scope,
+                                                           @Nullable GlobalSearchScope scope,
                                                            IdFilter filter) {
     final List<Psi> result = new SmartList<Psi>();
     process(indexKey, key, project, scope, filter, new CommonProcessors.CollectProcessor<Psi>(result));
@@ -221,20 +223,22 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   @Override
-  public <Key, Psi extends PsiElement> boolean process(@NotNull StubIndexKey<Key, Psi> indexKey,
+  public <Key, Psi extends PsiElement> boolean processElements(@NotNull StubIndexKey<Key, Psi> indexKey,
                                                        @NotNull Key key,
                                                        @NotNull Project project,
-                                                       GlobalSearchScope scope,
+                                                       @Nullable GlobalSearchScope scope,
+                                                       Class<Psi> requiredClass,
                                                        @NotNull Processor<? super Psi> processor) {
-    return process(indexKey, key, project, scope, null, processor);
+    return processElements(indexKey, key, project, scope, null, requiredClass, processor);
   }
 
   @Override
-  public <Key, Psi extends PsiElement> boolean process(@NotNull final StubIndexKey<Key, Psi> indexKey,
+  public <Key, Psi extends PsiElement> boolean processElements(@NotNull final StubIndexKey<Key, Psi> indexKey,
                                                        @NotNull final Key key,
                                                        @NotNull final Project project,
                                                        @Nullable final GlobalSearchScope scope,
                                                        @Nullable IdFilter idFilter,
+                                                       @NotNull final Class<Psi> requiredClass,
                                                        @NotNull final Processor<? super Psi> processor) {
     final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     fileBasedIndex.ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
@@ -261,7 +265,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
             if (file == null || scope != null && !scope.contains(file)) {
               return true;
             }
-            return myStubProcessingHelper.processStubsInFile(project, file, value, processor);
+            return myStubProcessingHelper.processStubsInFile(project, file, value, processor, requiredClass);
           }
 
         });
@@ -282,6 +286,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       else {
         throw e;
       }
+    } catch (AssertionError ae) {
+      forceRebuild(ae);
     }
 
     return true;
@@ -309,7 +315,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     return processAllKeys(indexKey, processor, GlobalSearchScope.allScope(project), null);
   }
 
-  public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey, Processor<K> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter) {
+  public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey, @NotNull Processor<K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
 
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, scope.getProject(), scope);
 
@@ -424,12 +430,13 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   public <K> void updateIndex(@NotNull StubIndexKey key, int fileId, @NotNull final Map<K, StubIdList> oldValues, @NotNull Map<K, StubIdList> newValues) {
     try {
       final MyIndex<K> index = (MyIndex<K>)myIndices.get(key);
-      index.updateWithMap(fileId, newValues, new Callable<Collection<K>>() {
+      index.updateWithMap(fileId, fileId, newValues, new NotNullComputable<Collection<K>>() {
+        @NotNull
         @Override
-        public Collection<K> call() throws Exception {
+        public Collection<K> compute() {
           return oldValues.keySet();
         }
-      }, true);
+      });
     }
     catch (StorageException e) {
       LOG.info(e);
@@ -438,60 +445,66 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   private static class MyIndex<K> extends MapReduceIndex<K, StubIdList, Void> {
-    public MyIndex(final IndexStorage<K, StubIdList> storage) {
+    public MyIndex(final IndexStorage<K, StubIdList> storage) throws IOException {
       super(null, null, storage);
     }
 
     @Override
     public void updateWithMap(final int inputId,
-                              @NotNull final Map<K, StubIdList> newData,
-                              @NotNull Callable<Collection<K>> oldKeysGetter,
-                              boolean merge) throws StorageException {
-      super.updateWithMap(inputId, newData, oldKeysGetter, merge);
+                              int savedInputId, @NotNull final Map<K, StubIdList> newData,
+                              @NotNull NotNullComputable<Collection<K>> oldKeysGetter) throws StorageException {
+      super.updateWithMap(inputId, savedInputId, newData, oldKeysGetter);
     }
   }
 
   @Override
-  protected <Psi extends PsiElement> void reportStubPsiMismatch(Psi psi, VirtualFile file) {
+  protected <Psi extends PsiElement> void reportStubPsiMismatch(Psi psi, VirtualFile file, Class<Psi> requiredClass) {
     if (file == null) {
-      super.reportStubPsiMismatch(psi, file);
+      super.reportStubPsiMismatch(psi, file, requiredClass);
       return;
     }
 
-    String msg = "Invalid stub element type in index: " + file;
-    msg += "; found: " + psi;
-    msg += "\nfile stamp: " + file.getModificationStamp();
-    msg += "; file size: " + file.getLength();
-    msg += "; file modCount: " + file.getModificationCount();
+    StringWriter writer = new StringWriter();
+    //noinspection IOResourceOpenedButNotSafelyClosed
+    PrintWriter out = new PrintWriter(writer);
+
+    out.print("Invalid stub element type in index:");
+    out.printf("\nfile: %s\npsiElement: %s\nrequiredClass: %s\nactualClass: %s",
+               file, psi, requiredClass, psi.getClass());
+
+    FileType fileType = file.getFileType();
+    Language language = fileType instanceof LanguageFileType ?
+                        LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)fileType).getLanguage(), file, psi.getProject()) :
+                        Language.ANY;
+    out.printf("\nvirtualFile: size:%s; stamp:%s; modCount:%s; fileType:%s; language:%s",
+               file.getLength(), file.getModificationStamp(), file.getModificationCount(),
+               fileType.getName(), language.getID());
 
     Document document = FileDocumentManager.getInstance().getCachedDocument(file);
     if (document != null) {
-      msg += "\nsaved: " + !FileDocumentManager.getInstance().isDocumentUnsaved(document);
-      msg += "; doc stamp: " + document.getModificationStamp();
-      msg += "; doc size: " + document.getTextLength();
-      msg += "; committed: " + PsiDocumentManager.getInstance(psi.getProject()).isCommitted(document);
+      boolean committed = PsiDocumentManager.getInstance(psi.getProject()).isCommitted(document);
+      boolean saved = !FileDocumentManager.getInstance().isDocumentUnsaved(document);
+      out.printf("\ndocument: size:%s; stamp:%s; committed:%s; saved:%s",
+                 document.getTextLength(), document.getModificationStamp(), committed, saved);
     }
 
     PsiFile psiFile = psi.getManager().findFile(file);
     if (psiFile != null) {
-      msg += "\npsiFile size: " + psiFile.getTextLength();
-      msg += "; viewProvider stamp: " + psiFile.getViewProvider().getModificationStamp();
-      if (psiFile instanceof PsiFileImpl) {
-        StubTree stub = ((PsiFileImpl)psiFile).getStubTree();
-        if (stub == null) {
-          FileElement treeElement = ((PsiFileImpl)psiFile).getTreeElement();
-          msg += "; ast loaded: " + (treeElement != null);
-          if (treeElement != null) {
-            msg += "; ast parsed: " + treeElement.isParsed();
-            msg += "; ast size: " + treeElement.getTextLength();
-          }
-        } else {
-          msg += "\nstub info=" + stub.getDebugInfo();
-        }
-      }
+      out.printf("\npsiFile: size:%s; stamp:%s; class:%s; language:%s",
+                 psiFile.getTextLength(), psiFile.getViewProvider().getModificationStamp(), psiFile.getClass().getName(),
+                 psiFile.getLanguage().getID());
     }
 
-    msg += "\nindexing info: " + StubUpdatingIndex.getIndexingStampInfo(file);
-    LOG.error(msg);
+    StubTree stub = psiFile instanceof PsiFileWithStubSupport ? ((PsiFileWithStubSupport)psiFile).getStubTree() : null;
+    FileElement treeElement = stub == null && psiFile instanceof PsiFileImpl? ((PsiFileImpl)psiFile).getTreeElement() : null;
+    if (stub != null) {
+      out.printf("\nstubInfo: " + stub.getDebugInfo());
+    }
+    else if (treeElement != null) {
+      out.printf("\nfileAST: size:%s; parsed:%s", treeElement.getTextLength(), treeElement.isParsed());
+    }
+
+    out.printf("\nindexing info: " + StubUpdatingIndex.getIndexingStampInfo(file));
+    LOG.error(writer.toString());
   }
 }

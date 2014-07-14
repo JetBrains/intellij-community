@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import junit.framework.Assert;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContextImpl;
@@ -80,7 +81,7 @@ public class IntroduceVariableValidatorTest extends LightCodeInsightFixtureTestC
 
     myEditor.getSelectionModel().setSelection(startOffset, endOffset);
 
-    GrExpression selectedExpr = GroovyRefactoringUtil.findElementInRange(myFixture.getFile(), startOffset, endOffset, GrExpression.class);
+    GrExpression selectedExpr = PsiImplUtil.findElementInRange(myFixture.getFile(), startOffset, endOffset, GrExpression.class);
 
     Assert.assertNotNull("Selected expression reference points to null", selectedExpr);
 

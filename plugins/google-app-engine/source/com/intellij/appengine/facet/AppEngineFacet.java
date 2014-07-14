@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
@@ -84,7 +84,7 @@ public class AppEngineFacet extends Facet<AppEngineFacetConfiguration> {
     final DomFileElement<DomElement> element = domManager.getFileElement((XmlFile)file, DomElement.class);
     if (element == null) return null;
     final DomElement root = element.getRootElement();
-    if (!ReflectionCache.isAssignable(domClass, root.getClass())) return null;
+    if (!ReflectionUtil.isAssignable(domClass, root.getClass())) return null;
     return (T)root;
   }
 

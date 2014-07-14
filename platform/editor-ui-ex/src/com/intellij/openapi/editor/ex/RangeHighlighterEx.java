@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,15 +28,23 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Comparator;
+
 public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
+  RangeHighlighterEx[] EMPTY_ARRAY = new RangeHighlighterEx[0];
   boolean isAfterEndOfLine();
-  void setAfterEndOfLine(boolean val);
+  void setAfterEndOfLine(boolean value);
 
   int getAffectedAreaStartOffset();
 
   int getAffectedAreaEndOffset();
-  @Override
-  long getId();
 
   void setTextAttributes(@NotNull TextAttributes textAttributes);
+
+  Comparator<RangeHighlighterEx> BY_AFFECTED_START_OFFSET = new Comparator<RangeHighlighterEx>() {
+    @Override
+    public int compare(RangeHighlighterEx r1, RangeHighlighterEx r2) {
+      return r1.getAffectedAreaStartOffset() - r2.getAffectedAreaStartOffset();
+    }
+  };
 }

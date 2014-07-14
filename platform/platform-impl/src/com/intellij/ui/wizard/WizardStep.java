@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.ui.wizard;
 
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -28,7 +27,7 @@ public abstract class WizardStep<T extends WizardModel> {
   private String myTitle = "";
   private String myExplanation = "";
 //todo:
-  private Icon myIcon = IconLoader.getIcon("/newprojectwizard.png");
+  private Icon myIcon = null;
   private String myHelpId;
 
   protected WizardStep() {

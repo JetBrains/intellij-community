@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,8 +130,7 @@ public class JavaResolveUtil {
         PsiClass topAccessClass = getTopLevelClass(accessObjectClass, memberClass);
         if (!manager.areElementsEquivalent(topMemberClass, topAccessClass)) return false;
         if (accessObjectClass instanceof PsiAnonymousClass && accessObjectClass.isInheritor(memberClass, true)) {
-          if (place instanceof PsiMethodCallExpression &&
-              ((PsiMethodCallExpression)place).getMethodExpression().getQualifierExpression() instanceof PsiThisExpression) {
+          if (place instanceof PsiMethodCallExpression) {
             return false;
           }
         }
@@ -225,14 +224,21 @@ public class JavaResolveUtil {
     return true;
   }
 
-  public static void substituteResults(@NotNull PsiJavaCodeReferenceElement ref, @NotNull JavaResolveResult[] result) {
+  public static void substituteResults(@NotNull final PsiJavaCodeReferenceElement ref, @NotNull JavaResolveResult[] result) {
     if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
-      PsiType[] parameters = ref.getTypeParameters();
       for (int i = 0; i < result.length; i++) {
-        CandidateInfo resolveResult = (CandidateInfo)result[i];
-        PsiElement resultElement = resolveResult.getElement();
+        final CandidateInfo resolveResult = (CandidateInfo)result[i];
+        final PsiElement resultElement = resolveResult.getElement();
         if (resultElement instanceof PsiClass && ((PsiClass)resultElement).hasTypeParameters()) {
-          result[i] = new CandidateInfo(resolveResult, resolveResult.getSubstitutor().putAll((PsiClass)resultElement, parameters));
+          PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+          result[i] = new CandidateInfo(resolveResult, substitutor) {
+            @NotNull
+            @Override
+            public PsiSubstitutor getSubstitutor() {
+              final PsiType[] parameters = ref.getTypeParameters();
+              return super.getSubstitutor().putAll((PsiClass)resultElement, parameters);
+            }
+          };
         }
       }
     }
@@ -240,10 +246,10 @@ public class JavaResolveUtil {
 
   @NotNull
   public static <T extends PsiPolyVariantReference> JavaResolveResult[] resolveWithContainingFile(@NotNull T ref,
-                                                                                  @NotNull ResolveCache.PolyVariantResolver<T> resolver,
-                                                                                  boolean needToPreventRecursion,
-                                                                                  boolean incompleteCode,
-                                                                                  @NotNull PsiFile containingFile) {
+                                                                                                  @NotNull ResolveCache.PolyVariantContextResolver<T> resolver,
+                                                                                                  boolean needToPreventRecursion,
+                                                                                                  boolean incompleteCode,
+                                                                                                  @NotNull PsiFile containingFile) {
     boolean valid = containingFile.isValid();
     if (!valid) {
       return JavaResolveResult.EMPTY_ARRAY;

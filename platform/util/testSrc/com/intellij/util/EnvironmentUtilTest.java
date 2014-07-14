@@ -30,7 +30,6 @@ import static org.junit.Assume.assumeTrue;
 public class EnvironmentUtilTest {
   @Test(timeout = 30000)
   public void map() throws Exception {
-    System.setProperty("idea.fix.mac.env", "true");
     assertNotNull(EnvironmentUtil.getEnvironmentMap());
   }
 

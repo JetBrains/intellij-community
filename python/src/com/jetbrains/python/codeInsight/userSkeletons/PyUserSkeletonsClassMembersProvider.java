@@ -22,6 +22,7 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.types.PyClassMembersProviderBase;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyOverridingAncestorsClassMembersProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ import java.util.List;
 /**
  * @author vlan
  */
-public class PyUserSkeletonsClassMembersProvider extends PyClassMembersProviderBase {
+public class PyUserSkeletonsClassMembersProvider extends PyClassMembersProviderBase implements PyOverridingAncestorsClassMembersProvider {
   @NotNull
   @Override
   public Collection<PyDynamicMember> getMembers(@NotNull PyClassType classType, PsiElement location) {

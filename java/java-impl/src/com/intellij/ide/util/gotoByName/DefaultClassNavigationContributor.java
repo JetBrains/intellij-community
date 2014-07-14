@@ -90,7 +90,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
       final boolean isAnnotation = parameters.getLocalPatternName().startsWith("@");
       @Override
       public boolean process(PsiClass aClass) {
-        if (aClass.getContainingFile().getVirtualFile() == null) return true;
+        if (aClass.getContainingFile().getVirtualFile() == null || !aClass.isPhysical()) return true;
         if (isAnnotation && !aClass.isAnnotationType()) return true;
         return processor.process(aClass);
       }

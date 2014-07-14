@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.plugins.groovy.actions.NewGroovyActionBase;
@@ -37,7 +38,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -48,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.refactoring.GroovyChangeContextUtil;
 
@@ -60,8 +61,9 @@ import java.util.Iterator;
 public class MoveGroovyClassHandler implements MoveClassHandler {
   Logger LOG = Logger.getInstance(MoveGroovyClassHandler.class);
 
+  @Override
   public PsiClass doMoveClass(@NotNull PsiClass aClass, @NotNull PsiDirectory moveDestination) throws IncorrectOperationException {
-    if (!aClass.getLanguage().equals(GroovyFileType.GROOVY_LANGUAGE)) return null;
+    if (!aClass.getLanguage().equals(GroovyLanguage.INSTANCE)) return null;
     PsiFile file = aClass.getContainingFile();
     if (!(file instanceof GroovyFile)) return null;
 
@@ -156,7 +158,7 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
       }
     }
 
-    if (modifiersText != null && modifiersText.length() > 0) {
+    if (modifiersText != null && !modifiersText.isEmpty()) {
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(file.getProject());
       final GrPackageDefinition newPackageDefinition = (GrPackageDefinition)factory.createTopElementFromText(modifiersText + " package " + newPackageName);
       newFile.setPackage(newPackageDefinition);
@@ -186,7 +188,7 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
     if (packageDefinition != null) packageDefinition.delete();
 
     PsiElement cur = newFile.getFirstChild();
-    while (cur != null && TokenSets.WHITE_SPACES_SET.contains(cur.getNode().getElementType())) {
+    while (cur != null && PsiImplUtil.isWhiteSpaceOrNls(cur)) {
       cur = cur.getNextSibling();
     }
     if (cur != null && cur != newFile.getFirstChild()) {
@@ -195,7 +197,7 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
     }
 
     cur = newFile.getLastChild();
-    while (cur != null && TokenSets.WHITE_SPACES_SET.contains(cur.getNode().getElementType())) {
+    while (cur != null && PsiImplUtil.isWhiteSpaceOrNls(cur)) {
       cur = cur.getPrevSibling();
     }
     if (cur != null && cur != newFile.getLastChild()) {
@@ -210,6 +212,7 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
     return newFile;
   }
 
+  @Override
   @Nullable
   public String getName(PsiClass clazz) {
     final PsiFile file = clazz.getContainingFile();

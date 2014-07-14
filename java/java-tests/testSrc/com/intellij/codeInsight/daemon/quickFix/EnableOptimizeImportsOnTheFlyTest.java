@@ -7,7 +7,7 @@ import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import org.jetbrains.annotations.NotNull;
 
 
-public class EnableOptimizeImportsOnTheFlyTest extends LightQuickFixTestCase {
+public class EnableOptimizeImportsOnTheFlyTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {

@@ -1,5 +1,21 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.psi.search;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Comparing;
@@ -21,9 +37,10 @@ import java.util.Map;
  */
 public class FileTypeIndex extends ScalarIndexExtension<FileType>
   implements FileBasedIndex.InputFilter, KeyDescriptor<FileType>, DataIndexer<FileType, Void, FileContent> {
-  private final EnumeratorStringDescriptor myEnumeratorStringDescriptor = new EnumeratorStringDescriptor();
+  private static final EnumeratorStringDescriptor ENUMERATOR_STRING_DESCRIPTOR = new EnumeratorStringDescriptor();
 
-  public static Collection<VirtualFile> getFiles(FileType fileType, GlobalSearchScope scope) {
+  @NotNull
+  public static Collection<VirtualFile> getFiles(@NotNull FileType fileType, @NotNull GlobalSearchScope scope) {
     return FileBasedIndex.getInstance().getContainingFiles(NAME, fileType, scope);
   }
 
@@ -47,11 +64,13 @@ public class FileTypeIndex extends ScalarIndexExtension<FileType>
     return this;
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<FileType> getKeyDescriptor() {
     return this;
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return this;
@@ -69,22 +88,27 @@ public class FileTypeIndex extends ScalarIndexExtension<FileType>
     for (FileType type : types) {
       version += type.getName().hashCode();
     }
+
+    version *= 31;
+    for (FileTypeRegistry.FileTypeDetector detector : Extensions.getExtensions(FileTypeRegistry.FileTypeDetector.EP_NAME)) {
+      version += detector.getVersion();
+    }
     return version;
   }
 
   @Override
-  public boolean acceptInput(VirtualFile file) {
+  public boolean acceptInput(@NotNull VirtualFile file) {
     return !file.isDirectory();
   }
 
   @Override
-  public void save(DataOutput out, FileType value) throws IOException {
-    myEnumeratorStringDescriptor.save(out, value.getName());
+  public void save(@NotNull DataOutput out, FileType value) throws IOException {
+    ENUMERATOR_STRING_DESCRIPTOR.save(out, value.getName());
   }
 
   @Override
-  public FileType read(DataInput in) throws IOException {
-    String read = myEnumeratorStringDescriptor.read(in);
+  public FileType read(@NotNull DataInput in) throws IOException {
+    String read = ENUMERATOR_STRING_DESCRIPTOR.read(in);
     return myFileTypeManager.findFileTypeByName(read);
   }
 
@@ -100,7 +124,7 @@ public class FileTypeIndex extends ScalarIndexExtension<FileType>
 
   @NotNull
   @Override
-  public Map<FileType, Void> map(FileContent inputData) {
+  public Map<FileType, Void> map(@NotNull FileContent inputData) {
     return Collections.singletonMap(inputData.getFileType(), null);
   }
 

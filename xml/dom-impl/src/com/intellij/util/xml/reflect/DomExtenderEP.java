@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +54,7 @@ public class DomExtenderEP extends AbstractExtensionPointBean {
       }
     }
     if (myDomClass.isAssignableFrom(handler.getRawType())) {
+      if (!myExtender.supportsStubs() && XmlUtil.isStubBuilding()) return registrar;
       if (registrar == null) {
         registrar = new DomExtensionsRegistrarImpl();
       }

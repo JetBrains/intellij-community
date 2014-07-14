@@ -23,6 +23,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.KeyedFactoryEPBean;
 import com.intellij.openapi.fileTypes.FileTypeExtensionPoint;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -42,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.Extensions;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.util.ExtensionPointCandidate;
 
 import java.util.List;
 
@@ -71,12 +73,12 @@ public class RegisterExtensionFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return true;
+    return !DumbService.isDumb(project);
   }
 
   @Override
   public void invoke(@NotNull Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
-    RegisterInspectionFix.choosePluginDescriptor(project, editor, file, new Consumer<DomFileElement<IdeaPlugin>>() {
+    PluginDescriptorChooser.show(project, editor, file, new Consumer<DomFileElement<IdeaPlugin>>() {
       @Override
       public void consume(DomFileElement<IdeaPlugin> element) {
         doFix(editor, element);
@@ -101,11 +103,11 @@ public class RegisterExtensionFix implements IntentionAction {
     }
   }
 
-  private void registerExtension(final DomFileElement<IdeaPlugin> element, final ExtensionPointCandidate candidate) {
-    PsiElement navTarget = new WriteCommandAction<PsiElement>(element.getFile().getProject(), element.getFile()) {
+  private void registerExtension(final DomFileElement<IdeaPlugin> selectedValue, final ExtensionPointCandidate candidate) {
+    PsiElement navTarget = new WriteCommandAction<PsiElement>(selectedValue.getFile().getProject(), selectedValue.getFile()) {
       @Override
-      protected void run(Result<PsiElement> result) throws Throwable {
-        Extensions extensions = RegisterInspectionFix.getExtension(element.getRootElement(), candidate.epName);
+      protected void run(@NotNull Result<PsiElement> result) throws Throwable {
+        Extensions extensions = PluginDescriptorChooser.findOrCreateExtensionsForEP(selectedValue, candidate.epName);
         Extension extension = extensions.addExtension(candidate.epName);
         XmlTag tag = extension.getXmlTag();
         PsiElement navTarget = null;

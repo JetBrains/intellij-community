@@ -16,8 +16,6 @@
 
 package com.intellij.ide.highlighter.custom.impl;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.completion.SyntaxTableCompletionData;
 import com.intellij.codeInsight.editorActions.TypedHandler;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.ide.highlighter.FileTypeRegistrator;
@@ -37,7 +35,6 @@ public class StandardFileTypeRegistrator implements FileTypeRegistrator {
 
   private static void init(final AbstractFileType abstractFileType) {
     SyntaxTable table = abstractFileType.getSyntaxTable();
-    CompletionUtil.registerCompletionData(abstractFileType,new SyntaxTableCompletionData(table));
 
     if (!isEmpty(table.getStartComment()) && !isEmpty(table.getEndComment()) ||
         !isEmpty(table.getLineComment())) {

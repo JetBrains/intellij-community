@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>6</line>
+    <description>String literal 'bollocks' doesn't appear to be valid property key</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>7</line>
+    <description>Property 'with.params' expected 3 parameters, passed 2</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>11</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Invalid property key</problem_class>
+    <description>Property 'weird' expected 4 parameters, passed 3</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>14</line>
+    <description>Property 'with.params' expected 3 parameters, passed 0</description>
+  </problem>
+</problems>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,11 @@
 
 package com.intellij.find.impl;
 
-import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesManager;
-import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.ProjectScope;
-import com.intellij.usageView.UsageViewUtil;
+import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.impl.UsageViewImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,27 +47,22 @@ public class ShowRecentFindUsagesGroup extends ActionGroup {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return EMPTY_ARRAY;
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
-    List<FindUsagesManager.SearchData> history = new ArrayList<FindUsagesManager.SearchData>(findUsagesManager.getFindUsageHistory());
+    List<ConfigurableUsageTarget> history = new ArrayList<ConfigurableUsageTarget>(findUsagesManager.getHistory().getAll());
     Collections.reverse(history);
 
     String description =
       ActionManager.getInstance().getAction(UsageViewImpl.SHOW_RECENT_FIND_USAGES_ACTION_ID).getTemplatePresentation().getDescription();
 
     List<AnAction> children = new ArrayList<AnAction>(history.size());
-    for (final FindUsagesManager.SearchData data : history) {
-      if (data.myElements == null) {
+    for (final ConfigurableUsageTarget usageTarget : history) {
+      if (!usageTarget.isValid()) {
         continue;
       }
-      PsiElement psiElement = data.myElements[0].getElement();
-      if (psiElement == null) continue;
-      String scopeString = data.myOptions.searchScope == null ? null : data.myOptions.searchScope.getDisplayName();
-      String text = FindBundle.message("recent.find.usages.action.popup", StringUtil.capitalize(UsageViewUtil.getType(psiElement)),
-                                       DescriptiveNameUtil.getDescriptiveName(psiElement),
-                                       scopeString == null ? ProjectScope.getAllScope(psiElement.getProject()).getDisplayName() : scopeString);
-      AnAction action = new AnAction(text, description, psiElement.getIcon(0)) {
+      String text = usageTarget.getLongDescriptiveName();
+      AnAction action = new AnAction(text, description, null) {
         @Override
         public void actionPerformed(final AnActionEvent e) {
-          findUsagesManager.rerunAndRecallFromHistory(data);
+          findUsagesManager.rerunAndRecallFromHistory(usageTarget);
         }
       };
       children.add(action);

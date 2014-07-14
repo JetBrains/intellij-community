@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,11 +41,11 @@ import java.util.List;
 public class TemplateFileReferenceSet extends FileReferenceSet {
   private final String mySeparatorString;
 
-  public TemplateFileReferenceSet(PsiElement element, @Nullable PsiReferenceProvider provider) {
+  public TemplateFileReferenceSet(@NotNull PsiElement element, @Nullable PsiReferenceProvider provider) {
     this(str(element), element, provider);
   }
 
-  public TemplateFileReferenceSet(String text, PsiElement element,
+  public TemplateFileReferenceSet(String text, @NotNull PsiElement element,
                                   @Nullable PsiReferenceProvider provider) {
     super(text, element, detectShift(element, text), provider,
           SystemInfo.isFileSystemCaseSensitive);
@@ -53,7 +53,7 @@ public class TemplateFileReferenceSet extends FileReferenceSet {
     reparse();
   }
 
-  private static String str(PsiElement element) {
+  private static String str(@NotNull PsiElement element) {
     return PythonStringUtil.stripQuotesAroundValue(element.getText());
   }
 

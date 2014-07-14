@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,6 +110,7 @@ public class MvcModuleStructureUtil {
     for (final VirtualFile excluded : structure.getExcludedFolders(root)) {
       if (moduleRootManager.getFileIndex().isInContent(excluded)) {
         actions.add(new Consumer<ContentEntry>() {
+          @Override
           public void consume(ContentEntry contentEntry) {
             contentEntry.addExcludeFolder(excluded);
           }
@@ -124,6 +125,7 @@ public class MvcModuleStructureUtil {
     }
 
     return new Consumer<ModifiableRootModel>() {
+      @Override
       public void consume(ModifiableRootModel model) {
         ContentEntry contentEntry = findContentEntry(model, root);
         if (contentEntry == null) {
@@ -141,10 +143,17 @@ public class MvcModuleStructureUtil {
   }
 
   public static void removeSrcFolderFromRoots(final VirtualFile file,
-                                              List<Consumer<ContentEntry>> actions,
-                                              Map<VirtualFile, JpsModuleSourceRootType<?>> sourceRoots) {
-    if (sourceRoots.containsKey(file)) {
+                                              @NotNull List<Consumer<ContentEntry>> actions,
+                                              @NotNull Map<VirtualFile, JpsModuleSourceRootType<?>> sourceRoots) {
+    removeSrcFolderFromRoots(file, actions, sourceRoots.keySet());
+  }
+
+  public static void removeSrcFolderFromRoots(final VirtualFile file,
+                                              @NotNull List<Consumer<ContentEntry>> actions,
+                                              @NotNull Collection<VirtualFile> sourceRoots) {
+    if (sourceRoots.contains(file)) {
       actions.add(new Consumer<ContentEntry>() {
+        @Override
         public void consume(ContentEntry contentEntry) {
           SourceFolder[] folders = contentEntry.getSourceFolders();
           for (SourceFolder folder : folders) {
@@ -170,6 +179,7 @@ public class MvcModuleStructureUtil {
     }
 
     return new Consumer<ModifiableRootModel>() {
+      @Override
       public void consume(ModifiableRootModel model) {
         Library.ModifiableModel libModel = modifyDefaultLibrary(model, libName);
         libModel.addJarDirectory(libDir, false);
@@ -230,6 +240,7 @@ public class MvcModuleStructureUtil {
     }
 
     actions.add(new Consumer<ContentEntry>() {
+      @Override
       public void consume(ContentEntry contentEntry) {
         contentEntry.addSourceFolder(src, rootType);
       }
@@ -361,6 +372,7 @@ public class MvcModuleStructureUtil {
 
     if (!toRemove.isEmpty() || !toRemoveContent.isEmpty()) {
       actions.add(new Consumer<ModifiableRootModel>() {
+        @Override
         public void consume(ModifiableRootModel model) {
           for (final ContentEntry entry : toRemoveContent) {
             model.removeContentEntry(entry);
@@ -408,6 +420,7 @@ public class MvcModuleStructureUtil {
 
     if (!toRemoveUrls.isEmpty()) {
       actions.add(new Consumer<ModifiableRootModel>() {
+        @Override
         public void consume(ModifiableRootModel model) {
           final Library.ModifiableModel modifiableModel = modifyDefaultLibrary(model, libName);
           for (String url : toRemoveUrls) {
@@ -725,6 +738,7 @@ public class MvcModuleStructureUtil {
 
   public static Consumer<ModifiableRootModel> removeStaleContentEntries(final Collection<VirtualFile> pluginDirs) {
     return new Consumer<ModifiableRootModel>() {
+      @Override
       public void consume(ModifiableRootModel modifiableRootModel) {
         for (final ContentEntry entry : modifiableRootModel.getContentEntries()) {
           if (!pluginDirs.contains(entry.getFile())) {
@@ -760,6 +774,7 @@ public class MvcModuleStructureUtil {
 
   public static Consumer<ModifiableRootModel> exportDefaultLibrary(final String libraryName) {
     return new Consumer<ModifiableRootModel>() {
+      @Override
       public void consume(ModifiableRootModel modifiableRootModel) {
         for (final OrderEntry entry : modifiableRootModel.getOrderEntries()) {
           if (entry instanceof LibraryOrderEntry) {

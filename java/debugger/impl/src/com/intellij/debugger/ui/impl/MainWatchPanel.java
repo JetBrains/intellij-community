@@ -43,16 +43,21 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 
 public class MainWatchPanel extends WatchPanel implements DataProvider {
 
@@ -61,30 +66,79 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
     final WatchDebuggerTree watchTree = getWatchTree();
 
     final AnAction removeWatchesAction = ActionManager.getInstance().getAction(DebuggerActions.REMOVE_WATCH);
-    removeWatchesAction.registerCustomShortcutSet(CommonShortcuts.DELETE, watchTree);
+    removeWatchesAction.registerCustomShortcutSet(CommonShortcuts.getDelete(), watchTree);
 
     final AnAction newWatchAction  = ActionManager.getInstance().getAction(DebuggerActions.NEW_WATCH);
     newWatchAction.registerCustomShortcutSet(CommonShortcuts.INSERT, watchTree);
 
-    final ClickListener mouseListener = new DoubleClickListener() {
+    final Alarm quitePeriod = new Alarm();
+    final Alarm editAlarm = new Alarm();
+    final ClickListener mouseListener = new ClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
-        AnAction editWatchAction = ActionManager.getInstance().getAction(DebuggerActions.EDIT_WATCH);
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
+        if (!SwingUtilities.isLeftMouseButton(event) ||
+            ((event.getModifiers() & (InputEvent.SHIFT_MASK | InputEvent.ALT_MASK | InputEvent.CTRL_MASK | InputEvent.META_MASK)) !=0) ) {
+          return false;
+        }
+        boolean sameRow = isAboveSelectedItem(event, watchTree);
+        final AnAction editWatchAction = ActionManager.getInstance().getAction(DebuggerActions.EDIT_WATCH);
         Presentation presentation = editWatchAction.getTemplatePresentation().clone();
         DataContext context = DataManager.getInstance().getDataContext(watchTree);
-
-        AnActionEvent actionEvent = new AnActionEvent(null, context, "WATCH_TREE", presentation, ActionManager.getInstance(), 0);
-        editWatchAction.actionPerformed(actionEvent);
-        return true;
+        final AnActionEvent actionEvent = new AnActionEvent(null, context, "WATCH_TREE", presentation, ActionManager.getInstance(), 0);
+        Runnable runnable = new Runnable() {
+          public void run() {
+            editWatchAction.actionPerformed(actionEvent);
+          }
+        };
+        if (sameRow && editAlarm.isEmpty() && quitePeriod.isEmpty()) {
+          editAlarm.addRequest(runnable, UIUtil.getMultiClickInterval());
+        } else {
+          editAlarm.cancelAllRequests();
+        }
+        return false;
+      }
+    };
+    final ClickListener mouseEmptySpaceListener = new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent event) {
+        if (!isAboveSelectedItem(event, watchTree)) {
+          newWatch();
+          return true;
+        }
+        return false;
       }
     };
     ListenerUtil.addClickListener(watchTree, mouseListener);
+    ListenerUtil.addClickListener(watchTree, mouseEmptySpaceListener);
+
+    final FocusListener focusListener = new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        quitePeriod.addRequest(EmptyRunnable.getInstance(), UIUtil.getMultiClickInterval());
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        editAlarm.cancelAllRequests();
+      }
+    };
+    ListenerUtil.addFocusListener(watchTree, focusListener);
+
+    final TreeSelectionListener selectionListener = new TreeSelectionListener() {
+      @Override
+      public void valueChanged(TreeSelectionEvent e) {
+        quitePeriod.addRequest(EmptyRunnable.getInstance(), UIUtil.getMultiClickInterval());
+      }
+    };
+    watchTree.addTreeSelectionListener(selectionListener);
 
     final AnAction editWatchAction  = ActionManager.getInstance().getAction(DebuggerActions.EDIT_WATCH);
     editWatchAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), watchTree);
     registerDisposable(new Disposable() {
       public void dispose() {
         ListenerUtil.removeClickListener(watchTree, mouseListener);
+        ListenerUtil.removeFocusListener(watchTree, focusListener);
+        watchTree.removeTreeSelectionListener(selectionListener);
         removeWatchesAction.unregisterCustomShortcutSet(watchTree);
         newWatchAction.unregisterCustomShortcutSet(watchTree);
         editWatchAction.unregisterCustomShortcutSet(watchTree);
@@ -133,6 +187,17 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
       public void updateDraggedImage(final Image image, final Point dropPoint, final Point imageOffset) {
       }
     }, myTree);
+  }
+
+  private static boolean isAboveSelectedItem(MouseEvent event, WatchDebuggerTree watchTree) {
+    Rectangle bounds = watchTree.getRowBounds(watchTree.getLeadSelectionRow());
+    if (bounds != null) {
+      bounds.width = watchTree.getWidth();
+      if (bounds.contains(event.getPoint())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void addWatchesFrom(final DebuggerTreeNodeImpl[] nodes) {
@@ -184,8 +249,13 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
         }
 
         TextWithImports text = comboBox.getText();
-        WatchDebuggerTree.setWatchNodeText(node, text);
-        comboBox.addRecent(text);
+        if (!text.isEmpty()) {
+          WatchDebuggerTree.setWatchNodeText(node, text);
+          comboBox.addRecent(text);
+        }
+        else {
+          getWatchTree().removeWatch(node);
+        }
         try {
           super.doOKAction();
         }
@@ -196,6 +266,9 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
 
       public void cancelEditing() {
         comboBox.setPopupVisible(false);
+        if (((WatchItemDescriptor)node.getDescriptor()).getEvaluationText().isEmpty()) {
+          getWatchTree().removeWatch(node);
+        }
 
         try {
           super.cancelEditing();

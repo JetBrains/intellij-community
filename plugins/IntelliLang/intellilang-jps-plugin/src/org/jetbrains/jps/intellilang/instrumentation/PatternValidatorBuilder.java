@@ -18,8 +18,6 @@ package org.jetbrains.jps.intellilang.instrumentation;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.asm4.ClassReader;
-import org.jetbrains.asm4.ClassWriter;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -30,6 +28,8 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.intellilang.model.InstrumentationException;
 import org.jetbrains.jps.intellilang.model.JpsIntelliLangConfiguration;
 import org.jetbrains.jps.intellilang.model.JpsIntelliLangExtensionService;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassWriter;
 
 /**
  * @author Eugene Zhuravlev

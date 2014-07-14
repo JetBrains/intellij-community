@@ -39,6 +39,32 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightInspecti
            "}");
   }
 
+  public void testJavaUtilObjectsEquals() {
+    doStatementTest("java.util.Objects./*'equals()' between objects of inconvertible types 'Integer' and 'String'*/equals/**/(Integer.valueOf(1), \"string\");");
+  }
+
+  public void testComGoogleCommonBaseObjects() {
+    doStatementTest("com.google.common.base.Objects./*'equal()' between objects of inconvertible types 'Integer' and 'String'*/equal/**/(Integer.valueOf(1), \"string\");");
+  }
+
+  @Override
+  protected String[] getEnvironmentClasses() {
+    return new String[] {
+      "package java.util;" +
+      "public final class Objects {" +
+      "  public static boolean equals(Object a, Object b) {" +
+      "    return (a == b) || (a != null && a.equals(b));" +
+      "  }" +
+      "}",
+      "package com.google.common.base;" +
+      "public final class Objects {" +
+      "  public static boolean equal(Object a, Object b) {" +
+      "    return true;" +
+      "  }" +
+      "}"
+    };
+  }
+
   @Override
   protected InspectionProfileEntry getInspection() {
     return new EqualsBetweenInconvertibleTypesInspection();

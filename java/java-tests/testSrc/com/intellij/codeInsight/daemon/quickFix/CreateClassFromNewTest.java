@@ -20,9 +20,14 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 /**
  * @author ven
  */
-public class CreateClassFromNewTest extends LightQuickFixTestCase {
-  public void test() throws Exception {
+public class CreateClassFromNewTest extends LightQuickFixParameterizedTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
     CodeStyleSettingsManager.getSettings(getProject()).SPACE_BEFORE_CLASS_LBRACE = true;
+  }
+
+  public void test() throws Exception {
     doAllTests();
   }
 

@@ -137,6 +137,14 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
     );
   }
 
+  /**
+   * Returns a new instance of class corresponding to the same logical position in the document, but without any cached
+   * reference to its visual position.
+   */
+  public LogicalPosition withoutVisualPositionInfo() {
+    return new LogicalPosition(line, column);
+  }
+
   public boolean equals(Object o) {
     if (!(o instanceof LogicalPosition)) return false;
     final LogicalPosition logicalPosition = (LogicalPosition) o;

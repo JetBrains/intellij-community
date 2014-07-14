@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +81,7 @@ public class SubstringZeroInspection extends BaseInspection {
         return;
       }
       final String qualifierText = qualifier.getText();
-      replaceExpression(call, qualifierText);
+      PsiReplacementUtil.replaceExpression(call, qualifierText);
     }
   }
 

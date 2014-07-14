@@ -33,7 +33,7 @@ class GroovyMembersGetter extends MembersGetter {
   private final PsiClassType myExpectedType;
 
   GroovyMembersGetter(PsiClassType expectedType, CompletionParameters parameters) {
-    super(GroovyCompletionContributor.completeStaticMembers(parameters), parameters.getPosition());
+    super(GrMainCompletionProvider.completeStaticMembers(parameters), parameters.getPosition());
     myExpectedType = JavaCompletionUtil.originalize(expectedType);
   }
 
@@ -47,7 +47,7 @@ class GroovyMembersGetter extends MembersGetter {
       return null;
     }
 
-    return GroovyCompletionContributor.createGlobalMemberElement(field, field.getContainingClass(), false);
+    return GrMainCompletionProvider.createGlobalMemberElement(field, field.getContainingClass(), false);
   }
 
   @Override
@@ -58,7 +58,7 @@ class GroovyMembersGetter extends MembersGetter {
       return null;
     }
 
-    return GroovyCompletionContributor.createGlobalMemberElement(method, method.getContainingClass(), false);
+    return GrMainCompletionProvider.createGlobalMemberElement(method, method.getContainingClass(), false);
   }
 
   private boolean isSuitableType(PsiType type) {

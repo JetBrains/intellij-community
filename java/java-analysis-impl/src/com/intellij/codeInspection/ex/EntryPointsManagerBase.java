@@ -400,7 +400,8 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         element instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)element).isDeprecated()) {
       return true;
     }
-    return AnnotationUtil.isAnnotated(owner, ADDITIONAL_ANNOTATIONS) ||
-           AnnotationUtil.isAnnotated(owner, getAdditionalAnnotations());
+
+    return AnnotationUtil.checkAnnotatedUsingPatterns(owner, ADDITIONAL_ANNOTATIONS) ||
+           AnnotationUtil.checkAnnotatedUsingPatterns(owner, getAdditionalAnnotations());
   }
 }

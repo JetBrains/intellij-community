@@ -310,7 +310,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
 
   private static void putCaretOnFieldName(Editor editor, PsiElement occurrence) {
     PyQualifiedExpression qExpr = PsiTreeUtil.getParentOfType(occurrence, PyQualifiedExpression.class, false);
-    if (qExpr != null && qExpr.getQualifier() == null) {
+    if (qExpr != null && !qExpr.isQualified()) {
       qExpr = PsiTreeUtil.getParentOfType(qExpr, PyQualifiedExpression.class);
     }
     if (qExpr != null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,16 +28,19 @@ public class Bottom extends PsiType {
     super(PsiAnnotation.EMPTY_ARRAY);
   }
 
+  @NotNull
   @Override
   public String getPresentableText() {
     return "_";
   }
 
+  @NotNull
   @Override
   public String getCanonicalText() {
     return "_";
   }
 
+  @NotNull
   @Override
   public String getInternalCanonicalText() {
     return getCanonicalText();
@@ -49,7 +52,7 @@ public class Bottom extends PsiType {
   }
 
   @Override
-  public boolean equalsToText(String text) {
+  public boolean equalsToText(@NotNull String text) {
     return text.equals("_");
   }
 

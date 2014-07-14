@@ -230,7 +230,7 @@ public class RefactoringHierarchyUtil {
   }
 
 
-  public static interface SuperTypeVisitor {
+  public interface SuperTypeVisitor {
     void visitType(PsiType aType);
 
     void visitClass(PsiClass aClass);

@@ -45,7 +45,7 @@ public class CreateAbstractMethodFromUsageFix extends CreateMethodFromUsageFix {
   }
 
   @Override
-  protected String getVisibility(PsiClass parentClass, PsiClass targetClass) {
+  protected String getVisibility(PsiClass parentClass, @NotNull PsiClass targetClass) {
     String result = super.getVisibility(parentClass, targetClass);
     return PsiModifier.PUBLIC.equals(result) ? result : PsiModifier.PROTECTED;
   }

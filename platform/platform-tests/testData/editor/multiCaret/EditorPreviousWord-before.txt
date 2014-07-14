@@ -1,0 +1,3 @@
+some tE<selection>x<caret>t</selection>
+other l<caret>ine<caret>
+<caret>yet another<caret> <caret>line

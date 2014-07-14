@@ -81,6 +81,18 @@ public interface PsiResolveHelper {
   CandidateInfo[] getReferencedMethodCandidates(@NotNull PsiCallExpression call, boolean dummyImplicitConstructor);
 
   /**
+   * Resolves a call expression and returns an array of possible resolve results.
+   *
+   * @param call the call expression to resolve.
+   * @param dummyImplicitConstructor if true, implicit empty constructor which does not actually exist
+   * can be returned as a candidate for the resolve.
+   * @param checkVarargs true if varargs method should lead to 2 candidates in the result array
+   * @return the array of resolve results.
+   */
+  @NotNull
+  CandidateInfo[] getReferencedMethodCandidates(@NotNull PsiCallExpression call, boolean dummyImplicitConstructor, boolean checkVarargs);
+
+  /**
    * Resolves a reference to a class, given the text of the reference and the context
    * in which it was encountered.
    *

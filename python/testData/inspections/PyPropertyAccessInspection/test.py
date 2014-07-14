@@ -22,7 +22,7 @@ b = a.readonly
 
 <warning descr="Property 'readonly' cannot be set">a.readonly</warning> += 1
 del <warning descr="Property 'readonly' cannot be deleted">a.readonly</warning>
-del <error descr="can't delete function call">a.readonly()</error> # Error, delete the result of function
+del <error descr="Can't delete function call">a.readonly()</error> # Error, delete the result of function
 
 a.writeonly = 1
 <warning descr="Property 'writeonly' cannot be read">a.writeonly</warning> += 1

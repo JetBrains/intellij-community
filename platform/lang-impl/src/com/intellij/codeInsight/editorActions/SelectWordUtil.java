@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ public class SelectWordUtil {
     return SELECTIONERS;
   }
 
-  private static final CharCondition JAVA_IDENTIFIER_PART_CONDITION = new CharCondition() {
+  public static final CharCondition JAVA_IDENTIFIER_PART_CONDITION = new CharCondition() {
     @Override
     public boolean value(char ch) {
       return Character.isJavaIdentifierPart(ch);
@@ -218,8 +218,12 @@ public class SelectWordUtil {
         availableSelectioners.add(selectioner);
       }
     }
+    long stamp = editor.getDocument().getModificationStamp();
     for (ExtendWordSelectionHandler selectioner : availableSelectioners) {
       List<TextRange> ranges = selectioner.select(element, text, cursorOffset, editor);
+      if (stamp != editor.getDocument().getModificationStamp()) {
+        throw new AssertionError("Selectioner " + selectioner + " has changed the document");
+      }
       if (ranges == null) continue;
 
       for (TextRange range : ranges) {

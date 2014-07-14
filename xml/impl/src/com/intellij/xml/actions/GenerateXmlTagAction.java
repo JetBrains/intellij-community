@@ -80,6 +80,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
         throw new CommonRefactoringUtil.RefactoringErrorHintException("Caret should be positioned inside a tag");
       }
       XmlElementDescriptor currentTagDescriptor = contextTag.getDescriptor();
+      assert currentTagDescriptor != null;
       final XmlElementDescriptor[] descriptors = currentTagDescriptor.getElementsDescriptors(contextTag);
       Arrays.sort(descriptors, new Comparator<XmlElementDescriptor>() {
         @Override
@@ -110,7 +111,9 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
               else {
                 newTag = (XmlTag)contextTag.addAfter(newTag, anchor);
               }
-              generateTag(newTag);
+              if (newTag != null) {
+                generateTag(newTag, editor);
+              }
             }
           }.execute();
         }
@@ -169,7 +172,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     return previousPositionIsPossible ? null : anchor;
   }
 
-  public static void generateTag(XmlTag newTag) {
+  public static void generateTag(@NotNull XmlTag newTag, Editor editor) {
     generateRaw(newTag);
     final XmlTag restored = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(newTag);
     if (restored == null) {
@@ -177,10 +180,10 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     }
     TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(restored);
     replaceElements(restored, builder);
-    builder.run();
+    builder.run(editor, false);
   }
 
-  private static void generateRaw(final XmlTag newTag) {
+  private static void generateRaw(final @NotNull XmlTag newTag) {
     XmlElementDescriptor selected = newTag.getDescriptor();
     if (selected == null) return;
     switch (selected.getContentType()) {

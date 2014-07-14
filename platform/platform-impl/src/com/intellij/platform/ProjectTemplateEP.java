@@ -33,4 +33,6 @@ public class ProjectTemplateEP extends AbstractExtensionPointBean {
   @Attribute("templatePath")
   public String templatePath;
 
+  @Attribute("category")
+  public boolean category;
 }

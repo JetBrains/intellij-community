@@ -16,7 +16,18 @@
 
 <idea-plugin>
   <name>JUnit</name>
-  <description>Provides possibility to run JUnit 3.x and 4.x tests and view their results</description>
+  <description>
+      <![CDATA[
+      This plugin supports <a href="https://github.com/junit-team/junit">JUnit tests</a>.
+      The following features are available:
+        <ul>
+        <li>Ability to create JUnit 3.x or JUnit 4.x tests.</li>
+        <li>Navigation between a test and test subject.</li>
+        <li>Running tests.</li>
+        <li>Viewing test results in the dedicated Test Runner tab of the Run tool window.</li>
+        </ul>
+      ]]>
+   </description>
   <version>1.0</version>
   <vendor>JetBrains</vendor>
   <extensions defaultExtensionNs="com.intellij">

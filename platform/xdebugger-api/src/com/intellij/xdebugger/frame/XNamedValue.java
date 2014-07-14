@@ -27,6 +27,7 @@ public abstract class XNamedValue extends XValue {
     myName = name;
   }
 
+  @NotNull
   public final String getName() {
     return myName;
   }

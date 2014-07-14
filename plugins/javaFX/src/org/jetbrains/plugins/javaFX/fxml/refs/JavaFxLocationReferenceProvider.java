@@ -78,7 +78,7 @@ class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
     }
   }
 
-  private static PsiReference[] collectRefs(PsiElement element, String value, final int startInElement, final FileType... acceptedFileTypes) {
+  private static PsiReference[] collectRefs(@NotNull PsiElement element, String value, final int startInElement, final FileType... acceptedFileTypes) {
     final FileReferenceSet set = new FileReferenceSet(value, element, startInElement, null, true){
       @Override
       protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {

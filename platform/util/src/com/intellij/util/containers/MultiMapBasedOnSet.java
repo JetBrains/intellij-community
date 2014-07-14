@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,34 @@
  */
 package com.intellij.util.containers;
 
-import java.util.*;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.Collections;
+
+@Deprecated
 /**
  * @author Sergey Evdokimov
+ * @deprecated Please use {@link MultiMap#createSet()}
+ * to remove in IDEA 15
  */
 public class MultiMapBasedOnSet<K, V> extends MultiMap<K, V> {
 
+  @NotNull
   @Override
   protected Collection<V> createCollection() {
     return new HashSet<V>();
   }
 
+  @NotNull
   @Override
   protected Collection<V> createEmptyCollection() {
     return Collections.emptySet();
   }
+
+  @NotNull
+  public static <K, V> MultiMap<K, V> createBasedOnSet() {
+    return MultiMap.createSet();
+  }
+
 }

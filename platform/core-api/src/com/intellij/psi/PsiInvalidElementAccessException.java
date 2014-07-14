@@ -16,9 +16,17 @@
 
 package com.intellij.psi;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,29 +36,94 @@ import java.lang.ref.SoftReference;
 /**
  * @author mike
  */
-public class PsiInvalidElementAccessException extends RuntimeException {
+public class PsiInvalidElementAccessException extends RuntimeException implements ExceptionWithAttachments {
+  private static final Key<Object> INVALIDATION_TRACE = Key.create("INVALIDATION_TRACE");
+  private static final Key<Boolean> REPORTING_EXCEPTION = Key.create("REPORTING_EXCEPTION");
   private final SoftReference<PsiElement> myElementReference;  // to prevent leaks, since exceptions are stored in IdeaLogger
+  private final Attachment[] myDiagnostic;
+  private final String myMessage;
 
   public PsiInvalidElementAccessException(PsiElement element) {
-    this(element, (String)null);
+    this(element, null, null);
   }
 
   public PsiInvalidElementAccessException(PsiElement element, @Nullable String message) {
-    this(element, getMessageWithReason(element, message), null);
+    this(element, message, null);
   }
 
   public PsiInvalidElementAccessException(PsiElement element, @Nullable Throwable cause) {
-    this(element, getMessageWithReason(element, null), cause);
+    this(element, null, cause);
   }
 
-  public PsiInvalidElementAccessException(PsiElement element, @Nullable String message, @Nullable Throwable cause) {
-    super(message, cause);
+  public PsiInvalidElementAccessException(@Nullable PsiElement element, @Nullable String message, @Nullable Throwable cause) {
+    super(null, cause);
     myElementReference = new SoftReference<PsiElement>(element);
+
+    if (element == null) {
+      myMessage = message;
+      myDiagnostic = Attachment.EMPTY_ARRAY;
+    } else if (element == PsiUtilCore.NULL_PSI_ELEMENT) {
+      myMessage = "NULL_PSI_ELEMENT ;" + message;
+      myDiagnostic = Attachment.EMPTY_ARRAY;
+    } else {
+      boolean recursiveInvocation = Boolean.TRUE.equals(element.getUserData(REPORTING_EXCEPTION));
+      element.putUserData(REPORTING_EXCEPTION, Boolean.TRUE);
+
+      try {
+        Object trace = recursiveInvocation ? null : findInvalidationTrace(element.getNode());
+        myMessage = getMessageWithReason(element, message, recursiveInvocation, trace);
+        if (trace == null) {
+          myDiagnostic = Attachment.EMPTY_ARRAY;
+        } else {
+          String diagnostic = trace instanceof Throwable ? ExceptionUtil.getThrowableText((Throwable)trace) : trace.toString();
+          myDiagnostic = new Attachment[]{new Attachment("diagnostic.txt", diagnostic)};
+        }
+      }
+      finally {
+        element.putUserData(REPORTING_EXCEPTION, null);
+      }
+    }
   }
 
-  private static String getMessageWithReason(@Nullable PsiElement element, @Nullable String message) {
-    return (element == null ? "Unknown psi element" : "Element: " + element.getClass() + " because: " + reason(element)) +
-          (message == null ? "" : "; " + message);
+  private static String getMessageWithReason(@NotNull PsiElement element, @Nullable String message, boolean recursiveInvocation, @Nullable Object trace) {
+    String reason = "Element: " + element.getClass();
+    if (!recursiveInvocation) {
+      String traceText = !isTrackingInvalidation() ? "disabled" :
+                         trace != null ? "see attachment" :
+                         "no info";
+      reason += " because: " + reason(element) + "\ninvalidated at: " + traceText;
+    }
+    return reason + (message == null ? "" : "; " + message);
+  }
+
+  @Override
+  public String getMessage() {
+    return myMessage;
+  }
+
+  @NotNull
+  @Override
+  public Attachment[] getAttachments() {
+    return myDiagnostic;
+  }
+
+  public static Object findInvalidationTrace(@Nullable ASTNode element) {
+    while (element != null) {
+      Object trace = element.getUserData(INVALIDATION_TRACE);
+      if (trace != null) {
+        return trace;
+      }
+      ASTNode parent = element.getTreeParent();
+      if (parent == null && element instanceof FileASTNode) {
+        PsiElement psi = element.getPsi();
+        trace = psi == null ? null : psi.getUserData(INVALIDATION_TRACE);
+        if (trace != null) {
+          return trace;
+        }
+      }
+      element = parent;
+    }
+    return null;
   }
 
   @NonNls
@@ -72,7 +145,6 @@ public class PsiInvalidElementAccessException extends RuntimeException {
       if (context != null && !context.isValid()) {
         return "invalid context: " + reason(context);
       }
-      return "non-physical provider: " + provider; // "dummy" file?
     }
     PsiManager manager = file.getManager();
     if (manager.getProject().isDisposed()) return "project is disposed";
@@ -81,7 +153,18 @@ public class PsiInvalidElementAccessException extends RuntimeException {
 
     FileViewProvider provider1 = manager.findViewProvider(vFile);
     if (provider != provider1) return "different providers: "+provider+"("+Integer.toHexString(System.identityHashCode(provider))+"); "+provider1+"("+Integer.toHexString(System.identityHashCode(provider1))+")";
+    if (!provider.isPhysical()) {
+      return "non-physical provider: " + provider; // "dummy" file?
+    }
     return "psi is outdated";
+  }
+
+  public static void setInvalidationTrace(UserDataHolder element, Object trace) {
+    element.putUserData(INVALIDATION_TRACE, trace);
+  }
+
+  public static boolean isTrackingInvalidation() {
+    return Registry.is("psi.track.invalidation", true);
   }
 
   @Nullable

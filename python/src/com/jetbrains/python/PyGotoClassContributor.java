@@ -19,11 +19,14 @@ import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import com.jetbrains.python.psi.PyClass;
+import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -31,13 +34,18 @@ import java.util.Collection;
 public class PyGotoClassContributor implements ChooseByNameContributor {
   @NotNull
   public String[] getNames(final Project project, final boolean includeNonProjectItems) {
-    final Collection<String> classNames = PyClassNameIndex.allKeys(project);
-    return ArrayUtil.toStringArray(classNames);
+    Set<String> results = new HashSet<String>();
+    results.addAll(PyClassNameIndex.allKeys(project));
+    results.addAll(PyModuleNameIndex.getAllKeys(project));
+    return ArrayUtil.toStringArray(results);
   }
 
   @NotNull
-  public NavigationItem[] getItemsByName(final String name, final String pattern, final Project project, final boolean includeNonProjectItems) {
-    final Collection<PyClass> classes = PyClassNameIndex.find(name, project, includeNonProjectItems);
-    return classes.toArray(new NavigationItem[classes.size()]);
+  public NavigationItem[] getItemsByName(final String name, final String pattern, final Project project,
+                                         final boolean includeNonProjectItems) {
+    final List<NavigationItem> results = new ArrayList<NavigationItem>();
+    results.addAll(PyClassNameIndex.find(name, project, includeNonProjectItems));
+    results.addAll(PyModuleNameIndex.find(name, project, includeNonProjectItems));
+    return results.toArray(new NavigationItem[results.size()]);
   }
 }

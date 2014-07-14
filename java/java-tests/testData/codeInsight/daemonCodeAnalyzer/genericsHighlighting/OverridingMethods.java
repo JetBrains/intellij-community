@@ -116,7 +116,7 @@ abstract class A8 implements II1<Integer>, II2<Number>{}
 abstract class HasGenericMethods<T> {
     abstract <P> void toArray(P[] p);
 }
-public class RawOverridesGenericMethods extends HasGenericMethods{
+class RawOverridesGenericMethods extends HasGenericMethods{
     public void toArray(Object[] ps) {
     }
 }
@@ -160,7 +160,7 @@ class BarIU {
 interface IU {
     public <I> I[] toArray(I[] ts);
 }
-public class BarIUBarIU extends BarIU implements IU{
+class BarIUBarIU extends BarIU implements IU{
     public <T> T[] toArray(T[] ts) {
         return null;
     }
@@ -339,7 +339,7 @@ final class Manista extends Super<Collection> {
 //end of IDEADEV-8393
 
 ///////////////////
-public class Prim {
+class Prim {
     Object g() {
         return null;
     }
@@ -366,7 +366,7 @@ class BubbleTypeDispatcher extends DefaultDispatcher<Node, String> {
 //end of IDEADEV-21921
 
 ////////////////////////////////////////
-public class Bug2 extends SmartList<Bug2> implements Places  {
+class Bug2 extends SmartList<Bug2> implements Places  {
 }
 interface Places extends java.util.List<Bug2> {}
 
@@ -433,37 +433,37 @@ interface PsiElement {
     String toString();
 }
 ///////////////////////IDEADEV-24300 ////////////////////////
-public class ActionContext<A extends ContextAction> {
+class ActionContext<A extends ContextAction> {
 }
-public abstract class ContextAction<AC extends ActionContext> {
+abstract class ContextAction<AC extends ActionContext> {
 	protected abstract void performAction(AC context);
 }
-public class OurAction extends TableContextAction<Object> {
+class OurAction extends TableContextAction<Object> {
 	protected void performAction(TableContext<Object> context) {
 	}
 }
-public class TableContext<TCP> extends ActionContext<TableContextAction<TCP>> {
+class TableContext<TCP> extends ActionContext<TableContextAction<TCP>> {
 }
-public abstract class TableContextAction<RO> extends ContextAction<TableContext<RO>> {
+abstract class TableContextAction<RO> extends ContextAction<TableContext<RO>> {
 }
 ///////////////////////////////IDEADEV-23176 /////////////////////
-public interface MyListModel { }
-public interface MyList {
+interface MyListModel { }
+interface MyList {
     Object get(int i);
     int hashCode();
 }
-public interface MutableListModel extends MyListModel, MyList {
+interface MutableListModel extends MyListModel, MyList {
 }
-public class ListModelImpl {
+class ListModelImpl {
     public Object get(int i) {
         return null;
     }
 }
-public class MutableListModelImpl extends ListModelImpl implements MutableListModel {
+class MutableListModelImpl extends ListModelImpl implements MutableListModel {
 }
 ///////////////////////////////////////////////////////////////
 
-public class InheritanceBug {
+class InheritanceBug {
     interface A {
         Object clone();
     }

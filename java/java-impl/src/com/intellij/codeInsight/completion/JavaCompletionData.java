@@ -465,8 +465,10 @@ public class JavaCompletionData extends JavaAwareCompletionData {
         result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.NEW), TailType.INSERT_SPACE));
         result.addElement(createKeyword(position, PsiKeyword.NULL));
       }
-      result.addElement(createKeyword(position, PsiKeyword.TRUE));
-      result.addElement(createKeyword(position, PsiKeyword.FALSE));
+      if (mayExpectBoolean(parameters)) {
+        result.addElement(createKeyword(position, PsiKeyword.TRUE));
+        result.addElement(createKeyword(position, PsiKeyword.FALSE));
+      }
     }
 
     PsiFile file = position.getContainingFile();
@@ -514,8 +516,7 @@ public class JavaCompletionData extends JavaAwareCompletionData {
     addUnfinishedMethodTypeParameters(position, result);
 
     if (JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(position) &&
-        !AFTER_DOT.accepts(position) &&
-        !(position.getParent() instanceof PsiLiteralExpression)) {
+        !AFTER_DOT.accepts(position)) {
       addExpectedTypeMembers(parameters, result);
       if (SameSignatureCallParametersProvider.IN_CALL_ARGUMENT.accepts(position)) {
         new SameSignatureCallParametersProvider().addCompletions(parameters, new ProcessingContext(), result);
@@ -526,6 +527,14 @@ public class JavaCompletionData extends JavaAwareCompletionData {
       result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.EXTENDS), TailType.HUMBLE_SPACE_BEFORE_WORD));
       result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.SUPER), TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
+  }
+
+  private static boolean mayExpectBoolean(CompletionParameters parameters) {
+    for (ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
+      PsiType type = info.getType();
+      if (type instanceof PsiClassType || type == PsiType.BOOLEAN) return true;
+    }
+    return false;
   }
 
   private static boolean isExpressionPosition(PsiElement position) {
@@ -573,8 +582,10 @@ public class JavaCompletionData extends JavaAwareCompletionData {
   }
 
   static void addExpectedTypeMembers(CompletionParameters parameters, final CompletionResultSet result) {
-    for (final ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
-      new JavaMembersGetter(info.getDefaultType(), parameters).addMembers(parameters.getInvocationCount() > 1, result);
+    if (parameters.getInvocationCount() <= 1) { // on second completion, StaticMemberProcessor will suggest those
+      for (final ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
+        new JavaMembersGetter(info.getDefaultType(), parameters).addMembers(false, result);
+      }
     }
   }
 

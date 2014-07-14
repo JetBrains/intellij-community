@@ -16,6 +16,7 @@
 package org.jetbrains.jps.javac;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.client.SimpleProtobufClient;
 import org.jetbrains.jps.client.UUIDGetter;
@@ -42,7 +43,7 @@ public class JavacServerClient extends SimpleProtobufClient<JavacServerResponseH
   }
 
   public RequestFuture<JavacServerResponseHandler> sendCompileRequest(List<String> options, Collection<File> files, Collection<File> classpath, Collection<File> platformCp, Collection<File> sourcePath, Map<File, Set<File>> outs, DiagnosticOutputConsumer diagnosticSink, OutputFileConsumer outputSink) {
-    final JavacServerResponseHandler rh = new JavacServerResponseHandler(diagnosticSink, outputSink);
+    final JavacServerResponseHandler rh = new JavacServerResponseHandler(diagnosticSink, outputSink, getEncodingName(options));
     final JavacRemoteProto.Message.Request request = JavacProtoUtil.createCompilationRequest(options, files, classpath, platformCp, sourcePath, outs);
     return sendRequest(request, rh, new RequestFuture.CancelAction<JavacServerResponseHandler>() {
       @Override
@@ -61,4 +62,17 @@ public class JavacServerClient extends SimpleProtobufClient<JavacServerResponseH
     return sendMessage(requestId, JavacProtoUtil.toMessage(requestId, request), responseHandler, cancelAction);
   }
 
+  @Nullable
+  private static String getEncodingName(List<String> options) {
+    boolean found = false;
+    for (String option : options) {
+      if (found) {
+        return option;
+      }
+      if ("-encoding".equalsIgnoreCase(option)) {
+        found = true;
+      }
+    }
+    return null;
+  }
 }

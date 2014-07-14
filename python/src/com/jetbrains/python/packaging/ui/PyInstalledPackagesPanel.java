@@ -33,6 +33,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -50,7 +51,6 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
 
   public PyInstalledPackagesPanel(Project project, PackagesNotificationPanel area) {
     super(project, area);
-
     myNotificationArea.addLinkHandler(INSTALL_SETUPTOOLS, new Runnable() {
       @Override
       public void run() {
@@ -76,7 +76,11 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
     return service != null ? service.getSdk() : null;
   }
 
-  public void updateNotifications(@NotNull final Sdk selectedSdk) {
+  public void updateNotifications(@Nullable final Sdk selectedSdk) {
+    if (selectedSdk == null) {
+      myNotificationArea.hide();
+      return;
+    }
     final Application application = ApplicationManager.getApplication();
     application.executeOnPooledThread(new Runnable() {
       @Override
@@ -84,11 +88,11 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         PyExternalProcessException exc = null;
         try {
           PyPackageManagerImpl packageManager = (PyPackageManagerImpl)PyPackageManager.getInstance(selectedSdk);
-          myHasSetuptools = packageManager.findPackage(PyPackageManagerImpl.PACKAGE_SETUPTOOLS) != null;
+          myHasSetuptools = packageManager.findInstalledPackage(PyPackageManagerImpl.PACKAGE_SETUPTOOLS) != null;
           if (!myHasSetuptools) {
-            myHasSetuptools = packageManager.findPackage(PyPackageManagerImpl.PACKAGE_DISTRIBUTE) != null;
+            myHasSetuptools = packageManager.findInstalledPackage(PyPackageManagerImpl.PACKAGE_DISTRIBUTE) != null;
           }
-          myHasPip = packageManager.findPackage(PyPackageManagerImpl.PACKAGE_PIP) != null;
+          myHasPip = packageManager.findInstalledPackage(PyPackageManagerImpl.PACKAGE_PIP) != null;
         }
         catch (PyExternalProcessException e) {
           exc = e;
@@ -121,7 +125,22 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
                   }
                   final boolean hasPackagingTools = myHasPip && myHasSetuptools;
                   allowCreateVirtualEnv &= !hasPackagingTools;
+
+                  if (externalProcessException.hasHandler()) {
+                    final String key = externalProcessException.getHandler().first;
+                    myNotificationArea.addLinkHandler(key,
+                                                      new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                          externalProcessException.getHandler().second.run();
+                                                          myNotificationArea.removeLinkHandler(key);
+                                                          updateNotifications(selectedSdk);
+                                                        }
+                                                      }
+                    );
+                  }
                 }
+
                 if (text == null) {
                   if (!myHasSetuptools) {
                     text = "Python package management tools not found. <a href=\"" + INSTALL_SETUPTOOLS + "\">Install 'setuptools'</a>";
@@ -182,7 +201,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   protected boolean canUninstallPackage(InstalledPackage pkg) {
     if (!myHasPip) return false;
     if (PythonSdkType.isVirtualEnv(getSelectedSdk()) && pkg instanceof PyPackage) {
-      final String location = ((PyPackage) pkg).getLocation();
+      final String location = ((PyPackage)pkg).getLocation();
       if (location != null && location.startsWith(PyPackageManagerImpl.getUserSite())) {
         return false;
       }

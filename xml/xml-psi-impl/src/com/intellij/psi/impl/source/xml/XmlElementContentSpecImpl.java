@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElem
     super(XML_ELEMENT_CONTENT_SPEC);
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -56,19 +57,23 @@ public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElem
     }
   }
 
+  @Override
   public boolean isEmpty() {
     return findElementByTokenType(XML_CONTENT_EMPTY) != null;
   }
 
+  @Override
   public boolean isAny() {
     return findElementByTokenType(XML_CONTENT_ANY) != null;
   }
 
+  @Override
   public boolean isMixed() {
     XmlElementContentGroup topGroup = getTopGroup();
     return topGroup != null && ((XmlElementImpl)topGroup).findElementByTokenType(XML_PCDATA) != null;
   }
 
+  @Override
   public boolean hasChildren() {
     return !(isEmpty() || isAny() || isMixed());
   }
@@ -78,11 +83,13 @@ public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElem
     return (XmlElementContentGroup)findElementByTokenType(XML_ELEMENT_CONTENT_GROUP);
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this,XmlElementContentSpec.class);
   }
 
+  @Override
   public void accept(@NotNull final PsiElementVisitor visitor) {
     if (visitor instanceof XmlElementVisitor) {
       ((XmlElementVisitor)visitor).visitXmlElement(this);

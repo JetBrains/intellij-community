@@ -288,26 +288,6 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
                  VfsUtil.loadText(myProjectRoot.findFileByRelativePath("subDir/module/pom.xml")));
   }
 
-  public void testFindingPotentialParentInNotMavenizedProject() throws Exception {
-    if (!hasMavenInstallation()) return;
-
-    Module module = createModule("project");
-    final VirtualFile dir = module.getModuleFile().getParent();
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        dir.createChildData(this, "pom.xml");
-      }
-    }.execute().throwException();
-
-
-    setModuleNameAndRoot("module", dir.getPath() + "/module");
-
-     // should not throw
-    MavenProject project = myBuilder.findPotentialParentProject(myProject);
-    assertNull(project);
-  }
-
   private void setModuleNameAndRoot(String name, String root) {
     myBuilder.setName(name);
     myBuilder.setModuleFilePath(root + "/" + name + ".iml");

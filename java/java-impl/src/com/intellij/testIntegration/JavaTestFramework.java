@@ -15,6 +15,7 @@
  */
 package com.intellij.testIntegration;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -114,5 +115,17 @@ public abstract class JavaTestFramework implements TestFramework {
     final FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(getSetUpMethodFileTemplateDescriptor().getFileName());
     final String templateText = StringUtil.replace(StringUtil.replace(template.getText(), "${BODY}\n", ""), "${NAME}", "setUp");
     return factory.createMethodFromText(templateText, null);
+  }
+
+  public FileTemplateDescriptor getTestClassFileTemplateDescriptor() {
+    return null;
+  }
+  
+  public void setupLibrary(Module module) {
+    OrderEntryFix.addJarToRoots(getLibraryPath(), module, null);
+  }
+
+  public boolean isSingleConfig() {
+    return false;
   }
 }

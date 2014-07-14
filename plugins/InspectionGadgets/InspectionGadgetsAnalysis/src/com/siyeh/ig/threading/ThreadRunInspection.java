@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ThreadRunInspection extends BaseInspection {
@@ -78,11 +79,11 @@ public class ThreadRunInspection extends BaseInspection {
       final PsiExpression qualifier =
         methodExpression.getQualifierExpression();
       if (qualifier == null) {
-        replaceExpression(methodExpression, "start");
+        PsiReplacementUtil.replaceExpression(methodExpression, "start");
       }
       else {
         final String qualifierText = qualifier.getText();
-        replaceExpression(methodExpression, qualifierText + ".start");
+        PsiReplacementUtil.replaceExpression(methodExpression, qualifierText + ".start");
       }
     }
   }

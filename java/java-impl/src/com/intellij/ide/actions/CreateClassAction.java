@@ -84,6 +84,11 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
   }
 
   @Override
+  protected String removeExtension(String templateName, String className) {
+    return StringUtil.trimEnd(className, ".java");
+  }
+
+  @Override
   protected String getErrorTitle() {
     return IdeBundle.message("title.cannot.create.class");
   }

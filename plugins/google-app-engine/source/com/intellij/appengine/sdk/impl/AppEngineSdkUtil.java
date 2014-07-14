@@ -42,7 +42,7 @@ public class AppEngineSdkUtil {
   private static final FacetConfigurationQuickFix DOWNLOAD_SDK_QUICK_FIX = new FacetConfigurationQuickFix("Download...") {
     @Override
     public void run(JComponent place) {
-      BrowserUtil.launchBrowser(APP_ENGINE_DOWNLOAD_URL);
+      BrowserUtil.browse(APP_ENGINE_DOWNLOAD_URL);
     }
   };
 
@@ -101,7 +101,7 @@ public class AppEngineSdkUtil {
       final ClassLoader loader = UrlClassLoader.build().urls(toolsApiJarFile.toURI().toURL()).parent(
         AppEngineSdkUtil.class.getClassLoader()).get();
       final Class<?> whiteListClass = Class.forName("com.google.apphosting.runtime.security.WhiteList", true, loader);
-      final Set<String> classes = (Set<String>) whiteListClass.getMethod("getWhiteList").invoke(null);
+      final Set<String> classes = (Set<String>)whiteListClass.getMethod("getWhiteList").invoke(null);
       for (String qualifiedName : classes) {
         final String packageName = StringUtil.getPackageName(qualifiedName);
         Set<String> classNames = map.get(packageName);
@@ -112,6 +112,10 @@ public class AppEngineSdkUtil {
         classNames.add(StringUtil.getShortName(qualifiedName));
       }
       return map;
+    }
+    catch (UnsupportedClassVersionError e) {
+      LOG.warn(e);
+      return Collections.emptyMap();
     }
     catch (Exception e) {
       LOG.error(e);

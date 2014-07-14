@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,12 @@ package com.intellij.openapi.editor.highlighter;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentListener;
+import org.jetbrains.annotations.NotNull;
 
 public interface EditorHighlighter extends DocumentListener {
+  @NotNull
   HighlighterIterator createIterator(int startOffset);
-  void setText(CharSequence text);
-  void setEditor(HighlighterClient editor);
-  void setColorScheme(EditorColorsScheme scheme);
+  void setText(@NotNull CharSequence text);
+  void setEditor(@NotNull HighlighterClient editor);
+  void setColorScheme(@NotNull EditorColorsScheme scheme);
 }

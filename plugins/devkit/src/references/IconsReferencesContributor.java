@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,9 +43,11 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.FindUsagesProcessPresentation;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -58,7 +60,7 @@ import static com.intellij.patterns.PsiJavaPatterns.*;
  */
 public class IconsReferencesContributor extends PsiReferenceContributor implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
-  public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+  public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     final StringPattern methodName = string().oneOf("findIcon", "getIcon");
     final PsiMethodPattern method = psiMethod().withName(methodName).definedInClass(IconLoader.class.getName());
     final PsiJavaElementPattern.Capture<PsiLiteralExpression> javaFile
@@ -73,7 +75,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
       @NotNull
       @Override
       public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
-        if (!PlatformUtils.isIdeaProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
+        if (!PsiUtil.isIdeaProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
         return new PsiReference[] {
           new PsiReferenceBase<PsiElement>(element, true) {
             @Override
@@ -157,7 +159,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
       @NotNull
       @Override
       public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
-        if (!PlatformUtils.isIdeaProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
+        if (!PsiUtil.isIdeaProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
         return new FileReferenceSet(element) {
           @Override
           protected Collection<PsiFileSystemItem> getExtraContexts() {
@@ -297,7 +299,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
         model.setCaseSensitive(true);
         model.setFindAll(true);
         model.setWholeWordsOnly(true);
-        FindInProjectUtil.findUsages(model, FindInProjectUtil.getPsiDirectory(model, project), project, false, new Processor<UsageInfo>() {
+        FindInProjectUtil.findUsages(model, FindInProjectUtil.getPsiDirectory(model, project), project, new Processor<UsageInfo>() {
           @Override
           public boolean process(final UsageInfo usage) {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -325,7 +327,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
             });
             return true;
           }
-        }, new FindUsagesProcessPresentation());
+        }, new FindUsagesProcessPresentation(new UsageViewPresentation()));
       }
     }
     return true;

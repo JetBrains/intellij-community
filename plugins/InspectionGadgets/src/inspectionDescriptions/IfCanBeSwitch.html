@@ -2,7 +2,7 @@
 <body>
 Reports any <b>if</b> statements with which can be replaced
 by a <b>switch</b> statement. This inspection will automatically suggest string
-switches when the project language level is jdk 1.7 or higher.
+switches when the project language level is Java 7 or higher.
 <!-- tooltip end -->
 <p>
 Use the text field below to indicate the minimum
@@ -14,6 +14,7 @@ primitive and boxed numbers and characters.
 Use the second checkbox below to have this inspection suggest switch statements on
 enum constants.
 <p>
-<small>New in 10.5</small>
+Use the third checkbox below to only suggest switch statements which can't introduce a <b>NullPointerException</b>
+<p>
 </body>
 </html>

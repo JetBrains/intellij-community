@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ public class UndoHelper {
   private final Set<Document> myCurrentDocuments = new HashSet<Document>();
   private boolean myDirty;
   private final DocumentAdapter myDocumentAdapter = new DocumentAdapter() {
+    @Override
     public void documentChanged(DocumentEvent e) {
       if (myShowing) {
         myDirty = true;
@@ -47,14 +48,17 @@ public class UndoHelper {
     myProject = project;
     final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     CommandProcessor.getInstance().addCommandListener(new CommandAdapter() {
+      @Override
       public void commandStarted(CommandEvent event) {
         undoTransparentActionStarted();
       }
 
+      @Override
       public void undoTransparentActionStarted() {
         myDirty = false;
       }
 
+      @Override
       public void undoTransparentActionFinished() {
         if (myDirty) {
           psiDocumentManager.commitAllDocuments();
@@ -62,6 +66,7 @@ public class UndoHelper {
         }
       }
 
+      @Override
       public void commandFinished(CommandEvent event) {
         undoTransparentActionFinished();
       }

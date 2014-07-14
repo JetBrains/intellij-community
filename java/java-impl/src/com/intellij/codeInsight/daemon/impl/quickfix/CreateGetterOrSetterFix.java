@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
   private final PsiField myField;
   private final String myPropertyName;
 
-  public CreateGetterOrSetterFix(boolean createGetter, boolean createSetter, PsiField field) {
+  public CreateGetterOrSetterFix(boolean createGetter, boolean createSetter, @NotNull PsiField field) {
     myCreateGetter = createGetter;
     myCreateSetter = createSetter;
     myField = field;

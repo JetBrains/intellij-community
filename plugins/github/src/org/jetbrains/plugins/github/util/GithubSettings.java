@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 
-import java.util.ArrayList;
-import java.util.Collection;
-
 import static org.jetbrains.plugins.github.util.GithubAuthData.AuthType;
 
 /**
@@ -61,8 +58,8 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     public boolean OPEN_IN_BROWSER_GIST = true;
     public boolean PRIVATE_GIST = true;
     public boolean SAVE_PASSWORD = true;
-    @NotNull public Collection<String> TRUSTED_HOSTS = new ArrayList<String>();
     public int CONNECTION_TIMEOUT = 5000;
+    public boolean VALID_GIT_AUTH = true;
   }
 
   public static GithubSettings getInstance() {
@@ -124,6 +121,10 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     return myState.SAVE_PASSWORD;
   }
 
+  public boolean isValidGitAuth() {
+    return myState.VALID_GIT_AUTH;
+  }
+
   public boolean isSavePasswordMakesSense() {
     final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
     return passwordSafe.getSettings().getProviderType() == PasswordSafeSettings.ProviderType.MASTER_PASSWORD;
@@ -141,19 +142,12 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     myState.SAVE_PASSWORD = savePassword;
   }
 
+  public void setValidGitAuth(final boolean validGitAuth) {
+    myState.VALID_GIT_AUTH = validGitAuth;
+  }
+
   public void setOpenInBrowserGist(final boolean openInBrowserGist) {
     myState.OPEN_IN_BROWSER_GIST = openInBrowserGist;
-  }
-
-  @NotNull
-  public Collection<String> getTrustedHosts() {
-    return myState.TRUSTED_HOSTS;
-  }
-
-  public void addTrustedHost(String host) {
-    if (!myState.TRUSTED_HOSTS.contains(host)) {
-      myState.TRUSTED_HOSTS.add(host);
-    }
   }
 
   @NotNull
@@ -187,10 +181,25 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     }
   }
 
+  private static boolean isValidGitAuth(@NotNull GithubAuthData auth) {
+    switch (auth.getAuthType()) {
+      case BASIC:
+        assert auth.getBasicAuth() != null;
+        return auth.getBasicAuth().getCode() == null;
+      case TOKEN:
+        return true;
+      case ANONYMOUS:
+        return false;
+      default:
+        throw new IllegalStateException("GithubSettings: setAuthData - wrong AuthType: " + auth.getAuthType());
+    }
+  }
+
   @NotNull
   public GithubAuthData getAuthData() {
     switch (getAuthType()) {
       case BASIC:
+        //noinspection ConstantConditions
         return GithubAuthData.createBasicAuth(getHost(), getLogin(), getPassword());
       case TOKEN:
         return GithubAuthData.createTokenAuth(getHost(), getPassword());
@@ -201,8 +210,11 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     }
   }
 
-  private void setAuthData(@NotNull GithubAuthData auth, boolean rememberPassword) {
+  public void setAuthData(@NotNull GithubAuthData auth, boolean rememberPassword) {
+    setValidGitAuth(isValidGitAuth(auth));
+
     setAuthType(auth.getAuthType());
+    setHost(auth.getHost());
 
     switch (auth.getAuthType()) {
       case BASIC:
@@ -220,12 +232,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
         setPassword("", rememberPassword);
         break;
       default:
-        throw new IllegalStateException("GithubSettings: setAuthData - wrong AuthType: " + getAuthType());
+        throw new IllegalStateException("GithubSettings: setAuthData - wrong AuthType: " + auth.getAuthType());
     }
-  }
-
-  public void setCredentials(@NotNull String host, @NotNull GithubAuthData auth, boolean rememberPassword) {
-    setHost(host);
-    setAuthData(auth, rememberPassword);
   }
 }

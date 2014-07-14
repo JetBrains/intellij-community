@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.config.DefaultProxyGroup;
 import org.jetbrains.idea.svn.config.ProxyGroup;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
@@ -25,6 +27,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class IdeaSVNConfigFile {
+
+  public final static String SERVERS_FILE_NAME = "servers";
+
   private final Map<String, String> myPatternsMap;
   private final long myLatestUpdate;
   private final File myFile;
@@ -39,6 +44,16 @@ public class IdeaSVNConfigFile {
     myFile = file;
     myLatestUpdate = -1;
     myPatternsMap = new HashMap<String, String>();
+  }
+
+  @NotNull
+  public static String getNewGroupName(@NotNull String host, @NotNull IdeaSVNConfigFile configFile) {
+    String groupName = host;
+    final Map<String, ProxyGroup> groups = configFile.getAllGroups();
+    while (StringUtil.isEmptyOrSpaces(groupName) || groups.containsKey(groupName)) {
+      groupName += "1";
+    }
+    return groupName;
   }
 
   public void updateGroups() {
@@ -94,10 +109,10 @@ public class IdeaSVNConfigFile {
 
   public void modifyGroup(final String name, final String patterns, final Collection<String> delete, final Map<String, String> addOrModify,
                           final boolean isDefault) {
-    if (! isDefault) {
+    if (!isDefault) {
       mySVNConfigFile.setPropertyValue(GROUPS_GROUP_NAME, name, patterns, false);
     }
-    final Map<String,String> deletedPrepared = new HashMap<String, String>(delete.size());
+    final Map<String, String> deletedPrepared = new HashMap<String, String>(delete.size());
     for (String property : delete) {
       deletedPrepared.put(property, null);
     }

@@ -16,6 +16,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspXml.JspDirective;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -90,7 +91,8 @@ public class JavaCodeBlockModificationListener implements PsiTreeChangePreproces
   }
 
   private static boolean isSourceDir(PsiElement element) {
-    return element instanceof PsiDirectory && JavaDirectoryService.getInstance().getPackage((PsiDirectory)element) != null;
+    return element instanceof PsiDirectory &&
+           ProjectFileIndex.SERVICE.getInstance(element.getProject()).isInSource(((PsiDirectory)element).getVirtualFile());
   }
 
   private static boolean isClassOwner(final PsiElement element) {

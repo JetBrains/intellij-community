@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,12 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlEle
     super(XML_COMMENT);
   }
 
+  @Override
   public IElementType getTokenType() {
     return XML_COMMENT;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof XmlElementVisitor) {
       ((XmlElementVisitor)visitor).visitXmlComment(this);
@@ -53,31 +55,37 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlEle
     return true;
   }
 
+  @Override
   public XmlTag getParentTag() {
     if(getParent() instanceof XmlTag) return (XmlTag)getParent();
     return null;
   }
 
+  @Override
   public XmlTagChild getNextSiblingInTag() {
     if(getParent() instanceof XmlTag) return (XmlTagChild)getNextSibling();
     return null;
   }
 
+  @Override
   public XmlTagChild getPrevSiblingInTag() {
     if(getParent() instanceof XmlTag) return (XmlTagChild)getPrevSibling();
     return null;
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlComment.class);
   }
 
+  @Override
   @Nullable
   public PsiMetaData getMetaData() {
     return MetaRegistry.getMetaBase(this);
   }
 
+  @Override
   public PsiLanguageInjectionHost updateText(@NotNull final String text) {
     final PsiFile psiFile = getContainingFile();
 
@@ -93,6 +101,7 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlEle
     return this;
   }
 
+  @Override
   @NotNull
   public LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
     return new XmlCommentLiteralEscaper(this);

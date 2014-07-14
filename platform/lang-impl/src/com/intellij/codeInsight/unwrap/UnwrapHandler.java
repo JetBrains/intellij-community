@@ -105,6 +105,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     }
 
     final JList list = new JBList(m);
+    list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setVisibleRowCount(options.size());
 
     list.addListSelectionListener(new ListSelectionListener() {

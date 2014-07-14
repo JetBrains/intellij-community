@@ -81,10 +81,6 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
     return true;
   }
 
-  public boolean isVisible() {
-    return true;
-  }
-
   @NotNull
   public String getId() {
     return "copyright";

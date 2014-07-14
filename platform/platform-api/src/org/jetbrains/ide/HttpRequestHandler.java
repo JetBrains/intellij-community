@@ -28,11 +28,11 @@ public abstract class HttpRequestHandler {
   // Your handler will be instantiated on first user request
   public static final ExtensionPointName<HttpRequestHandler> EP_NAME = ExtensionPointName.create("com.intellij.httpRequestHandler");
 
-  public boolean isSupported(FullHttpRequest request) {
+  public boolean isSupported(@NotNull FullHttpRequest request) {
     return request.getMethod() == HttpMethod.GET || request.getMethod() == HttpMethod.HEAD;
   }
 
-  public abstract boolean process(QueryStringDecoder urlDecoder, FullHttpRequest request, ChannelHandlerContext context)
+  public abstract boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context)
     throws IOException;
 
   protected static boolean checkPrefix(@NotNull String uri, @NotNull String prefix) {

@@ -19,7 +19,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade;
@@ -27,7 +26,9 @@ import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTa
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,18 +50,25 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
 
   @NotNull private final List<ExternalTaskPojo> myTasksToExecute;
   @Nullable private final String myVmOptions;
+  @Nullable private String myScriptParameters;
   @Nullable private final String myDebuggerSetup;
 
   public ExternalSystemExecuteTaskTask(@NotNull ProjectSystemId externalSystemId,
                                        @NotNull Project project,
                                        @NotNull List<ExternalTaskPojo> tasksToExecute,
                                        @Nullable String vmOptions,
-                                       @Nullable String debuggerSetup) throws IllegalArgumentException
-  {
+                                       @Nullable String scriptParameters,
+                                       @Nullable String debuggerSetup) throws IllegalArgumentException {
     super(externalSystemId, ExternalSystemTaskType.EXECUTE_TASK, project, getLinkedExternalProjectPath(tasksToExecute));
     myTasksToExecute = tasksToExecute;
     myVmOptions = vmOptions;
+    myScriptParameters = scriptParameters;
     myDebuggerSetup = debuggerSetup;
+  }
+
+  @NotNull
+  public List<ExternalTaskPojo> getTasksToExecute() {
+    return myTasksToExecute;
   }
 
   @NotNull
@@ -80,7 +88,8 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
           "but they are not (at least two different projects detected - '%s' and '%s'). Tasks: %s",
           result,
           task.getLinkedExternalProjectPath(),
-          tasks));
+          tasks
+        ));
       }
     }
     assert result != null;
@@ -98,26 +107,22 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
     RemoteExternalSystemTaskManager taskManager = facade.getTaskManager();
     List<String> taskNames = ContainerUtilRt.map2List(myTasksToExecute, MAPPER);
 
-    setState(ExternalSystemTaskState.IN_PROGRESS);
-    try {
-      taskManager.executeTasks(getId(), taskNames, getExternalProjectPath(), settings, myVmOptions, myDebuggerSetup);
-    }
-    finally {
-      setState(ExternalSystemTaskState.FINISHED);
-    }
+    final List<String> vmOptions = parseCmdParameters(myVmOptions);
+    final List<String> scriptParametersList = parseCmdParameters(myScriptParameters);
+
+    taskManager.executeTasks(getId(), taskNames, getExternalProjectPath(), settings, vmOptions, scriptParametersList, myDebuggerSetup);
   }
 
   @Override
-  protected void doCancel() throws Exception {
+  protected boolean doCancel() throws Exception {
     final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
     RemoteExternalSystemFacade facade = manager.getFacade(getIdeProject(), getExternalProjectPath(), getExternalSystemId());
     RemoteExternalSystemTaskManager taskManager = facade.getTaskManager();
-    setState(ExternalSystemTaskState.CANCELING);
-    try {
-      taskManager.cancelTask(getId());
-    }
-    finally {
-      setState(ExternalSystemTaskState.CANCELED);
-    }
+
+    return taskManager.cancelTask(getId());
+  }
+
+  private static List<String> parseCmdParameters(@Nullable String cmdArgsLine) {
+    return cmdArgsLine != null ? ParametersListUtil.parse(cmdArgsLine) : ContainerUtil.<String>newArrayList();
   }
 }

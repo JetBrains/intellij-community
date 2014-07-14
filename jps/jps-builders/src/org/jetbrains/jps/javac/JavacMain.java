@@ -16,11 +16,13 @@
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CanceledStatus;
+import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
+import org.jetbrains.jps.builders.java.CannotCreateJavaCompilerException;
+import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.LineOutputWriter;
@@ -32,6 +34,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Eugene Zhuravlev
@@ -44,8 +47,7 @@ public class JavacMain {
     "-d", "-classpath", "-cp", "-bootclasspath"
   ));
   private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.<String>asList(
-    /*javac options*/  "-verbose", "-proc:only", "-implicit:class", "-implicit:none", "-Xprefer:newer", "-Xprefer:source",
-    /*eclipse options*/"-noExit"
+    /*javac options*/  "-verbose", "-proc:only", "-implicit:class", "-implicit:none", "-Xprefer:newer", "-Xprefer:source"
   ));
 
   public static boolean compile(Collection<String> options,
@@ -56,118 +58,103 @@ public class JavacMain {
                                 Map<File, Set<File>> outputDirToRoots,
                                 final DiagnosticOutputConsumer diagnosticConsumer,
                                 final OutputFileConsumer outputSink,
-                                CanceledStatus canceledStatus, boolean useEclipseCompiler) {
-    JavaCompiler compiler = null;
-    if (useEclipseCompiler) {
-      for (JavaCompiler javaCompiler : ServiceLoader.load(JavaCompiler.class)) {
-        compiler = javaCompiler;
-        break;
-      }
-      if (compiler == null) {
-        diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Eclipse Batch Compiler was not found in classpath"));
-        return false;
-      }
+                                CanceledStatus canceledStatus, @NotNull JavaCompilingTool compilingTool) {
+    JavaCompiler compiler;
+    try {
+      compiler = compilingTool.createCompiler();
     }
-
-    final boolean nowUsingJavac;
-    if (compiler == null) {
-      compiler = ToolProvider.getSystemJavaCompiler();
-      if (compiler == null) {
-        String message = "System Java Compiler was not found in classpath";
-        // trying to obtain additional diagnostic for the case when compiler.jar is present, but there were problems with compiler class loading:
-        try {
-          Class.forName("com.sun.tools.javac.api.JavacTool", false, JavacMain.class.getClassLoader());
-        }
-        catch (Throwable ex) {
-          message = message + ":\n" + ExceptionUtil.getThrowableText(ex);
-        }
-        diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, message));
-        return false;
-      }
-      nowUsingJavac = true;
-    }
-    else {
-      nowUsingJavac = false;
+    catch (CannotCreateJavaCompilerException e) {
+      diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
+      return false;
     }
 
     for (File outputDir : outputDirToRoots.keySet()) {
       outputDir.mkdirs();
     }
-    
+
     final List<JavaSourceTransformer> transformers = getSourceTransformers();
 
-    final JavacFileManager fileManager = new JavacFileManager(new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, nowUsingJavac), transformers);
+    final boolean usingJavac = compilingTool instanceof JavacCompilerTool;
+    final JavacFileManager fileManager = new JavacFileManager(new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, usingJavac), transformers);
 
-    fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator()); // this will clear cached stuff
+    if (!platformClasspath.isEmpty()) {
+      // for javac6 this will prevent lazy initialization of Paths.bootClassPathRtJar 
+      // and thus usage of symbol file for resolution, when this file is not expected to be used
+      fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator());
+    }
     fileManager.handleOption("-extdirs", Collections.singleton("").iterator()); // this will clear cached stuff
     fileManager.handleOption("-endorseddirs", Collections.singleton("").iterator()); // this will clear cached stuff
-    final Collection<String> _options = prepareOptions(options, nowUsingJavac);
+    final Collection<String> _options = prepareOptions(options, compilingTool);
 
     try {
-      fileManager.setOutputDirectories(outputDirToRoots);
-    }
-    catch (IOException e) {
-      fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
-      return false;
-    }
-
-    if (!classpath.isEmpty()) {
-      try {
-        fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
-        if (!nowUsingJavac && !isOptionSet(options, "-processorpath")) {
-          // for non-javac file manager ensure annotation processor path defaults to classpath
-          fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, classpath);
-        }
-      }
-      catch (IOException e) {
-        fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
-        return false;
-      }
-    }
-    if (!platformClasspath.isEmpty()) {
-      try {
-        fileManager.setLocation(StandardLocation.PLATFORM_CLASS_PATH, buildPlatformClasspath(platformClasspath, _options));
-      }
-      catch (IOException e) {
-        fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
-        return false;
-      }
-    }
-    try {
-    // ensure the source path is set;
-    // otherwise, if not set, javac attempts to search both classes and sources in classpath;
-    // so if some classpath jars contain sources, it will attempt to compile them
-      fileManager.setLocation(StandardLocation.SOURCE_PATH, sourcePath);
-    }
-    catch (IOException e) {
-      fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
-      return false;
-    }
-
-    //noinspection IOResourceOpenedButNotSafelyClosed
-    final LineOutputWriter out = new LineOutputWriter() {
-      protected void lineAvailable(String line) {
-        if (nowUsingJavac) {
-          diagnosticConsumer.outputLineAvailable(line);
-        }
-        else {
-          // todo: filter too verbose eclipse output?
-        }
-      }
-    };
-
-    try {
-
       // to be on the safe side, we'll have to apply all options _before_ calling any of manager's methods
       // i.e. getJavaFileObjectsFromFiles()
       // This way the manager will be properly initialized. Namely, the encoding will be set correctly
+      // Note that due to lazy initialization in various components inside javac, handleOption() should be called before setLocation() and others
       for (Iterator<String> iterator = _options.iterator(); iterator.hasNext(); ) {
         fileManager.handleOption(iterator.next(), iterator);
       }
 
+      try {
+        fileManager.setOutputDirectories(outputDirToRoots);
+      }
+      catch (IOException e) {
+        fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
+        return false;
+      }
+
+      if (!classpath.isEmpty()) {
+        try {
+          fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
+          if (!usingJavac && !isOptionSet(options, "-processorpath")) {
+            // for non-javac file manager ensure annotation processor path defaults to classpath
+            fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, classpath);
+          }
+        }
+        catch (IOException e) {
+          fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
+          return false;
+        }
+      }
+      
+      if (!platformClasspath.isEmpty()) {
+        try {
+          fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator()); // this will clear cached stuff
+          fileManager.setLocation(StandardLocation.PLATFORM_CLASS_PATH, buildPlatformClasspath(platformClasspath, _options));
+        }
+        catch (IOException e) {
+          fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
+          return false;
+        }
+      }
+      
+      try {
+        // ensure the source path is set;
+        // otherwise, if not set, javac attempts to search both classes and sources in classpath;
+        // so if some classpath jars contain sources, it will attempt to compile them
+        fileManager.setLocation(StandardLocation.SOURCE_PATH, sourcePath);
+      }
+      catch (IOException e) {
+        fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
+        return false;
+      }
+
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      final LineOutputWriter out = new LineOutputWriter() {
+        protected void lineAvailable(String line) {
+          if (usingJavac) {
+            diagnosticConsumer.outputLineAvailable(line);
+          }
+          else {
+            // todo: filter too verbose eclipse output?
+          }
+        }
+      };
+
       final JavaCompiler.CompilationTask task = compiler.getTask(
         out, fileManager, diagnosticConsumer, _options, null, fileManager.getJavaFileObjectsFromFiles(sources)
       );
+      compilingTool.prepareCompilationTask(task, _options);
 
       //if (!IS_VM_6_VERSION) { //todo!
       //  // Do not add the processor for JDK 1.6 because of the bugs in javac
@@ -185,7 +172,7 @@ public class JavacMain {
     }
     finally {
       fileManager.close();
-      if (nowUsingJavac) {
+      if (usingJavac) {
         cleanupJavacNameTable();
       }
     }
@@ -220,14 +207,9 @@ public class JavacMain {
     return false;
   }
 
-  private static Collection<String> prepareOptions(final Collection<String> options, boolean usingJavac) {
+  private static Collection<String> prepareOptions(final Collection<String> options, @NotNull JavaCompilingTool compilingTool) {
     final List<String> result = new ArrayList<String>();
-    if (usingJavac) {
-      result.add("-implicit:class"); // the option supported by javac only
-    }
-    else { // is Eclipse
-      result.add("-noExit");
-    }
+    result.addAll(compilingTool.getDefaultCompilerOptions());
     boolean skip = false;
     for (String option : options) {
       if (FILTERED_OPTIONS.contains(option)) {
@@ -235,7 +217,7 @@ public class JavacMain {
         continue;
       }
       if (!skip) {
-        if (!FILTERED_SINGLE_OPTIONS.contains(option)) {
+        if (!FILTERED_SINGLE_OPTIONS.contains(option) && !compilingTool.getDefaultCompilerOptions().contains(option)) {
           result.add(option);
         }
       }
@@ -257,7 +239,7 @@ public class JavacMain {
     if (argsMap.isEmpty()) {
       return platformClasspath;
     }
-    
+
     final List<File> result = new ArrayList<File>();
     appendFiles(argsMap, PathOption.PREPEND_CP, result, false);
     appendFiles(argsMap, PathOption.ENDORSED, result, true);
@@ -295,7 +277,7 @@ public class JavacMain {
   }
 
   enum PathOption {
-    PREPEND_CP("-Xbootclasspath/p:"), 
+    PREPEND_CP("-Xbootclasspath/p:"),
     ENDORSED("-endorseddirs"), D_ENDORSED("-Djava.endorsed.dirs="),
     APPEND_CP("-Xbootclasspath/a:"),
     EXTDIRS("-extdirs"), D_EXTDIRS("-Djava.ext.dirs=");
@@ -334,6 +316,7 @@ public class JavacMain {
     private final DiagnosticOutputConsumer myOutConsumer;
     private final OutputFileConsumer myOutputFileSink;
     private final CanceledStatus myCanceledStatus;
+    private static final AtomicBoolean ourOptimizedManagerMissingReported = new AtomicBoolean(false);
 
     public ContextImpl(@NotNull JavaCompiler compiler,
                        @NotNull DiagnosticOutputConsumer outConsumer,
@@ -351,22 +334,18 @@ public class JavacMain {
             final Constructor<StandardJavaFileManager> constructor = optimizedManagerClass.getConstructor();
             // if optimizedManagerClass is loaded by another classloader, cls.newInstance() will not work
             // that's why we need to call setAccessible() to ensure access
-            constructor.setAccessible(true); 
+            constructor.setAccessible(true);
             optimizedManager = constructor.newInstance();
             cacheClearMethod = ClasspathBootstrap.getOptimizedFileManagerCacheClearMethod();
           }
           catch (Throwable e) {
             if (SystemInfo.isWindows) {
-              outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "JPS build failed to load optimized file manager for javac: " + e.getMessage()));
+              reportMissingOptimizedManager(outConsumer, e.getMessage());
             }
           }
         }
         else {
-          String error = ClasspathBootstrap.getOptimizedFileManagerLoadError();
-          if (error == null) {
-            error = "";
-          }
-          outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "JPS build failed to load optimized file manager for javac:\n" + error));
+          reportMissingOptimizedManager(outConsumer, null);
         }
       }
       myCacheClearMethod = cacheClearMethod;
@@ -375,6 +354,18 @@ public class JavacMain {
       }
       else {
         myStdManager = compiler.getStandardFileManager(outConsumer, Locale.US, null);
+      }
+    }
+
+    private static void reportMissingOptimizedManager(DiagnosticOutputConsumer outConsumer, String message) {
+      if (!ourOptimizedManagerMissingReported.getAndSet(true)) {
+        if (message == null) {
+          message = ClasspathBootstrap.getOptimizedFileManagerLoadError();
+          if (message == null) {
+            message = "";
+          }
+        }
+        outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "JPS build failed to load optimized file manager for javac:\n" + message));
       }
     }
 
@@ -449,13 +440,71 @@ public class JavacMain {
     try {
       final Field freelistField = NameTableCleanupDataHolder.freelistField;
       final Object emptyList = NameTableCleanupDataHolder.emptyList;
-        // both parameters should be non-null if properly initialized
+      // both parameters should be non-null if properly initialized
       if (freelistField != null && emptyList != null) {
-        freelistField.set(null, emptyList);
+        // the access to static 'freeList' field is synchronized inside javac, so we must use "synchronized" too
+        synchronized (freelistField.getDeclaringClass()) { 
+          freelistField.set(null, emptyList);
+        }
       }
     }
     catch (Throwable ignored) {
     }
   }
+
+  private static class ZipFileIndexCleanupDataHolder {
+    @Nullable
+    static final Method cacheInstanceGetter;
+    @Nullable
+    static final Method cacheClearMethod;
+
+    static {
+      Method getterMethod = null;
+      Method clearMethod = null;
+      try {
+        //trying JDK 6
+        clearMethod = Class.forName("com.sun.tools.javac.zip.ZipFileIndex").getDeclaredMethod("clearCache");
+        clearMethod.setAccessible(true);
+      }
+      catch (Throwable e) {
+        try {
+          final Class<?> cacheClass = Class.forName("com.sun.tools.javac.file.ZipFileIndexCache");
+          clearMethod = cacheClass.getDeclaredMethod("clearCache");
+          getterMethod = cacheClass.getDeclaredMethod("getSharedInstance");
+          clearMethod.setAccessible(true);
+          getterMethod.setAccessible(true);
+        }
+        catch (Throwable ignored2) {
+          clearMethod = null;
+          getterMethod = null;
+        }
+      }
+
+      cacheInstanceGetter = getterMethod;
+      cacheClearMethod = clearMethod;
+    }
+  }
+
+  private static volatile boolean zipCacheCleanupPossible = true;
+
+  public static void clearCompilerZipFileCache() {
+    if (zipCacheCleanupPossible) {
+      final Method clearMethod = ZipFileIndexCleanupDataHolder.cacheClearMethod;
+      if (clearMethod != null) {
+        final Method getter = ZipFileIndexCleanupDataHolder.cacheInstanceGetter;
+        try {
+          Object instance = getter != null? getter.invoke(null) : null;
+          clearMethod.invoke(instance);
+        }
+        catch (Throwable e) {
+          zipCacheCleanupPossible = false;
+        }
+      }
+      else {
+        zipCacheCleanupPossible = false;
+      }
+    }
+  }
+
 
 }

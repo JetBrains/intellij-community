@@ -153,6 +153,21 @@ public class SSHMain implements GitExternalApp {
     Connection c = new Connection(myHost.getHostName(), myHost.getPort());
     try {
       configureKnownHosts(c);
+
+      boolean useHttpProxy = Boolean.valueOf(System.getenv(GitSSHHandler.SSH_USE_PROXY_ENV));
+      if (useHttpProxy) {
+        String proxyHost = System.getenv(GitSSHHandler.SSH_PROXY_HOST_ENV);
+        Integer proxyPort = Integer.valueOf(System.getenv(GitSSHHandler.SSH_PROXY_PORT_ENV));
+        boolean proxyAuthentication = Boolean.valueOf(System.getenv(GitSSHHandler.SSH_PROXY_AUTHENTICATION_ENV));
+        String proxyUser = null;
+        String proxyPassword = null;
+        if (proxyAuthentication) {
+          proxyUser = System.getenv(GitSSHHandler.SSH_PROXY_USER_ENV);
+          proxyPassword = System.getenv(GitSSHHandler.SSH_PROXY_PASSWORD_ENV);
+        }
+        c.setProxyData(new HTTPProxyData(proxyHost, proxyPort, proxyUser, proxyPassword));
+      }
+
       c.connect(new HostKeyVerifier());
       authenticate(c);
       final Session s = c.openSession();
@@ -471,7 +486,7 @@ public class SSHMain implements GitExternalApp {
     }
     String host = args[i++];
     String user;
-    int atIndex = host.indexOf('@');
+    int atIndex = host.lastIndexOf('@');
     if (atIndex == -1) {
       user = null;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -666,14 +666,14 @@ public class MavenIndex {
   }
 
   private static class SetDescriptor implements DataExternalizer<Set<String>> {
-    public void save(DataOutput s, Set<String> set) throws IOException {
+    public void save(@NotNull DataOutput s, Set<String> set) throws IOException {
       s.writeInt(set.size());
       for (String each : set) {
         s.writeUTF(each);
       }
     }
 
-    public Set<String> read(DataInput s) throws IOException {
+    public Set<String> read(@NotNull DataInput s) throws IOException {
       int count = s.readInt();
       Set<String> result = new THashSet<String>(count);
       while (count-- > 0) {

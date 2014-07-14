@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 class RemoveParenthesesFromMethodPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof GrMethodCallExpression)) return false;
     if (!PsiUtil.isExpressionStatement(element)) return false;

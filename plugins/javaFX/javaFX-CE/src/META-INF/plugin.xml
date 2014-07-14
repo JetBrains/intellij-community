@@ -4,7 +4,17 @@
   <version>1.0</version>
   <vendor>JetBrains</vendor>
   <description>
-    This plugin provides JavaFX2 support.
-  </description>
+      <![CDATA[
+      This plugin enables <a href="http://www.oracle.com/technetwork/java/javafx/overview/index.html">JavaFX</a> support.
+      The following features are available:
+        <ul>
+        <li>Dedicated file type.</li>
+        <li>Ability to create a project with the special file and directory structure.</li>
+        <li>JavaFX-aware coding assistance (code completion, search, navigation and refactoring in JavaFX-specific source files).</li>
+        <li>Integration with <a href="http://www.oracle.com/technetwork/java/javafx/tools/index.html">JavaFX Scene Builder</a>.</li>
+        <li>JavaFX application packaging capabilities.</li>
+        </ul>
+      ]]>
+   </description>
   <xi:include href="/META-INF/common-javaFX-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>

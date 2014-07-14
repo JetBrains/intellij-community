@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,19 +28,23 @@ import java.io.IOException;
  */
 public interface TempDirTestFixture extends IdeaTestFixture {
 
-  VirtualFile copyFile(@NotNull VirtualFile file, String targetPath);
+  @NotNull
+  VirtualFile copyFile(@NotNull VirtualFile file, @NotNull String targetPath);
 
-  VirtualFile copyAll(String dataDir, String targetDir);
+  @NotNull
+  VirtualFile copyAll(@NotNull String dataDir, @NotNull String targetDir);
 
-  VirtualFile copyAll(String dataDir, String targetDir, @NotNull VirtualFileFilter filter);
+  @NotNull
+  VirtualFile copyAll(@NotNull String dataDir, @NotNull String targetDir, @NotNull VirtualFileFilter filter);
 
+  @NotNull
   String getTempDirPath();
 
-  VirtualFile getFile(@NonNls String path);
+  VirtualFile getFile(@NonNls @NotNull String path);
 
   @NotNull VirtualFile createFile(final String name);
 
-  @NotNull VirtualFile findOrCreateDir(final String name) throws IOException;
+  @NotNull VirtualFile findOrCreateDir(@NotNull String name) throws IOException;
 
-  @NotNull VirtualFile createFile(final String name, String text) throws IOException;
+  @NotNull VirtualFile createFile(@NotNull String name, String text) throws IOException;
 }

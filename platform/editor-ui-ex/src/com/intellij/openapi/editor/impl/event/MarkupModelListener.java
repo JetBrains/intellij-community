@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,22 @@ public interface MarkupModelListener extends EventListener {
   MarkupModelListener[] EMPTY_ARRAY = new MarkupModelListener[0];
 
   void afterAdded(@NotNull RangeHighlighterEx highlighter);
+
   void beforeRemoved(@NotNull RangeHighlighterEx highlighter);
+
   void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged);
+
+  abstract class Adapter implements MarkupModelListener {
+    @Override
+    public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
+    }
+
+    @Override
+    public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+    }
+
+    @Override
+    public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged) {
+    }
+  }
 }

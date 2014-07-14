@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public interface DataConstants {
   /**
    * Returns {@link com.intellij.openapi.module.Module}
    *
-   * @depreacated use {@link com.intellij.openapi.actionSystem.LangDataKeys#MODULE} instead
+   * @deprecated use {@link com.intellij.openapi.actionSystem.LangDataKeys#MODULE} instead
    */
   @NonNls String MODULE = "module";
 
@@ -166,7 +166,7 @@ public interface DataConstants {
   @NonNls String LANGUAGE = "Language";
 
   /**
-   * Returns java.awt.Component currently in focus, DataContext should be retreived for
+   * Returns java.awt.Component currently in focus, DataContext should be retrieved for
    *
    * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#CONTEXT_COMPONENT} instead
    */
@@ -232,7 +232,7 @@ public interface DataConstants {
   String DELETE_ELEMENT_PROVIDER = PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getName();
 
   /**
-   * Returns com.intellij.openapi.editor.Editor even if foces currently is in find bar
+   * Returns com.intellij.openapi.editor.Editor even if focuses currently is in find bar
    *
    * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#EDITOR} instead
    */

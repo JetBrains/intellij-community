@@ -28,7 +28,6 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.ui.DebuggerPanelsManager;
 import com.intellij.debugger.ui.DebuggerSessionTab;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -40,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.unscramble.ThreadDumpParser;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.SmartList;
+import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.*;
 import gnu.trove.TIntObjectHashMap;
 
@@ -68,9 +68,9 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
             final List<ThreadState> threads = buildThreadStates(vm);
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                final DebuggerSessionTab sessionTab = DebuggerPanelsManager.getInstance(project).getSessionTab();
-                if (sessionTab != null) {
-                  sessionTab.addThreadDump(threads);
+                XDebugSession xSession = session.getXDebugSession();
+                if (xSession != null) {
+                  DebuggerSessionTab.addThreadDump(project, threads, xSession.getUI(), session);
                 }
               }
             }, ModalityState.NON_MODAL);

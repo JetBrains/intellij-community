@@ -363,7 +363,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
 
     public void visitTestStdErr(@NotNull final TestStdErr testStdErr) {
-      fireOnTestOutput(new TestOutputEvent(testStdErr.getTestName(), testStdErr.getStdErr(), false));
+      fireOnTestOutput(new TestOutputEvent(testStdErr, testStdErr.getStdErr(), false));
     }
 
     public void visitTestFailed(@NotNull final TestFailed testFailed) {

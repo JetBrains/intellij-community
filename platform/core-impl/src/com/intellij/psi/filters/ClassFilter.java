@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package com.intellij.psi.filters;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -46,7 +46,7 @@ public class ClassFilter implements ElementFilter{
   }
 
   private boolean filterMatches(final Class hintClass) {
-    return ReflectionCache.isAssignable(myFilter, hintClass);
+    return ReflectionUtil.isAssignable(myFilter, hintClass);
   }
 
   @Override

@@ -16,7 +16,6 @@
 package com.jetbrains.python.templateLanguages;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -26,7 +25,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelperRegistrar;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileSystemItemUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -66,17 +64,13 @@ public class TemplateFileReference extends WeakFileReference {
     final VirtualFile curVFile = file.getVirtualFile();
     if (curVFile == null) throw new IncorrectOperationException("Cannot bind from non-physical element:" + file);
 
-    final Project project = element.getProject();
-
     String newName;
 
     PsiFileSystemItem curItem = null;
     PsiFileSystemItem dstItem = null;
 
-    final FileReferenceHelper helper = FileReferenceHelperRegistrar.getNotNullHelper(file);
-
-    PsiFileSystemItem _dstItem = helper.getPsiFileSystemItem(project, dstVFile);
-    PsiFileSystemItem _curItem = helper.getPsiFileSystemItem(project, curVFile);
+    PsiFileSystemItem _dstItem = FileReferenceHelper.getPsiFileSystemItem(file.getManager(), dstVFile);
+    PsiFileSystemItem _curItem = FileReferenceHelper.getPsiFileSystemItem(file.getManager(), curVFile);
     if (_dstItem != null && _curItem != null) {
       curItem = _curItem;
       dstItem = _dstItem;

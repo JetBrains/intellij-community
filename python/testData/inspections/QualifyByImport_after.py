@@ -1,3 +1,3 @@
 import QualifyByImportFoo
 
-QualifyByImportFoo.foo # must be qualified
+QualifyByImportFoo.foo  # must be qualified

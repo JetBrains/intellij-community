@@ -27,7 +27,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -39,6 +39,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginDescriptorConstants;
 
@@ -91,12 +92,15 @@ public class PluginBuildConfiguration implements ModuleComponent, JDOMExternaliz
     }
     url = element.getAttributeValue(MANIFEST_ATTR);
     if (url != null) {
-      setManifestPath(VfsUtil.urlToPath(url));
+      setManifestPath(VfsUtilCore.urlToPath(url));
     }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    element.setAttribute(URL_ATTR, getPluginXmlUrl());
+    final String url = getPluginXmlUrl();
+    if (url != null) {
+      element.setAttribute(URL_ATTR, url);
+    }
     if (myManifestFilePointer != null){
       element.setAttribute(MANIFEST_ATTR, myManifestFilePointer.getUrl());
     }
@@ -105,6 +109,11 @@ public class PluginBuildConfiguration implements ModuleComponent, JDOMExternaliz
   @Nullable
   public ConfigFile getPluginXML() {
     return myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
+  }
+
+  @TestOnly
+  public void setPluginXmlFromVirtualFile(VirtualFile virtualFile) {
+    myPluginXmlContainer.getConfiguration().replaceConfigFile(PluginDescriptorConstants.META_DATA, virtualFile.getUrl());
   }
 
   private void createDescriptor(final String url) {
@@ -135,14 +144,14 @@ public class PluginBuildConfiguration implements ModuleComponent, JDOMExternaliz
     if (url == null) {
       return getDefaultLocation();
     }
-    return FileUtil.toSystemDependentName(VfsUtil.urlToPath(url));
+    return FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(url));
   }
 
   public void setPluginXmlPathAndCreateDescriptorIfDoesntExist(final String pluginXmlPath) {
     myPluginXmlContainer.getConfiguration().removeConfigFiles(PluginDescriptorConstants.META_DATA);
     new WriteAction() {
       protected void run(final Result result) throws Throwable {
-        createDescriptor(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(pluginXmlPath)));
+        createDescriptor(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(pluginXmlPath)));
       }
     }.execute();
   }
@@ -157,7 +166,8 @@ public class PluginBuildConfiguration implements ModuleComponent, JDOMExternaliz
         Messages.showErrorDialog(myModule.getProject(), DevKitBundle.message("error.file.not.found.message", manifestPath), DevKitBundle.message("error.file.not.found"));
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            myManifestFilePointer = VirtualFilePointerManager.getInstance().create(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(manifestPath)), myModule, null);
+            myManifestFilePointer = VirtualFilePointerManager.getInstance().create(
+              VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(manifestPath)), myModule, null);
           }
         });
       } else {

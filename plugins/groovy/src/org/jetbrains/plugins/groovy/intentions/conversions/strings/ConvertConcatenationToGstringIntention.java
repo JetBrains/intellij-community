@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.intentions.base.ErrorUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -111,13 +111,14 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     if (expressions.size() == 1) {
       invokeImpl(expressions.get(0), document);
     }
-    else if (expressions.size() > 0) {
+    else if (!expressions.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         invokeImpl(expressions.get(expressions.size() - 1), document);
         return;
       }
       IntroduceTargetChooser.showChooser(editor, expressions,
                                          new Pass<GrExpression>() {
+                                           @Override
                                            public void pass(final GrExpression selectedValue) {
                                              invokeImpl(selectedValue, document);
                                            }
@@ -196,13 +197,12 @@ public class ConvertConcatenationToGstringIntention extends Intention {
 
   private static void getOperandText(@Nullable GrExpression operand, StringBuilder builder, boolean multiline) {
     if (operand instanceof GrRegex) {
-      boolean isDollarSlashy = GrStringUtil.isDollarSlashyString((GrLiteral)operand);
       for (GroovyPsiElement element : ((GrRegex)operand).getAllContentParts()) {
         if (element instanceof GrStringInjection) {
           builder.append(element.getText());
         }
         else if (element instanceof GrStringContent) {
-          if (isDollarSlashy) {
+          if (GrStringUtil.isDollarSlashyString((GrLiteral)operand)) {
             processDollarSlashyContent(builder, multiline, element.getText());
           }
           else {
@@ -323,6 +323,7 @@ public class ConvertConcatenationToGstringIntention extends Intention {
   }
 
   private static class MyPredicate implements PsiElementPredicate {
+    @Override
     public boolean satisfiedBy(PsiElement element) {
       return satisfied(element);
     }

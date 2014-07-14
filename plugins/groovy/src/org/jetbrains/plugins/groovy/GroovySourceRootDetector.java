@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ public class GroovySourceRootDetector extends JavaSourceRootDetector {
     return GroovyFileType.DEFAULT_EXTENSION;
   }
 
+  @Override
   @NotNull
   protected NullableFunction<CharSequence, String> getPackageNameFetcher() {
     return new NullableFunction<CharSequence, String>() {
@@ -78,7 +79,7 @@ public class GroovySourceRootDetector extends JavaSourceRootDetector {
         skipWhitespacesAndComments(lexer);
       }
       String packageName = buffer.toString();
-      if (packageName.length() == 0 || StringUtil.endsWithChar(packageName, '.')) return null;
+      if (packageName.isEmpty() || StringUtil.endsWithChar(packageName, '.')) return null;
       return packageName;
     }
     finally {

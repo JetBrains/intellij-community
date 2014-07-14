@@ -74,7 +74,7 @@ public class ExternalSystemFacadeWrapper<S extends ExternalSystemExecutionSettin
   }
 
   @Override
-  public void cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException {
-    myDelegate.cancelTask(id);
+  public boolean cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException {
+    return myDelegate.cancelTask(id);
   }
 }

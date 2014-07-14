@@ -39,10 +39,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author mike
@@ -171,6 +168,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     method.getBody().add(stmt);
 
     for (PsiAnnotation annotation : methodCandidate.getElement().getModifierList().getAnnotations()) {
+      if (SuppressWarnings.class.getName().equals(annotation.getQualifiedName())) continue;
       method.getModifierList().add(annotation.copy());
     }
 
@@ -238,7 +236,17 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
 
     List<PsiMethodMember> methodInstances = new ArrayList<PsiMethodMember>();
 
-    final PsiMethod[] allMethods = targetClass.getAllMethods();
+    final PsiMethod[] allMethods;
+    if (targetClass instanceof PsiTypeParameter) {
+      LinkedHashSet<PsiMethod> meths = new LinkedHashSet<PsiMethod>();
+      for (PsiClass superClass : targetClass.getSupers()) {
+        meths.addAll(Arrays.asList(superClass.getAllMethods()));
+      }
+      allMethods = meths.toArray(new PsiMethod[meths.size()]);
+    }
+    else {
+      allMethods = targetClass.getAllMethods();
+    }
     final Set<MethodSignature> signatures = new HashSet<MethodSignature>();
     final Set<MethodSignature> existingSignatures = new HashSet<MethodSignature>(aClass.getVisibleSignatures());
     final Set<PsiMethodMember> selection = new HashSet<PsiMethodMember>();
@@ -253,7 +261,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
         superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, targetClass, substitutor);
         superSubstitutors.put(superClass, superSubstitutor);
       }
-      PsiSubstitutor methodSubstitutor = OverrideImplementUtil.correctSubstitutor(method, superSubstitutor);
+      PsiSubstitutor methodSubstitutor = OverrideImplementExploreUtil.correctSubstitutor(method, superSubstitutor);
       MethodSignature signature = method.getSignature(methodSubstitutor);
       if (!signatures.contains(signature)) {
         signatures.add(signature);
@@ -347,14 +355,16 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
       final PsiType type = field.getType();
       if (helper.isAccessible(field, aClass, aClass) && type instanceof PsiClassType && !PsiTreeUtil.isAncestor(field, element, false)) {
         final PsiClass containingClass = field.getContainingClass();
-        result.add(new PsiFieldMember(field, TypeConversionUtil.getSuperClassSubstitutor(containingClass, aClass, PsiSubstitutor.EMPTY)));
+        if (containingClass != null) {
+          result.add(new PsiFieldMember(field, TypeConversionUtil.getSuperClassSubstitutor(containingClass, aClass, PsiSubstitutor.EMPTY)));
+        }
       }
     }
 
     final PsiMethod[] methods = aClass.getAllMethods();
     for (PsiMethod method : methods) {
       final PsiClass containingClass = method.getContainingClass();
-      if (CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) continue;
+      if (containingClass == null || CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) continue;
       final PsiType returnType = method.getReturnType();
       if (returnType != null && PropertyUtil.isSimplePropertyGetter(method) && helper.isAccessible(method, aClass, aClass) &&
           returnType instanceof PsiClassType && !PsiTreeUtil.isAncestor(method, element, false)) {

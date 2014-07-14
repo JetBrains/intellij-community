@@ -145,12 +145,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       final ActionManagerImpl am = (ActionManagerImpl)ActionManager.getInstance();
       ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)am.createActionPopupMenu(event.getPlace(), (ActionGroup)myAction, new MenuItemPresentationFactory() {
         @Override
-        protected Presentation processPresentation(Presentation presentation) {
+        protected void processPresentation(Presentation presentation) {
           if (myNoIconsInPopup) {
             presentation.setIcon(null);
             presentation.setHoveredIcon(null);
           }
-          return presentation;
         }
       });
       popupMenu.setDataContextProvider(new Getter<DataContext>() {
@@ -185,6 +184,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       myActionButtonSynchronizer = new ActionButtonSynchronizer();
       myPresentation.addPropertyChangeListener(myActionButtonSynchronizer);
     }
+    AnActionEvent e = new AnActionEvent(null, getDataContext(), myPlace, myPresentation, ActionManager.getInstance(), 0);
+    ActionUtil.performDumbAwareUpdate(myAction, e, false);
     updateToolTipText();
     updateIcon();
   }
@@ -351,6 +352,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         updateToolTipText();
       }
       else if (Presentation.PROP_ENABLED.equals(propertyName)) {
+        updateIcon();
         repaint();
       }
       else if (Presentation.PROP_ICON.equals(propertyName)) {

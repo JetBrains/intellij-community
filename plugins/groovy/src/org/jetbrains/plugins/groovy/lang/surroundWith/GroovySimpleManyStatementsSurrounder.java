@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.util.TextRange;
  * Date: Mar 18, 2009
  */
 public abstract class GroovySimpleManyStatementsSurrounder extends GroovyManyStatementsSurrounder {
+  @Override
   protected final GroovyPsiElement doSurroundElements(PsiElement[] elements, PsiElement context) throws IncorrectOperationException {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(elements[0].getProject());
     GrMethodCallExpression withCall = (GrMethodCallExpression) factory.createExpressionFromText(getReplacementTokens(), context);
@@ -39,6 +40,7 @@ public abstract class GroovySimpleManyStatementsSurrounder extends GroovyManySta
 
   protected abstract String getReplacementTokens();
 
+  @Override
   protected final TextRange getSurroundSelectionRange(GroovyPsiElement element) {
     assert element instanceof GrMethodCallExpression;
 

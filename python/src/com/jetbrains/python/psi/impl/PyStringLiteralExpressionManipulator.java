@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,15 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
 import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.psi.PyElementGenerator;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author traff
  */
 public class PyStringLiteralExpressionManipulator extends AbstractElementManipulator<PyStringLiteralExpressionImpl> {
 
-  public PyStringLiteralExpressionImpl handleContentChange(PyStringLiteralExpressionImpl element, TextRange range, String newContent) {
+  @Override
+  public PyStringLiteralExpressionImpl handleContentChange(@NotNull PyStringLiteralExpressionImpl element, @NotNull TextRange range, String newContent) {
     Pair<String, String> quotes = PythonStringUtil.getQuotes(range.substring(element.getText()));
 
     if (quotes != null) {
@@ -39,8 +41,9 @@ public class PyStringLiteralExpressionManipulator extends AbstractElementManipul
       .replace(PyElementGenerator.getInstance(element.getProject()).createStringLiteralAlreadyEscaped(newName));
   }
 
+  @NotNull
   @Override
-  public TextRange getRangeInElement(PyStringLiteralExpressionImpl element) {
+  public TextRange getRangeInElement(@NotNull PyStringLiteralExpressionImpl element) {
     Pair<String, String> pair = PythonStringUtil.getQuotes(element.getText());
     if (pair != null) {
       return TextRange.from(pair.first.length(), element.getTextLength() - pair.first.length() - pair.second.length());

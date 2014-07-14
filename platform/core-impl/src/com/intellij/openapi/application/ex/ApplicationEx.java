@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,16 +44,34 @@ public interface ApplicationEx extends Application {
   @NotNull
   String getName();
 
+  /**
+   * @return true if this thread is inside read action.
+   * @see #runReadAction(Runnable)
+   */
   boolean holdsReadLock();
+
+  /**
+   * @return true if the EDT is performing write action right now.
+   * @see #runWriteAction(Runnable)
+   */
+  boolean isWriteActionInProgress();
 
   void doNotSave();
   void doNotSave(boolean value);
   boolean isDoNotSave();
 
-  //force exit
-  void exit(boolean force);
+  /**
+   * @param force if true, no additional confirmations will be shown. The application is guaranteed to exit
+   * @param exitConfirmed if true, suppresses any shutdown confirmation. However, if there are any background processes or tasks running,
+   *                      a corresponding confirmation will be shown with the possibility to cancel the operation
+   */
+  void exit(boolean force, boolean exitConfirmed);
 
-  void restart(boolean force);
+  /**
+   * @param exitConfirmed if true, suppresses any shutdown confirmation. However, if there are any background processes or tasks running,
+   *                      a corresponding confirmation will be shown with the possibility to cancel the operation
+   */
+  void restart(boolean exitConfirmed);
 
   /**
    * Runs modal process. For internal use only, see {@link Task}

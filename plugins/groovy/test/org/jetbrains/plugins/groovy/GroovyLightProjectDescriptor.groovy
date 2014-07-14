@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,7 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 
-import static org.jetbrains.plugins.groovy.util.TestUtils.getMockGroovy2_1LibraryName
-import static org.jetbrains.plugins.groovy.util.TestUtils.getMockGroovy2_2LibraryName
+import static org.jetbrains.plugins.groovy.util.TestUtils.*
 
 /**
  * @author Max Medvedev
@@ -33,6 +32,7 @@ import static org.jetbrains.plugins.groovy.util.TestUtils.getMockGroovy2_2Librar
 class GroovyLightProjectDescriptor extends DefaultLightProjectDescriptor {
   public static final GroovyLightProjectDescriptor GROOVY_2_1 = new GroovyLightProjectDescriptor(mockGroovy2_1LibraryName)
   public static final GroovyLightProjectDescriptor GROOVY_2_2 = new GroovyLightProjectDescriptor(mockGroovy2_2LibraryName)
+  public static final GroovyLightProjectDescriptor GROOVY_2_3 = new GroovyLightProjectDescriptor(mockGroovy2_3LibraryName)
 
   private final String myLibPath
 

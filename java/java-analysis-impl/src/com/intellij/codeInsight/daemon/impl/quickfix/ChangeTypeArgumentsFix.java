@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Nov 13, 2002
- * Time: 3:26:50 PM
- * To change this template use Options | File Templates.
- */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -32,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -39,11 +32,18 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.util.ObjectUtils.assertNotNull;
+
+/**
+ * @author cdr
+ * @since Nov 13, 2002
+ */
 public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityAction {
+  private static final Logger LOG = Logger.getInstance("#" + ChangeTypeArgumentsFix.class.getName());
+
   private final PsiMethod myTargetMethod;
   private final PsiClass myPsiClass;
   private final PsiExpression[] myExpressions;
-  private static final Logger LOG = Logger.getInstance("#" + ChangeTypeArgumentsFix.class.getName());
   private final PsiNewExpression myNewExpression;
 
   ChangeTypeArgumentsFix(@NotNull PsiMethod targetMethod,
@@ -116,11 +116,12 @@ public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityActi
     LOG.assertTrue(reference != null, myNewExpression);
     final PsiReferenceParameterList parameterList = reference.getParameterList();
     LOG.assertTrue(parameterList != null, myNewExpression);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiTypeElement[] elements = parameterList.getTypeParameterElements();
     for (int i = elements.length - 1; i >= 0; i--) {
-      PsiTypeElement typeElement = elements[i];
-      final PsiType typeArg = psiSubstitutor.substitute(typeParameters[i]);
-      typeElement.replace(JavaPsiFacade.getElementFactory(project).createTypeElement(typeArg));
+      PsiType typeArg = assertNotNull(psiSubstitutor.substitute(typeParameters[i]));
+      PsiElement replaced = elements[i].replace(factory.createTypeElement(typeArg));
+      JavaCodeStyleManager.getInstance(file.getProject()).shortenClassReferences(replaced);
     }
   }
 

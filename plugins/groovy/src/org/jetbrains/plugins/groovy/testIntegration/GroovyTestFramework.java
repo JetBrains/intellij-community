@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,11 @@ import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.util.IncorrectOperationException;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
+import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
 
@@ -50,7 +50,7 @@ public class GroovyTestFramework extends JavaTestFramework {
 
   @Override
   protected boolean isTestClass(PsiClass clazz, boolean canBePotential) {
-    return clazz.getLanguage() == GroovyFileType.GROOVY_LANGUAGE &&
+    return clazz.getLanguage() == GroovyLanguage.INSTANCE &&
            //JUnitUtil.isTestClass(clazz) &&
            InheritanceUtil.isInheritor(clazz, GroovyCommonClassNames.GROOVY_UTIL_TEST_CASE);
   }
@@ -77,7 +77,7 @@ public class GroovyTestFramework extends JavaTestFramework {
 
   @Override
   protected PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException {
-    LOG.assertTrue(clazz.getLanguage() == GroovyFileType.GROOVY_LANGUAGE);
+    LOG.assertTrue(clazz.getLanguage() == GroovyLanguage.INSTANCE);
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(clazz.getProject());
 
     final PsiMethod patternMethod = createSetUpPatternMethod(factory);
@@ -124,7 +124,7 @@ public class GroovyTestFramework extends JavaTestFramework {
 
   @Override
   public String getLibraryPath() {
-    return GroovyUtils.getBundledGroovyJar().getAbsolutePath();
+    return GroovyFacetUtil.getBundledGroovyJar().getAbsolutePath();
   }
 
   @Override
@@ -133,14 +133,21 @@ public class GroovyTestFramework extends JavaTestFramework {
   }
 
   @Override
+  public FileTemplateDescriptor getTestClassFileTemplateDescriptor() {
+    return new FileTemplateDescriptor(GroovyTemplates.GROOVY_JUNIT_TEST_CASE_GROOVY);
+  }
+
+  @Override
   public FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor(GroovyTemplates.GROOVY_JUNIT_SET_UP_METHOD_GROOVY);
   }
 
+  @Override
   public FileTemplateDescriptor getTearDownMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor(GroovyTemplates.GROOVY_JUNIT_TEAR_DOWN_METHOD_GROOVY);
   }
 
+  @Override
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor(GroovyTemplates.GROOVY_JUNIT_TEST_METHOD_GROOVY);
   }
@@ -153,6 +160,6 @@ public class GroovyTestFramework extends JavaTestFramework {
   @Override
   @NotNull
   public Language getLanguage() {
-    return GroovyFileType.GROOVY_LANGUAGE;
+    return GroovyLanguage.INSTANCE;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.util.IncorrectOperationException;
@@ -52,7 +48,7 @@ public class FileReferenceQuickFixProvider {
   private FileReferenceQuickFixProvider() {}
 
   @NotNull
-  public static List<? extends LocalQuickFix> registerQuickFix(final FileReference reference) {
+  public static List<? extends LocalQuickFix> registerQuickFix(@NotNull FileReference reference) {
     final FileReferenceSet fileReferenceSet = reference.getFileReferenceSet();
     int index = reference.getIndex();
 
@@ -69,16 +65,19 @@ public class FileReferenceQuickFixProvider {
     }
 
     PsiFileSystemItem context = null;
+    PsiElement element = reference.getElement();
+    PsiFile containingFile = element == null ? null : element.getContainingFile();
+
     if(index > 0) {
       context = fileReferenceSet.getReference(index - 1).resolve();
-    } else { // index == 0
+    }
+    else { // index == 0
       final Collection<PsiFileSystemItem> defaultContexts = fileReferenceSet.getDefaultContexts();
       if (defaultContexts.isEmpty()) {
         return Collections.emptyList();
       }
 
-      PsiElement element = reference.getElement();
-      Module module = element != null ? ModuleUtilCore.findModuleForPsiElement(element) : null;
+      Module module = containingFile == null ? null : ModuleUtilCore.findModuleForPsiElement(containingFile);
 
       for (PsiFileSystemItem defaultContext : defaultContexts) {
         if (defaultContext != null) {
@@ -103,15 +102,15 @@ public class FileReferenceQuickFixProvider {
     if (context == null) return Collections.emptyList();
 
     final VirtualFile virtualFile = context.getVirtualFile();
-    if (virtualFile == null) return Collections.emptyList();
+    if (virtualFile == null || !virtualFile.isValid()) return Collections.emptyList();
 
     final PsiDirectory directory = context.getManager().findDirectory(virtualFile);
     if (directory == null) return Collections.emptyList();
 
     if (fileReferenceSet.isCaseSensitive()) {
-      final PsiElement psiElement = reference.innerSingleResolve(false);
+      final PsiElement psiElement = containingFile == null ? null : reference.innerSingleResolve(false, containingFile);
 
-      if (psiElement instanceof PsiNamedElement) {
+      if (psiElement != null) {
         final String existingElementName = ((PsiNamedElement)psiElement).getName();
 
         final RenameFileReferenceIntentionAction renameRefAction = new RenameFileReferenceIntentionAction(existingElementName, reference);
@@ -151,7 +150,7 @@ public class FileReferenceQuickFixProvider {
   @Nullable
   private static Module getModuleForContext(@NotNull PsiFileSystemItem context) {
     VirtualFile file = context.getVirtualFile();
-    return file != null ? ModuleUtil.findModuleForFile(file, context.getProject()) : null;
+    return file != null ? ModuleUtilCore.findModuleForFile(file, context.getProject()) : null;
   }
 
   private static class MyCreateFileFix extends CreateFileFix {

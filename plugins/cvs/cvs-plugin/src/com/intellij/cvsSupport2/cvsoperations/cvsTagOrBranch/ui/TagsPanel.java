@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -56,7 +57,7 @@ public class TagsPanel extends JPanel implements TableCellRenderer{
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         showTags();
         return true;
       }

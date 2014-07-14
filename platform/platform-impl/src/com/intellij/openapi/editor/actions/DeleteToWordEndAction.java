@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 14, 2002
- * Time: 7:18:30 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.ide.CopyPasteManager;
 
+/*
+ * Created by IntelliJ IDEA.
+ * User: max
+ * Date: May 14, 2002
+ * Time: 7:18:30 PM
+ */
 public class DeleteToWordEndAction extends TextComponentEditorAction {
   public DeleteToWordEndAction() {
     super(new Handler(false));
@@ -40,16 +40,31 @@ public class DeleteToWordEndAction extends TextComponentEditorAction {
     private final boolean myNegateCamelMode;
 
     Handler(boolean negateCamelMode) {
+      super(true);
       myNegateCamelMode = negateCamelMode;
     }
 
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
+      CopyPasteManager.getInstance().stopKillRings();
+
+      int lineNumber = editor.getCaretModel().getLogicalPosition().line;
+      if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets()
+          && editor.getCaretModel().getOffset() == editor.getDocument().getLineEndOffset(lineNumber)) {
+        return;
+      }
+
       boolean camelMode = editor.getSettings().isCamelWords();
       if (myNegateCamelMode) {
         camelMode = !camelMode;
       }
+
+      if (editor.getSelectionModel().hasSelection()) {
+        EditorModificationUtil.deleteSelectedText(editor);
+        return;
+      }
+
       deleteToWordEnd(editor, camelMode);
     }
   }

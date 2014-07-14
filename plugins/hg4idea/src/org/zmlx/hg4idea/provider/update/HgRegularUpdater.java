@@ -12,7 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.update;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,9 +22,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.ArrayList;
@@ -33,34 +35,19 @@ import java.util.List;
 import java.util.Set;
 
 import static org.zmlx.hg4idea.HgErrorHandler.ensureSuccess;
+import static org.zmlx.hg4idea.provider.update.HgUpdateType.MERGE;
+import static org.zmlx.hg4idea.provider.update.HgUpdateType.ONLY_UPDATE;
 
 public class HgRegularUpdater implements HgUpdater {
 
-  private final Project project;
+  @NotNull private final Project project;
   @NotNull private final VirtualFile repoRoot;
-  @NotNull private final UpdateConfiguration updateConfiguration;
-  private static final Logger LOG = Logger.getInstance(HgRegularUpdater.class);
+  @NotNull private final HgUpdateConfigurationSettings updateConfiguration;
 
-  public HgRegularUpdater(Project project, @NotNull VirtualFile repository, @NotNull UpdateConfiguration configuration) {
+  public HgRegularUpdater(@NotNull Project project, @NotNull VirtualFile repository, @NotNull HgUpdateConfigurationSettings configuration) {
     this.project = project;
     this.repoRoot = repository;
     this.updateConfiguration = configuration;
-  }
-
-  private boolean shouldPull() {
-    return updateConfiguration.shouldPull();
-  }
-
-  private boolean shouldUpdate() {
-    return updateConfiguration.shouldUpdate();
-  }
-
-  private boolean shouldMerge() {
-    return updateConfiguration.shouldMerge();
-  }
-
-  private boolean shouldCommitAfterMerge() {
-    return updateConfiguration.shouldCommitAfterMerge();
   }
 
   public boolean update(final UpdatedFiles updatedFiles, ProgressIndicator indicator, List<VcsException> warnings)
@@ -88,44 +75,53 @@ public class HgRegularUpdater implements HgUpdater {
 //      throw new VcsException("working dir not at branch tip (use \"Update to...\" to check out branch tip)");
 //    }
 
-    if (shouldPull()) {
-      boolean pullResult = pull(repoRoot, indicator);
-      if (!pullResult) {
+    if (updateConfiguration.shouldPull()) {
+      HgCommandExitCode pullResult = pull(repoRoot, indicator);
+      if (pullResult == HgCommandExitCode.ERROR) {
         return false;
       }
     }
 
-    if (shouldUpdate()) {
+    List<HgRevisionNumber> parentsBeforeUpdate = new HgWorkingCopyRevisionsCommand(project).parents(repoRoot);
+    if (parentsBeforeUpdate.size() > 1) {
+      throw new VcsException(HgVcsMessages.message("hg4idea.update.error.uncommittedMerge", repoRoot.getPath()));
+    }
 
-      List<HgRevisionNumber> parentsBeforeUpdate = new HgWorkingCopyRevisionsCommand(project).parents(repoRoot);
-      if (parentsBeforeUpdate.size() > 1) {
-        throw new VcsException(HgVcsMessages.message("hg4idea.update.error.uncommittedMerge", repoRoot.getPath()));
-      }
+    indicator.setText2(HgVcsMessages.message("hg4idea.progress.countingHeads"));
 
-      indicator.setText2(HgVcsMessages.message("hg4idea.progress.countingHeads"));
+    List<HgRevisionNumber> branchHeadsAfterPull = new HgHeadsCommand(project, repoRoot).execute();
+    List<HgRevisionNumber> pulledBranchHeads = determinePulledBranchHeads(branchHeadsBeforePull, branchHeadsAfterPull);
+    List<HgRevisionNumber> remainingOriginalBranchHeads =
+      determingRemainingOriginalBranchHeads(branchHeadsBeforePull, branchHeadsAfterPull);
+    HgUpdateType updateType = updateConfiguration.getUpdateType();
 
-      List<HgRevisionNumber> branchHeadsAfterPull = new HgHeadsCommand(project, repoRoot).execute();
-      List<HgRevisionNumber> pulledBranchHeads = determinePulledBranchHeads(branchHeadsBeforePull, branchHeadsAfterPull);
-      List<HgRevisionNumber> remainingOriginalBranchHeads = determingRemainingOriginalBranchHeads(branchHeadsBeforePull, branchHeadsAfterPull);
-
-      if (branchHeadsAfterPull.size() > 1 && shouldMerge()) {
+    if (branchHeadsAfterPull.size() > 1 && updateType != ONLY_UPDATE) {
+      // merge strategy
+      if (updateType == MERGE) {
         abortOnLocalChanges();
         abortOnMultiplePulledHeads(pulledBranchHeads);
         abortOnMultipleLocalHeads(remainingOriginalBranchHeads);
 
-        HgCommandResult mergeResult = doMerge(updatedFiles, indicator, pulledBranchHeads.get(0));
+        HgCommandResult mergeResult = doMerge(indicator);
 
-        if (shouldCommitAfterMerge()) {
+        if (updateConfiguration.shouldCommitAfterMerge()) {
           commitOrWarnAboutConflicts(warnings, mergeResult);
         }
-      } else {
-        //in case of multiple heads the update will report the appropriate error
-        update(repoRoot, indicator, updatedFiles, warnings);
       }
-
-      //any kind of update could have resulted in merges and merge conflicts, so run the resolver
-      resolvePossibleConflicts(updatedFiles);
+      //rebase strategy
+      else {
+        processRebase(indicator, updatedFiles);  //resolve conflicts processed during rebase
+        return true;
+      }
     }
+    //if pull complete successfully and there are only one head, we need just update working directory to the head
+    else {
+      //in case of multiple heads the update will report the appropriate error
+      update(repoRoot, indicator, updatedFiles, warnings);
+    }
+    //any kind of update could have resulted in merges and merge conflicts, so run the resolver
+    resolvePossibleConflicts(updatedFiles);
+
     return true;
   }
 
@@ -198,15 +194,41 @@ public class HgRegularUpdater implements HgUpdater {
       }
     }
 
-  private HgCommandResult doMerge(UpdatedFiles updatedFiles,
-                                  ProgressIndicator indicator,
-                                  HgRevisionNumber headToMerge) throws VcsException {
+  private HgCommandResult doMerge(ProgressIndicator indicator) throws VcsException {
     indicator.setText2(HgVcsMessages.message("hg4idea.update.progress.merging"));
     HgMergeCommand mergeCommand = new HgMergeCommand(project, repoRoot);
     //do not explicitly set the revision, that way mercurial itself checks that there are exactly
     //two heads in this branch
 //    mergeCommand.setRevision(headToMerge.getRevision());
-    return new HgHeadMerger(project, mergeCommand).merge(repoRoot, updatedFiles, headToMerge);
+    return new HgHeadMerger(project, mergeCommand).merge(repoRoot);
+  }
+
+  private void processRebase(ProgressIndicator indicator, final UpdatedFiles updatedFiles) throws VcsException {
+    indicator.setText2(HgVcsMessages.message("hg4idea.progress.rebase"));
+    HgRepository repository = HgUtil.getRepositoryManager(project).getRepositoryForRoot(repoRoot);
+    if (repository == null) {
+      throw new VcsException("Repository not found for root " + repoRoot);
+    }
+    HgRebaseCommand rebaseCommand = new HgRebaseCommand(project, repository);
+    HgCommandResult result = new HgRebaseCommand(project, repository).startRebase();
+    if (HgErrorUtil.isAbort(result)) {
+      new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't rebase repository.");
+      return;
+    }
+    //noinspection ConstantConditions
+    while (result.getExitValue() == 1) {    //if result == null isAbort will be true;
+      resolvePossibleConflicts(updatedFiles);
+      if (!HgConflictResolver.findConflicts(project, repoRoot).isEmpty()) {
+        break;
+      }
+      result = rebaseCommand.continueRebase();
+      if (HgErrorUtil.isAbort(result)) {
+        new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't continue rebasing");
+        break;
+      }
+    }
+    repository.update();
+    repoRoot.refresh(true, true);
   }
 
   private void abortOnLocalChanges() throws VcsException {
@@ -224,14 +246,12 @@ public class HgRegularUpdater implements HgUpdater {
     return statusCommand.execute(repoRoot);
   }
 
-  private boolean pull(VirtualFile repo, ProgressIndicator indicator)
+  private HgCommandExitCode pull(VirtualFile repo, ProgressIndicator indicator)
     throws VcsException {
     indicator.setText2(HgVcsMessages.message("hg4idea.progress.pull.with.update"));
     HgPullCommand hgPullCommand = new HgPullCommand(project, repo);
     final String defaultPath = HgUtil.getRepositoryDefaultPath(project, repo);
     hgPullCommand.setSource(defaultPath);
-    hgPullCommand.setUpdate(false);
-    hgPullCommand.setRebase(false);
     return hgPullCommand.execute();
   }
 
@@ -240,7 +260,8 @@ public class HgRegularUpdater implements HgUpdater {
 
     HgRevisionNumber parentBeforeUpdate = new HgWorkingCopyRevisionsCommand(project).firstParent(repo);
     HgUpdateCommand hgUpdateCommand = new HgUpdateCommand(project, repo);
-    String warningMessages = ensureSuccess(hgUpdateCommand.execute()).getWarnings();
+    HgCommandResult updateResult = hgUpdateCommand.execute();
+    String warningMessages = ensureSuccess(updateResult).getRawError();
     handlePossibleWarning(warnings, warningMessages);
 
     HgRevisionNumber parentAfterUpdate = new HgWorkingCopyRevisionsCommand(project).firstParent(repo);
@@ -268,7 +289,7 @@ public class HgRegularUpdater implements HgUpdater {
     if (parentAfterUpdate.equals(parentBeforeUpdate)) { // nothing to update => returning not to capture local uncommitted changes
       return;
     }
-    HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).baseRevision(parentBeforeUpdate).targetRevision(
+    HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).ignored(false).unknown(false).baseRevision(parentBeforeUpdate).targetRevision(
       parentAfterUpdate).build(project);
     Set<HgChange> changes = statusCommand.execute(repo);
     for (HgChange change : changes) {

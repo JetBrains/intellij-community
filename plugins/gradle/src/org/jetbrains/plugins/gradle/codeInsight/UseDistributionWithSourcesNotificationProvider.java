@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,14 +65,14 @@ import java.util.regex.Pattern;
  * @since 9/13/13
  */
 public class UseDistributionWithSourcesNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
-  public static final Pattern GRADLE_SRC_DISTIBUTION_PATTERN;
+  public static final Pattern GRADLE_SRC_DISTRIBUTION_PATTERN;
   private static final Logger LOG = Logger.getInstance("#" + UseDistributionWithSourcesNotificationProvider.class.getName());
   private static final Key<EditorNotificationPanel> KEY = Key.create("gradle.notifications.use.distribution.with.sources");
   private static final String ALL_ZIP_DISTRIBUTION_URI_SUFFIX = "-all.zip";
   private final Project myProject;
 
   static {
-    GRADLE_SRC_DISTIBUTION_PATTERN = Pattern.compile("http\\\\?://services\\.gradle\\.org.*" + ALL_ZIP_DISTRIBUTION_URI_SUFFIX);
+    GRADLE_SRC_DISTRIBUTION_PATTERN = Pattern.compile("https?\\\\?://services\\.gradle\\.org.*" + ALL_ZIP_DISTRIBUTION_URI_SUFFIX);
   }
 
   public UseDistributionWithSourcesNotificationProvider(Project project, final EditorNotifications notifications) {
@@ -85,13 +85,14 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
     });
   }
 
+  @NotNull
   @Override
   public Key<EditorNotificationPanel> getKey() {
     return KEY;
   }
 
   @Override
-  public EditorNotificationPanel createNotificationPanel(VirtualFile file, FileEditor fileEditor) {
+  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
     try {
       if (GradleConstants.DEFAULT_SCRIPT_NAME.equals(file.getName()) ||
           GradleConstants.SETTINGS_FILE_NAME.equals(file.getName())) {
@@ -190,7 +191,7 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
     // currently only wrapped distribution takes into account
     if (wrapperConfiguration == null) return true;
     String distributionUri = wrapperConfiguration.getDistribution().toString();
-    return GRADLE_SRC_DISTIBUTION_PATTERN.matcher(distributionUri).matches();
+    return GRADLE_SRC_DISTRIBUTION_PATTERN.matcher(distributionUri).matches();
   }
 
   @Nullable

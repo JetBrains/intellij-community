@@ -16,9 +16,9 @@
 package com.intellij.util.cls;
 
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NonNls;
 
-
+/** @deprecated to be removed in IDEA 15 */
+@SuppressWarnings("ALL")
 public class ClsUtil {
   public static final int MAGIC = 0xCAFEBABE;
 
@@ -375,56 +375,6 @@ public class ClsUtil {
   }
 
   public static String literalToString(CharSequence value, char quote) {
-    int length = value.length();
-    @NonNls StringBuilder buffer = new StringBuilder(length + 3);
-    buffer.append(quote);
-
-    for (int i = 0; i < length; i++) {
-      char c = value.charAt(i);
-      if (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9') {
-        buffer.append(c);
-        continue;
-      }
-
-      switch (c) {
-      case '\b':
-             buffer.append("\\b");
-             break;
-      case '\t':
-             buffer.append("\\t");
-             break;
-      case '\n':
-             buffer.append("\\n");
-             break;
-      case '\f':
-             buffer.append("\\f");
-             break;
-      case '\r':
-             buffer.append("\\r");
-             break;
-      case '\\':
-             buffer.append("\\\\");
-             break;
-      default:
-             if (c == quote) {
-               buffer.append("\\").append(quote);
-             }
-             else if (Character.isISOControl(c)) {
-               String hexCode = StringUtil.toUpperCase(Integer.toHexString(c));
-               buffer.append("\\u");
-               int paddingCount = 4 - hexCode.length();
-               while (paddingCount-- > 0) {
-                 buffer.append(0);
-               }
-               buffer.append(hexCode);
-             }
-             else {
-               buffer.append(c);
-             }
-      }
-    }
-
-    buffer.append(quote);
-    return buffer.toString();
+    return quote + StringUtil.escapeStringCharacters(value.toString()) + quote;
   }
 }

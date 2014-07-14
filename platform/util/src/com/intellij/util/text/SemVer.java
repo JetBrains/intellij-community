@@ -29,11 +29,18 @@ public class SemVer {
   private final int myMajor;
   private final int myMinor;
   private final int myPatch;
+  private final String myRawVersion;
 
-  public SemVer(int major, int minor, int patch) {
+  public SemVer(@NotNull String rawVersion, int major, int minor, int patch) {
+    myRawVersion = rawVersion;
     myMajor = major;
     myMinor = minor;
     myPatch = patch;
+  }
+
+  @NotNull
+  public String getRawVersion() {
+    return myRawVersion;
   }
 
   public int getMajor() {
@@ -46,6 +53,11 @@ public class SemVer {
 
   public int getPatch() {
     return myPatch;
+  }
+
+  @NotNull
+  public String getParsedVersion() {
+    return myMajor + "." + myMinor + "." + myPatch;
   }
 
   @Override
@@ -70,6 +82,11 @@ public class SemVer {
     return result;
   }
 
+  @Override
+  public String toString() {
+    return myRawVersion;
+  }
+
   @Nullable
   public static SemVer parseFromText(@NotNull String text) {
     String[] comps = text.split(Pattern.quote("."), 3);
@@ -85,7 +102,7 @@ public class SemVer {
     }
     Integer patch = toInteger(patchStr);
     if (major != null && minor != null && patch != null) {
-      return new SemVer(major, minor, patch);
+      return new SemVer(text, major, minor, patch);
     }
     return null;
   }

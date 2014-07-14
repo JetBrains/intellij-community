@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,28 +18,30 @@ package com.intellij.xdebugger.impl.evaluate;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebugSessionAdapter;
-import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
 import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.nodes.EvaluatingExpressionRootNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
@@ -61,10 +63,10 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private final boolean myIsCodeFragmentEvaluationSupported;
 
   public XDebuggerEvaluationDialog(@NotNull XDebugSession session,
-                                   final @NotNull XDebuggerEditorsProvider editorsProvider,
+                                   @NotNull XDebuggerEditorsProvider editorsProvider,
                                    @NotNull XDebuggerEvaluator evaluator,
-                                   @NotNull String text,
-                                   final XSourcePosition sourcePosition) {
+                                   @NotNull XExpression text,
+                                   @Nullable XSourcePosition sourcePosition) {
     super(session.getProject(), true);
     mySession = session;
     myEditorsProvider = editorsProvider;
@@ -94,28 +96,28 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
     mySwitchModeAction = new SwitchModeAction();
 
-    new AnAction(){
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        doOKAction();
-      }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK)), getRootPane(), myDisposable);
     new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         IdeFocusManager.getInstance(mySession.getProject()).requestFocus(myTreePanel.getTree(), true);
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK)), getRootPane(), myDisposable);
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK)), getRootPane(),
+                                myDisposable);
 
-    EvaluationMode mode = EvaluationMode.EXPRESSION;
+    myTreePanel.getTree().expandNodesOnLoad(new Condition<TreeNode>() {
+      @Override
+      public boolean value(TreeNode node) {
+        return node.getParent() instanceof EvaluatingExpressionRootNode;
+      }
+    });
+
+    EvaluationMode mode = XDebuggerSettingsManager.getInstance().getGeneralSettings().getEvaluationDialogMode();
     myIsCodeFragmentEvaluationSupported = evaluator.isCodeFragmentEvaluationSupported();
-    if (text.indexOf('\n') != -1) {
-      if (myIsCodeFragmentEvaluationSupported) {
-        mode = EvaluationMode.CODE_FRAGMENT;
-      }
-      else {
-        text = StringUtil.replace(text, "\n", " ");
-      }
+    if (mode == EvaluationMode.CODE_FRAGMENT && !myIsCodeFragmentEvaluationSupported) {
+      mode = EvaluationMode.EXPRESSION;
+    }
+    if (mode == EvaluationMode.EXPRESSION) {
+      text = new XExpressionImpl(StringUtil.replace(text.getExpression(), "\n", " "), text.getLanguage(), text.getCustomInfo());
     }
     switchToMode(mode, text);
     init();
@@ -126,6 +128,23 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     evaluate();
   }
 
+  protected void createDefaultActions() {
+    super.createDefaultActions();
+    myOKAction = new OkAction(){
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        super.actionPerformed(e);
+        if (myMode == EvaluationMode.EXPRESSION && ((e.getModifiers() & InputEvent.CTRL_MASK) != 0)) {
+          // add to watches
+          XExpression expression = myInputComponent.getInputEditor().getExpression();
+          if (!XDebuggerUtilImpl.isEmptyExpression(expression)) {
+            ((XDebugSessionImpl)mySession).getSessionTab().getWatchesView().addWatchExpression(expression, -1, false);
+          }
+        }
+      }
+    };
+  }
+
   @NotNull
   @Override
   protected Action[] createActions() {
@@ -133,6 +152,11 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       return new Action[]{getOKAction(), mySwitchModeAction, getCancelAction()};
     }
     return super.createActions();
+  }
+
+  @Override
+  protected String getHelpId() {
+    return "debugging.debugMenu.evaluate";
   }
 
   @Override
@@ -148,8 +172,8 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     return button;
   }
 
-  public String getExpression() {
-    return myInputComponent.getInputEditor().getText();
+  public XExpression getExpression() {
+    return myInputComponent.getInputEditor().getExpression();
   }
 
   private static String getSwitchButtonText(EvaluationMode mode) {
@@ -158,8 +182,11 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
            : XDebuggerBundle.message("button.text.code.fragment.mode");
   }
 
-  private void switchToMode(EvaluationMode mode, String text) {
+  private void switchToMode(EvaluationMode mode, XExpression text) {
     if (myMode == mode) return;
+
+    XDebuggerSettingsManager.getInstance().getGeneralSettings().setEvaluationDialogMode(mode);
+
     myMode = mode;
 
     myInputComponent = createInputComponent(mode, text);
@@ -174,8 +201,9 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     }
   }
 
-  private EvaluationInputComponent createInputComponent(EvaluationMode mode, String text) {
+  private EvaluationInputComponent createInputComponent(EvaluationMode mode, XExpression text) {
     final Project project = mySession.getProject();
+    text = XExpressionImpl.changeMode(text, mode);
     if (mode == EvaluationMode.EXPRESSION) {
       return new ExpressionInputComponent(project, myEditorsProvider, mySourcePosition, text);
     }
@@ -185,16 +213,32 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   }
 
   private void evaluate() {
+    final XDebuggerEditorBase inputEditor = myInputComponent.getInputEditor();
+    int offset = -1;
+
+    //try to save caret position
+    Editor editor = inputEditor.getEditor();
+    if (editor != null) {
+      offset = editor.getCaretModel().getOffset();
+    }
+
     final XDebuggerTree tree = myTreePanel.getTree();
-    XDebuggerTreeNode root = tree.getRoot();
-    if (root instanceof EvaluatingExpressionRootNode) {
-      root.clearChildren();
-    }
-    else {
-      tree.setRoot(new EvaluatingExpressionRootNode(this, tree), false);
-    }
+    tree.markNodesObsolete();
+    tree.setRoot(new EvaluatingExpressionRootNode(this, tree), false);
+
     myResultPanel.invalidate();
-    myInputComponent.getInputEditor().selectAll();
+
+    //editor is already changed
+    editor = inputEditor.getEditor();
+    //selectAll puts focus back
+    inputEditor.selectAll();
+
+    //try to restore caret position and clear selection
+    if (offset >= 0 && editor != null) {
+      offset = Math.min(editor.getDocument().getTextLength(), offset);
+      editor.getCaretModel().moveToOffset(offset);
+      editor.getSelectionModel().setSelection(offset, offset);
+    }
   }
 
   @Override
@@ -210,10 +254,9 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   public void startEvaluation(@NotNull XDebuggerEvaluator.XEvaluationCallback evaluationCallback) {
     final XDebuggerEditorBase inputEditor = myInputComponent.getInputEditor();
     inputEditor.saveTextInHistory();
-    String expression = inputEditor.getText();
+    XExpression expression = inputEditor.getExpression();
 
-    XStackFrame frame = mySession.getCurrentStackFrame();
-    XDebuggerEvaluator evaluator = frame == null ? null : frame.getEvaluator();
+    XDebuggerEvaluator evaluator = mySession.getDebugProcess().getEvaluator();
     if (evaluator == null) {
       evaluationCallback.errorOccurred(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.not.evaluator"));
     }
@@ -230,12 +273,12 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private class SwitchModeAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
-      String text = myInputComponent.getInputEditor().getText();
+      XExpression text = myInputComponent.getInputEditor().getExpression();
       if (myMode == EvaluationMode.EXPRESSION) {
         switchToMode(EvaluationMode.CODE_FRAGMENT, text);
       }
       else {
-        if (text.indexOf('\n') != -1) text = "";
+        if (text.getExpression().indexOf('\n') != -1) text = XExpressionImpl.EMPTY_EXPRESSION;
         switchToMode(EvaluationMode.EXPRESSION, text);
       }
     }

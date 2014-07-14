@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
+import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.externalSystem.service.project.wizard.SelectExternalProjectStep;
@@ -70,15 +71,12 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
         return step instanceof SelectExternalProjectStep;
       }
     });
-    if (StringUtil.isEmpty(wizardContext.getProjectName())) {
-      final String projectName = dialog.getWizardContext().getProjectName();
-      if (!StringUtil.isEmpty(projectName)) {
-        wizardContext.setProjectName(projectName);
-      }
-    }
 
-    dialog.show();
-    return dialog.isOK();
+    boolean result = dialog.showAndGet();
+    if (result && getBuilder().getExternalProjectNode() != null) {
+      wizardContext.setProjectName(getBuilder().getExternalProjectNode().getData().getInternalName());
+    }
+    return result;
   }
 
   @Override

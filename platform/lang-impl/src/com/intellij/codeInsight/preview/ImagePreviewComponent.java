@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
   private static boolean refresh(@NotNull VirtualFile file) throws IOException {
     Long loadedTimeStamp = file.getUserData(TIMESTAMP_KEY);
     SoftReference<BufferedImage> imageRef = file.getUserData(BUFFERED_IMAGE_REF_KEY);
-    if (loadedTimeStamp == null || loadedTimeStamp < file.getTimeStamp() || imageRef == null || imageRef.get() == null) {
+    if (loadedTimeStamp == null || loadedTimeStamp < file.getTimeStamp() || SoftReference.dereference(imageRef) == null) {
       try {
         final byte[] content = file.contentsToByteArray();
         InputStream inputStream = new ByteArrayInputStream(content, 0, content.length);
@@ -153,11 +153,9 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
             try {
               refresh(file);
               SoftReference<BufferedImage> imageRef = file.getUserData(BUFFERED_IMAGE_REF_KEY);
-              if (imageRef != null) {
-                final BufferedImage image = imageRef.get();
-                if (image != null) {
-                  return new ImagePreviewComponent(image, file.getLength());
-                }
+              final BufferedImage image = SoftReference.dereference(imageRef);
+              if (image != null) {
+                return new ImagePreviewComponent(image, file.getLength());
               }
             }
             catch (IOException ignored) {

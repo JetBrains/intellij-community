@@ -41,7 +41,7 @@ public class JavaParameters extends SimpleJavaParameters {
     }
 
     final String jdkHome = jdk.getHomeDirectory().getPresentableUrl();
-    if (jdkHome == null || jdkHome.length() == 0) {
+    if (jdkHome.isEmpty()) {
       throw new CantRunException(ExecutionBundle.message("home.directory.not.specified.for.jdk.error.message"));
     }
     return jdkHome;

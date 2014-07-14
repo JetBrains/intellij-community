@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,11 +78,13 @@ public class DomExtensionImpl implements DomExtension {
     return myXmlName;
   }
 
+  @Override
   @NotNull
   public Type getType() {
     return myType;
   }
 
+  @Override
   public DomExtension setDeclaringElement(@NotNull DomElement declaringElement) {
     putUserData(KEY_DOM_DECLARATION, DomAnchorImpl.createAnchor(declaringElement, true));
     return this;
@@ -94,26 +96,31 @@ public class DomExtensionImpl implements DomExtension {
     return this;
   }
 
+  @Override
   public DomExtension setConverter(@NotNull Converter converter) {
     return setConverter(converter, false);
   }
 
+  @Override
   public final DomExtension setConverter(@NotNull final Converter converter, final boolean soft) {
     myConverter = converter;
     mySoft = soft;
     return this;
   }
 
+  @Override
   public DomExtension addCustomAnnotation(@NotNull final Annotation anno) {
     myCustomAnnos.add(anno);
     return this;
   }
 
+  @Override
   public <T> void putUserData(final Key<T> key, final T value) {
     if (myUserMap == null) myUserMap = new THashMap();
     myUserMap.put(key, value);
   }
 
+  @Override
   public DomExtension addExtender(final DomExtender extender) {
     if (myUserMap == null || !myUserMap.containsKey(DOM_EXTENDER_KEY)) {
       putUserData(DOM_EXTENDER_KEY, new SmartList<DomExtender>());

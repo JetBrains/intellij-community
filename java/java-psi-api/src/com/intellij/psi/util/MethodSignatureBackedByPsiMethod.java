@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,10 +66,12 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
     return myMethod;
   }
 
+  @NotNull
   public static MethodSignatureBackedByPsiMethod create(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
     return create(method, substitutor, PsiUtil.isRawSubstitutor(method, substitutor));
   }
 
+  @NotNull
   public static MethodSignatureBackedByPsiMethod create(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor, boolean isRaw) {
     PsiTypeParameter[] methodTypeParameters = method.getTypeParameters();
     if (isRaw) {
@@ -80,7 +82,7 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
     assert substitutor.isValid();
 
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    PsiType[] parameterTypes = new PsiType[parameters.length];
+    PsiType[] parameterTypes = PsiType.createArray(parameters.length);
     for (int i = 0; i < parameterTypes.length; i++) {
       PsiParameter parameter = parameters[i];
       PsiType type = parameter.getType();

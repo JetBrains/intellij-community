@@ -20,5 +20,5 @@ package com.jetbrains.python.psi;
  * User: dcheryasov
  * Date: Jul 28, 2008
  */
-public interface PyStarImportElement extends PyElement, PyImportedNameDefiner {
+public interface PyStarImportElement extends PyImportedNameDefiner {
 }

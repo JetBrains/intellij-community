@@ -39,14 +39,9 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.awt.event.*;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class FontOptions extends JPanel implements OptionsPanel{
 
@@ -148,6 +143,21 @@ public class FontOptions extends JPanel implements OptionsPanel{
         updateDescription(true);
       }
     });
+    myEditorFontSizeField.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() != KeyEvent.VK_UP && e.getKeyCode() != KeyEvent.VK_DOWN) return;
+        boolean up = e.getKeyCode() == KeyEvent.VK_UP;
+        try {
+          int value = Integer.parseInt(myEditorFontSizeField.getText());
+          value += (up ? 1 : -1);
+          value = Math.min(OptionsConstants.MAX_EDITOR_FONT_SIZE, Math.max(OptionsConstants.MIN_EDITOR_FONT_SIZE, value));
+          myEditorFontSizeField.setText(String.valueOf(value));
+        }
+        catch (NumberFormatException ignored) {
+        }
+      }
+    });
 
     myLineSpacingField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -160,11 +170,26 @@ public class FontOptions extends JPanel implements OptionsPanel{
         updateDescription(true);
       }
     });
+    myLineSpacingField.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() != KeyEvent.VK_UP && e.getKeyCode() != KeyEvent.VK_DOWN) return;
+        boolean up = e.getKeyCode() == KeyEvent.VK_UP;
+        try {
+          float value = Float.parseFloat(myLineSpacingField.getText());
+          value += (up ? 1 : -1) * .1F;
+          value = Math.min(OptionsConstants.MAX_EDITOR_LINE_SPACING, Math.max(OptionsConstants.MIN_EDITOR_LINE_SPACING, value));
+          myLineSpacingField.setText(String.format(Locale.ENGLISH, "%.1f", value));
+        }
+        catch (NumberFormatException ignored) {
+        }
+      }
+    });
   }
 
   private int getFontSizeFromField() {
     try {
-      return Math.min(OptionsConstants.MAX_EDITOR_FONT_SIZE, Math.max(1, Integer.parseInt(myEditorFontSizeField.getText())));
+      return Math.min(OptionsConstants.MAX_EDITOR_FONT_SIZE, Math.max(OptionsConstants.MIN_EDITOR_FONT_SIZE, Integer.parseInt(myEditorFontSizeField.getText())));
     }
     catch (NumberFormatException e) {
       return OptionsConstants.DEFAULT_EDITOR_FONT_SIZE;
@@ -173,9 +198,9 @@ public class FontOptions extends JPanel implements OptionsPanel{
 
   private float getLineSpacingFromField() {
     try {
-       return Math.min(30, Math.max(1, Float.parseFloat(myLineSpacingField.getText())));
+       return Math.min(OptionsConstants.MAX_EDITOR_LINE_SPACING, Math.max(OptionsConstants.MIN_EDITOR_LINE_SPACING, Float.parseFloat(myLineSpacingField.getText())));
     } catch (NumberFormatException e){
-      return 1;
+      return OptionsConstants.DEFAULT_EDITOR_LINE_SPACING;
     }
   }
 

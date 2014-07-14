@@ -60,7 +60,7 @@ public class ChannelResourceInspectionTest extends LightInspectionTestCase {
            "import java.io.*;" +
            "class X {" +
            "  void m(SocketInputStream ss) throws IOException {" +
-           "    /*'FileChannel' should be opened in front of a 'try' block and closed in the corresponding 'finally' block*/ss.getChannel()/**/;" +
+           "    ss./*'FileChannel' should be opened in front of a 'try' block and closed in the corresponding 'finally' block*/getChannel/**/();" +
            "  }" +
            "}");
   }

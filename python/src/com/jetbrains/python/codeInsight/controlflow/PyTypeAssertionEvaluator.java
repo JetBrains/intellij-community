@@ -84,7 +84,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
           @Override
           public PyType getType(TypeEvalContext context, PsiElement anchor) {
             final List<PyType> types = new ArrayList<PyType>();
-            types.add(PyTypeParser.getTypeByName(target, PyNames.CALLABLE));
+            types.add(PyTypeParser.getTypeByName(target, "collections." + PyNames.CALLABLE));
             return createAssertionType(context.getType(target), types, positive, context);
           }
         });

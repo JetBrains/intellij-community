@@ -21,8 +21,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +34,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
   private final Alignment myAlignment;
   private final Indent myIndentContent;
   private final CommonCodeStyleSettings mySettings;
+  private final JavaCodeStyleSettings myJavaSettings;
   private final Wrap myWrap;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.newXmlFormatter.java.SyntheticCodeBlock");
@@ -43,11 +44,14 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
   private ChildAttributes myChildAttributes;
   private boolean myIsIncomplete = false;
 
-  public SyntheticCodeBlock(final List<Block> subBlocks,
-                            final Alignment alignment,
+  public SyntheticCodeBlock(List<Block> subBlocks,
+                            Alignment alignment,
                             CommonCodeStyleSettings settings,
+                            JavaCodeStyleSettings javaSettings,
                             Indent indent,
-                            Wrap wrap) {
+                            Wrap wrap)
+  {
+    myJavaSettings = javaSettings;
     myIndentContent = indent;
     if (subBlocks.isEmpty()) {
       LOG.assertTrue(false);
@@ -89,7 +93,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
 
   @Override
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
-    return JavaSpacePropertyProcessor.getSpacing(AbstractJavaBlock.getTreeNode(child2), mySettings);
+    return JavaSpacePropertyProcessor.getSpacing(AbstractJavaBlock.getTreeNode(child2), mySettings, myJavaSettings);
   }
 
   public String toString() {

@@ -15,19 +15,20 @@
  */
 package org.jetbrains.idea.svn.mergeinfo;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
-import org.jetbrains.idea.svn.dialogs.WCInfo;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.dialogs.MergeContext;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 
 import java.util.*;
 
 public class OneShotMergeInfoHelper implements MergeChecker {
+
   private OneRecursiveShotMergeInfoWorker myWorker;
   private final Map<Long, Collection<String>> myPartiallyMerged;
 
-  public OneShotMergeInfoHelper(final Project project, final WCInfo wcInfo, final String branchPath) {
-    myWorker = new OneRecursiveShotMergeInfoWorker(project, wcInfo, branchPath);
+  public OneShotMergeInfoHelper(@NotNull MergeContext mergeContext) {
+    myWorker = new OneRecursiveShotMergeInfoWorker(mergeContext);
     myPartiallyMerged = new HashMap<Long, Collection<String>>();
   }
 

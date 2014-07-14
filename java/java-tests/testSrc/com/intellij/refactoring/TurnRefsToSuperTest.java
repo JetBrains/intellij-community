@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class TurnRefsToSuperTest extends MultiFileTestCase {
   public void testSuperClass() throws Exception { doTest("AClass", "ASuper", true); }
@@ -73,6 +74,7 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
     }, true);
   }
 
+  @NotNull
   @Override
   public String getTestRoot() {
     return "/refactoring/turnRefsToSuper/";

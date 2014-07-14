@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,16 @@
  */
 package com.intellij.codeInsight.template;
 
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Collections;
 
 abstract public class CustomLiveTemplateBase implements CustomLiveTemplate {
   /**
@@ -25,5 +33,33 @@ abstract public class CustomLiveTemplateBase implements CustomLiveTemplate {
    */
   public boolean hasCompletionItem(@NotNull PsiFile file, int offset) {
     return false;
+  }
+
+  /**
+   * Return lookup elements for popup that appears on ListTemplateAction (Ctrl + J)
+   */
+  @NotNull
+  public Collection<? extends CustomLiveTemplateLookupElement> getLookupElements(@NotNull PsiFile file, @NotNull Editor editor, int offset) {
+    return Collections.emptyList();
+  }
+  
+  /**
+   * Populate completion result set. Used by LiveTemplateCompletionContributor
+   */
+  public void addCompletions(CompletionParameters parameters, CompletionResultSet result) {
+    String prefix = computeTemplateKeyWithoutContextChecking(new CustomTemplateCallback(parameters.getEditor(), parameters.getOriginalFile()));
+    if (prefix != null) {
+      result.withPrefixMatcher(result.getPrefixMatcher().cloneWithPrefix(prefix)).addAllElements(
+        getLookupElements(parameters.getOriginalFile(), parameters.getEditor(), parameters.getOffset()));
+    }
+  }
+
+  @Nullable
+  public String computeTemplateKeyWithoutContextChecking(@NotNull CustomTemplateCallback callback) {
+    return computeTemplateKey(callback);
+  }
+
+  public boolean supportsMultiCaret() {
+    return true;
   }
 }

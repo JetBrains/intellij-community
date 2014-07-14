@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
-import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -35,11 +35,13 @@ import java.util.Set;
 public class ConvertClosureArgToItIntention extends Intention {
 
 
+    @Override
     @NotNull
     public PsiElementPredicate getElementPredicate() {
         return new SingleArgClosurePredicate();
     }
 
+    @Override
     public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
             throws IncorrectOperationException {
         final GrClosableBlock closure =
@@ -49,6 +51,7 @@ public class ConvertClosureArgToItIntention extends Intention {
         final GrParameter parameter = parameterList.getParameters()[0];
         final Set<GrReferenceExpression> referencesToChange = new HashSet<GrReferenceExpression>();
         final GroovyRecursiveElementVisitor visitor = new GroovyRecursiveElementVisitor() {
+            @Override
             public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
                 super.visitReferenceExpression(referenceExpression);
                 if (!referenceExpression.getText().equals(parameter.getName())) {
@@ -63,7 +66,7 @@ public class ConvertClosureArgToItIntention extends Intention {
         closure.accept(visitor);
         parameter.delete();
         for (GrReferenceExpression referenceExpression : referencesToChange) {
-            IntentionUtils.replaceExpression("it", referenceExpression );
+            PsiImplUtil.replaceExpression("it", referenceExpression);
         }
     }
 

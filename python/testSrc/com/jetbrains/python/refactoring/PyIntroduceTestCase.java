@@ -17,6 +17,7 @@ package com.jetbrains.python.refactoring;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
@@ -88,9 +89,15 @@ public abstract class PyIntroduceTestCase extends PyTestCase {
       }
       handler.performAction(introduceOperation);
 
-      TemplateState state = TemplateManagerImpl.getTemplateState(myFixture.getEditor());
-      assert state != null;
-      state.gotoEnd(false);
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
+        @Override
+        public void run() {
+          TemplateState state = TemplateManagerImpl.getTemplateState(myFixture.getEditor());
+          assert state != null;
+          state.gotoEnd(false);
+        }
+      });
+
       myFixture.checkResultByFile(name + ".after.py", true);
     }
     finally {

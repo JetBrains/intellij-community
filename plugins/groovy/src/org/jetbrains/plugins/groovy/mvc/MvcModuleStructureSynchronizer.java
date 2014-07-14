@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,9 @@ import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
@@ -54,7 +57,7 @@ import java.util.*;
  * @author peter
  */
 public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
-  private final Set<Pair<Object, SyncAction>> myActions = new LinkedHashSet<Pair<Object, SyncAction>>();
+  private final Set<Pair<Object, SyncAction>> myOrders = new LinkedHashSet<Pair<Object, SyncAction>>();
 
   private Set<VirtualFile> myPluginRoots = Collections.emptySet();
 
@@ -106,7 +109,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileAdapter() {
       @Override
-      public void fileCreated(final VirtualFileEvent event) {
+      public void fileCreated(@NotNull final VirtualFileEvent event) {
         myModificationCount++;
 
         final VirtualFile file = event.getFile();
@@ -182,7 +185,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       }
 
       @Override
-      public void fileDeleted(VirtualFileEvent event) {
+      public void fileDeleted(@NotNull VirtualFileEvent event) {
         myModificationCount++;
 
         final VirtualFile file = event.getFile();
@@ -192,7 +195,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       }
 
       @Override
-      public void contentsChanged(VirtualFileEvent event) {
+      public void contentsChanged(@NotNull VirtualFileEvent event) {
         final String fileName = event.getFileName();
         if (MvcModuleStructureUtil.APPLICATION_PROPERTIES.equals(fileName)) {
           queue(SyncAction.UpdateProjectStructure, event.getFile());
@@ -200,12 +203,12 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       }
 
       @Override
-      public void fileMoved(VirtualFileMoveEvent event) {
+      public void fileMoved(@NotNull VirtualFileMoveEvent event) {
         myModificationCount++;
       }
 
       @Override
-      public void propertyChanged(VirtualFilePropertyEvent event) {
+      public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
         if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
           myModificationCount++;
         }
@@ -240,29 +243,77 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
   private void queue(SyncAction action, Object on) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myProject.isDisposed()) return;
 
-    if (myActions.isEmpty()) {
-      if (myProject.isDisposed()) return;
+    boolean shouldSchedule;
+    synchronized (myOrders) {
+      shouldSchedule = myOrders.isEmpty();
+      myOrders.add(Pair.create(on, action));
+    }
+    if (shouldSchedule) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
         @Override
         public void run() {
-          Application app = ApplicationManager.getApplication();
-          if (!app.isUnitTestMode()) {
-            app.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                runActions();
-              }
-            }, ModalityState.NON_MODAL);
-          }
-          else {
-            runActions();
-          }
+          scheduleRunActions();
         }
       });
     }
+  }
 
-    myActions.add(new Pair<Object, SyncAction>(on, action));
+  private void scheduleRunActions() {
+    if (myProject.isDisposed()) return;
+
+    final Application app = ApplicationManager.getApplication();
+    if (app.isUnitTestMode()) {
+      if (ourGrailsTestFlag && !myProject.isInitialized()) {
+        runActions(computeRawActions(takeOrderSnapshot()));
+      }
+      return;
+    }
+    
+    app.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        final Set<Pair<Object, SyncAction>> orderSnapshot = takeOrderSnapshot();
+        ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ReadTask() {
+          @Override
+          public void computeInReadAction(@NotNull ProgressIndicator indicator) {
+            if (!isUpToDate()) {
+              indicator.cancel();
+              return;
+            }
+
+            final Set<Trinity<Module, SyncAction, MvcFramework>> actions = computeRawActions(orderSnapshot);
+            app.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                if (!isUpToDate()) {
+                  scheduleRunActions();
+                }
+                else {
+                  runActions(actions);
+                }
+              }
+            }, ModalityState.NON_MODAL);
+          }
+
+          @Override
+          public void onCanceled(@NotNull ProgressIndicator indicator) {
+            scheduleRunActions();
+          }
+
+          private boolean isUpToDate() {
+            return !myProject.isDisposed() && orderSnapshot.equals(takeOrderSnapshot());
+          }
+        });
+      }
+    });
+  }
+
+  private LinkedHashSet<Pair<Object, SyncAction>> takeOrderSnapshot() {
+    synchronized (myOrders) {
+      return new LinkedHashSet<Pair<Object, SyncAction>>(myOrders);
+    }
   }
 
   @NotNull
@@ -289,41 +340,15 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
   @TestOnly
   public static void forceUpdateProject(Project project) {
-    project.getComponent(MvcModuleStructureSynchronizer.class).runActions();
+    MvcModuleStructureSynchronizer instance = project.getComponent(MvcModuleStructureSynchronizer.class);
+    instance.runActions(instance.computeRawActions(instance.takeOrderSnapshot()));
   }
 
-  private void runActions() {
+  private void runActions(Set<Trinity<Module, SyncAction, MvcFramework>> actions) {
     try {
-      if (myProject.isDisposed()) {
-        return;
-      }
-
-      if (ApplicationManager.getApplication().isUnitTestMode() && !ourGrailsTestFlag) {
-        return;
-      }
-
-      @SuppressWarnings("unchecked") Pair<Object, SyncAction>[] actions = myActions.toArray(new Pair[myActions.size()]);
-      //get module by object and kill duplicates
-
-      final Set<Trinity<Module, SyncAction, MvcFramework>> rawActions = new LinkedHashSet<Trinity<Module, SyncAction, MvcFramework>>();
-
-      for (final Pair<Object, SyncAction> pair : actions) {
-        for (Module module : determineModuleBySyncActionObject(pair.first)) {
-          if (!module.isDisposed()) {
-            final MvcFramework framework = (pair.second == SyncAction.CreateAppStructureIfNeeded)
-                                           ? MvcFramework.getInstanceBySdk(module)
-                                           : MvcFramework.getInstance(module);
-
-            if (framework != null && !framework.isAuxModule(module)) {
-              rawActions.add(Trinity.create(module, pair.second, framework));
-            }
-          }
-        }
-      }
-
       boolean isProjectStructureUpdated = false;
 
-      for (final Trinity<Module, SyncAction, MvcFramework> rawAction : rawActions) {
+      for (final Trinity<Module, SyncAction, MvcFramework> rawAction : actions) {
         final Module module = rawAction.first;
         if (module.isDisposed()) {
           continue;
@@ -341,8 +366,29 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       // if there were any actions added during performSyncAction, clear them too
       // all needed actions are already added to buffer and have thus been performed
       // otherwise you may get repetitive 'run create-app?' questions
-      myActions.clear();
+      synchronized (myOrders) {
+        myOrders.clear();
+      }
     }
+  }
+
+  private Set<Trinity<Module, SyncAction, MvcFramework>> computeRawActions(Set<Pair<Object, SyncAction>> actions) {
+    //get module by object and kill duplicates
+    final Set<Trinity<Module, SyncAction, MvcFramework>> rawActions = new LinkedHashSet<Trinity<Module, SyncAction, MvcFramework>>();
+    for (final Pair<Object, SyncAction> pair : actions) {
+      for (Module module : determineModuleBySyncActionObject(pair.first)) {
+        if (!module.isDisposed()) {
+          final MvcFramework framework = (pair.second == SyncAction.CreateAppStructureIfNeeded)
+                                         ? MvcFramework.getInstanceBySdk(module)
+                                         : MvcFramework.getInstance(module);
+
+          if (framework != null && !framework.isAuxModule(module)) {
+            rawActions.add(Trinity.create(module, pair.second, framework));
+          }
+        }
+      }
+    }
+    return rawActions;
   }
 
   private enum SyncAction {

@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -155,9 +156,9 @@ public class AutoBoxingInspection extends BaseInspection {
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiTypeCastExpression) {
         final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
-        replaceExpression(typeCastExpression, newExpression);
+        PsiReplacementUtil.replaceExpression(typeCastExpression, newExpression);
       } else {
-        replaceExpression(expression, newExpression);
+        PsiReplacementUtil.replaceExpression(expression, newExpression);
       }
     }
 

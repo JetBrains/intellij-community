@@ -26,6 +26,7 @@ public abstract class DebuggerCommandImpl extends DebuggerTaskImpl {
   protected void commandCancelled() {
   }
 
+  @Override
   public Priority getPriority() {
     return Priority.LOW;
   }

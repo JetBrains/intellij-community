@@ -21,6 +21,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfoRt;
 import gnu.trove.TIntArrayList;
 
@@ -28,7 +29,7 @@ import gnu.trove.TIntArrayList;
  * @author Denis Zhdanov
  * @since 8/26/12 7:41 PM
  */
-public class RemoveArrangementRuleAction extends AnAction {
+public class RemoveArrangementRuleAction extends AnAction implements DumbAware {
 
   public RemoveArrangementRuleAction() {
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.remove.text"));

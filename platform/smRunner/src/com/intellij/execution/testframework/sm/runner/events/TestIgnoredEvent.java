@@ -38,7 +38,7 @@ public class TestIgnoredEvent extends TreeNodeEvent {
     myStacktrace = stacktrace;
   }
 
-  @NotNull
+  @Nullable
   public String getIgnoreComment() {
     return myIgnoreComment;
   }

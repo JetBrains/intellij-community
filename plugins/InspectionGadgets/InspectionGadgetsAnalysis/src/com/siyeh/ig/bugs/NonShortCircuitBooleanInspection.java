@@ -27,6 +27,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class NonShortCircuitBooleanInspection extends BaseInspection {
@@ -82,7 +83,7 @@ public class NonShortCircuitBooleanInspection extends BaseInspection {
         }
         newExpression.append(operand.getText());
       }
-      replaceExpression(expression, newExpression.toString());
+      PsiReplacementUtil.replaceExpression(expression, newExpression.toString());
     }
 
     private static String getShortCircuitOperand(IElementType tokenType) {

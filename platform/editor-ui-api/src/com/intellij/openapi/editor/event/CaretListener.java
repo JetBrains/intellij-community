@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.openapi.editor.event;
 import java.util.EventListener;
 
 /**
- * Allows to receive notifications about caret movement.
+ * Allows to receive notifications about caret movement, and caret additions/removal
  *
  * @see com.intellij.openapi.editor.CaretModel#addCaretListener(CaretListener)
  * @see EditorEventMulticaster#addCaretListener(CaretListener)
@@ -30,4 +30,14 @@ public interface CaretListener extends EventListener {
    * @param e the event containing information about the caret movement.
    */
   void caretPositionChanged(CaretEvent e);
+
+  /**
+   * Called when a new caret was added to the document.
+   */
+  void caretAdded(CaretEvent e);
+
+  /**
+   * Called when a caret was removed from the document.
+   */
+  void caretRemoved(CaretEvent e);
 }

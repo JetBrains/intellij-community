@@ -39,7 +39,7 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
 
   @SuppressWarnings("UnusedDeclaration")
   public GroovyAwareModuleBuilder() {
-    this("groovy", "Groovy", "Simple module with attached Groovy library", null);
+    this("groovy", "Groovy", "Simple module with attached Groovy library", JetgroovyIcons.Groovy.GroovyModule);
   }
 
   protected GroovyAwareModuleBuilder(String builderId, String presentableName, String description, Icon bigIcon) {
@@ -51,7 +51,7 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
 
   @Nullable
   @Override
-  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
+  public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep) {
     return new GroovySdkForNewModuleWizardStep(this, settingsStep.getContext(), getFramework(), settingsStep);
   }
 
@@ -88,6 +88,16 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
   @Override
   public String getGroupName() {
     return "Groovy";
+  }
+
+  @Override
+  public String getParentGroup() {
+    return "Groovy";
+  }
+
+  @Override
+  public int getWeight() {
+    return 60;
   }
 
   @Nullable

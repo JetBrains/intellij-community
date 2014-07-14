@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,14 +45,12 @@ public class CommandLineUtil {
   // please keep an implementation in sync with [junit-rt] ProcessBuilder.createProcess()
   @NotNull
   public static List<String> toCommandLine(@NotNull String command, @NotNull List<String> parameters, @NotNull Platform platform) {
-    List<String> commandLine = ContainerUtil.newArrayListWithExpectedSize(parameters.size() + 1);
+    List<String> commandLine = ContainerUtil.newArrayListWithCapacity(parameters.size() + 1);
 
     commandLine.add(FileUtilRt.toSystemDependentName(command, platform.fileSeparator));
 
     boolean isWindows = platform == Platform.WINDOWS;
-    boolean winShell = isWindows &&
-                       ("cmd".equalsIgnoreCase(command) || "cmd.exe".equalsIgnoreCase(command)) &&
-                       parameters.size() > 1 && "/c".equalsIgnoreCase(parameters.get(0));
+    boolean winShell = isWindows && isWinShell(command);
 
     for (String parameter : parameters) {
       if (isWindows) {
@@ -76,6 +74,15 @@ public class CommandLineUtil {
     }
 
     return commandLine;
+  }
+
+  private static boolean isWinShell(@NotNull String command) {
+    return endsWithIgnoreCase(command, ".cmd") || endsWithIgnoreCase(command, ".bat") ||
+           "cmd".equalsIgnoreCase(command) || "cmd.exe".equalsIgnoreCase(command);
+  }
+
+  private static boolean endsWithIgnoreCase(@NotNull String str, @NotNull String suffix) {
+    return str.regionMatches(true, str.length() - suffix.length(), suffix, 0, suffix.length());
   }
 
   private static String quote(String s, char ch) {

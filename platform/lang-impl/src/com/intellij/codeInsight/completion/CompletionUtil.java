@@ -211,6 +211,7 @@ public class CompletionUtil {
     editor.getCaretModel().moveToOffset(context.getTailOffset());
     PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
     item.handleInsert(context);
+    PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(document);
   }
 
   private static void setOffsets(InsertionContext context, int offset, final int tailOffset) {

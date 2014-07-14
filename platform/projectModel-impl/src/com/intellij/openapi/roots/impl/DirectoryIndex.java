@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ public abstract class DirectoryIndex {
   public abstract JpsModuleSourceRootType<?> getSourceRootType(@NotNull DirectoryInfo info);
 
   public abstract boolean isProjectExcludeRoot(@NotNull VirtualFile dir);
+  public abstract boolean isModuleExcludeRoot(@NotNull VirtualFile dir);
 
   @NotNull
   public abstract
@@ -48,5 +49,11 @@ public abstract class DirectoryIndex {
   @Nullable
   public abstract String getPackageName(@NotNull VirtualFile dir);
 
-  public abstract boolean isInitialized();
+  /**
+   * @return true
+   */
+  @Deprecated
+  public boolean isInitialized() {
+    return true;
+  }
 }

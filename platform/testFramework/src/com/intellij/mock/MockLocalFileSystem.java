@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,6 +147,7 @@ public class MockLocalFileSystem extends LocalFileSystem {
   public void renameFile(final Object requestor, @NotNull final VirtualFile vFile, @NotNull final String newName) throws IOException {
   }
 
+  @NotNull
   @Override
   public VirtualFile createChildFile(final Object requestor, @NotNull final VirtualFile vDir, @NotNull final String fileName) throws IOException {
     return myDelegate.createChildFile(requestor, vDir, fileName);
@@ -158,6 +159,7 @@ public class MockLocalFileSystem extends LocalFileSystem {
     return myDelegate.createChildDirectory(requestor, vDir, dirName);
   }
 
+  @NotNull
   @Override
   public VirtualFile copyFile(final Object requestor, @NotNull final VirtualFile virtualFile, @NotNull final VirtualFile newParent, @NotNull final String copyName)
     throws IOException {

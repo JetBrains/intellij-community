@@ -18,6 +18,7 @@ package org.jetbrains.plugins.javaFX.packaging;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -358,4 +359,6 @@ public abstract class AbstractJavaFxPackager {
   public abstract String getPreloaderJar();
 
   public abstract boolean convertCss2Bin();
+
+  public abstract List<JavaFxManifestAttribute> getCustomManifestAttributes();
 }

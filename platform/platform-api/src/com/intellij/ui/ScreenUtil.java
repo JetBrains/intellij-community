@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@ package com.intellij.ui;
 
 import com.intellij.Patches;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.WeakHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Area;
 import java.util.Map;
 
 /**
@@ -33,11 +33,8 @@ import java.util.Map;
 public class ScreenUtil {
   public static final String DISPOSE_TEMPORARY = "dispose.temporary";
 
-  @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache;
-  static {
-    final boolean useCache = SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless();
-    ourInsetsCache = useCache ? new WeakHashMap<GraphicsConfiguration, Pair<Insets, Long>>() : null;
-  }
+  @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache =
+    Patches.JDK_BUG_ID_8004103 ? new WeakHashMap<GraphicsConfiguration, Pair<Insets, Long>>() : null;
   private static final int ourInsetsTimeout = 5000;  // shouldn't be too long
 
   private ScreenUtil() { }
@@ -50,7 +47,10 @@ public class ScreenUtil {
       if (intersection.isEmpty()) continue;
       final int sq1 = intersection.width * intersection.height;
       final int sq2 = bounds.width * bounds.height;
-      return (double)sq1 / (double)sq2 > 0.1;
+      double visibleFraction = (double)sq1 / (double)sq2;
+      if (visibleFraction > 0.1) {
+        return true;
+      }
     }
     return false;
   }
@@ -74,6 +74,15 @@ public class ScreenUtil {
       applyInsets(result[i], getScreenInsets(configuration));
     }
     return result;
+  }
+
+  public static Shape getAllScreensShape() {
+    Rectangle[] rectangles = getAllScreenBounds();
+    Area area = new Area();
+    for (Rectangle rectangle : rectangles) {
+      area.add(new Area(rectangle));
+    }
+    return area;
   }
 
   public static Rectangle getScreenRectangle(@NotNull Point p) {

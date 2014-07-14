@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.lang.overriding
+
 import com.intellij.codeInsight.generation.OverrideImplementUtil
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.JavaPsiFacade
@@ -99,8 +100,8 @@ class Test<T> extends Base<T> {
 """
   }
 
-  void testTrhowsList() {
-    myFixture.configureByText('a.groovy', '''\
+  void testThrowsList() {
+    assertImplement('''\
 class X implements I {
     <caret>
 }
@@ -108,11 +109,7 @@ class X implements I {
 interface I {
     void foo() throws RuntimeException
 }
-''')
-
-    generateImplementation(findMethod('I', 'foo'))
-
-    myFixture.checkResult('''\
+''', 'I', 'foo', '''\
 class X implements I {
 
     @Override
@@ -123,6 +120,80 @@ class X implements I {
 
 interface I {
     void foo() throws RuntimeException
+}
+''')
+  }
+
+  private void assertImplement(String textBefore, String clazz, String name, String textAfter) {
+    myFixture.configureByText('a.groovy', textBefore)
+    generateImplementation(findMethod(clazz, name))
+    myFixture.checkResult(textAfter)
+  }
+
+  void testThrowsListWithImport() {
+    myFixture.addClass('''\
+package pack;
+public class Exc extends RuntimeException {}
+''')
+
+    myFixture.addClass('''\
+import pack.Exc;
+
+interface I {
+    void foo() throws Exc;
+}
+''')
+
+    myFixture.configureByText('a.groovy', '''\
+class X implements I {
+    <caret>
+}
+''')
+
+    generateImplementation(findMethod('I', 'foo'))
+
+    myFixture.checkResult('''\
+import pack.Exc
+
+class X implements I {
+
+    @Override
+    void foo() throws Exc {
+
+    }
+}
+''')
+  }
+
+  void testNullableParameter() {
+    myFixture.addClass('''
+package org.jetbrains.annotations;
+public @interface Nullable{}
+''')
+
+    assertImplement('''
+import org.jetbrains.annotations.Nullable
+
+class Inheritor implements I {
+  <caret>
+}
+
+interface I {
+  def foo(@Nullable p)
+}
+''', 'I', 'foo', '''
+import org.jetbrains.annotations.Nullable
+
+class Inheritor implements I {
+
+    @Override
+    def foo(@Nullable Object p) {
+        <caret>return null
+    }
+}
+
+interface I {
+  def foo(@Nullable p)
 }
 ''')
   }
@@ -145,7 +216,7 @@ class Test extends Base<String> {
   }
 
   private def generateImplementation(PsiMethod method) {
-    WriteCommandAction.runWriteCommandAction {
+    WriteCommandAction.runWriteCommandAction project, {
       GrTypeDefinition clazz = (myFixture.file as PsiClassOwner).classes[0] as GrTypeDefinition
       OverrideImplementUtil.overrideOrImplement(clazz, method);
       PostprocessReformattingAspect.getInstance(myFixture.project).doPostponedFormatting()

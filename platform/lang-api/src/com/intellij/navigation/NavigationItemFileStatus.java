@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -43,11 +44,11 @@ public class NavigationItemFileStatus {
     return FileStatus.NOT_CHANGED;
   }
 
-  private static FileStatus getPsiElementFileStatus(PsiElement psiElement) {
+  private static FileStatus getPsiElementFileStatus(@NotNull PsiElement psiElement) {
     if (!psiElement.isPhysical()) return FileStatus.NOT_CHANGED;
     PsiFile contFile = psiElement.getContainingFile();
     if (contFile == null) return FileStatus.NOT_CHANGED;
     VirtualFile vFile = contFile.getVirtualFile();
-    return vFile != null ? FileStatusManager.getInstance(psiElement.getProject()).getStatus(vFile) : FileStatus.NOT_CHANGED;
+    return vFile == null ? FileStatus.NOT_CHANGED : FileStatusManager.getInstance(psiElement.getProject()).getStatus(vFile);
   }
 }

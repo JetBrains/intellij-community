@@ -54,12 +54,15 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author yole
  */
 public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExpressionStub> implements PyTargetExpression {
+  QualifiedName myQualifiedName;
+
   public PyTargetExpressionImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -205,7 +208,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
           final PyAssignmentStatement assignment = (PyAssignmentStatement)nextParent;
           final PyExpression value = assignment.getAssignedValue();
           if (value != null) {
-            final PyType assignedType = context.getType(value);
+            final PyType assignedType = PyTypeChecker.toNonWeakType(context.getType(value), context);
             if (assignedType instanceof PyTupleType) {
               final PyType t = getTypeFromTupleAssignment((PyTupleExpression)parent, (PyTupleType)assignedType);
               if (t != null) {
@@ -242,7 +245,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
         final PyClass cls = ((PyClassType)exprType).getPyClass();
         final PyFunction enter = cls.findMethodByName(PyNames.ENTER, true);
         if (enter != null) {
-          final PyType enterType = enter.getReturnType(context, null);
+          final PyType enterType = enter.getCallType(expression, Collections.<PyExpression, PyNamedParameter>emptyMap(), context);
           if (enterType != null) {
             return enterType;
           }
@@ -356,7 +359,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     }
     if (source != null) {
       final PyType sourceType = context.getType(source);
-      final PyType type = getIterationType(sourceType, source, context);
+      final PyType type = getIterationType(sourceType, source, this, context);
       if (type instanceof PyTupleType && target instanceof PyTupleExpression) {
         return getTypeFromTupleAssignment((PyTupleExpression)target, (PyTupleType)type);
       }
@@ -368,7 +371,8 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   }
 
   @Nullable
-  private static PyType getIterationType(@Nullable PyType iterableType, @Nullable PyExpression source, @NotNull TypeEvalContext context) {
+  private static PyType getIterationType(@Nullable PyType iterableType, @Nullable PyExpression source, @NotNull PsiElement anchor,
+                                         @NotNull TypeEvalContext context) {
     PyType result = null;
     if (iterableType instanceof PyCollectionType) {
       result = ((PyCollectionType)iterableType).getElementType(context);
@@ -382,47 +386,44 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
         }
       }
     }
+    else if (iterableType instanceof PyTupleType) {
+      final PyTupleType tupleType = (PyTupleType)iterableType;
+      final List<PyType> memberTypes = new ArrayList<PyType>();
+      for (int i = 0; i < tupleType.getElementCount(); i++) {
+        memberTypes.add(tupleType.getElementType(i));
+      }
+      return PyUnionType.union(memberTypes);
+    }
     else if (iterableType instanceof PyUnionType) {
       final Collection<PyType> members = ((PyUnionType)iterableType).getMembers();
       final List<PyType> iterationTypes = new ArrayList<PyType>();
       for (PyType member : members) {
-        iterationTypes.add(getIterationType(member, source, context));
+        iterationTypes.add(getIterationType(member, source, anchor, context));
       }
       return PyUnionType.union(iterationTypes);
     }
-    else if (iterableType instanceof PyClassType) {
-      final PyClass pyClass = ((PyClassType)iterableType).getPyClass();
-      for (PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-        final PyType iterationType = provider.getIterationType(pyClass);
-        if (iterationType != null) {
-          result = iterationType;
-          break;
+    else if (iterableType != null && PyABCUtil.isSubtype(iterableType, PyNames.ITERATOR, context)) {
+      final PyFunction iterateMethod = findMethodByName(iterableType, PyNames.ITER, context);
+      PyType iterateMethodType = null;
+      if (iterateMethod != null) {
+        iterateMethodType = getContextSensitiveType(iterateMethod, context, source);
+      }
+      if (iterateMethodType instanceof PyCollectionType) {
+        final PyCollectionType collectionType = (PyCollectionType)iterateMethodType;
+        result = collectionType.getElementType(context);
+      }
+      if (result == null) {
+        final String nextMethodName = LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON30) ?
+                                      PyNames.DUNDER_NEXT : PyNames.NEXT;
+        final PyFunction next = findMethodByName(iterableType, nextMethodName, context);
+        if (next != null) {
+          result = getContextSensitiveType(next, context, source);
         }
       }
-      if (PyABCUtil.isSubclass(pyClass, PyNames.ITERATOR)) {
-        final PyFunction iterateMethod = pyClass.findMethodByName(PyNames.ITER, true);
-        PyType iterateMethodType = null;
-        if (iterateMethod != null) {
-          iterateMethodType = getContextSensitiveType(iterateMethod, context, source);
-        }
-        if (iterateMethodType instanceof PyCollectionType) {
-          final PyCollectionType collectionType = (PyCollectionType)iterateMethodType;
-          result = collectionType.getElementType(context);
-        }
-        if (result == null) {
-          PyFunction next = pyClass.findMethodByName(PyNames.NEXT, true);
-          if (next == null) {
-            next = pyClass.findMethodByName(PyNames.DUNDER_NEXT, true);
-          }
-          if (next != null) {
-            result = getContextSensitiveType(next, context, source);
-          }
-        }
-        if (result == null) {
-          final PyFunction getItem = pyClass.findMethodByName(PyNames.GETITEM, true);
-          if (getItem != null) {
-            result = getContextSensitiveType(getItem, context, source);
-          }
+      if (result == null) {
+        final PyFunction getItem = findMethodByName(iterableType, PyNames.GETITEM, context);
+        if (getItem != null) {
+          result = getContextSensitiveType(getItem, context, source);
         }
       }
     }
@@ -430,12 +431,23 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   }
 
   @Nullable
+  private static PyFunction findMethodByName(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ, resolveContext);
+    if (results != null && !results.isEmpty()) {
+      final RatedResolveResult result = results.get(0);
+      final PsiElement element = result.getElement();
+      if (element instanceof PyFunction) {
+        return (PyFunction)element;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
   private static PyType getContextSensitiveType(@NotNull PyFunction function, @NotNull TypeEvalContext context,
                                                 @Nullable PyExpression source) {
-    if (function instanceof PyFunctionImpl) {
-      return ((PyFunctionImpl)function).getReturnTypeWithoutCallSite(context, source);
-    }
-    return function.getReturnType(context, null);
+    return function.getCallType(source, Collections.<PyExpression, PyNamedParameter>emptyMap(), context);
   }
 
   @Nullable
@@ -457,6 +469,15 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   public PyExpression getQualifier() {
     ASTNode qualifier = getNode().findChildByType(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
     return qualifier != null ? (PyExpression) qualifier.getPsi() : null;
+  }
+
+  @Nullable
+  @Override
+  public QualifiedName asQualifiedName() {
+    if (myQualifiedName == null) {
+      myQualifiedName = PyPsiUtils.asQualifiedName(this);
+    }
+    return myQualifiedName;
   }
 
   public String toString() {
@@ -501,7 +522,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       }
       return null;
     }
-    return PyQualifiedNameFactory.fromExpression(findAssignedValue());
+    return PyPsiUtils.asQualifiedName(findAssignedValue());
   }
 
   @Nullable
@@ -552,7 +573,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     final PyExpression value = findAssignedValue();
     if (value instanceof PyCallExpression) {
       final PyExpression callee = ((PyCallExpression)value).getCallee();
-      return PyQualifiedNameFactory.fromExpression(callee);
+      return PyPsiUtils.asQualifiedName(callee);
     }
     return null;
   }
@@ -565,7 +586,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
 
   @NotNull
   public PsiPolyVariantReference getReference(final PyResolveContext resolveContext) {
-    if (getQualifier() != null) {
+    if (isQualified()) {
       return new PyQualifiedReference(this, resolveContext);
     }
     return new PyTargetReference(this, resolveContext);
@@ -574,6 +595,9 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   @NotNull
   @Override
   public SearchScope getUseScope() {
+    if (isQualified()) {
+      return super.getUseScope();
+    }
     final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
     if (owner != null) {
       final Scope scope = ControlFlowCache.getScope(owner);
@@ -590,7 +614,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     while(true) {
       PyElement parentContainer = PsiTreeUtil.getParentOfType(container, PyFunction.class, PyClass.class);
       if (parentContainer instanceof PyClass) {
-        if (getQualifier() != null) {
+        if (isQualified()) {
           return super.getUseScope();
         }
         break;
@@ -676,5 +700,11 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       }
     }
     return null;
+  }
+
+  @Override
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    myQualifiedName = null;
   }
 }

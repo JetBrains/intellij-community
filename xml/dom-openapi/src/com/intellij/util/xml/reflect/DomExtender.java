@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
  *   domClass - the DOM element class for which this extender will be called. Should be equal to T.
  *   extenderClass - this class qualified name.
  *
+ * For registering extenders, use "com.intellij.dom.extender" extension point.
+ *
  * @author peter
  */
 public abstract class DomExtender<T extends DomElement> {
@@ -33,4 +35,13 @@ public abstract class DomExtender<T extends DomElement> {
    * @param registrar a place to register your own DOM children descriptions
    */
   public abstract void registerExtensions(@NotNull T t, @NotNull final DomExtensionsRegistrar registrar);
+
+  /**
+   * Makes stub building for extensions available.
+   * To be compatible with general stubs contract, extension should NOT depend on anything beyond current file's content.
+   * @since 13.1
+   */
+  public boolean supportsStubs() {
+    return true;
+  }
 }

@@ -14,9 +14,8 @@ package org.zmlx.hg4idea.execution;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
+import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
-import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider;
-import com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafe;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,7 +36,7 @@ class HgCommandAuthenticator {
 
   private static final Logger LOG = Logger.getInstance(HgCommandAuthenticator.class.getName());
   
-  private GetPasswordRunnable myRunnable;
+  private GetPasswordRunnable myGetPassword;
   private final Project myProject;
   private boolean myForceAuthorization;
 
@@ -47,21 +46,23 @@ class HgCommandAuthenticator {
   }
 
   public void saveCredentials() {
-    if (myRunnable == null) return;
+    if (myGetPassword == null) return;
 
-    // if checkbox is selected, remember on disk. Otherwise in memory. Don't read password safe settings.
+    // if checkbox is selected, save on disk. Otherwise in memory. Don't read password safe settings.
 
     final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
-    final String url = VirtualFileManager.extractPath(myRunnable.getURL());
-    final String key = keyForUrlAndLogin(url, myRunnable.getUserName());
-
-    final PasswordSafeProvider provider =
-      myRunnable.isRememberPassword() ? passwordSafe.getMasterKeyProvider() : passwordSafe.getMemoryProvider();
+    final String url = VirtualFileManager.extractPath(myGetPassword.getURL());
+    final String key = keyForUrlAndLogin(url, myGetPassword.getUserName());
     try {
-      provider.storePassword(myProject, HgCommandAuthenticator.class, key, myRunnable.getPassword());
+      if (myGetPassword.isRememberPassword()) {
+        PasswordSafe.getInstance().storePassword(myProject, HgCommandAuthenticator.class, key, myGetPassword.getPassword());
+      }
+      else if (passwordSafe.getSettings().getProviderType() != PasswordSafeSettings.ProviderType.DO_NOT_STORE) {
+        passwordSafe.getMemoryProvider().storePassword(myProject, HgCommandAuthenticator.class, key, myGetPassword.getPassword());
+      }
       final HgVcs vcs = HgVcs.getInstance(myProject);
       if (vcs != null) {
-        vcs.getGlobalSettings().addRememberedUrl(url, myRunnable.getUserName());
+        vcs.getGlobalSettings().addRememberedUrl(url, myGetPassword.getUserName());
       }
     }
     catch (PasswordSafeException e) {
@@ -72,16 +73,16 @@ class HgCommandAuthenticator {
   public boolean promptForAuthentication(Project project, String proposedLogin, String uri, String path, @Nullable ModalityState state) {
     GetPasswordRunnable runnable = new GetPasswordRunnable(project, proposedLogin, uri, path, myForceAuthorization);
     ApplicationManager.getApplication().invokeAndWait(runnable, state == null ? ModalityState.defaultModalityState() : state);
-    myRunnable = runnable;
+    myGetPassword = runnable;
     return runnable.isOk();
   }
 
   public String getUserName() {
-    return myRunnable.getUserName();
+    return myGetPassword.getUserName();
   }
 
   public String getPassword() {
-    return myRunnable.getPassword();
+    return myGetPassword.getPassword();
   }
 
   private static class GetPasswordRunnable implements Runnable {
@@ -129,13 +130,7 @@ class HgCommandAuthenticator {
           final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
           password = passwordSafe.getMemoryProvider().getPassword(myProject, HgCommandAuthenticator.class, key);
           if (password == null) {
-            final MasterKeyPasswordSafe masterKeyProvider = passwordSafe.getMasterKeyProvider();
-            if (!masterKeyProvider.isEmpty()) {
-              // workaround for: don't ask for master password, if the requested password is not there.
-              // this should be fixed in PasswordSafe: don't ask master password to look for keys
-              // until then we assume that is PasswordSafe was used (there is anything there), then it makes sense to look there.
-              password = masterKeyProvider.getPassword(myProject, HgCommandAuthenticator.class, key);
-            }
+            password = passwordSafe.getPassword(myProject, HgCommandAuthenticator.class, key);
           }
         } catch (PasswordSafeException e) {
           LOG.info("Couldn't get password for key [" + key + "]", e);

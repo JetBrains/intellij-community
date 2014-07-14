@@ -13,16 +13,17 @@ import java.util.List;
 
 /**
  * Provides the information needed to build the VCS log, such as the list of most recent commits with their parents.
- *
- * @author Kirill Likhodedov
  */
 public interface VcsLogProvider {
 
   /**
-   * Reads the given number of the most recent commits from the log.
+   * Reads the most recent correctly ordered commits from the log. <br/>
+   * Commits should be at least topologically ordered, better considering commit time as well. <br/>
+   * Commits will be shown in the log in this order.
+   * @param requirements some limitations on commit data that should be returned.
    */
   @NotNull
-  List<? extends VcsFullCommitDetails> readFirstBlock(@NotNull VirtualFile root, boolean ordered, int commitCount) throws VcsException;
+  List<? extends VcsCommitMetadata> readFirstBlock(@NotNull VirtualFile root, @NotNull Requirements requirements) throws VcsException;
 
   /**
    * <p>Reads the whole history, but only hashes & parents.</p>
@@ -74,11 +75,13 @@ public interface VcsLogProvider {
   void subscribeToRootRefreshEvents(@NotNull Collection<VirtualFile> roots, @NotNull VcsLogRefresher refresher);
 
   /**
-   * Return commits with full details, which correspond to the given filters.
+   * <p>Return commits, which correspond to the given filters.</p>
+   *
+   * @param maxCount maximum number of commits to request from the VCS, or -1 for unlimited.
    */
   @NotNull
-  List<? extends VcsFullCommitDetails> getFilteredDetails(@NotNull VirtualFile root,
-                                                          @NotNull Collection<VcsLogFilter> filters) throws VcsException;
+  List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root, @NotNull VcsLogFilterCollection filterCollection, int maxCount)
+    throws VcsException;
 
   /**
    * Returns the name of current user as specified for the given root,
@@ -86,5 +89,21 @@ public interface VcsLogProvider {
    */
   @Nullable
   VcsUser getCurrentUser(@NotNull VirtualFile root) throws VcsException;
+
+  /**
+   * Returns the list of names of branches/references which contain the given commit.
+   */
+  @NotNull
+  Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) throws VcsException;
+
+  interface Requirements {
+
+    /**
+     * Returns the number of commits that should be queried from the VCS. <br/>
+     * (of course it may return less commits if the repository is small)
+     */
+    int getCommitCount();
+
+  }
 
 }

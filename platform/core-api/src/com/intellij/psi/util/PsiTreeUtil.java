@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -223,7 +223,7 @@ public class PsiTreeUtil {
    * @return first found element, or null if nothing found.
    */
   @Nullable
-  @Contract("null, _, _ -> null")
+  @Contract("null, _ -> null")
   public static <T extends PsiElement> T findChildOfAnyType(@Nullable final PsiElement element, @NotNull final Class<? extends T>... classes) {
     return findChildOfAnyType(element, true, classes);
   }
@@ -520,17 +520,27 @@ public class PsiTreeUtil {
   @Nullable
   @Contract("null, _, _ -> null")
   public static <T extends PsiElement> T getParentOfType(@Nullable PsiElement element, @NotNull Class<T> aClass, boolean strict) {
-    if (element == null) return null;
+    return getParentOfType(element, aClass, strict, -1);
+  }
+
+  @Contract("null, _, _, _ -> null")
+  public static <T extends PsiElement> T getParentOfType(@Nullable PsiElement element, @NotNull Class<T> aClass, boolean strict, int minStartOffset) {
+    if (element == null) {
+      return null;
+    }
+
     if (strict) {
       element = element.getParent();
     }
 
-    while (element != null) {
+    while (element != null && (minStartOffset == -1 || element.getNode().getStartOffset() >= minStartOffset)) {
       if (aClass.isInstance(element)) {
         //noinspection unchecked
         return (T)element;
       }
-      if (element instanceof PsiFile) return null;
+      if (element instanceof PsiFile) {
+        return null;
+      }
       element = element.getParent();
     }
 

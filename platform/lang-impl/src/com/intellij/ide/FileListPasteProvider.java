@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.ide.dnd.LinuxDragAndDropSupport;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -49,6 +48,8 @@ public class FileListPasteProvider implements PasteProvider {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || ideView == null) return;
+
+    if (!FileCopyPasteUtil.isFileListFlavorAvailable()) return;
 
     final Transferable contents = CopyPasteManager.getInstance().getContents();
     if (contents == null) return;
@@ -88,8 +89,7 @@ public class FileListPasteProvider implements PasteProvider {
 
   @Override
   public boolean isPasteEnabled(@NotNull DataContext dataContext) {
-    final Transferable contents = CopyPasteManager.getInstance().getContents();
-    final IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
-    return contents != null && FileCopyPasteUtil.isFileListFlavorSupported(contents) && ideView != null;
+    return LangDataKeys.IDE_VIEW.getData(dataContext) != null &&
+           FileCopyPasteUtil.isFileListFlavorAvailable();
   }
 }

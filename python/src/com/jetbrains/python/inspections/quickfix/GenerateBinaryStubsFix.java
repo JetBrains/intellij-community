@@ -19,12 +19,15 @@ import com.google.common.collect.Lists;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.notification.Notification;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.Task.Backgroundable;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -32,13 +35,11 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Consumer;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.*;
-import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -51,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -58,55 +60,86 @@ import java.util.List;
  * @author yole
  */
 public class GenerateBinaryStubsFix implements LocalQuickFix {
-  private String myQualifiedName;
-  private Sdk mySdk;
+  private static final Logger LOG = Logger.getInstance("#" + GenerateBinaryStubsFix.class.getName());
 
-  public GenerateBinaryStubsFix(PsiReference reference) {
-    myQualifiedName = getReferenceText(reference);
-    mySdk = getPythonSdk(reference);
+  private final String myQualifiedName;
+  private final Sdk mySdk;
+
+  /**
+   * Generates pack of fixes available for some unresolved import statement.
+   * Be sure to call {@link #isApplicable(com.jetbrains.python.psi.PyImportStatementBase)} first to make sure this statement is supported
+   *
+   * @param importStatementBase statement to fix
+   * @return pack of fixes
+   */
+  @NotNull
+  public static Collection<GenerateBinaryStubsFix> generateFixes(@NotNull final PyImportStatementBase importStatementBase) {
+    final List<String> names = importStatementBase.getFullyQualifiedObjectNames();
+    final List<GenerateBinaryStubsFix> result = new ArrayList<GenerateBinaryStubsFix>(names.size());
+    for (final String qualifiedName : names) {
+      result.add(new GenerateBinaryStubsFix(importStatementBase, qualifiedName));
+    }
+    return result;
   }
 
-  private static String getReferenceText(PsiReference reference) {
-    PsiElement element = reference.getElement();
-    while (element.getParent() instanceof PyReferenceExpression) {
-      element = element.getParent();
-    }
-    final String elementText = element.getText();
-
-    final PyFromImportStatement importStatementBase = PsiTreeUtil.getParentOfType(element, PyFromImportStatement.class);
-    if (importStatementBase != null) {
-      final QualifiedName qName = importStatementBase.getImportSourceQName();
-      if (qName != null) {
-        return qName.append(elementText).toString();
-      }
-    }
-
-    return elementText;
+  /**
+   * @param importStatementBase statement to fix
+   * @param qualifiedName       name should be fixed (one of {@link com.jetbrains.python.psi.PyImportStatementBase#getFullyQualifiedObjectNames()})
+   */
+  private GenerateBinaryStubsFix(@NotNull final PyImportStatementBase importStatementBase, @NotNull final String qualifiedName) {
+    myQualifiedName = qualifiedName;
+    mySdk = getPythonSdk(importStatementBase);
   }
 
+  @Override
   @NotNull
   public String getName() {
-    return "Generate stubs for binary module " + myQualifiedName;
+    return PyBundle.message("sdk.gen.stubs.for.binary.modules", myQualifiedName);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return "Generate binary stubs";
   }
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    final Task.Backgroundable backgroundable = new Task.Backgroundable(project, "Generating skeletons for binary module", false) {
+    final PsiFile file = descriptor.getPsiElement().getContainingFile();
+    final Backgroundable backgroundable = getFixTask(file);
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, new BackgroundableProcessIndicator(backgroundable));
+  }
+
+
+  /**
+   * Returns fix task that is used to generate stubs
+   * @param fileToRunTaskIn file where task should run
+   * @return task itself
+   */
+  @NotNull
+  public Backgroundable getFixTask(@NotNull final PsiFile fileToRunTaskIn) {
+    final Project project = fileToRunTaskIn.getProject();
+    final String folder = fileToRunTaskIn.getContainingDirectory().getVirtualFile().getCanonicalPath();
+    return new Task.Backgroundable(project, "Generating skeletons for binary module", false) {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
-        List<String> assemblyRefs = collectAssemblyReferences(descriptor.getPsiElement().getContainingFile());
+
+
+        final List<String> assemblyRefs = new ReadAction<List<String>>() {
+          @Override
+          protected void run(@NotNull Result<List<String>> result) throws Throwable {
+            result.setResult(collectAssemblyReferences(fileToRunTaskIn));
+          }
+        }.execute().getResultObject();
+
 
         try {
-          final PySkeletonRefresher refresher = new PySkeletonRefresher(project, null, mySdk, null, null);
+          final PySkeletonRefresher refresher = new PySkeletonRefresher(project, null, mySdk, null, null, folder);
 
           if (needBinaryList(myQualifiedName)) {
-            if (!generateSkeletonsForList(refresher, indicator)) return;
+            if (!generateSkeletonsForList(refresher, indicator, folder)) return;
           }
           else {
             //noinspection unchecked
@@ -119,16 +152,16 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
           }
         }
         catch (InvalidSdkException e) {
-          final Notification notification = PythonSdkType.createInvalidSdkNotification(project);
-          notification.notify(project);
+          LOG.error(e);
         }
       }
     };
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, new BackgroundableProcessIndicator(backgroundable));
   }
 
-  private boolean generateSkeletonsForList(@NotNull final PySkeletonRefresher refresher, ProgressIndicator indicator) throws InvalidSdkException {
-    final PySkeletonGenerator generator = new PySkeletonGenerator(refresher.getSkeletonsPath());
+  private boolean generateSkeletonsForList(@NotNull final PySkeletonRefresher refresher,
+                                           ProgressIndicator indicator,
+                                           @Nullable final String currentBinaryFilesPath) throws InvalidSdkException {
+    final PySkeletonGenerator generator = new PySkeletonGenerator(refresher.getSkeletonsPath(), mySdk, currentBinaryFilesPath);
     indicator.setIndeterminate(false);
     final String homePath = mySdk.getHomePath();
     if (homePath == null) return false;
@@ -171,10 +204,11 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
       @Override
       public void visitPyCallExpression(PyCallExpression node) {
         super.visitPyCallExpression(node);
-        if (node.isCalleeText("AddReference", "AddReferenceByPartialName")) {
+        // TODO: What if user loads it not by literal? We need to ask user for list of DLLs
+        if (node.isCalleeText("AddReference", "AddReferenceByPartialName", "AddReferenceByName")) {
           final PyExpression[] args = node.getArguments();
-          if (args.length == 1 && args [0] instanceof PyStringLiteralExpression) {
-            result.add(((PyStringLiteralExpression) args [0]).getStringValue());
+          if (args.length == 1 && args[0] instanceof PyStringLiteralExpression) {
+            result.add(((PyStringLiteralExpression)args[0]).getStringValue());
           }
         }
       }
@@ -182,34 +216,40 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
     return result;
   }
 
-  public static boolean isApplicable(@NotNull final PsiReference ref) {
-    if (!(ref instanceof PyImportReference)) {
+  /**
+   * Checks if this fix can help you to generate binary stubs
+   *
+   * @param importStatementBase statement to fix
+   * @return true if this fix could work
+   */
+  public static boolean isApplicable(@NotNull final PyImportStatementBase importStatementBase) {
+    if (importStatementBase.getFullyQualifiedObjectNames().isEmpty()) {
       return false;
     }
-    final Sdk sdk = getPythonSdk(ref);
+    final Sdk sdk = getPythonSdk(importStatementBase);
     if (sdk == null) {
       return false;
     }
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
     if (flavor instanceof IronPythonSdkFlavor) {
-      return getReferenceText(ref).matches("[A-Z][A-Za-z0-9]+(\\.[A-Z][A-Za-z0-9]+)*");
+      return true;
     }
-    return isGtk(ref);
+    return isGtk(importStatementBase);
   }
 
-  private static boolean isGtk(@NotNull final PsiReference ref) {
-    final PyFromImportStatement importStatementBase = PsiTreeUtil.getParentOfType(ref.getElement(), PyFromImportStatement.class);
-    if (importStatementBase != null) {
-      final QualifiedName qName = importStatementBase.getImportSourceQName();
-      if (qName != null && qName.matches("gi", "repository"))
+  private static boolean isGtk(@NotNull final PyImportStatementBase importStatementBase) {
+    if (importStatementBase instanceof PyFromImportStatement) {
+      final QualifiedName qName = ((PyFromImportStatement)importStatementBase).getImportSourceQName();
+      if (qName != null && qName.matches("gi", "repository")) {
         return true;
+      }
     }
     return false;
   }
 
   @Nullable
-  private static Sdk getPythonSdk(@NotNull final PsiReference ref) {
-    final Module module = ModuleUtilCore.findModuleForPsiElement(ref.getElement());
-    return module == null ? null : PythonSdkType.findPythonSdk(module);
+  private static Sdk getPythonSdk(@NotNull final PsiElement element) {
+    final Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    return (module == null) ? null : PythonSdkType.findPythonSdk(module);
   }
 }

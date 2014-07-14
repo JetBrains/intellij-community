@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,8 +32,12 @@ import java.util.StringTokenizer;
  */
 public abstract class AbstractElementSignatureProvider implements ElementSignatureProvider {
 
-  protected static final char ELEMENTS_SEPARATOR = ';';
+  protected static final String ELEMENTS_SEPARATOR = ";";
   protected static final String ELEMENT_TOKENS_SEPARATOR = "#";
+
+  private static final String ESCAPE_CHAR = "\\";
+  private static final String[] ESCAPE_FROM = {ESCAPE_CHAR, ELEMENT_TOKENS_SEPARATOR, ELEMENTS_SEPARATOR};
+  private static final String[] ESCAPE_TO = {ESCAPE_CHAR + ESCAPE_CHAR, ESCAPE_CHAR + "s", ESCAPE_CHAR + "h"};
 
   @Override
   @Nullable
@@ -81,7 +86,7 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
     int index = 0;
 
     for (PsiElement child : children) {
-      if (ReflectionCache.isAssignable(hisClass, child.getClass())) {
+      if (ReflectionUtil.isAssignable(hisClass, child.getClass())) {
         T namedChild = hisClass.cast(child);
         final String childName = namedChild.getName();
 
@@ -106,7 +111,7 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
     PsiElement[] children = parent.getChildren();
 
     for (PsiElement child : children) {
-      if (ReflectionCache.isAssignable(hisClass, child.getClass())) {
+      if (ReflectionUtil.isAssignable(hisClass, child.getClass())) {
         T namedChild = hisClass.cast(child);
         final String childName = namedChild.getName();
 
@@ -120,5 +125,13 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
     }
 
     return null;
+  }
+
+  protected static String escape(String name) {
+    return StringUtil.replace(name, ESCAPE_FROM, ESCAPE_TO);
+  }
+
+  protected static String unescape(String name) {
+    return StringUtil.replace(name, ESCAPE_TO, ESCAPE_FROM);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -29,22 +30,19 @@ public class FileTypeExtension<T> extends KeyedExtensionCollector<T, FileType> {
     super(epName);
   }
 
+  @NotNull
   @Override
-  protected String keyToString(final FileType key) {
+  protected String keyToString(@NotNull final FileType key) {
     return key.getName();
   }
 
-  public List<T> allForFileType(FileType t) {
+  @NotNull
+  public List<T> allForFileType(@NotNull FileType t) {
     return forKey(t);
   }
 
-  public T forFileType(FileType t) {
+  public T forFileType(@NotNull FileType t) {
     final List<T> all = allForFileType(t);
-    if (all.isEmpty()) {
-      return null;
-    }
-    else {
-      return all.get(0);
-    }
+    return all.isEmpty() ? null : all.get(0);
   }
 }

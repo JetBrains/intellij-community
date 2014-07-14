@@ -59,12 +59,15 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
 
   protected abstract TestResultsPanel createTestResultsPanel();
 
+  @Override
   public void attachToProcess(final ProcessHandler processHandler) {
     myConsole.attachToProcess(processHandler);
   }
 
-  public void print(final String s, final ConsoleViewContentType contentType) {
+  @Override
+  public void print(@NotNull final String s, @NotNull final ConsoleViewContentType contentType) {
     printNew(new Printable() {
+      @Override
       public void printOn(final Printer printer) {
         printer.print(s, contentType);
       }
@@ -75,67 +78,82 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   public void allowHeavyFilters() {
   }
 
+  @Override
   public void clear() {
     myConsole.clear();
   }
 
+  @Override
   public void scrollTo(final int offset) {
     myConsole.scrollTo(offset);
   }
 
+  @Override
   public void setOutputPaused(final boolean value) {
     if (myPrinter != null) {
       myPrinter.pause(value);
     }
   }
 
+  @Override
   public boolean isOutputPaused() {
     //noinspection SimplifiableConditionalExpression
     return myPrinter == null ? true : myPrinter.isPaused();
   }
 
+  @Override
   public boolean hasDeferredOutput() {
     return myConsole.hasDeferredOutput();
   }
 
+  @Override
   public void performWhenNoDeferredOutput(final Runnable runnable) {
     myConsole.performWhenNoDeferredOutput(runnable);
   }
 
+  @Override
   public void setHelpId(final String helpId) {
     myConsole.setHelpId(helpId);
   }
 
+  @Override
   public void addMessageFilter(final Filter filter) {
     myConsole.addMessageFilter(filter);
   }
 
+  @Override
   public void printHyperlink(final String hyperlinkText, final HyperlinkInfo info) {
     printNew(new HyperLink(hyperlinkText, info));
   }
 
+  @Override
   public int getContentSize() {
     return myConsole.getContentSize();
   }
 
+  @Override
   public boolean canPause() {
     return myPrinter != null && myPrinter.canPause() && myConsole.canPause();
   }
 
+  @Override
   public JComponent getComponent() {
     return myTestResultsPanel;
   }
 
+  @Override
   public JComponent getPreferredFocusableComponent() {
     return myConsole.getPreferredFocusableComponent();
   }
 
+  @Override
   public void dispose() {
     myPrinter = null;
     myProperties = null;
     myConsole = null;
   }
 
+  @Override
   public void addChangeListener(@NotNull final ChangeListener listener, @NotNull final Disposable parent) {
     if (myConsole instanceof ObservableConsoleView) {
       ((ObservableConsoleView)myConsole).addChangeListener(listener, parent);
@@ -144,6 +162,7 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
     }
   }
 
+  @Override
   @NotNull
   public AnAction[] createConsoleActions() {
     return AnAction.EMPTY_ARRAY;

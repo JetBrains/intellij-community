@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization;
 import com.intellij.ui.*;
@@ -143,7 +144,7 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
   }
 
   public void setText(final String initialMessage) {
-    final String text = initialMessage == null ? "" : initialMessage;
+    final String text = initialMessage == null ? "" : StringUtil.convertLineSeparators(initialMessage);
     myEditorField.setText(text);
     if (myMessageConsumer != null) {
       myMessageConsumer.consume(text);

@@ -2,7 +2,7 @@ package pck;
 import static pck.D.foo;
 import static pck.C.foo;
 
-public class C {
+class C {
      public static <T> String foo(Comparable<? extends Comparable<T>> x){
          return null;
      }

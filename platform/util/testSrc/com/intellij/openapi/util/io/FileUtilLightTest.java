@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,16 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -80,10 +84,20 @@ public class FileUtilLightTest {
     assertEquals("c:/", FileUtil.toCanonicalPath("c:\\a\\..\\", WINDOWS_SEPARATOR));
     assertEquals("c:/", FileUtil.toCanonicalPath("c:\\a\\..\\..", WINDOWS_SEPARATOR));
     assertEquals("c:/b", FileUtil.toCanonicalPath("c:\\a\\..\\..\\b", WINDOWS_SEPARATOR));
+
+    if (SystemInfo.isWindows) {
+      assertEquals("//", FileUtil.toCanonicalPath("\\\\\\", WINDOWS_SEPARATOR));
+      assertEquals("//host/", FileUtil.toCanonicalPath("\\\\\\host", WINDOWS_SEPARATOR));
+      assertEquals("//host/", FileUtil.toCanonicalPath("\\\\\\host\\\\", WINDOWS_SEPARATOR));
+      assertEquals("//host/share/", FileUtil.toCanonicalPath("\\\\host\\\\share", WINDOWS_SEPARATOR));
+      assertEquals("//host/share/", FileUtil.toCanonicalPath("\\\\host\\\\share\\\\", WINDOWS_SEPARATOR));
+      assertEquals("//host/share/path", FileUtil.toCanonicalPath("\\\\host\\\\share\\\\path\\\\", WINDOWS_SEPARATOR));
+      assertEquals("//host/share/path", FileUtil.toCanonicalPath("\\\\host\\\\share\\\\traversal\\..\\..\\path\\", WINDOWS_SEPARATOR));
+    }
   }
 
   @Test
-  public void isAncestor() throws Exception {
+  public void isAncestor() {
     assertTrue(FileUtil.isAncestor("/", "/a/", true));
     assertTrue(FileUtil.isAncestor("/a/b/c", "/a/b/c/d/e/f", true));
     assertTrue(FileUtil.isAncestor("/a/b/c/", "/a/b/c/d/e/f", true));
@@ -101,7 +115,7 @@ public class FileUtilLightTest {
   }
 
   @Test
-  public void testRemoveAncestors() throws Exception {
+  public void testRemoveAncestors() {
     List<String> data = Arrays.asList("/a/b/c", "/a", "/a/b", "/d/e", "/b/c", "/a/d", "/b/c/ttt", "/a/ewq.euq");
     String[] expected = {"/a","/b/c","/d/e"};
     @SuppressWarnings("unchecked") Collection<String> result = FileUtil.removeAncestors(data, Convertor.SELF, PairProcessor.TRUE);
@@ -109,7 +123,7 @@ public class FileUtilLightTest {
   }
 
   @Test
-  public void testCheckImmediateChildren() throws Exception {
+  public void testCheckImmediateChildren() {
     String root = "/a";
     String[] data = {"/a/b/c", "/a", "/a/b", "/d/e", "/b/c", "/a/d", "/a/b/c/d/e"};
     ThreeState[] expected1 = {ThreeState.UNSURE, ThreeState.YES, ThreeState.YES, ThreeState.NO, ThreeState.NO, ThreeState.YES, ThreeState.UNSURE};
@@ -144,5 +158,35 @@ public class FileUtilLightTest {
     assertFalse(FileUtil.startsWith("/usr/local/jeka", "/aaa"));
     assertFalse(FileUtil.startsWith("c:/idea2", "c:/idea"));
     assertFalse(FileUtil.startsWith("c:/idea_branches/i18n", "c:/idea"));
+  }
+
+  @Test
+  public void testLoadProperties() throws IOException {
+    String data = "key2=value2\nkey1=value1\nkey3=value3";
+    Map<String, String> map = FileUtil.loadProperties(new StringReader(data));
+    assertEquals(ContainerUtil.newArrayList("key2", "key1", "key3"), ContainerUtil.newArrayList(map.keySet()));
+  }
+
+  @Test
+  public void testRootPath() {
+    assertTrue(FileUtil.isRootPath("/"));
+    assertTrue(FileUtil.isRootPath("c:/"));
+    assertTrue(FileUtil.isRootPath("Z:\\"));
+
+    assertFalse(FileUtil.isRootPath(""));
+    assertFalse(FileUtil.isRootPath("/tmp"));
+    assertFalse(FileUtil.isRootPath("c:"));
+    assertFalse(FileUtil.isRootPath("X:\\Temp"));
+  }
+
+  @Test
+  public void testNormalize() {
+    assertEquals("/a/b/.././c/", FileUtil.normalize("/a//b//..///./c//"));
+    if (SystemInfo.isWindows) {
+      assertEquals("//a/b/.././c/", FileUtil.normalize("\\\\\\a\\\\//b//..///./c//"));
+    }
+    else {
+      assertEquals("/a/b/.././c/", FileUtil.normalize("\\\\\\a\\\\//b//..///./c//"));
+    }
   }
 }

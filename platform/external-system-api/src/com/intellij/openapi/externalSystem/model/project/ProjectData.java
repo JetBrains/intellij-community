@@ -3,11 +3,10 @@ package com.intellij.openapi.externalSystem.model.project;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Not thread-safe.
- * 
+ *
  * @author Denis Zhdanov
  * @since 8/1/11 1:30 PM
  */
@@ -19,13 +18,29 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
 
   @NotNull private String myIdeProjectFileDirectoryPath;
 
+  @Deprecated
   public ProjectData(@NotNull ProjectSystemId owner,
                      @NotNull String ideProjectFileDirectoryPath,
-                     @NotNull String linkedExternalProjectPath)
-  {
+                     @NotNull String linkedExternalProjectPath) {
     super(owner, "unnamed");
     myLinkedExternalProjectPath = ExternalSystemApiUtil.toCanonicalPath(linkedExternalProjectPath);
     myIdeProjectFileDirectoryPath = ExternalSystemApiUtil.toCanonicalPath(ideProjectFileDirectoryPath);
+  }
+
+  public ProjectData(@NotNull ProjectSystemId owner,
+                     @NotNull String externalName,
+                     @NotNull String ideProjectFileDirectoryPath,
+                     @NotNull String linkedExternalProjectPath) {
+    super(owner, externalName);
+    myLinkedExternalProjectPath = ExternalSystemApiUtil.toCanonicalPath(linkedExternalProjectPath);
+    myIdeProjectFileDirectoryPath = ExternalSystemApiUtil.toCanonicalPath(ideProjectFileDirectoryPath);
+  }
+
+  @Deprecated
+  @Override
+  public void setName(@NotNull String name) {
+    super.setExternalName(name);
+    super.setInternalName(name);
   }
 
   @NotNull
@@ -64,7 +79,7 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
 
   @Override
   public String toString() {
-    return String.format("%s project '%s'", getOwner().toString().toLowerCase(), getName());
+    return String.format("%s project '%s'", getOwner().toString().toLowerCase(), getExternalName());
   }
 
   @NotNull

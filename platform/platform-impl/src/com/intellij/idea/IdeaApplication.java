@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,11 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeRepaintManager;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.application.*;
+import com.intellij.internal.statistic.UsageTrigger;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationStarter;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -32,13 +36,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
-import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.SystemDock;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
@@ -55,6 +56,7 @@ import java.util.Arrays;
 
 public class IdeaApplication {
   @NonNls public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
+  @NonNls public static final String IDEA_IS_UNIT_TEST = "idea.is.unit.test";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.IdeaApplication");
 
@@ -79,7 +81,8 @@ public class IdeaApplication {
     ourInstance = this;
 
     myArgs = args;
-    boolean isInternal = Boolean.valueOf(System.getProperty(IDEA_IS_INTERNAL_PROPERTY)).booleanValue();
+    boolean isInternal = Boolean.getBoolean(IDEA_IS_INTERNAL_PROPERTY);
+    boolean isUnitTest = Boolean.getBoolean(IDEA_IS_UNIT_TEST);
 
     boolean headless = Main.isHeadless();
     if (!headless) {
@@ -87,7 +90,7 @@ public class IdeaApplication {
     }
 
     if (Main.isCommandLine()) {
-      new CommandLineApplication(isInternal, false, headless);
+      new CommandLineApplication(isInternal, isUnitTest, headless);
     }
     else {
       Splash splash = null;
@@ -98,7 +101,7 @@ public class IdeaApplication {
         }
       }
 
-      ApplicationManagerEx.createApplication(isInternal, false, false, false, "idea", splash);
+      ApplicationManagerEx.createApplication(isInternal, isUnitTest, false, false, ApplicationManagerEx.IDEA_APPLICATION, splash);
     }
 
     if (myStarter == null) {
@@ -215,7 +218,13 @@ public class IdeaApplication {
 
     @Nullable
     private SplashScreen getSplashScreen() {
-      return SplashScreen.getSplashScreen();
+      try {
+        return SplashScreen.getSplashScreen();
+      }
+      catch (Throwable t) {
+        LOG.warn(t);
+        return null;
+      }
     }
 
     @Override
@@ -225,7 +234,7 @@ public class IdeaApplication {
       // Event queue should not be changed during initialization of application components.
       // It also cannot be changed before initialization of application components because IdeEventQueue uses other
       // application components. So it is proper to perform replacement only here.
-      ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+      final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
       IdeEventQueue.getInstance().setWindowManager(windowManager);
 
@@ -261,16 +270,6 @@ public class IdeaApplication {
             loadProject();
           }
 
-          final UpdateSettings settings = UpdateSettings.getInstance();
-          if (settings != null) {
-            final ApplicationInfo appInfo = ApplicationInfo.getInstance();
-            if (StringUtil.compareVersionNumbers(settings.LAST_BUILD_CHECKED, appInfo.getBuild().asString()) < 0 ||
-                (UpdateChecker.isMyVeryFirstOpening() && UpdateChecker.checkNeeded())) {
-              UpdateChecker.setMyVeryFirstOpening(false);
-              UpdateChecker.updateAndShowResult();
-            }
-          }
-
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -278,6 +277,9 @@ public class IdeaApplication {
               PluginManager.reportPluginError();
             }
           });
+
+          //safe for headless and unit test modes
+          UsageTrigger.trigger(app.getName() + "app.started");
         }
       }, ModalityState.NON_MODAL);
     }

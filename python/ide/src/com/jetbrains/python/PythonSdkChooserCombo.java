@@ -15,18 +15,21 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.projectRoots.impl.SdkListCellRenderer;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.util.NullableConsumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.configuration.PythonSdkConfigurable;
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
+import com.jetbrains.python.sdk.PySdkListCellRenderer;
+import com.jetbrains.python.sdk.PySdkService;
+import com.jetbrains.python.sdk.PythonSdkDetailsStep;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -38,11 +41,9 @@ import java.util.List;
  */
 public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
   private final List<ActionListener> myChangedListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.PythonSdkChooserCombo");
 
-  //public PythonSdkChooserCombo(final Condition<Sdk> acceptableSdkCondition) {
-  //  this(PythonSdkType.getAllSdks(), acceptableSdkCondition);
-  //}
-
+  @SuppressWarnings("unchecked")
   public PythonSdkChooserCombo(final Project project, List<Sdk> sdks, final Condition<Sdk> acceptableSdkCondition) {
     Sdk initialSelection = null;
     for (Sdk sdk : sdks) {
@@ -51,30 +52,46 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
         break;
       }
     }
-    getComboBox().setModel(new CollectionComboBoxModel(sdks, initialSelection));
-    getComboBox().setRenderer(new SdkListCellRenderer("<no interpreter>") {
-      @Override
-      protected Icon getSdkIcon(Sdk sdk) {
-        final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
-        return flavor != null ? flavor.getIcon() : ((SdkType)sdk.getSdkType()).getIcon();
-      }
-    });
+    final JComboBox comboBox = getComboBox();
+    comboBox.setModel(new CollectionComboBoxModel(sdks, initialSelection));
+    comboBox.setRenderer(new PySdkListCellRenderer(true));
     addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final PythonSdkConfigurable configurable = new PythonSdkConfigurable(project);
-        configurable.setNewProject(true);
-        ShowSettingsUtil.getInstance().editConfigurable(PythonSdkChooserCombo.this, configurable);
-        Sdk selection = configurable.getRealSelectedSdk();
-        final List<Sdk> sdks = PythonSdkType.getAllSdks();
-        getComboBox().setModel(new CollectionComboBoxModel(sdks, selection));
+        showOptions(project);
         notifyChanged(e);
       }
     });
-    getComboBox().addActionListener(new ActionListener() {
+    comboBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         notifyChanged(e);
       }
     });
+  }
+
+  private void showOptions(final Project project) {
+    final PyConfigurableInterpreterList interpreterList = PyConfigurableInterpreterList.getInstance(project);
+    final Sdk[] sdks = interpreterList.getModel().getSdks();
+    PythonSdkDetailsStep.show(project, sdks, null, this, getButton().getLocationOnScreen(), new NullableConsumer<Sdk>() {
+      @Override
+      public void consume(@Nullable Sdk sdk) {
+        if (sdk == null) return;
+        final PySdkService sdkService = PySdkService.getInstance();
+        sdkService.restoreSdk(sdk);
+
+        final ProjectSdksModel projectSdksModel = interpreterList.getModel();
+        if (projectSdksModel.findSdk(sdk) == null) {
+          projectSdksModel.addSdk(sdk);
+          try {
+            projectSdksModel.apply();
+          }
+          catch (ConfigurationException e) {
+            LOG.error("Error adding new python interpreter " + e.getMessage());
+          }
+        }
+        //noinspection unchecked
+        getComboBox().setModel(new CollectionComboBoxModel(interpreterList.getAllPythonSdks(), sdk));
+      }
+    }, true);
   }
 
   private void notifyChanged(ActionEvent e) {
@@ -83,6 +100,7 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
     }
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   public void addChangedListener(ActionListener listener) {
     myChangedListeners.add(listener);
   }

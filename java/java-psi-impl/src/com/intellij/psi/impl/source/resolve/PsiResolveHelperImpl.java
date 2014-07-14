@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiGraphInferenceHelper;
@@ -26,7 +25,8 @@ import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,8 +80,9 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(myManager.getProject()).getParserFacade();
     try {
       final PsiJavaCodeReferenceElement ref = parserFacade.createReferenceFromText(referenceText, context);
-      LOG.assertTrue(ref.isValid(), referenceText);
-      return ResolveClassUtil.resolveClass(ref);
+      PsiFile containingFile = ref.getContainingFile();
+      LOG.assertTrue(containingFile.isValid(), referenceText);
+      return ResolveClassUtil.resolveClass(ref, containingFile);
     }
     catch (IncorrectOperationException e) {
       return null;
@@ -101,7 +102,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   }
 
   @Nullable
-  private PsiVariable resolveVar(final String referenceText, final PsiElement context, final boolean[] problemWithAccess) {
+  private PsiVariable resolveVar(@NotNull String referenceText, final PsiElement context, final boolean[] problemWithAccess) {
     final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(myManager.getProject()).getParserFacade();
     try {
       final PsiJavaCodeReferenceElement ref = parserFacade.createReferenceFromText(referenceText, context);
@@ -127,11 +128,18 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return JavaResolveUtil.isAccessible(member, containingClass, modifierList, place, accessObjectClass, currentFileResolveScope);
   }
 
-  @Override
   @NotNull
-  public CandidateInfo[] getReferencedMethodCandidates(@NotNull PsiCallExpression expr, boolean dummyImplicitConstructor) {
+  @Override
+  public CandidateInfo[] getReferencedMethodCandidates(@NotNull PsiCallExpression expr,
+                                                       boolean dummyImplicitConstructor,
+                                                       final boolean checkVarargs) {
     PsiFile containingFile = expr.getContainingFile();
-    final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(expr, containingFile);
+    final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(expr, containingFile) {
+      @Override
+      protected boolean acceptVarargs() {
+        return checkVarargs;
+      }
+    };
     try {
       PsiScopesUtil.setupAndRunProcessor(processor, expr, dummyImplicitConstructor);
     }
@@ -139,6 +147,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       return CandidateInfo.EMPTY_ARRAY;
     }
     return processor.getCandidates();
+  }
+
+  @NotNull
+  @Override
+  public CandidateInfo[] getReferencedMethodCandidates(@NotNull PsiCallExpression call, boolean dummyImplicitConstructor) {
+    return getReferencedMethodCandidates(call, dummyImplicitConstructor, false);
   }
 
   @Override
@@ -204,10 +218,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   }
 
   public PsiInferenceHelper getInferenceHelper(LanguageLevel languageLevel) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return myTestHelper != null ? myTestHelper : new PsiOldInferenceHelper(myManager);
+    if (ApplicationManager.getApplication().isUnitTestMode() && myTestHelper != null) {
+      return myTestHelper;
     }
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && Registry.is("enable.graph.inference", true)) {
+    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
       return new PsiGraphInferenceHelper(myManager);
     }
     return new PsiOldInferenceHelper(myManager);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,12 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 
 /**
- * Represents a file in <code>{@link VirtualFileSystem}</code>. A particular file is represented by the same
- * <code>VirtualFile</code> instance for the entire lifetime of the IntelliJ IDEA process, unless the file
- * is deleted, in which case {@link #isValid()} for the instance will return <code>false</code>.
+ * Represents a file in <code>{@link VirtualFileSystem}</code>. A particular file is represented by equal
+ * <code>VirtualFile</code> instances for the entire lifetime of the IntelliJ IDEA process, unless the file
+ * is deleted, in which case {@link #isValid()} will return <code>false</code>.
+ * <p/>
+ * VirtualFile instances are created on request, so there can be several instances corresponding to the same file.
+ * All of them are equal, have the same hashCode and use shared storage for all related data, including user data (see {@link com.intellij.openapi.util.UserDataHolder}).
  * <p/>
  * If an in-memory implementation of VirtualFile is required, {@link com.intellij.testFramework.LightVirtualFile}
  * can be used.
@@ -125,6 +128,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return the path
    */
   @SuppressWarnings("JavadocReference")
+  @NotNull
   public abstract String getPath();
 
   /**
@@ -150,8 +154,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return the presentable URL.
    * @see VirtualFileSystem#extractPresentableUrl
    */
+  @NotNull
   public final String getPresentableUrl() {
-    if (!isValid()) return null;
     return getFileSystem().extractPresentableUrl(getPath());
   }
 
@@ -392,7 +396,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return <code>VirtualFile</code> representing the created directory
    * @throws java.io.IOException if directory failed to be created
    */
-  public VirtualFile createChildDirectory(Object requestor, @NonNls String name) throws IOException {
+  @NotNull
+  public VirtualFile createChildDirectory(Object requestor, @NotNull @NonNls String name) throws IOException {
     if (!isDirectory()) {
       throw new IOException(VfsBundle.message("directory.create.wrong.parent.error"));
     }
@@ -422,6 +427,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return <code>VirtualFile</code> representing the created file
    * @throws IOException if file failed to be created
    */
+  @NotNull
   public VirtualFile createChildData(Object requestor, @NotNull @NonNls String name) throws IOException {
     if (!isDirectory()) {
       throw new IOException(VfsBundle.message("file.create.wrong.parent.error"));
@@ -726,5 +732,24 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   public static boolean isValidName(@NotNull String name) {
     return name.indexOf('\\') < 0 && name.indexOf('/') < 0;
+  }
+
+  private static final Key<String> DETECTED_LINE_SEPARATOR_KEY = Key.create("DETECTED_LINE_SEPARATOR_KEY");
+
+  /**
+   * @return Line separator for this file.
+   * It is always null for directories and binaries, and possibly null if a separator isn't yet known.
+   * @see com.intellij.util.LineSeparator
+   */
+  public String getDetectedLineSeparator() {
+    return getUserData(DETECTED_LINE_SEPARATOR_KEY);
+  }
+  public void setDetectedLineSeparator(@Nullable String separator) {
+    putUserData(DETECTED_LINE_SEPARATOR_KEY, separator);
+  }
+
+  @NotNull
+  public CharSequence getNameSequence() {
+    return getName();
   }
 }

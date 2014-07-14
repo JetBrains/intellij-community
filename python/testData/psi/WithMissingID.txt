@@ -13,7 +13,7 @@ PyFile:WithMissingID.py
           PsiElement(Py:RPAR)(')')
       PsiWhiteSpace(' ')
       PsiElement(Py:AS_KEYWORD)('as')
-      PsiErrorElement:identifier expected
+      PsiErrorElement:Identifier expected
         <empty list>
     PsiWhiteSpace(' ')
     PsiElement(Py:COLON)(':')

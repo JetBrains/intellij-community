@@ -38,6 +38,7 @@ public class EditorComboBoxEditor implements ComboBoxEditor{
     myTextField.setName(NAME);
   }
 
+  @Override
   public void selectAll() {
     myTextField.selectAll();
     myTextField.requestFocus();
@@ -48,18 +49,22 @@ public class EditorComboBoxEditor implements ComboBoxEditor{
     return myTextField.getEditor();
   }
 
+  @Override
   public EditorTextField getEditorComponent() {
     return myTextField;
   }
 
+  @Override
   public void addActionListener(ActionListener l) {
 
   }
 
+  @Override
   public void removeActionListener(ActionListener l) {
 
   }
 
+  @Override
   public Object getItem() {
     return getDocument();
   }
@@ -68,6 +73,7 @@ public class EditorComboBoxEditor implements ComboBoxEditor{
     return myTextField.getDocument();
   }
 
+  @Override
   public void setItem(Object anObject) {
     myTextField.setDocument((Document)anObject);
   }

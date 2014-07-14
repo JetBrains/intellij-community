@@ -25,6 +25,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -85,6 +87,11 @@ public class SelectInAction extends AnAction implements DumbAware {
     @NotNull
     public String getTextFor(final SelectInTarget value) {
       String text = value.toString();
+      String id = value.getMinorViewId() == null ? value.getToolWindowId() : null;
+      ToolWindow toolWindow = id == null ? null : ToolWindowManager.getInstance(mySelectInContext.getProject()).getToolWindow(id);
+      if (toolWindow != null) {
+        text = text.replace(value.getToolWindowId(), toolWindow.getStripeTitle());
+      }
       int n = myVisibleTargets.indexOf(value);
       return numberingText(n, text);
     }
@@ -108,7 +115,7 @@ public class SelectInAction extends AnAction implements DumbAware {
     @Override
     public boolean hasSubstep(final SelectInTarget selectedValue) {
       return selectedValue instanceof CompositeSelectInTarget &&
-             ((CompositeSelectInTarget)selectedValue).getSubTargets(mySelectInContext).size() != 0;
+             ((CompositeSelectInTarget)selectedValue).getSubTargets(mySelectInContext).size() > 1;
     }
 
     @Override

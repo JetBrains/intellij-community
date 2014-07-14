@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -123,10 +124,10 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       }
       final int precedence = ParenthesesUtils.getPrecedence(unboxedExpression);
       if (!cast.isEmpty() && precedence > ParenthesesUtils.TYPE_CAST_PRECEDENCE) {
-        replaceExpression(expression, cast + '(' + unboxedExpression.getText() + ')');
+        PsiReplacementUtil.replaceExpression(expression, cast + '(' + unboxedExpression.getText() + ')');
       }
       else {
-        replaceExpression(expression, cast + unboxedExpression.getText());
+        PsiReplacementUtil.replaceExpression(expression, cast + unboxedExpression.getText());
       }
     }
 
@@ -293,40 +294,42 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
           return unboxedType != null && unboxedType.isAssignableFrom(rhsType);
         }
       }
-      final PsiMethodCallExpression containingMethodCallExpression = getParentMethodCallExpression(expression);
+      final PsiCallExpression containingMethodCallExpression = getParentMethodCallExpression(expression);
       return containingMethodCallExpression == null || isSameMethodCalledWithoutBoxing(containingMethodCallExpression, expression);
     }
 
     @Nullable
-    private PsiMethodCallExpression getParentMethodCallExpression(@NotNull PsiElement expression) {
+    private PsiCallExpression getParentMethodCallExpression(@NotNull PsiElement expression) {
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiParenthesizedExpression || parent instanceof PsiExpressionList) {
         return getParentMethodCallExpression(parent);
       }
-      else if (parent instanceof PsiMethodCallExpression) {
-        return (PsiMethodCallExpression)parent;
+      else if (parent instanceof PsiCallExpression) {
+        return (PsiCallExpression)parent;
       }
       else {
         return null;
       }
     }
 
-    private boolean isSameMethodCalledWithoutBoxing(@NotNull PsiMethodCallExpression methodCallExpression,
+    private boolean isSameMethodCalledWithoutBoxing(@NotNull PsiCallExpression methodCallExpression,
                                                     @NotNull PsiExpression boxingExpression) {
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-      final PsiExpression[] expressions = argumentList.getExpressions();
-      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      final PsiElement element = methodExpression.resolve();
-      if (!(element instanceof PsiMethod)) {
+      if (argumentList == null) {
         return false;
       }
-      final PsiMethod originalMethod = (PsiMethod)element;
+      final PsiExpression[] expressions = argumentList.getExpressions();
+      final PsiMethod originalMethod = methodCallExpression.resolveMethod();
+      if (originalMethod == null) {
+        return false;
+      }
       final String name = originalMethod.getName();
       final PsiClass containingClass = originalMethod.getContainingClass();
       if (containingClass == null) {
         return false;
       }
-      final PsiType[] types = new PsiType[expressions.length];
+      final PsiType[] types = PsiType.createArray(expressions.length);
+
       for (int i = 0; i < expressions.length; i++) {
         final PsiExpression expression = expressions[i];
         final PsiType type = expression.getType();

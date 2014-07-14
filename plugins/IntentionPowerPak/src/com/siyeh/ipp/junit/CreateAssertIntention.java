@@ -20,6 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
@@ -54,8 +55,7 @@ public class CreateAssertIntention extends Intention {
       @NonNls final String newExpression =
         specifierString + "assertFalse(" +
         BoolUtils.getNegatedExpressionText(expression) + ");";
-      replaceStatementAndShorten(newExpression,
-                                 statement);
+      PsiReplacementUtil.replaceStatementAndShortenClassNames(statement, newExpression);
     }
     else if (isNullComparison(expression)) {
       final PsiBinaryExpression binaryExpression =
@@ -72,8 +72,7 @@ public class CreateAssertIntention extends Intention {
       assert comparedExpression != null;
       @NonNls final String newExpression = specifierString +
                                            "assertNull(" + comparedExpression.getText() + ");";
-      replaceStatementAndShorten(newExpression,
-                                 statement);
+      PsiReplacementUtil.replaceStatementAndShortenClassNames(statement, newExpression);
     }
     else if (isEqualityComparison(expression)) {
       final PsiBinaryExpression binaryExpression =
@@ -108,8 +107,7 @@ public class CreateAssertIntention extends Intention {
                         comparedExpression.getText() + ", " +
                         comparingExpression.getText() + ");";
       }
-      replaceStatementAndShorten(newExpression,
-                                 statement);
+      PsiReplacementUtil.replaceStatementAndShortenClassNames(statement, newExpression);
     }
     else if (isEqualsExpression(expression)) {
       final PsiMethodCallExpression call =
@@ -133,14 +131,12 @@ public class CreateAssertIntention extends Intention {
                         comparedExpression.getText() + ", " +
                         comparingExpression.getText() + ");";
       }
-      replaceStatementAndShorten(newExpression,
-                                 statement);
+      PsiReplacementUtil.replaceStatementAndShortenClassNames(statement, newExpression);
     }
     else {
       @NonNls final String newExpression =
         specifierString + "assertTrue(" + expression.getText() + ");";
-      replaceStatementAndShorten(newExpression,
-                                 statement);
+      PsiReplacementUtil.replaceStatementAndShortenClassNames(statement, newExpression);
     }
   }
 

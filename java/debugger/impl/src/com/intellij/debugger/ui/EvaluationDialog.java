@@ -26,6 +26,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.PositionUtil;
+import com.intellij.debugger.ui.impl.ValueNodeDnD;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.WatchPanel;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
@@ -176,6 +177,7 @@ public abstract class EvaluationDialog extends DialogWrapper {
       });
       setUpdateEnabled(true);
       getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.no.results"));
+      new ValueNodeDnD(myTree, project);
     }
 
     protected ActionPopupMenu createPopupMenu() {

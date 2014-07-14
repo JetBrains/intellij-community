@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +50,6 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   protected TextEditorComponent createEditorComponent(final Project project, final VirtualFile file) {
     return new TextEditorComponent(project, file, this);
   }
-
-  public void initFolding() {}
 
   @Override
   public void dispose(){
@@ -157,14 +155,13 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
 
   @Override
   public boolean canNavigateTo(@NotNull final Navigatable navigatable) {
-    return navigatable instanceof OpenFileDescriptor && (((OpenFileDescriptor)navigatable).getOffset() >= 0 ||
-                                                         ((OpenFileDescriptor)navigatable).getLine() != -1);
+    return navigatable instanceof OpenFileDescriptor && (((OpenFileDescriptor)navigatable).getLine() != -1 ||
+                                                         ((OpenFileDescriptor)navigatable).getOffset() >= 0);
   }
 
   @Override
   public void navigateTo(@NotNull final Navigatable navigatable) {
-    OpenFileDescriptor d = (OpenFileDescriptor)navigatable;
-    d.navigateIn(getEditor());
+    ((OpenFileDescriptor)navigatable).navigateIn(getEditor());
   }
 
   @Override

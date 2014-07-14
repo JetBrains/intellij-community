@@ -42,7 +42,7 @@ public abstract class AbstractJavaInplaceIntroduceTest extends AbstractInplaceIn
   }
 
   @Nullable
-  protected static PsiExpression getExpressionFromEditor() {
+  protected PsiExpression getExpressionFromEditor() {
     final PsiExpression expression = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiExpression.class);
     if (expression instanceof PsiReferenceExpression && expression.getParent() instanceof PsiMethodCallExpression) {
       return (PsiExpression)expression.getParent();

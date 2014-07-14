@@ -37,6 +37,7 @@ public class PyDynamicMember {
   private String myName;
   private final boolean myResolveToInstance;
   private final Function<PsiElement, PyType> myTypeCallback;
+  @Nullable
   private final String myTypeName;
 
   private final PsiElement myTarget;
@@ -44,7 +45,7 @@ public class PyDynamicMember {
 
   boolean myFunction = false;
 
-  public PyDynamicMember(@NotNull final String name, @NotNull final String type, final boolean resolveToInstance) {
+  public PyDynamicMember(@NotNull final String name, @Nullable final String type, final boolean resolveToInstance) {
     myName = name;
     myResolveToInstance = resolveToInstance;
     myTypeName = type;
@@ -63,7 +64,7 @@ public class PyDynamicMember {
   }
 
   public PyDynamicMember(@NotNull final String name,
-                         @NotNull final String type,
+                         @Nullable final String type,
                          final Function<PsiElement, PyType> typeCallback) {
     myName = name;
 

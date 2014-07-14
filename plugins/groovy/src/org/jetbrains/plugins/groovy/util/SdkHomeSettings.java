@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,10 +42,12 @@ public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHom
     myTracker = (PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker();
   }
 
+  @Override
   public SdkHomeConfigurable.SdkHomeBean getState() {
     return mySdkHome;
   }
 
+  @Override
   public void loadState(SdkHomeConfigurable.SdkHomeBean state) {
     SdkHomeConfigurable.SdkHomeBean oldState = mySdkHome;
     mySdkHome = state;

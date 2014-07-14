@@ -70,7 +70,7 @@ public class PyMissingConstructorInspection extends PyInspection {
         }
         if (superClasses.length == 1 || node.isNewStyleClass())
           registerProblem(initMethod.getNameIdentifier(), PyBundle.message("INSP.missing.super.constructor.message"),
-                          new AddCallSuperQuickFix(node.getSuperClasses()[0], superClasses[0].getText()));
+                          new AddCallSuperQuickFix());
         else
           registerProblem(initMethod.getNameIdentifier(), PyBundle.message("INSP.missing.super.constructor.message"));
       }
@@ -139,7 +139,7 @@ public class PyMissingConstructorInspection extends PyInspection {
                 if (args.length > 0) {
                   String firstArg = args[0].getText();
                   final String qualifiedName = cl.getQualifiedName();
-                  if (firstArg.equals(cl.getName()) || firstArg.equals(CANONICAL_SELF+"."+ CLASS) ||
+                  if (firstArg.equals(cl.getName()) || firstArg.equals(CANONICAL_SELF+"."+ __CLASS__) ||
                       (qualifiedName != null && qualifiedName.endsWith(firstArg)))
                       return true;
                   for (PyClass s : cl.getAncestorClasses(myTypeEvalContext)) {

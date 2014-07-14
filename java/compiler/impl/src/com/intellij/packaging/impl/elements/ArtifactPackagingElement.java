@@ -19,8 +19,6 @@ import com.intellij.compiler.ant.BuildProperties;
 import com.intellij.compiler.ant.Generator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointer;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
@@ -93,47 +91,6 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
       return Collections.singletonList(creator.createDirectoryContentCopyInstruction(outputPath));
     }
     return Collections.emptyList();
-  }
-
-  @Override
-  public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
-                                                     @NotNull PackagingElementResolvingContext resolvingContext,
-                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext,
-                                                     @NotNull ArtifactType artifactType) {
-    Artifact artifact = findArtifact(resolvingContext);
-    if (artifact == null) return;
-
-    if (StringUtil.isEmpty(artifact.getOutputPath())
-        || artifact.getArtifactType().getSubstitution(artifact, resolvingContext, artifactType) != null) {
-      super.computeIncrementalCompilerInstructions(creator, resolvingContext, compilerContext, artifactType);
-      return;
-    }
-
-    VirtualFile outputFile = artifact.getOutputFile();
-    if (outputFile == null) {
-      LOG.debug("Output file for " + artifact + " not found");
-      return;
-    }
-    if (!outputFile.isValid()) {
-      LOG.debug("Output file for " + artifact + "(" + outputFile + ") is not valid");
-      return;
-    }
-
-    if (outputFile.isDirectory()) {
-      creator.addDirectoryCopyInstructions(outputFile);
-    }
-    else {
-      creator.addFileCopyInstruction(outputFile, outputFile.getName());
-    }
-  }
-
-  @Override
-  protected ArtifactType getArtifactTypeForSubstitutedElements(PackagingElementResolvingContext resolvingContext, ArtifactType artifactType) {
-    final Artifact artifact = findArtifact(resolvingContext);
-    if (artifact != null) {
-      return artifact.getArtifactType();
-    }
-    return artifactType;
   }
 
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {

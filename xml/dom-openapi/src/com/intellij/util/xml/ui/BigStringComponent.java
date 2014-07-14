@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ public class BigStringComponent extends TextFieldWithBrowseButton {
     myWindowTitle = windowTitle;
     setButtonIcon(PlatformIcons.OPEN_EDIT_DIALOG_ICON);
     addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         Messages.showTextAreaDialog(getTextField(), myWindowTitle, "DescriptionDialogEditor");
       }

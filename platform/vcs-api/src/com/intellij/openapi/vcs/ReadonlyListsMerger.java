@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,8 +59,8 @@ public class ReadonlyListsMerger<T> {
       for (int i = 0; i < idxs.length; i++) {
         if (idxs[i] == -1) continue;  // at end
         final ReadonlyList<T> list = myLists.get(i);
-        if ((minIdxs == null) || (myComparator.compare(new Pair<CompoundNumber,T>(new CompoundNumber(i, idxs[i]), list.get(idxs[i])),
-                new Pair<CompoundNumber,T>(minIdxs, myLists.get(minIdxs.getMemberNumber()).get(minIdxs.getIdx()))) <= 0)) {
+        if ((minIdxs == null) || (myComparator.compare(Pair.create(new CompoundNumber(i, idxs[i]), list.get(idxs[i])),
+                                                       Pair.create(minIdxs, myLists.get(minIdxs.getMemberNumber()).get(minIdxs.getIdx()))) <= 0)) {
           minIdxs = new CompoundNumber(i, idxs[i]);
         }
       }

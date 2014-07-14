@@ -19,7 +19,6 @@ package com.intellij.refactoring.ui;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
@@ -32,9 +31,11 @@ import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.util.ArrayList;
@@ -61,7 +62,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
   protected MemberInfoModel<T, M> myMemberInfoModel;
   protected MyTableModel<T, M> myTableModel;
 
-  public AbstractMemberSelectionTable(Collection<M> memberInfos, MemberInfoModel<T, M> memberInfoModel, String abstractColumnHeader) {
+  public AbstractMemberSelectionTable(Collection<M> memberInfos, @Nullable MemberInfoModel<T, M> memberInfoModel, @Nullable String abstractColumnHeader) {
     myAbstractEnabled = abstractColumnHeader != null;
     myAbstractColumnHeader = abstractColumnHeader;
     myTableModel = new MyTableModel<T, M>(this);
@@ -78,10 +79,9 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
 
     TableColumnModel model = getColumnModel();
     model.getColumn(DISPLAY_NAME_COLUMN).setCellRenderer(new MyTableRenderer<T, M>(this));
-    model.getColumn(CHECKED_COLUMN).setCellRenderer(new MyBooleanRenderer<T, M>(this));
-    final int checkBoxWidth = new JCheckBox().getPreferredSize().width;
-    model.getColumn(CHECKED_COLUMN).setMaxWidth(checkBoxWidth);
-    model.getColumn(CHECKED_COLUMN).setMinWidth(checkBoxWidth);
+    TableColumn checkBoxColumn = model.getColumn(CHECKED_COLUMN);
+    TableUtil.setupCheckboxColumn(checkBoxColumn);
+    checkBoxColumn.setCellRenderer(new MyBooleanRenderer<T, M>(this));
     if (myAbstractEnabled) {
       int width = (int)(1.3 * getFontMetrics(getFont()).charsWidth(myAbstractColumnHeader.toCharArray(), 0, myAbstractColumnHeader.length()));
       model.getColumn(ABSTRACT_COLUMN).setMaxWidth(width);
@@ -123,6 +123,14 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
   }
 
   public void fireExternalDataChange() {
+    myTableModel.fireTableDataChanged();
+  }
+
+  /**
+   * Redraws table
+   */
+  public void redraw() {
+    myTableModel.redraw(getSelectedMemberInfos());
     myTableModel.fireTableDataChanged();
   }
 
@@ -174,6 +182,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     scrollSelectionInView();
   }
 
+  @Nullable
   protected abstract Object getAbstractColumnValue(M memberInfo);
 
   protected abstract boolean isAbstractColumnEditable(int rowIndex);
@@ -312,9 +321,13 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
       }
 
       Collection<M> changed = Collections.singletonList(myTable.myMemberInfos.get(rowIndex));
+      redraw(changed);
+//      fireTableRowsUpdated(rowIndex, rowIndex);
+    }
+
+    public void redraw(Collection<M> changed) {
       myTable.fireMemberInfoChange(changed);
       fireTableDataChanged();
-//      fireTableRowsUpdated(rowIndex, rowIndex);
     }
   }
 

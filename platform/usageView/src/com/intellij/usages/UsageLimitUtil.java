@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.usageView.UsageViewBundle;
 import org.jetbrains.annotations.NotNull;
@@ -29,8 +30,10 @@ import org.jetbrains.annotations.NotNull;
 public class UsageLimitUtil {
   public static final int USAGES_LIMIT = 1000;
 
-  public static void showAndCancelIfAborted(final Project project, final String message) {
-    Result retCode = showTooManyUsagesWarning(project, message);
+  public static void showAndCancelIfAborted(@NotNull Project project,
+                                            @NotNull String message,
+                                            @NotNull UsageViewPresentation usageViewPresentation) {
+    Result retCode = showTooManyUsagesWarning(project, message, usageViewPresentation);
 
     if (retCode != Result.CONTINUE) {
       throw new ProcessCanceledException();
@@ -42,19 +45,23 @@ public class UsageLimitUtil {
   }
 
   @NotNull
-  public static Result showTooManyUsagesWarning(@NotNull final Project project, @NotNull final String message) {
+  public static Result showTooManyUsagesWarning(@NotNull final Project project,
+                                                @NotNull final String message,
+                                                @NotNull final UsageViewPresentation usageViewPresentation) {
     final String[] buttons = {UsageViewBundle.message("button.text.continue"), UsageViewBundle.message("button.text.abort")};
     int result = runOrInvokeAndWait(new Computable<Integer>() {
       @Override
       public Integer compute() {
-        return Messages.showOkCancelDialog(project, message, UsageViewBundle.message("find.excessive.usages.title"), buttons[0], buttons[1],
+        String title = UsageViewBundle.message("find.excessive.usages.title", StringUtil.capitalize(StringUtil.pluralize(usageViewPresentation.getUsagesWord())));
+        return Messages.showOkCancelDialog(project, message,
+                                           title, buttons[0], buttons[1],
                                            Messages.getWarningIcon());
       }
     });
     return result == Messages.OK ? Result.CONTINUE : Result.ABORT;
   }
 
-  private static int runOrInvokeAndWait(final Computable<Integer> f) {
+  private static int runOrInvokeAndWait(@NotNull final Computable<Integer> f) {
     final int[] answer = new int[1];
     try {
       GuiUtils.runOrInvokeAndWait(new Runnable() {

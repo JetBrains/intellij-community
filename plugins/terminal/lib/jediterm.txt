@@ -1,1 +1,1 @@
-* jediterm-pty - PTY terminal from https://github.com/traff/jediterm
+* jediterm-pty - PTY terminal from https://github.com/JetBrains/jediterm

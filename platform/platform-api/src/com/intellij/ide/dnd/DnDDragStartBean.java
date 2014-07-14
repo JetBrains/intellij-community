@@ -43,4 +43,9 @@ public class DnDDragStartBean {
   public Point getPoint() {
     return myPoint;
   }
+
+  //If returns <code>true</code> provided "dragging" image won't be shown
+  public boolean isEmpty() {
+    return false;
+  }
 }

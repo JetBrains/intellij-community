@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement psiElement = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
-      if (!(psiElement instanceof PsiMethodCallExpression)) {
+      if (psiElement == null) {
         return;
       }
       final PsiClass newAssertClass =
@@ -130,8 +130,8 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
             }
             else {
               final PsiElement importQExpression = importReference.getQualifier();
-              if (importQExpression instanceof PsiReferenceExpression) {
-                ((PsiReferenceExpression)importQExpression).bindToElement(newAssertClass);
+              if (importQExpression instanceof PsiJavaCodeReferenceElement) {
+                ((PsiJavaCodeReferenceElement)importQExpression).bindToElement(newAssertClass);
               }
             }
           }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,18 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.psi.search.ExternalModuleBuildGlobalSearchScope;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,22 +41,23 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.NonClasspathDirectoryScope;
+import com.intellij.psi.search.NonClasspathDirectoriesScope;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.GradleTaskLocation;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.service.resolve.GradleResolverUtil;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
-import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
+import org.jetbrains.plugins.groovy.extensions.GroovyRunnableScriptType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrShiftExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
@@ -67,14 +74,14 @@ import java.util.regex.Pattern;
 /**
  * @author peter
  */
-public class GradleScriptType extends GroovyScriptType {
+public class GradleScriptType extends GroovyRunnableScriptType {
 
   private static final Pattern MAIN_CLASS_NAME_PATTERN = Pattern.compile("\nSTARTER_MAIN_CLASS=(.*)\n");
 
-  public static final GroovyScriptType INSTANCE = new GradleScriptType();
-  
+  public static final GradleScriptType INSTANCE = new GradleScriptType();
+
   private GradleScriptType() {
-    super(GradleConstants.EXTENSION);    
+    super(GradleConstants.EXTENSION);
   }
 
   @NotNull
@@ -89,7 +96,7 @@ public class GradleScriptType extends GroovyScriptType {
     if (params == null) {
       return false;
     }
-    
+
     final List<String> tasks = getTasksTarget(location);
     if (tasks == null) {
       return false;
@@ -129,7 +136,7 @@ public class GradleScriptType extends GroovyScriptType {
     }
     else if (parent instanceof GrApplicationStatement) {
       PsiElement shiftExpression = parent.getChildren()[1].getChildren()[0];
-      if (shiftExpression instanceof GrShiftExpressionImpl) {
+      if (GradleResolverUtil.isLShiftElement(shiftExpression)) {
         PsiElement shiftiesChild = shiftExpression.getChildren()[0];
         if (shiftiesChild instanceof GrReferenceExpression) {
           return Collections.singletonList(shiftiesChild.getText());
@@ -251,12 +258,17 @@ public class GradleScriptType extends GroovyScriptType {
         params.getVMParametersList().add("-Dgradle.home=" + FileUtil.toSystemDependentName(gradleHome.getPath()));
 
         setToolsJar(params);
-        
+
         final String scriptPath = configuration.getScriptPath();
         if (scriptPath == null) {
-          throw new CantRunException("Target script is undefined");
-        } 
-        params.getProgramParametersList().add("--build-file");
+          throw new CantRunException("Target script or gradle project path is undefined");
+        }
+
+        if(new File(scriptPath).isFile()) {
+          params.getProgramParametersList().add("--build-file");
+        } else {
+          params.getProgramParametersList().add("--project-dir");
+        }
         params.getProgramParametersList().add(FileUtil.toSystemDependentName(scriptPath));
         params.getProgramParametersList().addParametersString(configuration.getProgramParameters());
         params.getProgramParametersList().addParametersString(scriptParameters);
@@ -265,7 +277,7 @@ public class GradleScriptType extends GroovyScriptType {
   }
 
   @NotNull
-  private static String findMainClass(VirtualFile gradleHome, VirtualFile script, Project project) {
+  private static String findMainClass(VirtualFile gradleHome, @Nullable VirtualFile script, Project project) {
     final String userDefined = System.getProperty("gradle.launcher.class");
     if (StringUtil.isNotEmpty(userDefined)) {
       return userDefined;
@@ -290,9 +302,12 @@ public class GradleScriptType extends GroovyScriptType {
       }
     }
 
-    final PsiFile grFile = PsiManager.getInstance(project).findFile(script);
-    if (grFile != null && JavaPsiFacade.getInstance(project).findClass("org.gradle.BootstrapMain", grFile.getResolveScope()) != null) {
-      return "org.gradle.BootstrapMain";
+    final PsiFile grFile;
+    if (script != null) {
+      grFile = PsiManager.getInstance(project).findFile(script);
+      if (grFile != null && JavaPsiFacade.getInstance(project).findClass("org.gradle.BootstrapMain", grFile.getResolveScope()) != null) {
+        return "org.gradle.BootstrapMain";
+      }
     }
 
     return "org.gradle.launcher.GradleMain";
@@ -300,22 +315,28 @@ public class GradleScriptType extends GroovyScriptType {
 
   @Override
   public GlobalSearchScope patchResolveScope(@NotNull GroovyFile file, @NotNull GlobalSearchScope baseScope) {
+    if (!FileUtilRt.extensionEquals(file.getName(), GradleConstants.EXTENSION)) return baseScope;
+
+    final Collection<VirtualFile> files;
+    GlobalSearchScope result = GlobalSearchScope.EMPTY_SCOPE;
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
-    final GradleInstallationManager libraryManager = ServiceManager.getService(GradleInstallationManager.class);
     if (module != null) {
-      if (libraryManager.getGradleHome(module) != null) {
-        return baseScope;
+      String externalSystemId = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
+      if(!GradleConstants.SYSTEM_ID.toString().equals(externalSystemId)) return baseScope;
+
+      for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+        if (entry instanceof JdkOrderEntry) {
+          GlobalSearchScope scopeForSdk = LibraryScopeCache.getInstance(module.getProject()).getScopeForSdk((JdkOrderEntry)entry);
+          result = result.uniteWith(scopeForSdk);
+        }
       }
-    }
 
-    final Collection<VirtualFile> files = libraryManager.getClassRoots(file.getProject());
-    if (files == null || files.isEmpty()) {
-      return baseScope;
-    }
+      String modulePath = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
+      if(modulePath == null) return result;
 
-    GlobalSearchScope result = baseScope;
-    for (final VirtualFile root : files) {
-      result = result.uniteWith(new NonClasspathDirectoryScope(root));
+      files = GradleBuildClasspathManager.getInstance(file.getProject()).getModuleClasspathEntries(modulePath);
+
+      result = new ExternalModuleBuildGlobalSearchScope(module.getProject(), result.uniteWith(new NonClasspathDirectoriesScope(files)), modulePath);
     }
     return result;
   }

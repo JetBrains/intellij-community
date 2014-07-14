@@ -46,6 +46,7 @@ class AttributeFinder extends RecursionSaveWalker {
     myQname = qname;
   }
 
+  @Override
   public Void onElement(DElementPattern p) {
     depth++;
     try {
@@ -59,6 +60,7 @@ class AttributeFinder extends RecursionSaveWalker {
     }
   }
 
+  @Override
   public Void onAttribute(DAttributePattern p) {
     assert depth > 0;
 
@@ -70,6 +72,7 @@ class AttributeFinder extends RecursionSaveWalker {
     return null;
   }
 
+  @Override
   public Void onValue(DValuePattern p) {
     if (myLastAttr != null) {
       myAttributes.get(myLastAttr).first.put(p.getValue(), p.getType());
@@ -77,6 +80,7 @@ class AttributeFinder extends RecursionSaveWalker {
     return super.onValue(p);
   }
 
+  @Override
   public Void onOptional(DOptionalPattern p) {
     optional++;
     try {
@@ -86,6 +90,7 @@ class AttributeFinder extends RecursionSaveWalker {
     }
   }
 
+  @Override
   public Void onZeroOrMore(DZeroOrMorePattern p) {
     optional++;
     try {
@@ -95,6 +100,7 @@ class AttributeFinder extends RecursionSaveWalker {
     }
   }
 
+  @Override
   public Void onChoice(DChoicePattern p) {
     optional++;
     try {
@@ -104,6 +110,7 @@ class AttributeFinder extends RecursionSaveWalker {
     }
   }
 
+  @Override
   public Void onData(DDataPattern p) {
     if (depth == 1 && myLastAttr != null) {
       myAttributes.get(myLastAttr).first.put(null, p.getType());

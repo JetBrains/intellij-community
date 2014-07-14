@@ -7,9 +7,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="tasks-api" />
-    <orderEntry type="module" module-name="platform-api" />
-    <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="tasks-api" exported="" />
+    <orderEntry type="module" module-name="platform-api" exported="" />
+    <orderEntry type="module" module-name="platform-impl" exported="" />
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="vcs-impl" />
@@ -26,19 +26,10 @@
       </library>
     </orderEntry>
     <orderEntry type="library" exported="" name="http-client-3.1" level="project" />
-    <orderEntry type="library" name="XmlRPC" level="project" />
-    <orderEntry type="module-library" exported="">
-      <library name="markdownj">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/markdownj-core-0.4.2-SNAPSHOT.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="module" module-name="xml" />
-    <orderEntry type="module" module-name="core-api" />
+    <orderEntry type="library" exported="" name="XmlRPC" level="project" />
+    <orderEntry type="library" exported="" name="gson" level="project" />
+    <orderEntry type="module" module-name="xml" exported="" />
+    <orderEntry type="module" module-name="core-api" exported="" />
     <orderEntry type="module" module-name="RegExpSupport" />
     <orderEntry type="module-library">
       <library>
@@ -70,6 +61,7 @@
     <orderEntry type="module" module-name="xdebugger-api" />
     <orderEntry type="module" module-name="xdebugger-impl" />
     <orderEntry type="library" exported="" name="markdownj" level="project" />
+    <orderEntry type="library" name="http-client" level="project" />
   </component>
 </module>
 

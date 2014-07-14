@@ -16,20 +16,15 @@
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.newProjectWizard.*;
+import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,17 +117,8 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
   }
 
   public void updateDataModel() {
-    MultiMap<ProjectStructureDetector, DetectedProjectRoot> roots = new MultiMap<ProjectStructureDetector, DetectedProjectRoot>();
     final List<DetectedRootData> selectedElements = myDetectedRootsChooser.getMarkedElements();
-    for (final DetectedRootData rootData : selectedElements) {
-      for (ProjectStructureDetector detector : rootData.getSelectedDetectors()) {
-        roots.putValue(detector, rootData.getSelectedRoot());
-      }
-    }
-    myBuilder.setProjectRoots(roots);
-    for (ProjectStructureDetector detector : roots.keySet()) {
-      detector.setupProjectStructure(roots.get(detector), myBuilder.getProjectDescriptor(detector), myBuilder);
-    }
+    myBuilder.setupProjectStructure(RootDetectionProcessor.createRootsMap(selectedElements));
     updateSelectedTypes();
   }
 
@@ -177,71 +163,9 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
       return Collections.emptyList();
     }
 
-    final File baseProjectFile = new File(baseProjectPath);
-    Map<ProjectStructureDetector, List<DetectedProjectRoot>> roots = new RootDetectionProcessor(baseProjectFile,
-                                                                                                ProjectStructureDetector.EP_NAME.getExtensions()).findRoots();
-    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    if (progressIndicator != null) {
-      progressIndicator.setText2("Processing " + roots.values().size() + " project roots...");
-    }
-
-    Map<File, DetectedRootData> rootData = new LinkedHashMap<File, DetectedRootData>();
-    for (ProjectStructureDetector detector : roots.keySet()) {
-      for (DetectedProjectRoot detectedRoot : roots.get(detector)) {
-        if (isUnderIncompatibleRoot(detectedRoot, rootData)) {
-          continue;
-        }
-
-        final DetectedRootData data = rootData.get(detectedRoot.getDirectory());
-        if (data == null) {
-          rootData.put(detectedRoot.getDirectory(), new DetectedRootData(detector, detectedRoot));
-        }
-        else {
-          detectedRoot = data.addRoot(detector, detectedRoot);
-        }
-        removeIncompatibleRoots(detectedRoot, rootData);
-      }
-    }
-
-    if (progressIndicator != null) {
-      progressIndicator.setText2("");
-    }
-    return new ArrayList<DetectedRootData>(rootData.values());
+    return RootDetectionProcessor.detectRoots(new File(baseProjectPath));
   }
 
-  private static void removeIncompatibleRoots(DetectedProjectRoot root, Map<File, DetectedRootData> rootData) {
-    DetectedRootData[] allRoots = rootData.values().toArray(new DetectedRootData[rootData.values().size()]);
-    for (DetectedRootData child : allRoots) {
-      final File childDirectory = child.getDirectory();
-      if (FileUtil.isAncestor(root.getDirectory(), childDirectory, true)) {
-        for (DetectedProjectRoot projectRoot : child.getAllRoots()) {
-          if (!root.canContainRoot(projectRoot)) {
-            child.removeRoot(projectRoot);
-          }
-        }
-        if (child.getAllRoots().length == 0) {
-          rootData.remove(childDirectory);
-        }
-      }
-    }
-  }
-
-
-  private static boolean isUnderIncompatibleRoot(DetectedProjectRoot root, Map<File, DetectedRootData> rootData) {
-    File directory = root.getDirectory().getParentFile();
-    while (directory != null) {
-      final DetectedRootData data = rootData.get(directory);
-      if (data != null) {
-        for (DetectedProjectRoot parentRoot : data.getAllRoots()) {
-          if (!parentRoot.canContainRoot(root)) {
-            return true;
-          }
-        }
-      }
-      directory = directory.getParentFile();
-    }
-    return false;
-  }
 
   @Nullable
   private String getBaseProjectPath() {

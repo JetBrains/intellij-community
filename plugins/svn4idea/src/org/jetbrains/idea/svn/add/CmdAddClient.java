@@ -43,7 +43,7 @@ public class CmdAddClient extends BaseSvnClient implements AddClient {
     // TODO: handler should be called in parallel with command execution, but this will be in other thread
     // TODO: check if that is ok for current handler implementation
     // TODO: add possibility to invoke "handler.checkCancelled" - process should be killed
-    CommandExecutor command = CommandUtil.execute(myVcs, SvnTarget.fromFile(file), SvnCommandName.add, parameters, null);
+    CommandExecutor command = execute(myVcs, SvnTarget.fromFile(file), SvnCommandName.add, parameters, null);
     FileStatusResultParser parser = new FileStatusResultParser(CHANGED_PATH, handler, new AddStatusConvertor());
     parser.parse(command.getOutput());
   }

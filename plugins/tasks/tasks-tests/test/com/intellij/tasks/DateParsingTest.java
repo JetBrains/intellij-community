@@ -44,6 +44,9 @@ public class DateParsingTest {
     compareDates(expected, "2013/08/23 10:11:12");
     compareDates(expectedDateOnly, "2013-08-23");
     compareDates(expectedWithMillis, "2013-08-23 14:11:12.100123+04");
+    // Possible Redmine date format, notice space before timezone
+    compareDates(expected, "2013/08/23 14:11:12 +0400");
+
 
     // Malformed date
     assertNull(TaskUtil.parseDate("Fri Aug 23 14:11:12 MSK 2013"));

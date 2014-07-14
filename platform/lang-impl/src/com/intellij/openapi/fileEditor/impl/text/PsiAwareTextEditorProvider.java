@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,7 @@ import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorState;
-import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,18 +36,44 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiAwareTextEditorProvider extends TextEditorProvider {
+public class PsiAwareTextEditorProvider extends TextEditorProvider implements AsyncFileEditorProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider");
   @NonNls
   private static final String FOLDING_ELEMENT = "folding";
 
   @Override
   @NotNull
-  public FileEditor createEditor(@NotNull Project project, @NotNull final VirtualFile file) {
+  public FileEditor createEditor(@NotNull final Project project, @NotNull final VirtualFile file) {
+    return createEditorAsync(project, file).build();
+  }
+
+  @NotNull
+  @Override
+  public Builder createEditorAsync(@NotNull final Project project, @NotNull final VirtualFile file) {
     if (!accept(project, file)) {
       LOG.error("Cannot open text editor for " + file);
     }
-    return new PsiAwareTextEditorImpl(project, file, this);
+    CodeFoldingState state = null;
+    try {
+      Document document = FileDocumentManager.getInstance().getDocument(file);
+      if (document != null) {
+        state = CodeFoldingManager.getInstance(project).buildInitialFoldings(document);
+      }
+    }
+    catch (Exception e) {
+      LOG.error("Error building initial foldings", e);
+    }
+    final CodeFoldingState finalState = state;
+    return new Builder() {
+      @Override
+      public FileEditor build() {
+        final PsiAwareTextEditorImpl editor = new PsiAwareTextEditorImpl(project, file, PsiAwareTextEditorProvider.this);
+        if (finalState != null) {
+          finalState.setToEditor(editor.getEditor());
+        }
+        return editor;
+      }
+    };
   }
 
   @Override

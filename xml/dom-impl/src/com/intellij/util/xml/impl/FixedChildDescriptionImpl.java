@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Pair;
@@ -33,6 +48,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     myGetterMethods = getterMethods;
   }
 
+  @Override
   public JavaMethod getGetterMethod(int index) {
     if (myGetterMethods.length == 0) return null;
 
@@ -40,6 +56,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     return methods == null || methods.isEmpty() ? null : methods.iterator().next();
   }
 
+  @Override
   @Nullable
   public <T extends Annotation> T getAnnotation(int index, Class<? extends T> annotationClass) {
     final JavaMethod method = getGetterMethod(index);
@@ -57,10 +74,12 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     return super.getAnnotation(annotationClass);
   }
 
+  @Override
   public int getCount() {
     return myCount;
   }
 
+  @Override
   @NotNull
   public List<? extends DomElement> getValues(@NotNull final DomElement element) {
     final List<DomElement> result = new SmartList<DomElement>();
@@ -80,11 +99,13 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     return result;
   }
 
+  @Override
   @NotNull
   public String getCommonPresentableName(@NotNull DomNameStrategy strategy) {
     return StringUtil.capitalizeWords(strategy.splitIntoWords(getXmlElementName()), true);
   }
 
+  @Override
   @Nullable
   public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     return getAnnotation(0, annotationClass);

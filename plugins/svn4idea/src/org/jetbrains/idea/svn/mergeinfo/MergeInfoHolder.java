@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListsListener;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -47,7 +47,7 @@ public class MergeInfoHolder {
   private final static SimpleTextAttributes ourRefreshAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.GRAY);
   
   // used ONLY when refresh is triggered
-  private final Map<Pair<String, String>, MergeinfoCached> myCachedMap;
+  private final Map<Couple<String>, MergeinfoCached> myCachedMap;
 
   private final Getter<WCInfoWithBranches> myRootGetter;
   private final Getter<WCInfoWithBranches.Branch> myBranchGetter;
@@ -65,7 +65,7 @@ public class MergeInfoHolder {
     myManager = manager;
     myMixedRevisionsConsumer = mixedRevisionsConsumer;
     myMergeInfoCache = SvnMergeInfoCache.getInstance(project);
-    myCachedMap = new HashMap<Pair<String, String>, MergeinfoCached>();
+    myCachedMap = new HashMap<Couple<String>, MergeinfoCached>();
 
     myDecorator = new MyDecorator();
   }
@@ -85,8 +85,8 @@ public class MergeInfoHolder {
     return enabledAndGettersFilled(ignoreEnabled) && (getCurrentCache() == null);
   }
 
-  private static Pair<String, String> createKey(final WCPaths root, final WCInfoWithBranches.Branch branch) {
-    return new Pair<String, String>(root.getPath(), branch.getUrl());
+  private static Couple<String> createKey(final WCPaths root, final WCInfoWithBranches.Branch branch) {
+    return Couple.of(root.getPath(), branch.getUrl());
   }
 
   public void refresh(final boolean ignoreEnabled) {

@@ -25,11 +25,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The generic password dialog. Use it to ask a password from user with option to remember it.
@@ -37,54 +38,36 @@ import java.util.concurrent.atomic.AtomicReference;
 public class PasswordSafePromptDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(PasswordSafePromptDialog.class.getName());
 
-  private JPasswordField myPasswordField;
-  private JCheckBox myRememberPasswordCheckBox;
-  private JPanel myRootPanel;
-  private JLabel myMessageLabel;
-  private JLabel myPromptLabel;
-
+  private final PasswordPromptComponent myComponent;
 
   /**
    * The private constructor. Note that it does not do init on dialog.
    *
    * @param project      the project
-   * @param passwordSafe the passwordSafe instance
    * @param title        the dialog title
    * @param message      the message on the dialog
+   * @param type
    */
-  private PasswordSafePromptDialog(Project project, PasswordSafeImpl passwordSafe, String title, String message) {
+  private PasswordSafePromptDialog(@Nullable Project project, @NotNull String title, @NotNull PasswordPromptComponent component) {
     super(project, true);
     setTitle(title);
-    myMessageLabel.setText(message);
-    switch (passwordSafe.getSettings().getProviderType()) {
-      case MASTER_PASSWORD:
-        myRememberPasswordCheckBox.setEnabled(true);
-        myRememberPasswordCheckBox.setSelected(true);
-        myRememberPasswordCheckBox.setToolTipText("The password will be stored between application sessions.");
-        break;
-      case MEMORY_ONLY:
-        myRememberPasswordCheckBox.setEnabled(true);
-        myRememberPasswordCheckBox.setSelected(true);
-        myRememberPasswordCheckBox.setToolTipText("The password will be stored only during this application session.");
-        break;
-      case DO_NOT_STORE:
-        myRememberPasswordCheckBox.setEnabled(false);
-        myRememberPasswordCheckBox.setSelected(false);
-        myRememberPasswordCheckBox.setToolTipText("The password storing is disabled.");
-        break;
-      default:
-        LOG.error("Unknown policy type: " + passwordSafe.getSettings().getProviderType());
-    }
+    myComponent = component;
+    setResizable(false);
+    init();
+  }
+
+  public PasswordPromptComponent getComponent() {
+    return myComponent;
   }
 
   @Override
   protected JComponent createCenterPanel() {
-    return myRootPanel;
+    return myComponent.getComponent();
   }
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myPasswordField;
+    return myComponent.getPreferredFocusedComponent();
   }
 
   /**
@@ -96,19 +79,20 @@ public class PasswordSafePromptDialog extends DialogWrapper {
    *                      If null then {@link ModalityState#defaultModalityState() the default modality state} will be used.
    * @param title         the dialog title
    * @param message       the message describing a resource for which password is asked
-   * @param requester     the password requester
+   * @param requestor     the password requestor
    * @param key           the password key
    * @param resetPassword if true, the old password is removed from database and new password will be asked.
    * @param error         the error to show in the dialog       @return null if dialog was cancelled or password (stored in database or a entered by user)
    */
   @Nullable
   public static String askPassword(final Project project,
-                                   @Nullable ModalityState modalityState, final String title,
+                                   @Nullable ModalityState modalityState,
+                                   final String title,
                                    final String message,
-                                   final Class<?> requester,
+                                   @NotNull final Class<?> requestor,
                                    final String key,
                                    boolean resetPassword, String error) {
-    return askPassword(project, modalityState, title, message, requester, key, resetPassword, error, null, null);
+    return askPassword(project, modalityState, title, message, requestor, key, resetPassword, error, null, null);
   }
 
   /**
@@ -117,7 +101,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
    *
    * @param title         the dialog title
    * @param message       the message describing a resource for which password is asked
-   * @param requester     the password requester
+   * @param requestor     the password requestor
    * @param key           the password key
    * @param resetPassword if true, the old password is removed from database and new password will be asked.
    * @return null if dialog was cancelled or password (stored in database or a entered by user)
@@ -125,10 +109,10 @@ public class PasswordSafePromptDialog extends DialogWrapper {
   @Nullable
   public static String askPassword(final String title,
                                    final String message,
-                                   final Class<?> requester,
+                                   @NotNull final Class<?> requestor,
                                    final String key,
                                    boolean resetPassword) {
-    return askPassword(null, null, title, message, requester, key, resetPassword, null);
+    return askPassword(null, null, title, message, requestor, key, resetPassword, null);
   }
 
 
@@ -141,7 +125,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
    *                      If null then {@link ModalityState#defaultModalityState() the default modality state} will be used.
    * @param title         the dialog title
    * @param message       the message describing a resource for which password is asked
-   * @param requester     the password requester
+   * @param requestor     the password requestor
    * @param key           the password key
    * @param resetPassword if true, the old password is removed from database and new password will be asked.
    * @param error         the error to show in the dialog       @return null if dialog was cancelled or password (stored in database or a entered by user)
@@ -150,11 +134,11 @@ public class PasswordSafePromptDialog extends DialogWrapper {
   public static String askPassphrase(final Project project,
                                      @Nullable ModalityState modalityState, final String title,
                                      final String message,
-                                     final Class<?> requester,
+                                     @NotNull final Class<?> requestor,
                                      final String key,
                                      boolean resetPassword,
                                      String error) {
-    return askPassword(project, modalityState, title, message, requester, key, resetPassword, error,
+    return askPassword(project, modalityState, title, message, requestor, key, resetPassword, error,
                        "Passphrase:", "Remember the passphrase");
   }
 
@@ -168,7 +152,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
    *                      If null then {@link ModalityState#defaultModalityState() the default modality state} will be used.
    * @param title         the dialog title
    * @param message       the message describing a resource for which password is asked
-   * @param requester     the password requester
+   * @param requestor     the password requestor
    * @param key           the password key
    * @param resetPassword if true, the old password is removed from database and new password will be asked.
    * @param error         the error text to show in the dialog
@@ -177,20 +161,22 @@ public class PasswordSafePromptDialog extends DialogWrapper {
    */
   @Nullable
   private static String askPassword(final Project project,
-                                    @Nullable ModalityState modalityState, final String title,
+                                    @Nullable ModalityState modalityState,
+                                    final String title,
                                     final String message,
-                                    final Class<?> requester,
+                                    @NotNull final Class<?> requestor,
                                     final String key,
-                                    boolean resetPassword, final String error,
+                                    boolean resetPassword,
+                                    final String error,
                                     final String promptLabel,
                                     final String checkboxLabel) {
     final PasswordSafeImpl ps = (PasswordSafeImpl)PasswordSafe.getInstance();
     try {
       if (resetPassword) {
-        ps.removePassword(project, requester, key);
+        ps.removePassword(project, requestor, key);
       }
       else {
-        String pw = ps.getPassword(project, requester, key);
+        String pw = ps.getPassword(project, requestor, key);
         if (pw != null) {
           return pw;
         }
@@ -202,32 +188,26 @@ public class PasswordSafePromptDialog extends DialogWrapper {
         LOG.debug("Failed to retrieve or reset password", ex);
       }
     }
-    final AtomicReference<String> pw = new AtomicReference<String>(null);
+    final Ref<String> ref = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
-        final PasswordSafePromptDialog d = new PasswordSafePromptDialog(project, ps, title, message);
-        if (promptLabel != null) {
-          d.myPromptLabel.setText(promptLabel);
-        }
-        if (checkboxLabel != null) {
-          d.myRememberPasswordCheckBox.setText(checkboxLabel);
-        }
-        d.init();
+        PasswordSafeSettings.ProviderType type = ps.getSettings().getProviderType();
+        final PasswordPromptComponent component = new PasswordPromptComponent(type, message, false, promptLabel, checkboxLabel);
+        PasswordSafePromptDialog d = new PasswordSafePromptDialog(project, title, component);
+
         d.setErrorText(error);
-        d.show();
-        if (d.isOK()) {
-          String p = new String(d.myPasswordField.getPassword());
-          pw.set(p);
+        if (d.showAndGet()) {
+          ref.set(new String(component.getPassword()));
           try {
-            if (d.myRememberPasswordCheckBox.isSelected()) {
-              ps.storePassword(project, requester, key, p);
+            if (component.isRememberSelected()) {
+              ps.storePassword(project, requestor, key, ref.get());
             }
-            else if (!ps.getSettings().getProviderType().equals(PasswordSafeSettings.ProviderType.DO_NOT_STORE)) {
-              ps.getMemoryProvider().storePassword(project, requester, key, p);
+            else if (!type.equals(PasswordSafeSettings.ProviderType.DO_NOT_STORE)) {
+              ps.getMemoryProvider().storePassword(project, requestor, key, ref.get());
             }
           }
           catch (PasswordSafeException e) {
-            Messages.showErrorDialog(project, e.getMessage(), "Failed to store password");
+            Messages.showErrorDialog(project, e.getMessage(), "Failed to Store Password");
             if (LOG.isDebugEnabled()) {
               LOG.debug("Failed to store password", e);
             }
@@ -235,7 +215,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
         }
       }
     }, modalityState == null ? ModalityState.defaultModalityState() : modalityState);
-    return pw.get();
+    return ref.get();
   }
 }
 

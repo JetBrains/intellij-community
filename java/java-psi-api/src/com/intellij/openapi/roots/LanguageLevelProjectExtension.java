@@ -34,5 +34,11 @@ public abstract class LanguageLevelProjectExtension {
 
   public abstract void setLanguageLevel(@NotNull LanguageLevel languageLevel);
 
+  public abstract void languageLevelsChanged();
+
+  /**
+   * Project reloading is not needed on language level changes
+   * @deprecated to remove in IDEA 15
+   */
   public abstract void reloadProjectOnLanguageLevelChange(@NotNull LanguageLevel languageLevel, boolean forceReload);
 }

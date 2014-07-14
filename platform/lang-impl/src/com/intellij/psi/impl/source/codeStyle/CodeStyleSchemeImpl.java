@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,24 +56,24 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme,
   private volatile CodeStyleSettings myCodeStyleSettings;
   private final ExternalInfo myExternalInfo = new ExternalInfo();
 
-  public CodeStyleSchemeImpl(String name, String parentSchemeName, Element rootElement) {
+  public CodeStyleSchemeImpl(@NotNull String name, String parentSchemeName, Element rootElement) {
     myName = name;
     myRootElement = rootElement;
     myIsDefault = false;
     myParentSchemeName = parentSchemeName;
   }
 
-  public void init(CodeStyleSchemes schemesManager) {
+  public CodeStyleSchemeImpl(@NotNull String name, boolean isDefault, CodeStyleScheme parentScheme){
+    myName = name;
+    myIsDefault = isDefault;
+    init(parentScheme, null);
+  }
+
+  public void init(@NotNull CodeStyleSchemes schemesManager) {
     LOG.assertTrue(myCodeStyleSettings == null, "Already initialized");
     init(schemesManager.findSchemeByName(myParentSchemeName), myRootElement);
     myParentSchemeName = null;
     myRootElement = null;
-  }
-
-  public CodeStyleSchemeImpl(String name, boolean isDefault, CodeStyleScheme parentScheme){
-    myName = name;
-    myIsDefault = isDefault;
-    init(parentScheme, null);
   }
 
   private void init(CodeStyleScheme parentScheme, Element root) {
@@ -107,6 +107,7 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme,
   }
 
   @Override
+  @NotNull
   public String getName(){
     return myName;
   }
@@ -169,7 +170,7 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme,
   }
 
   @Override
-  public void setName(final String name) {
+  public void setName(@NotNull final String name) {
     myName = name;
   }
 

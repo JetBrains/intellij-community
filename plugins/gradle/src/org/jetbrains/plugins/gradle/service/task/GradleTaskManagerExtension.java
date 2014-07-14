@@ -37,7 +37,8 @@ public interface GradleTaskManagerExtension {
                        @NotNull final List<String> taskNames,
                        @NotNull String projectPath,
                        @Nullable final GradleExecutionSettings settings,
-                       @Nullable final String vmOptions,
+                       @NotNull final List<String> vmOptions,
+                       @NotNull final List<String> scriptParameters,
                        @Nullable final String debuggerSetup,
                        @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException;
 

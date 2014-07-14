@@ -301,6 +301,40 @@ public class BraceMatchingUtil {
     return lastLbraceOffset;
   }
 
+  public static int findLeftLParen(HighlighterIterator iterator,
+                                       IElementType lparenTokenType,
+                                       CharSequence fileText,
+                                       FileType fileType) {
+    int lastLbraceOffset = -1;
+
+    Stack<IElementType> braceStack = new Stack<IElementType>();
+    for (; !iterator.atEnd(); iterator.retreat()) {
+      final IElementType tokenType = iterator.getTokenType();
+
+      if (isLBraceToken(iterator, fileText, fileType)) {
+        if (!braceStack.isEmpty()) {
+          IElementType topToken = braceStack.pop();
+          if (!isPairBraces(tokenType, topToken, fileType)) {
+            break; // unmatched braces
+          }
+        }
+        else {
+          if (tokenType == lparenTokenType) {
+            return iterator.getStart();
+          }
+          else {
+            break;
+          }
+        }
+      }
+      else if (isRBraceToken(iterator, fileText, fileType)) {
+        braceStack.push(iterator.getTokenType());
+      }
+    }
+
+    return lastLbraceOffset;
+  }
+
   // TODO: better name for this method
   public static int findRightmostRParen(HighlighterIterator iterator,
                                         IElementType rparenTokenType,

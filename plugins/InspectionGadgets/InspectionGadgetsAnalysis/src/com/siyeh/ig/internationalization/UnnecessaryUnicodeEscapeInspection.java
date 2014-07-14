@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
     return new UnnecessaryUnicodeEscapeVisitor();
   }
 
-  private static class UnnecessaryUnicodeEscapeVisitor extends BaseInspectionVisitor {
+  private class UnnecessaryUnicodeEscapeVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitFile(PsiFile file) {
@@ -157,6 +157,10 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
           charBuffer.put(d).rewind();
           final CoderResult coderResult = encoder.encode(charBuffer, byteBuffer, true);
           if (!coderResult.isUnmappable()) {
+            final PsiElement element = file.findElementAt(i);
+            if (element != null && isSuppressedFor(element)) {
+              return;
+            }
             registerErrorAtOffset(file, i, escapeEnd - i, Character.valueOf(d));
           }
         }

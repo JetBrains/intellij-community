@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package git4idea.push;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -24,6 +22,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
@@ -37,7 +36,6 @@ import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.UpdateMethod;
 import git4idea.history.GitHistoryUtils;
-import git4idea.jgit.GitHttpAdapter;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -49,12 +47,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Collects information to push and performs the push.
- *
- * @author Kirill Likhodedov
  */
 public final class GitPusher {
 
@@ -324,13 +320,8 @@ public final class GitPusher {
     }
     String url = pushUrls.iterator().next();
     GitSimplePushResult pushResult;
-    if (GitHttpAdapter.shouldUseJGit(url)) {
-      pushResult = GitHttpAdapter.push(repository, remote.getName(), url, formPushSpec(pushSpec, remote));
-    }
-    else {
-      pushResult = pushNatively(repository, pushSpec, url);
-    }
-    
+    pushResult = pushNatively(repository, pushSpec, url);
+
     if (pushResult.getType() == GitSimplePushResult.Type.SUCCESS) {
       setUpstream(repository, pushSpec.getSource(), pushSpec.getRemote(),  pushSpec.getDest());
     }
@@ -356,8 +347,7 @@ public final class GitPusher {
       catch (VcsException e) {
         LOG.error(String.format("Couldn't set up tracking for source branch %s, target branch %s, remote %s in root %s",
                                 source, dest, remote, repository), e);
-        Notificator.getInstance(project).notify(GitVcs.NOTIFICATION_GROUP_ID, "", "Couldn't set up branch tracking",
-                                                        NotificationType.ERROR);
+        VcsNotifier.getInstance(project).notifyWeakError("Couldn't set up branch tracking");
       }
     }
   }
@@ -461,11 +451,11 @@ public final class GitPusher {
     result.mergeFrom(previousResult);
 
     if (result.isEmpty()) {
-      GitVcs.NOTIFICATION_GROUP_ID.createNotification("Nothing to push", NotificationType.INFORMATION).notify(myProject);
+     VcsNotifier.getInstance(myProject).notifyInfo("Nothing to push");
     }
     else if (result.wasErrorCancelOrNotAuthorized()) {
       // if there was an error on any repo, we won't propose to update even if current branch of a repo was rejected
-      result.createNotification().notify(myProject);
+      result.createPushNotificationAndNotify();
     }
     else {
       // there were no errors, but there might be some rejected branches on some of the repositories
@@ -482,9 +472,7 @@ public final class GitPusher {
           // and don't show the dialog again if user has chosen not to ask again
           updateSettings = readUpdateSettings();
           if (!mySettings.autoUpdateIfPushRejected()) {
-            final GitRejectedPushUpdateDialog dialog = new GitRejectedPushUpdateDialog(myProject, rejectedPushesForCurrentBranch.keySet(), updateSettings);
-            final int exitCode = showDialogAndGetExitCode(dialog);
-            updateSettings = new UpdateSettings(dialog.shouldUpdateAll(), getUpdateMethodFromDialogExitCode(exitCode));
+            updateSettings = showDialogAndGetExitCode(rejectedPushesForCurrentBranch, updateSettings);
             saveUpdateSettings(updateSettings);
           }
         } 
@@ -504,7 +492,7 @@ public final class GitPusher {
 
       }
 
-      result.createNotification().notify(myProject);
+      result.createPushNotificationAndNotify();
     }
   }
 
@@ -523,20 +511,23 @@ public final class GitPusher {
     return new UpdateSettings(updateAllRoots, updateMethod);
   }
 
-  private int showDialogAndGetExitCode(@NotNull final GitRejectedPushUpdateDialog dialog) {
-    final AtomicInteger exitCode = new AtomicInteger();
+  private UpdateSettings showDialogAndGetExitCode(final Map<GitRepository, GitBranch> rejectedPushesForCurrentBranch,
+                                                  final UpdateSettings initialSettings) {
+    final AtomicReference<UpdateSettings> updateSettings = new AtomicReference<UpdateSettings>();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
+        final GitRejectedPushUpdateDialog dialog = new GitRejectedPushUpdateDialog(myProject, rejectedPushesForCurrentBranch.keySet(), initialSettings);
         dialog.show();
-        exitCode.set(dialog.getExitCode());
-      }
+        final int exitCode = dialog.getExitCode();
+        if (exitCode != DialogWrapper.CANCEL_EXIT_CODE) {
+          mySettings.setAutoUpdateIfPushRejected(dialog.shouldAutoUpdateInFuture());
+        }
+        updateSettings.set(new UpdateSettings(dialog.shouldUpdateAll(), getUpdateMethodFromDialogExitCode(exitCode)));
+
+     }
     });
-    int code = exitCode.get();
-    if (code != DialogWrapper.CANCEL_EXIT_CODE) {
-      mySettings.setAutoUpdateIfPushRejected(dialog.shouldAutoUpdateInFuture());
-    }
-    return code;
+    return updateSettings.get();
   }
 
   /**
@@ -577,7 +568,7 @@ public final class GitPusher {
         description = "Push has been cancelled, because there were conflicts during update.<br/>" +
                       "Check that conflicts were resolved correctly, and invoke push again.";
       }
-      new Notification(GitVcs.MINOR_NOTIFICATION.getDisplayId(), title, description, NotificationType.WARNING).notify(myProject);
+      VcsNotifier.getInstance(myProject).notifyMinorWarning(title, description);
       return false;
     }
     else {

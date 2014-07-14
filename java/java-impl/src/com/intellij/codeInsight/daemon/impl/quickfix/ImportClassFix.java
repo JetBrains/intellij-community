@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceElement, PsiJavaCodeReferenceElement> {
@@ -91,7 +92,7 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
       if (importStaticStatement.resolve() != null) continue;
       if (importStaticStatement.isOnDemand()) return true;
       String qualifiedName = importStaticStatement.getReferenceName();
-      // rough heuristic, since there is no API to get class name refrence from static import
+      // rough heuristic, since there is no API to get class name reference from static import
       if (qualifiedName != null && StringUtil.split(qualifiedName, ".").contains(name)) return true;
     }
     return false;
@@ -107,9 +108,21 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
     return super.getRequiredMemberName(reference);
   }
 
+  @Override
+  protected boolean canReferenceClass(PsiJavaCodeReferenceElement ref) {
+    if (ref instanceof PsiReferenceExpression) {
+      return ref.getParent() instanceof PsiReferenceExpression;
+    }
+    return true;
+  }
+
   @NotNull
   @Override
   protected List<PsiClass> filterByContext(@NotNull List<PsiClass> candidates, @NotNull PsiJavaCodeReferenceElement ref) {
+    if (ref instanceof PsiReferenceExpression) {
+      return Collections.emptyList();
+    }
+
     PsiElement typeElement = ref.getParent();
     if (typeElement instanceof PsiTypeElement) {
       PsiElement var = typeElement.getParent();

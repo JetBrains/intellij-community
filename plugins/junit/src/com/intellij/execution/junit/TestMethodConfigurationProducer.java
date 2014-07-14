@@ -21,6 +21,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -40,14 +41,27 @@ public class TestMethodConfigurationProducer extends JUnitConfigurationProducer 
     if (PatternConfigurationProducer.isMultipleElementsSelected(context)) {
       return false;
     }
-    Location<PsiMethod> methodLocation = getTestMethod(context.getLocation());
+    final Location contextLocation = context.getLocation();
+    assert contextLocation != null;
+    Location<PsiMethod> methodLocation = getTestMethod(contextLocation);
     if (methodLocation == null) return false;
+
+    if (contextLocation instanceof PsiMemberParameterizedLocation) {
+      final String paramSetName = ((PsiMemberParameterizedLocation)contextLocation).getParamSetName();
+      if (paramSetName != null) {
+        configuration.setProgramParameters(paramSetName);
+      }
+      PsiClass containingClass = ((PsiMemberParameterizedLocation)contextLocation).getContainingClass();
+      if (containingClass != null) {
+        methodLocation = MethodLocation.elementInClass(methodLocation.getPsiElement(), containingClass);
+      }
+    }
     sourceElement.set(methodLocation.getPsiElement());
     setupConfigurationModule(context, configuration);
     final Module originalModule = configuration.getConfigurationModule().getModule();
     configuration.beMethodConfiguration(methodLocation);
     configuration.restoreOriginalModule(originalModule);
-    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, context.getLocation());
+    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, contextLocation);
     return true;
   }
 

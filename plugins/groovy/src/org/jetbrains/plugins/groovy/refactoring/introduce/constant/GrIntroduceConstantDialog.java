@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,10 +54,11 @@ import org.jetbrains.plugins.groovy.actions.NewGroovyActionBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 import org.jetbrains.plugins.groovy.refactoring.introduce.field.GrFieldNameSuggester;
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyVariableValidator;
@@ -91,7 +92,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
   private JPanel myTargetClassPanel;
   private JLabel myTargetClassLabel;
   @Nullable private PsiClass myTargetClass;
-  @Nullable private PsiClass myDefaultTargetClass;
+  @Nullable private final PsiClass myDefaultTargetClass;
 
   private TargetClassInfo myTargetClassInfo;
 
@@ -135,7 +136,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     initializeName();
     initializeTargetClassEditor();
 
-    if (myContext.getVar() != null) {
+    if (GrIntroduceHandlerBase.resolveLocalVar(myContext) != null) {
       myReplaceAllOccurrences.setEnabled(false);
       myReplaceAllOccurrences.setSelected(true);
     }
@@ -154,6 +155,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
           TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myContext.getProject())
             .createWithInnerClassesScopeChooser(RefactoringBundle.message("choose.destination.class"),
                                                 GlobalSearchScope.projectScope(myContext.getProject()), new ClassFilter() {
+                @Override
                 public boolean isAccepted(PsiClass aClass) {
                   return aClass.getParent() instanceof GroovyFile || aClass.hasModifierProperty(PsiModifier.STATIC);
                 }
@@ -189,6 +191,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     }
 
     myTargetClassEditor.getChildComponent().addDocumentListener(new DocumentAdapter() {
+      @Override
       public void documentChanged(DocumentEvent e) {
         targetClassChanged();
         updateOkStatus();
@@ -201,6 +204,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     myNameLabel.setLabelFor(myNameField);
 
     myPanel.registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myNameField.requestFocus();
       }
@@ -345,7 +349,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     }
 
     final String targetClassName = myTargetClassEditor.getText();
-    if (targetClassName.trim().length() == 0 && myDefaultTargetClass == null) {
+    if (targetClassName.trim().isEmpty() && myDefaultTargetClass == null) {
       setOKActionEnabled(false);
       return;
     }

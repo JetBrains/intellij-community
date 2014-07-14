@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,15 +63,15 @@ public class OutOfMemoryDialog extends DialogWrapper {
         ApplicationNamesInfo.getInstance().getProductName()));
 
     File file = VMOptions.getWriteFile();
-    final String path = file != null ? file.getPath() : null;
-    if (path != null) {
-      mySettingsFileHintLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.willBeSavedTo", path));
+    if (file != null) {
+      mySettingsFileHintLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.willBeSavedTo", file.getPath()));
     }
     else {
       mySettingsFileHintLabel.setVisible(false);
     }
 
     myIgnoreAction = new AbstractAction(DiagnosticBundle.message("diagnostic.out.of.memory.ignore")) {
+      @Override
       public void actionPerformed(ActionEvent e) {
         save();
         close(0);
@@ -79,6 +79,7 @@ public class OutOfMemoryDialog extends DialogWrapper {
     };
 
     myShutdownAction = new AbstractAction(DiagnosticBundle.message("diagnostic.out.of.memory.shutdown")) {
+      @Override
       public void actionPerformed(ActionEvent e) {
         save();
         System.exit(0);
@@ -93,7 +94,7 @@ public class OutOfMemoryDialog extends DialogWrapper {
                    myHeapSizeField,
                    myHeapUnitsLabel,
                    myHeapCurrentValueLabel);
-    
+
     configControls(VMOptions.PERM_GEN_OPTION_NAME,
                    VMOptions.readMaxPermGen(),
                    memoryKind == MemoryKind.PERM_GEN,
@@ -122,9 +123,7 @@ public class OutOfMemoryDialog extends DialogWrapper {
                                      JLabel currentValueLabel) {
     sizeLabel.setText(optionName);
 
-    String formatted = value == -1
-           ? DiagnosticBundle.message("diagnostic.out.of.memory.currentValue.unknown")
-           : String.valueOf(value);
+    String formatted = value == -1 ? DiagnosticBundle.message("diagnostic.out.of.memory.currentValue.unknown") : String.valueOf(value);
     sizeField.setText(formatted);
     currentValueLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.currentValue", formatted));
 
@@ -140,33 +139,34 @@ public class OutOfMemoryDialog extends DialogWrapper {
     try {
       VMOptions.writeXmx(Integer.parseInt(myHeapSizeField.getText()));
     }
-    catch (NumberFormatException ignored) {
-    }
+    catch (NumberFormatException ignored) { }
 
     try {
       VMOptions.writeMaxPermGen(Integer.parseInt(myPermGenSizeField.getText()));
     }
-    catch (NumberFormatException ignored) {
-    }
+    catch (NumberFormatException ignored) { }
 
     try {
       VMOptions.writeCodeCache(Integer.parseInt(myCodeCacheSizeField.getText()));
     }
-    catch (NumberFormatException ignored) {
-    }
+    catch (NumberFormatException ignored) { }
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myContentPane;
   }
 
   @NotNull
+  @Override
   protected Action[] createActions() {
     return new Action[]{myShutdownAction, myIgnoreAction};
   }
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myMemoryKind == MemoryKind.HEAP ? myHeapSizeField : myMemoryKind == MemoryKind.PERM_GEN ? myPermGenSizeField : myCodeCacheSizeField;
+    return myMemoryKind == MemoryKind.HEAP ? myHeapSizeField :
+           myMemoryKind == MemoryKind.PERM_GEN ? myPermGenSizeField :
+           myCodeCacheSizeField;
   }
 }

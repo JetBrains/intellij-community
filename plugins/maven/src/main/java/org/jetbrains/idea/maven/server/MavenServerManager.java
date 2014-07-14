@@ -228,6 +228,8 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
           params.getVMParametersList().defineProperty(each.getKey(), each.getValue());
         }
 
+        params.getVMParametersList().addProperty("idea.version=", MavenUtil.getIdeaVersionToPassToMavenProcess());
+
         boolean xmxSet = false;
 
         if (mavenEmbedderVMOptions != null) {
@@ -512,6 +514,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     final Element element = new Element("maven-version");
     element.setAttribute("version", useMaven2 ? "2.x" : "3.x");
     element.setAttribute("vmOptions", mavenEmbedderVMOptions);
+    element.setAttribute("embedderJdk", embedderJdk);
     return element;
   }
 
@@ -522,6 +525,9 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
     String vmOptions = state.getAttributeValue("vmOptions");
     mavenEmbedderVMOptions = vmOptions == null ? DEFAULT_VM_OPTIONS : vmOptions;
+
+    String embedderJdk = state.getAttributeValue("embedderJdk");
+    this.embedderJdk = embedderJdk == null ? MavenRunnerSettings.USE_INTERNAL_JAVA : embedderJdk;
   }
 
   private static class RemoteMavenServerLogger extends MavenRemoteObject implements MavenServerLogger {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,25 +60,23 @@ public class VirtualFileWithDependenciesState {
 
 
   private static class VirtualFileWithDependenciesExternalizer implements DataExternalizer<VirtualFileWithDependenciesState> {
-    private byte[] myBuffer = IOUtil.allocReadWriteUTFBuffer();
-
     @Override
-    public void save(DataOutput out, VirtualFileWithDependenciesState value) throws IOException {
+    public void save(@NotNull DataOutput out, VirtualFileWithDependenciesState value) throws IOException {
       out.writeLong(value.mySourceTimestamp);
       final Map<String, Long> dependencies = value.myDependencies;
       out.writeInt(dependencies.size());
       for (Map.Entry<String, Long> entry : dependencies.entrySet()) {
-        IOUtil.writeUTFFast(myBuffer, out, entry.getKey());
+        IOUtil.writeUTF(out, entry.getKey());
         out.writeLong(entry.getValue());
       }
     }
 
     @Override
-    public VirtualFileWithDependenciesState read(DataInput in) throws IOException {
+    public VirtualFileWithDependenciesState read(@NotNull DataInput in) throws IOException {
       final VirtualFileWithDependenciesState state = new VirtualFileWithDependenciesState(in.readLong());
       int size = in.readInt();
       while (size-- > 0) {
-        final String url = IOUtil.readUTFFast(myBuffer, in);
+        final String url = IOUtil.readUTF(in);
         final long timestamp = in.readLong();
         state.myDependencies.put(url, timestamp);
       }

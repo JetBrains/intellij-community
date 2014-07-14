@@ -22,12 +22,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.hash.HashMap;
-import com.jetbrains.python.psi.*;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.hash.HashMap;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
+import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
-import com.jetbrains.python.psi.types.PyModuleType;
-import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.testing.pytest.PyTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +44,10 @@ import java.util.regex.Pattern;
 public class PyPep8NamingInspection extends PyInspection {
   public boolean ignoreOverriddenFunctions = true;
   public boolean ignoreTestFunctions = false;
+  private static Pattern LOWERCASE_REGEX = Pattern.compile("[_\\p{javaLowerCase}][_\\p{javaLowerCase}0-9]*");
+  private static Pattern UPPERCASE_REGEX = Pattern.compile("[_\\p{javaUpperCase}][_\\p{javaUpperCase}0-9]*");
+  private static Pattern MIXEDCASE_REGEX = Pattern.compile("_?[\\p{javaUpperCase}][\\p{javaLowerCase}\\p{javaUpperCase}0-9]*");
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
@@ -54,10 +59,6 @@ public class PyPep8NamingInspection extends PyInspection {
   }
 
   public class Visitor extends PyInspectionVisitor {
-    Pattern LOWERCASE_REGEX = Pattern.compile("[_a-z][_a-z0-9]*");
-    Pattern UPPERCASE_REGEX = Pattern.compile("[_A-Z][_A-Z0-9]*");
-    Pattern MIXEDCASE_REGEX = Pattern.compile("_?[A-Z][a-zA-Z0-9]*");
-
     private final Map<PyFunction, Boolean> myHasSupers = new HashMap<PyFunction, Boolean>();
 
     public Visitor(@NotNull final ProblemsHolder holder, LocalInspectionToolSession session) {
@@ -68,14 +69,14 @@ public class PyPep8NamingInspection extends PyInspection {
     public void visitPyAssignmentStatement(PyAssignmentStatement node) {
       final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, true, PyClass.class);
       if (function == null) return;
+      final Scope scope = ControlFlowCache.getScope(function);
       for (PyExpression expression : node.getTargets()) {
         final String name = expression.getName();
-        if (name == null) continue;
+        if (name == null || scope.isGlobal(name)) continue;
         if (expression instanceof PyTargetExpression) {
           final PyExpression qualifier = ((PyTargetExpression)expression).getQualifier();
           if (qualifier != null) {
-            final PyType type = myTypeEvalContext.getType(qualifier);
-            if (type instanceof PyModuleType) return;
+            return;
           }
         }
         if (!LOWERCASE_REGEX.matcher(name).matches() && !name.startsWith("_")) {
@@ -126,7 +127,7 @@ public class PyPep8NamingInspection extends PyInspection {
       final String asName = node.getAsName();
       final QualifiedName importedQName = node.getImportedQName();
       if (importedQName == null) return;
-      final String name = importedQName.toString();
+      final String name = importedQName.getLastComponent();
 
       if (asName == null || name == null) return;
       if (UPPERCASE_REGEX.matcher(name).matches()) {

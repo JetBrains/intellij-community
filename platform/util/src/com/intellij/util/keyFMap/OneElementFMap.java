@@ -18,45 +18,69 @@ package com.intellij.util.keyFMap;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
-class OneElementFMap<V> implements KeyFMap {
-  private final int myKeyCode;
+public class OneElementFMap<V> implements KeyFMap {
+  private final Key myKey;
   private final V myValue;
 
-  OneElementFMap(int keyCode, @NotNull V value) {
-    myKeyCode = keyCode;
+  public OneElementFMap(@NotNull Key key, @NotNull V value) {
+    myKey = key;
     myValue = value;
   }
 
   @NotNull
   @Override
   public <V> KeyFMap plus(@NotNull Key<V> key, @NotNull V value) {
-    int keyCode = key.hashCode();
-    if (myKeyCode == keyCode) return new OneElementFMap<V>(keyCode, value);
-    return new PairElementsFMap(myKeyCode, myValue, keyCode, value);
+    if (myKey == key) return new OneElementFMap<V>(key, value);
+    return new PairElementsFMap(myKey, myValue, key, value);
   }
 
   @NotNull
   @Override
   public KeyFMap minus(@NotNull Key<?> key) {
-    if (key.hashCode() == myKeyCode) {
-      return KeyFMap.EMPTY_MAP;
-    }
-    return this;
+    return key == myKey ? KeyFMap.EMPTY_MAP : this;
   }
 
   @Override
   public <V> V get(@NotNull Key<V> key) {
     //noinspection unchecked
-    return myKeyCode == key.hashCode() ? (V)myValue : null;
+    return myKey == key ? (V)myValue : null;
   }
 
   @Override
   public String toString() {
-    return "<"+Key.getKeyByIndex(myKeyCode) + " -> " + myValue+">";
+    return "<" + myKey + " -> " + myValue+">";
   }
 
   @Override
   public boolean isEmpty() {
     return false;
+  }
+
+  public Key getKey() {
+    return myKey;
+  }
+
+  public V getValue() {
+    return myValue;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof OneElementFMap)) return false;
+
+    OneElementFMap map = (OneElementFMap)o;
+
+    if (myKey != map.myKey) return false;
+    if (!myValue.equals(map.myValue)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myKey.hashCode();
+    result = 31 * result + myValue.hashCode();
+    return result;
   }
 }

@@ -104,6 +104,10 @@ public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithPar
 
   @Override
   public Wrap getWrap() {
+    BlockWithParent parent = getParent();
+    if (parent instanceof TemplateLanguageBlock) {
+      return ((TemplateLanguageBlock)parent).substituteTemplateChildWrap(this, myOriginal.getWrap());
+    }
     return myOriginal.getWrap();
   }
 

@@ -80,7 +80,6 @@ public interface Action extends DomElement {
 	@NotNull
 	GenericAttributeValue<String> getText();
 
-
 	/**
 	 * Returns the value of the id child.
 	 * Attribute id
@@ -90,6 +89,13 @@ public interface Action extends DomElement {
 	@Required
 	GenericAttributeValue<String> getId();
 
+	///**
+	// * Returns the value of the overrides child.
+	// * Attribute overrides
+	// * @return the value of the overrides child.
+	// */
+	//@NotNull
+	//GenericAttributeValue<Boolean> getOverrides();
 
 	/**
 	 * Returns the list of keyboard-shortcut children.

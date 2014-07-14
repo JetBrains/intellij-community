@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,20 +67,20 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     return null;
   }
 
-  public <T> void registerService(Class<T> serviceInterface, Class<? extends T> serviceImplementation) {
+  public <T> void registerService(@NotNull Class<T> serviceInterface, @NotNull Class<? extends T> serviceImplementation) {
     myPicoContainer.unregisterComponent(serviceInterface.getName());
     myPicoContainer.registerComponentImplementation(serviceInterface.getName(), serviceImplementation);
   }
 
-  public <T> void registerService(Class<T> serviceImplementation) {
+  public <T> void registerService(@NotNull Class<T> serviceImplementation) {
     registerService(serviceImplementation, serviceImplementation);
   }
 
-  public <T> void registerService(Class<T> serviceInterface, T serviceImplementation) {
+  public <T> void registerService(@NotNull Class<T> serviceInterface, @NotNull T serviceImplementation) {
     myPicoContainer.registerComponentInstance(serviceInterface.getName(), serviceImplementation);
   }
 
-  public <T> void addComponent(Class<T> interfaceClass, T instance) {
+  public <T> void addComponent(@NotNull Class<T> interfaceClass, @NotNull T instance) {
     myComponents.put(interfaceClass, instance);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ public class MockDocument implements DocumentEx {
     myText.append(text);
   }
 
+  @NotNull
   @Override
   public String getText() {
     return myText.toString();
@@ -82,6 +83,12 @@ public class MockDocument implements DocumentEx {
   @Override
   @NotNull
   public CharSequence getCharsSequence() {
+    return getText();
+  }
+
+  @NotNull
+  @Override
+  public CharSequence getImmutableCharSequence() {
     return getText();
   }
 

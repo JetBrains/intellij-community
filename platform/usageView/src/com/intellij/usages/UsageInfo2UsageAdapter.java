@@ -168,7 +168,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
 
   @Override
   public boolean isReadOnly() {
-    return isValid() && !getElement().isWritable();
+    PsiFile psiFile = getPsiFile();
+    return psiFile == null || psiFile.isValid() && !psiFile.isWritable();
   }
 
   @Override
@@ -437,8 +438,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   @Override
   @NotNull
   public TextChunk[] getText() {
-    Reference<TextChunk[]> reference = myTextChunks;
-    TextChunk[] chunks = reference == null ? null : reference.get();
+    TextChunk[] chunks = SoftReference.dereference(myTextChunks);
     final long currentModificationStamp = getCurrentModificationStamp();
     boolean isModified = currentModificationStamp != myModificationStamp;
     if (chunks == null || isValid() && isModified) {
@@ -480,9 +480,13 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     Icon icon = myIcon;
     if (icon == null) {
       PsiElement psiElement = getElement();
-      myIcon = icon = psiElement != null && psiElement.isValid() ? psiElement.getIcon(0) : null;
+      myIcon = icon = psiElement != null && psiElement.isValid() && !isFindInPathUsage(psiElement) ? psiElement.getIcon(0) : null;
     }
     return icon;
+  }
+
+  private boolean isFindInPathUsage(PsiElement psiElement) {
+    return psiElement instanceof PsiFile && getUsageInfo().getPsiFileRange() != null;
   }
 
   @Override

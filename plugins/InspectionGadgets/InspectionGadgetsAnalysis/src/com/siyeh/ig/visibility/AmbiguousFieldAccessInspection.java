@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +83,7 @@ public class AmbiguousFieldAccessInspection extends BaseInspection {
       }
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
       final String newExpressionText = "super." + referenceExpression.getText();
-      replaceExpression(referenceExpression, newExpressionText);
+      PsiReplacementUtil.replaceExpression(referenceExpression, newExpressionText);
     }
   }
 

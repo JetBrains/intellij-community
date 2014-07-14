@@ -22,6 +22,7 @@ import com.intellij.refactoring.classMembers.DependentMembersCollectorBase;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 
 /**
  * @author Dennis.Ushakov
@@ -30,7 +31,7 @@ public class PyClassMembersRefactoringSupport implements ClassMembersRefactoring
 
   public static PyMemberInfoStorage getSelectedMemberInfos(PyClass clazz, PsiElement element1, PsiElement element2) {
     final PyMemberInfoStorage infoStorage = new PyMemberInfoStorage(clazz);
-    for (PyMemberInfo member : infoStorage.getClassMemberInfos(clazz)) {
+    for (PyMemberInfo<PyElement> member : infoStorage.getClassMemberInfos(clazz)) {
       final PyElement function = member.getMember();
       member.setChecked(PsiTreeUtil.isAncestor(function, element1, false) ||
                         PsiTreeUtil.isAncestor(function, element2, false));

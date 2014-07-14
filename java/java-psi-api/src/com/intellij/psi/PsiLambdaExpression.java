@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a Java lambda expression.
  */
-public interface PsiLambdaExpression extends PsiExpression {
+public interface PsiLambdaExpression extends PsiFunctionalExpression {
   /**
    * Returns this lambda expression's parameter list.
    *
@@ -39,13 +39,6 @@ public interface PsiLambdaExpression extends PsiExpression {
   @Nullable
   PsiElement getBody();
 
-  /**
-   * @return SAM type the lambda expression corresponds to
-   *         null when no SAM type could be found
-   */
-  @Nullable
-  PsiType getFunctionalInterfaceType();
-
   boolean isVoidCompatible();
   boolean isValueCompatible();
 
@@ -53,4 +46,6 @@ public interface PsiLambdaExpression extends PsiExpression {
    * @return true when lambda declares parameter types explicitly
    */
   boolean hasFormalParameterTypes();
+
+  boolean isAcceptable(PsiType leftType, boolean checkReturnType);
 }

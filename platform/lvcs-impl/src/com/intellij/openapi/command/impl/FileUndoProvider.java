@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.FileContentUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -85,18 +86,18 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
   }
 
   @Override
-  public void fileCreated(VirtualFileEvent e) {
+  public void fileCreated(@NotNull VirtualFileEvent e) {
     processEvent(e);
   }
 
   @Override
-  public void propertyChanged(VirtualFilePropertyEvent e) {
+  public void propertyChanged(@NotNull VirtualFilePropertyEvent e) {
     if (!e.getPropertyName().equals(VirtualFile.PROP_NAME)) return;
     processEvent(e);
   }
 
   @Override
-  public void fileMoved(VirtualFileMoveEvent e) {
+  public void fileMoved(@NotNull VirtualFileMoveEvent e) {
     processEvent(e);
   }
 
@@ -111,14 +112,14 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
   }
 
   @Override
-  public void beforeContentsChange(VirtualFileEvent e) {
+  public void beforeContentsChange(@NotNull VirtualFileEvent e) {
     if (shouldNotProcess(e)) return;
     if (isUndoable(e)) return;
     registerNonUndoableAction(e);
   }
 
   @Override
-  public void beforeFileDeletion(VirtualFileEvent e) {
+  public void beforeFileDeletion(@NotNull VirtualFileEvent e) {
     if (shouldNotProcess(e)) {
       invalidateActionsFor(e);
       return;
@@ -133,7 +134,7 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
   }
 
   @Override
-  public void fileDeleted(VirtualFileEvent e) {
+  public void fileDeleted(@NotNull VirtualFileEvent e) {
     VirtualFile f = e.getFile();
 
     DocumentReference ref = f.getUserData(DELETION_WAS_UNDOABLE);

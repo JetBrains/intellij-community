@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ public class DomTableView extends AbstractTableView<DomElement> {
     myCustomDataProviders.add(provider);
   }
 
+  @Override
   public void calcData(final DataKey key, final DataSink sink) {
     super.calcData(key, sink);
     for (final TypeSafeDataProvider customDataProvider : myCustomDataProviders) {
@@ -56,9 +57,11 @@ public class DomTableView extends AbstractTableView<DomElement> {
     installPopup(ActionPlaces.J2EE_ATTRIBUTES_VIEW_POPUP, group);
   }
 
+  @Override
   protected void wrapValueSetting(@NotNull final DomElement domElement, final Runnable valueSetter) {
     if (domElement.isValid()) {
       new WriteCommandAction(getProject(), DomUtil.getFile(domElement)) {
+        @Override
         protected void run(final Result result) throws Throwable {
           valueSetter.run();
         }

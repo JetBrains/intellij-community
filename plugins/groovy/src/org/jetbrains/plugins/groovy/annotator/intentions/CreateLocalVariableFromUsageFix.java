@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,16 +56,19 @@ public class CreateLocalVariableFromUsageFix extends Intention {
     myOwner = owner;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return GroovyBundle.message("create.variable.from.usage", myRefExpression.getReferenceName());
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return GroovyBundle.message("create.from.usage.family.name");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myOwner.isValid() && myRefExpression.isValid();
   }
@@ -136,6 +139,7 @@ public class CreateLocalVariableFromUsageFix extends Intention {
   }
 
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

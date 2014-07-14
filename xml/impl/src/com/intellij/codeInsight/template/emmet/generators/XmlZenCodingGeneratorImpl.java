@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlChildRole;
@@ -51,9 +51,10 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
     return type == StdFileTypes.XHTML || type == StdFileTypes.JSPX || type == StdFileTypes.XML;
   }
 
+  @Override
   @NotNull
   public String toString(@NotNull XmlTag tag,
-                         @NotNull List<Pair<String, String>> attribute2Value,
+                         @NotNull List<Couple<String>> attribute2Value,
                          boolean hasChildren,
                          @NotNull PsiElement context) {
     FileType fileType = context.getContainingFile().getFileType();
@@ -63,14 +64,15 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
     return tag.getContainingFile().getText();
   }
 
+  @Override
   @NotNull
-  public String buildAttributesString(@NotNull List<Pair<String, String>> attribute2value,
+  public String buildAttributesString(@NotNull List<Couple<String>> attribute2value,
                                       boolean hasChildren,
                                       int numberInIteration,
                                       int totalIterations, @Nullable String surroundedText) {
     StringBuilder result = new StringBuilder();
-    for (Iterator<Pair<String, String>> it = attribute2value.iterator(); it.hasNext();) {
-      Pair<String, String> pair = it.next();
+    for (Iterator<Couple<String>> it = attribute2value.iterator(); it.hasNext();) {
+      Couple<String> pair = it.next();
       String name = pair.first;
       String value = ZenCodingUtil.getValue(pair.second, numberInIteration, totalIterations, surroundedText);
       result.append(getAttributeString(name, value));
@@ -81,6 +83,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
     return result.toString();
   }
 
+  @Override
   public boolean isMyContext(@NotNull PsiElement context, boolean wrapping) {
     return isMyLanguage(context.getLanguage()) && (wrapping || HtmlTextContextType.isInContext(context));
   }
@@ -89,6 +92,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
     return language instanceof XMLLanguage;
   }
 
+  @Override
   public String getSuffix() {
     return "html";
   }
@@ -98,6 +102,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
     return EmmetOptions.getInstance().isEmmetEnabled();
   }
 
+  @Override
   public boolean isAppliedByDefault(@NotNull PsiElement context) {
     return true;
   }
@@ -131,6 +136,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
             final Document document = FileDocumentManager.getInstance().getDocument(file);
             documentManager.doPostponedOperationsAndUnblockDocument(document);
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
               public void run() {
                 document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
                 documentManager.commitDocument(document);

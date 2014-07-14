@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyDeprecationInspection;
 import com.jetbrains.python.psi.PyFile;
@@ -43,14 +44,24 @@ public class PyDeprecationTest extends PyTestCase {
 
   public void testFunctionStub() {
     myFixture.configureByFile("deprecation/functionStub.py");
-    PyFunction getstatus = ((PyFile) myFixture.getFile()).findTopLevelFunction("getstatus");
-    assertEquals("commands.getstatus() is deprecated", getstatus.getDeprecationMessage());
-    assertNotParsed((PyFile) myFixture.getFile());
+    PyFile file = (PyFile)myFixture.getFile();
+    assertEquals("commands.getstatus() is deprecated", file.findTopLevelFunction("getstatus").getDeprecationMessage());
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNotParsed(file);
+    
+    assertEquals("commands.getstatus() is deprecated", file.findTopLevelFunction("getstatus").getDeprecationMessage());
+    assertNotParsed(file);
   }
 
   public void testDeprecatedAsFallback() {
     myFixture.enableInspections(PyDeprecationInspection.class);
-    myFixture.configureByFile("deprecation/deprecatedAsFallback.py");
+    myFixture.configureByFiles("deprecation/deprecatedAsFallback.py", "deprecation/tmp.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  public void testDeprecatedFallback2() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFiles("deprecation/deprecatedFallback2.py", "deprecation/tmp.py", "deprecation/deprecatedAsFallback.py");
     myFixture.checkHighlighting(true, false, false);
   }
 
@@ -68,7 +79,13 @@ public class PyDeprecationTest extends PyTestCase {
 
   public void testFileStub() {
     myFixture.configureByFile("deprecation/deprecatedModule.py");
-    assertEquals("the deprecated module is deprecated; use a non-deprecated module instead", ((PyFile) myFixture.getFile()).getDeprecationMessage());
-    assertNotParsed((PyFile) myFixture.getFile());
+    PyFile file = (PyFile)myFixture.getFile();
+    assertEquals("the deprecated module is deprecated; use a non-deprecated module instead", file.getDeprecationMessage());
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNotParsed(file);
+
+    assertEquals("the deprecated module is deprecated; use a non-deprecated module instead", file.getDeprecationMessage());
+    assertNotParsed(file);
+    
   }
 }

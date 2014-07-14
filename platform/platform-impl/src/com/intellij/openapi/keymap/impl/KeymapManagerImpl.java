@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,26 +67,26 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
       "$ROOT_CONFIG$/keymaps",
       new BaseSchemeProcessor<KeymapImpl>() {
         @Override
-        public KeymapImpl readScheme(final Document schemeContent) throws InvalidDataException, IOException, JDOMException {
+        public KeymapImpl readScheme(@NotNull final Document schemeContent) throws InvalidDataException, IOException, JDOMException {
           return readKeymap(schemeContent);
         }
 
         @Override
-        public Document writeScheme(final KeymapImpl scheme) throws WriteExternalException {
+        public Document writeScheme(@NotNull final KeymapImpl scheme) throws WriteExternalException {
           return new Document(scheme.writeExternal());
         }
 
         @Override
-        public boolean shouldBeSaved(final KeymapImpl scheme) {
+        public boolean shouldBeSaved(@NotNull final KeymapImpl scheme) {
           return scheme.canModify();
         }
       },
       RoamingType.PER_USER);
 
     Keymap[] keymaps = defaultKeymap.getKeymaps();
+    String systemDefaultKeymap = defaultKeymap.getDefaultKeymapName();
     for (Keymap keymap : keymaps) {
       addKeymap(keymap);
-      String systemDefaultKeymap = defaultKeymap.getDefaultKeymapName();
       if (systemDefaultKeymap.equals(keymap.getName())) {
         setActiveKeymap(keymap);
       }
@@ -143,6 +143,10 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
   @Override
   public void bindShortcuts(String sourceActionId, String targetActionId) {
     myBoundShortcuts.put(targetActionId, sourceActionId);
+  }
+
+  public void unbindShortcuts(String targetActionId) {
+    myBoundShortcuts.remove(targetActionId);
   }
 
   @Override
@@ -233,6 +237,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     mySchemesManager.loadSchemes();
   }
 
+  @NotNull
   private KeymapImpl readKeymap(Document document) throws JDOMException, InvalidDataException, IOException {
     if (document == null) throw new InvalidDataException();
     Element root = document.getRootElement();

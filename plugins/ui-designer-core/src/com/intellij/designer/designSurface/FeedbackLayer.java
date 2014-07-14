@@ -21,4 +21,13 @@ import javax.swing.*;
  * @author Alexander Lobas
  */
 public class FeedbackLayer extends JComponent {
+  private final DesignerEditorPanel myDesigner;
+
+  public FeedbackLayer(DesignerEditorPanel designer) {
+    myDesigner = designer;
+  }
+
+  public double getZoom() {
+    return myDesigner.getZoom();
+  }
 }

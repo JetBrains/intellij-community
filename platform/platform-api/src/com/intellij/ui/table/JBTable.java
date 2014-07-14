@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,8 @@ import java.util.Comparator;
 import java.util.EventObject;
 
 public class JBTable extends JTable implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
-  private StatusText myEmptyText;
-  private ExpandableItemsHandler<TableCell> myExpandableItemsHandler;
+  private final StatusText myEmptyText;
+  private final ExpandableItemsHandler<TableCell> myExpandableItemsHandler;
 
   private MyCellEditorRemover myEditorRemover;
   private boolean myEnableAntialiasing;
@@ -62,10 +62,11 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   public JBTable(final TableModel model) {
     super(model);
+
     myEmptyText = new StatusText(this) {
       @Override
       protected boolean isStatusVisible() {
-        return JBTable.this.isEmpty();
+        return isEmpty();
       }
     };
 
@@ -75,21 +76,26 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     addMouseListener(new MyMouseListener());
     getColumnModel().addColumnModelListener(new TableColumnModelListener() {
+      @Override
       public void columnMarginChanged(ChangeEvent e) {
         if (cellEditor != null && !(cellEditor instanceof Animated)) {
           cellEditor.stopCellEditing();
         }
       }
 
+      @Override
       public void columnSelectionChanged(ListSelectionEvent e) {
       }
 
+      @Override
       public void columnAdded(TableColumnModelEvent e) {
       }
 
+      @Override
       public void columnMoved(TableColumnModelEvent e) {
       }
 
+      @Override
       public void columnRemoved(TableColumnModelEvent e) {
       }
     });
@@ -201,7 +207,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   }
 
   @Override
-  public void setModel(final TableModel model) {
+  public void setModel(@NotNull TableModel model) {
     super.setModel(model);
 
     if (model instanceof SortableColumnModel) {
@@ -293,6 +299,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     myExpandableItemsHandler.setEnabled(enabled);
   }
 
+  @Override
   public void removeNotify() {
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -333,6 +340,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   @Override
   public void paint(Graphics g) {
+    if (!isEnabled()) {
+      g = new TableGrayer((Graphics2D)g);
+    }
     super.paint(g);
     if (myBusyIcon != null) {
       myBusyIcon.updateLocation(this);
@@ -364,6 +374,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         myBusyIcon.suspend();
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             if (myBusyIcon != null) {
               repaint();
@@ -390,6 +401,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
   }
 
+  @Override
   public boolean editCellAt(final int row, final int column, final EventObject e) {
     if (cellEditor != null && !cellEditor.stopCellEditing()) {
       return false;
@@ -449,6 +461,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     return UIUtil.isUnderAlloyLookAndFeel()
            || UIUtil.isUnderNativeMacLookAndFeel()
            || UIUtil.isUnderDarcula()
+           || UIUtil.isUnderIntelliJLaF()
            || UIUtil.isUnderNimbusLookAndFeel()
            || UIUtil.isUnderWindowsLookAndFeel();
   }
@@ -492,6 +505,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       myFocusManager = IdeFocusManager.findInstanceByComponent(JBTable.this);
     }
 
+    @Override
     public void propertyChange(final PropertyChangeEvent e) {
       if (!isEditing()) {
         return;
@@ -526,6 +540,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   }
 
   private final class MyMouseListener extends MouseAdapter {
+    @Override
     public void mousePressed(final MouseEvent e) {
       if (SwingUtilities.isRightMouseButton(e)) {
         final int[] selectedRows = getSelectedRows();
@@ -565,6 +580,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       return super.getComparator(column);
     }
 
+    @Override
     protected boolean useToString(int column) {
       return false;
     }
@@ -583,24 +599,28 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
 
     private class TableRowSorterModelWrapper extends ModelWrapper<TableModel, Integer> {
-      private TableModel myModel;
+      private final TableModel myModel;
 
-      private TableRowSorterModelWrapper(@NotNull final TableModel model) {
+      private TableRowSorterModelWrapper(@NotNull TableModel model) {
         myModel = model;
       }
 
+      @Override
       public TableModel getModel() {
         return myModel;
       }
 
+      @Override
       public int getColumnCount() {
-        return (myModel == null) ? 0 : myModel.getColumnCount();
+        return myModel.getColumnCount();
       }
 
+      @Override
       public int getRowCount() {
-        return (myModel == null) ? 0 : myModel.getRowCount();
+        return myModel.getRowCount();
       }
 
+      @Override
       public Object getValueAt(int row, int column) {
         if (myModel instanceof SortableColumnModel) {
           return ((SortableColumnModel)myModel).getRowValue(row);
@@ -609,6 +629,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         return myModel.getValueAt(row, column);
       }
 
+      @Override
       public String getStringValueAt(int row, int column) {
         TableStringConverter converter = getStringConverter();
         if (converter != null) {
@@ -633,6 +654,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         return string;
       }
 
+      @Override
       public Integer getIdentifier(int index) {
         return index;
       }
@@ -642,12 +664,22 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   protected class JBTableHeader extends JTableHeader {
     public JBTableHeader() {
       super(JBTable.this.columnModel);
+      JBTable.this.addPropertyChangeListener(new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+          JBTableHeader.this.revalidate();
+          JBTableHeader.this.repaint();
+        }
+      });
     }
 
     @Override
     public void paint(Graphics g) {
       if (myEnableAntialiasing) {
         GraphicsUtil.setupAntialiasing(g);
+      }
+      if (!JBTable.this.isEnabled()) {
+        g = new TableGrayer((Graphics2D)g);
       }
       super.paint(g);
     }
@@ -665,6 +697,31 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         }
       }
       return super.getToolTipText(event);
+    }
+  }
+
+  /**
+   * Make it possible to disable a JBTable
+   *
+   * @author Konstantin Bulenkov
+   */
+  private final class TableGrayer extends Graphics2DDelegate {
+    public TableGrayer(Graphics2D g2d) {
+      super(g2d);
+    }
+
+    @Override
+    public void setColor(Color color) {
+      if (!UIUtil.isUnderDarcula() || !JBTable.this.getBackground().equals(color)) {
+        //noinspection UseJBColor
+        color = new Color(UIUtil.getGrayFilter().filterRGB(0, 0, color.getRGB()));
+      }
+      super.setColor(color);
+    }
+
+    @Override
+    public Graphics create() {
+      return new TableGrayer((Graphics2D)super.create());
     }
   }
 }

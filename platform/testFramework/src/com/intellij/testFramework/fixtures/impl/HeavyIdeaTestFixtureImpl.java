@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,20 +23,19 @@ import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryIndexImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
@@ -72,11 +71,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * Creates new project for each test.
  * @author mike
  */
 class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixture {
 
-  @NonNls private static final String PROJECT_FILE_PREFIX = "temp";
   @NonNls private static final String PROJECT_FILE_SUFFIX = ProjectFileType.DOT_DEFAULT_EXTENSION;
 
   private Project myProject;
@@ -116,7 +115,6 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
       moduleFixtureBuilder.getFixture().tearDown();
     }
-    ((DirectoryIndexImpl)DirectoryIndex.getInstance(getProject())).assertAncestorConsistent();
 
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
@@ -141,6 +139,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     myEditorListenerTracker.checkListenersLeak();
     myThreadTracker.checkLeak();
     LightPlatformTestCase.checkEditorsReleased();
+    PlatformTestCase.cleanupApplicationCaches(project);
     InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
   }
 
@@ -149,9 +148,9 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     new WriteCommandAction.Simple(null) {
       @Override
       protected void run() throws Throwable {
-        File projectFile = FileUtil.createTempFile(myName+"_", PROJECT_FILE_SUFFIX);
-        FileUtil.delete(projectFile);
-        myFilesToDelete.add(projectFile);
+        File tempDirectory = FileUtil.createTempDirectory(myName, "");
+        File projectFile = new File(tempDirectory, myName + PROJECT_FILE_SUFFIX);
+        myFilesToDelete.add(tempDirectory);
 
         LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -169,6 +168,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
         ProjectManagerEx.getInstanceEx().openTestProject(myProject);
         LightPlatformTestCase.clearUncommittedDocuments(myProject);
+        ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
       }
     }.execute().throwException();
   }
@@ -247,6 +247,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       }
     }.execute();
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+            @Override
             public PsiFile compute() {
               return PsiManager.getInstance(getProject()).findFile(virtualFile[0]);
             }

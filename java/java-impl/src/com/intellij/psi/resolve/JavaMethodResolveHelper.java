@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,9 +54,9 @@ public class JavaMethodResolveHelper {
                                                                                                                                       languageLevel);
     myProcessor = new MethodResolverProcessor(argumentList, containingFile, new PsiConflictResolver[]{resolver}) {
       @Override
-      protected MethodCandidateInfo createCandidateInfo(final PsiMethod method, final PsiSubstitutor substitutor,
+      protected MethodCandidateInfo createCandidateInfo(@NotNull final PsiMethod method, @NotNull final PsiSubstitutor substitutor,
                                                         final boolean staticProblem,
-                                                        final boolean accessible) {
+                                                        final boolean accessible, final boolean varargs) {
         return JavaMethodResolveHelper.this
           .createCandidateInfo(method, substitutor, staticProblem, myCurrentFileContext, !accessible, argumentList, argumentTypes,
                                languageLevel);
@@ -69,7 +69,7 @@ public class JavaMethodResolveHelper {
     };
   }
 
-  protected MethodCandidateInfo createCandidateInfo(PsiMethod method,
+  protected MethodCandidateInfo createCandidateInfo(@NotNull PsiMethod method,
                                                     PsiSubstitutor substitutor,
                                                     boolean staticProblem,
                                                     PsiElement currentFileContext,
@@ -81,7 +81,7 @@ public class JavaMethodResolveHelper {
                                    PsiType.EMPTY_ARRAY, languageLevel);
   }
 
-  public void addMethod(PsiMethod method, PsiSubstitutor substitutor, boolean staticError) {
+  public void addMethod(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor, boolean staticError) {
     if (myDuplicates.add(method.getSignature(substitutor))) {
       myProcessor.addMethod(method, substitutor, staticError);
     }

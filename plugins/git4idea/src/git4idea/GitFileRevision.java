@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package git4idea;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
@@ -40,7 +40,7 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
   @NotNull private final Project myProject;
   @NotNull private final FilePath myPath;
   @NotNull private final GitRevisionNumber myRevision;
-  @Nullable private final Pair<Pair<String, String>, Pair<String, String>> myAuthorAndCommitter;
+  @Nullable private final Couple<Couple<String>> myAuthorAndCommitter;
   @Nullable private final String myMessage;
   @Nullable private final String myBranch;
   @Nullable private final Date myAuthorTime;
@@ -51,7 +51,7 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
   }
 
   public GitFileRevision(@NotNull Project project, @NotNull FilePath path, @NotNull GitRevisionNumber revision,
-                         @Nullable Pair<Pair<String, String>, Pair<String, String>> authorAndCommitter, @Nullable String message,
+                         @Nullable Couple<Couple<String>> authorAndCommitter, @Nullable String message,
                          @Nullable String branch, @Nullable final Date authorTime, @NotNull Collection<String> parents) {
     myProject = project;
     myPath = path;

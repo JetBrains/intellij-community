@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi;
 
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -110,5 +111,18 @@ public class MnemonicHelper extends ComponentTreeWatcher {
       LOG.error("conflict: multiple components with mnemonic '" + (char)mnemonic + "' seen on '" + text + "' and '" + other + "'");
     }
     myMnemonics.put(Integer.valueOf(mnemonic), text);
+  }
+
+  /**
+   * Creates shortcut for mnemonic replacing standard Alt+Letter to Ctrl+Alt+Letter on Mac with jdk version newer than 6
+   * @param ch mnemonic letter
+   * @return shortcut for mnemonic
+   */
+  public static CustomShortcutSet createShortcut(char ch) {
+    Character mnemonic = Character.valueOf(ch);
+    String shortcut = SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.7") ?
+                      "control alt pressed " + mnemonic :
+                      "alt pressed " + mnemonic;
+    return CustomShortcutSet.fromString(shortcut);
   }
 }

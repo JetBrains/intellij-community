@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -35,6 +34,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.util.*;
@@ -166,7 +166,7 @@ public class PlatformPackageUtil {
           throw e;
         }
         catch (IOException e) {
-          throw new IncorrectOperationException(e.toString(), e);
+          throw new IncorrectOperationException(e);
         }
         catch (Exception e) {
           LOG.error(e);
@@ -276,12 +276,10 @@ public class PlatformPackageUtil {
   }
 
   @Nullable
-  public static PsiDirectory getDirectory(PsiElement element) {
-    PsiFile file = element.getContainingFile();
-    final PsiElement context = InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file);
-    if (context != null) {
-      file = context.getContainingFile();
-    }
-    return file.getParent();
+  public static PsiDirectory getDirectory(@Nullable PsiElement element) {
+    if (element == null) return null;
+    // handle injection and fragment editor
+    PsiFile file = FileContextUtil.getContextFile(element);
+    return file == null ? null : file.getContainingDirectory();
   }
 }

@@ -21,9 +21,12 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.test.AbstractExternalSystemTest
 import com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.roots.JavadocOrderRootType
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleSourceOrderEntry
 import com.intellij.openapi.roots.OrderEntry
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.util.io.FileUtil
 
 import static com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.*
 /**
@@ -98,5 +101,60 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
       }
     }
     ExternalSystemTestUtil.assertMapsEqual(['source': 4, 'excluded': 2], folders)
+  }
+
+  void 'test library dependency with sources path added on subsequent refresh'() {
+
+    def libBinPath = new File(projectDir, "bin_path");
+    def libSrcPath = new File(projectDir, "source_path");
+    def libDocPath = new File(projectDir, "doc_path");
+
+    FileUtil.createDirectory(libBinPath);
+    FileUtil.createDirectory(libSrcPath);
+    FileUtil.createDirectory(libDocPath);
+
+    applyProjectState([
+      buildExternalProjectInfo {
+        project {
+          module('module') {
+            lib('lib1', level: 'module', bin: [libBinPath.absolutePath]) } } },
+      buildExternalProjectInfo {
+        project {
+          module('module') {
+            lib('lib1', level: 'module', bin: [libBinPath.absolutePath], src: [libSrcPath.absolutePath]) } } },
+      buildExternalProjectInfo {
+        project {
+          module('module') {
+            lib('lib1', level: 'module', bin: [libBinPath.absolutePath], src: [libSrcPath.absolutePath],  doc: [libDocPath.absolutePath]) } } }
+    ])
+
+    def helper = ServiceManager.getService(ProjectStructureHelper.class)
+    def module = helper.findIdeModule('module', project)
+    assertNotNull(module)
+
+    def facade = ServiceManager.getService(PlatformFacade.class)
+    def entries = facade.getOrderEntries(module)
+    def dependencies = [:].withDefault { 0 }
+    entries.each { OrderEntry entry ->
+      if (entry instanceof LibraryOrderEntry) {
+        def name = (entry as LibraryOrderEntry).libraryName
+        dependencies[name]++
+        if ("Test_external_system_id: lib1".equals(name)) {
+          def classesUrls = entry.getUrls(OrderRootType.CLASSES)
+          assertEquals(1, classesUrls.length)
+          assertTrue(classesUrls[0].endsWith("bin_path"))
+          def sourceUrls = entry.getUrls(OrderRootType.SOURCES)
+          assertEquals(1, sourceUrls.length)
+          assertTrue(sourceUrls[0].endsWith("source_path"))
+          def docUrls = entry.getUrls(JavadocOrderRootType.instance)
+          assertEquals(1, docUrls.length)
+          assertTrue(docUrls[0].endsWith("doc_path"))
+        }
+        else {
+          fail()
+        }
+      }
+    }
+    ExternalSystemTestUtil.assertMapsEqual(['Test_external_system_id: lib1': 1], dependencies)
   }
 }

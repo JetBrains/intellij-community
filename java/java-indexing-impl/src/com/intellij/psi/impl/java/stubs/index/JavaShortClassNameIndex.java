@@ -51,8 +51,8 @@ public class JavaShortClassNameIndex extends StringStubIndexExtension<PsiClass> 
   }
 
   @Override
-  public Collection<PsiClass> get(final String s, final Project project, @NotNull final GlobalSearchScope scope) {
-    return StubIndex.getInstance().safeGet(getKey(), s, project, new JavaSourceFilterScope(scope), PsiClass.class);
+  public Collection<PsiClass> get(@NotNull final String s, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
+    return StubIndex.getElements(getKey(), s, project, new JavaSourceFilterScope(scope), PsiClass.class);
   }
 
   @Override

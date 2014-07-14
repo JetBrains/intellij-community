@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
+import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import javax.swing.*;
@@ -41,6 +41,7 @@ public abstract class NewGroovyActionBase extends CreateElementActionBase {
     super(text, description, icon);
   }
 
+  @Override
   @NotNull
   protected final PsiElement[] invokeDialog(final Project project, final PsiDirectory directory) {
     MyInputValidator validator = new MyInputValidator(project, directory);
@@ -60,9 +61,10 @@ public abstract class NewGroovyActionBase extends CreateElementActionBase {
     }
 
     Module module = LangDataKeys.MODULE.getData(dataContext);
-    return GroovyUtils.isSuitableModule(module) && LibrariesUtil.hasGroovySdk(module);
+    return GroovyFacetUtil.isSuitableModule(module) && LibrariesUtil.hasGroovySdk(module);
   }
 
+  @Override
   @NotNull
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
     return doCreate(newName, directory);
@@ -72,6 +74,7 @@ public abstract class NewGroovyActionBase extends CreateElementActionBase {
   protected abstract PsiElement[] doCreate(String newName, PsiDirectory directory) throws Exception;
 
 
+  @Override
   protected String getErrorTitle() {
     return CommonBundle.getErrorTitle();
   }

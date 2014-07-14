@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,9 +39,9 @@ import java.io.OutputStream;
  */
 public class MockVirtualFile extends VirtualFile {
 
-  private static VirtualFileSystem ourFileSystem = new MockVirtualFileSystem();
+  private static final VirtualFileSystem ourFileSystem = new MockVirtualFileSystem();
 
-  private String myPath;
+  private final String myPath;
 
   @NotNull
   static VirtualFile fromPath(@NotNull String absolutePath) {
@@ -84,6 +84,7 @@ public class MockVirtualFile extends VirtualFile {
     return ourFileSystem;
   }
 
+  @NotNull
   @Override
   public String getPath() {
     return myPath;
@@ -179,14 +180,12 @@ public class MockVirtualFile extends VirtualFile {
 
     MockVirtualFile file = (MockVirtualFile)o;
 
-    if (myPath != null ? !myPath.equals(file.myPath) : file.myPath != null) return false;
-
-    return true;
+    return myPath.equals(file.myPath);
   }
 
   @Override
   public int hashCode() {
-    return myPath != null ? myPath.hashCode() : 0;
+    return myPath.hashCode();
   }
 
 }

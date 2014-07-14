@@ -31,8 +31,13 @@ public abstract class Task {
   public static Task[] EMPTY_ARRAY = new Task[0];
 
   /**
-   * Task identifier, e.g. IDEA-00001
-   * @return unique id
+   * Global unique task identifier, e.g. IDEA-00001. It's important that its format is consistent with
+   * {@link TaskRepository#extractId(String)}, because otherwise task won't be updated on its activation.
+   *
+   * @return unique global ID as described
+   *
+   * @see com.intellij.tasks.TaskRepository#extractId(String)
+   * @see com.intellij.tasks.TaskManager#activateTask(Task, boolean)
    */
   @NotNull
   public abstract String getId();
@@ -116,15 +121,45 @@ public abstract class Task {
     return getId().hashCode();
   }
 
+  /**
+   * <b>Per-project</b> issue identifier. Default behavior is to extract project name from task's ID.
+   * If your service doesn't provide issue ID in format <tt>PROJECT-123</tt> be sure to initialize it manually,
+   * as it will be used to format commit messages.
+   *
+   * @return project-wide issue identifier
+   *
+   * @see #getId()
+   * @see TaskRepository#getCommitMessageFormat()
+   */
   @NotNull
   public String getNumber() {
-    int i = getId().lastIndexOf('-');
-    return i > 0 ? getId().substring(i + 1) : getId();
+    return extractNumberFromId(getId());
+  }
+
+  @NotNull
+  protected static String extractNumberFromId(@NotNull String id) {
+    int i = id.lastIndexOf('-');
+    return i > 0 ? id.substring(i + 1) : id;
+  }
+
+  /**
+   * Name of the project task belongs to. Default behavior is to extract project name from task's ID.
+   * If your service doesn't provide issue ID in format <tt>PROJECT-123</tt> be sure to initialize it manually,
+   * as it will be used to format commit messages.
+   *
+   * @return name of the project
+   *
+   * @see #getId()
+   * @see TaskRepository#getCommitMessageFormat()
+   */
+  @Nullable
+  public String getProject() {
+    return extractProjectFromId(getId());
   }
 
   @Nullable
-  public String getProject() {
-    int i = getId().lastIndexOf('-');
-    return i > 0 ? getId().substring(0, i) : null;
+  protected static String extractProjectFromId(@NotNull String id) {
+    int i = id.lastIndexOf('-');
+    return i > 0 ? id.substring(0, i) : null;
   }
 }

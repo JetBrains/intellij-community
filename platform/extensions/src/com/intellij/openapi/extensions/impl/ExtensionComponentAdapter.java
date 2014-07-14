@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@ package com.intellij.openapi.extensions.impl;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.pico.AssignableToComponentAdapter;
+import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
 import org.picocontainer.defaults.CachingComponentAdapter;
-import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 /**
  * @author Alexander Kireyev
@@ -40,6 +40,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   private final boolean myDeserializeInstance;
   private ComponentAdapter myDelegate;
   private Class myImplementationClass;
+  private boolean myNotificationSent = false;
 
   public ExtensionComponentAdapter(@NotNull String implementationClass,
                                    Element extensionElement,
@@ -155,7 +156,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
         if (classLoader == null) {
           classLoader = getClass().getClassLoader();
         }
-        myImplementationClass = Class.forName(className, true, classLoader);
+        myImplementationClass = Class.forName(className, false, classLoader);
       }
       catch (ClassNotFoundException e) {
         throw new RuntimeException(e);
@@ -181,5 +182,18 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   @Override
   public String getAssignableToClassName() {
     return myImplementationClassName;
+  }
+
+  public boolean isNotificationSent() {
+    return myNotificationSent;
+  }
+
+  public void setNotificationSent(boolean notificationSent) {
+    myNotificationSent = notificationSent;
+  }
+
+  @Override
+  public String toString() {
+    return "ExtensionComponentAdapter[" + myImplementationClassName + "]: plugin=" + myPluginDescriptor;
   }
 }

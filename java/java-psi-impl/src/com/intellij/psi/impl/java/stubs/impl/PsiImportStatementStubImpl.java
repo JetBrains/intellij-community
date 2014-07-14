@@ -77,7 +77,7 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
   @Override
   @Nullable
   public PsiJavaCodeReferenceElement getReference() {
-    PsiJavaCodeReferenceElement ref = myReference != null ? myReference.get() : null;
+    PsiJavaCodeReferenceElement ref = SoftReference.dereference(myReference);
     if (ref == null) {
       ref = isStatic() ? getStaticReference() : getRegularReference();
       myReference = new SoftReference<PsiJavaCodeReferenceElement>(ref);

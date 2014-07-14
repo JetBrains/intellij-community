@@ -270,8 +270,9 @@ public class ConversionContextImpl implements ConversionContext {
     return myProjectFileVersionSettings;
   }
 
+  @Override
   @Nullable
-  private ComponentManagerSettingsImpl createProjectSettings(final String fileName) {
+  public ComponentManagerSettingsImpl createProjectSettings(@NotNull final String fileName) {
     try {
       File file;
       if (myStorageScheme == StorageScheme.DEFAULT) {
@@ -329,6 +330,7 @@ public class ConversionContextImpl implements ConversionContext {
     return mySettingsBaseDir;
   }
 
+  @NotNull
   @Override
   public File getProjectFile() {
     return myProjectFile;
@@ -399,6 +401,7 @@ public class ConversionContextImpl implements ConversionContext {
     return myNonExistingModuleFiles;
   }
 
+  @NotNull
   @Override
   public StorageScheme getStorageScheme() {
     return myStorageScheme;

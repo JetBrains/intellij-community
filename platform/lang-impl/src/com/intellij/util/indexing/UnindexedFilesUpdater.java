@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,43 +15,57 @@
  */
 package com.intellij.util.indexing;
 
-import com.intellij.ide.caches.CacheUpdater;
+import com.intellij.ProjectTopics;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.FileContent;
+import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.CacheUpdateRunner;
+import com.intellij.openapi.project.DumbModeTask;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CollectingContentIterator;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.roots.ModuleRootAdapter;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Eugene Zhuravlev
  * @since Jan 29, 2008
  */
-public class UnindexedFilesUpdater implements CacheUpdater {
+public class UnindexedFilesUpdater extends DumbModeTask {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.UnindexedFilesUpdater");
 
-  private final FileBasedIndexImpl myIndex;
+  private final FileBasedIndexImpl myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
   private final Project myProject;
-  private final AtomicBoolean myFinishedUpdate = new AtomicBoolean();
-  private long myStarted;
+  private final boolean myOnStartup;
 
-  public UnindexedFilesUpdater(final Project project, FileBasedIndexImpl index) {
-    myIndex = index;
+  public UnindexedFilesUpdater(final Project project, boolean onStartup) {
     myProject = project;
+    myOnStartup = onStartup;
+    project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+      @Override
+      public void rootsChanged(ModuleRootEvent event) {
+        DumbService.getInstance(project).cancelTask(UnindexedFilesUpdater.this);
+      }
+    });
   }
 
-  @Override
-  public int getNumberOfPendingUpdateJobs() {
-    return myIndex.getNumberOfPendingInvalidations();
-  }
+  private void updateUnindexedFiles(ProgressIndicator indicator) {
+    PushedFilePropertiesUpdater.getInstance(myProject).pushAllPropertiesNow();
 
-  @Override
-  public VirtualFile[] queryNeededFiles(ProgressIndicator indicator) {
-    myIndex.filesUpdateStarted(myProject);
+    indicator.setIndeterminate(true);
+    indicator.setText(IdeBundle.message("progress.indexing.scanning"));
+
     CollectingContentIterator finder = myIndex.createContentIterator(indicator);
     long l = System.currentTimeMillis();
     myIndex.iterateIndexableFiles(finder, myProject, indicator);
@@ -59,34 +73,51 @@ public class UnindexedFilesUpdater implements CacheUpdater {
 
     LOG.info("Indexable files iterated in " + (System.currentTimeMillis() - l) + " ms");
     List<VirtualFile> files = finder.getFiles();
+
+    if (myOnStartup && !ApplicationManager.getApplication().isUnitTestMode()) {
+      // full VFS refresh makes sense only after it's loaded, i.e. after scanning files to index is finished
+      ((StartupManagerImpl)StartupManager.getInstance(myProject)).scheduleInitialVfsRefresh();
+    }
+
+    if (files.isEmpty()) {
+      return;
+    }
+
+    long started = System.currentTimeMillis();
     LOG.info("Unindexed files update started: " + files.size() + " files to update");
-    myFinishedUpdate.set(false);
-    myStarted = System.currentTimeMillis();
-    return VfsUtilCore.toVirtualFileArray(files);
+
+    indicator.setIndeterminate(false);
+    indicator.setText(IdeBundle.message("progress.indexing.updating"));
+
+    indexFiles(indicator, files);
+    LOG.info("Unindexed files update done in " + (System.currentTimeMillis() - started) + " ms");
+  }
+
+  private void indexFiles(ProgressIndicator indicator, List<VirtualFile> files) {
+    CacheUpdateRunner.processFiles(indicator, true, files, myProject, new Consumer<FileContent>() {
+      @Override
+      public void consume(FileContent content) {
+        try {
+          myIndex.indexFileContent(myProject, content);
+        }
+        finally {
+          IndexingStamp.flushCache(content.getVirtualFile());
+        }
+      }
+    });
   }
 
   @Override
-  public void processFile(final FileContent fileContent) {
+  public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+    myIndex.filesUpdateStarted(myProject);
     try {
-      myIndex.indexFileContent(myProject, fileContent);
-    } finally {
-      IndexingStamp.flushCache(fileContent.getVirtualFile());
+      updateUnindexedFiles(indicator);
     }
-  }
-
-  @Override
-  public void updatingDone() {
-    if (myFinishedUpdate.compareAndSet(false, true)) {
-      myIndex.filesUpdateFinished(myProject);
-      LOG.info("Unindexed files update done in " + (System.currentTimeMillis() - myStarted) + " ms");
-    }
-  }
-
-  @Override
-  public void canceled() {
-    if (myFinishedUpdate.compareAndSet(false, true)) {
-      myIndex.filesUpdateFinished(myProject);
+    catch (ProcessCanceledException e) {
       LOG.info("Unindexed files update canceled");
+      throw e;
+    } finally {
+      myIndex.filesUpdateFinished(myProject);
     }
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.compiler.ant.taskdefs.Property;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.packaging.artifacts.Artifact;
@@ -33,7 +34,10 @@ import com.intellij.util.Base64Converter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.javaFX.packaging.*;
+import org.jetbrains.plugins.javaFX.packaging.JavaFxAntGenerator;
+import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType;
+import org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactProperties;
+import org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactPropertiesProvider;
 
 import java.io.File;
 import java.io.IOException;
@@ -78,12 +82,12 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
     }
     if (javaSdk != null) {
       final Tag taskdef = new Tag("taskdef",
-                                  new Pair<String, String>("resource", "com/sun/javafx/tools/ant/antlib.xml"),
-                                  new Pair<String, String>("uri", "javafx:com.sun.javafx.tools.ant"),
-                                  new Pair<String, String>("classpath",
-                                                           BuildProperties
-                                                             .propertyRef(BuildProperties.getJdkHomeProperty(javaSdk.getName())) +
-                                                           "/lib/ant-javafx.jar"));
+                                  Couple.of("resource", "com/sun/javafx/tools/ant/antlib.xml"),
+                                  Couple.of("uri", "javafx:com.sun.javafx.tools.ant"),
+                                  Couple.of("classpath",
+                                            BuildProperties
+                                              .propertyRef(BuildProperties.getJdkHomeProperty(javaSdk.getName())) +
+                                            "/lib/ant-javafx.jar"));
       generator.add(taskdef);
     }
   }
@@ -171,21 +175,22 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
       final Pair[] keysDescriptions = createKeysDescriptions(artifactName);
       if (selfSigning) {
         generator.add(new Tag("genkey", 
-                              ArrayUtil.prepend(new Pair<String, String>("dname", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACT_VENDOR_SIGN_PROPERTY, artifactName))), 
+                              ArrayUtil.prepend(Couple.of("dname", BuildProperties
+                                                  .propertyRef(artifactBasedProperty(ARTIFACT_VENDOR_SIGN_PROPERTY, artifactName))),
                                                 keysDescriptions)));
       }
       
       final Tag signjar = new Tag("signjar", keysDescriptions);
-      final Tag fileset = new Tag("fileset", new Pair<String, String>("dir", tempDirPath + "/deploy"));
-      fileset.add(new Tag("include", new Pair<String, String>("name", "*.jar")));
+      final Tag fileset = new Tag("fileset", Couple.of("dir", tempDirPath + "/deploy"));
+      fileset.add(new Tag("include", Couple.of("name", "*.jar")));
       signjar.add(fileset);
       generator.add(signjar);
     }
 
     final DirectoryAntCopyInstructionCreator creator = new DirectoryAntCopyInstructionCreator(BuildProperties.propertyRef(context.getConfiguredArtifactOutputProperty(artifact)));
     generator.add(creator.createDirectoryContentCopyInstruction(tempDirPath + "/deploy"));
-    final Tag deleteTag = new Tag("delete", new Pair<String, String>("includeemptydirs", "true"));
-    deleteTag.add(new Tag("fileset", new Pair<String, String>("dir", tempDirPath)));
+    final Tag deleteTag = new Tag("delete", Couple.of("includeemptydirs", "true"));
+    deleteTag.add(new Tag("fileset", Couple.of("dir", tempDirPath)));
     generator.add(deleteTag);
   }
 
@@ -214,17 +219,17 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
 
   private static Pair[] createKeysDescriptions(String artifactName) {
     return new Pair[]{
-      new Pair<String, String>("alias", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACT_ALIAS_SIGN_PROPERTY, artifactName))),
-      new Pair<String, String>("keystore", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACT_KEYSTORE_SIGN_PROPERTY, artifactName))),
-      new Pair<String, String>("storepass", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACT_STOREPASS_SIGN_PROPERTY, artifactName))),
-      new Pair<String, String>("keypass", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACTKEYPASS_SIGN_PROPERTY, artifactName)))};
+      Couple.of("alias", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACT_ALIAS_SIGN_PROPERTY, artifactName))),
+      Couple.of("keystore", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACT_KEYSTORE_SIGN_PROPERTY, artifactName))),
+      Couple.of("storepass", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACT_STOREPASS_SIGN_PROPERTY, artifactName))),
+      Couple.of("keypass", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACTKEYPASS_SIGN_PROPERTY, artifactName)))};
   }
 
   @Nullable
   @Override
-  public Pair<String, String> getArtifactXmlNs(ArtifactType artifactType) {
+  public Couple<String> getArtifactXmlNs(ArtifactType artifactType) {
     if (artifactType instanceof JavaFxApplicationArtifactType) {
-      return Pair.create("xmlns:fx", "javafx:com.sun.javafx.tools.ant");
+      return Couple.of("xmlns:fx", "javafx:com.sun.javafx.tools.ant");
     }
     return null;
   }

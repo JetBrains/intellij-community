@@ -33,6 +33,7 @@
     <filetype.stubBuilder filetype="XML" implementationClass="com.intellij.util.xml.stubs.builder.DomStubBuilder"/>
     <stubElementTypeHolder class="com.intellij.util.xml.stubs.DomElementTypeHolder"/>
     <stubIndex implementation="com.intellij.util.xml.stubs.index.DomNamespaceKeyIndex"/>
+    <stubIndex implementation="com.intellij.util.xml.stubs.index.DomElementClassIndex"/>
 
     <applicationService serviceInterface="com.intellij.util.xml.impl.DomApplicationComponent"
                         serviceImplementation="com.intellij.util.xml.impl.DomApplicationComponent"/>

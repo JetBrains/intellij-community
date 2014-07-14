@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,11 +65,13 @@ public class StructureViewCompositeModel extends StructureViewModelBase implemen
         return file.canNavigateToSource();
       }
 
+      @NotNull
       @Override
       public ItemPresentation getPresentation() {
         return file.getPresentation();
       }
 
+      @NotNull
       @Override
       public TreeElement[] getChildren() {
         ArrayList<TreeElement> elements = new ArrayList<TreeElement>();
@@ -127,6 +129,7 @@ public class StructureViewCompositeModel extends StructureViewModelBase implemen
         return file.canNavigateToSource();
       }
 
+      @NotNull
       @Override
       public ItemPresentation getPresentation() {
         return new ItemPresentation() {
@@ -150,6 +153,7 @@ public class StructureViewCompositeModel extends StructureViewModelBase implemen
         };
       }
 
+      @NotNull
       @Override
       public TreeElement[] getChildren() {
         return view.structureView.getTreeModel().getRoot().getChildren();

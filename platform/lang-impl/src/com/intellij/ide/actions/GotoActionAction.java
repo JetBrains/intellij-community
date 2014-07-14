@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,12 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,14 +40,17 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 
 public class GotoActionAction extends GotoActionBase implements DumbAware {
   public static final Comparator<MatchResult> ELEMENTS_COMPARATOR = new Comparator<MatchResult>() {
     @Override
-    public int compare(MatchResult o1, MatchResult o2) {
+    public int compare(@NotNull MatchResult o1, @NotNull MatchResult o2) {
+      if (o1.elementName.equals(GotoActionModel.INTENTIONS_KEY)) return -1;
+      if (o2.elementName.equals(GotoActionModel.INTENTIONS_KEY)) return 1;
+
       if (o1.elementName.equals(GotoActionModel.SETTINGS_KEY)) return 1;
       if (o2.elementName.equals(GotoActionModel.SETTINGS_KEY)) return -1;
+
       return o1.elementName.compareToIgnoreCase(o2.elementName);
     }
   };
@@ -54,9 +59,11 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
   public void gotoActionPerformed(final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
+    final PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.action");
-    final GotoActionModel model = new GotoActionModel(project, component);
+    final GotoActionModel model = new GotoActionModel(project, component, editor, file);
     final GotoActionCallback<Object> callback = new GotoActionCallback<Object>() {
       @Override
       public void elementChosen(ChooseByNamePopup popup, final Object element) {
@@ -99,7 +106,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     }
     else {
       //element could be AnAction (SearchEverywhere)
-      final AnAction action = element instanceof AnAction ? ((AnAction)element) : (AnAction)((Map.Entry)element).getKey();
+      final AnAction action = element instanceof AnAction ? (AnAction)element : ((GotoActionModel.ActionWrapper)element).getAction();
       if (action != null) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override

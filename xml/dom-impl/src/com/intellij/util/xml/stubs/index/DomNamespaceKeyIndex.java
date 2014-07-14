@@ -42,30 +42,25 @@ public class DomNamespaceKeyIndex extends StringStubIndexExtension<PsiFile> {
 
   public boolean hasStubElementsWithNamespaceKey(final DomFileElement domFileElement, final String namespaceKey) {
     final VirtualFile file = domFileElement.getFile().getVirtualFile();
-    assert file instanceof VirtualFileWithId : file;
+    if (!(file instanceof VirtualFileWithId)) return false;
 
     final int virtualFileId = ((VirtualFileWithId)file).getId();
-    CommonProcessors.FindFirstProcessor<String> processor =
-      new CommonProcessors.FindFirstProcessor<String>() {
+    CommonProcessors.FindFirstProcessor<PsiFile> processor = new CommonProcessors.FindFirstProcessor<PsiFile>();
+    StubIndex.getInstance().processElements(
+      KEY,
+      namespaceKey,
+      domFileElement.getFile().getProject(),
+      GlobalSearchScope.fileScope(domFileElement.getFile()),
+      new IdFilter() {
         @Override
-        protected boolean accept(String s) {
-          return namespaceKey.equals(s);
+        public boolean containsFileId(int id) {
+          return id == virtualFileId;
         }
-      };
-    StubIndex.getInstance().processAllKeys(KEY, processor,
-                                           GlobalSearchScope.fileScope(domFileElement.getFile()),
-                                           new IdFilter() {
-                                             @Override
-                                             public boolean containsFileId(int id) {
-                                               return id == virtualFileId;
-                                             }
-                                           });
+      },
+      PsiFile.class, 
+      processor
+    );
     return processor.isFound();
-  }
-
-  @Override
-  public boolean traceKeyHashToVirtualFileMapping() {
-    return true;
   }
 
   @NotNull
@@ -76,6 +71,6 @@ public class DomNamespaceKeyIndex extends StringStubIndexExtension<PsiFile> {
 
   @Override
   public int getVersion() {
-    return 0;
+    return 1;
   }
 }

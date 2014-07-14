@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,22 +91,27 @@ public class XmlTagInplaceRenamer {
       myHighlighters = new ArrayList<RangeHighlighter>();
 
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+        @Override
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               final int offset = myEditor.getCaretModel().getOffset();
               myEditor.getCaretModel().moveToOffset(tag.getTextOffset());
 
               final Template t = buildTemplate(tag, pair);
               TemplateManager.getInstance(project).startTemplate(myEditor, t, new TemplateEditingAdapter() {
+                @Override
                 public void templateFinished(final Template template, boolean brokenOff) {
                   finish();
                 }
 
+                @Override
                 public void templateCancelled(final Template template) {
                   finish();
                 }
               }, new PairProcessor<String, String>() {
+                @Override
                 public boolean process(final String variableName, final String value) {
                   return value.length() == 0 || value.charAt(value.length() - 1) != ' ';
                 }
@@ -152,7 +157,7 @@ public class XmlTagInplaceRenamer {
                              : endTagName;
     final ASTNode other = (selected == startTagName) ? endTagName : startTagName;
 
-    return new Pair<ASTNode, ASTNode>(selected, other);
+    return Pair.create(selected, other);
   }
 
   private static Template buildTemplate(@NotNull final XmlTag tag, @NotNull final Pair<ASTNode, ASTNode> pair) {
@@ -162,10 +167,12 @@ public class XmlTagInplaceRenamer {
     final ASTNode other = pair.second;
 
     builder.replaceElement(selected.getPsi(), PRIMARY_VARIABLE_NAME, new EmptyExpression() {
+      @Override
       public Result calculateQuickResult(final ExpressionContext context) {
         return new TextResult(selected.getText());
       }
 
+      @Override
       public Result calculateResult(final ExpressionContext context) {
         return new TextResult(selected.getText());
       }

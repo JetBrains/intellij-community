@@ -17,7 +17,7 @@ interface S<T> {
 
 interface F<TF> {}
 
-public final class Collectors {
+final class Collectors {
     public static <T>
     Collector<List<T>> toList() {
         return null;

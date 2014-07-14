@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -317,8 +317,8 @@ public class FileAttributesReadingTest {
 
   @Test
   public void extraLongName() throws Exception {
-    final String prefix = StringUtil.repeatSymbol('a', 128) + ".";
-    final File dir = FileUtil.createTempDirectory(
+    String prefix = StringUtil.repeatSymbol('a', 128) + ".";
+    File dir = FileUtil.createTempDirectory(
       FileUtil.createTempDirectory(
         FileUtil.createTempDirectory(
           FileUtil.createTempDirectory(
@@ -326,7 +326,7 @@ public class FileAttributesReadingTest {
           prefix, ".dir"),
         prefix, ".dir"),
       prefix, ".dir");
-    final File file = FileUtil.createTempFile(dir, prefix, ".txt");
+    File file = FileUtil.createTempFile(dir, prefix, ".txt");
     assertTrue(file.exists());
     FileUtil.writeToFile(file, myTestData);
 
@@ -335,8 +335,34 @@ public class FileAttributesReadingTest {
       assertDirectoriesEqual(dir);
     }
 
-    final String target = FileSystemUtil.resolveSymLink(file);
+    String target = FileSystemUtil.resolveSymLink(file);
     assertEquals(file.getPath(), target);
+
+    if (SystemInfo.isWindows) {
+      String path = myTempDirectory.getPath();
+      int length = 250 - path.length();
+      for (int i = 0; i < length / 10; i++) {
+        path += "\\x_x_x_x_x";
+      }
+
+      File baseDir = new File(path);
+      assertTrue(baseDir.mkdirs());
+      assertTrue(getAttributes(baseDir).isDirectory());
+
+      for (int i = 1; i <= 100; i++) {
+        dir = new File(baseDir, StringUtil.repeat("x", i));
+        assertTrue(dir.mkdir());
+        assertTrue(getAttributes(dir).isDirectory());
+
+        file = new File(dir, "file.txt");
+        FileUtil.writeToFile(file, "test".getBytes("UTF-8"));
+        assertTrue(file.exists());
+        assertFileAttributes(file);
+
+        target = FileSystemUtil.resolveSymLink(file);
+        assertEquals(file.getPath(), target);
+      }
+    }
   }
 
   @Test

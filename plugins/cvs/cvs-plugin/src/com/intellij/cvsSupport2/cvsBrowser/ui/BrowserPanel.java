@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.cvsSupport2.cvsBrowser.ui;
 
 import com.intellij.CvsBundle;
+import com.intellij.cvsSupport2.CvsFilePath;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextAdapter;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsLightweightFile;
@@ -33,12 +34,11 @@ import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -87,14 +87,13 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     DefaultActionGroup result = new DefaultActionGroup();
     result.add(new EditSourceAction());
     result.add(new MyCheckoutAction());
-    //TODO lesya
-    //result.add(new ShowLightCvsFileHistoryAction());
+    result.add(new MyHistoryAction());
     result.add(new MyAnnotateAction());
     result.add(new BrowseChangesAction());
     return result;
   }
 
-  private static class EditSourceAction extends AnAction {
+  private static class EditSourceAction extends AnAction implements DumbAware {
     public EditSourceAction() {
       super(ActionsBundle.actionText("EditSource"),
             ActionsBundle.actionDescription("EditSource"),
@@ -114,7 +113,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     }
   }
 
-  private class MyCheckoutAction extends AnAction {
+  private class MyCheckoutAction extends AnAction implements DumbAware {
     public MyCheckoutAction() {
       super(CvsBundle.message("operation.name.check.out"), null, AllIcons.Actions.CheckOut);
     }
@@ -153,7 +152,34 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     }
   }
 
-  private class MyAnnotateAction extends AnAction {
+  private class MyHistoryAction extends AnAction implements DumbAware {
+    public MyHistoryAction() {
+      super(CvsBundle.message("operation.name.show.file.history"),
+            CvsBundle.message("operation.name.show.file.history.description"), AllIcons.Vcs.History);
+    }
+
+    public void update(AnActionEvent e) {
+      Presentation presentation = e.getPresentation();
+      presentation.setVisible(true);
+      CvsLightweightFile cvsLightFile = getCvsLightFile();
+      presentation.setEnabled(cvsLightFile != null && cvsLightFile.getCvsFile() != null);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      final CvsElement[] currentSelection = myTree.getCurrentSelection();
+      if (currentSelection.length != 1) return;
+      final CvsElement cvsElement = currentSelection[0];
+      final VirtualFile virtualFile = cvsElement.getVirtualFile();
+      if (virtualFile == null || virtualFile.isDirectory()) return;
+      final CvsVcs2 vcs = CvsVcs2.getInstance(myProject);
+      final VcsHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
+      final String moduleName = cvsElement.getElementPath();
+      final CvsRepositoryLocation location = new CvsRepositoryLocation(null, myCvsRootConfiguration, moduleName);
+      AbstractVcsHelper.getInstance(myProject).showFileHistory(historyProvider, new CvsFilePath(virtualFile, location), vcs, null);
+    }
+  }
+
+  private class MyAnnotateAction extends AnAction implements DumbAware {
     public MyAnnotateAction() {
       super(CvsBundle.message("operation.name.annotate"), null, AllIcons.Actions.Annotate);
     }
@@ -184,7 +210,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     }
   }
 
-  private class BrowseChangesAction extends AnAction {
+  private class BrowseChangesAction extends AnAction implements DumbAware {
     public BrowseChangesAction() {
       super(VcsBundle.message("browse.changes.action"), "", AllIcons.Actions.ShowChangesOnly);
     }

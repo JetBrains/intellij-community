@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,9 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
                        int end,
                        int layer,
                        @NotNull HighlighterTargetArea target,
-                       TextAttributes textAttributes, boolean greedyToLeft, boolean greedyToRight) {
+                       TextAttributes textAttributes,
+                       boolean greedyToLeft,
+                       boolean greedyToRight) {
     super((DocumentEx)model.getDocument(), start, end,false);
 
     data = new RangeHighlighterData(model, target, textAttributes) {
@@ -97,6 +99,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     return node == null ? -1 : node.myLayer;
   }
 
+  @NotNull
   @Override
   public HighlighterTargetArea getTargetArea() {
     return getData().getTargetArea();
@@ -209,8 +212,8 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   }
 
   @Override
-  public void setAfterEndOfLine(boolean afterEndOfLine) {
-    getData().setAfterEndOfLine(afterEndOfLine);
+  public void setAfterEndOfLine(boolean value) {
+    getData().setAfterEndOfLine(value);
   }
 
   @Override

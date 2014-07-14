@@ -230,11 +230,15 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
 //    assertTrue(null, condition);
 //  }
 
-  private static final int CURRENT_VERSION = 6;
-  private static final String VERSION_FILE_NAME = "version-" + CURRENT_VERSION;
+  //private static final int CURRENT_VERSION = 6;
+  protected int getTestAppVersion() {
+    return 6;
+  }
+
   protected void ensureCompiledAppExists() throws Exception {
     final String appPath = getTestAppPath();
     final File classesDir = new File(appPath, CLASSES);
+    String VERSION_FILE_NAME = "version-" + getTestAppVersion();
     final File versionFile = new File(classesDir, VERSION_FILE_NAME);
     if (!classesDir.exists() || !versionFile.exists() || !hasCompiledClasses(classesDir)) {
       FileUtil.delete(classesDir);

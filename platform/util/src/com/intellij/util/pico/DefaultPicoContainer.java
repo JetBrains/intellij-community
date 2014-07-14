@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 package com.intellij.util.pico;
 
-import com.intellij.util.ReflectionCache;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
@@ -34,9 +33,9 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
   private final PicoContainer parent;
   private final Set<PicoContainer> children = new HashSet<PicoContainer>();
 
-  private final Map<Object, ComponentAdapter> componentKeyToAdapterCache = new ConcurrentHashMap<Object, ComponentAdapter>();
+  private final Map<Object, ComponentAdapter> componentKeyToAdapterCache = ContainerUtil.newConcurrentMap();
   private final LinkedHashSetWrapper<ComponentAdapter> componentAdapters = new LinkedHashSetWrapper<ComponentAdapter>();
-  private final Map<String, ComponentAdapter> classNameToAdapter = new ConcurrentHashMap<String, ComponentAdapter>();
+  private final Map<String, ComponentAdapter> classNameToAdapter = ContainerUtil.newConcurrentMap();
   private final AtomicReference<FList<ComponentAdapter>> nonAssignableComponentAdapters = new AtomicReference<FList<ComponentAdapter>>(FList.<ComponentAdapter>emptyList());
 
   public DefaultPicoContainer(@NotNull ComponentAdapterFactory componentAdapterFactory, PicoContainer parent) {
@@ -60,7 +59,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
   protected LinkedList<ComponentAdapter> getNonAssignableAdaptersOfType(final Class componentType) {
     LinkedList<ComponentAdapter> result = new LinkedList<ComponentAdapter>();
     for (final ComponentAdapter componentAdapter : nonAssignableComponentAdapters.get()) {
-      if (ReflectionCache.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
+      if (ReflectionUtil.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
         result.addFirst(componentAdapter);
       }
     }
@@ -129,7 +128,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     for (final Object o : getComponentAdapters()) {
       ComponentAdapter componentAdapter = (ComponentAdapter)o;
 
-      if (ReflectionCache.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
+      if (ReflectionUtil.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
         found.add(componentAdapter);
       }
     }
@@ -166,9 +165,20 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
   @Override
   public ComponentAdapter unregisterComponent(Object componentKey) {
     ComponentAdapter adapter = componentKeyToAdapterCache.remove(componentKey);
-
     componentAdapters.remove(adapter);
-
+    if (adapter instanceof AssignableToComponentAdapter) {
+      classNameToAdapter.remove(((AssignableToComponentAdapter)adapter).getAssignableToClassName());
+    }
+    else {
+      do {
+        FList<ComponentAdapter> oldList = nonAssignableComponentAdapters.get();
+        FList<ComponentAdapter> newList = oldList.without(adapter);
+        if (nonAssignableComponentAdapters.compareAndSet(oldList, newList)) {
+          break;
+        }
+      }
+      while (true);
+    }
     return adapter;
   }
 
@@ -185,7 +195,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
 
     List<Object> result = new ArrayList<Object>();
     for (final ComponentAdapter componentAdapter : componentAdapters.getImmutableSet()) {
-      if (ReflectionCache.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
+      if (ReflectionUtil.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
         // may be null in the case of the "implicit" adapter representing "this".
         ContainerUtil.addIfNotNull(result, getInstance(componentAdapter));
       }

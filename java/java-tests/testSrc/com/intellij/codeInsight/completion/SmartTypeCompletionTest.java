@@ -317,7 +317,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after2.java");
   }
 
-  public void testInsideCatch() throws Exception { doTest(); }
+  public void testInsideCatch() { doTest(); }
+  public void testInsideCatchFinal() { doTest(); }
 
   public void testGenerics6() throws Exception {
     String path = "/generics";
@@ -664,6 +665,31 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testNewAnonymousFunction() throws Throwable { doTest(); }
 
+  public void testNewRunnableInsideMethod() throws Throwable {
+    CommonCodeStyleSettings settings = getCodeStyleSettings();
+    boolean lParenOnNextLine = settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE;
+    try {
+      settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+      doTest();
+    } finally {
+      settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = lParenOnNextLine;
+    }
+  }
+
+  public void testNewRunnableInsideMethodMultiParams() throws Throwable {
+    CommonCodeStyleSettings settings = getCodeStyleSettings();
+    boolean lParenOnNextLine = settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE;
+    boolean rParenOnNextLine = settings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE;
+    try {
+      settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+      settings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+      doTest();
+    } finally {
+      settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = lParenOnNextLine;
+      settings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = rParenOnNextLine;
+    }
+  }
+
   public void testUseIntConstantsFromTargetClass() throws Throwable { doTest(); }
   public void testUseIntConstantsFromTargetClassReturnValue() throws Throwable { doTest(); }
   public void testUseIntConstantsFromConstructedClass() throws Throwable { doTest(); }
@@ -773,7 +799,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
   public void testNoClassLiteral() throws Exception {
     doActionTest();
-    assertStringItems("Object.class", "forName", "forName", "getClass");
+    assertStringItems("Object.class", "getClass", "forName", "forName");
   }
 
   public void testClassLiteralInAnno2() throws Throwable {
@@ -994,6 +1020,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testCaseMissingEnumValue() throws Throwable { doTest(); }
   public void testCaseMissingEnumValue2() throws Throwable { doTest(); }
+  
+  public void testNoHiddenParameter() { doTest(); }
 
   public void testTypeVariableInstanceOf() throws Throwable {
     configureByTestName();
@@ -1018,6 +1046,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testArrayInitializerBeforeVarargs() throws Throwable { doTest(); }
   public void testDuplicateMembersFromSuperClass() throws Throwable { doTest(); }
   public void testInnerAfterNew() throws Throwable { doTest(); }
+  public void testEverythingInStringConcatenation() throws Throwable { doTest(); }
+  public void testGetClassWhenClassExpected() { doTest(); }
 
   public void testMemberImportStatically() {
     configureByTestName();
@@ -1106,7 +1136,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     complete();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest(Lookup.NORMAL_SELECT_CHAR);
   }
 

@@ -16,19 +16,24 @@
 package git4idea.update;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.notification.NotificationType;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.*;
+import com.intellij.util.ArrayUtil;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
+import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
-import git4idea.commands.*;
-import git4idea.config.GitVersionSpecialty;
-import git4idea.jgit.GitHttpAdapter;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitLineHandlerAdapter;
+import git4idea.commands.GitLineHandlerListener;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -37,20 +42,13 @@ import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static git4idea.GitBranch.REFS_HEADS_PREFIX;
 import static git4idea.GitBranch.REFS_REMOTES_PREFIX;
 
-/**
- * @author Kirill Likhodedov
- */
 public class GitFetcher {
 
   private static final Logger LOG = Logger.getInstance(GitFetcher.class);
@@ -133,10 +131,7 @@ public class GitFetcher {
                                      @NotNull GitRemote remote,
                                      @NotNull String url,
                                      @Nullable String branch) {
-    if (GitHttpAdapter.shouldUseJGit(url)) {
-      return GitHttpAdapter.fetch(repository, remote, url, branch);
-    }
-    return fetchNatively(repository.getRoot(), remote, url, branch);
+    return fetchNatively(repository, remote, url, branch);
   }
 
   // leaving this unused method, because the wanted behavior can change again
@@ -151,10 +146,7 @@ public class GitFetcher {
     GitRemote remote = fetchParams.getRemote();
     String remoteBranch = fetchParams.getRemoteBranch().getNameForRemoteOperations();
     String url = fetchParams.getUrl();
-    if (GitHttpAdapter.shouldUseJGit(url)) {
-      return GitHttpAdapter.fetch(repository, remote, url, remoteBranch);
-    }
-    return fetchNatively(repository.getRoot(), remote, url, remoteBranch);
+    return fetchNatively(repository, remote, url, remoteBranch);
   }
 
   @NotNull
@@ -192,75 +184,40 @@ public class GitFetcher {
         LOG.error("URL is null for remote " + remote.getName());
         continue;
       }
-      if (GitHttpAdapter.shouldUseJGit(url)) {
-        GitFetchResult res = GitHttpAdapter.fetch(repository, remote, url, null);
-        res.addPruneInfo(fetchResult.getPrunedRefs());
-        fetchResult = res;
-        myErrors.addAll(fetchResult.getErrors());
-        if (!fetchResult.isSuccess()) {
-          break;
-        }
-      }
-      else {
-        GitFetchResult res = fetchNatively(repository.getRoot(), remote, url, null);
-        res.addPruneInfo(fetchResult.getPrunedRefs());
-        fetchResult = res;
-        if (!fetchResult.isSuccess()) {
-          break;
-        }
+      GitFetchResult res = fetchNatively(repository, remote, url, null);
+      res.addPruneInfo(fetchResult.getPrunedRefs());
+      fetchResult = res;
+      if (!fetchResult.isSuccess()) {
+        break;
       }
     }
     return fetchResult;
   }
 
-  private GitFetchResult fetchNatively(@NotNull VirtualFile root, @NotNull GitRemote remote, @NotNull String url, @Nullable String branch) {
-    final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(myProject, root, GitCommand.FETCH);
-    h.setUrl(url);
-    h.addProgressParameter();
-    if (GitVersionSpecialty.SUPPORTS_FETCH_PRUNE.existsIn(myVcs.getVersion())) {
-      h.addParameters("--prune");
-    }
-
-    String remoteName = remote.getName();
-    h.addParameters(remoteName);
-    if (branch != null) {
-      h.addParameters(getFetchSpecForBranch(branch, remoteName));
-    }
-
-    final GitTask fetchTask = new GitTask(myProject, h, "Fetching " + remote.getFirstUrl());
-    fetchTask.setProgressIndicator(myProgressIndicator);
-    fetchTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
+  @NotNull
+  private static GitFetchResult fetchNatively(@NotNull GitRepository repository, @NotNull GitRemote remote, @NotNull String url,
+                                              @Nullable String branch) {
+    Git git = ServiceManager.getService(Git.class);
+    String[] additionalParams = branch != null ?
+                                new String[]{ getFetchSpecForBranch(branch, remote.getName()) } :
+                                ArrayUtil.EMPTY_STRING_ARRAY;
 
     GitFetchPruneDetector pruneDetector = new GitFetchPruneDetector();
-    h.addLineListener(pruneDetector);
+    GitCommandResult result =
+      git.fetch(repository, url, remote.getName(), Collections.<GitLineHandlerListener>singletonList(pruneDetector), additionalParams);
 
-    final AtomicReference<GitFetchResult> result = new AtomicReference<GitFetchResult>();
-    fetchTask.execute(true, false, new GitTaskResultHandlerAdapter() {
-      @Override
-      protected void onSuccess() {
-        result.set(GitFetchResult.success());
-      }
-
-      @Override
-      protected void onCancel() {
-        LOG.info("Cancelled fetch.");
-        result.set(GitFetchResult.cancel());
-      }
-      
-      @Override
-      protected void onFailure() {
-        LOG.info("Error fetching: " + h.errors());
-        if (!h.hadAuthRequest()) {
-          myErrors.addAll(h.errors());
-        } else {
-          myErrors.add(new VcsException("Authentication failed"));
-        }
-        result.set(GitFetchResult.error(myErrors));
-      }
-    });
-
-    result.get().addPruneInfo(pruneDetector.getPrunedRefs());
-    return result.get();
+    GitFetchResult fetchResult;
+    if (result.success()) {
+      fetchResult = GitFetchResult.success();
+    }
+    else if (result.cancelled()) {
+      fetchResult = GitFetchResult.cancel();
+    }
+    else {
+      fetchResult = GitFetchResult.error(result.getErrorOutputAsJoinedString());
+    }
+    fetchResult.addPruneInfo(pruneDetector.getPrunedRefs());
+    return fetchResult;
   }
 
   private static String getRidOfPrefixIfExists(String branch) {
@@ -285,9 +242,9 @@ public class GitFetcher {
                                         @NotNull GitFetchResult result,
                                         @Nullable String errorNotificationTitle, @NotNull Collection<? extends Exception> errors) {
     if (result.isSuccess()) {
-      GitVcs.NOTIFICATION_GROUP_ID.createNotification("Fetched successfully" + result.getAdditionalInfo(), NotificationType.INFORMATION).notify(project);
+      VcsNotifier.getInstance(project).notifySuccess("Fetched successfully" + result.getAdditionalInfo());
     } else if (result.isCancelled()) {
-      GitVcs.NOTIFICATION_GROUP_ID.createNotification("Fetch cancelled by user" + result.getAdditionalInfo(), NotificationType.WARNING).notify(project);
+      VcsNotifier.getInstance(project).notifyMinorWarning("", "Fetch cancelled by user" + result.getAdditionalInfo());
     } else if (result.isNotAuthorized()) {
       String title;
       String description;
@@ -299,11 +256,11 @@ public class GitFetcher {
         description = "Couldn't authorize";
       }
       description += result.getAdditionalInfo();
-      GitUIUtil.notifyMessage(project, title, description, NotificationType.ERROR, true, null);
+      GitUIUtil.notifyMessage(project, title, description, true, null);
     } else {
       GitVcs instance = GitVcs.getInstance(project);
       if (instance != null && instance.getExecutableValidator().isExecutableValid()) {
-        GitUIUtil.notifyMessage(project, "Fetch failed",  result.getAdditionalInfo(), NotificationType.ERROR, true, errors);
+        GitUIUtil.notifyMessage(project, "Fetch failed", result.getAdditionalInfo(), true, errors);
       }
     }
   }
@@ -336,12 +293,12 @@ public class GitFetcher {
       }
     }
     if (notifySuccess) {
-      GitUIUtil.notifySuccess(myProject, "", "Fetched successfully");
+      VcsNotifier.getInstance(myProject).notifySuccess("Fetched successfully");
     }
 
     String addInfo = makeAdditionalInfoByRoot(additionalInfo);
     if (!StringUtil.isEmptyOrSpaces(addInfo)) {
-        Notificator.getInstance(myProject).notify(GitVcs.MINOR_NOTIFICATION, "Fetch details", addInfo, NotificationType.INFORMATION);
+      VcsNotifier.getInstance(myProject).notifyMinorInfo("Fetch details", addInfo);
     }
 
     return true;

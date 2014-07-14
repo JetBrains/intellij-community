@@ -1,7 +1,7 @@
 import java.lang.IllegalArgumentException;
 import java.lang.Object;
 
-public class Doo {
+class Doo {
   private final Object myA;
   private final Object myB;
   private final Object myC;

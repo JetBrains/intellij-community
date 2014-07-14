@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.http;
 
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,4 +35,7 @@ public interface RemoteFileInfo {
   RemoteFileState getState();
 
   void cancelDownloading();
+
+  @NotNull
+  AsyncResult<VirtualFile> download();
 }

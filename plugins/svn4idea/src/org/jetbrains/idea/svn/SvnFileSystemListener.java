@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
@@ -47,7 +48,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.wc.SVNMoveClient;
+import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
 import java.io.IOException;
@@ -89,7 +93,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   private final Map<Project, List<VcsException>> myMoveExceptions = new HashMap<Project, List<VcsException>>();
   private final List<VirtualFile> myFilesToRefresh = new ArrayList<VirtualFile>();
   @Nullable private File myStorageForUndo;
-  private final List<Pair<File, File>> myUndoStorageContents = new ArrayList<Pair<File, File>>();
+  private final List<Couple<File>> myUndoStorageContents = new ArrayList<Couple<File>>();
   private boolean myUndoingMove = false;
 
   public SvnFileSystemListener() {
@@ -211,8 +215,6 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   }
 
   public boolean move(VirtualFile file, VirtualFile toDir) throws IOException {
-    FileDocumentManager.getInstance().saveAllDocuments();
-
     File srcFile = getIOFile(file);
     File dstFile = new File(getIOFile(toDir), file.getName());
 
@@ -223,6 +225,8 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     if (vcs == null) {
       return false;
     }
+
+    FileDocumentManager.getInstance().saveAllDocuments();
     if (sourceVcs == null) {
       return createItem(toDir, file.getName(), file.isDirectory(), true);
     }
@@ -241,12 +245,12 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   }
 
   public boolean rename(VirtualFile file, String newName) throws IOException {
-    FileDocumentManager.getInstance().saveAllDocuments();
-
     File srcFile = getIOFile(file);
     File dstFile = new File(srcFile.getParentFile(), newName);
     SvnVcs vcs = getVCS(file);
     if (vcs != null) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+
       myFilesToRefresh.add(file.getParent());
       return doMove(vcs, srcFile, dstFile);
     }
@@ -395,7 +399,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   }
 
   private boolean for16move(SvnVcs vcs, final File src, final File dst, boolean undo) throws SVNException {
-    final SVNMoveClient mover = vcs.createMoveClient();
+    final SVNMoveClient mover = vcs.getSvnKitManager().createMoveClient();
     if (undo) {
       myUndoingMove = true;
       restoreFromUndoStorage(dst);
@@ -421,8 +425,8 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
 
   private void restoreFromUndoStorage(final File dst) {
     String normPath = FileUtil.toSystemIndependentName(dst.getPath());
-    for (Iterator<Pair<File, File>> it = myUndoStorageContents.iterator(); it.hasNext();) {
-      Pair<File, File> e = it.next();
+    for (Iterator<Couple<File>> it = myUndoStorageContents.iterator(); it.hasNext();) {
+      Couple<File> e = it.next();
       final String p = FileUtil.toSystemIndependentName(e.first.getPath());
       if (p.startsWith(normPath)) {
         try {
@@ -579,7 +583,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       }
     }
     final File tmpFile = FileUtil.findSequentNonexistentFile(myStorageForUndo, "tmp", "");
-    myUndoStorageContents.add(0, new Pair<File, File>(new File(file.getPath()), tmpFile));
+    myUndoStorageContents.add(0, Couple.of(new File(file.getPath()), tmpFile));
     new File(file.getPath()).renameTo(tmpFile);
   }
 

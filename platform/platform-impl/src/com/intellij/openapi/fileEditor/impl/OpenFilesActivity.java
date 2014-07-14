@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,9 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,28 +31,9 @@ public class OpenFilesActivity implements StartupActivity, DumbAware {
   public void runActivity(@NotNull Project project) {
     final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
     if (fileEditorManager instanceof FileEditorManagerImpl) {
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          FileEditorManagerImpl manager = (FileEditorManagerImpl)fileEditorManager;
-          manager.getMainSplitters().openFiles();
-          manager.initDockableContentFactory();
-        }
-      };
-      if (Registry.is("ide.open.editors.asynchronously")) {
-        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        if (indicator != null) {
-          indicator.pushState();
-          indicator.setText("Preparing editors to open...");
-        }
-        runnable.run();
-        if (indicator != null) {
-          indicator.popState();
-        }
-      }
-      else {
-        UIUtil.invokeLaterIfNeeded(runnable);
-      }
+      final FileEditorManagerImpl manager = (FileEditorManagerImpl)fileEditorManager;
+      manager.getMainSplitters().openFiles();
+      manager.initDockableContentFactory();
     }
   }
 }

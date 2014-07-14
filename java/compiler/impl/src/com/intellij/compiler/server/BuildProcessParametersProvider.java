@@ -27,10 +27,23 @@ import java.util.List;
 public abstract class BuildProcessParametersProvider {
   public static final ExtensionPointName<BuildProcessParametersProvider> EP_NAME = ExtensionPointName.create("com.intellij.buildProcess.parametersProvider");
 
+  /**
+   * Override this method to include additional jars to the build process classpath
+   * @return list of paths to additional jars to be included to the build process classpath
+   */
   public @NotNull List<String> getClassPath() {
     return Collections.emptyList();
   }
-  
+
+  /**
+   * Override this method to include additional jars to the build process launcher classpath. This may be needed if the plugin provides
+   * custom implementation of Java compiler which must be loaded by the same classloader as tools.jar
+   * @return list of paths to additional jars to be included to the build process launcher classpath
+   */
+  public @NotNull List<String> getLauncherClassPath() {
+    return Collections.emptyList();
+  }
+
   public @NotNull List<String> getVMArguments() {
     return Collections.emptyList();
   }

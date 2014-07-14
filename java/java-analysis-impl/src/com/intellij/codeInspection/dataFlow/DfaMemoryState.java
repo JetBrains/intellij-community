@@ -44,7 +44,7 @@ public interface DfaMemoryState {
 
   boolean applyCondition(DfaValue dfaCond);
 
-  void flushFields(DfaVariableValue[] fields);
+  void flushFields();
 
   void flushVariable(DfaVariableValue variable);
 

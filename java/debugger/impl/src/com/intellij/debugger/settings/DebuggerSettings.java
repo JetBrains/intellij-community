@@ -70,7 +70,6 @@ public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Clo
   public volatile boolean AUTO_VARIABLES_MODE = false;
   public volatile boolean SHOW_LIBRARY_STACKFRAMES = true;
 
-
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
 
   private Map<String, ContentState> myContentStates = new HashMap<String, ContentState>();
@@ -83,7 +82,7 @@ public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Clo
     return rv;
   }
 
-  void setSteppingFilters(ClassFilter[] steppingFilters) {
+  public void setSteppingFilters(ClassFilter[] steppingFilters) {
     mySteppingFilters = steppingFilters != null ? steppingFilters : ClassFilter.EMPTY_ARRAY;
   }
 

@@ -15,6 +15,8 @@
  */
 package com.intellij.internal.statistic.beans;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.*;
 
 /**
@@ -150,6 +152,22 @@ public class ConvertUsagesUtil {
     return map;
   }
 
+  /**
+   * Escapes descriptor name so it could be used in {@link #assertDescriptorName(String)}
+   *
+   * @param name name to escape
+   * @return escaped name
+   */
+  @NotNull
+  public static String escapeDescriptorName(@NotNull final String name) {
+    return name.replace(" ", "_").
+      replace(GROUP_SEPARATOR, '_').
+      replace(GROUPS_SEPARATOR, '_').
+      replace(GROUP_VALUE_SEPARATOR, '_')
+      .replace("'", " ")
+      .replace("\"", " ");
+  }
+
   private static class StringPair {
     public final String first;
     public final String second;
@@ -164,6 +182,9 @@ public class ConvertUsagesUtil {
     return s == null || s.trim().length() == 0;
   }
 
+  /**
+   * @see #escapeDescriptorName(String)
+   */
   public static void assertDescriptorName(String key) {
     assert key != null;
     assert key.indexOf(GROUP_SEPARATOR) == -1 : key + " contains invalid chars";

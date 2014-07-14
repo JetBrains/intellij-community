@@ -29,7 +29,7 @@ import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 
 public class FindInPathAction extends AnAction implements DumbAware {
-  static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("FindInPath", ToolWindowId.FIND, false);
+  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Find in Path", ToolWindowId.FIND, false);
 
   { // enabled in modal content for find in path <-> replace in path modal dialog transition
     setEnabledInModalContext(true);

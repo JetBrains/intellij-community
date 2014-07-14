@@ -9,7 +9,7 @@ public class TooBroadScope
     public void test() {
         // Example #1
         {
-            Collection<Integer> list  = null; //scope too broad
+            Collection<Integer> <warning descr="Scope of variable 'list' is too broad">list</warning>  = null; //scope too broad
             {
                 list = new ArrayList<Integer>();
                 list.add(new Integer(0));
@@ -19,7 +19,7 @@ public class TooBroadScope
         // Example #2
         {
 
-            Collection<Integer> list; // scope too broad
+            Collection<Integer> <warning descr="Scope of variable 'list' is too broad">list</warning>; // scope too broad
             list = new ArrayList<Integer>();
             list.add(new Integer(0));
         }
@@ -27,14 +27,14 @@ public class TooBroadScope
         // Example #3
         {
 
-            Collection<Integer> list  = null; // nope
+            Collection<Integer> <warning descr="Scope of variable 'list' is too broad">list</warning>  = null; // nope
             list = new ArrayList<Integer>();
             list.add(new Integer(0));
         }
     }
 
     public void join() {
-        String test;
+        String <warning descr="Scope of variable 'test' is too broad">test</warning>;
         test = "asdf";
     }
 
@@ -104,13 +104,13 @@ public class TooBroadScope
     }
 
     void forLoop() {
-        int i  = 0;
+        int <warning descr="Scope of variable 'i' is too broad">i</warning>  = 0;
         for ( ; i < 10; i++) {
             System.out.println(i);
         }
     }
 
-    void resourceVariable(boolean b) {
+    void resourceVariable(boolean b) throws Exception {
         try (AutoCloseable ac = null) {
             if (b) {
                 System.out.println(ac);

@@ -108,8 +108,8 @@ public class Disposer {
     ourTree.executeAll(disposable, true, ourDisposeAction, processUnregistered);
   }
 
-  public static void disposeChildAndReplace(@NotNull Disposable toDipose, @NotNull Disposable toReplace) {
-    ourTree.executeChildAndReplace(toDipose, toReplace, true, ourDisposeAction);
+  public static void disposeChildAndReplace(@NotNull Disposable toDispose, @NotNull Disposable toReplace) {
+    ourTree.executeChildAndReplace(toDispose, toReplace, true, ourDisposeAction);
   }
 
   @NotNull

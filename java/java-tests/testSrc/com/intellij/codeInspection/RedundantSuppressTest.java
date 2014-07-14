@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.InspectionTestCase;
+import com.siyeh.ig.migration.RawUseOfParameterizedTypeInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class RedundantSuppressTest extends InspectionTestCase {
@@ -15,7 +16,9 @@ public class RedundantSuppressTest extends InspectionTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     InspectionToolRegistrar.getInstance().ensureInitialized();
-    myInspectionToolWrappers = new InspectionToolWrapper[]{new LocalInspectionToolWrapper(new I18nInspection()),
+    myInspectionToolWrappers = new InspectionToolWrapper[]{
+      new LocalInspectionToolWrapper(new I18nInspection()),
+      new LocalInspectionToolWrapper(new RawUseOfParameterizedTypeInspection()),
       new GlobalInspectionToolWrapper(new EmptyMethodInspection())};
 
     myWrapper = new GlobalInspectionToolWrapper(new RedundantSuppressInspection() {
@@ -27,6 +30,10 @@ public class RedundantSuppressTest extends InspectionTestCase {
   }
 
   public void testDefaultFile() throws Exception {
+    doTest();
+  }
+
+  public void testAlternativeIds() throws Exception {
     doTest();
   }
 

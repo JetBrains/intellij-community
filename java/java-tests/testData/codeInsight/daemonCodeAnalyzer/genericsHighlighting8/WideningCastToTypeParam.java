@@ -9,14 +9,14 @@ abstract class AbstractNumberConverter<N extends Number> implements IConverter<N
 class DoubleConverter extends AbstractNumberConverter<Double> {
 }
 
-public class Test {
+class Test {
   public static <C> IConverter<C> getConverter(Class<C> type) {
     return (IConverter<C>)new DoubleConverter() {
     };
   }
 
   public static <C extends String> IConverter<C> getConverter1(Class<C> type) {
-    return <error descr="Inconvertible types; cannot cast 'DoubleConverter' to 'IConverter<C>'">(IConverter<C>)new DoubleConverter() {
+    return <error descr="Inconvertible types; cannot cast 'anonymous DoubleConverter' to 'IConverter<C>'">(IConverter<C>)new DoubleConverter() {
     }</error>;
   }
 

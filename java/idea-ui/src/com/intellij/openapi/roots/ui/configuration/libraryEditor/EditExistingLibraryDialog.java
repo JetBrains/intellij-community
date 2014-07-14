@@ -98,6 +98,12 @@ public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
     return myTableModifiableModel;
   }
 
+  @Nullable
+  @Override
+  protected String getHelpId() {
+    return "Configure_Library_Dialog";
+  }
+
   @Override
   protected boolean shouldCheckName(String newName) {
     return !Comparing.equal(newName, getLibraryRootsComponent().getLibraryEditor().getName());

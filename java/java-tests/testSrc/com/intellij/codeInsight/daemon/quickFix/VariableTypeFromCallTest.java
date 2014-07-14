@@ -16,7 +16,9 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 
-public class VariableTypeFromCallTest extends LightQuickFixTestCase {
+import com.intellij.pom.java.LanguageLevel;
+
+public class VariableTypeFromCallTest extends LightQuickFixParameterizedTestCase {
 
   public void test() throws Exception { doAllTests(); }
 
@@ -25,5 +27,9 @@ public class VariableTypeFromCallTest extends LightQuickFixTestCase {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/varTypeFromCall";
   }
 
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_7;
+  }
 }
 

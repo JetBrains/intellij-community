@@ -30,7 +30,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,7 +94,7 @@ public class ImportToImportFromIntention implements IntentionAction {
       // usages of imported name are qualifiers; what they refer to?
       PyReferenceExpression reference = myImportElement.getImportReferenceExpression();
       if (reference != null) {
-        myModuleName = PyResolveUtil.toPath(reference);
+        myModuleName = PyPsiUtils.toPath(reference);
         myQualifierName = myImportElement.getVisibleName();
         myReferee = reference.getReference().resolve();
         myHasModuleReference = false;
@@ -104,7 +104,7 @@ public class ImportToImportFromIntention implements IntentionAction {
             public boolean execute(@NotNull PsiElement element) {
               if (element instanceof PyReferenceExpression && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null) {
                 PyReferenceExpression ref = (PyReferenceExpression)element;
-                if (myQualifierName.equals(PyResolveUtil.toPath(ref))) {  // filter out other names that might resolve to our target
+                if (myQualifierName.equals(PyPsiUtils.toPath(ref))) {  // filter out other names that might resolve to our target
                   PsiElement parent_elt = ref.getParent();
                   if (parent_elt instanceof PyQualifiedExpression) { // really qualified by us, not just referencing?
                     PsiElement resolved = ref.getReference().resolve();
@@ -197,7 +197,7 @@ public class ImportToImportFromIntention implements IntentionAction {
       String module_name = "?";
       if (myImportElement != null) {
         PyReferenceExpression reference = myImportElement.getImportReferenceExpression();
-        if (reference != null) module_name = PyResolveUtil.toPath(reference);
+        if (reference != null) module_name = PyPsiUtils.toPath(reference);
       }
       return PyBundle.message("INTN.convert.to.from.$0.import.$1", getDots()+module_name, "...");
     }

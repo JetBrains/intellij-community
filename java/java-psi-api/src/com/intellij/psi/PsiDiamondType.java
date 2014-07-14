@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.psi;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import org.jetbrains.annotations.NotNull;
@@ -74,24 +73,17 @@ public abstract class PsiDiamondType extends PsiType {
 
     private final List<PsiType> myInferredTypes = new ArrayList<PsiType>();
     private String myErrorMessage;
-
     private String myNewExpressionPresentableText;
-    private Project myProject;
 
-    public DiamondInferenceResult() {
-    }
+    public DiamondInferenceResult() { }
 
-    public DiamondInferenceResult(String expressionPresentableText, Project project) {
+    public DiamondInferenceResult(String expressionPresentableText) {
       myNewExpressionPresentableText = expressionPresentableText;
-      myProject = project;
     }
 
     @NotNull
     public PsiType[] getTypes() {
-      if (myErrorMessage != null) {
-        return PsiType.EMPTY_ARRAY;
-      }
-      return myInferredTypes.toArray(new PsiType[myInferredTypes.size()]);
+      return myErrorMessage == null ? myInferredTypes.toArray(createArray(myInferredTypes.size())) : PsiType.EMPTY_ARRAY;
     }
 
     /**
@@ -113,46 +105,10 @@ public abstract class PsiDiamondType extends PsiType {
       if (myErrorMessage != null) return;
       if (psiType == null) {
         myErrorMessage = "Cannot infer type arguments for " + myNewExpressionPresentableText;
-      } /*else if (!isValid(psiType)) {
-        myErrorMessage = "Cannot infer type arguments for " +
-                         myNewExpressionPresentableText + " because type " + psiType.getPresentableText() + " inferred is not allowed in current context";
-      }*/ else {
+      }
+      else {
         myInferredTypes.add(psiType);
       }
-    }
-
-    private static Boolean isValid(PsiType type) {
-      return type.accept(new PsiTypeVisitor<Boolean>() {
-        @Override
-        public Boolean visitType(PsiType type) {
-          return !(type instanceof PsiIntersectionType);
-        }
-
-        @Override
-        public Boolean visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
-          return false;
-        }
-
-        @Override
-        public Boolean visitWildcardType(PsiWildcardType wildcardType) {
-          final PsiType bound = wildcardType.getBound();
-          if (bound != null) {
-            if (bound instanceof PsiIntersectionType) return false;
-            return bound.accept(this);
-          }
-          return true;
-        }
-
-        @Override
-        public Boolean visitClassType(PsiClassType classType) {
-          for (PsiType psiType : classType.getParameters()) {
-            if (!psiType.accept(this)) {
-              return false;
-            }
-          }
-          return true;
-        }
-      });
     }
 
     @Override

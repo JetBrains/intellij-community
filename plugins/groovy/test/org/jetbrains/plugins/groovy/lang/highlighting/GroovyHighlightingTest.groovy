@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -576,18 +576,77 @@ int method(x, y, z) {
 ''')
   }
 
-  void testReassignedVarInClosure() {
+  void testReassignedVarInClosure1() {
     addCompileStatic()
     testHighlighting("""
 $IMPORT_COMPILE_STATIC
 
 @CompileStatic
-test() {
+def test() {
     def var = "abc"
     def cl = {
         var = new Date()
     }
     cl()
+    var.<error descr="Cannot resolve symbol 'toUpperCase'">toUpperCase</error>()
+}
+""", GrUnresolvedAccessInspection)
+  }
+
+  void testReassignedVarInClosure2() {
+    addCompileStatic()
+    testHighlighting("""
+$IMPORT_COMPILE_STATIC
+
+@CompileStatic
+def test() {
+    def cl = {
+        def var
+        var = new Date()
+    }
+    def var = "abc"
+
+    cl()
+    var.toUpperCase()  //no errors
+}
+""", GrUnresolvedAccessInspection)
+  }
+
+  void testReassignedVarInClosure3() {
+    addCompileStatic()
+    testHighlighting("""
+$IMPORT_COMPILE_STATIC
+
+@CompileStatic
+def test() {
+    def var = "abc"
+    def cl = new Closure(this, this){
+      def call() {
+        var = new Date()
+      }
+    }
+    cl()
+    var.toUpperCase() //no errors
+}
+""", GrUnresolvedAccessInspection)
+  }
+
+  void testReassignedVarInClosure4() {
+    addCompileStatic()
+    testHighlighting("""
+$IMPORT_COMPILE_STATIC
+
+class X {
+  def var
+}
+
+@CompileStatic
+def test() {
+    def var = "abc"
+    new X().with {
+        var = new Date()
+    }
+
     var.<error descr="Cannot resolve symbol 'toUpperCase'">toUpperCase</error>()
 }
 """, GrUnresolvedAccessInspection)
@@ -1367,8 +1426,8 @@ def bar
 ''')
   }
 
- void testFinalFieldRewrite() {
-   testHighlighting('''\
+  void testFinalFieldRewrite() {
+    testHighlighting('''\
 class A {
   final foo = 1
 
@@ -1383,7 +1442,7 @@ class A {
 
 new A().foo = 2 //no error
 ''')
- }
+  }
 
   void testStaticFinalFieldRewrite() {
     testHighlighting('''\
@@ -1413,15 +1472,15 @@ A.foo = 3 //no error
 
   void testSOEIfExtendsItself() {
     testHighlighting('''\
-<error descr="Cyclic inheritance involving 'A'"><error descr="Method 'invokeMethod' is not implemented">class A extends A </error></error>{
+<error descr="Cyclic inheritance involving 'A'"><error descr="Method 'invokeMethod' is not implemented">class A extends A</error></error> {
   def foo
 }
 
-<error descr="Cyclic inheritance involving 'B'"><error descr="Method 'invokeMethod' is not implemented">class B extends C </error></error>{
+<error descr="Cyclic inheritance involving 'B'"><error descr="Method 'invokeMethod' is not implemented">class B extends C</error></error> {
   def foo
 }
 
-<error descr="Cyclic inheritance involving 'C'"><error descr="Method 'invokeMethod' is not implemented">class C extends B </error></error>{
+<error descr="Cyclic inheritance involving 'C'"><error descr="Method 'invokeMethod' is not implemented">class C extends B</error></error> {
 }
 ''')
   }
@@ -1584,7 +1643,7 @@ public abstract class Base {
 }
 ''')
     testHighlighting('''\
-<error>class Foo extends p.Base </error>{
+<error>class Foo extends p.Base</error> {
 }
 ''')
   }
@@ -1644,6 +1703,118 @@ class D {
 class E {
   <error>private foo()</error>{}
   <error>def foo(int x)</error> {}
+}
+
+class Z {
+ private Z() {}   //correct
+ private Z(x) {}  //correct
+}
+''')
+  }
+
+  void testImmutable() {
+    testHighlighting('''\
+import groovy.transform.Immutable
+
+@Immutable
+class A {
+  String immutable
+  private String mutable
+
+  def foo() {
+    <error descr="Cannot assign a value to final field 'immutable'">immutable</error> = 5
+    mutable = 5
+
+  }
+}
+''')
+  }
+
+  void testConstructorInImmutable() {
+    testHighlighting('''\
+import groovy.transform.Immutable
+
+@Immutable
+class A {
+  String immutable
+  private String mutable
+
+  def <error descr="Explicit constructors are not allowed for @Immutable class">A</error>() {}
+}
+''')
+  }
+
+  void testGetterInImmutable() {
+    testHighlighting('''\
+import groovy.transform.Immutable
+
+@Immutable
+class A {
+  String immutable
+  private String mutable
+
+  String <error descr="Repetitive method name 'getImmutable'">getImmutable</error>() {immutable}
+  String getMutable() {mutable}
+}
+''')
+  }
+
+  void testGetterInImmutable2() {
+    testHighlighting('''\
+import groovy.transform.Immutable
+
+@Immutable
+class A {
+  String immutable
+
+  int <error descr="Repetitive method name 'getImmutable'">getImmutable</error>() {1}
+}
+''')
+  }
+
+  void testMinusInAnnotationArg() {
+    testHighlighting('''\
+@interface Xx {
+    int value()
+}
+
+@Xx(-1)
+public class Bar1 { }
+
+@Xx(+1)
+public class Bar2 { }
+
+@Xx(<error descr="Expected '++1' to be an inline constant">++1</error>)
+public class Bar3 { }
+''')
+  }
+
+  void testImportStaticFix() {
+    myFixture.configureByText('a.groovy', '''
+class A {
+  static void foo(String s){}
+}
+
+foo(<caret>)
+''')
+
+    myFixture.getAvailableIntention("Static Import Method 'A.foo'")
+  }
+
+  void testInaccessibleWithCompileStatic() {
+    addCompileStatic()
+    testHighlighting('''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class PrivateTest {
+    void doTest() {
+        Target.<error descr="Access to 'callMe' exceeds its access rights">callMe</error>()
+    }
+}
+
+class Target {
+    private static void callMe() {}
 }
 ''')
   }

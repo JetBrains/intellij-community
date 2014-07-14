@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
@@ -29,13 +31,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.GSTRING_CONTENT;
-
 /**
  * @author Maxim.Medvedev
  */
 public class GroovyGStringSelectioner extends ExtendWordSelectionHandlerBase {
+  @Override
   public boolean canSelect(PsiElement e) {
     PsiElement parent = e.getParent();
     return parent instanceof GrStringInjection || parent instanceof GrString;
@@ -56,10 +56,10 @@ public class GroovyGStringSelectioner extends ExtendWordSelectionHandlerBase {
 
         PsiElement firstChild = parent.getFirstChild();
         PsiElement lastChild = parent.getLastChild();
-        if (firstChild.getNode().getElementType() == mGSTRING_BEGIN) {
+        if (firstChild.getNode().getElementType() == GroovyTokenTypes.mGSTRING_BEGIN) {
           firstChild = firstChild.getNextSibling();
         }
-        if (lastChild.getNode().getElementType() == mGSTRING_END) {
+        if (lastChild.getNode().getElementType() == GroovyTokenTypes.mGSTRING_END) {
           lastChild = lastChild.getPrevSibling();
         }
 
@@ -98,7 +98,7 @@ public class GroovyGStringSelectioner extends ExtendWordSelectionHandlerBase {
     PsiElement next = e;
     int startOffset = cursorOffset;
     int endOffset = cursorOffset;
-    if (e.getNode().getElementType() == mGSTRING_CONTENT) {
+    if (e.getNode().getElementType() == GroovyTokenTypes.mGSTRING_CONTENT) {
       final String text = e.getText();
       int cur;
       int index = -1;
@@ -123,8 +123,8 @@ public class GroovyGStringSelectioner extends ExtendWordSelectionHandlerBase {
         final ASTNode node = next.getNode();
         if (node == null) break;
         final IElementType type = node.getElementType();
-        if (type == mGSTRING_BEGIN) break;
-        if (type == GSTRING_CONTENT) {
+        if (type == GroovyTokenTypes.mGSTRING_BEGIN) break;
+        if (type == GroovyElementTypes.GSTRING_CONTENT) {
           final int i = next.getText().lastIndexOf('\n');
           if (i >= 0) {
             startOffset = next.getTextOffset() + i + 1;
@@ -145,11 +145,11 @@ public class GroovyGStringSelectioner extends ExtendWordSelectionHandlerBase {
         if (node == null) break;
 
         final IElementType type = node.getElementType();
-        if (type == mGSTRING_END) {
+        if (type == GroovyTokenTypes.mGSTRING_END) {
           endOffset = next.getTextOffset();
           break;
         }
-        if (type == GSTRING_CONTENT) {
+        if (type == GroovyElementTypes.GSTRING_CONTENT) {
           final int i = next.getText().indexOf('\n');
           if (i >= 0) {
             endOffset = next.getTextOffset() + i + 1;

@@ -7,3 +7,4 @@ class
 default
 enum
 interface
+trait

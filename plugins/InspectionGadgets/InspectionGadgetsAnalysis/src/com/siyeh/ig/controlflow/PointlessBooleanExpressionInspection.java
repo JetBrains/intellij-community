@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -283,7 +284,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
         return;
       }
       final PsiExpression expression = (PsiExpression)element;
-      replaceExpression(expression, buildSimplifiedExpression(expression, new StringBuilder()).toString());
+      PsiReplacementUtil.replaceExpression(expression, buildSimplifiedExpression(expression, new StringBuilder()).toString());
     }
   }
 

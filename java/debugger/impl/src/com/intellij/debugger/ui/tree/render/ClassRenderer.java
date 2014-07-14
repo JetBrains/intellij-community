@@ -110,9 +110,11 @@ public class ClassRenderer extends NodeRendererImpl{
       final StringBuilder buf = StringBuilderSpinAllocator.alloc();
       try {
         if (value instanceof StringReference) {
-          buf.append('\"');
-          buf.append(DebuggerUtils.convertToPresentationString(((StringReference)value).value()));
-          buf.append('\"');
+          // no need to add quotes and escape characters here, XValueTextRendererImpl handles the presentation
+          //buf.append('\"');
+          //buf.append(DebuggerUtils.convertToPresentationString(((StringReference)value).value()));
+          //buf.append('\"');
+          buf.append(((StringReference)value).value());
         }
         else if (value instanceof ClassObjectReference) {
           ReferenceType type = ((ClassObjectReference)value).reflectedType();

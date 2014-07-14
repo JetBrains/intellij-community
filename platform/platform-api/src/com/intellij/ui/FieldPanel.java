@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.ui.components.JBTextField;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -25,7 +26,7 @@ public class FieldPanel extends AbstractFieldPanel {
   private final JTextField myTextField;
 
   public FieldPanel() {
-    this(new JTextField(30));
+    this(new JBTextField(30));
   }
 
   protected FieldPanel(JTextField textField) {
@@ -35,7 +36,7 @@ public class FieldPanel extends AbstractFieldPanel {
   }
 
   public FieldPanel(String labelText, final String viewerDialogTitle, ActionListener browseButtonActionListener, final Runnable documentListener) {
-    this(new JTextField(30), labelText, viewerDialogTitle, browseButtonActionListener, documentListener);
+    this(new JBTextField(30), labelText, viewerDialogTitle, browseButtonActionListener, documentListener);
   }
 
   public FieldPanel(JTextField textField, String labelText, final String viewerDialogTitle, ActionListener browseButtonActionListener, final Runnable documentListener) {

@@ -1,0 +1,9 @@
+Types:
+PsiParameter:l : java.lang.Integer[]
+PsiReferenceExpression:l : java.lang.Integer[]
+
+Conversions:
+
+New expression type changes:
+Fails:
+l->java.lang.Integer[]

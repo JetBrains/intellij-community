@@ -20,6 +20,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.TestDataFile;
+import com.jetbrains.python.documentation.DocStringFormat;
+import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -35,12 +37,23 @@ import java.util.Map;
  */
 public class PyQuickDocTest extends LightMarkedTestCase {
   private PythonDocumentationProvider myProvider;
+  private String myFormat;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     // the provider is stateless, can be reused, as in real life
     myProvider = new PythonDocumentationProvider();
+    final PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
+    myFormat = documentationSettings.getFormat();
+    documentationSettings.setFormat(DocStringFormat.PLAIN);
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    final PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
+    documentationSettings.setFormat(myFormat);
+    super.tearDown();
   }
 
   private void checkByHTML(String text) {
@@ -162,9 +175,9 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   public void testPropNewSetter() {
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON26);
     Map<String, PsiElement> marks = loadTest();
     PsiElement ref_elt = marks.get("<the_ref>");
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON26);
     try {
       final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyTargetExpression)(ref_elt.getParent())).getReference().resolve();
       checkByHTML(myProvider.generateDoc(doc_owner, ref_elt));
@@ -175,9 +188,9 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   public void testPropNewDeleter() {
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON26);
     Map<String, PsiElement> marks = loadTest();
     PsiElement ref_elt = marks.get("<the_ref>");
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON26);
     try {
       final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyReferenceExpression)(ref_elt.getParent())).getReference().resolve();
       checkByHTML(myProvider.generateDoc(doc_owner, ref_elt));

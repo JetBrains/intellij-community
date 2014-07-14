@@ -21,7 +21,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
-import com.intellij.psi.impl.source.tree.java.PsiMethodReferenceExpressionImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
@@ -46,7 +45,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
 
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
-    if (myExpression instanceof PsiCallExpression || !PsiPolyExpressionUtil.isPolyExpression(myExpression)) {
+    if (!PsiPolyExpressionUtil.isPolyExpression(myExpression)) {
       return true;
     }
     if (myExpression instanceof PsiParenthesizedExpression) {
@@ -65,7 +64,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
       return true;
     }
     if (myExpression instanceof PsiLambdaExpression || myExpression instanceof PsiMethodReferenceExpression) {
-      if (LambdaHighlightingUtil.checkInterfaceFunctional(myT) != null) {
+      if (!LambdaUtil.isFunctionalType(myT)) {
         return false;
       }
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(myT);
@@ -74,11 +73,17 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
       }
 
       final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, PsiUtil.resolveGenericsClassInType(myT));
-      for (PsiParameter parameter : interfaceMethod.getParameterList().getParameters()) {
-        if (!session.isProperType(substitutor.substitute(parameter.getType()))) return false;
+      if (myExpression instanceof PsiLambdaExpression && !((PsiLambdaExpression)myExpression).hasFormalParameterTypes() ||
+          myExpression instanceof PsiMethodReferenceExpression && !((PsiMethodReferenceExpression)myExpression).isExact()) {
+        for (PsiParameter parameter : interfaceMethod.getParameterList().getParameters()) {
+          if (!session.isProperType(substitutor.substitute(parameter.getType()))) return false;
+        }
       }
+
       final PsiType returnType = interfaceMethod.getReturnType();
-      if (!session.isProperType(substitutor.substitute(returnType))) return false;
+      if (myExpression instanceof PsiLambdaExpression || !((PsiMethodReferenceExpression)myExpression).isExact()) {
+        if (!session.isProperType(substitutor.substitute(returnType))) return false;
+      }
 
       final List<PsiType>
         expectedThrownTypes = ContainerUtil.map(interfaceMethod.getThrowsList().getReferencedTypes(), new Function<PsiType, PsiType>() {
@@ -97,22 +102,28 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
       final List<PsiType> thrownTypes = new ArrayList<PsiType>();
       if (myExpression instanceof PsiLambdaExpression) {
         PsiElement body = ((PsiLambdaExpression)myExpression).getBody();
-        thrownTypes.addAll(ExceptionUtil.getUnhandledExceptions(body));
+        if (body != null) {
+          thrownTypes.addAll(ExceptionUtil.getUnhandledExceptions(body));
+        }
       } else {
+
+        final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult((PsiMethodReferenceExpression)myExpression);
+        final PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
+        final PsiMethod method;
         if (((PsiMethodReferenceExpression)myExpression).isExact()) {
-          final PsiElement resolve = ((PsiMethodReferenceExpression)myExpression).resolve();
+          final PsiElement resolve = ((PsiMethodReferenceExpression)myExpression).getPotentiallyApplicableMember();
           if (resolve instanceof PsiMethod) {
-            for (PsiClassType type : ((PsiMethod)resolve).getThrowsList().getReferencedTypes()) {
-              if (!ExceptionUtil.isUncheckedException(type)) {
-                thrownTypes.add(type);
-              }
-            }
+            method = (PsiMethod)resolve;
+          } else {
+            method = null;
           }
         }
         else {
-          PsiSubstitutor psiSubstitutor =
-            PsiMethodReferenceUtil.getQualifierResolveResult((PsiMethodReferenceExpression)myExpression).getSubstitutor();
-          for (PsiType type : interfaceMethod.getThrowsList().getReferencedTypes()) {
+          method = interfaceMethod;
+        }
+
+        if (method != null) {
+          for (PsiType type : method.getThrowsList().getReferencedTypes()) {
             type = psiSubstitutor.substitute(type);
             if (type instanceof PsiClassType && !ExceptionUtil.isUncheckedException((PsiClassType)type)) {
               thrownTypes.add(type);
@@ -131,9 +142,15 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
         for (PsiType thrownType : thrownTypes) {
           if (!isAddressed(expectedProperTypes, thrownType)) {
             for (PsiType expectedNonProperThrownType : expectedNonProperThrownTypes) {
-              constraints.add(new TypeCompatibilityConstraint(expectedNonProperThrownType, thrownType));
+              constraints.add(new StrictSubtypingConstraint(expectedNonProperThrownType, thrownType));
             }
           }
+        }
+
+        for (PsiType expectedNonProperThrownType : expectedNonProperThrownTypes) {
+          final InferenceVariable variable = session.getInferenceVariable(expectedNonProperThrownType);
+          LOG.assertTrue(variable != null);
+          variable.setThrownBound();
         }
       }
     }

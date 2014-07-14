@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.IntArrayList;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
@@ -213,6 +213,7 @@ public class ControlFlowUtil {
 
   public static List<PsiVariable> getUsedVariables(ControlFlow flow, int start, int end) {
     ArrayList<PsiVariable> array = new ArrayList<PsiVariable>();
+    if (start < 0) return array;
     List<Instruction> instructions = flow.getInstructions();
     for (int i = start; i < end; i++) {
       Instruction instruction = instructions.get(i);
@@ -351,7 +352,7 @@ public class ControlFlowUtil {
   private static boolean isElementOfClass(PsiElement element, Class[] classesFilter) {
     if (classesFilter == null) return true;
     for (Class aClassesFilter : classesFilter) {
-      if (ReflectionCache.isAssignable(aClassesFilter, element.getClass())) {
+      if (ReflectionUtil.isAssignable(aClassesFilter, element.getClass())) {
         return true;
       }
     }
@@ -377,7 +378,8 @@ public class ControlFlowUtil {
     return PsiTreeUtil.getParentOfType(element, PsiStatement.class, false);
   }
 
-  public static PsiElement findCodeFragment(PsiElement element) {
+  @NotNull
+  public static PsiElement findCodeFragment(@NotNull PsiElement element) {
     PsiElement codeFragment = element;
     PsiElement parent = codeFragment.getParent();
     while (parent != null) {

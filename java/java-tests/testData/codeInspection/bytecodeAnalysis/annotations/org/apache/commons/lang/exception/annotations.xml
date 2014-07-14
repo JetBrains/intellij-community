@@ -1,0 +1,72 @@
+<root>
+  <item name="org.apache.commons.lang.exception.ExceptionUtils boolean isNestedThrowable(java.lang.Throwable)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.exception.ExceptionUtils boolean setCause(java.lang.Throwable, java.lang.Throwable) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.exception.ExceptionUtils java.lang.String getFullStackTrace(java.lang.Throwable)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.exception.ExceptionUtils java.lang.String getMessage(java.lang.Throwable)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.exception.ExceptionUtils java.lang.String getRootCauseMessage(java.lang.Throwable)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.exception.ExceptionUtils java.lang.String getStackTrace(java.lang.Throwable) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.exception.ExceptionUtils java.lang.String getStackTrace(java.lang.Throwable)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.exception.ExceptionUtils java.lang.String[] toArray(java.util.List) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.exception.ExceptionUtils java.lang.Throwable getCause(java.lang.Throwable)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.exception.ExceptionUtils java.lang.Throwable getCause(java.lang.Throwable, java.lang.String[])">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null,_-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.exception.ExceptionUtils java.lang.Throwable getCauseUsingWellKnownTypes(java.lang.Throwable)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.exception.ExceptionUtils java.util.ArrayList getCauseMethodNameList()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.exception.ExceptionUtils java.util.List getStackFrameList(java.lang.Throwable) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.exception.ExceptionUtils void removeCommonFrames(java.util.List, java.util.List) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.exception.ExceptionUtils void removeCommonFrames(java.util.List, java.util.List) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.exception.NestableDelegate NestableDelegate(org.apache.commons.lang.exception.Nestable) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.exception.NestableDelegate java.lang.String getMessage(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.exception.NestableDelegate java.lang.String[] getStackFrames(java.lang.Throwable) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.exception.NestableDelegate void printStackTrace(java.io.PrintStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.exception.NestableDelegate void trimStackFrames(java.util.List) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+</root>

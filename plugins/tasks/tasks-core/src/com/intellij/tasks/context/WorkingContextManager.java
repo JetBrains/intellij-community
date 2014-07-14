@@ -75,7 +75,7 @@ public class WorkingContextManager {
     myProject = project;
   }
 
-  private void loadContext(Element fromElement) {
+  public void loadContext(Element fromElement) {
     for (WorkingContextProvider provider : Extensions.getExtensions(WorkingContextProvider.EP_NAME, myProject)) {
       try {
         Element child = fromElement.getChild(provider.getId());
@@ -169,7 +169,7 @@ public class WorkingContextManager {
     File tasksFolder = new File(PathManager.getConfigPath(), TASKS_FOLDER);
     if (!tasksFolder.exists()) {
       //noinspection ResultOfMethodCallIgnored
-      tasksFolder.mkdir();
+      tasksFolder.mkdirs();
     }
     String projectName = FileUtil.sanitizeFileName(myProject.getName());
     return new File(tasksFolder, projectName + postfix);

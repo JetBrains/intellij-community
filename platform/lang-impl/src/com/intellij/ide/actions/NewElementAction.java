@@ -17,7 +17,6 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -85,24 +84,25 @@ public class NewElementAction extends AnAction  implements DumbAware, PopupActio
 
   @Override
   public void update(AnActionEvent e){
-    final Presentation presentation = e.getPresentation();
-    final DataContext context = e.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(context);
+    Presentation presentation = e.getPresentation();
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) {
       presentation.setEnabled(false);
       return;
     }
-    if (Boolean.TRUE.equals(LangDataKeys.NO_NEW_ACTION.getData(context))) {
-      presentation.setEnabled(false);
-      return;
-    }
-    final IdeView ideView = LangDataKeys.IDE_VIEW.getData(context);
-    if (ideView == null) {
+    if (!isEnabled(e)) {
       presentation.setEnabled(false);
       return;
     }
 
-    presentation.setEnabled(!ActionGroupUtil.isGroupEmpty(getGroup(context), e));
+    presentation.setEnabled(!ActionGroupUtil.isGroupEmpty(getGroup(e.getDataContext()), e));
+  }
+
+  protected boolean isEnabled(AnActionEvent e) {
+    if (Boolean.TRUE.equals(LangDataKeys.NO_NEW_ACTION.getData(e.getDataContext()))) {
+      return false;
+    }
+    return true;
   }
 
   protected ActionGroup getGroup(DataContext dataContext) {

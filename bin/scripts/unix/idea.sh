@@ -28,6 +28,8 @@ GREP=`which egrep`
 GREP_OPTIONS=""
 CUT=`which cut`
 READLINK=`which readlink`
+XARGS=`which xargs`
+DIRNAME=`which dirname`
 MKTEMP=`which mktemp`
 RM=`which rm`
 CAT=`which cat`
@@ -53,7 +55,7 @@ elif [ -n "$JAVA_HOME" -a -x "$JAVA_HOME/bin/java" ]; then
 else
   JAVA_BIN_PATH=`which java`
   if [ -n "$JAVA_BIN_PATH" ]; then
-    if [ "$OS_TYPE" = "FreeBSD" ]; then
+    if [ "$OS_TYPE" = "FreeBSD" -o "$OS_TYPE" = "MidnightBSD" ]; then
       JAVA_LOCATION=`JAVAVM_DRYRUN=yes java | "$GREP" '^JAVA_HOME' | "$CUT" -c11-`
       if [ -x "$JAVA_LOCATION/bin/java" ]; then
         JDK="$JAVA_LOCATION"
@@ -70,13 +72,18 @@ else
       fi
     fi
 
-    if [ -z "$JDK" -a -x "$READLINK" ]; then
+    if [ -z "$JDK" -a -x "$READLINK" -a -x "$XARGS" -a -x "$DIRNAME" ]; then
       JAVA_LOCATION=`"$READLINK" -f "$JAVA_BIN_PATH"`
       case "$JAVA_LOCATION" in
         */jre/bin/java)
-          JAVA_LOCATION=`echo "$JAVA_LOCATION" | xargs dirname | xargs dirname | xargs dirname` ;;
+          JAVA_LOCATION=`echo "$JAVA_LOCATION" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME"`
+          if [ ! -d "$JAVA_LOCATION/bin" ]; then
+            JAVA_LOCATION="$JAVA_LOCATION/jre"
+          fi
+          ;;
         *)
-          JAVA_LOCATION=`echo "$JAVA_LOCATION" | xargs dirname | xargs dirname` ;;
+          JAVA_LOCATION=`echo "$JAVA_LOCATION" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME"`
+          ;;
       esac
       if [ -x "$JAVA_LOCATION/bin/java" ]; then
         JDK="$JAVA_LOCATION"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,16 +34,19 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author peter
  */
 public abstract class ElementPresentationManager {
   private static final ConcurrentFactoryMap<Class,Method> ourNameValueMethods = new ConcurrentFactoryMap<Class, Method>() {
+    @Override
     @Nullable
     protected Method create(final Class key) {
-      for (final Method method : ReflectionCache.getMethods(key)) {
+      for (final Method method : ReflectionUtil.getClassPublicMethods(key)) {
       if (JavaMethod.getMethod(key, method).getAnnotation(NameValue.class) != null) {
         return method;
       }
@@ -53,6 +56,7 @@ public abstract class ElementPresentationManager {
   };
 
   private final static Function<Object, String> DEFAULT_NAMER = new Function<Object, String>() {
+    @Override
     @Nullable
     public String fun(final Object element) {
       return getElementName(element);
@@ -94,6 +98,7 @@ public abstract class ElementPresentationManager {
 
   static {
     ourIconProviders.add(new NullableFunction<Object, Icon>() {
+      @Override
       public Icon fun(final Object o) {
         return o instanceof Iconable ? ((Iconable)o).getIcon(Iconable.ICON_FLAG_READ_STATUS) : null;
       }
@@ -113,8 +118,9 @@ public abstract class ElementPresentationManager {
   public static void registerDocumentationProvider(Function<Object, String> function) { ourDocumentationProviders.add(function); }
 
 
-  public static final <T>NullableFunction<T, String> NAMER() {
+  public static <T>NullableFunction<T, String> NAMER() {
     return new NullableFunction<T, String>() {
+      @Override
       public String fun(final T o) {
         return getElementName(o);
       }
@@ -122,6 +128,7 @@ public abstract class ElementPresentationManager {
   }
 
   public static final NullableFunction<Object, String> NAMER = new NullableFunction<Object, String>() {
+    @Override
     public String fun(final Object o) {
       return getElementName(o);
     }
@@ -257,7 +264,7 @@ public abstract class ElementPresentationManager {
     return null;
   }
 
-  public static Method findNameValueMethod(final Class<? extends Object> aClass) {
+  public static Method findNameValueMethod(final Class<?> aClass) {
     synchronized (ourNameValueMethods) {
       return ourNameValueMethods.get(aClass);
     }
@@ -266,6 +273,7 @@ public abstract class ElementPresentationManager {
   @Nullable
   public static <T> T findByName(Collection<T> collection, final String name) {
     return ContainerUtil.find(collection, new Condition<T>() {
+      @Override
       public boolean value(final T object) {
         return Comparing.equal(name, getElementName(object), true);
       }

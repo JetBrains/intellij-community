@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.refactoring.encapsulateFields.FieldDescriptor;
 import com.intellij.refactoring.encapsulateFields.FieldDescriptorImpl;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import junit.framework.Assert;
+import org.jetbrains.annotations.NotNull;
 
 public class EncapsulateFieldsTest extends MultiFileTestCase{
   public void testAlreadyExist() throws Exception {
@@ -58,6 +59,10 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
     doTest("i", "A.B", "There is already a method <b><code>A.getI()</code></b> which would be hidden by generated getter");
   }
 
+  public void testCommentsInside() throws Exception {
+    doTest("i", "A", null);
+  }
+
   public void testMoveJavadocToGetter() throws Exception {
     doTest(new PerformAction() {
       @Override
@@ -76,6 +81,7 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @NotNull
   @Override
   protected String getTestRoot() {
     return "/refactoring/encapsulateFields/";

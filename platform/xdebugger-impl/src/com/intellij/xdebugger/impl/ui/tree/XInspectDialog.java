@@ -22,8 +22,8 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.evaluate.quick.XValueHintTreeComponent;
+import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
+import com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeWithHistoryPanel;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +35,7 @@ import javax.swing.*;
  * @author nik
  */
 public class XInspectDialog extends DialogWrapper {
-  private final XValueHintTreeComponent myTreePanel;
+  private final DebuggerTreeWithHistoryPanel<Pair<XValue, String>> myDebuggerTreePanel;
 
   public XInspectDialog(@NotNull Project project,
                         XDebuggerEditorsProvider editorsProvider,
@@ -48,15 +48,16 @@ public class XInspectDialog extends DialogWrapper {
     setTitle(XDebuggerBundle.message("inspect.value.dialog.title", name));
     setModal(false);
 
-    XDebuggerTree tree = new XDebuggerTree(project, editorsProvider, sourcePosition, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, markers);
-    myTreePanel = new XValueHintTreeComponent(null, tree, Pair.create(value, name));
+    Pair<XValue, String> initialItem = Pair.create(value, name);
+    XDebuggerTreeCreator creator = new XDebuggerTreeCreator(project, editorsProvider, sourcePosition, markers);
+    myDebuggerTreePanel = new DebuggerTreeWithHistoryPanel<Pair<XValue, String>>(initialItem, creator, project);
     init();
   }
 
   @Override
   @Nullable
   protected JComponent createCenterPanel() {
-    return myTreePanel.getMainPanel();
+    return myDebuggerTreePanel.getMainPanel();
   }
 
   @Override

@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.SourcePathsStep;
 import com.intellij.ide.util.newProjectWizard.SupportForFrameworksStep;
@@ -33,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -137,10 +135,6 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
 
   @Override
   public ModuleWizardStep createSupportForFrameworksStep(@NotNull WizardContext context, @NotNull ModuleBuilder builder, @NotNull ModulesProvider modulesProvider) {
-    Map<String,Boolean> availableFrameworks = builder.getAvailableFrameworks();
-    if (FrameworkSupportUtil.getProviders(builder).isEmpty() || availableFrameworks != null && availableFrameworks.isEmpty()) {
-      return null;
-    }
     final LibrariesContainer container = LibrariesContainerFactory.createContainer(context, modulesProvider);
     return new SupportForFrameworksStep(context, builder, container);
   }

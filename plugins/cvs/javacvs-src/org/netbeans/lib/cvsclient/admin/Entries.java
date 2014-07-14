@@ -13,9 +13,10 @@
 package org.netbeans.lib.cvsclient.admin;
 
 import com.intellij.openapi.util.io.FileUtil;
-import org.netbeans.lib.cvsclient.util.BugLog;
-import org.netbeans.lib.cvsclient.JavaCvsSrcBundle;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.netbeans.lib.cvsclient.JavaCvsSrcBundle;
+import org.netbeans.lib.cvsclient.util.BugLog;
 
 import java.io.*;
 import java.util.*;
@@ -27,7 +28,7 @@ public final class Entries {
 
   // Fields =================================================================
 
-  private final Map<String, Entry> fileNameToEntryMap = new HashMap<String, Entry>();
+  private final Map<String, Entry> fileNameToEntryMap = new THashMap<String, Entry>();
   @NonNls private static final String DIRECTORY_PREFIX = "D";
 
   // Accessing ==============================================================

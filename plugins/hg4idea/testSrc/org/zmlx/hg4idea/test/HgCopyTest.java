@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.test;
 
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.testng.annotations.Test;
 
@@ -31,7 +32,7 @@ public class HgCopyTest extends HgSingleUserTest {
   public void testCopyModifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
     runHgOnProjectRepo("commit", "-m", "added file");
-    editFileInCommand(myProject, file, "newer content");
+    VcsTestUtil.editFileInCommand(myProject, file, "newer content");
     verify(runHgOnProjectRepo("status"), HgTestOutputParser.modified("a.txt"));
     copyFileInCommand(file, "b.txt");
     verify(runHgOnProjectRepo("status"), HgTestOutputParser.modified("a.txt"), HgTestOutputParser.added("b.txt"));

@@ -18,6 +18,7 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -95,7 +96,7 @@ public class MergeIfOrIntention extends Intention {
       statement.append(childElseBranchText);
     }
     final String newStatement = statement.toString();
-    replaceStatement(newStatement, parentStatement);
+    PsiReplacementUtil.replaceStatement(parentStatement, newStatement);
   }
 
   private static void replaceMergeableImplicitIf(PsiJavaToken token)
@@ -147,7 +148,7 @@ public class MergeIfOrIntention extends Intention {
       newStatement.append("else ");
       newStatement.append(childElseBranch.getText());
     }
-    replaceStatement(newStatement.toString(), parentStatement);
+    PsiReplacementUtil.replaceStatement(parentStatement, newStatement.toString());
     childStatement.delete();
   }
 }

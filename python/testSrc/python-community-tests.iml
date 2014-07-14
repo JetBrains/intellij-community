@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="spellchecker" scope="TEST" />
     <orderEntry type="module" module-name="python-ide-community" />
     <orderEntry type="module" module-name="python-helpers" scope="RUNTIME" />
+    <orderEntry type="library" name="Groovy" level="project" />
   </component>
 </module>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
-
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.writeTypeParameters;
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeType;
 
 /**
  * @author Max Medvedev
@@ -165,7 +162,7 @@ public class SetterWriter {
   private void processTypeParameters(PsiType parameterType) {
     //type parameters
     if (mySetter.hasTypeParameters()) {
-      writeTypeParameters(myBuffer, mySetter, myClassNameProvider);
+      GenerationUtil.writeTypeParameters(myBuffer, mySetter, myClassNameProvider);
     }
 
     if (parameterType instanceof PsiPrimitiveType) {
@@ -183,7 +180,7 @@ public class SetterWriter {
       myBuffer.append("Value");
       if (!parameterType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
         myBuffer.append(" extends ");
-        writeType(myBuffer, parameterType, myClass, myClassNameProvider);
+        TypeWriter.writeType(myBuffer, parameterType, myClass, myClassNameProvider);
       }
       myBuffer.append('>');
       myBuffer.append("Value ");

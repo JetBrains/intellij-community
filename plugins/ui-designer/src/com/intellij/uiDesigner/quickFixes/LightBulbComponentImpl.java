@@ -50,7 +50,7 @@ final class LightBulbComponentImpl extends JComponent{
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         myManager.showIntentionPopup();
         return true;
       }

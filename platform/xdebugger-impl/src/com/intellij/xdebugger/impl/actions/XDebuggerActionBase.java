@@ -39,8 +39,7 @@ public abstract class XDebuggerActionBase extends AnAction implements AnAction.T
     Presentation presentation = event.getPresentation();
     boolean hidden = isHidden(event);
     if (hidden) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
+      presentation.setEnabledAndVisible(false);
       return;
     }
 
@@ -100,7 +99,7 @@ public abstract class XDebuggerActionBase extends AnAction implements AnAction.T
   }
 
   protected boolean isHidden(AnActionEvent event) {
-    final Project project = event.getData(CommonDataKeys.PROJECT);
+    final Project project = event.getProject();
     if (project != null) {
       for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
         if (!getHandler(support).isHidden(project, event)) {

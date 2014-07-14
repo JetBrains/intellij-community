@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbAware;
@@ -32,7 +33,6 @@ import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.JavaDummyHolderFactory;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -57,8 +57,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author max
  */
 public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
-  private PsiElementFinder[] myElementFinders; //benign data race
-  private final PsiNameHelper myNameHelper;
+  private volatile PsiElementFinder[] myElementFinders;
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
   private volatile SoftReference<ConcurrentMap<String, PsiPackage>> myPackageCache;
   private final Project myProject;
@@ -70,7 +69,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
                            MessageBus bus) {
     myProject = project;
     myFileManager = javaFileManager;
-    myNameHelper = new PsiNameHelperImpl(this);
     myConstantEvaluationHelper = new PsiConstantEvaluationHelperImpl();
 
     final PsiModificationTracker modificationTracker = psiManager.getModificationTracker();
@@ -91,7 +89,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     }
 
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
-    JavaElementType.ANNOTATION.getIndex(); // Initialize stubs.
   }
 
   @Override
@@ -178,8 +175,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   @Override
   public PsiPackage findPackage(@NotNull String qualifiedName) {
-    SoftReference<ConcurrentMap<String, PsiPackage>> ref = myPackageCache;
-    ConcurrentMap<String, PsiPackage> cache = ref == null ? null : ref.get();
+    ConcurrentMap<String, PsiPackage> cache = SoftReference.dereference(myPackageCache);
     if (cache == null) {
       myPackageCache = new SoftReference<ConcurrentMap<String, PsiPackage>>(cache = new ConcurrentHashMap<String, PsiPackage>());
     }
@@ -225,7 +221,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   @Override
   @NotNull
   public PsiNameHelper getNameHelper() {
-    return myNameHelper;
+    return PsiNameHelper.getInstance(myProject);
   }
 
   @NotNull
@@ -467,7 +463,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   @TestOnly
   @Override
-  public void setAssertOnFileLoadingFilter(@NotNull final VirtualFileFilter filter) {
-    ((PsiManagerImpl)PsiManager.getInstance(myProject)).setAssertOnFileLoadingFilter(filter);
+  public void setAssertOnFileLoadingFilter(@NotNull final VirtualFileFilter filter, Disposable parentDisposable) {
+    ((PsiManagerImpl)PsiManager.getInstance(myProject)).setAssertOnFileLoadingFilter(filter, parentDisposable);
   }
 }

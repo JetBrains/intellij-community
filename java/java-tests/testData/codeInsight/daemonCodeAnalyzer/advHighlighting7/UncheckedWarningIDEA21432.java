@@ -1,7 +1,6 @@
-
 import java.util.Map;
 
-public class MissingWarning {
+class MissingWarning {
 
   static final Map<String, String> VALID_VALUES_BY_KEY = <warning descr="Unchecked generics array creation for varargs parameter">newExceptionOnNullHashMap</warning>(
     "Invalid key",

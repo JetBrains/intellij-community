@@ -67,7 +67,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   private final InspectionToolRegistrar myRegistrar;
   private final SchemesManager<Profile, InspectionProfileImpl> mySchemesManager;
   private final AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
-  private final SeverityRegistrar mySeverityRegistrar;
+  private final SeverityRegistrar mySeverityRegistrar = new SeverityRegistrar();
 
   protected static final Logger LOG = Logger.getInstance("#com.intellij.profile.DefaultProfileManager");
 
@@ -77,37 +77,36 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
 
   public InspectionProfileManagerImpl(InspectionToolRegistrar registrar, SchemesManagerFactory schemesManagerFactory) {
     myRegistrar = registrar;
-    mySeverityRegistrar = new SeverityRegistrar();
     registerProvidedSeverities();
 
     SchemeProcessor<InspectionProfileImpl> processor = new BaseSchemeProcessor<InspectionProfileImpl>() {
       @Override
-      public InspectionProfileImpl readScheme(final Document document) {
+      public InspectionProfileImpl readScheme(@NotNull final Document document) {
         InspectionProfileImpl profile = new InspectionProfileImpl(InspectionProfileLoadUtil.getProfileName(document), myRegistrar, InspectionProfileManagerImpl.this);
         read(profile, document.getRootElement());
         return profile;
       }
 
       @Override
-      public boolean shouldBeSaved(final InspectionProfileImpl scheme) {
+      public boolean shouldBeSaved(@NotNull final InspectionProfileImpl scheme) {
         return scheme.wasInitialized();
       }
 
 
       @Override
-      public Document writeScheme(final InspectionProfileImpl scheme) throws WriteExternalException {
+      public Document writeScheme(@NotNull final InspectionProfileImpl scheme) throws WriteExternalException {
         return scheme.saveToDocument();
       }
 
       @Override
-      public void onSchemeAdded(final InspectionProfileImpl scheme) {
+      public void onSchemeAdded(@NotNull final InspectionProfileImpl scheme) {
         updateProfileImpl(scheme);
         fireProfileChanged(scheme);
         onProfilesChanged();
       }
 
       @Override
-      public void onSchemeDeleted(final InspectionProfileImpl scheme) {
+      public void onSchemeDeleted(@NotNull final InspectionProfileImpl scheme) {
         onProfilesChanged();
       }
 

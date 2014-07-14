@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,72 +26,6 @@ import java.util.List;
 public class EquivalenceChecker {
 
   private EquivalenceChecker() {}
-
-  public static boolean modifierListsAreEquivalent(
-    @Nullable PsiModifierList list1, @Nullable PsiModifierList list2) {
-    if (list1 == null) {
-      return list2 == null;
-    }
-    else if (list2 == null) {
-      return false;
-    }
-    final PsiAnnotation[] annotations = list1.getAnnotations();
-    for (PsiAnnotation annotation : annotations) {
-      final String qualifiedName = annotation.getQualifiedName();
-      if (qualifiedName == null) {
-        return false;
-      }
-      if (list2.findAnnotation(qualifiedName) == null) {
-        return false;
-      }
-    }
-    if (list1.hasModifierProperty(PsiModifier.ABSTRACT) &&
-        !list2.hasModifierProperty(PsiModifier.ABSTRACT)) {
-      return false;
-    }
-    if (list1.hasModifierProperty(PsiModifier.FINAL) &&
-        !list2.hasModifierProperty(PsiModifier.FINAL)) {
-      return false;
-    }
-    if (list1.hasModifierProperty(PsiModifier.NATIVE) &&
-        !list2.hasModifierProperty(PsiModifier.NATIVE)) {
-      return false;
-    }
-    if (list1.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
-        !list2.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-      return false;
-    }
-    if (list1.hasModifierProperty(PsiModifier.PRIVATE) &&
-        !list2.hasModifierProperty(PsiModifier.PRIVATE)) {
-      return false;
-    }
-    if (list1.hasModifierProperty(PsiModifier.PROTECTED) &&
-        !list2.hasModifierProperty(PsiModifier.PROTECTED)) {
-      return false;
-    }
-    if (list1.hasModifierProperty(PsiModifier.PUBLIC) &&
-        !list2.hasModifierProperty(PsiModifier.PUBLIC)) {
-      return false;
-    }
-    if (list1.hasModifierProperty(PsiModifier.STATIC) &&
-        !list2.hasModifierProperty(PsiModifier.STATIC)) {
-      return false;
-    }
-    if (list1.hasModifierProperty(PsiModifier.STRICTFP) &&
-        !list2.hasModifierProperty(PsiModifier.STRICTFP)) {
-      return false;
-    }
-    if (list1.hasModifierProperty(PsiModifier.SYNCHRONIZED) &&
-        !list2.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
-      return false;
-    }
-    if (list1.hasModifierProperty(PsiModifier.TRANSIENT) &&
-        !list2.hasModifierProperty(PsiModifier.TRANSIENT)) {
-      return false;
-    }
-    return !(list1.hasModifierProperty(PsiModifier.VOLATILE) &&
-             !list2.hasModifierProperty(PsiModifier.VOLATILE));
-  }
 
   public static boolean statementsAreEquivalent(@Nullable PsiStatement statement1, @Nullable PsiStatement statement2) {
     if (statement1 == null) {
@@ -658,7 +592,7 @@ public class EquivalenceChecker {
       }
     }
     else {
-      return element2 == null;
+      return false; // incomplete code
     }
     if (element1 instanceof PsiMember) {
       final PsiMember member1 = (PsiMember)element1;

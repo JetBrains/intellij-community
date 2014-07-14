@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
@@ -26,6 +28,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.VariableSearchUtils;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class UnnecessaryThisInspection extends BaseInspection {
+public class UnnecessaryThisInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreAssignments = false;
@@ -85,7 +88,7 @@ public class UnnecessaryThisInspection extends BaseInspection {
       if (newExpression == null) {
         return;
       }
-      replaceExpression(thisExpression, newExpression);
+      PsiReplacementUtil.replaceExpression(thisExpression, newExpression);
     }
   }
 
@@ -132,6 +135,9 @@ public class UnnecessaryThisInspection extends BaseInspection {
         }
         final PsiVariable variable = (PsiVariable)target;
         if (!VariableSearchUtils.variableNameResolvesToTarget(referenceName, variable, expression)) {
+          return;
+        }
+        if (variable instanceof PsiField && HighlightUtil.isIllegalForwardReferenceToField(expression, (PsiField)variable, true) != null) {
           return;
         }
         registerError(thisExpression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);

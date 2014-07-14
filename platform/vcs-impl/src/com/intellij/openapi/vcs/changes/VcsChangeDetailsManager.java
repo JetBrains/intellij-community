@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ public class VcsChangeDetailsManager {
       if (! convertor.canComment(change)) continue;
       RefreshablePanel panel = convertor.comment(change, parent, myQueue);
       if (panel != null) {
-        panels.add(new Pair<String, RefreshablePanel>("Diff", panel));
+        panels.add(Pair.create("Diff", panel));
         break;  // only one of dedicated for now
       }
     }
@@ -102,7 +102,7 @@ public class VcsChangeDetailsManager {
       if (provider.canComment(change)) {
         RefreshablePanel panel = provider.comment(change, parent, myQueue);
         if (panel != null) {
-          panels.add(new Pair<String, RefreshablePanel>(provider.getName(), panel));
+          panels.add(Pair.create(provider.getName(), panel));
         }
       }
     }

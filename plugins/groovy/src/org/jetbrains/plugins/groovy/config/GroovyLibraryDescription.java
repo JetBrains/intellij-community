@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ import java.util.Set;
 */
 public class GroovyLibraryDescription extends CustomLibraryDescription {
   private static final String GROOVY_FRAMEWORK_NAME = "Groovy";
-  private String myEnvVariable;
+  private final String myEnvVariable;
   private final Set<? extends LibraryKind> myLibraryKinds;
   private final String myFrameworkName;
 
@@ -141,7 +141,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
 
   @Nullable
   private static VirtualFile findFile(String path) {
-    if (path != null && path.length() > 0) {
+    if (path != null && !path.isEmpty()) {
       return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path));
     }
     return null;

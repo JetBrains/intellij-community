@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.xml.util.ColorSampleLookupValue;
+import com.intellij.xml.util.ColorMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -137,7 +137,7 @@ public class JavaPreviewHintProvider implements PreviewHintProvider {
         if (psiElement instanceof PsiField) {
           if ("java.awt.Color".equals(((PsiField)psiElement).getContainingClass().getQualifiedName())) {
             final String colorName = ((PsiField)psiElement).getName().toLowerCase().replace("_", "");
-            final String hex = ColorSampleLookupValue.getHexCodeForColorName(colorName);
+            final String hex = ColorMap.getHexCodeForColorName(colorName);
             return new ColorPreviewComponent(Color.decode("0x" + hex.substring(1)));
           }
         }

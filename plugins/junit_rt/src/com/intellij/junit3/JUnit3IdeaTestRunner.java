@@ -37,7 +37,7 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
     super(DeafStream.DEAF_PRINT_STREAM);
   }
 
-  public int startRunnerWithArgs(String[] args, ArrayList listeners, boolean sendTree) {
+  public int startRunnerWithArgs(String[] args, ArrayList listeners, String name, boolean sendTree) {
     myListeners = listeners;
     mySendTree = sendTree;
     if (sendTree) {
@@ -74,7 +74,7 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
     myTestsListener = new TestResultsSender(myRegistry);
   }
 
-  public Object getTestToStart(String[] args) {
+  public Object getTestToStart(String[] args, String name) {
     return TestRunnerUtil.getTestSuite(this, args);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.PomTransaction;
@@ -143,7 +142,8 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       final PomModelAspect aspect = transaction.getTransactionAspect();
       startTransaction(transaction);
       try{
-        myBlockedAspects.push(new Pair<PomModelAspect, PomTransaction>(aspect, transaction));
+        DebugUtil.startPsiModification(null);
+        myBlockedAspects.push(Pair.create(aspect, transaction));
 
         final PomModelEvent event;
         try{
@@ -196,6 +196,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         catch (Throwable t) {
           throwables.add(t);
         }
+        finally {
+          DebugUtil.finishPsiModification();
+        }
       }
     }
 
@@ -209,7 +212,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       final ListIterator<Pair<PomModelAspect, PomTransaction>> blocksIterator = myBlockedAspects.listIterator(myBlockedAspects.size());
       while (blocksIterator.hasPrevious()) {
         final Pair<PomModelAspect, PomTransaction> pair = blocksIterator.previous();
-        if (pomModelAspect == pair.getFirst() && // aspect dependance
+        if (pomModelAspect == pair.getFirst() && // aspect dependence
             PsiTreeUtil.isAncestor(pair.getSecond().getChangeScope(), transaction.getChangeScope(), false) &&
             // target scope contain current
             getContainingFileByTree(pair.getSecond().getChangeScope()) != null  // target scope physical
@@ -231,7 +234,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       final int oldLength = containingFileByTree.getTextLength();
       boolean success = synchronizer.commitTransaction(document);
       if (success) {
-        BlockSupportImpl.sendAfterChildrenChangedEvent((PsiManagerImpl)PsiManager.getInstance(myProject), (PsiFileImpl)containingFileByTree, oldLength, true);
+        BlockSupportImpl.sendAfterChildrenChangedEvent((PsiManagerImpl)PsiManager.getInstance(myProject), containingFileByTree, oldLength, true);
       }
     }
     if (containingFileByTree != null) {
@@ -251,30 +254,25 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       return;
     }
 
-    String newText = changedFile.getNode().getText();
+    CharSequence newText = changedFile.getNode().getChars();
     for (final PsiFile file : allFiles) {
       if (file != changedFile) {
         FileElement fileElement = ((PsiFileImpl)file).getTreeElement();
         if (fileElement != null) {
-          String oldText = fileElement.getText();
-          try {
-            reparseFile(file, newText, oldText);
-          }
-          finally {
-            TextBlock.get(file).clear();
-          }
+          CharSequence oldText = fileElement.getChars();
+          reparseFile(file, newText, oldText);
         }
       }
     }
   }
 
-  private void reparseFile(final PsiFile file, String newText, String oldText) {
+  private void reparseFile(final PsiFile file, CharSequence newText, CharSequence oldText) {
     if (oldText.equals(newText)) return;
 
     PsiToDocumentSynchronizer synchronizer =((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).getSynchronizer();
-    int changeStart = StringUtil.commonPrefixLength(oldText, newText);
-    int changeEnd = oldText.length() - StringUtil.commonSuffixLength(oldText, newText);
-    TextRange changedPsiRange = DocumentCommitProcessor.getChangedPsiRange(file, changeStart, changeEnd, newText.length());
+    TextRange changedPsiRange = DocumentCommitProcessor.getChangedPsiRange(file, oldText, newText);
+    if (changedPsiRange == null) return;
+
     final DiffLog log = BlockSupport.getInstance(myProject).reparseRange(file, changedPsiRange, newText, new EmptyProgressIndicator());
     synchronizer.setIgnorePsiEvents(true);
     try {
@@ -296,19 +294,19 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     }
   }
 
-  private void startTransaction(final PomTransaction transaction) {
+  private void startTransaction(@NotNull PomTransaction transaction) {
     final ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if(progressIndicator != null) progressIndicator.startNonCancelableSection();
     final PsiDocumentManagerBase manager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     final PsiElement changeScope = transaction.getChangeScope();
-    BlockSupportImpl.sendBeforeChildrenChangeEvent((PsiManagerImpl)PsiManager.getInstance(myProject), transaction.getChangeScope(), true);
     LOG.assertTrue(changeScope != null);
+    BlockSupportImpl.sendBeforeChildrenChangeEvent((PsiManagerImpl)PsiManager.getInstance(myProject), changeScope, true);
     final PsiFile containingFileByTree = getContainingFileByTree(changeScope);
 
     Document document = containingFileByTree == null ? null : manager.getCachedDocument(containingFileByTree);
     if(document != null) {
-      synchronizer.startTransaction(myProject, document, transaction.getChangeScope());
+      synchronizer.startTransaction(myProject, document, changeScope);
     }
   }
 

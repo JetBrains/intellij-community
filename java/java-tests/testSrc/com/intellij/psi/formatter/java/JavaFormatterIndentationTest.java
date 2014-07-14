@@ -343,8 +343,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "            @Override\n" +
       "            public void run() {\n" +
       "            }\n" +
-      "        }\n" +
-      ");"
+      "        });"
     );
     
     doMethodTest(
@@ -367,8 +366,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "            @Override\n" +
       "            public void run() {\n" +
       "            }\n" +
-      "        }\n" +
-      ");"
+      "        });"
     );
   }
 
@@ -395,8 +393,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "        @Override\n" +
       "        public void run() {\n" +
       "        }\n" +
-      "    }\n" +
-      ");"
+      "    });"
     );
 
     doMethodTest(
@@ -419,8 +416,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "        @Override\n" +
       "        public void run() {\n" +
       "        }\n" +
-      "    }\n" +
-      ");"
+      "    });"
     );
 
     doMethodTest(

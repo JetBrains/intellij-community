@@ -45,7 +45,7 @@ class IdeaHelpContentViewUI extends BasicContentViewerUI{
   protected void linkActivated(URL u){
     String url=u.toExternalForm();
     if(url.startsWith("http") || url.startsWith("ftp")){
-      BrowserUtil.launchBrowser(url);
+      BrowserUtil.browse(url);
     } else{
       super.linkActivated(u);
     }

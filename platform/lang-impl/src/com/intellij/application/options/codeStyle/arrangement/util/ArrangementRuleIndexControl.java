@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.util;
 
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -26,6 +27,7 @@ import java.awt.*;
  */
 public class ArrangementRuleIndexControl extends JPanel {
 
+  private boolean myIsError;
   private final int myDiameter;
   private final int myHeight;
 
@@ -75,13 +77,17 @@ public class ArrangementRuleIndexControl extends JPanel {
       return;
     }
     
-    g.setColor(UIUtil.getBorderColor());
+    g.setColor(myIsError ? JBColor.red : UIUtil.getBorderColor());
     Rectangle bounds = getBounds();
     ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     int y = Math.max(0, myBaseLine - myHeight - (myDiameter - myHeight) / 2);
     g.drawOval(0, y, myDiameter, myDiameter);
     
     g.drawChars(myChars, 0, myChars.length, (bounds.width - myIndexWidth) / 2, myBaseLine);
+  }
+
+  public void setError(boolean isError) {
+    myIsError = isError;
   }
 
   public void setBaseLine(int baseLine) {

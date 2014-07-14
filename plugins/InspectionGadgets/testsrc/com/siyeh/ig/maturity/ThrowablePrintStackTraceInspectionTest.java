@@ -37,6 +37,16 @@ public class ThrowablePrintStackTraceInspectionTest extends LightInspectionTestC
                  "}");
   }
 
+  public void testPrintStacktraceOverridden() throws Exception {
+    addEnvironmentClass("public class FException extends Exception {\n" +
+                        "    @Override\n" +
+                        "    public void printStackTrace() {\n" +
+                        "        super.printStackTrace();\n" +
+                        "    }\n" +
+                        "}\n");
+    doStatementTest("new FException()./*Call to 'printStackTrace()' should probably be replaced with more robust logging*/printStackTrace/**/();");
+  }
+
   @Override
   protected InspectionProfileEntry getInspection() {
     return new ThrowablePrintStackTraceInspection();

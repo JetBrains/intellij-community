@@ -1,8 +1,7 @@
 
 <html>
 <body>
-Reports any Hibernate resource which is not opened in a <b>try</b>
-block and closed in the corresponding <b>finally</b> block. Such resources may
+Reports any Hibernate resource which is not safely closed in a <b>finally</b> block. Such resources may
 be inadvertently leaked if an exception is thrown before the resource is closed. Hibernate resources reported
 by this inspection include <b>org.hibernate.Session</b>.
 <!-- tooltip end -->

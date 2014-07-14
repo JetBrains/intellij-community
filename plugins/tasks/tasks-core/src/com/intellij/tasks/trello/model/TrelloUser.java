@@ -19,9 +19,6 @@ package com.intellij.tasks.trello.model;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * @author Mikhail Golubev
@@ -30,9 +27,9 @@ import java.util.List;
 @Tag("TrelloUser")
 public class TrelloUser extends TrelloModel {
 
-  private String username, fullName, initials, email;
-  private List<String> idBoards, idOrganizations;
-  private String url;
+  public static final String REQUIRED_FIELDS = "username";
+
+  private String username;
 
   /**
    * Serialization constructor
@@ -61,35 +58,5 @@ public class TrelloUser extends TrelloModel {
   @NotNull
   public String getUsername() {
     return username;
-  }
-
-  @NotNull
-  public String getFullName() {
-    return fullName;
-  }
-
-  @NotNull
-  public String getInitials() {
-    return initials;
-  }
-
-  @Nullable
-  public String getEmail() {
-    return email;
-  }
-
-  @NotNull
-  public List<String> getIdBoards() {
-    return idBoards;
-  }
-
-  @NotNull
-  public List<String> getIdOrganizations() {
-    return idOrganizations;
-  }
-
-  @NotNull
-  public String getUrl() {
-    return url;
   }
 }

@@ -18,26 +18,13 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Map;
 
 class HighlightersRecycler {
-  private final MultiMap<TextRange, RangeHighlighter> incinerator = new MultiMap<TextRange, RangeHighlighter>(){
-    @Override
-    protected Map<TextRange, Collection<RangeHighlighter>> createMap() {
-      return new THashMap<TextRange, Collection<RangeHighlighter>>();
-    }
-
-    @Override
-    protected Collection<RangeHighlighter> createCollection() {
-      return new SmartList<RangeHighlighter>();
-    }
-  };
+  private final MultiMap<TextRange, RangeHighlighter> incinerator = MultiMap.createSmartList();
 
   void recycleHighlighter(@NotNull RangeHighlighter highlighter) {
     if (highlighter.isValid()) {

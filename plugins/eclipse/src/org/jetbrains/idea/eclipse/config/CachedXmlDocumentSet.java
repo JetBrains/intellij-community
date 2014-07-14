@@ -23,7 +23,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.io.fs.IFile;
 import org.jdom.Document;
 import org.jdom.JDOMException;
 import org.jdom.output.EclipseJDOMUtil;
@@ -44,8 +43,12 @@ public class CachedXmlDocumentSet implements FileSet {
     this.project = project;
   }
 
-  public Document read (final String name) throws IOException, JDOMException {
-    return (Document)load(name).clone();
+  public Document read(final String name) throws IOException, JDOMException {
+    return read(name, true);
+  }
+
+  public Document read(final String name, final boolean refresh) throws IOException, JDOMException {
+    return (Document)load(name, refresh).clone();
   }
 
   public void write(Document document, String name) throws IOException {
@@ -66,13 +69,18 @@ public class CachedXmlDocumentSet implements FileSet {
 
   public boolean exists(String name) {
     assertKnownName(name);
-    return !deletedContent.contains(name) && getVFile(name) != null;
+    return !deletedContent.contains(name) && getVFile(name, false) != null;
   }
 
   @Nullable
   protected VirtualFile getVFile(final String name) {
+    return getVFile(name, true);
+  }
+
+  @Nullable
+  protected VirtualFile getVFile(final String name, boolean refresh) {
     final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(getParent(name), name));
-    if (file != null) {
+    if (file != null && refresh) {
       file.refresh(false, true);
       if (!file.isValid()) return null;
     }
@@ -107,7 +115,7 @@ public class CachedXmlDocumentSet implements FileSet {
     }
   }
 
-  protected Document load(final String name) throws IOException, JDOMException {
+  protected Document load(final String name, boolean refresh) throws IOException, JDOMException {
     assertKnownName(name);
     final Document logical = modifiedContent.get(name);
     if (logical != null) {
@@ -116,7 +124,7 @@ public class CachedXmlDocumentSet implements FileSet {
 
     Document physical = savedContent.get(name);
     if (physical == null) {
-      final VirtualFile vFile = deletedContent.contains(name) ? null : getVFile(name);
+      final VirtualFile vFile = deletedContent.contains(name) ? null : getVFile(name, refresh);
       if (vFile == null) {
         throw new IOException(name + ": file does not exist");
       }
@@ -136,7 +144,7 @@ public class CachedXmlDocumentSet implements FileSet {
   public void preload() {
     for (String key : nameToDir.keySet()) {
       try {
-        load(key);
+        load(key, true);
       }
       catch (IOException ignore) {
       }

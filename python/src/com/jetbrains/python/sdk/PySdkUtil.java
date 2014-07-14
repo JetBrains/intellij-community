@@ -17,15 +17,18 @@ package com.jetbrains.python.sdk;
 
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.remotesdk.RemoteCredentials;
+import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -106,12 +109,11 @@ public class PySdkUtil {
    * Executes a process and returns its stdout and stderr outputs as lists of lines.
    * Waits for process for possibly limited duration.
    *
-   *
-   * @param homePath process run directory
-   * @param command  command to execute and its arguments
-   * @param addEnv   items are prepended to same-named values of inherited process environment.
-   * @param timeout  how many milliseconds to wait until the process terminates; non-positive means infinity.
-   * @param stdin    the data to write to the process standard input stream
+   * @param homePath      process run directory
+   * @param command       command to execute and its arguments
+   * @param addEnv        items are prepended to same-named values of inherited process environment.
+   * @param timeout       how many milliseconds to wait until the process terminates; non-positive means infinity.
+   * @param stdin         the data to write to the process standard input stream
    * @param needEOFMarker
    * @return a tuple of (stdout lines, stderr lines, exit_code), lines in them have line terminators stripped, or may be null.
    */
@@ -213,7 +215,7 @@ public class PySdkUtil {
   }
 
   public static boolean isRemote(@Nullable Sdk sdk) {
-    return sdk != null && sdk.getSdkAdditionalData() instanceof RemoteCredentials;
+    return sdk != null && sdk.getSdkAdditionalData() instanceof RemoteSdkAdditionalData;
   }
 
   public static boolean isElementInSkeletons(@NotNull final PsiElement element) {
@@ -223,7 +225,7 @@ public class PySdkUtil {
       if (virtualFile != null) {
         final Sdk sdk = PythonSdkType.getSdk(element);
         if (sdk != null) {
-          final VirtualFile skeletonsDir = PythonSdkType.findSkeletonsDir(sdk);
+          final VirtualFile skeletonsDir = findSkeletonsDir(sdk);
           if (skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, virtualFile, false)) {
             return true;
           }
@@ -231,5 +233,37 @@ public class PySdkUtil {
       }
     }
     return false;
+  }
+
+  public static String getRemoteSourcesLocalPath(String sdkHome) {
+    String sep = File.separator;
+
+    String basePath = PathManager.getSystemPath();
+    return basePath +
+           File.separator +
+           PythonSdkType.REMOTE_SOURCES_DIR_NAME +
+           sep +
+           FileUtil.toSystemIndependentName(sdkHome).hashCode() +
+           sep;
+  }
+
+  @Nullable
+  public static VirtualFile findSkeletonsDir(@NotNull final Sdk sdk) {
+    return findLibraryDir(sdk, PythonSdkType.SKELETON_DIR_NAME, PythonSdkType.BUILTIN_ROOT_TYPE);
+  }
+
+  @Nullable
+  public static VirtualFile findAnyRemoteLibrary(@NotNull final Sdk sdk) {
+    return findLibraryDir(sdk, PythonSdkType.REMOTE_SOURCES_DIR_NAME, OrderRootType.CLASSES);
+  }
+
+  private static VirtualFile findLibraryDir(Sdk sdk, String dirName, OrderRootType rootType) {
+    final VirtualFile[] virtualFiles = sdk.getRootProvider().getFiles(rootType);
+    for (VirtualFile virtualFile : virtualFiles) {
+      if (virtualFile.isValid() && virtualFile.getPath().contains(dirName)) {
+        return virtualFile;
+      }
+    }
+    return null;
   }
 }

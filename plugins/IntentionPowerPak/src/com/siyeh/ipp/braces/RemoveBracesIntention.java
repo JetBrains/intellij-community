@@ -18,6 +18,7 @@ package com.siyeh.ipp.braces;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.psi.util.FileTypeUtils;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,7 +65,7 @@ public class RemoveBracesIntention extends BaseBracesIntention {
     handleComments(blockStatement, codeBlock);
 
     final String text = statement.getText();
-    replaceStatement(text, blockStatement);
+    PsiReplacementUtil.replaceStatement(blockStatement, text);
   }
 
   private static void handleComments(PsiBlockStatement blockStatement, PsiCodeBlock codeBlock) {

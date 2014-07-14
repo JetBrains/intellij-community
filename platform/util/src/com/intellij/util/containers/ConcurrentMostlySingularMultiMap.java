@@ -28,7 +28,7 @@ public class ConcurrentMostlySingularMultiMap<K, V> extends MostlySingularMultiM
   @NotNull
   @Override
   protected Map<K, Object> createMap() {
-    return new ConcurrentHashMap<K, Object>();
+    return ContainerUtil.newConcurrentMap();
   }
 
   @Override

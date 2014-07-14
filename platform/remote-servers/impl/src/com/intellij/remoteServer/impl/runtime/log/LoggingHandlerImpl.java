@@ -1,6 +1,7 @@
 package com.intellij.remoteServer.impl.runtime.log;
 
 import com.intellij.execution.filters.BrowserHyperlinkInfo;
+import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
@@ -31,7 +32,12 @@ public class LoggingHandlerImpl implements LoggingHandler {
 
   @Override
   public void printHyperlink(@NotNull String url) {
-    myConsole.printHyperlink(url, new BrowserHyperlinkInfo(url));
+    printHyperlink(url, new BrowserHyperlinkInfo(url));
+  }
+
+  @Override
+  public void printHyperlink(@NotNull String text, HyperlinkInfo info) {
+    myConsole.printHyperlink(text, info);
   }
 
   public void printlnSystemMessage(@NotNull String s) {

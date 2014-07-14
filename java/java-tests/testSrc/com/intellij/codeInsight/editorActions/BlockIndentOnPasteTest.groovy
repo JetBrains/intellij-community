@@ -757,7 +757,7 @@ class Test {
     try {
       def offset = myFixture.editor.caretModel.offset
       def column = myFixture.editor.caretModel.logicalPosition.column
-      com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction  {
+      com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction project, {
         myFixture.editor.document.insertString(offset, toPaste)
         PasteHandler.indentBlock(project, myFixture.editor, offset, offset + toPaste.length(), column)
       }

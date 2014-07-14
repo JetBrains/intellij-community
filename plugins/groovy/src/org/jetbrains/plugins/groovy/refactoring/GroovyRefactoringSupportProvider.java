@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
 
   public static final GroovyRefactoringSupportProvider INSTANCE = new GroovyRefactoringSupportProvider();
 
+  @Override
   public boolean isSafeDeleteAvailable(@NotNull PsiElement element) {
     return element instanceof GrTypeDefinition ||
            element instanceof GrField ||
@@ -59,11 +60,13 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
   /**
    * @return handler for introducing local variables in Groovy
    */
+  @Override
   @Nullable
   public RefactoringActionHandler getIntroduceVariableHandler() {
     return new GrIntroduceVariableHandler();
   }
 
+  @Override
   @Nullable
   public RefactoringActionHandler getExtractMethodHandler() {
     return new GroovyExtractMethodHandler();

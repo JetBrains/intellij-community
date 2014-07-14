@@ -16,6 +16,7 @@
 package com.siyeh.ipp.whileloop;
 
 import com.intellij.psi.*;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -44,7 +45,7 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
       if (body != null) {
         replacementText.append(body.getText());
       }
-      replaceStatement(replacementText.toString(), doWhileStatement);
+      PsiReplacementUtil.replaceStatement(doWhileStatement, replacementText.toString());
       return;
     }
     final boolean noBraces = !(parent instanceof PsiCodeBlock);
@@ -136,10 +137,10 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
       replacementText.append('}');
     }
     if (noBraces) {
-      replaceStatement(replacementText.toString(), (PsiStatement)parent);
+      PsiReplacementUtil.replaceStatement((PsiStatement)parent, replacementText.toString());
     }
     else {
-      replaceStatement(replacementText.toString(), doWhileStatement);
+      PsiReplacementUtil.replaceStatement(doWhileStatement, replacementText.toString());
     }
   }
 }

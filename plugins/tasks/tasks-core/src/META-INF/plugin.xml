@@ -36,7 +36,8 @@
       <action id="tasks.open.in.browser" class="com.intellij.tasks.actions.OpenTaskInBrowserAction" text="Open in _Browser">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift B"/>
       </action>
-      <action id="tasks.analyze.stacktrace" class="com.intellij.tasks.actions.AnalyzeTaskStacktraceAction" text="Analyze _Stacktrace From Task..."/>
+      <action id="tasks.analyze.stacktrace" class="com.intellij.tasks.actions.AnalyzeTaskStacktraceAction"
+              text="Analyze _Stacktrace From Task..."/>
       <separator/>
       <action id="tasks.configure.servers" class="com.intellij.tasks.actions.ConfigureServersAction" text="Configure Servers..."/>
     </group>
@@ -54,10 +55,18 @@
       </action>
     </group>
 
+    <group id="tasks.internal" text="_Tasks" internal="true" popup="true">
+      <action id="show.certificate" class="com.intellij.tasks.actions.ShowCertificateInfoAction" text="_Show certificate dialog"/>
+      <action id="deadlock.with.certificate.dialog" class="com.intellij.tasks.actions.DeadlockWithCertificateDialogAction"
+              text="_Deadlock IDE with certificate dialog"/>
+      <add-to-group group-id="Internal"/>
+    </group>
+
     <group id="tasks.and.contexts" text="_Tasks &amp; Contexts" popup="true">
       <reference ref="task.actions"/>
       <separator/>
       <reference ref="working.context"/>
+      <!-- <reference ref="tasks.util"/> -->
     </group>
 
     <group id="tasks.group">
@@ -72,7 +81,7 @@
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift T"/>
       </action>
       <add-to-group group-id="MainToolBar" anchor="last"/>
-      <add-to-group group-id="NavBarToolBar" anchor="last"/>
+      <add-to-group group-id="NavBarToolBarOthers" anchor="last"/>
     </group>
 
     <!--
@@ -112,6 +121,7 @@
     <tasks.contextProvider implementation="com.intellij.tasks.context.ProjectViewContextProvider"/>
     <tasks.contextProvider implementation="com.intellij.tasks.context.RunConfigurationsContextProvider"/>
     <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerBreakpointsContextProvider"/>
+    <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerWatchesProvider"/>
 
     <tasks.repositoryType implementation="com.intellij.tasks.jira.JiraRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.youtrack.YouTrackRepositoryType"/>
@@ -123,6 +133,8 @@
     <tasks.repositoryType implementation="com.intellij.tasks.mantis.MantisRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.generic.GenericRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.trello.TrelloRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.gitlab.GitlabRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.bugzilla.BugzillaRepositoryType"/>
 
     <!-- JQL support -->
     <fileTypeFactory implementation="com.intellij.tasks.jira.jql.JqlFileTypeFactory"/>

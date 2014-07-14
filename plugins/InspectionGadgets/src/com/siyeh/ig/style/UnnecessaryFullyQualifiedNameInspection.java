@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -42,7 +43,7 @@ import java.util.List;
 /**
  * @see com.siyeh.ipp.fqnames.ReplaceFullyQualifiedNameWithImportIntention
  */
-public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
+public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings("PublicField")
   public boolean m_ignoreJavadoc = false; // left here to prevent changes to project files.

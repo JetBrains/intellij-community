@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,12 +23,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
  * Represents a group of actions.
+ *
+ * @see com.intellij.openapi.actionSystem.DefaultActionGroup
+ * @see com.intellij.openapi.actionSystem.ComputableActionGroup
  */
 public abstract class ActionGroup extends AnAction {
   private boolean myPopup;
@@ -169,17 +172,11 @@ public abstract class ActionGroup extends AnAction {
 
     boolean dumbAware = super.isDumbAware();
     if (dumbAware) {
-      myDumbAware = Boolean.valueOf(dumbAware);
+      myDumbAware = Boolean.TRUE;
     } else {
       if (myDumbAware == null) {
-        try {
-          Method updateMethod = getClass().getMethod("update", AnActionEvent.class);
-          Class<?> declaringClass = updateMethod.getDeclaringClass();
-          myDumbAware = AnAction.class.equals(declaringClass) || ActionGroup.class.equals(declaringClass);
-        }
-        catch (NoSuchMethodException e) {
-          myDumbAware = Boolean.FALSE;
-        }
+        Class<?> declaringClass = ReflectionUtil.getMethodDeclaringClass(getClass(), "update", AnActionEvent.class);
+        myDumbAware = AnAction.class.equals(declaringClass) || ActionGroup.class.equals(declaringClass);
       }
     }
 

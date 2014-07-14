@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ public class GroovyCompilerWorkspaceConfiguration implements PersistentStateComp
   boolean transformsOk = JpsGroovySettings.DEFAULT_TRANSFORMS_OK;
   final ExcludedEntriesConfiguration myExcludeFromStubGeneration = new ExcludedEntriesConfiguration();
 
+  @Override
   public JpsGroovySettings getState() {
     final JpsGroovySettings bean = new JpsGroovySettings();
     bean.heapSize = myHeapSize;
@@ -44,6 +45,7 @@ public class GroovyCompilerWorkspaceConfiguration implements PersistentStateComp
     return bean;
   }
 
+  @Override
   public void loadState(JpsGroovySettings state) {
     myHeapSize = state.heapSize;
     myInvokeDynamic = state.invokeDynamic;
@@ -52,6 +54,7 @@ public class GroovyCompilerWorkspaceConfiguration implements PersistentStateComp
     myExcludeFromStubGeneration.readExternal(state.excludes);
   }
 
+  @Override
   public void dispose() {
     Disposer.dispose(myExcludeFromStubGeneration);
   }

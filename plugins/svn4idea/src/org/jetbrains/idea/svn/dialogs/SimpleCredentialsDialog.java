@@ -190,6 +190,10 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
     return isOK() && myAllowSave && myAllowSaveCheckBox != null && myAllowSaveCheckBox.isSelected();
   }
 
+  public void setSaveEnabled(boolean enabled) {
+    myAllowSaveCheckBox.setEnabled(enabled);
+  }
+
   public void insertUpdate(DocumentEvent e) {
     updateOKButton();
   }

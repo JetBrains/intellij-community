@@ -50,11 +50,9 @@ public abstract class StructuredDocStringBase implements StructuredDocString {
   public static String[] RAISES_TAGS = new String[] { "raises", "raise", "except", "exception" };
   public static String[] RETURN_TAGS = new String[] { "return", "returns" };
 
-  public static String PARAMETER = "parameter";
+  public enum ReferenceType {PARAMETER, PARAMETER_TYPE, KEYWORD, VARIABLE, CLASS_VARIABLE, INSTANCE_VARIABLE}
+
   public static String TYPE = "type";
-  public static String PARAMETER_TYPE = "parameter_type";
-  public static String KEYWORD = "keyword";
-  public static String VARIABLE = "variable";
 
   protected StructuredDocStringBase(@NotNull String docStringText, String tagPrefix) {
     final Substring docString = new Substring(docStringText);

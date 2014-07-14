@@ -30,6 +30,8 @@ import javax.swing.*;
  */
 public class VcsLogContentProvider implements ChangesViewContentProvider, NotNullFunction<Project, Boolean> {
 
+  public static final String TAB_NAME = "Log";
+
   @NotNull private final VcsLogManager myLogManager;
 
   public VcsLogContentProvider(@NotNull VcsLogManager logManager) {

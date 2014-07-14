@@ -45,7 +45,7 @@ public class ConfigureTemplateDirectoriesAction implements LocalQuickFix, LowPri
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        ShowSettingsUtil.getInstance().showSettingsDialog(project, "Template Languages");
+        ShowSettingsUtil.getInstance().showSettingsDialog(project, "Project Structure");
       }
     }, ModalityState.NON_MODAL);
   }

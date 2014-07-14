@@ -73,7 +73,7 @@ public class NameSuggestionsField extends JPanel {
       myComponent = createTextFieldForName(nameSuggestions, fileType);
     }
     else {
-      final ComboBox combobox = new ComboBox(nameSuggestions,-1);
+      final ComboBox combobox = new ComboBox(nameSuggestions);
       combobox.setSelectedIndex(0);
       setupComboBox(combobox, fileType);
       myComponent = combobox;
@@ -103,7 +103,7 @@ public class NameSuggestionsField extends JPanel {
           int myOffset = offset - wordRangeStartOffset;
           myEditor.getCaretModel().moveToOffset(myOffset);
           TextRange selected = new TextRange(Math.max(0, selectionModel.getSelectionStart() - wordRangeStartOffset),
-                                             selectionModel.getSelectionEnd() - wordRangeStartOffset);
+                                             Math.max(0, selectionModel.getSelectionEnd() - wordRangeStartOffset));
           selected = selected.intersection(new TextRange(0, myEditor.getDocument().getTextLength()));
           if (selectionModel.hasSelection() && selected != null && !selected.isEmpty()) {
             myEditor.getSelectionModel().setSelection(selected.getStartOffset(), selected.getEndOffset());

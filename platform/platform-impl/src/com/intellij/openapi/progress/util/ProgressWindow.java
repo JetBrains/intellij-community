@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -613,6 +613,11 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
                 ? new MyDialogWrapper(myParentWindow, myShouldShowCancel)
                 : new MyDialogWrapper(myProject, myShouldShowCancel);
       myPopup.setUndecorated(true);
+      if (SystemInfo.isAppleJvm) {
+        // With Apple JDK we look for MacMessage parent by the window title.
+        // Let's set just the title as the window title for simplicity.
+        myPopup.setTitle(myTitle);
+      }
       if (myPopup.getPeer() instanceof DialogWrapperPeerImpl) {
         ((DialogWrapperPeerImpl)myPopup.getPeer()).setAutoRequestFocus(false);
       }
@@ -663,6 +668,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
         }
       }
 
+      @NotNull
       @Override
       protected DialogWrapperPeer createPeer(@NotNull final Component parent, final boolean canBeParent) {
         if (System.getProperty("vintage.progress") == null) {
@@ -678,11 +684,13 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
         }
       }
 
+      @NotNull
       @Override
       protected DialogWrapperPeer createPeer(final boolean canBeParent, final boolean applicationModalIfPossible) {
         return createPeer(null, canBeParent, applicationModalIfPossible);
       }
 
+      @NotNull
       @Override
       protected DialogWrapperPeer createPeer(final Window owner, final boolean canBeParent, final boolean applicationModalIfPossible) {
         if (System.getProperty("vintage.progress") == null) {
@@ -698,6 +706,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
         }
       }
 
+      @NotNull
       @Override
       protected DialogWrapperPeer createPeer(final Project project, final boolean canBeParent) {
         if (System.getProperty("vintage.progress") == null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -639,7 +639,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         if (!cache.isEmpty()) {
           debug("Loading incoming changes for " + cache.getLocation());
           final List<CommittedChangeList> incomingChanges = cache.loadIncomingChanges();
-          byVcs.putValue(cache.getVcs(), new Pair<RepositoryLocation, List<CommittedChangeList>>(cache.getLocation(), incomingChanges));
+          byVcs.putValue(cache.getVcs(), Pair.create(cache.getLocation(), incomingChanges));
         }
       }
       catch (IOException e) {
@@ -688,14 +688,13 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       if (lists.size() == 1) {
         return lists.get(0);
       }
-      final CommittedChangeList victim = lists.get(0) instanceof ReceivedChangeList ? (((ReceivedChangeList) lists.get(0)).getBaseList()) :
-                                         lists.get(0);
+      final CommittedChangeList victim = ReceivedChangeList.unwrap(lists.get(0));
       final ReceivedChangeList result = new ReceivedChangeList(victim);
       result.setForcePartial(false);
       final Set<Change> baseChanges = new HashSet<Change>();
 
       for (CommittedChangeList list : lists) {
-        baseChanges.addAll(list instanceof ReceivedChangeList ? ((ReceivedChangeList) list).getBaseList().getChanges() : list.getChanges());
+        baseChanges.addAll(ReceivedChangeList.unwrap(list).getChanges());
 
         final Collection<Change> changes = list.getChanges();
         for (Change change : changes) {

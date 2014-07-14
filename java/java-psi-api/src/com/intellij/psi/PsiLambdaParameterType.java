@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,16 +30,19 @@ public class PsiLambdaParameterType extends PsiType {
     myParameter = parameter;
   }
 
+  @NotNull
   @Override
   public String getPresentableText() {
     return "<lambda parameter>";
   }
 
+  @NotNull
   @Override
   public String getCanonicalText() {
     return getPresentableText();
   }
 
+  @NotNull
   @Override
   public String getInternalCanonicalText() {
     return getCanonicalText();
@@ -51,7 +54,7 @@ public class PsiLambdaParameterType extends PsiType {
   }
 
   @Override
-  public boolean equalsToText(@NonNls final String text) {
+  public boolean equalsToText(@NotNull @NonNls final String text) {
     return false;
   }
 

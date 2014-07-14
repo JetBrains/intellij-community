@@ -89,7 +89,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
         return new DataIndexer<String, Kind, FileContent>() {
             @Override
             @NotNull
-            public Map<String, Kind> map(FileContent inputData) {
+            public Map<String, Kind> map(@NotNull FileContent inputData) {
                 CharSequence inputDataContentAsText = inputData.getContentAsText();
                 if (CharArrayUtil.indexOf(inputDataContentAsText, XsltSupport.XSLT_NS, 0) == -1) {
                   return Collections.emptyMap();
@@ -132,21 +132,24 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
         };
     }
 
+    @NotNull
     @Override
     public DataExternalizer<Kind> getValueExternalizer() {
         return new EnumDataDescriptor<Kind>(Kind.class);
     }
 
+    @NotNull
     @Override
     public KeyDescriptor<String> getKeyDescriptor() {
         return new EnumeratorStringDescriptor();
     }
 
+    @NotNull
     @Override
     public FileBasedIndex.InputFilter getInputFilter() {
         return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML) {
             @Override
-            public boolean acceptInput(VirtualFile file) {
+            public boolean acceptInput(@NotNull VirtualFile file) {
                 return !(file.getFileSystem() instanceof JarFileSystem);
             }
         };

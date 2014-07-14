@@ -17,6 +17,7 @@ package org.jetbrains.jps.builders.rebuild
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.TestFileSystemBuilder
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.jps.builders.JpsBuildTestCase
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -41,7 +42,7 @@ abstract class JpsRebuildTestCase extends JpsBuildTestCase {
     assertOutput(getOrCreateOutputDirectory().getAbsolutePath(), expectedOutput);
   }
 
-  def protected assertOutput(String targetFolder, Closure expectedOutput) {
+  def protected assertOutput(@NotNull String targetFolder, Closure expectedOutput) {
     def root = TestFileSystemBuilder.fs()
     initFileSystemItem(root, expectedOutput)
     root.build().assertDirectoryEqual(new File(FileUtil.toSystemDependentName(targetFolder)))

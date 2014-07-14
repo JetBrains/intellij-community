@@ -26,6 +26,7 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -70,14 +71,22 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
   }
 
   private static boolean findClassInheritors(final PsiClass element) {
-    final Collection<PsiClass> inheritors = new ArrayList<PsiClass>();
+    final Collection<PsiElement> inheritors = new ArrayList<PsiElement>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
       @Override
       public void run() {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
           public void run() {
-            inheritors.addAll(ClassInheritorsSearch.search(element).findAll());
+            final PsiClass inheritor = ClassInheritorsSearch.search(element).findFirst();
+            if (inheritor != null) {
+              inheritors.add(inheritor);
+            } else {
+              final PsiFunctionalExpression functionalExpression = FunctionalExpressionSearch.search(element).findFirst();
+              if (functionalExpression != null) {
+                inheritors.add(functionalExpression);
+              }
+            }
           }
         });
       }

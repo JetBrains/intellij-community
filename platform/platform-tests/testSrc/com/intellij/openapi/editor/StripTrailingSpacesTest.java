@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public class StripTrailingSpacesTest extends LightPlatformCodeInsightTestCase {
   }
 
   private static void stripTrailingSpaces() {
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         TrailingSpacesStripper.stripIfNotCurrentLine(getEditor().getDocument(), true);
@@ -76,6 +76,11 @@ public class StripTrailingSpacesTest extends LightPlatformCodeInsightTestCase {
   public void testDoStripModifiedOnCurrentLineIfCaretWouldNotJump() throws IOException {
     doTest("xxx\n   222<caret>    \nyyy",
            "xxx\n   222<caret>\nyyy");
+  }
+
+  public void testStrippingWithMultipleCarets() throws Exception {
+    doTest("xxx\n   <caret>\nyyy<caret>  ",
+           "xxx\n   <caret>\nyyy<caret>");
   }
 
   public void testModifyAndAltTabAway() throws IOException {
@@ -170,5 +175,26 @@ public class StripTrailingSpacesTest extends LightPlatformCodeInsightTestCase {
 
     FileDocumentManager.getInstance().saveAllDocuments();
     checkResultByText(" xxx <caret>\nyyy\n\t\t\t\n");
+  }
+
+  public void testOverrideStripTrailingSpaces() throws IOException {
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    settings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
+    configureFromFileText("x.txt", "xxx<caret>\n   222    \nyyy");
+    myVFile.putUserData(TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY,
+                        EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
+    type(' ');
+    FileDocumentManager.getInstance().saveAllDocuments();
+    checkResultByText("xxx <caret>\n   222\nyyy");
+  }
+
+  public void testOverrideEnsureNewline() throws  IOException {
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    settings.setEnsureNewLineAtEOF(false);
+    configureFromFileText("x.txt", "XXX<caret>\nYYY");
+    myVFile.putUserData(TrailingSpacesStripper.OVERRIDE_ENSURE_NEWLINE_KEY, Boolean.TRUE);
+    type(' ');
+    FileDocumentManager.getInstance().saveAllDocuments();
+    checkResultByText("XXX <caret>\nYYY\n");
   }
 }

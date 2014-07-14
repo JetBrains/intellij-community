@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.NullableComponent;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.awt.RelativePoint;
@@ -26,18 +28,16 @@ import com.intellij.util.ui.update.UiNotifyConnector;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 
-public abstract class MouseDragHelper implements MouseListener, MouseMotionListener, KeyEventDispatcher {
+public abstract class MouseDragHelper implements MouseListener, MouseMotionListener, KeyEventDispatcher, Weighted {
 
   public static final int DRAG_START_DEADZONE = 7;
 
   private final JComponent myDragComponent;
 
   private Point myPressPointScreen;
+  protected Point myPressedOnScreenPoint;
   private Point myPressPointComponent;
 
   private boolean myDraggingNow;
@@ -54,6 +54,16 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     myDragComponent = dragComponent;
     myParentDisposable = parent;
 
+  }
+
+  /**
+   *
+   * @param event
+   * @return false if Settings -> Appearance -> Drag-n-Drop with ALT pressed only is selected but event doesn't have ALT modifier
+   */
+  public static boolean checkModifiers(InputEvent event) {
+    if (event == null || !UISettings.getInstance().DND_WITH_PRESSED_ALT_ONLY) return true;
+    return (event.getModifiers() & InputEvent.ALT_MASK) != 0;
   }
 
   public void start() {
@@ -110,10 +120,16 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     }
   }
 
+  @Override
+  public double getWeight() {
+    return 2;
+  }
+
   public void mousePressed(final MouseEvent e) {
     if (!canStartDragging(e)) return;
 
     myPressPointScreen = new RelativePoint(e).getScreenPoint();
+    myPressedOnScreenPoint = new Point(myPressPointScreen);
     myPressPointComponent = e.getPoint();
     processMousePressed(e);
 
@@ -144,6 +160,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
         }
       }
       finally {
+        myPressedOnScreenPoint = null;
         resetDragState();
         e.consume();
         if (myDetachPostponed) {

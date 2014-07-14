@@ -50,6 +50,21 @@ public class ModuleChunk {
     myContainsTests = containsTests;
   }
 
+  public String getPresentableShortName() {
+    String name = myModules.iterator().next().getName();
+    if (myModules.size() > 1) {
+      name += " and " + (myModules.size() - 1) + " more";
+      String fullName = getName();
+      if (fullName.length() < name.length()) {
+        name = fullName;
+      }
+    }
+    if (containsTests()) {
+      name = "tests of " + name;
+    }
+    return name;
+  }
+
   public String getName() {
     if (myModules.size() == 1) return myModules.iterator().next().getName();
     return StringUtil.join(myModules, GET_NAME, ",");

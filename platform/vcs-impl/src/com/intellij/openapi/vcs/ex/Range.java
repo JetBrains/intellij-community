@@ -31,6 +31,10 @@ public class Range {
   public static final byte INSERTED = 2;
   public static final byte DELETED = 3;
 
+  // offset1/offset2 - line numbers
+  // (2,3) - modified 2nd line
+  // (2,2) - empty range between 1 and 2 lines
+  // index of first line is 0
   private int myOffset1;
   private int myOffset2;
   private final int myUpToDateOffset1;
@@ -154,22 +158,4 @@ public class Range {
   public RangeHighlighter getHighlighter() {
     return myRangeHighlighter;
   }
-
-  public boolean contains(int offset1, int offset2) {
-    return  getOffset1() <= offset1 && getOffset2() >= offset2;
-  }
-
-  public boolean containsLine(int line) {
-    if (myType == DELETED) return (myOffset1 - 1) <= line
-                                  && (myOffset2) >= line;
-    return myOffset1 <= line && myOffset2 >= line;
-  }
-
-  public boolean isAfter(int line) {
-    if (myType == DELETED)
-      return (getOffset1() - 1) > line;
-    else
-      return getOffset1() > line;
-  }
-
 }

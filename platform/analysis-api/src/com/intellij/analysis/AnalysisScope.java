@@ -19,7 +19,9 @@ package com.intellij.analysis;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -36,6 +38,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
@@ -237,6 +240,29 @@ public class AnalysisScope {
       myFilesSet = new HashSet<VirtualFile>();
       accept(createFileSearcher());
     }
+    else if (myType == VIRTUAL_FILES) {
+      final HashSet<VirtualFile> files = new HashSet<VirtualFile>();
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+      for (Iterator<VirtualFile> iterator = myFilesSet.iterator(); iterator.hasNext(); ) {
+        final VirtualFile vFile = iterator.next();
+        VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
+          @NotNull
+          @Override
+          public Result visitFileEx(@NotNull VirtualFile file) {
+            boolean ignored = fileIndex.isIgnored(file);
+            if (!ignored && !file.isDirectory()) {
+              files.add(file);
+            }
+            return ignored ? SKIP_CHILDREN : CONTINUE;
+          }
+        });
+
+        if (vFile.isDirectory()) {
+          iterator.remove();
+        }
+      }
+      myFilesSet.addAll(files);
+    }
   }
 
 
@@ -282,8 +308,12 @@ public class AnalysisScope {
         @Override
         public void run() {
           final PsiElement[] psiElements = ((LocalSearchScope)myScope).getScope();
+          final Set<PsiFile> files = new LinkedHashSet<PsiFile>();
           for (PsiElement element : psiElements) {
-            element.accept(visitor);
+            final PsiFile file = element.getContainingFile();
+            if (file != null && files.add(file)) {
+              file.accept(visitor);
+            }
           }
         }
       });
@@ -341,23 +371,44 @@ public class AnalysisScope {
                               final boolean needReadAction) {
     if (fileOrDir.isDirectory()) return true;
     if (ProjectCoreUtil.isProjectOrWorkspaceFile(fileOrDir)) return true;
-    if (projectFileIndex.isInContent(fileOrDir) && (myIncludeTestSource || !projectFileIndex.isInTestSourceContent(fileOrDir))) {
+    if (projectFileIndex.isInContent(fileOrDir) && (myIncludeTestSource || !projectFileIndex.isInTestSourceContent(fileOrDir))
+        && !isInGeneratedSources(fileOrDir, psiManager.getProject())) {
       return processFile(fileOrDir, visitor, psiManager, needReadAction);
     }
     return true;
+  }
+
+  private static boolean isInGeneratedSources(@NotNull VirtualFile file, @NotNull Project project) {
+    for (GeneratedSourcesFilter filter : GeneratedSourcesFilter.EP_NAME.getExtensions()) {
+      if (filter.isGeneratedSource(file, project)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean processFile(@NotNull final VirtualFile fileOrDir,
                                      @NotNull final PsiElementVisitor visitor,
                                      @NotNull final PsiManager psiManager,
                                      final boolean needReadAction) {
-    if (!fileOrDir.isValid()) return false;
-    final PsiFile file = getPsiFileInReadAction(psiManager, fileOrDir);
-    if (file == null){
-      //skip .class files under src directory
-      return true;
+    final PsiFile file;
+
+    AccessToken accessToken = ReadAction.start();
+    try {
+      if (!fileOrDir.isValid()) return false;
+
+      file = psiManager.findFile(fileOrDir);
+      if (file == null) {
+        //skip .class files under src directory
+        return true;
+      }
+
+      if (!shouldHighlightFile(file)) return true;
     }
-    if (!shouldHighlightFile(file)) return true;
+    finally {
+      accessToken.finish();
+    }
+
     if (needReadAction) {
       PsiDocumentManager.getInstance(psiManager.getProject()).commitAndRunReadAction(new Runnable(){
         @Override
@@ -548,22 +599,6 @@ public class AnalysisScope {
         }
       }
     }
-  }
-
-  private static PsiFile getPsiFileInReadAction(@NotNull final PsiManager psiManager, @NotNull final VirtualFile file) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-      @Override
-      @Nullable
-      public PsiFile compute() {
-        if (file.isValid()) {
-          PsiFile psiFile = psiManager.findFile(file);
-          if (psiFile != null && psiFile.isValid()) {
-            return psiFile;
-          }
-        }
-        return null;
-      }
-    });
   }
 
   public boolean containsSources(boolean isTest) {

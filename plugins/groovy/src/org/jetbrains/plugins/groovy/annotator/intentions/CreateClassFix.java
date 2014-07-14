@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.AccessToken;
@@ -26,6 +25,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
+import org.jetbrains.plugins.groovy.lang.GrCreateClassKind;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -52,15 +53,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
-import static com.intellij.openapi.module.ModuleUtilCore.findModuleForPsiElement;
-
 /**
  * @author ilyas
  */
 public abstract class CreateClassFix {
 
   public static IntentionAction createClassFromNewAction(final GrNewExpression expression) {
-    return new CreateClassActionBase(CreateClassKind.CLASS, expression.getReferenceElement()) {
+    return new CreateClassActionBase(GrCreateClassKind.CLASS, expression.getReferenceElement()) {
 
       @Override
       protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
@@ -77,7 +76,7 @@ public abstract class CreateClassFix {
           qualifier = groovyFile instanceof GroovyFile ? groovyFile.getPackageName() : "";
           name = myRefElement.getReferenceName();
           assert name != null;
-          module = findModuleForPsiElement(file);
+          module = ModuleUtilCore.findModuleForPsiElement(file);
         }
         finally {
           accessToken.finish();
@@ -97,7 +96,7 @@ public abstract class CreateClassFix {
         }
         else {
           bindRef(targetClass, myRefElement);
-          putCursor(project, targetClass.getContainingFile(), targetClass);
+          IntentionUtils.positionCursor(project, targetClass.getContainingFile(), targetClass);
         }
       }
     };
@@ -145,7 +144,7 @@ public abstract class CreateClassFix {
     }
   }
 
-  public static IntentionAction createClassFixAction(final GrReferenceElement refElement, CreateClassKind type) {
+  public static IntentionAction createClassFixAction(final GrReferenceElement refElement, GrCreateClassKind type) {
     return new CreateClassActionBase(type, refElement) {
       @Override
       protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
@@ -196,7 +195,7 @@ public abstract class CreateClassFix {
           if (modifierList != null) {
             modifierList.setModifierProperty(PsiModifier.STATIC, true);
           }
-          putCursor(project, added.getContainingFile(), added);
+          IntentionUtils.positionCursor(project, added.getContainingFile(), added);
         }
         finally {
           lock.finish();
@@ -229,6 +228,13 @@ public abstract class CreateClassFix {
         switch (getType()) {
           case ENUM:
             return factory.createEnum(name);
+          case TRAIT:
+            if (factory instanceof GroovyPsiElementFactory) {
+              return ((GroovyPsiElementFactory)factory).createTrait(name);
+            }
+            else {
+              return null;
+            }
           case CLASS:
             return factory.createClass(name);
           case INTERFACE:
@@ -245,7 +251,7 @@ public abstract class CreateClassFix {
         final PsiManager manager = PsiManager.getInstance(project);
         final String name = myRefElement.getReferenceName();
         assert name != null;
-        final Module module = findModuleForPsiElement(file);
+        final Module module = ModuleUtilCore.findModuleForPsiElement(file);
         PsiDirectory targetDirectory = getTargetDirectory(project, pack, name, module, getText());
         if (targetDirectory == null) return;
 
@@ -254,7 +260,7 @@ public abstract class CreateClassFix {
         if (targetClass == null) return;
 
         bindRef(targetClass, myRefElement);
-        putCursor(project, targetClass.getContainingFile(), targetClass);
+        IntentionUtils.positionCursor(project, targetClass.getContainingFile(), targetClass);
       }
 
       @NotNull
@@ -293,8 +299,10 @@ public abstract class CreateClassFix {
     });
   }
 
-  private static String getTemplateName(CreateClassKind createClassKind) {
+  private static String getTemplateName(GrCreateClassKind createClassKind) {
     switch (createClassKind) {
+      case TRAIT:
+        return GroovyTemplates.GROOVY_TRAIT;
       case ENUM:
         return GroovyTemplates.GROOVY_ENUM;
       case CLASS:

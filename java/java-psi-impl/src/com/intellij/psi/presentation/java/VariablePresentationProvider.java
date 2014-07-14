@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProvider;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.psi.PsiVariable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -27,7 +28,7 @@ import javax.swing.*;
  */
 public class VariablePresentationProvider<T extends PsiVariable & NavigationItem> implements ItemPresentationProvider<T> {
   @Override
-  public ItemPresentation getPresentation(final T variable) {
+  public ItemPresentation getPresentation(@NotNull final T variable) {
     return new ItemPresentation() {
       @Override
       public String getPresentableText() {

@@ -28,13 +28,15 @@ public final class LocalFileFinder {
    Method is not generic and is not suitable for all.
    */
   public static VirtualFile findFile(@NotNull String path) {
-    if (!SystemInfo.isWindows || windowsDriveExists(path)) {
+    if (windowsDriveExists(path)) {
       return LocalFileSystem.getInstance().findFileByPath(path);
     }
     return null;
   }
 
-  private static boolean windowsDriveExists(@NotNull String path) {
+  public static boolean windowsDriveExists(@NotNull String path) {
+    if (!SystemInfo.isWindows) return true;
+    
     if (path.length() > 2 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':') {
       final char driveLetter = Character.toUpperCase(path.charAt(0));
       final Boolean driveExists = myWindowsDrivesMap.getIfPresent(driveLetter);

@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.roots;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -30,7 +31,7 @@ public class VcsRootErrorsFinder {
   @NotNull
   public Collection<VcsRootError> find() {
     List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
-    Collection<VcsRoot> vcsRoots = new VcsRootDetector(myProject).detect().getRoots();
+    Collection<VcsRoot> vcsRoots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
 
     Collection<VcsRootError> errors = new ArrayList<VcsRootError>();
     errors.addAll(findExtraMappings(mappings));
@@ -50,7 +51,7 @@ public class VcsRootErrorsFinder {
       }
       String vcsPath = virtualFileFromRoot.getPath();
       if (!mappedPaths.contains(vcsPath) && root.getVcs() != null) {
-        errors.add(new VcsRootError(VcsRootError.Type.UNREGISTERED_ROOT, vcsPath, root.getVcs().getName()));
+        errors.add(new VcsRootErrorImpl(VcsRootError.Type.UNREGISTERED_ROOT, vcsPath, root.getVcs().getName()));
       }
     }
     return errors;
@@ -65,13 +66,13 @@ public class VcsRootErrorsFinder {
       }
       if (mapping.isDefaultMapping()) {
         if (!isRoot(mapping)) {
-          errors.add(new VcsRootError(VcsRootError.Type.EXTRA_MAPPING, VcsDirectoryMapping.PROJECT_CONSTANT, mapping.getVcs()));
+          errors.add(new VcsRootErrorImpl(VcsRootError.Type.EXTRA_MAPPING, VcsDirectoryMapping.PROJECT_CONSTANT, mapping.getVcs()));
         }
       }
       else {
         String mappedPath = mapping.systemIndependentPath();
         if (!isRoot(mapping)) {
-          errors.add(new VcsRootError(VcsRootError.Type.EXTRA_MAPPING, mappedPath, mapping.getVcs()));
+          errors.add(new VcsRootErrorImpl(VcsRootError.Type.EXTRA_MAPPING, mappedPath, mapping.getVcs()));
         }
       }
     }

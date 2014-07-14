@@ -37,7 +37,6 @@ import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.ShareDialog;
-import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -200,7 +199,7 @@ public class ShareProjectAction extends BasicAction {
                                         final SvnVcs activeVcs,
                                         final String parent,
                                         ProgressManager progressManager) throws VcsException {
-    final SVNException[] exc = new SVNException[1];
+    final VcsException[] exc = new VcsException[1];
     final boolean[] folderEmpty = new boolean[1];
 
     progressManager.runProcessWithProgressSynchronously(new Runnable() {
@@ -209,21 +208,21 @@ public class ShareProjectAction extends BasicAction {
         try {
           folderEmpty[0] = SvnUtil.remoteFolderIsEmpty(activeVcs, parent);
         }
-        catch (SVNException e) {
+        catch (VcsException e) {
           exc[0] = e;
         }
       }
     }, "Check remote folder contents", false, project);
     if (exc[0] != null) {
-      throw new VcsException(exc[0]);
+      throw exc[0];
     }
     return folderEmpty[0];
   }
 
-  private static Pair<SVNRevision, SVNURL> createRemoteFolder(final SvnVcs vcs,
-                                                              final SVNURL parent,
+  private static Pair<SVNRevision, SVNURL> createRemoteFolder(@NotNull final SvnVcs vcs,
+                                                              @NotNull final SVNURL parent,
                                                               final String folderName,
-                                                              String commitText) throws SVNException {
+                                                              String commitText) throws VcsException, SVNException {
     SVNURL url = parent.appendPath(folderName, false);
     final String urlText = url.toString();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -231,11 +230,13 @@ public class ShareProjectAction extends BasicAction {
       indicator.checkCanceled();
       indicator.setText(SvnBundle.message("share.directory.create.dir.progress.text", urlText));
     }
-    // TODO: Implement with command line client
-    final SVNCommitInfo info =
-      vcs.createCommitClient().doMkDir(new SVNURL[]{url}, SvnBundle.message("share.directory.commit.message", folderName,
-                                                                            ApplicationNamesInfo.getInstance().getFullProductName(), commitText));
-    return new Pair<SVNRevision, SVNURL>(SVNRevision.create(info.getNewRevision()), url);
+
+    String message =
+      SvnBundle.message("share.directory.commit.message", folderName, ApplicationNamesInfo.getInstance().getFullProductName(), commitText);
+    SvnTarget target = SvnTarget.fromURL(url);
+    long revision = vcs.getFactoryFromSettings().createBrowseClient().createDirectory(target, message, false);
+
+    return Pair.create(SVNRevision.create(revision), url);
   }
 
   @Override

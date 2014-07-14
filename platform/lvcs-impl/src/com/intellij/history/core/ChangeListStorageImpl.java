@@ -138,7 +138,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
                                                                             @NotNull HyperlinkEvent event) {
                                                   if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                                                     if ("url".equals(event.getDescription())) {
-                                                      BrowserUtil.launchBrowser("http://youtrack.jetbrains.net/issue/IDEA-71270");
+                                                      BrowserUtil.browse("http://youtrack.jetbrains.net/issue/IDEA-71270");
                                                     }
                                                     else {
                                                       File file = new File(logFile);

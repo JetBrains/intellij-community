@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ public class Key<T> {
     allKeys.put(myIndex, this);
   }
 
+  // made final because many classes depend on one-to-one key index <-> key instance relationship. See e.g. UserDataHolderBase
   public final int hashCode() {
     return myIndex;
   }

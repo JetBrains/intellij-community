@@ -21,35 +21,21 @@
 package com.intellij.execution.configuration;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.util.EnvVariablesTable;
-import com.intellij.execution.util.EnvironmentVariable;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.*;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWithBrowseButton> implements UserActivityProviderComponent {
-  private boolean myPassParentEnvs;
-  private final Map<String, String> myEnvs = new THashMap<String, String>();
   @NonNls private static final String ENVS = "envs";
   @NonNls public static final String ENV = "env";
   @NonNls public static final String NAME = "name";
@@ -57,52 +43,30 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
   @NonNls private static final String OPTION = "option";
   @NonNls private static final String ENV_VARIABLES = "ENV_VARIABLES";
 
-  private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final EnvironmentVariablesTextFieldWithBrowseButton myEnvVars;
 
   public EnvironmentVariablesComponent() {
     super();
-    final TextFieldWithBrowseButton envsTestField = new TextFieldWithBrowseButton();
-    envsTestField.setEditable(false);
-    setComponent(envsTestField);
+    myEnvVars = new EnvironmentVariablesTextFieldWithBrowseButton();
+    setComponent(myEnvVars);
     setText(ExecutionBundle.message("environment.variables.component.title"));
-    getComponent().addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        new MyEnvironmentVariablesDialog().show();
-      }
-    });
   }
 
   public void setEnvs(@NotNull Map<String, String> envs) {
-    myEnvs.clear();
-    myEnvs.putAll(envs);
-    @NonNls final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-    try {
-      for (String variable : myEnvs.keySet()) {
-        buf.append(variable).append("=").append(myEnvs.get(variable)).append(";");
-      }
-      if (buf.length() > 0) buf.deleteCharAt(buf.length() - 1); //trim last ;
-      getComponent().setText(buf.toString());
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buf);
-    }
+    myEnvVars.setEnvs(envs);
   }
 
   @NotNull
   public Map<String, String> getEnvs() {
-    return myEnvs;
+    return myEnvVars.getEnvs();
   }
 
   public boolean isPassParentEnvs() {
-    return myPassParentEnvs;
+    return myEnvVars.isPassParentEnvs();
   }
 
-  public void setPassParentEnvs(final boolean passDefaultVariables) {
-    if (myPassParentEnvs != passDefaultVariables) {
-      myPassParentEnvs = passDefaultVariables;
-      fireStateChanged();
-    }
+  public void setPassParentEnvs(final boolean passParentEnvs) {
+    myEnvVars.setPassParentEnvs(passParentEnvs);
   }
 
   public static void readExternal(Element element, Map<String, String> envs) {
@@ -129,12 +93,10 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
   private static void splitVars(final Map<String, String> envs, final String val) {
     if (val != null) {
       final String[] envVars = val.split(";");
-      if (envVars != null) {
-        for (String envVar : envVars) {
-          final int idx = envVar.indexOf('=');
-          if (idx > -1) {
-            envs.put(envVar.substring(0, idx), idx < envVar.length() - 1 ? envVar.substring(idx + 1) : "");
-          }
+      for (String envVar : envVars) {
+        final int idx = envVar.indexOf('=');
+        if (idx > -1) {
+          envs.put(envVar.substring(0, idx), idx < envVar.length() - 1 ? envVar.substring(idx + 1) : "");
         }
       }
     }
@@ -170,56 +132,11 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
 
   @Override
   public void addChangeListener(final ChangeListener changeListener) {
-    myListeners.add(changeListener);
+    myEnvVars.addChangeListener(changeListener);
   }
 
   @Override
   public void removeChangeListener(final ChangeListener changeListener) {
-    myListeners.remove(changeListener);
-  }
-
-  private void fireStateChanged() {
-    for (ChangeListener listener : myListeners) {
-      listener.stateChanged(new ChangeEvent(this));
-    }
-  }
-
-  private class MyEnvironmentVariablesDialog extends DialogWrapper {
-    private final EnvVariablesTable myEnvVariablesTable;
-    private final JCheckBox myUseDefaultCb = new JCheckBox(ExecutionBundle.message("env.vars.checkbox.title"));
-    private final JPanel myWholePanel = new JPanel(new BorderLayout());
-
-    protected MyEnvironmentVariablesDialog() {
-      super(EnvironmentVariablesComponent.this, true);
-      myEnvVariablesTable = new EnvVariablesTable();
-      final List<EnvironmentVariable> envVariables = new ArrayList<EnvironmentVariable>();
-      for (String envVariable : myEnvs.keySet()) {
-        envVariables.add(new EnvironmentVariable(envVariable, myEnvs.get(envVariable), false));
-      }
-      myEnvVariablesTable.setValues(envVariables);
-      myUseDefaultCb.setSelected(isPassParentEnvs());
-      myWholePanel.add(myEnvVariablesTable.getComponent(), BorderLayout.CENTER);
-      myWholePanel.add(myUseDefaultCb, BorderLayout.SOUTH);
-      setTitle(ExecutionBundle.message("environment.variables.dialog.title"));
-      init();
-    }
-
-    @Override
-    @Nullable
-    protected JComponent createCenterPanel() {
-      return myWholePanel;
-    }
-
-    @Override
-    protected void doOKAction() {
-      myEnvVariablesTable.stopEditing();
-      final Map<String, String> envs = new LinkedHashMap<String, String>();
-      for (EnvironmentVariable variable : myEnvVariablesTable.getEnvironmentVariables()) {
-        envs.put(variable.getName(), variable.getValue());
-      }
-      setEnvs(envs);
-      setPassParentEnvs(myUseDefaultCb.isSelected());
-      super.doOKAction();
-    }
+    myEnvVars.removeChangeListener(changeListener);
   }
 }

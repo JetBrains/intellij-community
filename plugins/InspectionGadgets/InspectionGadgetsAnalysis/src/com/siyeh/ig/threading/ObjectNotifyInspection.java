@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ObjectNotifyInspection extends BaseInspection {
@@ -81,14 +82,15 @@ public class ObjectNotifyInspection extends BaseInspection {
       final PsiExpression qualifier =
         methodExpression.getQualifierExpression();
       if (qualifier == null) {
-        replaceExpression(methodExpression,
-                          HardcodedMethodConstants.NOTIFY_ALL);
+        PsiReplacementUtil.replaceExpression(methodExpression,
+                                             HardcodedMethodConstants.NOTIFY_ALL);
       }
       else {
         final String qualifierText = qualifier.getText();
-        replaceExpression(methodExpression,
-                          qualifierText + '.' +
-                          HardcodedMethodConstants.NOTIFY_ALL);
+        PsiReplacementUtil.replaceExpression(methodExpression,
+                                             qualifierText + '.' +
+                                             HardcodedMethodConstants.NOTIFY_ALL
+        );
       }
     }
   }

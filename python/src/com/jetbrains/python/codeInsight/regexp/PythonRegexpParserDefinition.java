@@ -33,7 +33,8 @@ public class PythonRegexpParserDefinition extends RegExpParserDefinition {
   public static final IFileElementType PYTHON_REGEXP_FILE = new IFileElementType("PYTHON_REGEXP_FILE", PythonRegexpLanguage.INSTANCE);
   protected final EnumSet<RegExpCapability> CAPABILITIES = EnumSet.of(RegExpCapability.DANGLING_METACHARACTERS,
                                                                       RegExpCapability.OCTAL_NO_LEADING_ZERO,
-                                                                      RegExpCapability.OMIT_NUMBERS_IN_QUANTIFIERS);
+                                                                      RegExpCapability.OMIT_NUMBERS_IN_QUANTIFIERS,
+                                                                      RegExpCapability.ALLOW_EMPTY_CHARACTER_CLASS);
 
   @NotNull
   public Lexer createLexer(Project project) {

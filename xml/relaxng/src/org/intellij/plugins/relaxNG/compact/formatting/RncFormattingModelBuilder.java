@@ -27,11 +27,13 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 public class RncFormattingModelBuilder implements FormattingModelBuilder {
+  @Override
   @NotNull
   public FormattingModel createModel(PsiElement element, CodeStyleSettings settings) {
     return FormattingModelProvider.createFormattingModelForPsiFile(element.getContainingFile(), new RncBlock(element.getNode()), settings);
   }
 
+  @Override
   public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
     // TODO
     return null;

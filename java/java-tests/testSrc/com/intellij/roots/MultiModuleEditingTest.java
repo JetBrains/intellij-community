@@ -192,7 +192,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
   }
 
   private VirtualFile getVirtualFileInTestData(final String relativeVfsPath) {
-    return WriteCommandAction.runWriteCommandAction(new Computable<VirtualFile>() {
+    return WriteCommandAction.runWriteCommandAction(null, new Computable<VirtualFile>() {
       @Override
       public VirtualFile compute() {
         final String path =

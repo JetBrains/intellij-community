@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public abstract class UnwrapDescriptorBase implements UnwrapDescriptor {
      while (e != null) {
        for (Unwrapper u : getUnwrappers()) {
          if (u.isApplicableTo(e) && !ignored.contains(e)) {
-           result.add(new Pair<PsiElement, Unwrapper>(e, u));
+           result.add(Pair.create(e, u));
            u.collectElementsToIgnore(e, ignored);
          }
        }

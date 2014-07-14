@@ -18,7 +18,7 @@ package com.intellij.codeInsight.daemon.quickFix;
 /**
  * @author Danila Ponomarenko
  */
-public class ReplaceWithListAccessTest extends LightQuickFixTestCase {
+public class ReplaceWithListAccessTest extends LightQuickFixParameterizedTestCase {
 
   public void test() throws Exception { doAllTests(); }
 

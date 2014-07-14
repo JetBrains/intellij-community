@@ -29,6 +29,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -50,6 +51,11 @@ public class TooBroadCatchInspection extends TooBroadCatchInspectionBase {
         fixes.add(new AddCatchSectionFix(thrown));
       }
     }
+    final PsiElement context = (PsiElement)infos[1];
+    final InspectionGadgetsFix fix = SuppressForTestsScopeFix.build(this, context);
+    if (fix != null) {
+      fixes.add(fix);
+    }
     return fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
   }
 
@@ -57,7 +63,6 @@ public class TooBroadCatchInspection extends TooBroadCatchInspectionBase {
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message("too.broad.catch.option"), "onlyWarnOnRootExceptions");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.in.test.code"), "ignoreInTestCode");
     panel.addCheckbox(InspectionGadgetsBundle.message("overly.broad.throws.clause.ignore.thrown.option"), "ignoreThrown");
     return panel;
   }
@@ -66,7 +71,7 @@ public class TooBroadCatchInspection extends TooBroadCatchInspectionBase {
     @NotNull
     @Override
     public String getName() {
-      return "Replace with 'catch' clause for 'RuntimeException'";
+      return InspectionGadgetsBundle.message("replace.with.catch.clause.for.runtime.exception.quickfix");
     }
 
     @NotNull

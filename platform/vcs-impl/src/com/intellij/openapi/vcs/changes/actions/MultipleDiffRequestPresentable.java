@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public class MultipleDiffRequestPresentable implements DiffRequestPresentable {
     final List<Pair<String,DiffRequestPresentable>> list = new ArrayList<Pair<String,DiffRequestPresentable>>();
     final DiffRequestPresentable requestPresentable = convertor.convert(myChange, false);
     if (requestPresentable != null) {
-      list.add(new Pair<String, DiffRequestPresentable>("", requestPresentable));
+      list.add(Pair.create("", requestPresentable));
     }
     final Map<String,Change> layers = myChange.getOtherLayers();
     for (Map.Entry<String, Change> entry : layers.entrySet()) {
@@ -59,7 +59,7 @@ public class MultipleDiffRequestPresentable implements DiffRequestPresentable {
       final Change value = entry.getValue();
       final DiffRequestPresentable additional = convertor.convert(value, true);
       if (additional != null) {
-        list.add(new Pair<String, DiffRequestPresentable>(key, additional));
+        list.add(Pair.create(key, additional));
       }
     }
 

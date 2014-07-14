@@ -74,7 +74,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
       getProject(), new Runnable() {
       @Override
       public void run() {
-        WriteCommandAction.runWriteCommandAction(new Runnable() {
+        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
           @Override
           public void run() {
             try {
@@ -368,7 +368,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
 
 
   public void testAutoImportOfGenericReference() throws Throwable {
-    @NonNls final String text = "class S {{ new ArrayList<caret><> }}";
+    @NonNls final String text = "class S {{ new ArrayList<caret><String> }}";
     configureByText(StdFileTypes.JAVA, text);
     boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;

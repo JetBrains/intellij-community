@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,10 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +67,7 @@ public class IntentionDescriptionPanel {
   public void reset(IntentionActionMetaData actionMetaData, String filter)  {
     try {
       final TextDescriptor url = actionMetaData.getDescription();
-      final String description = url == null ?
+      final String description = StringUtil.isEmpty(url.getText()) ?
                                  CodeInsightBundle.message("under.construction.string") :
                                  SearchUtil.markup(url.getText(), filter);
       myDescriptionBrowser.setText(description);
@@ -91,7 +93,7 @@ public class IntentionDescriptionPanel {
     PluginId pluginId = actionMetaData == null ? null : actionMetaData.getPluginId();
     JComponent owner;
     if (pluginId == null) {
-      @NonNls String label = "<html><body><b>" + ApplicationNamesInfo.getInstance().getFullProductName() + "</b></body></html>";
+      @NonNls String label = XmlStringUtil.wrapInHtml("<b>" + ApplicationNamesInfo.getInstance().getFullProductName() + "</b>");
       owner = new JLabel(label);
     }
     else {

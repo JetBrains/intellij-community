@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public class SubstitutedFileType extends LanguageFileType{
   }
 
   @NotNull
-  public static FileType substituteFileType(VirtualFile file, @NotNull FileType fileType, Project project) {
+  public static FileType substituteFileType(@NotNull VirtualFile file, @NotNull FileType fileType, Project project) {
     if (project == null) {
       return fileType;
     }
@@ -81,7 +81,7 @@ public class SubstitutedFileType extends LanguageFileType{
   }
 
   @Override
-  public String getCharset(@NotNull VirtualFile file, byte[] content) {
+  public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
     return myFileType.getCharset(file, content);
   }
 
@@ -97,5 +97,10 @@ public class SubstitutedFileType extends LanguageFileType{
 
   public boolean isSameFileType() {
     return myFileType.equals(myOriginalFileType);
+  }
+
+  @Override
+  public String toString() {
+    return "SubstitutedFileType: original="+myOriginalFileType+"; substituted="+myFileType;
   }
 }

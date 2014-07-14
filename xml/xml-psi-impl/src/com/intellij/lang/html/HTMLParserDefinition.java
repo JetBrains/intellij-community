@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.html.HtmlEmbeddedContentImpl;
 import com.intellij.psi.impl.source.html.HtmlFileImpl;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -37,44 +38,56 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class HTMLParserDefinition implements ParserDefinition {
+  @Override
   @NotNull
   public Lexer createLexer(Project project) {
     return new HtmlLexer();
   }
 
+  @Override
   public IFileElementType getFileNodeType() {
     return XmlElementType.HTML_FILE;
   }
 
+  @Override
   @NotNull
   public TokenSet getWhitespaceTokens() {
     return XmlTokenType.WHITESPACES;
   }
 
+  @Override
   @NotNull
   public TokenSet getCommentTokens() {
     return XmlTokenType.COMMENTS;
   }
 
+  @Override
   @NotNull
   public TokenSet getStringLiteralElements() {
     return TokenSet.EMPTY;
   }
 
+  @Override
   @NotNull
   public PsiParser createParser(final Project project) {
     return new HTMLParser();
   }
 
+  @Override
   @NotNull
   public PsiElement createElement(ASTNode node) {
+    if (node.getElementType() == XmlElementType.HTML_EMBEDDED_CONTENT) {
+      return new HtmlEmbeddedContentImpl(node);
+    }
     return PsiUtilCore.NULL_PSI_ELEMENT;
   }
 
+  @Override
   public PsiFile createFile(FileViewProvider viewProvider) {
     return new HtmlFileImpl(viewProvider);
   }
 
+  @Override
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
     final Lexer lexer = createLexer(left.getPsi().getProject());
     return XMLParserDefinition.canStickTokensTogetherByLexerInXml(left, right, lexer, 0);

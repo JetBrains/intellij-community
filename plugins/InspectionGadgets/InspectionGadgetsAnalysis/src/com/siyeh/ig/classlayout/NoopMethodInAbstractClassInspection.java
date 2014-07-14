@@ -60,7 +60,8 @@ public class NoopMethodInAbstractClassInspection extends BaseInspection {
       if (!containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT) || method.hasModifierProperty(PsiModifier.NATIVE)) {
+      if (method.hasModifierProperty(PsiModifier.ABSTRACT) || method.hasModifierProperty(PsiModifier.NATIVE) ||
+        method.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
       if (!MethodUtils.isEmpty(method)) {

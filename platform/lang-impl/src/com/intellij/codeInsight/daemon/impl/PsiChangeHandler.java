@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +72,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
         if (documentManager.getCachedPsiFile(document) == null) return;
         if (document.getUserData(UPDATE_ON_COMMIT_ENGAGED) == null) {
           document.putUserData(UPDATE_ON_COMMIT_ENGAGED, Boolean.TRUE);
-          PsiDocumentManagerImpl.addRunOnCommit(document, new Runnable() {
+          PsiDocumentManagerBase.addRunOnCommit(document, new Runnable() {
             @Override
             public void run() {
               updateChangesForDocument(document);
@@ -83,11 +85,11 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
 
     connection.subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
       @Override
-      public void transactionStarted(final Document doc, final PsiFile file) {
+      public void transactionStarted(@NotNull final Document doc, @NotNull final PsiFile file) {
       }
 
       @Override
-      public void transactionCompleted(final Document doc, final PsiFile file) {
+      public void transactionCompleted(@NotNull final Document doc, @NotNull final PsiFile file) {
         updateChangesForDocument(doc);
       }
     });
@@ -100,16 +102,28 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
   private void updateChangesForDocument(@NotNull final Document document) {
     if (DaemonListeners.isUnderIgnoredAction(null)) return;
     List<Pair<PsiElement, Boolean>> toUpdate = changedElements.get(document);
-    if (toUpdate == null) return;
+    if (toUpdate == null) {
+      // The document has been changed, but psi hasn't
+      // We may still need to rehighlight the file if there were changes inside highlighted ranges.
+      if (UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document)) return;
+
+      // don't create PSI for files in other projects
+      PsiElement file = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(document);
+      if (file == null) return;
+
+      toUpdate = ContainerUtil.newArrayList(Pair.create(file, true));
+    }
     Application application = ApplicationManager.getApplication();
     final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
     if (editor != null && !application.isUnitTestMode()) {
       application.invokeLater(new Runnable() {
         @Override
         public void run() {
-          EditorMarkupModel markupModel = (EditorMarkupModel)editor.getMarkupModel();
-          PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-          TrafficLightRenderer.setOrRefreshErrorStripeRenderer(markupModel, myProject, editor.getDocument(), file);
+          if (!editor.isDisposed()) {
+            EditorMarkupModel markupModel = (EditorMarkupModel)editor.getMarkupModel();
+            PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+            TrafficLightRenderer.setOrRefreshErrorStripeRenderer(markupModel, myProject, editor.getDocument(), file);
+          }
         }
       }, ModalityState.stateForComponent(editor.getComponent()), myProject.getDisposed());
     }

@@ -28,9 +28,7 @@ import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.dom.Extension;
-import org.jetbrains.idea.devkit.dom.ExtensionPoint;
-import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.*;
 
 import javax.swing.*;
 
@@ -45,6 +43,30 @@ public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> 
       if (element instanceof Extension) {
         annotateExtension((Extension)element, holder);
       }
+      else if (element instanceof Vendor) {
+        annotateVendor((Vendor)element, holder);
+      }
+      else if (element instanceof IdeaVersion) {
+        annotateIdeaVersion((IdeaVersion)element, holder);
+      }
+      else if (element instanceof Extensions) {
+        annotateExtensions((Extensions)element, holder);
+      }
+    }
+
+    private void annotateExtensions(Extensions extensions, DomElementAnnotationHolder holder) {
+      final GenericAttributeValue<IdeaPlugin> xmlnsAttribute = extensions.getXmlns();
+      if (!DomUtil.hasXml(xmlnsAttribute)) return;
+
+      final Annotation annotation = holder.createAnnotation(xmlnsAttribute,
+                                                            HighlightSeverity.WARNING,
+                                                            "Use defaultExtensionNs instead");
+      annotation.setHighlightType(ProblemHighlightType.LIKE_DEPRECATED);
+    }
+
+    private void annotateIdeaVersion(IdeaVersion ideaVersion, DomElementAnnotationHolder holder) {
+      highlightNotUsedAnymore(ideaVersion.getMin(), holder);
+      highlightNotUsedAnymore(ideaVersion.getMax(), holder);
     }
 
     private void annotateExtension(Extension extension, DomElementAnnotationHolder holder) {
@@ -58,6 +80,20 @@ public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> 
         final Annotation annotation = holder.createAnnotation(extension, HighlightSeverity.WARNING, "Deprecated EP");
         annotation.setHighlightType(ProblemHighlightType.LIKE_DEPRECATED);
       }
+    }
+
+    private void annotateVendor(Vendor vendor, DomElementAnnotationHolder holder) {
+      highlightNotUsedAnymore(vendor.getLogo(), holder);
+    }
+
+    private void highlightNotUsedAnymore(GenericAttributeValue attributeValue,
+                                         DomElementAnnotationHolder holder) {
+      if (!DomUtil.hasXml(attributeValue)) return;
+
+      final Annotation annotation = holder.createAnnotation(attributeValue,
+                                                            HighlightSeverity.WARNING,
+                                                            "Not used anymore");
+      annotation.setHighlightType(ProblemHighlightType.LIKE_DEPRECATED);
     }
   };
 
@@ -79,5 +115,10 @@ public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> 
   @Override
   public boolean hasStubs() {
     return true;
+  }
+
+  @Override
+  public int getStubVersion() {
+    return 3;
   }
 }

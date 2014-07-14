@@ -1,10 +1,16 @@
 package com.siyeh.ig.bugs;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
 
-public class MismatchedStringBuilderQueryUpdateInspectionTest extends IGInspectionTestCase {
+public class MismatchedStringBuilderQueryUpdateInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/bugs/mismatched_string_builder_query_update", new MismatchedStringBuilderQueryUpdateInspection());
+  public void testMismatchedStringBuilderQueryUpdate() throws Exception {
+    doTest();
+  }
+
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new MismatchedStringBuilderQueryUpdateInspection();
   }
 }

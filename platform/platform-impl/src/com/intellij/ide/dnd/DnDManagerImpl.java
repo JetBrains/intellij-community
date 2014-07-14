@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.reference.SoftReference;
+import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.GeometryUtil;
 import com.intellij.util.ui.UIUtil;
@@ -537,7 +539,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
     public void dragGestureRecognized(DragGestureEvent dge) {
       try {
         final DnDSource source = getSource(dge.getComponent());
-        if (source == null) return;
+        if (source == null || !MouseDragHelper.checkModifiers(dge.getTriggerEvent())) return;
 
         DnDAction action = getDnDActionForPlatformAction(dge.getDragAction());
         if (source.canStartDragging(action, dge.getDragOrigin())) {
@@ -555,9 +557,9 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
             myCurrentEvent = new DnDEventImpl(DnDManagerImpl.this, action, dnDDragStartBean.getAttachedObject(), dnDDragStartBean.getPoint());
             myCurrentEvent.setOrgPoint(dge.getDragOrigin());
 
-            Pair<Image, Point> pair = source.createDraggedImage(action, dge.getDragOrigin());
+            Pair<Image, Point> pair = dnDDragStartBean.isEmpty() ? null : source.createDraggedImage(action, dge.getDragOrigin());
             if (pair == null) {
-              pair = new Pair<Image, Point>(EMPTY_IMAGE, new Point(0, 0));
+              pair = Pair.create(EMPTY_IMAGE, new Point(0, 0));
             }
 
             if (!DragSource.isDragImageSupported()) {
@@ -741,6 +743,6 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
 
   @Nullable
   public Component getLastDropHandler() {
-    return myLastDropHandler != null ? myLastDropHandler.get() : null;
+    return SoftReference.dereference(myLastDropHandler);
   }
 }

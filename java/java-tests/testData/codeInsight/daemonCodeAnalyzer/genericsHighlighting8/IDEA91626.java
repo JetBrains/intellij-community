@@ -11,7 +11,7 @@ class Test {
     }
 
     static void foo2(final A<? extends Integer> bar) {
-        bar._<error descr="'_(capture<? extends java.lang.Integer>...)' in 'Test.A' cannot be applied to '(java.lang.String)'">("")</error>;
+        bar._<error descr="Cannot resolve method '_(java.lang.String)'">("")</error>;
     }
 
 

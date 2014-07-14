@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageContextPanel;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,10 +34,12 @@ import java.util.List;
  */
 public abstract class UsageContextPanelBase extends JPanel implements UsageContextPanel {
   protected final Project myProject;
+  @NotNull protected final UsageViewPresentation myPresentation;
   protected volatile boolean isDisposed;
 
-  public UsageContextPanelBase(@NotNull Project project) {
+  public UsageContextPanelBase(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
     myProject = project;
+    myPresentation = presentation;
     setLayout(new BorderLayout());
     setBorder(IdeBorderFactory.createBorder());
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.ide.highlighter.DomSupportEnabled;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
@@ -89,6 +90,14 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
     }
     if (sb != null) {
       sb.append("File is valid\n");
+    }
+
+    if (!(myXmlFile.getFileType() instanceof DomSupportEnabled)) {
+      return null;
+    }
+
+    if (sb != null) {
+      sb.append("File is of dom file type\n");
     }
 
     final DomFileDescription<T> description = findFileDescription(rootTagName, sb);
@@ -193,6 +202,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
   private class MyCondition implements Condition<DomFileDescription> {
     public Module module;
 
+    @Override
     public boolean value(final DomFileDescription description) {
       return description.isMyFile(myXmlFile, module);
     }

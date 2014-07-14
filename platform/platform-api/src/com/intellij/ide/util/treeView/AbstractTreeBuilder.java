@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Condition;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -212,10 +212,9 @@ public class AbstractTreeBuilder implements Disposable {
 
   /**
    * node descriptor getElement contract is as follows:
-   * 1.TreeStructure always returns & recieves "treestructure" element returned by getTreeStructureElement
+   * 1.TreeStructure always returns & receives "treeStructure" element returned by getTreeStructureElement
    * 2.Paths contain "model" element returned by getElement
    */
-
   protected Object getTreeStructureElement(NodeDescriptor nodeDescriptor) {
     return nodeDescriptor.getElement();
   }
@@ -432,6 +431,7 @@ public class AbstractTreeBuilder implements Disposable {
     return true;
   }
 
+  @SuppressWarnings("SpellCheckingInspection")
   protected void runOnYeildingDone(Runnable onDone) {
     if (isDisposed()) return;
 
@@ -490,10 +490,22 @@ public class AbstractTreeBuilder implements Disposable {
     }
   }
 
+  @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"})
+  @Deprecated
   @NotNull
+  /**
+   * @deprecated use {@link #getInitialized()}
+   * to remove in IDEA 14
+   */
   public final ActionCallback getIntialized() {
-    if (isDisposed()) return new ActionCallback.Rejected();
+    return getInitialized();
+  }
 
+  @NotNull
+  public final ActionCallback getInitialized() {
+    if (isDisposed()) {
+      return new ActionCallback.Rejected();
+    }
     return myUi.getInitialized();
   }
 
@@ -623,20 +635,23 @@ public class AbstractTreeBuilder implements Disposable {
   @Nullable
   public static AbstractTreeBuilder getBuilderFor(@NotNull JTree tree) {
     final WeakReference ref = (WeakReference)tree.getClientProperty(TREE_BUILDER);
-    return ref != null ? (AbstractTreeBuilder)ref.get() : null;
+    return (AbstractTreeBuilder)SoftReference.dereference(ref);
   }
 
   @Nullable
-  public final <T> Object accept(@NotNull Class nodeClass, @NotNull TreeVisitor<T> visitor) {
+  public final <T> Object accept(@NotNull Class<?> nodeClass, @NotNull TreeVisitor<T> visitor) {
     return accept(nodeClass, getRootElement(), visitor);
   }
 
   @Nullable
-  private <T> Object accept(@NotNull Class nodeClass, Object element, @NotNull TreeVisitor<T> visitor) {
-    if (element == null) return null;
+  private <T> Object accept(@NotNull Class<?> nodeClass, Object element, @NotNull TreeVisitor<T> visitor) {
+    if (element == null) {
+      return null;
+    }
 
-    if (nodeClass.isAssignableFrom(element.getClass())) {
-      if (visitor.visit((T)element)) return element;
+    //noinspection unchecked
+    if (nodeClass.isAssignableFrom(element.getClass()) && visitor.visit((T)element)) {
+      return element;
     }
 
     final Object[] children = getTreeStructure().getChildElements(element);

@@ -64,6 +64,10 @@ public class PyWrapTest extends PyTestCase {
     doTest(" AND field");
   }
 
+  public void testDontWrapStartOfString() { // PY-9436
+    doTest("_some_long_text_here_to_test_right_margin_some_long_text_here_to_test_right_margin_some_long_text_here_to_test_right_margin");
+  }
+
 
   public void testWrapRightMargin() {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings();
@@ -83,7 +87,6 @@ public class PyWrapTest extends PyTestCase {
       settings.RIGHT_MARGIN = oldValue;
       settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = oldMarginValue;
     }
-
   }
 
   private void doTest(final String textToType) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,12 +35,9 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import java.util.List;
 
@@ -51,7 +48,7 @@ import java.util.List;
 public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSettings> extends AbstractInplaceIntroducer<GrVariable, PsiElement> {
 
   private SmartTypePointer myTypePointer;
-  private OccurrencesChooser.ReplaceChoice myReplaceChoice;
+  private final OccurrencesChooser.ReplaceChoice myReplaceChoice;
 
   private RangeMarker myVarMarker;
   private final PsiFile myFile;
@@ -85,7 +82,8 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
     GrExpression expression =
       refVariableElementParent instanceof GrNewExpression && refVariableElement.getNode().getElementType() == GroovyTokenTypes.kNEW
       ? (GrNewExpression)refVariableElementParent
-      : PsiTreeUtil.getParentOfType(refVariableElement, GrReferenceExpression.class);
+      : refVariableElementParent instanceof GrParenthesizedExpression ? ((GrParenthesizedExpression)refVariableElementParent).getOperand() 
+                                                                      : PsiTreeUtil.getParentOfType(refVariableElement, GrReferenceExpression.class);
     if (expression instanceof GrReferenceExpression && !(expression.getParent() instanceof GrMethodCall)) {
       final String referenceName = ((GrReferenceExpression)expression).getReferenceName();
       if (((GrReferenceExpression)expression).resolve() == variable ||
@@ -98,7 +96,7 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
     if (expression == null) {
       expression = PsiTreeUtil.getParentOfType(refVariableElement, GrExpression.class);
     }
-    while (expression instanceof GrReferenceExpression) {
+    while (expression instanceof GrReferenceExpression || expression instanceof GrCall) {
       final PsiElement parent = expression.getParent();
       if (parent instanceof GrMethodCallExpression) {
         if (parent.getText().equals(exprText)) return (GrExpression)parent;
@@ -109,8 +107,10 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
           return expression;
         }
       }
-      else {
+      else if (expression instanceof GrReferenceExpression){
         return null;
+      } else {
+        break;
       }
     }
     if (expression != null && expression.isValid() && expression.getText().equals(exprText)) {
@@ -163,56 +163,14 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
   }
 
   @Override
+  protected void moveOffsetAfter(boolean success) {
+    super.moveOffsetAfter(success);
+
+  }
+
+  @Override
   protected void performIntroduce() {
-    GrIntroduceContext context = new GrIntroduceContext() {
-      @NotNull
-      @Override
-      public Project getProject() {
-        return myProject;
-      }
-
-      @Override
-      public Editor getEditor() {
-        return myEditor;
-      }
-
-      @Nullable
-      @Override
-      public GrExpression getExpression() {
-        return (GrExpression)getExpr();
-      }
-
-      @Nullable
-      @Override
-      public GrVariable getVar() {
-        return getLocalVariable();
-      }
-
-      @Nullable
-      @Override
-      public StringPartInfo getStringPart() {
-        return null;
-      }
-
-      @NotNull
-      @Override
-      public PsiElement[] getOccurrences() {
-        return restoreOccurrences();
-      }
-
-      @Override
-      public PsiElement getScope() {
-        return myScope;
-      }
-
-      @NotNull
-      @Override
-      public PsiElement getPlace() {
-        GrExpression expression = getExpression();
-        return expression != null ? expression : getLocalVariable();
-      }
-    };
-    runRefactoring(context, getSettings(), true);
+    runRefactoring(new IntroduceContextAdapter(), getSettings(), true);
   }
 
   @NotNull
@@ -220,7 +178,7 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
     List<PsiElement> result = ContainerUtil.map(getOccurrenceMarkers(), new Function<RangeMarker, PsiElement>() {
       @Override
       public PsiElement fun(RangeMarker marker) {
-        return GroovyRefactoringUtil.findElementInRange(myFile, marker.getStartOffset(), marker.getEndOffset(), GrExpression.class);
+        return PsiImplUtil.findElementInRange(myFile, marker.getStartOffset(), marker.getEndOffset(), GrExpression.class);
       }
     });
     return PsiUtilCore.toPsiElementArray(result);
@@ -262,7 +220,7 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
 
   @Override
   public boolean isReplaceAllOccurrences() {
-    return myReplaceChoice != OccurrencesChooser.ReplaceChoice.NO || myContext.getOccurrences().length == 1;
+    return myReplaceChoice != OccurrencesChooser.ReplaceChoice.NO;
   }
 
   protected abstract Settings getSettings();
@@ -277,5 +235,54 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
   @Nullable
   protected PsiType getSelectedType() {
     return myTypePointer != null ? myTypePointer.getType() : null;
+  }
+
+  private class IntroduceContextAdapter implements GrIntroduceContext {
+    @NotNull
+    @Override
+    public Project getProject() {
+      return myProject;
+    }
+
+    @Override
+    public Editor getEditor() {
+      return myEditor;
+    }
+
+    @Nullable
+    @Override
+    public GrExpression getExpression() {
+      return (GrExpression)getExpr();
+    }
+
+    @Nullable
+    @Override
+    public GrVariable getVar() {
+      return getLocalVariable();
+    }
+
+    @Nullable
+    @Override
+    public StringPartInfo getStringPart() {
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public PsiElement[] getOccurrences() {
+      return restoreOccurrences();
+    }
+
+    @Override
+    public PsiElement getScope() {
+      return myScope;
+    }
+
+    @NotNull
+    @Override
+    public PsiElement getPlace() {
+      GrExpression expression = getExpression();
+      return expression != null ? expression : getLocalVariable();
+    }
   }
 }

@@ -51,4 +51,131 @@ class MavenSurefirePluginTest extends MavenDomTestCase {
     assertCompletionVariants(myProjectPom, "main", "test")
   }
 
+  void testCompletionSurefireProperties() {
+    importProject("""
+  <groupId>simpleMaven</groupId>
+  <artifactId>simpleMaven</artifactId>
+  <version>1.0</version>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <additionalClasspathElements>
+            <additionalClasspathElement>\${surefire.<caret>}</additionalClasspathElement>
+          </additionalClasspathElements>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+""")
+
+    assertCompletionVariants(myProjectPom, "surefire.forkNumber", "surefire.threadNumber")
+  }
+
+  void testCompletionSurefirePropertiesOutsideConfiguration() {
+    importProject("""
+  <groupId>simpleMaven</groupId>
+  <artifactId>simpleMaven</artifactId>
+  <version>1.0</version>
+
+  <properties>
+    <aaa>\${surefire.<caret>}</aaa>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+""")
+
+    assertCompletionVariants(myProjectPom)
+  }
+
+  void testSurefirePropertiesHighlighting() {
+    importProject("""
+  <groupId>simpleMaven</groupId>
+  <artifactId>simpleMaven</artifactId>
+  <version>1.0</version>
+
+    <properties>
+    <aaa>\${surefire.forkNumber}</aaa>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <additionalClasspathElements>
+            <additionalClasspathElement>\${surefire.forkNumber}</additionalClasspathElement>
+          </additionalClasspathElements>
+        </configuration>
+
+        <executions>
+          <execution>
+            <goals>
+              <goal>test</goal>
+              <goal>\${surefire.threadNumber}</goal>
+            </goals>
+            <configuration>
+              <debugForkedProcess>\${surefire.threadNumber}</debugForkedProcess>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+""")
+
+    createProjectPom("""
+  <groupId>simpleMaven</groupId>
+  <artifactId>simpleMaven</artifactId>
+  <version>1.0</version>
+
+    <properties>
+    <aaa>\${<error>surefire.forkNumber</error>}</aaa>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <additionalClasspathElements>
+            <additionalClasspathElement>\${surefire.forkNumber}</additionalClasspathElement>
+          </additionalClasspathElements>
+        </configuration>
+
+        <executions>
+          <execution>
+            <goals>
+              <goal>test</goal>
+              <goal>\${<error>surefire.threadNumber</error>}</goal>
+            </goals>
+            <configuration>
+              <debugForkedProcess>\${surefire.threadNumber}</debugForkedProcess>
+            </configuration>
+          </execution>
+        </executions>
+
+      </plugin>
+    </plugins>
+  </build>
+""")
+
+    checkHighlighting()
+  }
+
+
 }

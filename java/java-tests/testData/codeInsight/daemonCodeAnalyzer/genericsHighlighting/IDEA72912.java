@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class Test<T>
+class Test<T>
 {
         List<Collection<T>> getList ()
         {

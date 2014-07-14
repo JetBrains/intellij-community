@@ -127,7 +127,7 @@ public class PyRegexpTest extends PyTestCase {
                        "\n" +
                        "def f(x, y):\n" +
                        "    re.search('<caret>.*(' + x + ')' + y, 'foo')\n",
-                       ".*(missing)missing");
+                       ".*(missing_value)missing_value");
   }
 
   public void testPercentFormattingRegexpAutoInjection() {
@@ -135,7 +135,7 @@ public class PyRegexpTest extends PyTestCase {
                        "\n" +
                        "def f(x, y):\n" +
                        "    re.search('<caret>.*%s-%d' % (x, y), 'foo')\n",
-                       ".*missing-missing");
+                       ".*missing_value-missing_value");
   }
 
   public void testNewStyleFormattingRegexpAutoInjection() {
@@ -143,7 +143,7 @@ public class PyRegexpTest extends PyTestCase {
                        "\n" +
                        "def f(x, y):\n" +
                        "    re.search('<caret>.*{foo}-{}'.format(x, foo=y), 'foo')\n",
-                       ".*missing-missing");
+                       ".*missing_value-missing_value");
   }
 
   public void testNewStyleFormattingEndsWithConstant() {
@@ -151,7 +151,7 @@ public class PyRegexpTest extends PyTestCase {
                        "\n" +
                        "def f(**kwargs):" +
                        "    re.search('<caret>(foo{bar}baz$)'.format(**kwargs), 'foo')\n",
-                       "(foomissingbaz$)");
+                       "(foomissing_valuebaz$)");
   }
 
   private void doTestInjectedText(@NotNull String text, @NotNull String expected) {

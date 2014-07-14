@@ -23,11 +23,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.MultiMapBasedOnSet;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
+import com.intellij.util.xml.highlighting.DomElementsInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.DependencyConflictId;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
@@ -40,7 +39,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.*;
 
-public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspection<MavenDomProjectModel> {
+public class MavenDuplicateDependenciesInspection extends DomElementsInspection<MavenDomProjectModel> {
   public MavenDuplicateDependenciesInspection() {
     super(MavenDomProjectModel.class);
   }
@@ -142,7 +141,7 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
 
   @NotNull
   private static MultiMap<DependencyConflictId, MavenDomDependency> getDuplicateDependenciesMap(MavenDomProjectModel projectModel) {
-    final MultiMap<DependencyConflictId, MavenDomDependency> allDependencies = new MultiMapBasedOnSet<DependencyConflictId, MavenDomDependency>();
+    final MultiMap<DependencyConflictId, MavenDomDependency> allDependencies = MultiMap.createSet();
 
     Processor<MavenDomProjectModel> collectProcessor = new Processor<MavenDomProjectModel>() {
       public boolean process(MavenDomProjectModel model) {
@@ -168,7 +167,7 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
 
   private static void checkManagedDependencies(@NotNull MavenDomProjectModel projectModel,
                                                @NotNull DomElementAnnotationHolder holder) {
-    MultiMap<DependencyConflictId, MavenDomDependency> duplicates = new MultiMapBasedOnSet<DependencyConflictId, MavenDomDependency>();
+    MultiMap<DependencyConflictId, MavenDomDependency> duplicates = MultiMap.createSet();
     collect(duplicates, projectModel.getDependencyManagement().getDependencies());
 
     for (Map.Entry<DependencyConflictId, Collection<MavenDomDependency>> entry : duplicates.entrySet()) {

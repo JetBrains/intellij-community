@@ -1,6 +1,5 @@
 foo: <caret>
 -----
-as
 assert
 boolean
 byte

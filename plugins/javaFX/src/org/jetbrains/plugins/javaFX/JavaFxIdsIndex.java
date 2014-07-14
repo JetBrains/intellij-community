@@ -42,11 +42,13 @@ public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>>
     return myDataIndexer;
   }
 
+  @NotNull
   @Override
   public DataExternalizer<Set<String>> getValueExternalizer() {
     return myDataExternalizer;
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
@@ -58,6 +60,7 @@ public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>>
     return KEY;
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
     return myKeyDescriptor;

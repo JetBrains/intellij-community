@@ -24,9 +24,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLayeredPane;
+import com.intellij.ui.components.Magnificator;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
@@ -37,6 +39,7 @@ import org.intellij.images.options.*;
 import org.intellij.images.ui.ImageComponent;
 import org.intellij.images.ui.ImageComponentDecorator;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -49,6 +52,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
+import java.util.Locale;
 
 /**
  * Image editor UI
@@ -142,6 +146,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
     JPanel topPanel = new JPanel(new BorderLayout());
     topPanel.add(toolbarPanel, BorderLayout.WEST);
     infoLabel = new JLabel((String)null, SwingConstants.RIGHT);
+    infoLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 2));
     topPanel.add(infoLabel, BorderLayout.EAST);
 
     add(topPanel, BorderLayout.NORTH);
@@ -159,7 +164,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
       if (format == null) {
         format = ImagesBundle.message("unknown.format");
       } else {
-        format = format.toUpperCase();
+        format = format.toUpperCase(Locale.ENGLISH);
       }
       VirtualFile file = editor.getFile();
       infoLabel.setText(
@@ -191,12 +196,24 @@ final class ImageEditorUI extends JPanel implements DataProvider {
     return zoomModel;
   }
 
-  private static final class ImageContainerPane extends JBLayeredPane {
+  private final class ImageContainerPane extends JBLayeredPane {
     private final ImageComponent imageComponent;
 
-    public ImageContainerPane(ImageComponent imageComponent) {
+    public ImageContainerPane(final ImageComponent imageComponent) {
       this.imageComponent = imageComponent;
       add(imageComponent);
+
+      putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, new Magnificator() {
+        @Override
+        public Point magnify(double scale, Point at) {
+          Point locationBefore = imageComponent.getLocation();
+          ImageZoomModel model = editor.getZoomModel();
+          double factor = model.getZoomFactor();
+          model.setZoomFactor(scale * factor);
+          return new Point(((int)((at.x - Math.max(scale > 1.0 ? locationBefore.x : 0, 0)) * scale)), 
+                           ((int)((at.y - Math.max(scale > 1.0 ? locationBefore.y : 0, 0)) * scale)));
+        }
+      });
     }
 
     private void centerComponents() {
@@ -217,7 +234,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
     }
 
     @Override
-    protected void paintComponent(Graphics g) {
+    protected void paintComponent(@NotNull Graphics g) {
       super.paintComponent(g);
       if (UIUtil.isUnderDarcula()) {
         g.setColor(UIUtil.getControlColor().brighter());
@@ -322,7 +339,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
   }
 
   private class DocumentChangeListener implements ChangeListener {
-    public void stateChanged(ChangeEvent e) {
+    public void stateChanged(@NotNull ChangeEvent e) {
       ImageDocument document = imageComponent.getDocument();
       BufferedImage value = document.getValue();
 
@@ -337,7 +354,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
   }
 
   private class FocusRequester extends MouseAdapter {
-    public void mousePressed(MouseEvent e) {
+    public void mousePressed(@NotNull MouseEvent e) {
       requestFocus();
     }
   }

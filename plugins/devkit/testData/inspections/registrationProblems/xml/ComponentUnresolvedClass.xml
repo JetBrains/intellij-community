@@ -1,0 +1,9 @@
+<idea-plugin>
+  <application-components>
+    <component>
+      <interface-class><error descr="Cannot resolve interface class">INVALID_VALUE</error></interface-class>
+      <implementation-class><error descr="Cannot resolve implementation class">INVALID_VALUE</error></implementation-class>
+      <headless-implementation-class>INVALID_VALUE</headless-implementation-class>
+    </component>
+  </application-components>
+</idea-plugin>

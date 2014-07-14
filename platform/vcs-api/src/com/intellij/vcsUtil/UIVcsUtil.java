@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.vcsUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,7 +33,7 @@ public class UIVcsUtil {
   }
 
   public static JPanel errorPanel(final String text, boolean isError) {
-    final JLabel label = new JLabel("<html><body>" + escapeXmlAndAddBr(text) + "</body></html>");
+    final JLabel label = new JLabel(XmlStringUtil.wrapInHtml(escapeXmlAndAddBr(text)));
     label.setForeground(isError ? SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor() : UIUtil.getInactiveTextColor());
     final JPanel wrapper = new JPanel(new GridBagLayout());
     wrapper.add(label, new GridBagConstraints(0,0,1,1,0,0,GridBagConstraints.CENTER, GridBagConstraints.NONE,
@@ -47,8 +48,8 @@ public class UIVcsUtil {
   }
 
   public static JPanel infoPanel(final String header, final String text) {
-    final JLabel label = new JLabel("<html><body><h4>" + StringUtil.escapeXml(header) +
-                                    "</h4>" + escapeXmlAndAddBr(text) + "</body></html>");
+    final JLabel label = new JLabel(XmlStringUtil.wrapInHtml("<h4>" + StringUtil.escapeXml(header) +
+                                    "</h4>" + escapeXmlAndAddBr(text)));
     final JPanel wrapper = new JPanel(new GridBagLayout());
     wrapper.add(label, new GridBagConstraints(0,0,1,1,0,0,GridBagConstraints.CENTER, GridBagConstraints.NONE,
                                                          new Insets(1,1,1,1), 0,0));

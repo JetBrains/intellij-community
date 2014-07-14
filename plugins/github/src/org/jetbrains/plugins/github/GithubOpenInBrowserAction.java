@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -99,7 +100,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
 
     String urlToOpen = getGithubUrl(project, virtualFile, editor);
     if (urlToOpen != null) {
-      BrowserUtil.launchBrowser(urlToOpen);
+      BrowserUtil.browse(urlToOpen);
     }
   }
 
@@ -156,7 +157,12 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     if (githubRepoUrl == null) {
       return null;
     }
-    builder.append(githubRepoUrl).append("/blob/").append(branch).append(relativePath);
+    if (StringUtil.isEmptyOrSpaces(relativePath)) {
+      builder.append(githubRepoUrl).append("/tree/").append(branch);
+    }
+    else {
+      builder.append(githubRepoUrl).append("/blob/").append(branch).append(relativePath);
+    }
 
     if (editor != null && editor.getDocument().getLineCount() >= 1) {
       // lines are counted internally from 0, but from 1 on github

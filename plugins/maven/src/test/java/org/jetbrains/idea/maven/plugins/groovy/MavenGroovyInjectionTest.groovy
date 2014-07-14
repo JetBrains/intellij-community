@@ -116,6 +116,45 @@ class MavenGroovyInjectionTest extends LightCodeInsightFixtureTestCase {
     assert lookups.containsAll(["String", "StringBuffer", "StringBuilder"])
   }
 
+  public void testCompletion3() {
+    myFixture.configureByText("pom.xml", """
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>simpleMaven</groupId>
+  <artifactId>simpleMaven</artifactId>
+  <version>1.0</version>
+
+  <packaging>jar</packaging>
+
+  <build>
+    <plugins>
+            <plugin>
+                <groupId>org.codehaus.gmaven</groupId>
+                <artifactId>groovy-maven-plugin</artifactId>
+                <version>1.3</version>
+                <configuration>
+                    <!-- http://groovy.codehaus.org/The+groovydoc+Ant+task -->
+                    <source>
+                        String<caret>
+                    </source>
+                </configuration>
+            </plugin>
+    </plugins>
+  </build>
+
+</project>
+""")
+
+    myFixture.completeBasic()
+
+    def lookups = myFixture.lookupElementStrings
+    assert lookups.containsAll(["String", "StringBuffer", "StringBuilder"])
+  }
+
   public void testInjectionVariables() {
     myFixture.configureByText("pom.xml", """
 <?xml version="1.0" encoding="UTF-8"?>

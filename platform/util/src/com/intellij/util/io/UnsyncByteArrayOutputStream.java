@@ -22,20 +22,25 @@ import java.util.Arrays;
 public class UnsyncByteArrayOutputStream extends OutputStream {
   protected byte[] myBuffer;
   protected int myCount;
+  private boolean myIsShared;
 
   public UnsyncByteArrayOutputStream() {
     this(32);
   }
 
   public UnsyncByteArrayOutputStream(int size) {
-    myBuffer = new byte[size];
+    this(new byte[size]);
+  }
+  public UnsyncByteArrayOutputStream(byte[] buffer) {
+    myBuffer = buffer;
   }
 
   @Override
   public void write(int b) {
     int newcount = myCount + 1;
-    if (newcount > myBuffer.length) {
-      myBuffer = Arrays.copyOf(myBuffer, Math.max(myBuffer.length << 1, newcount));
+    if (newcount > myBuffer.length || myIsShared) {
+      myBuffer = Arrays.copyOf(myBuffer, newcount > myBuffer.length ? Math.max(myBuffer.length << 1, newcount):myBuffer.length);
+      myIsShared = false;
     }
     myBuffer[myCount] = (byte)b;
     myCount = newcount;
@@ -50,8 +55,9 @@ public class UnsyncByteArrayOutputStream extends OutputStream {
       return;
     }
     int newcount = myCount + len;
-    if (newcount > myBuffer.length) {
-      myBuffer = Arrays.copyOf(myBuffer, Math.max(myBuffer.length << 1, newcount));
+    if (newcount > myBuffer.length || myIsShared) {
+      myBuffer = Arrays.copyOf(myBuffer, newcount > myBuffer.length ? Math.max(myBuffer.length << 1, newcount): myBuffer.length);
+      myIsShared = false;
     }
     System.arraycopy(b, off, myBuffer, myCount, len);
     myCount = newcount;
@@ -66,6 +72,10 @@ public class UnsyncByteArrayOutputStream extends OutputStream {
   }
 
   public byte[] toByteArray() {
+    if (myBuffer.length == myCount) {
+      myIsShared = true;
+      return myBuffer;
+    }
     return Arrays.copyOf(myBuffer, myCount);
   }
 

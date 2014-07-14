@@ -2,16 +2,25 @@
   <name>IntelliLang</name>
   <id>org.intellij.intelliLang</id>
   <vendor>JetBrains</vendor>
-  <description><![CDATA[User configurable language injection support (originally developed by Sascha Weinreuter sascha.weinreuter@cit.de)]]></description>
+  <description>
+      <![CDATA[
+      Enables user configurable language injection support (originally developed by Sascha Weinreuter sascha.weinreuter@cit.de)
+        The following features are available:
+        <ul>
+        <li>Language injection</li>
+        <li>Pattern validation</li>
+        <li>Regular expression support</li>
+        <li>Language Injections page in the Settings/Preferences dialog.</li>
+        <li>Ability to edit injected code in the special scratch-pad editor.</l>
+        </ul>
+      ]]>
+   </description>
   <version>8.0</version>
 
   <depends optional="true" config-file="intellilang-xpath-support.xml">XPathView</depends>
   <depends optional="true" config-file="intellilang-java-support.xml">com.intellij.modules.java</depends>
-  <depends optional="true" config-file="intellilang-javaee-support.xml">com.intellij.javaee</depends>
   <depends optional="true" config-file="intellilang-xml-support.xml">com.intellij.modules.xml</depends>
-  <depends optional="true" config-file="intellilang-js-support.xml">JavaScript</depends>
   <depends optional="true" config-file="intellilang-python-support.xml">com.intellij.modules.python</depends>
-  <depends optional="true" config-file="intellilang-python-support.xml">Pythonid</depends>
 
   <extensionPoints>
     <extensionPoint name="languageSupport" interface="org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport"/>
@@ -36,7 +45,7 @@
     <highlightErrorFilter implementation="org.intellij.plugins.intelliLang.inject.FrankensteinErrorFilter"/>
     <daemon.highlightInfoFilter implementation="org.intellij.plugins.intelliLang.inject.FrankensteinErrorFilter"/>
 
-    <projectConfigurable instance="org.intellij.plugins.intelliLang.InjectionsSettingsUI" nonDefaultProject="true"/>
+    <projectConfigurable displayName="Language Injections" dynamic="true" instance="org.intellij.plugins.intelliLang.InjectionsSettingsUI" nonDefaultProject="true"/>
 
     <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.CommentLanguageInjector"/>
     <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.TemporaryPlacesInjector"/>

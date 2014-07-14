@@ -16,9 +16,10 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.compiler.ant.Generator;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.elements.*;
+import com.intellij.packaging.elements.AntCopyInstructionCreator;
+import com.intellij.packaging.elements.ArtifactAntGenerationContext;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.ui.DirectoryCopyPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
@@ -52,17 +53,6 @@ public class DirectoryCopyPackagingElement extends FileOrDirectoryCopyPackagingE
                                                           @NotNull ArtifactType artifactType) {
     final String path = generationContext.getSubstitutedPath(myFilePath);
     return Collections.singletonList(creator.createDirectoryContentCopyInstruction(path));
-  }
-
-  @Override
-  public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
-                                                     @NotNull PackagingElementResolvingContext resolvingContext,
-                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext,
-                                                     @NotNull ArtifactType artifactType) {
-    final VirtualFile file = findFile();
-    if (file != null && file.isValid() && file.isDirectory()) {
-      creator.addDirectoryCopyInstructions(file);
-    }
   }
 
   public DirectoryCopyPackagingElement getState() {

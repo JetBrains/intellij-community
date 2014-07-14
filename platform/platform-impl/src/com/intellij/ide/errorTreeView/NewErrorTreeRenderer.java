@@ -24,6 +24,7 @@ import com.intellij.ui.MultilineTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -80,6 +81,11 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
                                                   boolean leaf,
                                                   int row,
                                                   boolean hasFocus) {
+      if (myCurrentCallback instanceof CustomizeColoredTreeCellRendererReplacement) {
+        return ((CustomizeColoredTreeCellRendererReplacement)myCurrentCallback)
+          .getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+      }
+
       clear();
       setBackground(UIUtil.getBgFillColor(tree));
 
@@ -130,6 +136,7 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
                                                   boolean leaf,
                                                   int row,
                                                   boolean hasFocus) {
+      myPanel.removeAll();
       myPanel.setBackground(tree.getBackground());
       myPanel.add(myLeft.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus), BorderLayout.WEST);
       myPanel.add(myRight.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus), BorderLayout.EAST);
@@ -137,12 +144,8 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     }
   }
 
-  protected void initComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-    final ErrorTreeElement element = getElement(value);
-    if(element instanceof GroupingElement) {
-      setFont(getFont().deriveFont(Font.BOLD));
-    }
-
+  @NotNull
+  public static String calcPrefix(@Nullable ErrorTreeElement element) {
     if(element instanceof SimpleMessageElement || element instanceof NavigatableMessageElement) {
       String prefix = element.getKind().getPresentableText();
 
@@ -151,9 +154,19 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
         if (!StringUtil.isEmpty(rendPrefix)) prefix += rendPrefix + " ";
       }
 
-      setText(element.getText(), prefix);
+      return prefix;
     }
-    else if (element != null){
+    return "";
+  }
+
+  protected void initComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    final ErrorTreeElement element = getElement(value);
+    if(element instanceof GroupingElement) {
+      setFont(getFont().deriveFont(Font.BOLD));
+    }
+
+    String prefix = calcPrefix(element);
+    if (element != null) {
       String[] text = element.getText();
       if (text == null) {
         text = ArrayUtil.EMPTY_STRING_ARRAY;
@@ -161,7 +174,7 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
       if(text.length > 0 && text[0] == null) {
         text[0] = "";
       }
-      setText(text, null);
+      setText(text, prefix);
     }
 
     Icon icon = null;

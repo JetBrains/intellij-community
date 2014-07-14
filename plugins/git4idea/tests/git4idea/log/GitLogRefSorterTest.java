@@ -6,9 +6,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Function;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -137,13 +135,7 @@ public class GitLogRefSorterTest extends UsefulTestCase {
   }
 
   private static VcsRef ref(String hash, String name, VcsRefType type) {
-    return new VcsRefImpl(new NotNullFunction<Hash, Integer>() {
-      @NotNull
-      @Override
-      public Integer fun(Hash hash) {
-        return Integer.parseInt(hash.asString().substring(0, Math.min(4, hash.asString().length())), 16);
-      }
-    }, HashImpl.build(hash), name, type, MOCK_VIRTUAL_FILE);
+    return new VcsRefImpl(HashImpl.build(hash), name, type, MOCK_VIRTUAL_FILE);
   }
 
   private static void check(Collection<VcsRef> unsorted, List<VcsRef> expected) {

@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DependencyInspectionBase extends AbstractBaseJavaLocalInspectionTool {
+public class DependencyInspectionBase extends BaseJavaBatchLocalInspectionTool {
   private static final String GROUP_DISPLAY_NAME = "";
   private static final String DISPLAY_NAME = InspectionsBundle.message("illegal.package.dependencies");
   @NonNls private static final String SHORT_NAME = "Dependency";

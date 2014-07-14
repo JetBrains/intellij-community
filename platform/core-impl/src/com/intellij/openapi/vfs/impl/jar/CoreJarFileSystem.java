@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.jar;
 
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,14 +40,19 @@ public class CoreJarFileSystem extends DeprecatedVirtualFileSystem {
 
   @Override
   public VirtualFile findFileByPath(@NotNull @NonNls String path) {
-    int separatorIndex = path.indexOf("!/");
-    if (separatorIndex < 0) {
-      throw new IllegalArgumentException("path in JarFileSystem must contain a separator");
+    Couple<String> pair = splitPath(path);
+    return getHandler(pair.first).findFileByPath(pair.second);
+  }
+
+  @NotNull
+  protected Couple<String> splitPath(@NotNull String path) {
+    int separator = path.indexOf("!/");
+    if (separator < 0) {
+      throw new IllegalArgumentException("Path in JarFileSystem must contain a separator: " + path);
     }
-    String localPath = path.substring(0, separatorIndex);
-    String pathInJar = path.substring(separatorIndex+2);
-    CoreJarHandler handler = getHandler(localPath);
-    return handler.findFileByPath(pathInJar);
+    String localPath = path.substring(0, separator);
+    String pathInJar = path.substring(separator + 2);
+    return Couple.of(localPath, pathInJar);
   }
 
   @NotNull
@@ -60,8 +66,7 @@ public class CoreJarFileSystem extends DeprecatedVirtualFileSystem {
   }
 
   @Override
-  public void refresh(boolean asynchronous) {
-  }
+  public void refresh(boolean asynchronous) { }
 
   @Override
   public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
@@ -83,6 +88,7 @@ public class CoreJarFileSystem extends DeprecatedVirtualFileSystem {
     throw new UnsupportedOperationException("JarFileSystem is read-only");
   }
 
+  @NotNull
   @Override
   protected VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
     throw new UnsupportedOperationException("JarFileSystem is read-only");
@@ -94,6 +100,7 @@ public class CoreJarFileSystem extends DeprecatedVirtualFileSystem {
     throw new UnsupportedOperationException("JarFileSystem is read-only");
   }
 
+  @NotNull
   @Override
   protected VirtualFile copyFile(Object requestor,
                                  @NotNull VirtualFile virtualFile,

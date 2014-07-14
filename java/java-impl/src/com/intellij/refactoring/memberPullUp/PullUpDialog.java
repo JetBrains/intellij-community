@@ -180,11 +180,12 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
 
     @Override
     public boolean isMemberEnabled(MemberInfo member) {
-      PsiClass currentSuperClass = getSuperClass();
+      final PsiClass currentSuperClass = getSuperClass();
       if(currentSuperClass == null) return true;
       if (myMemberInfoStorage.getDuplicatedMemberInfos(currentSuperClass).contains(member)) return false;
       if (myMemberInfoStorage.getExtending(currentSuperClass).contains(member.getMember())) return false;
-      if (!currentSuperClass.isInterface()) return true;
+      final boolean isInterface = currentSuperClass.isInterface();
+      if (!isInterface) return true;
 
       PsiElement element = member.getMember();
       if (element instanceof PsiClass && ((PsiClass) element).isInterface()) return true;
@@ -192,13 +193,11 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
         return ((PsiModifierListOwner) element).hasModifierProperty(PsiModifier.STATIC);
       }
       if (element instanceof PsiMethod) {
-        if (currentSuperClass.isInterface()) {
-          final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(currentSuperClass, myClass, PsiSubstitutor.EMPTY);
-          final MethodSignature signature = ((PsiMethod) element).getSignature(superSubstitutor);
-          final PsiMethod superClassMethod = MethodSignatureUtil.findMethodBySignature(currentSuperClass, signature, false);
-          if (superClassMethod != null) return false;
-        }
-        return !((PsiModifierListOwner) element).hasModifierProperty(PsiModifier.STATIC);
+        final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(currentSuperClass, myClass, PsiSubstitutor.EMPTY);
+        final MethodSignature signature = ((PsiMethod) element).getSignature(superSubstitutor);
+        final PsiMethod superClassMethod = MethodSignatureUtil.findMethodBySignature(currentSuperClass, signature, false);
+        if (superClassMethod != null) return false;
+        return !((PsiModifierListOwner) element).hasModifierProperty(PsiModifier.STATIC) || PsiUtil.isLanguageLevel8OrHigher(currentSuperClass);
       }
       return true;
     }
@@ -218,8 +217,9 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
       PsiClass currentSuperClass = getSuperClass();
       if(currentSuperClass == null) return false;
       if (currentSuperClass.isInterface()) {
-        if (member.getMember() instanceof PsiMethod) {
-          return true;
+        final PsiMember psiMember = member.getMember();
+        if (psiMember instanceof PsiMethod) {
+          return !psiMember.hasModifierProperty(PsiModifier.STATIC);
         }
       }
       return false;

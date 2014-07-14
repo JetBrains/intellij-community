@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.roots.ex;
 
 import com.intellij.openapi.project.Project;
@@ -31,8 +30,8 @@ public abstract class ProjectRootManagerEx extends ProjectRootManager {
 
   public abstract void removeProjectJdkListener(ProjectJdkListener listener);
 
-  // invokes runnable surrounded by beforeRootsChage()/rootsChanged() callbacks
-  public abstract void makeRootsChange(@NotNull Runnable runnable, boolean filetypes, boolean fireEvents);
+  // invokes runnable surrounded by beforeRootsChange()/rootsChanged() callbacks
+  public abstract void makeRootsChange(@NotNull Runnable runnable, boolean fileTypes, boolean fireEvents);
 
   public abstract void mergeRootsChangesDuring(@NotNull Runnable runnable);
 

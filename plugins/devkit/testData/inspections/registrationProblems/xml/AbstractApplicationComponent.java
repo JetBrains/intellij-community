@@ -1,0 +1,1 @@
+public abstract class AbstractApplicationComponent implements com.intellij.openapi.components.ApplicationComponent {}

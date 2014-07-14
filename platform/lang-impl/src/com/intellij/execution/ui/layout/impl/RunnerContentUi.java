@@ -521,9 +521,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     for (Content content : contents) {
       getStateFor(content).setWindow(0);
     }
-    for (Content content : contents) {
-      myOriginal.myManager.addContent(content);
-      myOriginal.findCellFor(content).minimize(content);
+    if (myOriginal != null) {
+      for (Content content : contents) {
+        myOriginal.myManager.addContent(content);
+        myOriginal.findCellFor(content).minimize(content);
+      }
     }
     myManager.removeAllContents(false);
   }
@@ -1480,7 +1482,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
             final LayoutAttractionPolicy policy = getOrCreatePolicyFor(contentId, policyMap, defaultPolicy);
             if (activate) {
-              myAttractionCount++;
+              // See IDEA-93683, bounce attraction should not disable further focus attraction
+              if (!(policy instanceof LayoutAttractionPolicy.Bounce)) {
+                myAttractionCount++;
+              }
               policy.attract(content, myRunnerUi);
             }
             else {

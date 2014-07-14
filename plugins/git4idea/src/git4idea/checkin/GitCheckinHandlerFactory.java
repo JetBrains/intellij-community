@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
@@ -131,14 +133,17 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       }
 
       if (crlfHelper.get().shouldWarn()) {
-        final GitCrlfDialog dialog = new GitCrlfDialog(myProject);
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        Pair<Integer, Boolean> codeAndDontWarn = UIUtil.invokeAndWaitIfNeeded(new Computable<Pair<Integer, Boolean>>() {
           @Override
-          public void run() {
+          public Pair<Integer, Boolean> compute() {
+            final GitCrlfDialog dialog = new GitCrlfDialog(myProject);
             dialog.show();
+            return Pair.create(dialog.getExitCode(), dialog.dontWarnAgain());
           }
         });
-        int decision = dialog.getExitCode();
+        int decision = codeAndDontWarn.first;
+        boolean dontWarnAgain = codeAndDontWarn.second;
+
         if  (decision == GitCrlfDialog.CANCEL) {
           return ReturnResult.CANCEL;
         }
@@ -148,7 +153,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
             setCoreAutoCrlfAttribute(anyRoot);
           }
           else {
-            if (dialog.dontWarnAgain()) {
+            if (dontWarnAgain) {
               settings.setWarnAboutCrlf(false);
             }
           }
@@ -174,14 +179,14 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       assert vcs != null;
 
       Collection<VirtualFile> notDefined = new ArrayList<VirtualFile>();
-      Map<VirtualFile, Pair<String, String>> defined = new HashMap<VirtualFile, Pair<String, String>>();
+      Map<VirtualFile, Couple<String>> defined = new HashMap<VirtualFile, Couple<String>>();
       Collection<VirtualFile> allRoots = new ArrayList<VirtualFile>(Arrays.asList(
         ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs)));
 
       Collection<VirtualFile> affectedRoots = getSelectedRoots();
       for (VirtualFile root : affectedRoots) {
         try {
-          Pair<String, String> nameAndEmail = getUserNameAndEmailFromGitConfig(project, root);
+          Couple<String> nameAndEmail = getUserNameAndEmailFromGitConfig(project, root);
           String name = nameAndEmail.getFirst();
           String email = nameAndEmail.getSecond();
           if (name == null || email == null) {
@@ -216,7 +221,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         allRoots.removeAll(affectedRoots);
         for (VirtualFile root : allRoots) {
           try {
-            Pair<String, String> nameAndEmail = getUserNameAndEmailFromGitConfig(project, root);
+            Couple<String> nameAndEmail = getUserNameAndEmailFromGitConfig(project, root);
             String name = nameAndEmail.getFirst();
             String email = nameAndEmail.getSecond();
             if (name != null && email != null) {
@@ -258,10 +263,10 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     }
 
     @NotNull
-    private Pair<String, String> getUserNameAndEmailFromGitConfig(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+    private Couple<String> getUserNameAndEmailFromGitConfig(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
       String name = GitConfigUtil.getValue(project, root, GitConfigUtil.USER_NAME);
       String email = GitConfigUtil.getValue(project, root, GitConfigUtil.USER_EMAIL);
-      return Pair.create(name, email);
+      return Couple.of(name, email);
     }
 
     private boolean emptyCommitMessage() {
@@ -295,7 +300,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         message = messageCommonStart + " is in the <b>detached HEAD</b> state. <br/>" +
                   "You can look around, make experimental changes and commit them, but be sure to checkout a branch not to lose your work. <br/>" +
                   "Otherwise you risk losing your changes. <br/>" +
-                  readMore("http://sitaramc.github.com/concepts/detached-head.html", "Read more about detached HEAD");
+                  readMore("http://gitolite.com/detached-head.html", "Read more about detached HEAD");
       }
 
       final int choice = Messages.showOkCancelDialog(myPanel.getComponent(), XmlStringUtil.wrapInHtml(message), title,

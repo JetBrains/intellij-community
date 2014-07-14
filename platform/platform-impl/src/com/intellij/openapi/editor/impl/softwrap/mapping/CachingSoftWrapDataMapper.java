@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapDataMapper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -254,12 +253,12 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
   }
 
   @Override
-  public void onCollapsedFoldRegion(@NotNull FoldRegion foldRegion, int x, int visualLine) {
+  public void onCollapsedFoldRegion(@NotNull FoldRegion foldRegion, int widthInColumns, int visualLine) {
     CacheEntry cacheEntry = getCacheEntryForVisualLine(visualLine, false);
     if (cacheEntry == null) {
       return;
     }
-    cacheEntry.store(new FoldingData(foldRegion, x, myRepresentationHelper, myEditor), foldRegion.getStartOffset());
+    cacheEntry.store(new FoldingData(foldRegion, widthInColumns), foldRegion.getStartOffset());
   }
 
   @Override
@@ -466,20 +465,11 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
           || (beforeLast.visualLine + 1 == last.visualLine && last.startOffset - beforeLast.endOffset > 1)
           || last.startOffset > myEditor.getDocument().getTextLength())
       {
-        CharSequence editorState = "";
-        if (myEditor instanceof EditorImpl) {
-          editorState = ((EditorImpl)myEditor).dumpState();
-        }
-        LOG.error(
-          "Detected invalid soft wraps cache update",
-          String.format(
-            "Event: %s, normal: %b.%n%nTail cache entries: %s%n%nAffected by change cache entries: %s%n%nBefore change state: %s%n%n"
-            + "After change state: %s%n%nEditor state: %s",
-            event, normal, myNotAffectedByUpdateTailCacheEntries, myAffectedByUpdateCacheEntries,
-            myBeforeChangeState, myAfterChangeState, editorState
-          )
-        );
+        logInvalidUpdate(event, normal);
       }
+    }
+    if (!myCache.isEmpty() && myEditor.getDocument().getTextLength() == 0) {
+      logInvalidUpdate(event, normal);
     }
     
     myAffectedByUpdateCacheEntries.clear();
@@ -491,6 +481,22 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     }
 
     myBeforeChangeState.cacheShouldBeUpdated = false;
+  }
+
+  private void logInvalidUpdate(@NotNull IncrementalCacheUpdateEvent event, boolean normal) {
+    CharSequence editorState = "";
+    if (myEditor instanceof EditorImpl) {
+      editorState = ((EditorImpl)myEditor).dumpState();
+    }
+    LOG.error(
+      "Detected invalid soft wraps cache update",
+      String.format(
+        "Event: %s, normal: %b.%n%nTail cache entries: %s%n%nAffected by change cache entries: %s%n%nBefore change state: %s%n%n"
+        + "After change state: %s%n%nEditor state: %s",
+        event, normal, myNotAffectedByUpdateTailCacheEntries, myAffectedByUpdateCacheEntries,
+        myBeforeChangeState, myAfterChangeState, editorState
+      )
+    );
   }
 
   @Override
@@ -657,7 +663,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
                      int endLogicalLine,
                      int endLogicalColumn,
                      int endVisualColumn,
-                     @NotNull List<Trinity<Integer, Integer, FoldRegion>> foldRegions,
+                     @NotNull List<Pair<Integer, FoldRegion>> foldRegions,
                      @NotNull List<Pair<Integer, Integer>> tabData)
   {
     final CacheEntry entry = new CacheEntry(visualLine, myEditor, myRepresentationHelper);
@@ -670,10 +676,9 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     assert endLogicalLine == myEditor.getDocument().getLineNumber(endOffset);
     entry.endLogicalColumn = endLogicalColumn;
     entry.endVisualColumn = endVisualColumn;
-    for (Trinity<Integer, Integer, FoldRegion> region : foldRegions) {
-      final FoldingData foldData = new FoldingData(region.third, region.second, myRepresentationHelper, myEditor);
-      foldData.widthInColumns = region.first;
-      entry.store(foldData, region.third.getStartOffset());
+    for (Pair<Integer, FoldRegion> region : foldRegions) {
+      final FoldingData foldData = new FoldingData(region.second, region.first);
+      entry.store(foldData, region.second.getStartOffset());
     }
     for (Pair<Integer, Integer> pair : tabData) {
       entry.storeTabData(new TabData(pair.second, pair.first));

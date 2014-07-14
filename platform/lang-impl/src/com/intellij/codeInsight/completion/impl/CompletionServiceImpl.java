@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.psi.Weigher;
 import com.intellij.psi.WeighingService;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,14 +69,15 @@ public class CompletionServiceImpl extends CompletionService{
   @Override
   public String getAdvertisementText() {
     final CompletionProgressIndicator completion = getCompletionService().getCurrentCompletion();
-    return completion == null ? null : completion.getLookup().getAdvertisementText();
+    return completion == null ? null : ContainerUtil.getFirstItem(completion.getLookup().getAdvertisements());
   }
 
   @Override
   public void setAdvertisementText(@Nullable final String text) {
+    if (text == null) return;
     final CompletionProgressIndicator completion = getCompletionService().getCurrentCompletion();
     if (completion != null) {
-      completion.getLookup().setAdvertisementText(text);
+      completion.addAdvertisement(text, null);
     }
   }
 
@@ -84,15 +86,10 @@ public class CompletionServiceImpl extends CompletionService{
                                              @NotNull final CompletionContributor contributor) {
     final PsiElement position = parameters.getPosition();
     final String prefix = CompletionData.findPrefixStatic(position, parameters.getOffset());
-    final String textBeforePosition = parameters.getPosition().getContainingFile().getText().substring(0, parameters.getOffset());
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (!(indicator instanceof CompletionProgressIndicator)) {
-      throw new AssertionError("createResultSet may be invoked only from completion thread: " + indicator + "!=" + getCurrentCompletion() + "; phase set at " + ourPhaseTrace);
-    }
-    CompletionProgressIndicator process = (CompletionProgressIndicator)indicator;
+    final int lengthOfTextBeforePosition = parameters.getOffset();
     CamelHumpMatcher matcher = new CamelHumpMatcher(prefix);
     CompletionSorterImpl sorter = defaultSorter(parameters, matcher);
-    return new CompletionResultSetImpl(consumer, textBeforePosition, matcher, contributor,parameters, sorter, process, null);
+    return new CompletionResultSetImpl(consumer, lengthOfTextBeforePosition, matcher, contributor,parameters, sorter, null);
   }
 
   @Override
@@ -105,24 +102,21 @@ public class CompletionServiceImpl extends CompletionService{
   }
 
   private static class CompletionResultSetImpl extends CompletionResultSet {
-    private final String myTextBeforePosition;
+    private final int myLengthOfTextBeforePosition;
     private final CompletionParameters myParameters;
     private final CompletionSorterImpl mySorter;
-    private final CompletionProgressIndicator myProcess;
     @Nullable private final CompletionResultSetImpl myOriginal;
 
-    public CompletionResultSetImpl(final Consumer<CompletionResult> consumer, final String textBeforePosition,
+    public CompletionResultSetImpl(final Consumer<CompletionResult> consumer, final int lengthOfTextBeforePosition,
                                    final PrefixMatcher prefixMatcher,
                                    CompletionContributor contributor,
                                    CompletionParameters parameters,
                                    @NotNull CompletionSorterImpl sorter,
-                                   @NotNull CompletionProgressIndicator process,
                                    @Nullable CompletionResultSetImpl original) {
       super(prefixMatcher, consumer, contributor);
-      myTextBeforePosition = textBeforePosition;
+      myLengthOfTextBeforePosition = lengthOfTextBeforePosition;
       myParameters = parameters;
       mySorter = sorter;
-      myProcess = process;
       myOriginal = original;
     }
 
@@ -142,7 +136,7 @@ public class CompletionServiceImpl extends CompletionService{
     @Override
     @NotNull
     public CompletionResultSet withPrefixMatcher(@NotNull final PrefixMatcher matcher) {
-      return new CompletionResultSetImpl(getConsumer(), myTextBeforePosition, matcher, myContributor, myParameters, mySorter, myProcess, this);
+      return new CompletionResultSetImpl(getConsumer(), myLengthOfTextBeforePosition, matcher, myContributor, myParameters, mySorter, this);
     }
 
     @Override
@@ -165,7 +159,8 @@ public class CompletionServiceImpl extends CompletionService{
     @NotNull
     @Override
     public CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter) {
-      return new CompletionResultSetImpl(getConsumer(), myTextBeforePosition, getPrefixMatcher(), myContributor, myParameters, (CompletionSorterImpl)sorter, myProcess, this);
+      return new CompletionResultSetImpl(getConsumer(), myLengthOfTextBeforePosition, getPrefixMatcher(), myContributor, myParameters, (CompletionSorterImpl)sorter,
+                                         this);
     }
 
     @Override
@@ -183,7 +178,7 @@ public class CompletionServiceImpl extends CompletionService{
     public void restartCompletionOnPrefixChange(ElementPattern<String> prefixCondition) {
       final CompletionProgressIndicator indicator = getCompletionService().getCurrentCompletion();
       if (indicator != null) {
-        indicator.addWatchedPrefix(myTextBeforePosition.length() - getPrefixMatcher().getPrefix().length(), prefixCondition);
+        indicator.addWatchedPrefix(myLengthOfTextBeforePosition - getPrefixMatcher().getPrefix().length(), prefixCondition);
       }
     }
 
@@ -246,12 +241,13 @@ public class CompletionServiceImpl extends CompletionService{
     final CompletionLocation location = new CompletionLocation(parameters);
 
     CompletionSorterImpl sorter = emptySorter();
-    sorter = sorter.withClassifier(CompletionSorterImpl.weighingFactory(new PreferStartMatching(location)));
+    sorter = sorter.withClassifier(CompletionSorterImpl.weighingFactory(new DispreferLiveTemplates()));
+    sorter = sorter.withClassifier(CompletionSorterImpl.weighingFactory(new PreferStartMatching()));
 
     for (final Weigher weigher : WeighingService.getWeighers(CompletionService.RELEVANCE_KEY)) {
       final String id = weigher.toString();
       if ("prefix".equals(id)) {
-        sorter = sorter.withClassifier(CompletionSorterImpl.weighingFactory(new RealPrefixMatchingWeigher(location)));
+        sorter = sorter.withClassifier(CompletionSorterImpl.weighingFactory(new RealPrefixMatchingWeigher()));
       }
       else if ("stats".equals(id)) {
         sorter = sorter.withClassifier(new ClassifierFactory<LookupElement>("stats") {
@@ -284,13 +280,13 @@ public class CompletionServiceImpl extends CompletionService{
     return new CompletionSorterImpl(new ArrayList<ClassifierFactory<LookupElement>>());
   }
 
-  public static boolean isStartMatch(LookupElement element, Lookup lookup) {
-    return getItemMatcher(element, lookup).isStartMatch(element);
+  public static boolean isStartMatch(LookupElement element, WeighingContext context) {
+    return getItemMatcher(element, context).isStartMatch(element);
   }
 
-  static PrefixMatcher getItemMatcher(LookupElement element, Lookup lookup) {
-    PrefixMatcher itemMatcher = lookup.itemMatcher(element);
-    String pattern = lookup.itemPattern(element);
+  static PrefixMatcher getItemMatcher(LookupElement element, WeighingContext context) {
+    PrefixMatcher itemMatcher = context.itemMatcher(element);
+    String pattern = context.itemPattern(element);
     if (!pattern.equals(itemMatcher.getPrefix())) {
       return itemMatcher.cloneWithPrefix(pattern);
     }

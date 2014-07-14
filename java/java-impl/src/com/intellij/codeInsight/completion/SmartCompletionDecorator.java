@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.TailType;
@@ -117,8 +118,14 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
       context.commitDocument();
     }
     myPosition = getPosition(context, this);
-    
+
+    TailType tailType = computeTailType(context);
+
     super.handleInsert(context);
+
+    if (tailType == TailType.COMMA) {
+      AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(context.getEditor(), null);
+    }
   }
 
   public static boolean hasUnboundTypeParams(final PsiMethod method, PsiType expectedType) {

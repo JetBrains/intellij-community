@@ -204,18 +204,19 @@ public class ClassUtil {
                                       @Nullable PsiClass psiClass,
                                       boolean jvmCompatible, 
                                       final GlobalSearchScope scope) {
-    final int topIdx = externalName.indexOf('$');
-    if (topIdx > -1) {
-      if (psiClass == null) {
-        psiClass = JavaPsiFacade.getInstance(psiManager.getProject())
-          .findClass(externalName.substring(0, topIdx), scope);
+    for (int pos = 0; pos < externalName.length(); pos++) {
+      if (externalName.charAt(pos) == '$') {
+        PsiClass parentClass = psiClass;
+        if (parentClass == null) {
+          parentClass = JavaPsiFacade.getInstance(psiManager.getProject())
+            .findClass(externalName.substring(0, pos), scope);
+        }
+        if (parentClass == null) continue;
+        PsiClass res = findSubclass(psiManager, externalName.substring(pos + 1), parentClass, jvmCompatible);
+        if (res != null) return res;
       }
-      if (psiClass == null) return null;
-      externalName = externalName.substring(topIdx + 1);
-      return findSubclass(psiManager, externalName, psiClass, jvmCompatible);
-    } else {
-      return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(externalName, scope);
     }
+    return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(externalName, scope);
   }
 
   @Nullable
@@ -223,15 +224,15 @@ public class ClassUtil {
                                        final String externalName,
                                        final PsiClass psiClass,
                                        final boolean jvmCompatible) {
-    final int nextIdx = externalName.indexOf('$');
-    if (nextIdx > -1) {
-      final PsiClass anonymousClass = findNonQualifiedClassByIndex(externalName.substring(0, nextIdx), psiClass, jvmCompatible);
-      if (anonymousClass == null) return null;
-      return findPsiClass(psiManager, externalName.substring(nextIdx), anonymousClass, jvmCompatible);
+    for (int pos = 0; pos < externalName.length(); pos++) {
+      if (externalName.charAt(pos) == '$') {
+        PsiClass anonymousClass = findNonQualifiedClassByIndex(externalName.substring(0, pos), psiClass, jvmCompatible);
+        if (anonymousClass == null) return null;
+        PsiClass res = findPsiClass(psiManager, externalName.substring(pos), anonymousClass, jvmCompatible);
+        if (res != null) return res;
+      }
     }
-    else {
-      return findNonQualifiedClassByIndex(externalName, psiClass, jvmCompatible);
-    }
+    return findNonQualifiedClassByIndex(externalName, psiClass, jvmCompatible);
   }
 
   @Nullable

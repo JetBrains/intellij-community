@@ -87,8 +87,9 @@ public class MemberOrderService {
     List<? extends ArrangementEntry> nonArranged = parentEntry.getChildren();
     List<ArrangementEntry> entriesWithNew = new ArrayList<ArrangementEntry>(nonArranged);
     entriesWithNew.add(memberEntry);
-    final List<? extends ArrangementMatchRule> rulesByPriority = ArrangementUtil.getRulesSortedByPriority(arrangementSettings);
-    List<ArrangementEntry> arranged = ArrangementEngine.arrange(entriesWithNew, arrangementSettings.getRules(), rulesByPriority);
+    //TODO: check insert new element
+    final List<? extends ArrangementMatchRule> rulesByPriority = arrangementSettings.getRulesSortedByPriority();
+    List<ArrangementEntry> arranged = ArrangementEngine.arrange(entriesWithNew, arrangementSettings.getSections(), rulesByPriority, null);
     int i = arranged.indexOf(memberEntry);
     
     if (i <= 0) {

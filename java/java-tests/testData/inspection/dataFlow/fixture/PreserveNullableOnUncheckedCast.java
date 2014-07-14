@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class BrokenAlignment {
+class BrokenAlignment {
   void t() {
     @NotNull Collection list = new ArrayList();
     List<String> strings = (List<String>) list;

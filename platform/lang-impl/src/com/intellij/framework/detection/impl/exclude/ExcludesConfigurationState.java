@@ -17,6 +17,7 @@ package com.intellij.framework.detection.impl.exclude;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ import java.util.List;
 public class ExcludesConfigurationState {
   private List<String> myFrameworkTypes = new ArrayList<String>();
   private List<ExcludedFileState> myFiles = new ArrayList<ExcludedFileState>();
+  private boolean myDetectionEnabled = true;
 
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false, elementTag = "type", elementValueAttribute = "id")
@@ -39,6 +41,15 @@ public class ExcludesConfigurationState {
   @AbstractCollection(surroundWithTag = false)
   public List<ExcludedFileState> getFiles() {
     return myFiles;
+  }
+
+  @Attribute("detection-enabled")
+  public boolean isDetectionEnabled() {
+    return myDetectionEnabled;
+  }
+
+  public void setDetectionEnabled(boolean detectionEnabled) {
+    myDetectionEnabled = detectionEnabled;
   }
 
   public void setFrameworkTypes(List<String> frameworkTypes) {
@@ -55,11 +66,12 @@ public class ExcludesConfigurationState {
     if (!(o instanceof ExcludesConfigurationState)) return false;
 
     ExcludesConfigurationState state = (ExcludesConfigurationState)o;
-    return Comparing.haveEqualElements(myFiles, state.myFiles) && Comparing.haveEqualElements(myFrameworkTypes, state.myFrameworkTypes);
+    return myDetectionEnabled == state.myDetectionEnabled && Comparing.haveEqualElements(myFiles, state.myFiles)
+           && Comparing.haveEqualElements(myFrameworkTypes, state.myFrameworkTypes);
   }
 
   @Override
   public int hashCode() {
-    return 31 * myFrameworkTypes.hashCode() + myFiles.hashCode();
+    return 31 * myFrameworkTypes.hashCode() + myFiles.hashCode() + (myDetectionEnabled ? 1 : 0);
   }
 }

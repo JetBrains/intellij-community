@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.rename;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -33,6 +34,7 @@ import java.util.*;
 public class JavaNameSuggestionProvider implements NameSuggestionProvider {
   @Nullable
   public SuggestedNameInfo getSuggestedNames(final PsiElement element, final PsiElement nameSuggestionContext, Set<String> result) {
+    if (!element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return null;
     String initialName = UsageViewUtil.getShortName(element);
     SuggestedNameInfo info = suggestNamesForElement(element, nameSuggestionContext);
     if (info != null) {
@@ -95,12 +97,14 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
   @Nullable
   private static String[] suggestProperlyCasedName(PsiElement psiElement) {
     if (!(psiElement instanceof PsiNamedElement)) return null;
+    if (psiElement instanceof PsiFile) return null;
     String name = ((PsiNamedElement)psiElement).getName();
     if (name == null) return null;
+    String prefix = "";
     if (psiElement instanceof PsiVariable) {
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(psiElement.getProject());
       final VariableKind kind = codeStyleManager.getVariableKind((PsiVariable)psiElement);
-      final String prefix = codeStyleManager.getPrefixByVariableKind(kind);
+      prefix = codeStyleManager.getPrefixByVariableKind(kind);
       if (kind == VariableKind.STATIC_FINAL_FIELD) {
         final String[] words = NameUtil.splitNameIntoWords(name);
         StringBuilder buffer = new StringBuilder();
@@ -111,19 +115,15 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
         }
         return new String[] {buffer.toString()};
       }
-      else {
-        final List<String> result = new ArrayList<String>();
-        result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name)));
-        if (name.startsWith(prefix)) {
-          name = name.substring(prefix.length());
-          result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name)));
-        }
-        result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name.toLowerCase())));
-        return ArrayUtil.toStringArray(result);
-      }
-
     }
-    return new String[]{name};
+    final List<String> result = new ArrayList<String>();
+    result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name)));
+    if (name.startsWith(prefix)) {
+      name = name.substring(prefix.length());
+      result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name)));
+    }
+    result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name.toLowerCase())));
+    return ArrayUtil.toStringArray(result);
   }
 
   private static String suggestProperlyCasedName(String prefix, String[] words) {

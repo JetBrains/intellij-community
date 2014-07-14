@@ -56,8 +56,8 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
+import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -361,7 +361,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
             }
 
             // We want to get fixed xmlns attr from dtd and check its default with requested namespace
-            if (descriptor instanceof XmlNSDescriptorImpl) {
+            if (descriptor instanceof com.intellij.xml.impl.dtd.XmlNSDescriptorImpl) {
               final XmlElementDescriptor elementDescriptor = descriptor.getElementDescriptor(XmlTagImpl.this);
               if (elementDescriptor != null) {
                 final XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor("xmlns", XmlTagImpl.this);
@@ -909,6 +909,17 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   private String getNsLocation(String ns) {
     if (XmlUtil.XHTML_URI.equals(ns)) {
       return XmlUtil.getDefaultXhtmlNamespace(getProject());
+    }
+    if (XmlNSDescriptorImpl.equalsToSchemaName(this, XmlNSDescriptorImpl.SCHEMA_TAG_NAME)) {
+      for (XmlTag subTag : getSubTags()) {
+        if (XmlNSDescriptorImpl.equalsToSchemaName(subTag, XmlNSDescriptorImpl.IMPORT_TAG_NAME) &&
+            ns.equals(subTag.getAttributeValue("namespace"))) {
+          String location = subTag.getAttributeValue("schemaLocation");
+          if (location != null) {
+            return location;
+          }
+        }
+      }
     }
     return ns;
   }

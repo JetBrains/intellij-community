@@ -16,6 +16,7 @@
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
+import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
 import com.intellij.lang.java.JavaParserDefinition;
@@ -166,7 +167,7 @@ public class JavaModuleInsight extends ModuleInsight {
     }
   }
 
-  protected ModuleDescriptor createModuleDescriptor(final File moduleContentRoot, final Collection<DetectedProjectRoot> sourceRoots) {
+  protected ModuleDescriptor createModuleDescriptor(final File moduleContentRoot, final Collection<DetectedSourceRoot> sourceRoots) {
     return new ModuleDescriptor(moduleContentRoot, StdModuleTypes.JAVA, sourceRoots);
   }
 

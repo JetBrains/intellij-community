@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,19 +25,20 @@ import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.reference.SoftReference;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ConcurrentWeakKeySoftValueHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.ReferenceQueue;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 public class ResolveCache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.ResolveCache");
-  private final ConcurrentMap[] myMaps = new ConcurrentMap[2*2*2]; //boolean physical, boolean incompleteCode, boolean isPoly
+  @SuppressWarnings("unchecked")
+  private final ConcurrentMap[] myMaps = new ConcurrentWeakKeySoftValueHashMap[2*2*2]; //boolean physical, boolean incompleteCode, boolean isPoly
   private final RecursionGuard myGuard = RecursionManager.createGuard("resolveCache");
 
   public static ResolveCache getInstance(Project project) {
@@ -45,16 +46,31 @@ public class ResolveCache {
     return ServiceManager.getService(project, ResolveCache.class);
   }
 
-  public interface AbstractResolver<TRef extends PsiReference,TResult> {
+  public interface AbstractResolver<TRef extends PsiReference, TResult> {
     TResult resolve(@NotNull TRef ref, boolean incompleteCode);
   }
+
+  /**
+   * Resolver which returns array of possible resolved variants instead of just one
+   */
   public interface PolyVariantResolver<T extends PsiPolyVariantReference> extends AbstractResolver<T,ResolveResult[]> {
     @Override
     @NotNull
     ResolveResult[] resolve(@NotNull T t, boolean incompleteCode);
   }
 
-  public interface Resolver extends AbstractResolver<PsiReference,PsiElement>{
+  /**
+   * Poly variant resolver with additional containingFile parameter, which helps to avoid costly tree up traversal
+   */
+  public interface PolyVariantContextResolver<T extends PsiPolyVariantReference> {
+    @NotNull
+    ResolveResult[] resolve(@NotNull T ref, @NotNull PsiFile containingFile, boolean incompleteCode);
+  }
+
+  /**
+   * Resolver specialized to resolve PsiReference to PsiElement
+   */
+  public interface Resolver extends AbstractResolver<PsiReference, PsiElement> {
   }
 
   public ResolveCache(@NotNull MessageBus messageBus) {
@@ -73,8 +89,30 @@ public class ResolveCache {
     });
   }
 
-  private static <K,V> ConcurrentWeakHashMap<K, V> createWeakMap() {
-    return new ConcurrentWeakHashMap<K,V>(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.<K>canonicalStrategy());
+  @NotNull
+  private static <K,V> ConcurrentMap<K, V> createWeakMap() {
+    return new ConcurrentWeakKeySoftValueHashMap<K, V>(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.<K>canonicalStrategy()){
+      @NotNull
+      @Override
+      protected ValueReference<K, V> createValueReference(@NotNull final V value,
+                                                          @NotNull ReferenceQueue<V> queue) {
+        ValueReference<K, V> result;
+        if (value == NULL_RESULT || value instanceof Object[] && ((Object[])value).length == 0) {
+          // no use in creating SoftReference to null
+          result = createStrongReference(value);
+        }
+        else {
+          result = super.createValueReference(value, queue);
+        }
+        return result;
+      }
+
+      @Override
+      public V get(@NotNull Object key) {
+        V v = super.get(key);
+        return v == NULL_RESULT ? null : v;
+      }
+    };
   }
 
   public void clearCache(boolean isPhysical) {
@@ -92,9 +130,9 @@ public class ResolveCache {
     ProgressIndicatorProvider.checkCanceled();
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    ConcurrentMap<TRef, Getter<TResult>> map = getMap(isPhysical, incompleteCode, isPoly);
-    Getter<TResult> reference = map.get(ref);
-    TResult result = reference == null ? null : reference.get();
+    int index = getIndex(isPhysical, incompleteCode, isPoly);
+    ConcurrentMap<TRef, TResult> map = getMap(index);
+    TResult result = map.get(ref);
     if (result != null) {
       return result;
     }
@@ -110,7 +148,7 @@ public class ResolveCache {
     LOG.assertTrue(element == null || element.isValid(), result);
 
     if (stamp.mayCacheNow()) {
-      cache(ref, map, result, isPoly);
+      cache(ref, map, result);
     }
     return result;
   }
@@ -132,11 +170,40 @@ public class ResolveCache {
     return result == null ? ResolveResult.EMPTY_ARRAY : result;
   }
 
+  @NotNull
+  public <T extends PsiPolyVariantReference> ResolveResult[] resolveWithCaching(@NotNull final T ref,
+                                                                                @NotNull final PolyVariantContextResolver<T> resolver,
+                                                                                boolean needToPreventRecursion,
+                                                                                final boolean incompleteCode,
+                                                                                @NotNull final PsiFile containingFile) {
+    ProgressIndicatorProvider.checkCanceled();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+
+    int index = getIndex(containingFile.isPhysical(), incompleteCode, true);
+    ConcurrentMap<T, ResolveResult[]> map = getMap(index);
+    ResolveResult[] result = map.get(ref);
+    if (result != null) {
+      return result;
+    }
+
+    RecursionGuard.StackStamp stamp = myGuard.markStack();
+    result = needToPreventRecursion ? myGuard.doPreventingRecursion(Pair.create(ref, incompleteCode), true, new Computable<ResolveResult[]>() {
+      @Override
+      public ResolveResult[] compute() {
+        return resolver.resolve(ref, containingFile, incompleteCode);
+      }
+    }) : resolver.resolve(ref, containingFile, incompleteCode);
+
+    if (stamp.mayCacheNow()) {
+      cache(ref, map, result);
+    }
+    return result == null ? ResolveResult.EMPTY_ARRAY : result;
+  }
+
   @Nullable
   public <T extends PsiPolyVariantReference> ResolveResult[] getCachedResults(@NotNull T ref, boolean physical, boolean incompleteCode, boolean isPoly) {
-    Map<T, Getter<ResolveResult[]>> map = getMap(physical, incompleteCode, isPoly);
-    Getter<ResolveResult[]> reference = map.get(ref);
-    return reference == null ? null : reference.get();
+    Map<T, ResolveResult[]> map = getMap(getIndex(physical, incompleteCode, isPoly));
+    return map.get(ref);
   }
 
   @Nullable
@@ -148,40 +215,60 @@ public class ResolveCache {
     return resolve(ref, resolver, needToPreventRecursion, incompleteCode, false, ref.getElement().isPhysical());
   }
 
-  private <TRef extends PsiReference,TResult> ConcurrentMap<TRef, Getter<TResult>> getMap(boolean physical, boolean incompleteCode, boolean isPoly) {
+  @NotNull
+  private <TRef extends PsiReference,TResult> ConcurrentMap<TRef, TResult> getMap(int index) {
     //noinspection unchecked
-    return myMaps[(physical ? 0 : 1)*4 + (incompleteCode ? 0 : 1)*2 + (isPoly ? 0 : 1)];
+    return myMaps[index];
   }
 
-  private static class SoftGetter<T> extends SoftReference<T> implements Getter<T> {
-    public SoftGetter(T referent) {
-      super(referent);
-    }
+  private static int getIndex(boolean physical, boolean incompleteCode, boolean isPoly) {
+    return (physical ? 0 : 1)*4 + (incompleteCode ? 0 : 1)*2 + (isPoly ? 0 : 1);
   }
-  private static final Getter<ResolveResult[]> EMPTY_POLY_RESULT = new StaticGetter<ResolveResult[]>(ResolveResult.EMPTY_ARRAY);
-  private static final Getter<Object> NULL_RESULT = new StaticGetter<Object>(null);
-  private static <TRef extends PsiReference, TResult> void cache(@NotNull TRef ref,
-                                                                 @NotNull ConcurrentMap<TRef, Getter<TResult>> map,
-                                                                 TResult result,
-                                                                 boolean isPoly) {
+
+  private static final Object NULL_RESULT = new Object();
+  private <TRef extends PsiReference, TResult> void cache(@NotNull TRef ref,
+                                                          @NotNull ConcurrentMap<TRef, TResult> map,
+                                                          TResult result) {
     // optimization: less contention
-    Getter<TResult> cached = map.get(ref);
-    if (cached != null && cached.get() == result) {
+    TResult cached = map.get(ref);
+    if (cached != null && cached == result) {
       return;
     }
     if (result == null) {
       // no use in creating SoftReference to null
       //noinspection unchecked
-      cached = (Getter<TResult>)NULL_RESULT;
-    }
-    else if (isPoly && ((Object[])result).length == 0) {
-      // no use in creating SoftReference to empty array
-      //noinspection unchecked
-      cached = result.getClass() == ResolveResult[].class ? (Getter<TResult>)EMPTY_POLY_RESULT : new StaticGetter<TResult>(result);
+      cached = (TResult)NULL_RESULT;
     }
     else {
-      cached = new SoftGetter<TResult>(result);
+      //noinspection unchecked
+      cached = result;
     }
     map.put(ref, cached);
+  }
+
+  @NotNull
+  private static <K, V> StrongValueReference<K, V> createStrongReference(@NotNull V value) {
+    return value == NULL_RESULT ? NULL_VALUE_REFERENCE : value == ResolveResult.EMPTY_ARRAY ? EMPTY_RESOLVE_RESULT : new StrongValueReference<K, V>(value);
+  }
+
+  private static final StrongValueReference NULL_VALUE_REFERENCE = new StrongValueReference(NULL_RESULT);
+  private static final StrongValueReference EMPTY_RESOLVE_RESULT = new StrongValueReference(ResolveResult.EMPTY_ARRAY);
+  private static class StrongValueReference<K, V> implements ConcurrentWeakKeySoftValueHashMap.ValueReference<K, V> {
+    private final V myValue;
+
+    public StrongValueReference(@NotNull V value) {
+      myValue = value;
+    }
+
+    @NotNull
+    @Override
+    public ConcurrentWeakKeySoftValueHashMap.KeyReference<K, V> getKeyReference() {
+      throw new UnsupportedOperationException(); // will never GC so this method will never be called so no implementation is necessary
+    }
+
+    @Override
+    public V get() {
+      return myValue;
+    }
   }
 }

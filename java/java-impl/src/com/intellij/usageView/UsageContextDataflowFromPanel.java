@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.intellij.usageView;
 import com.intellij.openapi.project.Project;
 import com.intellij.usages.UsageContextPanel;
 import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsageViewImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +28,7 @@ public class UsageContextDataflowFromPanel extends UsageContextDataflowToPanel {
     @NotNull
     @Override
     public UsageContextPanel create(@NotNull UsageView usageView) {
-      return new UsageContextDataflowFromPanel(((UsageViewImpl)usageView).getProject());
+      return new UsageContextDataflowFromPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation());
     }
 
     @NotNull
@@ -37,8 +38,8 @@ public class UsageContextDataflowFromPanel extends UsageContextDataflowToPanel {
     }
   }
 
-  public UsageContextDataflowFromPanel(@NotNull Project project) {
-    super(project);
+  public UsageContextDataflowFromPanel(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
+    super(project, presentation);
   }
 
 

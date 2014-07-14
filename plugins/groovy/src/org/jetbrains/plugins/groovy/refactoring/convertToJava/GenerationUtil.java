@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -59,30 +61,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBAND;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBAND_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBOR;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBOR_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBSR_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBXOR;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBXOR_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDIV;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDIV_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMINUS;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMINUS_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMOD;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMOD_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mPLUS;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mPLUS_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSL_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSR_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR_STAR;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR_STAR_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeType;
-
 /**
  * @author Maxim.Medvedev
  */
@@ -103,7 +81,7 @@ public class GenerationUtil {
       if (parameter instanceof PsiPrimitiveType) {
         parameter = TypesUtil.boxPrimitiveType(parameter, context.getManager(), context.getResolveScope(), true);
       }
-      writeType(builder, parameter, context, classNameProvider);
+      TypeWriter.writeType(builder, parameter, context, classNameProvider);
       builder.append(", ");
     }
     builder.delete(builder.length()-2, builder.length()).append('>');
@@ -226,7 +204,7 @@ public class GenerationUtil {
     }
     else {
       addParentheses =
-        context != null && (context.shouldInsertCurlyBrackets() || context.myStatements.size() > 0) && parent instanceof GrControlStatement;
+        context != null && (context.shouldInsertCurlyBrackets() || !context.myStatements.isEmpty()) && parent instanceof GrControlStatement;
     }
 
     if (addParentheses) {
@@ -248,7 +226,7 @@ public class GenerationUtil {
     }
   }
 
-  public static void writeStatement(final StringBuilder builder, ExpressionContext context, @Nullable GrStatement statement, StatementWriter writer) {
+  public static void writeStatement(@NotNull StringBuilder builder, @NotNull ExpressionContext context, @Nullable GrStatement statement, @NotNull StatementWriter writer) {
     StringBuilder statementBuilder = new StringBuilder();
     ExpressionContext statementContext = context.copy();
     writer.writeStatement(statementBuilder, statementContext);
@@ -286,7 +264,7 @@ public class GenerationUtil {
         text.append(" extends ");
         for (int j = 0; j < extendsListTypes.length; j++) {
           if (j > 0) text.append(" & ");
-          writeType(text, extendsListTypes[j], typeParameterList, classNameProvider);
+          TypeWriter.writeType(text, extendsListTypes[j], typeParameterList, classNameProvider);
         }
       }
     }
@@ -317,10 +295,10 @@ public class GenerationUtil {
         if (context.analyzedVars.toMakeFinal(parameter) && !parameter.hasModifierProperty(PsiModifier.FINAL)) {
           text.append(PsiModifier.FINAL).append(' ');
         }
-        writeType(text, context.typeProvider.getParameterType(parameter), parameter, classNameProvider);
+        TypeWriter.writeType(text, context.typeProvider.getParameterType(parameter), parameter, classNameProvider);
       }
       else {
-        writeType(text, parameter.getType(), parameter, classNameProvider);
+        TypeWriter.writeType(text, parameter.getType(), parameter, classNameProvider);
       }
       text.append(' ');
       text.append(generateUniqueName(usedNames, parameter.getName()));
@@ -353,7 +331,7 @@ public class GenerationUtil {
       if (i != 0) {
         text.append(',');
       }
-      writeType(text, exception, throwsList, classNameProvider);
+      TypeWriter.writeType(text, exception, throwsList, classNameProvider);
       text.append(' ');
     }
   }
@@ -380,7 +358,7 @@ public class GenerationUtil {
 
   static String getTypeText(PsiType varType, PsiElement context) {
     final StringBuilder builder = new StringBuilder();
-    writeType(builder, varType, context);
+    TypeWriter.writeType(builder, varType, context);
     return builder.toString();
   }
 
@@ -452,7 +430,7 @@ public class GenerationUtil {
         builder.append("new ").append(GroovyCommonClassNames.GROOVY_LANG_REFERENCE);
         if (original != null) {
           builder.append('<');
-          writeType(builder, original, variable, new GeneratorClassNameProvider());
+          TypeWriter.writeType(builder, original, variable, new GeneratorClassNameProvider());
           builder.append('>');
         }
         builder.append('(');
@@ -462,7 +440,7 @@ public class GenerationUtil {
       //generate cast
       if (original != null && iType != null && !TypesUtil.isAssignable(original, iType, initializer)) {
         builder.append('(');
-        writeType(builder, original, initializer);
+        TypeWriter.writeType(builder, original, initializer);
         builder.append(')');
       }
 
@@ -492,7 +470,7 @@ public class GenerationUtil {
       }
     }
 
-    writeType(builder, type, variable);
+    TypeWriter.writeType(builder, type, variable);
     builder.append(' ');
 
     writeVariableWithoutType(builder, expressionContext, variable, wrapped, originalType);
@@ -501,18 +479,18 @@ public class GenerationUtil {
   private static final Map<IElementType, Pair<String, IElementType>> binOpTypes = new HashMap<IElementType, Pair<String, IElementType>>();
 
   static {
-    binOpTypes.put(mPLUS_ASSIGN, new Pair<String, IElementType>("+", mPLUS));
-    binOpTypes.put(mMINUS_ASSIGN, new Pair<String, IElementType>("-", mMINUS));
-    binOpTypes.put(mSTAR_ASSIGN, new Pair<String, IElementType>("*", mSTAR));
-    binOpTypes.put(mDIV_ASSIGN, new Pair<String, IElementType>("/", mDIV));
-    binOpTypes.put(mMOD_ASSIGN, new Pair<String, IElementType>("%", mMOD));
-    binOpTypes.put(mSL_ASSIGN, new Pair<String, IElementType>("<<", COMPOSITE_LSHIFT_SIGN));
-    binOpTypes.put(mSR_ASSIGN, new Pair<String, IElementType>(">>", COMPOSITE_RSHIFT_SIGN));
-    binOpTypes.put(mBSR_ASSIGN, new Pair<String, IElementType>(">>>", COMPOSITE_TRIPLE_SHIFT_SIGN));
-    binOpTypes.put(mBAND_ASSIGN, new Pair<String, IElementType>("&", mBAND));
-    binOpTypes.put(mBOR_ASSIGN, new Pair<String, IElementType>("|", mBOR));
-    binOpTypes.put(mBXOR_ASSIGN, new Pair<String, IElementType>("^", mBXOR));
-    binOpTypes.put(mSTAR_STAR_ASSIGN, new Pair<String, IElementType>("**", mSTAR_STAR));
+    binOpTypes.put(GroovyTokenTypes.mPLUS_ASSIGN, Pair.create("+", GroovyTokenTypes.mPLUS));
+    binOpTypes.put(GroovyTokenTypes.mMINUS_ASSIGN, Pair.create("-", GroovyTokenTypes.mMINUS));
+    binOpTypes.put(GroovyTokenTypes.mSTAR_ASSIGN, Pair.create("*", GroovyTokenTypes.mSTAR));
+    binOpTypes.put(GroovyTokenTypes.mDIV_ASSIGN, Pair.create("/", GroovyTokenTypes.mDIV));
+    binOpTypes.put(GroovyTokenTypes.mMOD_ASSIGN, Pair.create("%", GroovyTokenTypes.mMOD));
+    binOpTypes.put(GroovyTokenTypes.mSL_ASSIGN, new Pair<String, IElementType>("<<", GroovyElementTypes.COMPOSITE_LSHIFT_SIGN));
+    binOpTypes.put(GroovyTokenTypes.mSR_ASSIGN, new Pair<String, IElementType>(">>", GroovyElementTypes.COMPOSITE_RSHIFT_SIGN));
+    binOpTypes.put(GroovyTokenTypes.mBSR_ASSIGN, new Pair<String, IElementType>(">>>", GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN));
+    binOpTypes.put(GroovyTokenTypes.mBAND_ASSIGN, Pair.create("&", GroovyTokenTypes.mBAND));
+    binOpTypes.put(GroovyTokenTypes.mBOR_ASSIGN, Pair.create("|", GroovyTokenTypes.mBOR));
+    binOpTypes.put(GroovyTokenTypes.mBXOR_ASSIGN, Pair.create("^", GroovyTokenTypes.mBXOR));
+    binOpTypes.put(GroovyTokenTypes.mSTAR_STAR_ASSIGN, Pair.create("**", GroovyTokenTypes.mSTAR_STAR));
   }
 
   public static Pair<String, IElementType> getBinaryOperatorType(IElementType op_assign) {
@@ -541,7 +519,7 @@ public class GenerationUtil {
     final CheckProcessElement checker = new CheckProcessElement(member);
     ResolveUtil.processAllDeclarationsSeparately(declared, checker, new BaseScopeProcessor() {
       @Override
-      public boolean execute(@NotNull PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         return false;
       }
     }, ResolveState.initial(), qualifier);
@@ -561,7 +539,7 @@ public class GenerationUtil {
     }
 
     @Override
-    public boolean execute(@NotNull PsiElement element, ResolveState state) {
+    public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
       if (myManager.areElementsEquivalent(element, myMember)) {
         myResult = true;
         return false;
@@ -575,7 +553,7 @@ public class GenerationUtil {
     }
 
     @Override
-    public void handleEvent(Event event, Object associated) {
+    public void handleEvent(@NotNull Event event, Object associated) {
     }
 
     public boolean isFound() {
@@ -661,7 +639,7 @@ public class GenerationUtil {
     builder.append("((");
 
     //todo check operator priority IDEA-93790
-    writeType(builder, expected, context);
+    TypeWriter.writeType(builder, expected, context);
     builder.append(")(") ;
     writer.writeStatement(builder, expressionContext);
     builder.append("))");

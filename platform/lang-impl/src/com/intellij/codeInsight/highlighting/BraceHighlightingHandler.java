@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,6 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
-import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobLauncher;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -36,7 +34,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -100,23 +97,23 @@ public class BraceHighlightingHandler {
 
     myPsiFile = psiFile;
     myCodeInsightSettings = CodeInsightSettings.getInstance();
-    // myFileType = myPsiFile == null ? null : myPsiFile.getFileType();
   }
 
   static void lookForInjectedAndMatchBracesInOtherThread(@NotNull final Editor editor,
                                                          @NotNull final Alarm alarm,
                                                          @NotNull final Processor<BraceHighlightingHandler> processor) {
     ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
-    final Project project = editor.getProject();
-    if (project == null || project.isDisposed()) return;
+    if (!isValidEditor(editor)) return;
     if (!PROCESSED_EDITORS.add(editor)) {
       // Skip processing if that is not really necessary.
       // Assuming to be in EDT here.
       return;
     }
     final int offset = editor.getCaretModel().getOffset();
+    final Project project = editor.getProject();
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
-    JobLauncher.getInstance().submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
+    if (!isValidFile(psiFile)) return;
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
@@ -124,8 +121,12 @@ public class BraceHighlightingHandler {
           public void run() {
             final PsiFile injected;
             try {
-              injected = psiFile == null || psiFile instanceof PsiCompiledElement || isReallyDisposed(editor, project)
-                     ? null : getInjectedFileIfAny(editor, project, offset, psiFile, alarm);
+              injected = psiFile == null ||
+                         psiFile instanceof PsiCompiledElement ||
+                         psiFile instanceof PsiBinaryFile ||
+                         !isValidEditor(editor) ||
+                         !isValidFile(psiFile)
+                         ? null : getInjectedFileIfAny(editor, project, offset, psiFile, alarm);
             }
             catch (RuntimeException e) {
               // Reset processing flag in case of unexpected exception.
@@ -141,7 +142,7 @@ public class BraceHighlightingHandler {
               @Override
               public void run() {
                 try {
-                  if (!isReallyDisposed(editor, project)) {
+                  if (isValidEditor(editor) && isValidFile(injected)) {
                     Editor newEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injected);
                     BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, alarm, injected);
                     processor.process(handler);
@@ -167,10 +168,13 @@ public class BraceHighlightingHandler {
     });
   }
 
-  private static boolean isReallyDisposed(@NotNull Editor editor, @NotNull Project project) {
+  private static boolean isValidFile(PsiFile file) {
+    return file != null && file.isValid() && !file.getProject().isDisposed();
+  }
+
+  private static boolean isValidEditor(@NotNull Editor editor) {
     Project editorProject = editor.getProject();
-    return editorProject == null ||
-           editorProject.isDisposed() || project.isDisposed() || !editor.getComponent().isShowing() || editor.isViewer();
+    return editorProject != null && !editorProject.isDisposed() && !editor.isDisposed() && editor.getComponent().isShowing() && !editor.isViewer();
   }
 
   @NotNull
@@ -422,7 +426,8 @@ public class BraceHighlightingHandler {
       highlightBrace(lBrace, matched);
     }
 
-    if (!myEditor.equals(FileEditorManager.getInstance(myProject).getSelectedTextEditor())) {
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject); // null in default project
+    if (fileEditorManager == null || !myEditor.equals(fileEditorManager.getSelectedTextEditor())) {
       return;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,11 +112,6 @@ public class ToolsImpl implements Tools {
         }
       }
 
-      for (ScopeToolState state : getTools()) {
-        if (state.getScope(project) == null) {
-          return state.getTool();
-        }
-      }
     }
     return myDefaultState.getTool();
   }
@@ -142,7 +137,7 @@ public class ToolsImpl implements Tools {
       for (ScopeToolState state : myTools) {
         final Element scopeElement = new Element("scope");
         scopeElement.setAttribute("name", state.getScopeName());
-        scopeElement.setAttribute(LEVEL_ATTRIBUTE, state.getLevel().toString());
+        scopeElement.setAttribute(LEVEL_ATTRIBUTE, state.getLevel().getName());
         scopeElement.setAttribute(ENABLED_ATTRIBUTE, Boolean.toString(state.isEnabled()));
         InspectionToolWrapper toolWrapper = state.getTool();
         if (toolWrapper.isInitialized()) {
@@ -152,7 +147,7 @@ public class ToolsImpl implements Tools {
       }
     }
     inspectionElement.setAttribute(ENABLED_ATTRIBUTE, Boolean.toString(isEnabled()));
-    inspectionElement.setAttribute(LEVEL_ATTRIBUTE, getLevel().toString());
+    inspectionElement.setAttribute(LEVEL_ATTRIBUTE, getLevel().getName());
     inspectionElement.setAttribute(ENABLED_BY_DEFAULT_ATTRIBUTE, Boolean.toString(myDefaultState.isEnabled()));
     InspectionToolWrapper toolWrapper = myDefaultState.getTool();
     if (toolWrapper.isInitialized()) {

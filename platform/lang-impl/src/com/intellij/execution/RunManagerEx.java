@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,6 @@ public abstract class RunManagerEx extends RunManager {
   public abstract RunnerAndConfigurationSettings findConfigurationByName(@Nullable final String name);
 
   public abstract Icon getConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings);
-  public abstract void invalidateConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings);
 
   @NotNull
   public abstract Collection<RunnerAndConfigurationSettings> getSortedConfigurations();

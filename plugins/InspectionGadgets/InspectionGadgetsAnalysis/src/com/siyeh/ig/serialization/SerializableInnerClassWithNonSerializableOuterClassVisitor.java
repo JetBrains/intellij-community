@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
@@ -34,19 +34,24 @@ class SerializableInnerClassWithNonSerializableOuterClassVisitor
 
   @Override
   public void visitClass(@NotNull PsiClass aClass) {
-    if (aClass.isInterface() || aClass.isAnnotationType() ||
-        aClass.isEnum()) {
+    if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()) {
       return;
     }
-    if (inspection.ignoreAnonymousInnerClasses &&
-        aClass instanceof PsiAnonymousClass) {
+    if (aClass instanceof PsiTypeParameter) {
       return;
     }
-    final PsiClass containingClass = aClass.getContainingClass();
+    if (inspection.ignoreAnonymousInnerClasses && aClass instanceof PsiAnonymousClass) {
+      return;
+    }
+    final PsiClass containingClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
     if (containingClass == null) {
       return;
     }
     if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
+      return;
+    }
+    final PsiModifierListOwner staticElement = PsiUtil.getEnclosingStaticElement(aClass, containingClass);
+    if (staticElement != null) {
       return;
     }
     if (!SerializationUtils.isSerializable(aClass)) {

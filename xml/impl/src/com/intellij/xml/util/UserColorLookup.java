@@ -94,6 +94,6 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
   public static Color getColorFromElement(final PsiElement element) {
     if (!(element instanceof XmlToken)) return null;
 
-    return ColorSampleLookupValue.getColor(element.getText());
+    return ColorMap.getColor(element.getText());
   }
 }

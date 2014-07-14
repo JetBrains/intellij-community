@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,8 +120,9 @@ class LogicalToVisualMappingStrategy extends AbstractMappingStrategy<VisualPosit
     FoldingData data = getFoldRegionData(foldRegion);
     int foldEndColumn;
     if (data == null) {
+      int xStart = myEditor.getDocument().getLineNumber(foldRegion.getStartOffset()) == foldEndLine ? context.x : 0;
       foldEndColumn = myRepresentationHelper.toVisualColumnSymbolsNumber(
-        myEditor.getDocument().getCharsSequence(), foldRegion.getStartOffset(), foldRegion.getEndOffset(), 0
+        myEditor.getDocument().getCharsSequence(), foldRegion.getStartOffset(), foldRegion.getEndOffset(), xStart
       );
     } else {
       foldEndColumn = data.getCollapsedSymbolsWidthInColumns();

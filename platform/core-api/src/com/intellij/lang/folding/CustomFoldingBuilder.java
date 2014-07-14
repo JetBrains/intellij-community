@@ -1,8 +1,23 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.lang.folding;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -18,7 +33,7 @@ import java.util.List;
  * 
  * @author Rustam Vishnyakov
  */
-public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements DumbAware {
+public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements PossiblyDumbAware {
 
   private CustomFoldingProvider myDefaultProvider;
   private static final int MAX_LOOKUP_DEPTH = 10;
@@ -29,7 +44,8 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
     List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
     if (CustomFoldingProvider.getAllProviders().length > 0) {
       myDefaultProvider = null;
-      addCustomFoldingRegionsRecursively(null, root.getNode(), descriptors, 0);
+      ASTNode rootNode = root.getNode();
+      addCustomFoldingRegionsRecursively(new FoldingStack(rootNode), rootNode, descriptors, 0);
     }
     buildLanguageFoldRegions(descriptors, root, document, quick);
     return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
@@ -55,11 +71,11 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
                                                    @NotNull Document document,
                                                    boolean quick);
 
-  private void addCustomFoldingRegionsRecursively(@Nullable FoldingStack foldingStack,
+  private void addCustomFoldingRegionsRecursively(@NotNull FoldingStack foldingStack,
                                                   @NotNull ASTNode node,
                                                   @NotNull List<FoldingDescriptor> descriptors,
                                                   int currDepth) {
-    FoldingStack localFoldingStack = isCustomFoldingRoot(node) || foldingStack == null ? new FoldingStack(node) : foldingStack;
+    FoldingStack localFoldingStack = isCustomFoldingRoot(node) ? new FoldingStack(node) : foldingStack;
     for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (isCustomRegionStart(child)) {
         localFoldingStack.push(child);
@@ -103,15 +119,10 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
 
   @Override
   public final boolean isCollapsedByDefault(@NotNull ASTNode node) {
-    // TODO<rv>: Modify Folding API and pass here folding range.
-    if (isCustomFoldingRoot(node)) {
-      for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-        if (isCustomRegionStart(child)) {
-          String childText = child.getText();
-          CustomFoldingProvider defaultProvider = getDefaultProvider(childText);
-          return defaultProvider != null && defaultProvider.isCollapsedByDefault(childText);
-        }
-      }
+    if (isCustomRegionStart(node)) {
+      String childText = node.getText();
+      CustomFoldingProvider defaultProvider = getDefaultProvider(childText);
+      return defaultProvider != null && defaultProvider.isCollapsedByDefault(childText);
     }
     return isRegionCollapsedByDefault(node);
   }
@@ -180,8 +191,8 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
 
   /**
    * Checks if the node is used as custom folding root. Any custom folding elements inside the root are considered to be at the same level
-   * even if they are located at different levels of PSI tree. Collected folding descriptors always contain only root elements with
-   * appropriate ranges. The method returns true if the node has any child elements.
+   * even if they are located at different levels of PSI tree. By default the method returns true if the node has any child elements
+   * (only custom folding comments at the same PSI tree level are processed, start/end comments at different levels will be ignored).
    *
    * @param node  The node to check.
    * @return      True if the node is a root for custom foldings.
@@ -202,5 +213,17 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
     public ASTNode getOwner() {
       return owner;
     }
+  }
+
+  /**
+   * Checks if the folding ranges can be created in the Dumb Mode. In the most of
+   * language implementations the method returns true, but for strong context-dependent
+   * languages (like ObjC/C++) overridden method returns false.
+   *
+   * @return True if the folding ranges can be created in the Dumb Mode
+   */
+  @Override
+  public boolean isDumbAware() {
+    return true;
   }
 }

@@ -64,7 +64,7 @@ public class PyComparisonWithNoneInspection extends PyInspection {
           PsiReference reference = node.getReference();
           assert reference != null;
           PsiElement result = reference.resolve();
-          if (result == null || PyBuiltinCache.getInstance(node).hasInBuiltins(result)) {
+          if (result == null || PyBuiltinCache.getInstance(node).isBuiltin(result)) {
             registerProblem(node, "Comparison with None performed with equality operators", new ComparisonWithNoneQuickFix());
           }
         }

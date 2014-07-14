@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,8 +98,10 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testDiamondNeg13() { doTest(false, false); }
   public void testDiamondNeg14() { doTest(false, false); }
   public void testDiamondMisc() { doTest(false, false); }
+  public void testMultipleConstructors() { doTest(false, false); }
   public void testHighlightInaccessibleFromClassModifierList() { doTest(false, false); }
   public void testInnerInTypeArguments() { doTest(false, false); }
+  public void testRawSubstitutor() { doTest(false, false); }
 
   public void testIncompleteDiamonds() throws Exception {
     doTest(false, false);
@@ -109,8 +111,8 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
     EntryPoint extension = new EntryPoint() {
       @NotNull @Override public String getDisplayName() { return "duh"; }
-      @Override public boolean isEntryPoint(RefElement refElement, PsiElement psiElement) { return false; }
-      @Override public boolean isEntryPoint(PsiElement psiElement) { return false; }
+      @Override public boolean isEntryPoint(@NotNull RefElement refElement, @NotNull PsiElement psiElement) { return false; }
+      @Override public boolean isEntryPoint(@NotNull PsiElement psiElement) { return false; }
       @Override public boolean isSelected() { return false; }
       @Override public void setSelected(boolean selected) { }
       @Override public void readExternal(Element element) { }
@@ -165,6 +167,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testUncheckedWarningIDEA26738() { doTest(true, false); }
   public void testUncheckedWarningIDEA99536() { doTest(true, false); }
   public void testEnclosingInstance() { doTest(false, false); }
+  public void testIDEA122519EnclosingInstance() { doTest(false, false); }
   public void testWrongArgsAndUnknownTypeParams() { doTest(false, false); }
   public void testAmbiguousMethodCallIDEA97983() { doTest(false, false); }
   public void testAmbiguousMethodCallIDEA100314() { doTest(false, false); }
@@ -180,4 +183,5 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA78916() { doTest(false, false); }
   public void testIDEA111420() { doTest(false, false); }
   public void testIDEA111450() { doTest(true, false); }
+  public void testExternalizable() { doTest(true, false); }
 }

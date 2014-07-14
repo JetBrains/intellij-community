@@ -15,11 +15,9 @@
  */
 package com.intellij.openapi.deployment;
 
-import com.intellij.compiler.impl.packagingCompiler.BuildRecipeImpl;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -119,14 +117,6 @@ public class DeploymentUtilImpl extends DeploymentUtil {
                               FileUtil.toSystemDependentName(toFile.getPath()));
   }
 
-  public final boolean addItemsRecursively(@NotNull BuildRecipe items, @NotNull File root, String outputRelativePath) {
-    if (outputRelativePath == null) outputRelativePath = "";
-    outputRelativePath = trimForwardSlashes(outputRelativePath);
-
-    items.addFileCopyInstruction(root, true, outputRelativePath);
-    return true;
-  }
-
   public void reportDeploymentDescriptorDoesNotExists(ConfigFile descriptor, CompileContext context, Module module) {
     final String description = ModuleType.get(module).getName() + " '" + module.getName() + '\'';
     String descriptorPath = VfsUtil.urlToPath(descriptor.getUrl());
@@ -148,10 +138,6 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     else {
       DeploymentUtil.getInstance().reportDeploymentDescriptorDoesNotExists(descriptor, compileContext, module);
     }
-  }
-
-  public BuildRecipe createBuildRecipe() {
-    return new BuildRecipeImpl();
   }
 
   @Nullable

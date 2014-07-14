@@ -40,6 +40,7 @@ public class SdkVersionUtil {
   private SdkVersionUtil() {
   }
 
+  @Deprecated
   @Nullable
   public static String readVersionFromProcessOutput(String homePath, @NonNls String[] command, @NonNls String versionLineMarker) {
     return JdkVersionDetector.getInstance().readVersionFromProcessOutput(homePath, command, versionLineMarker, ACTION_RUNNER);
@@ -48,5 +49,10 @@ public class SdkVersionUtil {
   @Nullable
   public static String detectJdkVersion(String homePath) {
     return JdkVersionDetector.getInstance().detectJdkVersion(homePath, ACTION_RUNNER);
+  }
+
+  @Nullable
+  public static JdkVersionDetector.JdkVersionInfo getJdkVersionInfo(String homePath) {
+    return JdkVersionDetector.getInstance().detectJdkVersionInfo(homePath, ACTION_RUNNER);
   }
 }

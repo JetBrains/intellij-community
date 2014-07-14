@@ -21,13 +21,15 @@ import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.tasks.TaskManagerTestCase;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
+import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import org.intellij.plugins.xsltDebugger.XsltBreakpointType;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -78,10 +80,12 @@ public class ContextTest extends TaskManagerTestCase {
     final WorkingContextManager manager = getContextManager();
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(getProject()).getBreakpointManager();
 
+    final XsltBreakpointType type = XBreakpointType.EXTENSION_POINT_NAME.findExtension(XsltBreakpointType.class);
+
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         XLineBreakpointImpl<XBreakpointProperties> breakpoint =
-          (XLineBreakpointImpl<XBreakpointProperties>)breakpointManager.addLineBreakpoint(new XsltBreakpointType(), "foo", 0, null);
+          (XLineBreakpointImpl<XBreakpointProperties>)breakpointManager.addLineBreakpoint(type, "foo", 0, null);
 
         final String name = "foo";
         manager.saveContext(name, null);
@@ -89,8 +93,8 @@ public class ContextTest extends TaskManagerTestCase {
       }
     });
     manager.loadContext("foo");
-    XBreakpoint<?>[] breakpoints = breakpointManager.getAllBreakpoints();
-    assertEquals(1, breakpoints.length);
+    Collection<? extends XLineBreakpoint<XBreakpointProperties>> breakpoints = breakpointManager.getBreakpoints(type);
+    assertEquals(1, breakpoints.size());
     manager.clearContext();
   }
 

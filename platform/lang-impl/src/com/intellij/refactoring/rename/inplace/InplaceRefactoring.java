@@ -269,7 +269,7 @@ public abstract class InplaceRefactoring {
     final TemplateBuilderImpl builder = new TemplateBuilderImpl(myScope);
 
     PsiElement nameIdentifier = getNameIdentifier();
-    int offset = myEditor.getCaretModel().getOffset();
+    int offset = InjectedLanguageUtil.getTopLevelEditor(myEditor).getCaretModel().getOffset();
     PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, stringUsages, offset);
 
     boolean subrefOnPrimaryElement = false;
@@ -711,7 +711,7 @@ public abstract class InplaceRefactoring {
 
     if (nameIdentifier != null) {
       final TextRange range = nameIdentifier.getTextRange();
-      if (range != null && range.containsOffset(offset)) return nameIdentifier;
+      if (range != null && checkRangeContainsOffset(offset, range, nameIdentifier, 0)) return nameIdentifier;
     }
 
     for (Pair<PsiElement, TextRange> stringUsage : stringUsages) {
@@ -723,7 +723,10 @@ public abstract class InplaceRefactoring {
   }
 
   private boolean checkRangeContainsOffset(int offset, final TextRange textRange, PsiElement element) {
-    int startOffset = element.getTextRange().getStartOffset();
+    return checkRangeContainsOffset(offset, textRange, element, element.getTextRange().getStartOffset());
+  }
+
+  private boolean checkRangeContainsOffset(int offset, final TextRange textRange, PsiElement element, int shiftOffset) {
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
     final PsiLanguageInjectionHost injectionHost = injectedLanguageManager.getInjectionHost(element);
     if (injectionHost != null) {
@@ -732,8 +735,9 @@ public abstract class InplaceRefactoring {
       if (initialInjectedHost != null && initialInjectedHost != injectionHost) {
         return false;
       }
+      return injectedLanguageManager.injectedToHost(element, textRange).shiftRight(shiftOffset).containsOffset(offset);
     }
-    return textRange.shiftRight(startOffset).containsOffset(offset);
+    return textRange.shiftRight(shiftOffset).containsOffset(offset);
   }
 
   protected boolean isRestart() {

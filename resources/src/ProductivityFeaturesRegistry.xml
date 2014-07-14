@@ -220,12 +220,6 @@
       successive-show="7"
       />
     <feature
-      id="editing.completion.finishByControlEnter"
-      tip-file="FinishByControlEnter.html"
-      min-usage-count="10"
-      first-show="2"
-      successive-show="3"/>
-    <feature
       id="editing.completion.cancelByControlArrows"
       tip-file="CancelByControlArrows.html"
       min-usage-count="10"
@@ -234,6 +228,12 @@
     <feature
       id="editing.completion.changeSorting"
       tip-file="ChangeSorting.html"
+      min-usage-count="10"
+      first-show="2"
+      successive-show="3"/>
+    <feature
+      id="editing.completion.postfix"
+      tip-file="PostfixCompletion.html"
       min-usage-count="10"
       first-show="2"
       successive-show="3"/>

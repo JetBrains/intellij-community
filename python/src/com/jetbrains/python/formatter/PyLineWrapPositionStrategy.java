@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.StringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,9 +45,6 @@ public class PyLineWrapPositionStrategy extends GenericLineWrapPositionStrategy 
     addRule(new Rule('(', WrapCondition.AFTER));
     addRule(new Rule('[', WrapCondition.AFTER));
     addRule(new Rule('{', WrapCondition.AFTER));
-
-    // Symbols to wrap before
-    addRule(new Rule('.', WrapCondition.BEFORE));
   }
 
   @Override
@@ -75,10 +73,19 @@ public class PyLineWrapPositionStrategy extends GenericLineWrapPositionStrategy 
                                    int maxPreferredOffset,
                                    boolean allowToBeyondMaxPreferredOffset,
                                    boolean virtual) {
+
     int wrapPosition =
       super.calculateWrapPosition(document, project, startOffset, endOffset, maxPreferredOffset, allowToBeyondMaxPreferredOffset, virtual);
     if (wrapPosition < 0) return wrapPosition;
     final CharSequence text = document.getCharsSequence();
+
+    if (wrapPosition > 0) {
+      char charBefore = text.charAt(wrapPosition - 1);
+      if (charBefore == '\'' || charBefore == '"') {
+        //don't wrap the first char of string literal
+        return wrapPosition + 1;
+      }
+    }
 
     char c = text.charAt(wrapPosition);
     if (!StringUtil.isWhiteSpace(c) || project == null) {

@@ -1,3 +1,3 @@
 abstract class Test {
-  abstract String foo();
+    abstract String foo();
 }

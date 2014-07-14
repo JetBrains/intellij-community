@@ -39,7 +39,7 @@
         </constraints>
         <properties/>
       </component>
-      <component id="d1e7d" class="javax.swing.JComboBox" binding="myModulesBox">
+      <component id="d1e7d" class="com.intellij.application.options.ModulesComboBox" binding="myModulesBox">
         <constraints>
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>

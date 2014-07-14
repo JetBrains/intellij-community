@@ -66,7 +66,7 @@ public class GroovyClassNameInsertHandler implements InsertHandler<JavaPsiClassR
     boolean parens = shouldInsertParentheses(position);
 
     final PsiClass psiClass = item.getObject();
-    if (isInVariable(position) || GroovyCompletionContributor.isInPossibleClosureParameter(position)) {
+    if (isInVariable(position) || GroovyCompletionUtil.isInPossibleClosureParameter(position)) {
       Project project = context.getProject();
       String qname = psiClass.getQualifiedName();
       String shortName = psiClass.getName();

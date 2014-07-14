@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.frame.presentation;
 
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,6 +72,8 @@ public abstract class XValuePresentation {
      */
     void renderKeywordValue(@NotNull String value);
 
+    void renderValue(@NotNull String value, @NotNull TextAttributesKey key);
+
     /**
      * Appends {@code value} surrounded by quotes to the node text colored as a string
      * @param value value to be shown
@@ -88,5 +91,10 @@ public abstract class XValuePresentation {
      * Appends {@code symbol} which is not part of the value
      */
     void renderSpecialSymbol(@NotNull String symbol);
+
+    /**
+     * Appends red colored {@code error}
+     */
+    void renderError(@NotNull String error);
   }
 }

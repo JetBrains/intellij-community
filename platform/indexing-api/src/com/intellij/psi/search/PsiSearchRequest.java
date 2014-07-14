@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class PsiSearchRequest {
-  public final SearchScope searchScope;
-  public final String word;
+  @NotNull public final SearchScope searchScope;
+  @NotNull public final String word;
   public final short searchContext;
   public final boolean caseSensitive;
   public final RequestResultProcessor processor;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,8 @@ package com.intellij.openapi.editor.ex;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.util.containers.Convertor;
+import gnu.trove.TIntFunction;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -55,7 +56,7 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   @Nullable
   public abstract Point getPoint(GutterIconRenderer renderer);
 
-  public abstract void setLineNumberConvertor(final Convertor<Integer, Integer> lineNumberConvertor);
+  public abstract void setLineNumberConvertor(@NotNull TIntFunction lineNumberConvertor);
 
   public abstract void setShowDefaultGutterPopup(boolean show);
 }

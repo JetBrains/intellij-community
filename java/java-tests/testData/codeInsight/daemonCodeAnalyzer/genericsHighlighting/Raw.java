@@ -87,7 +87,7 @@ class e {
 
 class ccc {
     static Comparable<? super ccc> f() {
-        return <warning descr="Unchecked assignment: 'java.lang.Comparable' to 'java.lang.Comparable<? super ccc>'">new Comparable () {
+        return <warning descr="Unchecked assignment: 'anonymous java.lang.Comparable' to 'java.lang.Comparable<? super ccc>'">new Comparable () {
             public int compareTo(final Object o) {
                 return 0;
             }
@@ -159,7 +159,7 @@ class Test1<X> {
 
 
 ///////////////  signatures in non-parameterized class are not erased
-public class C3  {
+class C3  {
     public int get(Class<?> c) {
         return 0;
     }

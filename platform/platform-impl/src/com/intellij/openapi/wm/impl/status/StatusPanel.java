@@ -35,6 +35,7 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -99,7 +100,7 @@ class StatusPanel extends JPanel {
     myTextPanel.setBorder(new EmptyBorder(0, 5, 0, 0));
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (myCurrentNotification != null || myAfterClick) {
           EventLog.toggleLog(getActiveProject(), myCurrentNotification);
           myAfterClick = true;

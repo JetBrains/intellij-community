@@ -36,7 +36,7 @@ public class JavaFxFileReferenceProvider extends PsiReferenceProvider {
     return value;
   }
 
-  public static PsiReference[] getReferences(final PsiElement element, String value, final String acceptedExtension) {
+  public static PsiReference[] getReferences(@NotNull PsiElement element, String value, final String acceptedExtension) {
     final PsiDirectory directory = element.getContainingFile().getOriginalFile().getParent();
     if (directory == null) return PsiReference.EMPTY_ARRAY;
     final boolean startsWithSlash = value.startsWith("/");

@@ -16,14 +16,15 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.CommonActionsManager;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.CaptionPanel;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,12 +33,15 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -52,7 +56,7 @@ import java.util.List;
 public class XFramesView implements XDebugView {
   private final JPanel myMainPanel;
   private final XDebuggerFramesList myFramesList;
-  private final JComboBox myThreadComboBox;
+  private final ComboBox myThreadComboBox;
   private final Set<XExecutionStack> myExecutionStacks = ContainerUtil.newHashSet();
   @NotNull private final XDebugSession mySession;
   private XExecutionStack mySelectedStack;
@@ -60,6 +64,7 @@ public class XFramesView implements XDebugView {
   private final Map<XExecutionStack, StackFramesListBuilder> myBuilders = new HashMap<XExecutionStack, StackFramesListBuilder>();
   private final ActionToolbarImpl myToolbar;
   private final Wrapper myThreadsPanel;
+  private boolean myThreadsCalculated = false;
 
   public XFramesView(@NotNull final XDebugSession session) {
     mySession = session;
@@ -83,12 +88,61 @@ public class XFramesView implements XDebugView {
         }
       }
     });
+
+    final ActionManager actionManager = ActionManager.getInstance();
+    myFramesList.addMouseListener(new PopupHandler() {
+      @Override
+      public void invokePopup(final Component comp, final int x, final int y) {
+        ActionGroup group = (ActionGroup)actionManager.getAction(XDebuggerActions.FRAMES_TREE_POPUP_GROUP);
+        actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group).getComponent().show(comp, x, y);
+      }
+    });
+
     myMainPanel.add(ScrollPaneFactory.createScrollPane(myFramesList), BorderLayout.CENTER);
 
-    myThreadComboBox = new JComboBox();
+    myThreadComboBox = new ComboBox();
     //noinspection unchecked
     myThreadComboBox.setRenderer(new ThreadComboBoxRenderer(myThreadComboBox));
     myThreadComboBox.addItemListener(new MyItemListener());
+    myThreadComboBox.addPopupMenuListener(new PopupMenuListenerAdapter() {
+      @Override
+      public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+        XSuspendContext context = mySession.getSuspendContext();
+        if (context != null && !myThreadsCalculated) {
+          myThreadsCalculated = true;
+          myThreadComboBox.addItem(null); // rendered as "Loading..."
+          context.computeExecutionStacks(new XSuspendContext.XExecutionStackContainer() {
+            @Override
+            public void addExecutionStack(@NotNull final List<? extends XExecutionStack> executionStacks, boolean last) {
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  myThreadComboBox.removeItem(null);
+                  addExecutionStacks(executionStacks);
+                  ComboPopup popup = myThreadComboBox.getPopup();
+                  if (popup != null && popup.isVisible()) {
+                    popup.hide();
+                    popup.show();
+                  }
+                }
+              });
+            }
+
+            @Override
+            public void errorOccurred(@NotNull String errorMessage) {
+
+            }
+          });
+        }
+      }
+    });
+    new ComboboxSpeedSearch(myThreadComboBox) {
+      @Override
+      protected String getElementText(Object element) {
+        return ((XExecutionStack)element).getDisplayName();
+      }
+    };
+
     myToolbar = createToolbar();
     myThreadsPanel = new Wrapper();
     CustomLineBorder border = new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR, 0, 0, 1, 0);
@@ -105,6 +159,8 @@ public class XFramesView implements XDebugView {
     CommonActionsManager actionsManager = CommonActionsManager.getInstance();
     framesGroup.add(actionsManager.createPrevOccurenceAction(getFramesList()));
     framesGroup.add(actionsManager.createNextOccurenceAction(getFramesList()));
+
+    framesGroup.addAll(ActionManager.getInstance().getAction(XDebuggerActions.FRAMES_TOP_TOOLBAR_GROUP));
 
     final ActionToolbarImpl toolbar =
       (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, framesGroup, true);
@@ -141,21 +197,19 @@ public class XFramesView implements XDebugView {
     myBuilders.clear();
     mySelectedStack = null;
     XSuspendContext suspendContext = mySession.getSuspendContext();
-    if (suspendContext == null) {
+    if (suspendContext == null || event == SessionEvent.PAUSED) {
       myThreadComboBox.removeAllItems();
       myFramesList.clear();
+      myThreadsCalculated = false;
       myExecutionStacks.clear();
-      return;
+      if (suspendContext == null) {
+        return;
+      }
     }
 
     XExecutionStack[] executionStacks = suspendContext.getExecutionStacks();
-    for (XExecutionStack executionStack : executionStacks) {
-      if (!myExecutionStacks.contains(executionStack)) {
-        //noinspection unchecked
-        myThreadComboBox.addItem(executionStack);
-        myExecutionStacks.add(executionStack);
-      }
-    }
+    addExecutionStacks(Arrays.asList(executionStacks));
+
     XExecutionStack activeExecutionStack = suspendContext.getActiveExecutionStack();
     myThreadComboBox.setSelectedItem(activeExecutionStack);
     myThreadsPanel.removeAll();
@@ -167,6 +221,16 @@ public class XFramesView implements XDebugView {
     myToolbar.setAddSeparatorFirst(!invisible);
     updateFrames(activeExecutionStack);
     myListenersEnabled = true;
+  }
+
+  private void addExecutionStacks(List<? extends XExecutionStack> executionStacks) {
+    for (XExecutionStack executionStack : executionStacks) {
+      if (!myExecutionStacks.contains(executionStack)) {
+        //noinspection unchecked
+        myThreadComboBox.addItem(executionStack);
+        myExecutionStacks.add(executionStack);
+      }
+    }
   }
 
   private void updateFrames(final XExecutionStack executionStack) {
@@ -242,8 +306,11 @@ public class XFramesView implements XDebugView {
       XStackFrame topFrame = executionStack.getTopFrame();
       if (topFrame != null) {
         myStackFrames.add(topFrame);
+        myNextFrameIndex = 1;
       }
-      myNextFrameIndex = 1;
+      else {
+        myNextFrameIndex = 0;
+      }
     }
 
     @Override
@@ -279,7 +346,7 @@ public class XFramesView implements XDebugView {
     private void addFrameListElements(final List<?> values, final boolean last) {
       if (myExecutionStack != null && myExecutionStack == mySelectedStack) {
         DefaultListModel model = myFramesList.getModel();
-        if (model.getElementAt(model.getSize() - 1) == null) {
+        if (!model.isEmpty() && model.getElementAt(model.getSize() - 1) == null) {
           model.removeElementAt(model.getSize() - 1);
         }
         for (Object value : values) {

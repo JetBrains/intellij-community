@@ -17,16 +17,15 @@ package git4idea.stash;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.continuation.ContinuationContext;
 import git4idea.GitPlatformFacade;
-import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
 import git4idea.merge.GitConflictResolver;
@@ -115,11 +114,14 @@ public abstract class GitChangesSaver {
   public void notifyLocalChangesAreNotRestored() {
     if (wereChangesSaved()) {
       LOG.info("Update is incomplete, changes are not restored");
-      GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Local changes were not restored",
-                                                "Before update your uncommitted changes were saved to <a href='saver'>" + getSaverName() + "</a>.<br/>" +
-                                                "Update is not complete, you have unresolved merges in your working tree<br/>" +
-                                                "Resolve conflicts, complete update and restore changes manually.", NotificationType.WARNING,
-                                                new ShowSavedChangesNotificationListener()).notify(myProject);
+      VcsNotifier.getInstance(myProject).notifyImportantWarning("Local changes were not restored",
+                                                                "Before update your uncommitted changes were saved to <a href='saver'>" +
+                                                                getSaverName() +
+                                                                "</a>.<br/>" +
+                                                                "Update is not complete, you have unresolved merges in your working tree<br/>" +
+                                                                "Resolve conflicts, complete update and restore changes manually.",
+                                                                new ShowSavedChangesNotificationListener()
+      );
     }
   }
 

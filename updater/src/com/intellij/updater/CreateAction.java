@@ -18,6 +18,7 @@ public class CreateAction extends PatchAction {
   }
 
   protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
+    Runner.logger.info("building PatchFile");
     patchOutput.putNextEntry(new ZipEntry(myPath));
 
     writeExecutableFlag(patchOutput, newerFile);

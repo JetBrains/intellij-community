@@ -201,16 +201,18 @@ public abstract class Change {
       myHighlighterHolder = new ChangeHighlighterHolder();
     }
 
-    public SimpleChangeSide(ChangeSide originalSide, DiffRangeMarker newRange) {
+    public SimpleChangeSide(@NotNull ChangeSide originalSide, @NotNull DiffRangeMarker newRange) {
       mySide = ((SimpleChangeSide)originalSide).getFragmentSide();
       myRange = newRange;
       myHighlighterHolder = originalSide.getHighlighterHolder();
     }
 
+    @NotNull
     public FragmentSide getFragmentSide() {
       return mySide;
     }
 
+    @NotNull
     public DiffRangeMarker getRange() {
       return myRange;
     }

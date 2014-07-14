@@ -2,7 +2,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.String;
 
-public class BrokenAlignment {
+class BrokenAlignment {
 
   void main(Data data) {
     if (data.getText() != null) {

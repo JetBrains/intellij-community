@@ -143,7 +143,7 @@ public class PyImportedModule extends LightElement implements NameDefiner {
       element = ResolveImportUtil.resolveModuleInRoots(getImportedPrefix(), getContainingFile());
     }
     if (element instanceof PsiDirectory) {
-      return PyUtil.getPackageElement((PsiDirectory)element);
+      return PyUtil.getPackageElement((PsiDirectory)element, this);
     }
     return element;
   }

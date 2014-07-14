@@ -35,13 +35,8 @@ import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.psi.impl.PyQualifiedNameFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Ref resolution routines.
@@ -62,7 +57,7 @@ public class PyResolveUtil {
    * @return previous statement, or null.
    */
   @Nullable
-  public static PsiElement getPrevNodeOf(PsiElement elt, TokenSet elementTypes) {
+  private static PsiElement getPrevNodeOf(PsiElement elt, TokenSet elementTypes) {
     ASTNode seeker = elt.getNode();
     while (seeker != null) {
       ASTNode feeler = seeker.getTreePrev();
@@ -89,7 +84,7 @@ public class PyResolveUtil {
   }
 
   @Nullable
-  public static PsiElement getPrevNodeOf(PsiElement elt) {
+  private static PsiElement getPrevNodeOf(PsiElement elt) {
     if (elt instanceof PsiFile) return null;  // no sense to get the previous node of a file
     return getPrevNodeOf(elt, PythonDialectsTokenSetProvider.INSTANCE.getNameDefinerTokens());
   }
@@ -164,7 +159,10 @@ public class PyResolveUtil {
    * @param processor a visitor that says when the crawl is done and collects info.
    * @param elt       element from which we start (not checked by processor); if null, the search immediately returns null.
    * @return first element that the processor accepted.
+   *
+   * @deprecated Use {@link #scopeCrawlUp} instead.
    */
+  @Deprecated
   @Nullable
   public static PsiElement treeCrawlUp(PsiScopeProcessor processor, PsiElement elt) {
     if (elt == null || !elt.isValid()) return null; // can't find anyway.
@@ -231,7 +229,7 @@ public class PyResolveUtil {
    * @return true if an outer element is in a class context, while the inner is a method or function inside it.
    * @see com.jetbrains.python.psi.PyUtil#getConcealingParent(com.intellij.psi.PsiElement)
    */
-  protected static boolean refersFromMethodToClass(final PyFunction innerFunction, final PsiElement outer) {
+  private static boolean refersFromMethodToClass(final PyFunction innerFunction, final PsiElement outer) {
     if (innerFunction == null) {
       return false;
     }
@@ -241,49 +239,6 @@ public class PyResolveUtil {
       return true;
     }
     return false;
-  }
-
-  /**
-   * Unwinds a multi-level qualified expression into a path, as seen in source text, i.e. outermost qualifier first.
-   *
-   * @param expr an expression to unwind.
-   * @return path as a list of ref expressions.
-   */
-  @NotNull
-  public static List<PyExpression> unwindQualifiers(@NotNull final PyQualifiedExpression expr) {
-    final List<PyExpression> path = new LinkedList<PyExpression>();
-    PyQualifiedExpression e = expr;
-    while (e != null) {
-      path.add(0, e);
-      final PyExpression q = e.getQualifier();
-      e = q instanceof PyQualifiedExpression ? (PyQualifiedExpression)q : null;
-    }
-    return path;
-  }
-
-  public static List<String> unwindQualifiersAsStrList(final PyQualifiedExpression expr) {
-    final List<String> path = new LinkedList<String>();
-    PyQualifiedExpression e = expr;
-    while (e != null) {
-      path.add(0, e.getText());
-      final PyExpression q = e.getQualifier();
-      e = q instanceof PyQualifiedExpression ? (PyQualifiedExpression)q : null;
-    }
-    return path;
-  }
-
-  public static String toPath(PyQualifiedExpression expr) {
-    if (expr == null) return "";
-    List<PyExpression> path = unwindQualifiers(expr);
-    final QualifiedName qName = PyQualifiedNameFactory.fromReferenceChain(path);
-    if (qName != null) {
-      return qName.toString();
-    }
-    String name = expr.getName();
-    if (name != null) {
-      return name;
-    }
-    return "";
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,9 @@ import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.testIntegration.GroovyTestFramework;
@@ -51,7 +50,7 @@ public class SpockTestFramework extends GroovyTestFramework {
 
   @Override
   public FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor() {
-    return new FileTemplateDescriptor("Spock SetUp Method.groovy");
+    return new FileTemplateDescriptor("Spock_SetUp_Method.groovy");
   }
 
   @Override
@@ -79,7 +78,7 @@ public class SpockTestFramework extends GroovyTestFramework {
 
   @Override
   protected boolean isTestClass(PsiClass clazz, boolean canBePotential) {
-    return clazz.getLanguage() == GroovyFileType.GROOVY_LANGUAGE
+    return clazz.getLanguage() == GroovyLanguage.INSTANCE
            && GroovyPsiManager.isInheritorCached(clazz, SpockUtils.SPEC_CLASS_NAME);
   }
 

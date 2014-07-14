@@ -15,6 +15,7 @@
  */
 package com.intellij.util.text;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TObjectHashingStrategy;
 
@@ -22,27 +23,26 @@ import gnu.trove.TObjectHashingStrategy;
  * @author max
  */
 public final class CharSequenceHashingStrategy implements TObjectHashingStrategy<CharSequence> {
-  private static final int COMPARISON_THRESHOLD = 5;
+  public static final CharSequenceHashingStrategy CASE_SENSITIVE = new CharSequenceHashingStrategy(true);
+  public static final CharSequenceHashingStrategy CASE_INSENSITIVE = new CharSequenceHashingStrategy(false);
+  private final boolean myCaseSensitive;
+
+  @Deprecated
+  public CharSequenceHashingStrategy() {
+    this(true);
+  }
+
+  private CharSequenceHashingStrategy(boolean caseSensitive) {
+    myCaseSensitive = caseSensitive;
+  }
 
   @Override
   public int computeHashCode(final CharSequence chars) {
-    return StringUtil.stringHashCode(chars);
+    return myCaseSensitive ? StringUtil.stringHashCode(chars) : StringUtil.stringHashCodeInsensitive(chars);
   }
 
   @Override
   public boolean equals(final CharSequence s1, final CharSequence s2) {
-    if(s1 == null || s2 == null) return false;
-    if(s1 == s2) return true;
-    int len = s1.length();
-    if (len != s2.length()) return false;
-
-    if (len > COMPARISON_THRESHOLD && s1 instanceof String && s2 instanceof String) {
-      return s1.equals(s2);
-    }
-
-    for (int i = 0; i < len; i++) {
-      if (s1.charAt(i) != s2.charAt(i)) return false;
-    }
-    return true;
+    return Comparing.equal(s1, s2, myCaseSensitive);
   }
 }

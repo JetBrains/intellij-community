@@ -336,12 +336,12 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
 
   @NotNull
   private static String getDateString(@NotNull GitCommit commit) {
-    return DateFormatUtil.formatPrettyDateTime(commit.getTime()) + " ";
+    return DateFormatUtil.formatPrettyDateTime(commit.getTimestamp()) + " ";
   }
 
   @NotNull
   private static String getHashString(@NotNull GitCommit commit) {
-    return GitUtil.getShortHash(commit.getHash().toString());
+    return GitUtil.getShortHash(commit.getId().toString());
   }
 
   private static class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {

@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Avdeev
  */
-public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider {
+public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider implements InspectionSuppressor {
 
   public static final String SUPPRESS_MARK = "suppress";
 

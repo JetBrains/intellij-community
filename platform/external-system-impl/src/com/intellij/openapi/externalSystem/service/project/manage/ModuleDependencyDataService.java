@@ -93,7 +93,7 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
       @Override
       public void execute() {
         ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-        Map<Pair<String /* dependency module name */, /* dependency module scope */DependencyScope> , ModuleOrderEntry> toRemove = ContainerUtilRt.newHashMap();
+        Map<Pair<String /* dependency module internal name */, /* dependency module scope */DependencyScope> , ModuleOrderEntry> toRemove = ContainerUtilRt.newHashMap();
         for (OrderEntry entry : moduleRootManager.getOrderEntries()) {
           if (entry instanceof ModuleOrderEntry) {
             ModuleOrderEntry e = (ModuleOrderEntry)entry;
@@ -105,8 +105,8 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
         try {
           for (DataNode<ModuleDependencyData> dependencyNode : toImport) {
             final ModuleDependencyData dependencyData = dependencyNode.getData();
-            toRemove.remove(Pair.create(dependencyData.getName(), dependencyData.getScope()));
-            final String moduleName = dependencyData.getName();
+            toRemove.remove(Pair.create(dependencyData.getInternalName(), dependencyData.getScope()));
+            final String moduleName = dependencyData.getInternalName();
             Module ideDependencyModule = myProjectStructureHelper.findIdeModule(moduleName, module.getProject());
             if (ideDependencyModule == null) {
               DataNode<ProjectData> projectNode = dependencyNode.getDataNode(ProjectKeys.PROJECT);

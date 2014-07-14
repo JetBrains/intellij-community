@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
   @Nullable
   private static Pair<TextRange, TextRange> getTagRanges(XmlTag tag) {
     final ASTNode tagNode = tag.getNode();
-    return new Pair<TextRange, TextRange>(getStartTagRange(tagNode), getEndTagRange(tagNode));
+    return Pair.create(getStartTagRange(tagNode), getEndTagRange(tagNode));
   }
 
   @Nullable
@@ -232,9 +232,8 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     highlighter.setLineMarkerRenderer(new LineMarkerRenderer() {
       @Override
       public void paint(Editor editor, Graphics g, Rectangle r) {
-        int height = r.height + editor.getLineHeight();
         g.setColor(color);
-        g.fillRect(r.x, r.y, 2, height);
+        g.fillRect(r.x, r.y, 2, r.height);
       }
     });
     return highlighter;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,6 +64,7 @@ import com.intellij.util.config.StorageAccessors;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -79,8 +80,6 @@ import javax.swing.tree.DefaultTreeSelectionModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
@@ -245,9 +244,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     List<ScopeToolState> tools = profile.getDefaultStates(myProjectProfileManager.getProject());
     for (ScopeToolState state : tools) {
       final ArrayList<Descriptor> descriptors = new ArrayList<Descriptor>();
-      if (state.getLevel() == HighlightDisplayLevel.NON_SWITCHABLE_ERROR) {
-        continue;
-      }
+      if (!accept(state.getTool())) continue;
       Project project = myProjectProfileManager.getProject();
       myDescriptors.put(new Descriptor(state, profile, project), descriptors);
       InspectionToolWrapper toolWrapper = state.getTool();
@@ -256,6 +253,10 @@ public class SingleInspectionProfilePanel extends JPanel {
         descriptors.add(new Descriptor(nonDefaultToolState, profile, project));
       }
     }
+  }
+
+  protected boolean accept(InspectionToolWrapper entry) {
+    return entry.getDefaultLevel() != HighlightDisplayLevel.NON_SWITCHABLE_ERROR;
   }
 
   private void postProcessModification() {
@@ -291,7 +292,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         ModifiableModel profileModifiableModel = inspectionProfile.getModifiableModel();
         final InspectionToolWrapper[] profileEntries = profileModifiableModel.getInspectionTools(null);
         for (InspectionToolWrapper toolWrapper : profileEntries) {
-          profileModifiableModel.disableTool(toolWrapper.getShortName(), (NamedScope)null, project);
+          profileModifiableModel.disableTool(toolWrapper.getShortName(), null, project);
         }
         profileModifiableModel.setLocal(true);
         profileModifiableModel.setModified(true);
@@ -609,7 +610,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   static String renderSeverity(HighlightSeverity severity) {
-    return StringUtil.capitalizeWords(severity.toString().toLowerCase(), true);
+    return StringUtil.capitalizeWords(severity.getName().toLowerCase(), true);
   }
 
   private void toggleToolNode(final InspectionConfigTreeNode toolNode) {
@@ -756,11 +757,14 @@ public class SingleInspectionProfilePanel extends JPanel {
         catch (IOException e2) {
           try {
             //noinspection HardCodedStringLiteral
-            myBrowser.read(new StringReader("<html><body><b>" + UNDER_CONSTRUCTION + "</b></body></html>"), null);
+            myBrowser.read(new StringReader(XmlStringUtil.wrapInHtml("<b>" + UNDER_CONSTRUCTION + "</b>")), null);
           }
           catch (IOException e1) {
             //Can't be
           }
+        }
+        catch (Throwable t) {
+          LOG.error("Failed to load description for: " + descriptor.getToolWrapper().getTool().getClass() + "; description: " + description, t);
         }
 
       }
@@ -778,35 +782,26 @@ public class SingleInspectionProfilePanel extends JPanel {
       final NamedScope scope = node.getScope(myProjectProfileManager.getProject());
       if (scope != null || node.isInspectionNode()) {
         final HighlightDisplayKey key = descriptor.getKey();
-        final LevelChooser chooser = new LevelChooser(((SeverityProvider)mySelectedProfile.getProfileManager()).getOwnSeverityRegistrar()) {
-          @Override
-          public Dimension getPreferredSize() {
-            Dimension preferredSize = super.getPreferredSize();
-            return new Dimension(Math.min(300, preferredSize.width), preferredSize.height);
-          }
-
-          @Override
-          public Dimension getMinimumSize() {
-            return getPreferredSize();
-          }
-        };
-        chooser.getComboBox().addActionListener(new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            Project project = myProjectProfileManager.getProject();
-            boolean toUpdate = mySelectedProfile.getErrorLevel(key, scope, project) != chooser.getLevel();
-            mySelectedProfile.setErrorLevel(key, chooser.getLevel(), node.isInspectionNode() || node.isByDefault() ? -1 : node.getParent().getIndex(node),
-                                            project);
-            if (toUpdate) node.dropCache();
-          }
-        });
-        chooser.setLevel(mySelectedProfile.getErrorLevel(key, scope, myProjectProfileManager.getProject()));
+        final LevelChooserAction chooser =
+          new LevelChooserAction(((SeverityProvider)mySelectedProfile.getProfileManager()).getOwnSeverityRegistrar()) {
+            @Override
+            protected void onChosen(final HighlightSeverity severity) {
+              final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
+              final Project project = myProjectProfileManager.getProject();
+              final boolean toUpdate = mySelectedProfile.getErrorLevel(key, scope, project) != level;
+              mySelectedProfile.setErrorLevel(key, level,
+                                              node.isInspectionNode() || node.isByDefault() ? -1 : node.getParent().getIndex(node),
+                                              project);
+              if (toUpdate) node.dropCache();
+            }
+          };
+        chooser.setChosen(mySelectedProfile.getErrorLevel(key, scope, myProjectProfileManager.getProject()).getSeverity());
 
         final JPanel withSeverity = new JPanel(new GridBagLayout());
         withSeverity.add(new JLabel(InspectionsBundle.message("inspection.severity")),
                          new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
                                                 GridBagConstraints.NONE, new Insets(0, 0, 10, 10), 0, 0));
-        withSeverity.add(chooser, new GridBagConstraints(1, 0, 1, 1, 1.0, 0, GridBagConstraints.WEST,
+        withSeverity.add(chooser.createCustomComponent(chooser.getTemplatePresentation()), new GridBagConstraints(1, 0, 1, 1, 1.0, 0, GridBagConstraints.WEST,
                                                          GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
 
         final JComponent comp = descriptor.getState().getAdditionalConfigPanel();
@@ -1006,7 +1001,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     final Set<HighlightSeverity> severities = ((InspectionProfileImpl)selectedProfile).getUsedSeverities();
     for (Iterator<HighlightSeverity> iterator = severities.iterator(); iterator.hasNext();) {
       HighlightSeverity severity = iterator.next();
-      if (registrar.isSeverityValid(severity.toString())) {
+      if (registrar.isSeverityValid(severity.getName())) {
         iterator.remove();
       }
     }
@@ -1014,9 +1009,9 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (!severities.isEmpty()) {
       final SeverityRegistrar oppositeRegister = ((SeverityProvider)selectedProfile.getProfileManager()).getSeverityRegistrar();
       for (HighlightSeverity severity : severities) {
-        final TextAttributesKey attributesKey = TextAttributesKey.find(severity.toString());
+        final TextAttributesKey attributesKey = TextAttributesKey.find(severity.getName());
         final TextAttributes textAttributes = oppositeRegister.getTextAttributesBySeverity(severity);
-        LOG.assertTrue(textAttributes != null, severity.toString());
+        LOG.assertTrue(textAttributes != null, severity);
         HighlightInfoType.HighlightInfoTypeImpl info = new HighlightInfoType.HighlightInfoTypeImpl(severity, attributesKey);
         registrar.registerSeverity(new SeverityRegistrar.SeverityBasedTextAttributes(textAttributes.clone(), info),
                                    textAttributes.getErrorStripeColor());
@@ -1028,7 +1023,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     for (Map.Entry<Descriptor, List<Descriptor>> entry : myDescriptors.entrySet()) {
       Descriptor desc = entry.getKey();
       Project project = myProjectProfileManager.getProject();
-      if (mySelectedProfile.isToolEnabled(desc.getKey(), (NamedScope)null, project) != desc.isEnabled()){
+      if (mySelectedProfile.isToolEnabled(desc.getKey(), null, project) != desc.isEnabled()){
         return true;
       }
       if (mySelectedProfile.getErrorLevel(desc.getKey(), desc.getScope(), project) != desc.getLevel()) {

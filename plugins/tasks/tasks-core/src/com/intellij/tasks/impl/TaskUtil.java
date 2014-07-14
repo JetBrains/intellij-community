@@ -19,22 +19,33 @@ package com.intellij.tasks.impl;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonSyntaxException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.TaskState;
+import com.intellij.tasks.impl.httpclient.ResponseUtil;
+import com.intellij.util.text.SyncDateFormat;
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpMethod;
+import org.apache.http.HttpResponse;
+import org.apache.http.protocol.HTTP;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,17 +53,35 @@ import java.util.regex.Pattern;
  * @author Dmitry Avdeev
  */
 public class TaskUtil {
-  private static SimpleDateFormat ISO8601_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+  private static SyncDateFormat ISO8601_DATE_FORMAT = new SyncDateFormat(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
+
+  static {
+    // Use UTC time zone by default (for formatting)
+    ISO8601_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
+  }
+
   // Almost ISO-8601 strict except date parts may be separated by '/'
   // and date only also allowed just in case
   private static Pattern ISO8601_DATE_PATTERN = Pattern.compile(
-    "(\\d{4}[/-]\\d{2}[/-]\\d{2})" +                  // date
-    "(?:[ T](\\d{2}:\\d{2}:\\d{2})(.\\d{3,})?" +      // optional time and milliseconds
-    "([+-]\\d{2}:\\d{2}|[+-]\\d{4}|[+-]\\d{2}|Z)?)?");// optional timezone info
+    "(\\d{4}[/-]\\d{2}[/-]\\d{2})" +                   // date (1)
+    "(?:[ T]" +
+    "(\\d{2}:\\d{2}:\\d{2})(.\\d{3,})?" +              // optional time (2) and milliseconds (3)
+    "(?:\\s?" +
+    "([+-]\\d{2}:\\d{2}|[+-]\\d{4}|[+-]\\d{2}|Z)" +    // optional timezone info (4), if time is also present
+    ")?)?"
+  );
+
+
+  private TaskUtil() {
+    // empty
+  }
 
   public static String formatTask(@NotNull Task task, String format) {
-    return format.replace("{id}", task.getId()).replace("{number}", task.getNumber())
-      .replace("{project}", task.getProject() == null ? "" : task.getProject()).replace("{summary}", task.getSummary());
+    return format
+      .replace("{id}", task.getId())
+      .replace("{number}", task.getNumber())
+      .replace("{project}", StringUtil.notNullize(task.getProject()))
+      .replace("{summary}", task.getSummary());
   }
 
   @Nullable
@@ -112,8 +141,12 @@ public class TaskUtil {
     }
   }
 
+  public static String formatDate(@NotNull Date date) {
+    return ISO8601_DATE_FORMAT.format(date);
+  }
+
   /**
-   * {@link Task#equals(Object)} implementation compares tasks by they unique IDs only.
+   * {@link Task#equals(Object)} implementation compares tasks by their unique IDs only.
    * This method should be used when full comparison is necessary.
    */
   public static boolean tasksEqual(@NotNull Task t1, @NotNull Task t2) {
@@ -148,7 +181,7 @@ public class TaskUtil {
   }
 
   /**
-   * Print pretty-formatted XML to {@code logger} if its level is DEBUG or below
+   * Print pretty-formatted XML to {@code logger}, if its level is DEBUG or below.
    */
   public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull Element element) {
     if (logger.isDebugEnabled()) {
@@ -159,7 +192,7 @@ public class TaskUtil {
   }
 
   /**
-   * Parse and print pretty-formatted XML to {@code logger} if its level is DEBUG or below
+   * Parse and print pretty-formatted XML to {@code logger}, if its level is DEBUG or below.
    */
   public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull InputStream xml) {
     if (logger.isDebugEnabled()) {
@@ -173,7 +206,7 @@ public class TaskUtil {
   }
 
   /**
-   * Parse and print pretty-formatted XML to {@code logger} if its level is DEBUG or below
+   * Parse and print pretty-formatted XML to {@code logger}, if its level is DEBUG or below.
    */
   public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull String xml) {
     if (logger.isDebugEnabled()) {
@@ -187,12 +220,99 @@ public class TaskUtil {
   }
 
   /**
-   * Parse and print pretty-formatted Json to {@code logger} if its level is DEBUG or below
+   * Parse and print pretty-formatted Json to {@code logger}, if its level is DEBUG or below.
    */
   public static void prettyFormatJsonToLog(@NotNull Logger logger, @NotNull String json) {
     if (logger.isDebugEnabled()) {
-      Gson gson = new GsonBuilder().setPrettyPrinting().create();
-      logger.debug("\n" + gson.toJson(gson.fromJson(json, JsonElement.class)));
+      try {
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        logger.debug("\n" + gson.toJson(gson.fromJson(json, JsonElement.class)));
+      }
+      catch (JsonSyntaxException e) {
+        logger.debug("Malformed JSON\n" + json);
+      }
     }
+  }
+
+  /**
+   * Parse and print pretty-formatted Json to {@code logger}, if its level is DEBUG or below.
+   */
+  public static void prettyFormatJsonToLog(@NotNull Logger logger, @NotNull JsonElement json) {
+    if (logger.isDebugEnabled()) {
+      try {
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        logger.debug("\n" + gson.toJson(json));
+      }
+      catch (JsonSyntaxException e) {
+        logger.debug("Malformed JSON\n" + json);
+      }
+    }
+  }
+
+  public static void prettyFormatResponseToLog(@NotNull Logger logger, @NotNull HttpMethod response) {
+    if (logger.isDebugEnabled() && response.hasBeenUsed()) {
+      try {
+        String content = ResponseUtil.getResponseContentAsString(response);
+        Header header = response.getRequestHeader(HTTP.CONTENT_TYPE);
+        String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase(Locale.ENGLISH);
+        if (contentType.contains("xml")) {
+          prettyFormatXmlToLog(logger, content);
+        }
+        else if (contentType.contains("json")) {
+          prettyFormatJsonToLog(logger, content);
+        }
+        else {
+          logger.debug(content);
+        }
+      }
+      catch (IOException e) {
+        logger.error(e);
+      }
+    }
+  }
+
+  public static void prettyFormatResponseToLog(@NotNull Logger logger, @NotNull HttpResponse response) {
+    if (logger.isDebugEnabled()) {
+      try {
+        String content = ResponseUtil.getResponseContentAsString(response);
+        org.apache.http.Header header = response.getEntity().getContentType();
+        String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase(Locale.ENGLISH);
+        if (contentType.contains("xml")) {
+          prettyFormatXmlToLog(logger, content);
+        }
+        else if (contentType.contains("json")) {
+          prettyFormatJsonToLog(logger, content);
+        }
+        else {
+          logger.debug(content);
+        }
+      }
+      catch (IOException e) {
+        logger.error(e);
+      }
+    }
+  }
+
+  /**
+   * Perform standard {@code application/x-www-urlencoded} translation for string {@code s}.
+   *
+   * @return urlencoded string
+   */
+  @NotNull
+  public static String encodeUrl(@NotNull String s) {
+    try {
+      return URLEncoder.encode(s, CharsetToolkit.UTF8);
+    }
+    catch (UnsupportedEncodingException e) {
+      throw new AssertionError("UTF-8 is not supported");
+    }
+  }
+
+  @Contract("null, _ -> false")
+  public static boolean isStateSupported(@Nullable TaskRepository repository, @NotNull TaskState state) {
+    if (repository == null || !repository.isSupported(TaskRepository.STATE_UPDATING)) {
+      return false;
+    }
+    return repository.getRepositoryType().getPossibleTaskStates().contains(state);
   }
 }

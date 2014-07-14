@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ObjectUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +67,7 @@ public final class LookupElementBuilder extends LookupElement {
 
   public static LookupElementBuilder create(@NotNull PsiNamedElement element) {
     PsiUtilCore.ensureValid(element);
-    return new LookupElementBuilder(ObjectUtils.assertNotNull(element.getName()), element);
+    return new LookupElementBuilder(StringUtil.notNullize(element.getName()), element);
   }
 
   public static LookupElementBuilder createWithIcon(@NotNull PsiNamedElement element) {
@@ -210,9 +210,14 @@ public final class LookupElementBuilder extends LookupElement {
   public LookupElementBuilder setTypeText(@Nullable String typeText, boolean grayed) {
     return withTypeText(typeText, grayed);
   }
+
   public LookupElementBuilder withTypeText(@Nullable String typeText, boolean grayed) {
+    return withTypeText(typeText, null, grayed);
+  }
+
+  public LookupElementBuilder withTypeText(@Nullable String typeText, @Nullable Icon typeIcon, boolean grayed) {
     final LookupElementPresentation presentation = copyPresentation();
-    presentation.setTypeText(typeText);
+    presentation.setTypeText(typeText, typeIcon);
     presentation.setTypeGrayed(grayed);
     return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation,
                                     myAllLookupStrings, myCaseSensitive);

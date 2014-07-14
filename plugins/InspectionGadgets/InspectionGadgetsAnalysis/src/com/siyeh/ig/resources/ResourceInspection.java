@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2013 Bas Leijdekkers
+ * Copyright 2008-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,33 +60,30 @@ public abstract class ResourceInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      checkExpression(expression);
+      if (!isNotSafelyClosedResource(expression)) {
+        return;
+      }
+      registerMethodCallError(expression, expression);
     }
 
     @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
-      checkExpression(expression);
+      if (!isNotSafelyClosedResource(expression)) {
+        return;
+      }
+      registerNewExpressionError(expression, expression);
     }
 
-    private void checkExpression(PsiExpression expression) {
+    private boolean isNotSafelyClosedResource(PsiExpression expression) {
       if (!isResourceCreation(expression)) {
-        return;
+        return false;
       }
       final PsiVariable boundVariable = getVariable(expression);
-      if (boundVariable instanceof PsiResourceVariable) {
-        return;
-      }
-      if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
-        return;
-      }
-      if (isResourceFactoryClosed(expression, insideTryAllowed)) {
-        return;
-      }
-      if (isResourceEscapingFromMethod(boundVariable, expression)) {
-        return;
-      }
-      registerError(expression, expression);
+      return !(boundVariable instanceof PsiResourceVariable) &&
+             !isSafelyClosed(boundVariable, expression, insideTryAllowed) &&
+             !isResourceFactoryClosed(expression, insideTryAllowed) &&
+             !isResourceEscapingFromMethod(boundVariable, expression);
     }
   }
 
@@ -265,6 +262,25 @@ public abstract class ResourceInspection extends BaseInspection {
   }
 
   public static boolean isResourceEscapingFromMethod(PsiVariable boundVariable, PsiExpression resourceCreationExpression) {
+    if (resourceCreationExpression instanceof PsiMethodCallExpression) {
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)resourceCreationExpression;
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+      if (qualifierExpression instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifierExpression;
+        final PsiElement target = referenceExpression.resolve();
+        if (target instanceof PsiField) {
+          final PsiField field = (PsiField)target;
+          final String fieldName = field.getName();
+          if ("out".equals(fieldName) || "err".equals(fieldName)) {
+            final PsiClass containingClass = field.getContainingClass();
+            if (containingClass != null && "java.lang.System".equals(containingClass.getQualifiedName())) {
+              return true;
+            }
+          }
+        }
+      }
+    }
     final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(resourceCreationExpression);
     if (parent instanceof PsiReturnStatement) {
       return true;

@@ -60,6 +60,7 @@
         </options>
         <keywords keywords="#define;#else;#endif;#error;#if;#ifdef;#ifndef;#include;#line;#undef;auto;bool;break;case;char;const;continue;default;delete;do;double;else;enum;extern;false;float;for;goto;if;int;long;register;return;short;signed;sizeof;static;struct;switch;typedef;union;unsigned;void;volatile;while" ignore_case="false" />
         <keywords2 keywords="asm;catch;class;const_cast;dynamic_cast;explicit;friend;inline;mutable;namespace;new;operator;private;protected;public;reinterpret_cast;static_cast;this;throw;true;try;typeid;typename;using;virtual;wchar_t" />
+        <keywords3 keywords="->" />
       </highlighting>
     </filetype>
 
@@ -92,6 +93,24 @@
         </options>
         <keywords keywords="and;bless;caller;continue;die;do;dump;else;elsif;eq;eval;exit;for;foreach;goto;if;import;last;local;my;ne;next;no;or;our;package;qw;redo;ref;require;return;sub;tie;tied;unless;untie;until;use;wantarray;while" ignore_case="false" />
         <keywords2 keywords="chmod;chomp;close;exists;grep;join;keys;length;open;print;push;seek;shift;split;truncate;warn" />
+      </highlighting>
+    </filetype>
+
+    <filetype binary="false" default_extension="aj" extensions="aj" description="AspectJ files" name = "AspectJ (syntax highlighting only)" icon="AllIcons.FileTypes.Custom">
+      <highlighting>
+        <options>
+          <option name="LINE_COMMENT" value="%" />
+          <option name="COMMENT_START" value="" />
+          <option name="COMMENT_END" value="" />
+          <option name="HEX_PREFIX" value="" />
+          <option name="NUM_POSTFIXES" value="" />
+          <option name="HAS_BRACES" value="true" />
+          <option name="HAS_BRACKETS" value="true" />
+          <option name="HAS_PARENS" value="true" />
+        </options>
+        <keywords keywords="after;begin;case;catch;cond;end;fun;if;let;of;query;receive;when" ignore_case="false" />
+        <keywords2 keywords="and;andalso;not;or;orelse" />
+        <keywords3 keywords="export;import;include;module;record" />
       </highlighting>
     </filetype>
 
@@ -157,6 +176,40 @@
       </extensionMap>
     </filetype>
 
+    <filetype binary="false" default_extension="css" extensions="css" description="CSS files" name = "CSS files (syntax highlighting only)" icon="AllIcons.FileTypes.Css">
+      <highlighting>
+        <options>
+          <option name="LINE_COMMENT" value="" />
+          <option name="COMMENT_START" value="/*" />
+          <option name="COMMENT_END" value="*/" />
+          <option name="HAS_BRACES" value="true" />
+          <option name="NUM_POSTFIXES" value="" />
+        </options>
+      </highlighting>
+      <extensionMap>
+        <mapping ext="css"/>
+      </extensionMap>
+    </filetype>
+
+    <filetype binary="false" default_extension="js" extensions="js" description="JavaScript files" name = "JavaScript files (syntax highlighting only)" icon="AllIcons.FileTypes.JavaScript">
+      <highlighting>
+        <options>
+          <option name="LINE_COMMENT" value="//" />
+          <option name="COMMENT_START" value="/*" />
+          <option name="COMMENT_END" value="*/" />
+          <option name="NUM_POSTFIXES" value="" />
+          <option name="HAS_BRACES" value="true" />
+          <option name="HAS_BRACKETS" value="true" />
+          <option name="HAS_PARENS" value="true" />
+          <option name="HAS_STRING_ESCAPES" value="true" />
+        </options>
+        <keywords keywords="break;case;catch;continue;defaul;delete;do;else;false;finally;for;function;if;in;instanceof;new;null;return;switch;this;throw;true;try;typeof;var;void;while;with" ignore_case="false" />
+      </highlighting>
+      <extensionMap>
+        <mapping ext="js"/>
+      </extensionMap>
+    </filetype>
+
     <filetype binary="false" default_extension="php" extensions="" description="PHP files" name="PHP files">
       <highlighting>
         <options>
@@ -170,4 +223,23 @@
       </highlighting>
     </filetype>
   </filetypes>
+
+  <filetype binary="false" default_extension="jsp" extensions="jsp;jsf;jspf;tag;tagf" description="JSP files" name = "JSP files (syntax highlighting only)" icon="AllIcons.FileTypes.Jsp">
+    <highlighting>
+      <options>
+        <option name="LINE_COMMENT" value="" />
+        <option name="COMMENT_START" value="" />
+        <option name="COMMENT_END" value="" />
+        <option name="HAS_BRACES" value="false" />
+        <option name="NUM_POSTFIXES" value="" />
+      </options>
+    </highlighting>
+    <extensionMap>
+      <mapping ext="jsp"/>
+      <mapping ext="jsf"/>
+      <mapping ext="jspf"/>
+      <mapping ext="tag"/>
+      <mapping ext="tagf"/>
+    </extensionMap>
+  </filetype>
 </component>

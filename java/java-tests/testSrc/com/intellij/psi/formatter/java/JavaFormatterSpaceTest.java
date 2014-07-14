@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
  */
 public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
 
-  public void testSpacingBetweenTypeParameters() throws Exception {
+  public void testSpacingBetweenTypeParameters() {
     // Implied by IDEADEV-3666
     getSettings().SPACE_AFTER_COMMA = true;
 
@@ -33,6 +33,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                "class Foo {\n" + "    Map<String, String> map() {\n" + "    }\n" + "}");
   }
 
+  @SuppressWarnings("SpellCheckingInspection")
   public void testDoNotPlaceStatementsOnOneLineIfFirstEndsWithSingleLineComment() {
     getSettings().KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = true;
     getSettings().KEEP_LINE_BREAKS = false;
@@ -76,17 +77,18 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
 
   public void testCommaInTypeArguments() {
     // Inspired by IDEA-31681
-    getSettings().SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = false;
+    getSettings().SPACE_AFTER_COMMA = false;
 
+    getSettings().SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = false;
     String initial =
       "interface TestInterface<A,B> {\n" +
       "\n" +
-      "    <X,Y> void foo(X x, Y y);\n" +
+      "    <X,Y> void foo(X x,Y y);\n" +
       "}\n" +
       "\n" +
       "public class FormattingTest implements TestInterface<String,Integer> {\n" +
       "\n" +
-      "    public <X,Y> void foo(X x, Y y) {\n" +
+      "    public <X,Y> void foo(X x,Y y) {\n" +
       "        Map<String,Integer> map = new HashMap<String,Integer>();\n" +
       "    }\n" +
       "}";
@@ -95,14 +97,14 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
 
     getSettings().SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = true;
     String formatted =
-      "interface TestInterface<A, B> {\n" +
+      "interface TestInterface<A,B> {\n" +
       "\n" +
-      "    <X, Y> void foo(X x, Y y);\n" +
+      "    <X,Y> void foo(X x,Y y);\n" +
       "}\n" +
       "\n" +
       "public class FormattingTest implements TestInterface<String, Integer> {\n" +
       "\n" +
-      "    public <X, Y> void foo(X x, Y y) {\n" +
+      "    public <X,Y> void foo(X x,Y y) {\n" +
       "        Map<String, Integer> map = new HashMap<String, Integer>();\n" +
       "    }\n" +
       "}";
@@ -194,7 +196,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "}");
   }
 
-  public void testSpaceWithArrayBrackets() throws Exception {
+  public void testSpaceWithArrayBrackets() {
     // Inspired by IDEA-58510
     getSettings().SPACE_WITHIN_BRACKETS = true;
     doMethodTest(
@@ -206,11 +208,11 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "int[] i2 = new int[]{1}"
     );
   }
-  
-  public void testSpaceBeforeElse() throws Exception {
+
+  public void testSpaceBeforeElse() {
     // Inspired by IDEA-58068
     getSettings().ELSE_ON_NEW_LINE = false;
-    
+
     getSettings().SPACE_BEFORE_ELSE_KEYWORD = false;
     doMethodTest(
       "if (true) {\n" +
@@ -232,7 +234,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testSpaceBeforeWhile() throws Exception {
+  public void testSpaceBeforeWhile() {
     // Inspired by IDEA-58068
     getSettings().WHILE_ON_NEW_LINE = false;
 
@@ -253,8 +255,8 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
 
-  
-  public void testSpaceBeforeCatch() throws Exception {
+
+  public void testSpaceBeforeCatch() {
     // Inspired by IDEA-58068
     getSettings().CATCH_ON_NEW_LINE = false;
 
@@ -279,7 +281,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testSpaceBeforeFinally() throws Exception {
+  public void testSpaceBeforeFinally() {
     // Inspired by IDEA-58068
     getSettings().FINALLY_ON_NEW_LINE = false;
 
@@ -304,19 +306,19 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testEmptyIterationAtFor() throws Exception {
+  public void testEmptyIterationAtFor() {
     // Inspired by IDEA-58293
 
     getSettings().SPACE_AFTER_SEMICOLON = true;
     getSettings().SPACE_WITHIN_FOR_PARENTHESES = false;
-    
+
     doMethodTest(
       "for (   ; ;         )",
       "for (; ; )"
     );
   }
 
-  public void testSpacesInDisjunctiveType() throws Exception {
+  public void testSpacesInDisjunctiveType() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     getSettings().CATCH_ON_NEW_LINE = false;
 
@@ -329,7 +331,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  "try { } catch (E1|E2 e) { }");
   }
 
-  public void testSpacesInsideLambda() throws Exception {
+  public void testSpacesInsideLambda() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     getSettings().SPACE_AROUND_LAMBDA_ARROW = true;
 
@@ -341,7 +343,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  "()->{}");
   }
 
-  public void testSpacesInsideMethodRef() throws Exception {
+  public void testSpacesInsideMethodRef() {
     getSettings().SPACE_AROUND_METHOD_REF_DBL_COLON = true;
 
     doMethodTest("Runnable r = this::foo",
@@ -352,7 +354,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  "Runnable r = this::foo");
   }
 
-  public void testSpacesBeforeResourceList() throws Exception {
+  public void testSpacesBeforeResourceList() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
 
@@ -367,7 +369,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  "try(AutoCloseable r = null){ }");
   }
 
-  public void testSpacesWithinResourceList() throws Exception {
+  public void testSpacesWithinResourceList() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
 
     getSettings().SPACE_WITHIN_TRY_PARENTHESES = false;
@@ -385,7 +387,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  "try ( R r1 = null; R r2 = null; ) { }");
   }
 
-  public void testSpacesBetweenResources() throws Exception {
+  public void testSpacesBetweenResources() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
 
     getSettings().SPACE_BEFORE_SEMICOLON = false;
@@ -399,7 +401,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  "try (R r1 = null ;R r2 = null ;) { }");
   }
 
-  public void testSpacesInResourceAssignment() throws Exception {
+  public void testSpacesInResourceAssignment() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
 
     getSettings().SPACE_AROUND_ASSIGNMENT_OPERATORS = true;
@@ -411,20 +413,20 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  "try (R r=null) { }");
   }
 
-  public void testBetweenMethodCallArguments() throws Exception {
+  public void testBetweenMethodCallArguments() {
     // Inspired by IDEA-71823
     getSettings().SPACE_AFTER_COMMA = false;
-    
+
     doMethodTest(
       "foo(1, 2, 3);",
       "foo(1,2,3);"
     );
   }
 
-  public void testBeforeAnonymousClassConstructor() throws Exception {
+  public void testBeforeAnonymousClassConstructor() {
     // Inspired by IDEA-72321.
     getSettings().SPACE_BEFORE_METHOD_CALL_PARENTHESES = true;
-    
+
     doMethodTest(
       "actions.add(new Action(this) {\n" +
       "    public void run() {\n" +
@@ -437,11 +439,11 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testBeforeAnnotationArrayInitializer() throws Exception {
+  public void testBeforeAnnotationArrayInitializer() {
     // Inspired by IDEA-72317
     getSettings().SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = false;
     getSettings().SPACE_BEFORE_ANNOTATION_ARRAY_INITIALIZER_LBRACE = true;
-    
+
     doClassTest(
       "@SuppressWarnings({\"HardCodedStringLiteral\"})\n" +
       "void test() {\n" +
@@ -454,7 +456,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testBetweenParenthesesOfNoArgsMethod() throws Exception {
+  public void testBetweenParenthesesOfNoArgsMethod() {
     // Inspired by IDEA-74751
     getSettings().SPACE_WITHIN_METHOD_CALL_PARENTHESES = false;
     getSettings().SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES = false;
@@ -483,11 +485,77 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testIncompleteCastExpression() throws Exception {
+  public void testIncompleteCastExpression() {
     // Inspired by IDEA-75043.
     String text = "void test(int i) {\n" +
                   "    (() i)\n" +
                   "}";
     doClassTest(text, text);
+  }
+
+  public void testSpacesWithinAngleBrackets() {
+    getJavaSettings().SPACES_WITHIN_ANGLE_BRACKETS = true;
+
+    String beforeMethod = "static <      T             > void    fromArray(  T  [   ]   a ,   Collection<  T  >  c) {\n}";
+    doClassTest(beforeMethod, "static < T > void fromArray(T[] a, Collection< T > c) {\n}");
+
+    String beforeLocal = "Map<    String,   String     > map = new HashMap<   String,   String   >();";
+    doMethodTest(beforeLocal, "Map< String, String > map = new HashMap< String, String >();");
+
+    String beforeClass = "class  A <   U    > {\n}";
+    doTextTest(beforeClass, "class A< U > {\n}");
+
+    getJavaSettings().SPACES_WITHIN_ANGLE_BRACKETS = false;
+    doMethodTest(beforeLocal, "Map<String, String> map = new HashMap<String, String>();");
+    doClassTest(beforeMethod, "static <T> void fromArray(T[] a, Collection<T> c) {\n}");
+    doTextTest(beforeClass, "class A<U> {\n}");
+  }
+
+  public void testSpaceAfterClosingAngleBracket_InTypeArgument() {
+    String before = "Bar.<String, Integer>    mess(null);";
+
+    getJavaSettings().SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENT = false;
+    doMethodTest(before, "Bar.<String, Integer>mess(null);");
+
+    getJavaSettings().SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENT = true;
+    doMethodTest(before, "Bar.<String, Integer> mess(null);");
+  }
+
+  public void testSpaceBeforeOpeningAngleBracket_InTypeParameter() {
+    String before = "class        A<T> {\n}";
+
+    getJavaSettings().SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER = false;
+    doTextTest(before, "class A<T> {\n}");
+
+    getJavaSettings().SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER = true;
+    doTextTest(before, "class A <T> {\n}");
+  }
+
+  public void testSpaceAroundTypeBounds() {
+    String before = "public class     Foo<T extends Bar & Abba, U> {\n}";
+
+    getJavaSettings().SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS = true;
+    doTextTest(before, "public class Foo<T extends Bar & Abba, U> {\n}");
+
+    getJavaSettings().SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS = false;
+    doTextTest(before, "public class Foo<T extends Bar&Abba, U> {\n}");
+  }
+
+  public void testInnerTypeAnnotations() {
+    doTextTest(
+      "class C<@TA(1)T> {\n" +
+      "    L<@TA(2)A> f = (@TA(3)  A) new @TA(4)  A() {\n" +
+      "        void m(@TA(6) int  @TA(7)[] p) {\n" +
+      "        }\n" +
+      "    };\n" +
+      "}",
+
+      "class C<@TA(1) T> {\n" +
+      "    L<@TA(2) A> f = (@TA(3) A) new @TA(4) A() {\n" +
+      "        void m(@TA(6) int @TA(7) [] p) {\n" +
+      "        }\n" +
+      "    };\n" +
+      "}"
+    );
   }
 }

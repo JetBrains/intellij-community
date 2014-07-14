@@ -33,7 +33,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -71,15 +70,25 @@ public class FixDocCommentAction extends EditorAction {
 
       process(psiFile, editor, project, editor.getCaretModel().getOffset()); 
     }
-  } 
-  
+  }
+
   private static void process(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Project project, int offset) {
     PsiElement elementAtOffset = file.findElementAt(offset);
     if (elementAtOffset == null) {
       return;
     }
+    generateOrFixComment(elementAtOffset, project, editor);
+  }
 
-    Language language = PsiUtilCore.getLanguageAtOffset(file, offset);
+  /**
+   * Generates comment if it's not exist or try to fix if exists
+   *
+   * @param element     target element for which a comment should be generated
+   * @param project     current project
+   * @param editor      target editor
+   */
+  public static void generateOrFixComment(@NotNull final PsiElement element, @NotNull final Project project, @NotNull final Editor editor) {
+    Language language = element.getLanguage();
     final CodeDocumentationProvider docProvider;
     final DocumentationProvider langDocumentationProvider = LanguageDocumentation.INSTANCE.forLanguage(language);
     if (langDocumentationProvider instanceof CompositeDocumentationProvider) {
@@ -95,7 +104,7 @@ public class FixDocCommentAction extends EditorAction {
       return;
     }
 
-    final Pair<PsiElement, PsiComment> pair = docProvider.parseContext(elementAtOffset);
+    final Pair<PsiElement, PsiComment> pair = docProvider.parseContext(element);
     if (pair == null) {
       return;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,10 +45,12 @@ public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
   protected static GlobalSearchScope createFilter(final Project project) {
     final GlobalSearchScope projectScope = GlobalSearchScope.allScope(project);
     return new GlobalSearchScope(project) {
+      @Override
       public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
         return projectScope.compare(file1, file2);
       }
 
+      @Override
       public boolean isSearchInModuleContent(@NotNull Module aModule) {
         return true;
       }
@@ -71,6 +73,7 @@ public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
     return new VirtualFileFilter() {
+      @Override
       public boolean accept(final VirtualFile file) {
         Module moduleForFile = fileIndex.getModuleForFile(file);
         if (moduleForFile != null) { // in module content
@@ -95,13 +98,18 @@ public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
     };
   }
 
+  @Override
+  @NotNull
   public KeyDescriptor<String> getKeyDescriptor() {
     return KEY_DESCRIPTOR;
   }
 
+  @Override
+  @NotNull
   public FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE, DTDFileType.INSTANCE) {
-      public boolean acceptInput(final VirtualFile file) {
+      @Override
+      public boolean acceptInput(@NotNull final VirtualFile file) {
         FileType fileType = file.getFileType();
         final String extension = file.getExtension();
         return XmlFileType.INSTANCE.equals(fileType) && "xsd".equals(extension) ||
@@ -110,10 +118,12 @@ public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
     };
   }
 
+  @Override
   public boolean dependsOnFileContent() {
     return true;
   }
 
+  @Override
   public int getVersion() {
     return 0;
   }

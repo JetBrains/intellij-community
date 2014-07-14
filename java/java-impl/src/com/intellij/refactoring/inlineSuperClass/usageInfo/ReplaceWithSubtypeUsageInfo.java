@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 27-Aug-2008
- */
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 
+/**
+ * @author anna
+ * @since 27-Aug-2008
+ */
 public class ReplaceWithSubtypeUsageInfo extends FixableUsageInfo {
   public static final Logger LOG = Logger.getInstance("#" + ReplaceWithSubtypeUsageInfo.class.getName());
   private final PsiTypeElement myTypeElement;
@@ -51,8 +52,10 @@ public class ReplaceWithSubtypeUsageInfo extends FixableUsageInfo {
 
   public void fixUsage() throws IncorrectOperationException {
     if (myTypeElement.isValid()) {
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myTypeElement.getProject()).getElementFactory();
-      myTypeElement.replace(elementFactory.createTypeElement(myTargetClassType));
+      Project project = myTypeElement.getProject();
+      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+      PsiElement replaced = myTypeElement.replace(elementFactory.createTypeElement(myTargetClassType));
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced);
     }
   }
 

@@ -1,6 +1,6 @@
 import java.io.Serializable;
 
-public class Test {
+class Test {
     public <T extends Serializable> void foo(byte[] data) {
         T foo = (T)  data;
     }

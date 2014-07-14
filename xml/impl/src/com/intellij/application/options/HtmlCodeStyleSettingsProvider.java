@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,16 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class HtmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
+  @Override
   @NotNull
   public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
     return new CodeStyleAbstractConfigurable(settings, originalSettings, ApplicationBundle.message("title.html")) {
+      @Override
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
         return new HtmlCodeStyleMainPanel(settings, originalSettings);
       }
 
+      @Override
       public String getHelpTopic() {
         return "reference.settingsdialog.IDE.globalcodestyle.html";
       }

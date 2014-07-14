@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.lang.xml.XmlFormattingModel;
 import org.jetbrains.annotations.NotNull;
 
 public class XhtmlFormattingModelBuilder implements FormattingModelBuilder {
+  @Override
   @NotNull
     public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
     final PsiFile psiFile = element.getContainingFile();
@@ -45,6 +46,7 @@ public class XhtmlFormattingModelBuilder implements FormattingModelBuilder {
                                                             documentModel);
   }
 
+  @Override
   public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
     return null;
   }

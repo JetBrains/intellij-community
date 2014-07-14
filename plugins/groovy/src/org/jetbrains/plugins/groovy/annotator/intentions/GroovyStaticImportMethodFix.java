@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
@@ -61,11 +62,12 @@ public class GroovyStaticImportMethodFix extends Intention {
     myMethodCall = SmartPointerManager.getInstance(methodCallExpression.getProject()).createSmartPsiElementPointer(methodCallExpression);
   }
 
+  @Override
   @NotNull
   public String getText() {
     String text = "Static Import Method";
     if (getCandidates().size() == 1) {
-      final int options = PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_FQ_NAME;
+      final int options = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_FQ_NAME;
       text += " '" + PsiFormatUtil.formatMethod(getCandidates().get(0), PsiSubstitutor.EMPTY, options, 0) + "'";
     }
     else {
@@ -74,6 +76,7 @@ public class GroovyStaticImportMethodFix extends Intention {
     return text;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
@@ -85,10 +88,10 @@ public class GroovyStaticImportMethodFix extends Intention {
     return result instanceof GrReferenceExpression ? (GrReferenceExpression)result : null;
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     myCandidates = null;
-    return myMethodCall != null &&
-           myMethodCall.getElement() != null &&
+    return myMethodCall.getElement() != null &&
            myMethodCall.getElement().isValid() &&
            getMethodExpression(myMethodCall.getElement()) != null &&
            getMethodExpression(myMethodCall.getElement()).getQualifierExpression() == null &&
@@ -119,7 +122,7 @@ public class GroovyStaticImportMethodFix extends Intention {
       PsiFile file = method.getContainingFile();
       if (file instanceof PsiClassOwner
           //do not show methods from default package
-          && ((PsiClassOwner)file).getPackageName().length() != 0 && PsiUtil.isAccessible(element, method)) {
+          && !((PsiClassOwner)file).getPackageName().isEmpty() && PsiUtil.isAccessible(element, method)) {
         list.add(method);
         if (PsiUtil.isApplicable(PsiUtil.getArgumentTypes(element, true), method, PsiSubstitutor.EMPTY, element, false)) {
           applicableList.add(method);
@@ -157,6 +160,7 @@ public class GroovyStaticImportMethodFix extends Intention {
 
   private void doImport(final PsiMethod toImport) {
     CommandProcessor.getInstance().executeCommand(toImport.getProject(), new Runnable() {
+      @Override
       public void run() {
         AccessToken accessToken = WriteAction.start();
 
@@ -186,6 +190,7 @@ public class GroovyStaticImportMethodFix extends Intention {
       setTitle(QuickFixBundle.message("static.import.method.choose.method.to.import")).
       setMovable(true).
       setItemChoosenCallback(new Runnable() {
+        @Override
         public void run() {
           PsiMethod selectedValue = (PsiMethod)list.getSelectedValue();
           if (selectedValue == null) return;
@@ -196,6 +201,7 @@ public class GroovyStaticImportMethodFix extends Intention {
       showInBestPositionFor(editor);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

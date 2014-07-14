@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,13 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -37,21 +39,20 @@ import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentListener, Dumpable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFoldingModelImpl");
 
-  private final Set<FoldingListener> myListeners = new CopyOnWriteArraySet<FoldingListener>();
+  private final List<FoldingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private boolean myIsFoldingEnabled;
   private final EditorImpl myEditor;
@@ -63,7 +64,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
   private int mySavedCaretX;
   private int mySavedCaretY;
-  private int mySavedCaretShift;
+  private int mySavedCaretPositionBeforeBatchFolding;
   private boolean myCaretPositionSaved;
   private final MultiMap<FoldingGroup, FoldRegion> myGroups = new MultiMap<FoldingGroup, FoldRegion>();
   private boolean myDocumentChangeProcessed = true;
@@ -137,8 +138,8 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     return getCollapsedRegionAtOffset(offset) != null;
   }
 
-  private void assertIsDispatchThreadForEditor() {
-    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(myEditor.getComponent());
+  private static void assertIsDispatchThreadForEditor() {
+    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
   }
   private static void assertReadAccess() {
     ApplicationManagerEx.getApplicationEx().assertReadAccessAllowed();
@@ -199,29 +200,30 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   private void runBatchFoldingOperation(final Runnable operation, final boolean dontCollapseCaret, final boolean moveCaret) {
-    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
     assertIsDispatchThreadForEditor();
     boolean oldDontCollapseCaret = myDoNotCollapseCaret;
     myDoNotCollapseCaret |= dontCollapseCaret;
     boolean oldBatchFlag = myIsBatchFoldingProcessing;
     if (!oldBatchFlag) {
-      mySavedCaretShift =
-        myEditor.visibleLineToY(myEditor.getCaretModel().getVisualPosition().line) - myEditor.getScrollingModel().getVerticalScrollOffset();
+      mySavedCaretPositionBeforeBatchFolding = myEditor.visibleLineToY(myEditor.getCaretModel().getVisualPosition().line);
     }
 
     myIsBatchFoldingProcessing = true;
     myFoldTree.myCachedLastIndex = -1;
-    operation.run();
-    myFoldTree.myCachedLastIndex = -1;
+    try {
+      operation.run();
+    } finally {
+      myFoldTree.myCachedLastIndex = -1;
 
-    if (!oldBatchFlag) {
-      if (myFoldRegionsProcessed) {
-        notifyBatchFoldingProcessingDone(moveCaret);
-        myFoldRegionsProcessed = false;
+      if (!oldBatchFlag) {
+        if (myFoldRegionsProcessed) {
+          notifyBatchFoldingProcessingDone(moveCaret);
+          myFoldRegionsProcessed = false;
+        }
+        myIsBatchFoldingProcessing = false;
       }
-      myIsBatchFoldingProcessing = false;
+      myDoNotCollapseCaret = oldDontCollapseCaret;
     }
-    myDoNotCollapseCaret = oldDontCollapseCaret;
   }
 
   @Override
@@ -229,8 +231,12 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     runBatchFoldingOperation(operation, true, true);
   }
 
+  /**
+   * Disables caret position adjustment after batch folding operation is finished.
+   * Should be called from inside batch operation runnable.
+   */
   public void flushCaretShift() {
-    mySavedCaretShift = -1;
+    mySavedCaretPositionBeforeBatchFolding = -1;
   }
 
   @Override
@@ -258,9 +264,6 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     int line = pos.line;
 
     if (line >= myEditor.getDocument().getLineCount()) return null;
-
-    //leftmost folded block position
-    if (myEditor.xyToVisualPosition(p).equals(myEditor.logicalToVisualPosition(pos))) return null;
 
     int offset = myEditor.logicalPositionToOffset(pos);
 
@@ -426,11 +429,18 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       myEditor.getSelectionModel().setSelection(selectionStart, selectionEnd);
     }
 
-    if (mySavedCaretShift > 0) {
-      myEditor.getScrollingModel().disableAnimation();
-      int scrollTo = myEditor.visibleLineToY(myEditor.getCaretModel().getVisualPosition().line) - mySavedCaretShift;
-      myEditor.getScrollingModel().scrollVertically(scrollTo);
-      myEditor.getScrollingModel().enableAnimation();
+    if (mySavedCaretPositionBeforeBatchFolding >= 0) {
+      final int offset = myEditor.visibleLineToY(myEditor.getCaretModel().getVisualPosition().line) - mySavedCaretPositionBeforeBatchFolding;
+      final ScrollingModel scrollingModel = myEditor.getScrollingModel();
+      scrollingModel.runActionOnScrollingFinished(new Runnable() {
+        @Override
+        public void run() {
+          scrollingModel.disableAnimation();
+          int pos = scrollingModel.getVerticalScrollOffset();
+          scrollingModel.scrollVertically(pos + offset);
+          scrollingModel.enableAnimation();
+        }
+      });
     }
   }
 
@@ -516,25 +526,25 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   @Override
-  public FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, @Nullable FoldingGroup group,
-                                     boolean neverExpands)
-  {
-    if (startOffset + 1 >= endOffset) {
-      LOG.error("Invalid offsets: ("+startOffset+", "+endOffset+")");
-    }
+  public FoldRegion createFoldRegion(int startOffset,
+                                     int endOffset,
+                                     @NotNull String placeholder,
+                                     @Nullable FoldingGroup group,
+                                     boolean neverExpands) {
     FoldRegionImpl region = new FoldRegionImpl(myEditor, startOffset, endOffset, placeholder, group, neverExpands);
     LOG.assertTrue(region.isValid());
     return region;
   }
 
   @Override
-  public boolean addListener(@NotNull FoldingListener listener) {
-    return myListeners.add(listener);
-  }
-
-  @Override
-  public boolean removeListener(@NotNull FoldingListener listener) {
-    return myListeners.remove(listener);
+  public void addListener(@NotNull final FoldingListener listener, @NotNull Disposable parentDisposable) {
+    myListeners.add(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        myListeners.remove(listener);
+      }
+    });
   }
 
   private void notifyListenersOnFoldRegionStateChange(@NotNull FoldRegion foldRegion) {

@@ -18,7 +18,6 @@ package com.intellij.projectView;
 import com.intellij.JavaTestUtil;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.InheritedMembersNodeProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -150,7 +149,7 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
         @Override
         public void run() {
 
-          WriteCommandAction.runWriteCommandAction(new Runnable() {
+          WriteCommandAction.runWriteCommandAction(null, new Runnable() {
             @Override
             public void run() {
               try {

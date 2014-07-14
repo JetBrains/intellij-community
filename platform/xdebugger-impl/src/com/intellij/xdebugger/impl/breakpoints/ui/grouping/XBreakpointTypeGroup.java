@@ -17,6 +17,8 @@ package com.intellij.xdebugger.impl.breakpoints.ui.grouping;
 
 import com.intellij.util.ArrayUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +50,26 @@ public class XBreakpointTypeGroup extends XBreakpointGroup {
 
   @Override
   public int compareTo(XBreakpointGroup o) {
+    if (getName().equals(o.getName())) {
+      return 0;
+    }
     if (o instanceof XBreakpointTypeGroup) {
+      if (((XBreakpointTypeGroup)o).myBreakpointType instanceof XLineBreakpointType) {
+        if (myBreakpointType instanceof XLineBreakpointType) {
+          int res = ((XLineBreakpointType)((XBreakpointTypeGroup)o).myBreakpointType).getPriority() -
+                  ((XLineBreakpointType)myBreakpointType).getPriority();
+          if (res != 0) {
+            return res;
+          }
+        }
+        else {
+          // line breakpoints should be on top
+          return 1;
+        }
+      }
+      else if (myBreakpointType instanceof XLineBreakpointType) {
+        return -1;
+      }
       return indexOfType(myBreakpointType) - indexOfType(((XBreakpointTypeGroup)o).getBreakpointType());
     }
     return -o.compareTo(this);

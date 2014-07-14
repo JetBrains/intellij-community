@@ -44,10 +44,10 @@ public class PythonRunner extends DefaultProgramRunner {
 
   @Override
   protected RunContentDescriptor doExecute(
-    Project project,
-    RunProfileState state,
+    @NotNull Project project,
+    @NotNull RunProfileState state,
     RunContentDescriptor contentToReuse,
-    ExecutionEnvironment env
+    @NotNull ExecutionEnvironment env
   ) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
 

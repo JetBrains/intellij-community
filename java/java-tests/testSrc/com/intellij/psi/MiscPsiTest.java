@@ -25,10 +25,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
   @Override
-  protected void invokeTestRunnable(final Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull final Runnable runnable) throws Exception {
     new WriteCommandAction.Simple(getProject()) {
       @Override
       protected void run() throws Throwable {
@@ -116,7 +117,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     final PsiClass aClass = getJavaFacade().getElementFactory().createClassFromText("public int i, j;", null);
 
     final PsiField aField = aClass.getFields()[0];
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       public void run() {
         aField.delete();
       }

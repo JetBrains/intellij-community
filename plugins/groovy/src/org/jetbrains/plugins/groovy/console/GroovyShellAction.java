@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,12 @@ import com.intellij.openapi.project.Project;
  * @author peter
  */
 public class GroovyShellAction extends GroovyShellActionBase {
+  @Override
+  protected boolean isSuitableModule(Module module) {
+    return super.isSuitableModule(module) && DefaultGroovyShellRunner.hasGroovyWithNeededJars(module);
+  }
+
+  @Override
   protected GroovyShellRunner getRunner(Module module) {
     return new DefaultGroovyShellRunner();
   }
@@ -33,31 +39,6 @@ public class GroovyShellAction extends GroovyShellActionBase {
 
   @Override
   protected GroovyShellConsoleImpl createConsole(Project project, String title) {
-    final GroovyShellConsoleImpl console = new GroovyShellConsoleImpl(project, title);
-
-    /*UiNotifyConnector.doWhenFirstShown(console.getComponent(), new Runnable() {
-      @Override
-      public void run() {
-        final String key = "groovy.shell.is.really.groovy.shell";
-        if (!PropertiesComponent.getInstance().isTrueValue(key)) {
-          final Alarm alarm = new Alarm();
-          alarm.addRequest(new Runnable() {
-            @Override
-            public void run() {
-              GotItMessage.createMessage("Groovy Shell & Groovy Console", "<html><div align='left'>Use 'Groovy Console' action (Tools | Groovy Console...) to run <a href='http://'>Groovy Console</a><br>Use 'Groovy Shell' action (Tools | Groovy Shell...) to invoke <a href=\"http://groovy.codehaus.org/Groovy+Shell\">Groovy Shell</a></div></html>")
-                .setDisposable(console)
-                .show(new RelativePoint(console.getComponent(), new Point(10, 0)), Balloon.Position.above);
-
-              PropertiesComponent.getInstance().setValue(key, String.valueOf(true));
-              Disposer.dispose(alarm);
-            }
-          }, 2000);
-        }
-
-      }
-    })*/;
-
-
-    return console;
+    return new GroovyShellConsoleImpl(project, title);
   }
 }

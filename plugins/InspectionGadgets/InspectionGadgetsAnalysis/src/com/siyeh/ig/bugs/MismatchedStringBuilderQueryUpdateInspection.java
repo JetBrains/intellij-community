@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2012 Bas Leijdekkers
+ * Copyright 2011-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -227,12 +227,23 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
       if (updated) {
         return;
       }
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      checkReferenceExpression(expression.getMethodExpression());
+    }
+
+    @Override
+    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      if (updated) {
+        return;
+      }
+      super.visitMethodReferenceExpression(expression);
+      checkReferenceExpression(expression);
+    }
+
+    private void checkReferenceExpression(PsiReferenceExpression methodExpression) {
       final String name = methodExpression.getReferenceName();
       if (!updateNames.contains(name)) {
         return;

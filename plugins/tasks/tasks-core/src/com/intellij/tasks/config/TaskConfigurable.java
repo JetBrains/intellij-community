@@ -95,11 +95,18 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
   public void apply() throws ConfigurationException {
     boolean oldUpdateEnabled = getConfig().updateEnabled;
     super.apply();
+    TaskManager manager = TaskManager.getManager(myProject);
     if (getConfig().updateEnabled && !oldUpdateEnabled) {
-      TaskManager.getManager(myProject).updateIssues(null);
+      manager.updateIssues(null);
     }
     TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO = myAlwaysDisplayTaskCombo.isSelected();
-    TaskSettings.getInstance().CONNECTION_TIMEOUT = Integer.valueOf(myConnectionTimeout.getText());
+    int oldConnectionTimeout = TaskSettings.getInstance().CONNECTION_TIMEOUT;
+    Integer connectionTimeout = Integer.valueOf(myConnectionTimeout.getText());
+    TaskSettings.getInstance().CONNECTION_TIMEOUT = connectionTimeout;
+
+    if (manager instanceof TaskManagerImpl && connectionTimeout != oldConnectionTimeout) {
+      ((TaskManagerImpl)manager).reconfigureRepositoryClients();
+    }
   }
 
   @Override

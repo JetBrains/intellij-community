@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,6 +107,7 @@ public class InlineUtil {
           builder.append(exprType.getCanonicalText());
           builder.append("[]{");
           builder.append(StringUtil.join(Arrays.asList(arguments), new Function<PsiExpression, String>() {
+            @Override
             public String fun(final PsiExpression expr) {
               return expr.getText();
             }
@@ -294,8 +295,10 @@ public class InlineUtil {
   public static boolean allUsagesAreTailCalls(final PsiMethod method) {
     final List<PsiReference> nonTailCallUsages = Collections.synchronizedList(new ArrayList<PsiReference>());
     boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
       public void run() {
         ReferencesSearch.search(method).forEach(new Processor<PsiReference>() {
+          @Override
           public boolean process(final PsiReference psiReference) {
             ProgressManager.checkCanceled();
             if (getTailCallType(psiReference) == TailCallType.None) {

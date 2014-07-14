@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 
 /**
  * @author Jeka
@@ -72,15 +71,7 @@ public class ClipboardVsValueContents extends DiffRequest {
 
   @Nullable
   public static DiffContent createClipboardContent() {
-    Transferable content = CopyPasteManager.getInstance().getContents();
-    if (content != null) {
-      try {
-        String text = (String)(content.getTransferData(DataFlavor.stringFlavor));
-        return text != null ? new SimpleContent(text) : null;
-      }
-      catch (Exception ignored) {
-      }
-    }
-    return null;
+    String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+    return text != null ? new SimpleContent(text) : null;
   }
 }

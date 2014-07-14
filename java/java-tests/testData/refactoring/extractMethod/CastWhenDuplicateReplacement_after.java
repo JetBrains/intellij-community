@@ -6,6 +6,6 @@ class Test {
     }
 
     private String newMethod(String x) {
-        return ((String)x).substring(1);
+        return x.substring(1);
     }
 }

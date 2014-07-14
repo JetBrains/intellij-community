@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
   @Nullable
   @Override
-  public PsiElement findTargetElement(final Editor editor, final int flags, final int offset) {
+  public PsiElement findTargetElement(@NotNull final Editor editor, final int flags, final int offset) {
     final PsiElement element = super.findTargetElement(editor, flags, offset);
     if (element instanceof PsiKeyword) {
       if (element.getParent() instanceof PsiThisExpression) {
@@ -139,6 +139,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
   }
 
 
+  @Nullable
   @Override
   protected PsiElement getNamedElement(final PsiElement element) {
     PsiElement parent = element.getParent();
@@ -156,6 +157,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
         return parent;
       }
     }
+    //TODO: Code below this comment is very similar to parent code. We probably need to use "super()" instead, to prevent copy/paste in inheritors
     else if ((parent = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class, false)) != null) {
       // A bit hacky depends on navigation offset correctly overridden
       if (parent.getTextOffset() == element.getTextRange().getStartOffset() && !(parent instanceof XmlAttribute)
@@ -248,7 +250,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
   }
 
   @Override
-  public boolean includeSelfInGotoImplementation(final PsiElement element) {
+  public boolean includeSelfInGotoImplementation(@NotNull final PsiElement element) {
     if (element instanceof PsiModifierListOwner && ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.ABSTRACT)) {
       return false;
     }

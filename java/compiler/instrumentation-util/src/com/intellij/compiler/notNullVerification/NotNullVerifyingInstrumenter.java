@@ -15,7 +15,7 @@
  */
 package com.intellij.compiler.notNullVerification;
 
-import org.jetbrains.asm4.*;
+import org.jetbrains.org.objectweb.asm.*;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -50,7 +50,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
   private RuntimeException myPostponedError;
 
   private NotNullVerifyingInstrumenter(final ClassVisitor classVisitor, ClassReader reader) {
-    super(Opcodes.ASM4, classVisitor);
+    super(Opcodes.ASM5, classVisitor);
     myMethodParamNames = getAllParameterNames(reader);
   }
 
@@ -63,7 +63,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
   private static Map<String, Map<Integer, String>> getAllParameterNames(ClassReader reader) {
     final Map<String, Map<Integer, String>> methodParamNames = new LinkedHashMap<String, Map<Integer, String>>();
 
-    reader.accept(new ClassVisitor(Opcodes.ASM4) {
+    reader.accept(new ClassVisitor(Opcodes.ASM5) {
       private String myClassName = null;
 
       public void visit(final int version, final int access, final String name, final String signature, final String superName, final String[] interfaces) {
@@ -106,7 +106,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     final Type returnType = Type.getReturnType(desc);
     final MethodVisitor v = cv.visitMethod(access, name, desc, signature, exceptions);
     final Map<Integer, String> paramNames = myMethodParamNames.get(myClassName + '.' + name + desc);
-    return new MethodVisitor(Opcodes.ASM4, v) {
+    return new MethodVisitor(Opcodes.ASM5, v) {
 
       private final List<Integer> myNotNullParams = new ArrayList<Integer>();
       private int mySyntheticCount = 0;
@@ -118,7 +118,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
         AnnotationVisitor av = mv.visitParameterAnnotation(parameter, anno, visible);
         if (isReferenceType(args[parameter]) && anno.equals(NOT_NULL_TYPE)) {
           myNotNullParams.add(new Integer(parameter));
-          av = new AnnotationVisitor(Opcodes.ASM4, av) {
+          av = new AnnotationVisitor(Opcodes.ASM5, av) {
             @Override
             public void visit(String methodName, Object o) {
               if(ANNOTATION_DEFAULT_METHOD.equals(methodName)) {
@@ -144,7 +144,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
         AnnotationVisitor av = mv.visitAnnotation(anno, isRuntime);
         if (isReferenceType(returnType) && anno.equals(NOT_NULL_TYPE)) {
           myIsNotNull = true;
-          av = new AnnotationVisitor(Opcodes.ASM4, av) {
+          av = new AnnotationVisitor(Opcodes.ASM5, av) {
             @Override
             public void visit(String methodName, Object o) {
               if(ANNOTATION_DEFAULT_METHOD.equals(methodName)) {
@@ -229,9 +229,9 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
         }
 
         //noinspection SpellCheckingInspection
-        mv.visitMethodInsn(INVOKESTATIC, STRING_CLASS_NAME, "format", "(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;");
+        mv.visitMethodInsn(INVOKESTATIC, STRING_CLASS_NAME, "format", "(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;", false);
 
-        mv.visitMethodInsn(INVOKESPECIAL, exceptionClass, CONSTRUCTOR_NAME, EXCEPTION_INIT_SIGNATURE);
+        mv.visitMethodInsn(INVOKESPECIAL, exceptionClass, CONSTRUCTOR_NAME, EXCEPTION_INIT_SIGNATURE, false);
         mv.visitInsn(ATHROW);
         mv.visitLabel(end);
 

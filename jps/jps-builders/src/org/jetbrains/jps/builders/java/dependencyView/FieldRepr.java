@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -57,12 +58,12 @@ class FieldRepr extends ProtoMember {
   public static DataExternalizer<FieldRepr> externalizer(final DependencyContext context) {
     return new DataExternalizer<FieldRepr>() {
       @Override
-      public void save(final DataOutput out, final FieldRepr value) throws IOException {
+      public void save(@NotNull final DataOutput out, final FieldRepr value) throws IOException {
         value.save(out);
       }
 
       @Override
-      public FieldRepr read(final DataInput in) throws IOException {
+      public FieldRepr read(@NotNull final DataInput in) throws IOException {
         return new FieldRepr(context, in);
       }
     };

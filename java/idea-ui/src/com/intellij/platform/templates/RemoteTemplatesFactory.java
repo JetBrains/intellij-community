@@ -16,9 +16,7 @@
 package com.intellij.platform.templates;
 
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.ide.util.projectWizard.WizardInputField;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -55,12 +53,15 @@ import java.util.zip.ZipInputStream;
 public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
   private static final String URL = "http://download.jetbrains.com/idea/project_templates/";
-  public static final String SAMPLES_GALLERY = "Samples Gallery";
-  private static final Namespace NAMESPACE = Namespace.getNamespace("http://www.jetbrains.com/projectTemplates");
 
-  public static final String INPUT_FIELD = "input-field";
   public static final String TEMPLATE = "template";
   public static final String INPUT_DEFAULT = "default";
+  public static final Function<Element, String> ELEMENT_STRING_FUNCTION = new Function<Element, String>() {
+    @Override
+    public String fun(Element element) {
+      return element.getText();
+    }
+  };
 
   private final ClearableLazyValue<MultiMap<String, ArchivedProjectTemplate>> myTemplates = new ClearableLazyValue<MultiMap<String, ArchivedProjectTemplate>>() {
     @NotNull
@@ -113,20 +114,12 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   @SuppressWarnings("unchecked")
   public static MultiMap<String, ArchivedProjectTemplate> createFromText(String text) throws IOException, JDOMException {
 
-    Element rootElement = JDOMUtil.loadDocument(text).getRootElement();
-    List<Element> groups = rootElement.getChildren("group", NAMESPACE);
     MultiMap<String, ArchivedProjectTemplate> map = new MultiMap<String, ArchivedProjectTemplate>();
-    if (groups.isEmpty()) { // sample gallery by default
-      map.put(SAMPLES_GALLERY, createGroupTemplates(rootElement, Namespace.NO_NAMESPACE));
+    Element rootElement = JDOMUtil.loadDocument(text).getRootElement();
+    List<ArchivedProjectTemplate> templates = createGroupTemplates(rootElement, Namespace.NO_NAMESPACE);
+    for (ArchivedProjectTemplate template : templates) {
+      map.putValue(template.getCategory(), template);
     }
-    else {
-      for (Element group : groups) {
-        if (checkRequiredPlugins(group, NAMESPACE)) {
-          map.put(group.getChildText("name", NAMESPACE), createGroupTemplates(group, NAMESPACE));
-        }
-      }
-    }
-
     return map;
   }
 
@@ -143,52 +136,19 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
         final ModuleType moduleType = ModuleTypeManager.getInstance().findByID(type);
 
-        final List<WizardInputField> inputFields = getFields(element, ns);
         final String path = element.getChildText("path", ns);
         final String description = element.getChildTextTrim("description", ns);
         String name = element.getChildTextTrim("name", ns);
-        return new ArchivedProjectTemplate(name, element.getChildTextTrim("category")) {
-          @Override
-          protected ModuleType getModuleType() {
-            return moduleType;
-          }
-
-          @Override
-          public List<WizardInputField> getInputFields() {
-            return inputFields;
-          }
-
-          @Override
-          public ZipInputStream getStream() throws IOException {
-            final HttpURLConnection connection = getConnection(path);
-            return new ZipInputStream(connection.getInputStream()) {
-              @Override
-              public void close() throws IOException {
-                super.close();
-                connection.disconnect();
-              }
-            };
-          }
-
-          @Nullable
-          @Override
-          public String getDescription() {
-            return description;
-          }
-        };
+        RemoteProjectTemplate template = new RemoteProjectTemplate(name, element, moduleType, path, description);
+        template.populateFromElement(element, ns);
+        return template;
       }
     });
   }
 
-  static List<WizardInputField> getFields(Element templateElement, final Namespace ns) {
-    //noinspection unchecked
-    return ContainerUtil.mapNotNull(templateElement.getChildren(INPUT_FIELD, ns), new Function<Element, WizardInputField>() {
-      @Override
-      public WizardInputField fun(Element element) {
-        ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(element.getText());
-        return factory == null ? null : factory.createField(element.getAttributeValue(INPUT_DEFAULT));
-      }
-    });
+  public static List<String> getFrameworks(Element element) {
+    List<Element> frameworks = element.getChildren("framework");
+    return ContainerUtil.map(frameworks, ELEMENT_STRING_FUNCTION);
   }
 
   private static boolean checkRequiredPlugins(Element element, Namespace ns) {
@@ -211,4 +171,43 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   }
 
   private final static Logger LOG = Logger.getInstance(RemoteTemplatesFactory.class);
+
+  private static class RemoteProjectTemplate extends ArchivedProjectTemplate {
+    private final ModuleType myModuleType;
+    private final String myPath;
+    private final String myDescription;
+
+    public RemoteProjectTemplate(String name,
+                                 Element element,
+                                 ModuleType moduleType,
+                                 String path, String description) {
+      super(name, element.getChildTextTrim("category"));
+      myModuleType = moduleType;
+      myPath = path;
+      myDescription = description;
+    }
+
+    @Override
+    protected ModuleType getModuleType() {
+      return myModuleType;
+    }
+
+    @Override
+    public ZipInputStream getStream() throws IOException {
+      final HttpURLConnection connection = getConnection(myPath);
+      return new ZipInputStream(connection.getInputStream()) {
+        @Override
+        public void close() throws IOException {
+          super.close();
+          connection.disconnect();
+        }
+      };
+    }
+
+    @Nullable
+    @Override
+    public String getDescription() {
+      return myDescription;
+    }
+  }
 }

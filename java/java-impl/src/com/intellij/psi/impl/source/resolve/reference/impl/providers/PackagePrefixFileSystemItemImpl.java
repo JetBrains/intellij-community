@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,11 +37,11 @@ import java.util.ArrayList;
  * @author Gregory.Shrago
 */
 class PackagePrefixFileSystemItemImpl extends PsiElementBase implements PsiFileSystemItem, PackagePrefixFileSystemItem {
-  private final PsiDirectory myDirectory;
+  @NotNull private final PsiDirectory myDirectory;
   private final int myIndex;
   private final PsiPackage[] myPackages;
 
-  public static PackagePrefixFileSystemItemImpl create(final PsiDirectory directory) {
+  public static PackagePrefixFileSystemItemImpl create(@NotNull PsiDirectory directory) {
     final ArrayList<PsiPackage> packages = new ArrayList<PsiPackage>();
     for (PsiPackage cur = JavaDirectoryService.getInstance().getPackage(directory); cur != null; cur = cur.getParentPackage()) {
       packages.add(0, cur);
@@ -49,7 +49,7 @@ class PackagePrefixFileSystemItemImpl extends PsiElementBase implements PsiFileS
     return new PackagePrefixFileSystemItemImpl(directory, 0, packages.toArray(new PsiPackage[packages.size()]));
   }
 
-  private PackagePrefixFileSystemItemImpl(final PsiDirectory directory, int index, final PsiPackage[] packages) {
+  private PackagePrefixFileSystemItemImpl(@NotNull PsiDirectory directory, int index, final PsiPackage[] packages) {
     myDirectory = directory;
     myIndex = index;
     myPackages = packages;
@@ -249,6 +249,7 @@ class PackagePrefixFileSystemItemImpl extends PsiElementBase implements PsiFileS
     return myDirectory.getIcon(flags);
   }
 
+  @NotNull
   @Override
   public PsiDirectory getDirectory() {
     return myDirectory;

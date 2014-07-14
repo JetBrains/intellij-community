@@ -18,6 +18,7 @@ package com.intellij.debugger.impl.descriptors.data;
 import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadGroupDescriptorImpl;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class ThreadGroupData extends DescriptorData<ThreadGroupDescriptorImpl>{
   private final ThreadGroupReferenceProxyImpl myThreadGroup;
@@ -27,7 +28,7 @@ public class ThreadGroupData extends DescriptorData<ThreadGroupDescriptorImpl>{
     myThreadGroup = threadGroup;
   }
 
-  protected ThreadGroupDescriptorImpl createDescriptorImpl(Project project) {
+  protected ThreadGroupDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new ThreadGroupDescriptorImpl(myThreadGroup);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SchemeElement;
 import com.intellij.openapi.util.text.StringUtil;
@@ -105,14 +104,14 @@ public class TemplateImpl extends Template implements SchemeElement {
 
 
 
-  public TemplateImpl(@NotNull String key, String group) {
+  public TemplateImpl(@NotNull String key, @NotNull String group) {
     this(key, null, group);
     toParseSegments = false;
     myTemplateText = "";
     mySegments = new ArrayList<Segment>();
   }
 
-  public TemplateImpl(@NotNull String key, String string, String group) {
+  public TemplateImpl(@NotNull String key, String string, @NotNull String group) {
     myKey = key;
     myString = string;
     myGroupName = group;
@@ -126,7 +125,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   }
 
   @Override
-  public void addVariableSegment (String name) {
+  public void addVariableSegment (@NotNull String name) {
     mySegments.add(new Segment(name, myTemplateText.length()));
   }
 
@@ -136,7 +135,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   }
 
   @Override
-  public Variable addVariable(String name,
+  public Variable addVariable(@NotNull String name,
                               Expression expression,
                               Expression defaultValueExpression,
                               boolean isAlwaysStopAt,
@@ -176,26 +175,38 @@ public class TemplateImpl extends Template implements SchemeElement {
   @Override
   public TemplateImpl copy() {
     TemplateImpl template = new TemplateImpl(myKey, myString, myGroupName);
-    template.myId = myId;
-    template.myDescription = myDescription;
-    template.myShortcutChar = myShortcutChar;
-    template.isToReformat = isToReformat;
-    template.isToShortenLongNames = isToShortenLongNames;
-    template.myIsInline = myIsInline;
-    template.myTemplateContext = myTemplateContext.createCopy();
-    template.isDeactivated = isDeactivated;
-    for (Property property : Property.values()) {
-      boolean value = getValue(property);
-      if (value != Template.getDefaultValue(property)) {
-        template.setValue(property, value);
-      }
-    }
-    for (Variable variable : myVariables) {
-      template.addVariable(variable.getName(), variable.getExpressionString(), variable.getDefaultValueString(), variable.isAlwaysStopAt());
-    }
+    template.resetFrom(this);
     return template;
   }
 
+  public void resetFrom(TemplateImpl another) {
+    removeAllParsed();
+    toParseSegments = another.toParseSegments;
+
+    myKey = another.getKey();
+    myString = another.myString;
+    myTemplateText = another.myTemplateText;
+    myGroupName = another.myGroupName;
+    myId = another.myId;
+    myDescription = another.myDescription;
+    myShortcutChar = another.myShortcutChar;
+    isToReformat = another.isToReformat;
+    isToShortenLongNames = another.isToShortenLongNames;
+    myIsInline = another.myIsInline;
+    myTemplateContext = another.myTemplateContext.createCopy();
+    isDeactivated = another.isDeactivated;
+    for (Property property : Property.values()) {
+      boolean value = another.getValue(property);
+      if (value != Template.getDefaultValue(property)) {
+        setValue(property, value);
+      }
+    }
+    for (Variable variable : another.myVariables) {
+      addVariable(variable.getName(), variable.getExpressionString(), variable.getDefaultValueString(), variable.isAlwaysStopAt());
+    }
+  }
+
+  @Override
   public boolean isToReformat() {
     return isToReformat;
   }
@@ -326,7 +337,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   }
 
   @Override
-  public Variable addVariable(String name, String expression, String defaultValue, boolean isAlwaysStopAt) {
+  public Variable addVariable(@NotNull String name, String expression, String defaultValue, boolean isAlwaysStopAt) {
     Variable variable = new Variable(name, expression, defaultValue, isAlwaysStopAt);
     myVariables.add(variable);
     return variable;
@@ -404,14 +415,14 @@ public class TemplateImpl extends Template implements SchemeElement {
   }
 
   @Override
-  public void setGroupName(String groupName) {
+  public void setGroupName(@NotNull String groupName) {
     myGroupName = groupName;
   }
 
   public boolean isSelectionTemplate() {
     parseSegments();
     for (Segment v : mySegments) {
-      if (v.name.equals(SELECTION)) return true;
+      if (SELECTION.equals(v.name)) return true;
     }
 
     return false;
@@ -436,14 +447,8 @@ public class TemplateImpl extends Template implements SchemeElement {
     return context;
   }
 
-  public Map<TemplateContextType, Boolean> createContext(){
-
-    Map<TemplateContextType, Boolean> context = new LinkedHashMap<TemplateContextType, Boolean>();
-    for (TemplateContextType processor : TemplateManagerImpl.getAllContextTypes()) {
-      context.put(processor, getTemplateContext().isEnabled(processor));
-    }
-    return context;
-
+  public TemplateContext createContext() {
+    return getTemplateContext().createCopy();
   }
 
   public boolean contextsEqual(TemplateImpl defaultTemplate) {
@@ -456,10 +461,8 @@ public class TemplateImpl extends Template implements SchemeElement {
     }
   }
 
-  public void applyContext(final Map<TemplateContextType, Boolean> context) {
-    for (Map.Entry<TemplateContextType, Boolean> entry : context.entrySet()) {
-      getTemplateContext().setEnabled(entry.getKey(), entry.getValue().booleanValue());
-    }
+  public void applyContext(final TemplateContext context) {
+    myTemplateContext = context.createCopy();
   }
 
   public boolean skipOnStart(int i) {
@@ -471,10 +474,10 @@ public class TemplateImpl extends Template implements SchemeElement {
   }
 
   private static class Segment {
-    public String name;
-    public int offset;
+    public final String name;
+    public final int offset;
 
-    private Segment(String name, int offset) {
+    private Segment(@NotNull String name, int offset) {
       this.name = name;
       this.offset = offset;
     }

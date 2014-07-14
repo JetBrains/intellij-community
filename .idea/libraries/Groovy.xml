@@ -1,45 +1,46 @@
 <component name="libraryTable">
   <library name="Groovy">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/groovy-all-2.0.6.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/groovy-all-2.2.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-json/src/main/groovy" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-json/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-test/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-xml/src/test/groovy" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-xml/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-servlet/src/test/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-servlet/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-console/src/main/groovy" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-bsf/src/test/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-bsf/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-groovysh/src/main/groovy" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-templates/src/test/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-templates/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-sql/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-swing/src/test/groovy" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-swing/src/main/groovy" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-swing/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-groovydoc/src/test/groovy" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-groovydoc/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-testng/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-jsr223/src/test/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-jsr223/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-jmx/src/test/groovy" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-jmx/src/test/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-jmx/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-ant/src/test/groovy" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-ant/src/test-resources" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/subprojects/groovy-ant/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/benchmark/bench" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/src/tck/src" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/src/test" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/src/test-resources/stubgenerator/propertyUsageFromJava" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/src/test-resources/stubgenerator/circularLanguageReference" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/src/examples" />
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.0.6.zip!/groovy-2.0.6/src/main" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/src/tck/src" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/src/main" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/src/test" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/src/examples" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/src/test-resources" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/buildSrc/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/benchmark/bench" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-ant/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-ant/src/test/groovy" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-ant/src/test-resources" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-bsf/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-bsf/src/test/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-jmx/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-jmx/src/test/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-jmx/src/test/groovy" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-sql/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-xml/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-xml/src/test/groovy" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-json/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-json/src/main/groovy" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-test/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-test/src/test/groovy" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-swing/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-swing/src/main/groovy" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-swing/src/test/groovy" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-jsr223/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-jsr223/src/test/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-testng/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-console/src/main/groovy" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-servlet/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-servlet/src/test/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-groovysh/src/main/groovy" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-groovydoc/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-groovydoc/src/test/groovy" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-templates/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-2.2.1.zip!/groovy-2.2.1/subprojects/groovy-templates/src/test/java" />
     </SOURCES>
   </library>
 </component>

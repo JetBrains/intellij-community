@@ -120,7 +120,9 @@ public class BringVariableIntoScopeFix implements IntentionAction {
     }
     LOG.assertTrue(commonParent != null);
     PsiDeclarationStatement added = (PsiDeclarationStatement)commonParent.addBefore(newDeclaration, child);
-    PsiLocalVariable addedVar = (PsiLocalVariable)added.getDeclaredElements()[0];
+    final PsiElement[] declaredElements = added.getDeclaredElements();
+    LOG.assertTrue(declaredElements.length > 0, added.getText());
+    PsiLocalVariable addedVar = (PsiLocalVariable)declaredElements[0];
     CodeStyleManager.getInstance(manager.getProject()).reformat(commonParent);
 
     //Leave initializer assignment

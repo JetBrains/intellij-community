@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,38 +15,51 @@
  */
 package com.intellij.openapi.vfs.impl.jar;
 
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
  */
 public class CoreJarVirtualFile extends VirtualFile {
   private final CoreJarHandler myHandler;
+  private final String myName;
+  private final FileAttributes myEntry;
   private final VirtualFile myParent;
-  private final ArrayList<VirtualFile> myChildren = new ArrayList<VirtualFile>();
-  private final JarHandlerBase.EntryInfo myEntry;
+  private final List<VirtualFile> myChildren = new ArrayList<VirtualFile>();
 
-  public CoreJarVirtualFile(CoreJarHandler handler, JarHandlerBase.EntryInfo entry, CoreJarVirtualFile parent) {
+  public CoreJarVirtualFile(@NotNull CoreJarHandler handler, @NotNull String name, @NotNull FileAttributes entry, @Nullable CoreJarVirtualFile parent) {
     myHandler = handler;
-    myParent = parent;
+    myName = name;
     myEntry = entry;
+    myParent = parent;
 
     if (parent != null) {
       parent.myChildren.add(this);
     }
   }
 
+  /** @deprecated to be removed in IDEA 15 */
+  @SuppressWarnings({"deprecation", "UnusedDeclaration"})
+  public CoreJarVirtualFile(@NotNull CoreJarHandler handler, @NotNull JarHandlerBase.EntryInfo e, @Nullable CoreJarVirtualFile parent) {
+    this(handler, e.shortName, new FileAttributes(e.isDirectory, false, false, false, e.length, e.timestamp, false), parent);
+  }
+
   @NotNull
   @Override
   public String getName() {
-    return myEntry.shortName;
+    return myName;
   }
 
   @NotNull
@@ -56,17 +69,18 @@ public class CoreJarVirtualFile extends VirtualFile {
   }
 
   @Override
+  @NotNull
   public String getPath() {
-    if (myParent == null) return myHandler.myBasePath + "!/";
+    if (myParent == null) return myHandler.getFile().getPath() + "!/";
 
     String parentPath = myParent.getPath();
-    StringBuilder answer = new StringBuilder(parentPath.length() + 1 + myEntry.shortName.length());
+    StringBuilder answer = new StringBuilder(parentPath.length() + 1 + myName.length());
     answer.append(parentPath);
     if (answer.charAt(answer.length() - 1) != '/') {
       answer.append('/');
     }
-    answer.append(myEntry.shortName);
-    
+    answer.append(myName);
+
     return answer.toString();
   }
 
@@ -77,7 +91,7 @@ public class CoreJarVirtualFile extends VirtualFile {
 
   @Override
   public boolean isDirectory() {
-    return myEntry.isDirectory;
+    return myEntry.isDirectory();
   }
 
   @Override
@@ -104,26 +118,26 @@ public class CoreJarVirtualFile extends VirtualFile {
   @NotNull
   @Override
   public byte[] contentsToByteArray() throws IOException {
-    return myHandler.contentsToByteArray(this);
+    Couple<String> pair = ((CoreJarFileSystem)getFileSystem()).splitPath(getPath());
+    return myHandler.contentsToByteArray(pair.second);
   }
 
   @Override
   public long getTimeStamp() {
-    return myHandler.getTimeStamp(this);
+    return myEntry.lastModified;
   }
 
   @Override
   public long getLength() {
-    return myHandler.getLength(this);
+    return myEntry.length;
   }
 
   @Override
-  public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
-  }
+  public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) { }
 
   @Override
   public InputStream getInputStream() throws IOException {
-    return myHandler.getInputStream(this);
+    return new BufferExposingByteArrayInputStream(contentsToByteArray());
   }
 
   @Override

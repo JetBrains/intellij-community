@@ -1,4 +1,4 @@
-#Note: code gotten from importsTipper.
+#Note: code gotten from _pydev_imports_tipper.
 
 import sys
 

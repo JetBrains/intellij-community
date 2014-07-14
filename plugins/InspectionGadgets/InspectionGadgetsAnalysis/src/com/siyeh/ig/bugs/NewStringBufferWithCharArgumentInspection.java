@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,7 +95,7 @@ public class NewStringBufferWithCharArgumentInspection extends BaseInspection {
       final String text = argument.getText();
       final String newArgument =
         '"' + text.substring(1, text.length() - 1) + '"';
-      replaceExpression(argument, newArgument);
+      PsiReplacementUtil.replaceExpression(argument, newArgument);
     }
   }
 

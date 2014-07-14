@@ -19,14 +19,15 @@ import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.roots.libraries.JarVersionDetectionUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -120,9 +121,16 @@ public class AppEngineSdkImpl implements AppEngineSdk {
       }
       else {
         myClassesWhiteList = AppEngineSdkUtil.computeWhiteList(getToolsApiJarFile());
-        AppEngineSdkUtil.saveWhiteList(cachedWhiteList, myClassesWhiteList);
+        if (!myClassesWhiteList.isEmpty()) {
+          AppEngineSdkUtil.saveWhiteList(cachedWhiteList, myClassesWhiteList);
+        }
       }
     }
+    if (myClassesWhiteList.isEmpty()) {
+      //don't report errors if white-list wasn't properly loaded
+      return true;
+    }
+
     final String packageName = StringUtil.getPackageName(className);
     final String name = StringUtil.getShortName(className);
     final Set<String> classes = myClassesWhiteList.get(packageName);
@@ -132,12 +140,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
   @Override
   @Nullable
   public String getVersion() {
-    try {
-      return JarVersionDetectionUtil.getJarAttributeVersion(getToolsApiJarFile(), Attributes.Name.SPECIFICATION_VERSION, "com/google/appengine/tools/info/");
-    }
-    catch (IOException e) {
-      return null;
-    }
+    return JarUtil.getJarAttribute(getToolsApiJarFile(), "com/google/appengine/tools/info/", Attributes.Name.SPECIFICATION_VERSION);
   }
 
   private File getCachedWhiteListFile() {
@@ -165,6 +168,25 @@ public class AppEngineSdkImpl implements AppEngineSdk {
 
   public String getOrmLibDirectoryPath() {
     return getLibUserDirectoryPath() + "/orm";
+  }
+
+  @Override
+  public List<String> getUserLibraryPaths() {
+    List<String> result = new ArrayList<String>();
+    result.add(getLibUserDirectoryPath());
+    File opt = new File(myHomePath, "lib/opt/user");
+    ContainerUtil.addIfNotNull(result, findLatestVersion(new File(opt, "appengine-endpoints")));
+    ContainerUtil.addIfNotNull(result, findLatestVersion(new File(opt, "jsr107")));
+    return result;
+  }
+
+  private static String findLatestVersion(File dir) {
+    String[] names = dir.list();
+    if (names != null && names.length > 0) {
+      String max = Collections.max(Arrays.asList(names));
+      return FileUtil.toSystemIndependentName(new File(dir, max).getAbsolutePath());
+    }
+    return null;
   }
 
   public VirtualFile[] getOrmLibSources() {

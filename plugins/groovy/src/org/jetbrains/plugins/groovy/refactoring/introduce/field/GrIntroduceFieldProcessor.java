@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
+import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -65,8 +67,9 @@ public class GrIntroduceFieldProcessor {
 
   private final GrIntroduceContext myContext;
   private final GrIntroduceFieldSettings mySettings;
-  private GrExpression myInitializer;
-  private GrVariable myLocalVariable;
+
+  @Nullable private GrExpression myInitializer;
+  @Nullable private GrVariable myLocalVariable;
 
   public GrIntroduceFieldProcessor(@NotNull GrIntroduceContext context,
                                    @NotNull GrIntroduceFieldSettings settings) {
@@ -85,6 +88,7 @@ public class GrIntroduceFieldProcessor {
 
     if (mySettings.removeLocalVar()) {
       myLocalVariable = GrIntroduceHandlerBase.resolveLocalVar(myContext);
+      assert myLocalVariable != null : myContext.getExpression() + ", " + myContext.getVar() + ", " + myContext.getStringPart();
     }
     myInitializer = (GrExpression)getInitializer().copy();
 
@@ -117,30 +121,39 @@ public class GrIntroduceFieldProcessor {
   @NotNull
   private List<PsiElement> processOccurrences(@NotNull PsiClass targetClass, @NotNull GrVariable field) {
     if (myContext.getStringPart() != null) {
-      final GrExpression expr = GrIntroduceHandlerBase.processLiteral(field.getName(), myContext.getStringPart(), myContext.getProject());
+      final GrExpression expr = myContext.getStringPart().replaceLiteralWithConcatenation(field.getName());
       final PsiElement occurrence = replaceOccurrence(field, expr, targetClass);
       updateCaretPosition(occurrence);
       return Collections.singletonList(occurrence);
     }
-    else {
-      if (mySettings.replaceAllOccurrences()) {
-        GroovyRefactoringUtil.sortOccurrences(myContext.getOccurrences());
-        ArrayList<PsiElement> result = ContainerUtil.newArrayList();
-        for (PsiElement occurrence : myContext.getOccurrences()) {
-          result.add(replaceOccurrence(field, occurrence, targetClass));
-        }
-        return result;
+
+    if (mySettings.replaceAllOccurrences()) {
+      GroovyRefactoringUtil.sortOccurrences(myContext.getOccurrences());
+      ArrayList<PsiElement> result = ContainerUtil.newArrayList();
+      for (PsiElement occurrence : myContext.getOccurrences()) {
+        result.add(replaceOccurrence(field, occurrence, targetClass));
+      }
+      return result;
+    }
+
+    GrVariable var = myContext.getVar();
+    if (var != null) {
+      GrExpression initializer = var.getInitializerGroovy();
+      if (initializer != null) {
+        return Collections.singletonList(replaceOccurrence(field, initializer, targetClass));
       }
       else {
-        final GrExpression expression = myContext.getExpression();
-        assert expression != null;
-        if (PsiUtil.isExpressionStatement(expression)) {
-          return Collections.<PsiElement>singletonList(expression);
-        }
-        else {
-          return Collections.singletonList(replaceOccurrence(field, expression, targetClass));
-        }
+        return Collections.emptyList();
       }
+    }
+
+    final GrExpression expression = myContext.getExpression();
+    assert expression != null;
+    if (PsiUtil.isExpressionStatement(expression)) {
+      return Collections.<PsiElement>singletonList(expression);
+    }
+    else {
+      return Collections.singletonList(replaceOccurrence(field, expression, targetClass));
     }
   }
 
@@ -282,9 +295,10 @@ public class GrIntroduceFieldProcessor {
                                   @Nullable GrStatement anchor,
                                   @NotNull GrStatementOwner defaultContainer,
                                   @Nullable PsiElement occurrenceToDelete) {
-    final GrExpression initializer = myInitializer;
+    if (myInitializer == null) return;
+
     GrAssignmentExpression init = (GrAssignmentExpression)GroovyPsiElementFactory.getInstance(myContext.getProject())
-      .createExpressionFromText(mySettings.getName() + " = " + initializer.getText());
+      .createExpressionFromText(mySettings.getName() + " = " + myInitializer.getText());
 
     GrStatementOwner block;
     if (anchor != null) {
@@ -304,12 +318,10 @@ public class GrIntroduceFieldProcessor {
     }
   }
 
-  @NotNull
+  @Nullable
   private GrExpression extractVarInitializer() {
     assert myLocalVariable != null;
-    GrExpression initializer = myLocalVariable.getInitializerGroovy();
-    LOG.assertTrue(initializer != null);
-    return initializer;
+    return myLocalVariable.getInitializerGroovy();
   }
 
   @Nullable
@@ -320,7 +332,7 @@ public class GrIntroduceFieldProcessor {
         return PsiTreeUtil.isAncestor(block, element, true);
       }
     });
-    if (elements.size() == 0) return null;
+    if (elements.isEmpty()) return null;
     return GrIntroduceHandlerBase.findAnchor(ContainerUtil.toArray(elements, new PsiElement[elements.size()]), block);
   }
 
@@ -386,19 +398,21 @@ public class GrIntroduceFieldProcessor {
     }
   }
 
-  @NotNull
+  @Nullable
   protected GrExpression getInitializer() {
     if (mySettings.removeLocalVar()) {
       return extractVarInitializer();
     }
 
-
-    final GrExpression expression = myContext.getExpression();
+    GrExpression expression = myContext.getExpression();
+    StringPartInfo stringPart = myContext.getStringPart();
     if (expression != null) {
       return expression;
     }
+    else if (stringPart != null) {
+      return stringPart.createLiteralFromSelected();
+    }
 
-
-    return GrIntroduceHandlerBase.generateExpressionFromStringPart(myContext.getStringPart(), myContext.getProject());
+    throw new IncorrectOperationException("cannot be here!");
   }
 }

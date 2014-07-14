@@ -7,7 +7,7 @@ public class MismatchedStringBuilderQueryUpdate {
     b.append("");
     System.out.println("" + b + "");
 
-    final StringBuilder c = new StringBuilder();
+    final StringBuilder <warning descr="Contents of StringBuilder 'c' are updated, but never queried">c</warning> = new StringBuilder();
     c.append(' ');
   }
 
@@ -17,4 +17,17 @@ public class MismatchedStringBuilderQueryUpdate {
     sb.append("abc");
     return sb.reverse();
   }
+
+  void indexedList(List<String> list) {
+    StringBuilder stringBuilder = new StringBuilder(); // <--- false warning here
+    list.forEach(stringBuilder::append);
+    System.out.println(stringBuilder.toString());
+  }
+}
+interface List<T> {
+  default void forEach(Consumer<? super T> action) {
+  }
+}
+interface Consumer<T> {
+  void accept(T t);
 }

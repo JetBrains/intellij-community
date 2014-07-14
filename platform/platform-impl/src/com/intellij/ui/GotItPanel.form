@@ -54,7 +54,7 @@
               <opaque value="false"/>
             </properties>
             <border type="empty">
-              <size top="2" left="10" bottom="2" right="8"/>
+              <size top="4" left="10" bottom="4" right="8"/>
             </border>
             <children>
               <component id="366a9" class="javax.swing.JLabel">

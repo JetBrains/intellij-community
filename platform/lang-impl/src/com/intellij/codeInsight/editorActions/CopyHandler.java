@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +16,27 @@
 
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RawText;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actions.CopyAction;
+import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 
 import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CopyHandler extends EditorActionHandler {
-
   private final EditorActionHandler myOriginalAction;
 
   public CopyHandler(final EditorActionHandler originalHandler) {
@@ -46,32 +44,41 @@ public class CopyHandler extends EditorActionHandler {
   }
 
   @Override
-  public void execute(final Editor editor, final DataContext dataContext) {
+  public void doExecute(final Editor editor, Caret caret, final DataContext dataContext) {
+    assert caret == null : "Invocation of 'copy' operation for specific caret is not supported";
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
     if (project == null){
       if (myOriginalAction != null){
-        myOriginalAction.execute(editor, dataContext);
+        myOriginalAction.execute(editor, null, dataContext);
       }
       return;
     }
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-
-    if (file == null || settings.ADD_IMPORTS_ON_PASTE == CodeInsightSettings.NO){
-      if (myOriginalAction != null){
-        myOriginalAction.execute(editor, dataContext);
+    if (file == null) {
+      if (myOriginalAction != null) {
+        myOriginalAction.execute(editor, null, dataContext);
       }
       return;
     }
 
     final SelectionModel selectionModel = editor.getSelectionModel();
-    if(!selectionModel.hasSelection() && !selectionModel.hasBlockSelection()) {
+    if (!selectionModel.hasSelection(true) && !selectionModel.hasBlockSelection()) {
       if (Registry.is(CopyAction.SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
         return;
       }
-      selectionModel.selectLineAtCaret();
-      if (!selectionModel.hasSelection()) return;
+      editor.getCaretModel().runForEachCaret(new CaretAction() {
+        @Override
+        public void perform(Caret caret) {
+          selectionModel.selectLineAtCaret();
+        }
+      });
+      if (!selectionModel.hasSelection(true)) return;
+      editor.getCaretModel().runForEachCaret(new CaretAction() {
+        @Override
+        public void perform(Caret caret) {
+          EditorActionUtil.moveCaretToLineStartIgnoringSoftWraps(editor);
+        }
+      });
     }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -80,16 +87,16 @@ public class CopyHandler extends EditorActionHandler {
     final int[] endOffsets = selectionModel.getBlockSelectionEnds();
 
     List<TextBlockTransferableData> transferableDatas = new ArrayList<TextBlockTransferableData>();
-    for(CopyPastePostProcessor processor: Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
-      final TextBlockTransferableData e = processor.collectTransferableData(file, editor, startOffsets, endOffsets);
-      if (e != null) {
-        transferableDatas.add(e);
-      }
+    for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
+      transferableDatas.addAll(processor.collectTransferableData(file, editor, startOffsets, endOffsets));
     }
 
-    String rawText = TextBlockTransferable.convertLineSeparators(selectionModel.getSelectedText(), "\n", transferableDatas);
+    String text = editor.getCaretModel().supportsMultipleCarets()
+                  ? CopyPasteSupport.getSelectedTextForClipboard(editor, transferableDatas)
+                  : selectionModel.getSelectedText();
+    String rawText = TextBlockTransferable.convertLineSeparators(text, "\n", transferableDatas);
     String escapedText = null;
-    for(CopyPastePreProcessor processor: Extensions.getExtensions(CopyPastePreProcessor.EP_NAME)) {
+    for (CopyPastePreProcessor processor : Extensions.getExtensions(CopyPastePreProcessor.EP_NAME)) {
       escapedText = processor.preprocessOnCopy(file, startOffsets, endOffsets, rawText);
       if (escapedText != null) {
         break;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public class MethodSignatureUtil {
     if (parameterTypes.length == 0) return PsiType.EMPTY_ARRAY;
 
     PsiSubstitutor substitutor = signature.getSubstitutor();
-    PsiType[] erasedTypes = new PsiType[parameterTypes.length];
+    PsiType[] erasedTypes = PsiType.createArray(parameterTypes.length);
     for (int i = 0; i < parameterTypes.length; i++) {
       erasedTypes[i] = TypeConversionUtil.erasure(substitutor.substitute(parameterTypes[i]), substitutor);
     }

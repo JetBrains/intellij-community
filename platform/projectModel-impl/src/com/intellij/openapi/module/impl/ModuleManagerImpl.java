@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,11 +43,15 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.StringInterner;
+import com.intellij.util.containers.hash.EqualityPolicy;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.text.FilePathHashingStrategy;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
@@ -63,7 +67,7 @@ import java.util.*;
 /**
  * @author max
  */
-public abstract class ModuleManagerImpl extends ModuleManager implements ProjectComponent, PersistentStateComponent<Element>, ModificationTracker {
+public abstract class ModuleManagerImpl extends ModuleManager implements ProjectComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerImpl");
   public static final Key<String> DISPOSED_MODULE_NAME = Key.create("DisposedNeverAddedModuleName");
   private static final String IML_EXTENSION = ".iml";
@@ -80,7 +84,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   @NonNls private static final String ATTRIBUTE_FILEURL = "fileurl";
   @NonNls public static final String ATTRIBUTE_FILEPATH = "filepath";
   @NonNls private static final String ATTRIBUTE_GROUP = "group";
-  private long myModificationCount;
 
   public static ModuleManagerImpl getInstanceImpl(Project project) {
     return (ModuleManagerImpl)getInstance(project);
@@ -110,11 +113,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   @Override
   public void disposeComponent() {
     myModuleModel.disposeModel();
-  }
-
-  @Override
-  public long getModificationCount() {
-    return myModificationCount;
   }
 
   @Override
@@ -284,7 +282,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       }
     }
 
-    fireErrors(errors);
+    onModuleLoadErrors(errors);
 
     showUnknownModuleTypeNotification(modulesWithUnknownTypes);
 
@@ -323,7 +321,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
   }
 
-  private void fireErrors(final List<ModuleLoadingErrorDescription> errors) {
+  protected void onModuleLoadErrors(final List<ModuleLoadingErrorDescription> errors) {
     if (errors.isEmpty()) return;
 
     myModuleModel.myModulesCache = null;
@@ -339,6 +337,10 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       }
     }
 
+    fireModuleLoadErrors(errors);
+  }
+
+  protected void fireModuleLoadErrors(List<ModuleLoadingErrorDescription> errors) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       throw new RuntimeException(errors.get(0).getDescription());
     }
@@ -367,7 +369,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     public final void writeExternal(Element parentElement) {
       Element moduleElement = new Element(ELEMENT_MODULE);
       final String moduleFilePath = getModuleFilePath();
-      final String url = VirtualFileManager.constructUrl(StandardFileSystems.FILE_PROTOCOL, moduleFilePath);
+      final String url = VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, moduleFilePath);
       moduleElement.setAttribute(ATTRIBUTE_FILEURL, url);
       // [dsl] support for older builds
       moduleElement.setAttribute(ATTRIBUTE_FILEPATH, moduleFilePath);
@@ -464,7 +466,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   @Override
   @NotNull
   public Module newModule(@NotNull String filePath, final String moduleTypeId) {
-    myModificationCount++;
+    incModificationCount();
     final ModifiableModuleModel modifiableModel = getModifiableModel();
     final Module module = modifiableModel.newModule(filePath, moduleTypeId);
     modifiableModel.commit();
@@ -473,11 +475,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
   @Override
   @NotNull
-  public Module loadModule(@NotNull String filePath) throws InvalidDataException,
-                                                   IOException,
-                                                   JDOMException,
-                                                   ModuleWithNameAlreadyExists {
-    myModificationCount++;
+  public Module loadModule(@NotNull String filePath) throws InvalidDataException, IOException, JDOMException, ModuleWithNameAlreadyExists {
+    incModificationCount();
     final ModifiableModuleModel modifiableModel = getModifiableModel();
     final Module module = modifiableModel.loadModule(filePath);
     modifiableModel.commit();
@@ -602,7 +601,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   protected abstract ModuleEx createAndLoadModule(String filePath) throws IOException;
 
   class ModuleModelImpl implements ModifiableModuleModel {
-    final Map<String, Module> myPathToModule = new LinkedHashMap<String, Module>();
+    final Map<String, Module> myPathToModule = new LinkedHashMap<String, Module>(new EqualityPolicy.ByHashingStrategy<String>(FilePathHashingStrategy.create()));
     private Module[] myModulesCache;
 
     private final List<Module> myModulesToDispose = new ArrayList<Module>();
@@ -726,13 +725,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
     @Nullable
     private ModuleEx getModuleByFilePath(String filePath) {
-      final Collection<Module> modules = myPathToModule.values();
-      for (Module module : modules) {
-        if (FileUtil.pathsEqual(filePath, module.getModuleFilePath())) {
-          return (ModuleEx)module;
-        }
-      }
-      return null;
+      return (ModuleEx)myPathToModule.get(filePath);
     }
 
     @Override
@@ -747,10 +740,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       }
     }
 
-    private Module loadModuleInternal(String filePath)
-      throws ModuleWithNameAlreadyExists, IOException, StateStorageException {
-
-      final VirtualFile moduleFile = StandardFileSystems.local().findFileByPath(resolveShortWindowsName(filePath));
+    private Module loadModuleInternal(String filePath) throws ModuleWithNameAlreadyExists, IOException, StateStorageException {
+      filePath = resolveShortWindowsName(filePath);
+      final VirtualFile moduleFile = StandardFileSystems.local().findFileByPath(filePath);
       if (moduleFile == null || !moduleFile.exists()) {
         throw new IOException(ProjectBundle.message("module.file.does.not.exist.error", filePath));
       }
@@ -947,7 +939,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
   private void commitModel(final ModuleModelImpl moduleModel, final Runnable runnable) {
     myModuleModel.myModulesCache = null;
-    myModificationCount++;
+    incModificationCount();
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     final Collection<Module> oldModules = myModuleModel.myPathToModule.values();
     final Collection<Module> newModules = moduleModel.myPathToModule.values();

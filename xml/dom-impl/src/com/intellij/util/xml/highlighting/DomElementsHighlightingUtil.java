@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ public class DomElementsHighlightingUtil {
   public static ProblemDescriptor createProblemDescriptors(final InspectionManager manager, final DomElementProblemDescriptor problemDescriptor) {
     final ProblemHighlightType type = getProblemHighlightType(problemDescriptor);
     return createProblemDescriptors(problemDescriptor, new Function<Pair<TextRange, PsiElement>, ProblemDescriptor>() {
+      @Override
       public ProblemDescriptor fun(final Pair<TextRange, PsiElement> s) {
         return manager
           .createProblemDescriptor(s.second, s.first, problemDescriptor.getDescriptionTemplate(), type, true, problemDescriptor.getFixes());
@@ -68,6 +69,7 @@ public class DomElementsHighlightingUtil {
   public static Annotation createAnnotation(final DomElementProblemDescriptor problemDescriptor) {
 
     return createProblemDescriptors(problemDescriptor, new Function<Pair<TextRange, PsiElement>, Annotation>() {
+      @Override
       public Annotation fun(final Pair<TextRange, PsiElement> s) {
         String text = problemDescriptor.getDescriptionTemplate();
         if (StringUtil.isEmpty(text)) text = null;
@@ -93,7 +95,7 @@ public class DomElementsHighlightingUtil {
   private static Annotation createAnnotation(final HighlightSeverity severity,
                                              final TextRange range,
                                              final String text) {
-    String tooltip = text == null ? null : "<html><body>" + XmlStringUtil.escapeString(text) + "</body></html>";
+    String tooltip = text == null ? null : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(text));
     return new Annotation(range.getStartOffset(), range.getEndOffset(), severity, text, tooltip);
   }
 

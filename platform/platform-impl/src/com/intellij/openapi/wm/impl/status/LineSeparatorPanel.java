@@ -76,7 +76,7 @@ public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWi
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         update();
         showPopup(e);
         return true;
@@ -171,7 +171,7 @@ public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWi
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
       @Override
-      public void fileContentReloaded(VirtualFile file, @NotNull Document document) {
+      public void fileContentReloaded(@NotNull VirtualFile file, @NotNull Document document) {
         update();
       }
     });

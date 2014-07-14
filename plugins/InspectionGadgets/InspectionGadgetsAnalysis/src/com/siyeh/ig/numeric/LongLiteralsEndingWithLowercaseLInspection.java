@@ -25,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class LongLiteralsEndingWithLowercaseLInspection
@@ -81,7 +82,7 @@ public class LongLiteralsEndingWithLowercaseLInspection
         (PsiExpression)descriptor.getPsiElement();
       final String text = literal.getText();
       final String newText = text.replace('l', 'L');
-      replaceExpression(literal, newText);
+      PsiReplacementUtil.replaceExpression(literal, newText);
     }
   }
 

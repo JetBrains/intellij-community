@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 
 public final class LoadTextUtil {
-  private static final Key<String> DETECTED_LINE_SEPARATOR_KEY = Key.create("DETECTED_LINE_SEPARATOR_KEY");
   @Nls private static final String AUTO_DETECTED_FROM_BOM = "auto-detected from BOM";
 
   private LoadTextUtil() {
@@ -109,7 +108,7 @@ public final class LoadTextUtil {
     return Pair.create(result, detectedLineSeparator);
   }
 
-  private static Charset detectCharset(@NotNull VirtualFile virtualFile, @NotNull byte[] content) {
+  public static Charset detectCharset(@NotNull VirtualFile virtualFile, @NotNull byte[] content, @NotNull FileType fileType) {
     Charset charset = null;
 
     Trinity<Charset,CharsetToolkit.GuessedEncoding, byte[]> guessed = guessFromContent(virtualFile, content, content.length);
@@ -117,7 +116,6 @@ public final class LoadTextUtil {
       charset = guessed.first;
     }
     else {
-      FileType fileType = virtualFile.getFileType();
       String charsetName = fileType.getCharset(virtualFile, content);
 
       if (charsetName == null) {
@@ -132,7 +130,7 @@ public final class LoadTextUtil {
     }
 
     charset = charset == null ? EncodingRegistry.getInstance().getDefaultCharset() : charset;
-    if (EncodingRegistry.getInstance().isNative2Ascii(virtualFile)) {
+    if (fileType.getName().equals("Properties") && EncodingRegistry.getInstance().isNative2AsciiForPropertiesFiles()) {
       charset = Native2AsciiCharset.wrap(charset);
     }
     virtualFile.setCharset(charset);
@@ -146,7 +144,11 @@ public final class LoadTextUtil {
 
   @NotNull
   private static Pair<Charset, byte[]> doDetectCharsetAndSetBOM(@NotNull VirtualFile virtualFile, @NotNull byte[] content, boolean saveBOM) {
-    Charset charset = virtualFile.isCharsetSet() ? virtualFile.getCharset() : detectCharset(virtualFile, content);
+    return doDetectCharsetAndSetBOM(virtualFile, content, saveBOM, virtualFile.getFileType());
+  }
+  @NotNull
+  private static Pair<Charset, byte[]> doDetectCharsetAndSetBOM(@NotNull VirtualFile virtualFile, @NotNull byte[] content, boolean saveBOM, @NotNull FileType fileType) {
+    Charset charset = virtualFile.isCharsetSet() ? virtualFile.getCharset() : detectCharset(virtualFile, content,fileType);
     Pair<Charset,byte[]> bomAndCharset = getBOMAndCharset(content, charset);
     final byte[] bom = bomAndCharset.second;
     if (saveBOM && bom != null && bom.length != 0) {
@@ -156,14 +158,14 @@ public final class LoadTextUtil {
     return bomAndCharset;
   }
 
+  private static final boolean GUESS_UTF = Boolean.parseBoolean(System.getProperty("idea.guess.utf.encoding", "true"));
+
   @Nullable("null means no luck, otherwise it's tuple(guessed encoding, hint about content if was unable to guess, BOM)")
   public static Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]> guessFromContent(@NotNull VirtualFile virtualFile, @NotNull byte[] content, int length) {
-    EncodingRegistry settings = EncodingRegistry.getInstance();
-    boolean shouldGuess = settings != null && settings.isUseUTFGuessing(virtualFile);
-    CharsetToolkit toolkit = shouldGuess ? new CharsetToolkit(content, EncodingRegistry.getInstance().getDefaultCharset()) : null;
+    CharsetToolkit toolkit = GUESS_UTF ? new CharsetToolkit(content, EncodingRegistry.getInstance().getDefaultCharset()) : null;
     String detectedFromBytes = null;
     try {
-      if (shouldGuess) {
+      if (GUESS_UTF) {
         toolkit.setEnforce8Bit(true);
         Charset charset = toolkit.guessFromBOM();
         if (charset != null) {
@@ -177,7 +179,9 @@ public final class LoadTextUtil {
           detectedFromBytes = "auto-detected from bytes";
           return Trinity.create(CharsetToolkit.UTF8_CHARSET, guessed, null); //UTF detected, ignore all directives
         }
-        return Trinity.create(null, guessed,null);
+        if (guessed == CharsetToolkit.GuessedEncoding.SEVEN_BIT) {
+          return Trinity.create(null, guessed, null);
+        }
       }
       return null;
     }
@@ -215,7 +219,7 @@ public final class LoadTextUtil {
     }
     String newText = StringUtil.convertLineSeparators(currentText.toString(), newSeparator);
 
-    file.putUserData(DETECTED_LINE_SEPARATOR_KEY, newSeparator);
+    file.setDetectedLineSeparator(newSeparator);
     write(project, file, requestor, newText, -1);
   }
 
@@ -330,25 +334,23 @@ public final class LoadTextUtil {
     return charset;
   }
 
+  /**
+   * @deprecated use {@link #charsetFromContentOrNull(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile, CharSequence)}
+   */
   @Nullable("returns null if cannot determine from content")
   public static Charset charsetFromContentOrNull(@Nullable Project project, @NotNull VirtualFile virtualFile, @NotNull String text) {
-    FileType fileType = virtualFile.getFileType();
-    if (fileType instanceof LanguageFileType) {
-      return ((LanguageFileType)fileType).extractCharsetFromFileContent(project, virtualFile, text);
-    }
-    return null;
+    return CharsetUtil.extractCharsetFromFileContent(project, virtualFile, virtualFile.getFileType(), text);
+  }
+
+  @Nullable("returns null if cannot determine from content")
+  public static Charset charsetFromContentOrNull(@Nullable Project project, @NotNull VirtualFile virtualFile, @NotNull CharSequence text) {
+    return CharsetUtil.extractCharsetFromFileContent(project, virtualFile, virtualFile.getFileType(), text);
   }
 
   @NotNull
   public static CharSequence loadText(@NotNull VirtualFile file) {
     if (file instanceof LightVirtualFile) {
-      CharSequence content = ((LightVirtualFile)file).getContent();
-      if (StringUtil.indexOf(content, '\r') == -1) return content;
-
-      CharBuffer buffer = CharBuffer.allocate(content.length());
-      buffer.append(content);
-      buffer.rewind();
-      return convertLineSeparators(buffer).first;
+      return ((LightVirtualFile)file).getContent();
     }
 
     if (file.isDirectory()) {
@@ -386,14 +388,21 @@ public final class LoadTextUtil {
                                                          @NotNull VirtualFile virtualFile,
                                                          boolean saveDetectedSeparators,
                                                          boolean saveBOM) {
-    Pair<Charset, byte[]> pair = doDetectCharsetAndSetBOM(virtualFile, bytes, saveBOM);
+    return getTextByBinaryPresentation(bytes, virtualFile, saveDetectedSeparators, saveBOM, virtualFile.getFileType());
+  }
+  @NotNull
+  public static CharSequence getTextByBinaryPresentation(@NotNull byte[] bytes,
+                                                         @NotNull VirtualFile virtualFile,
+                                                         boolean saveDetectedSeparators,
+                                                         boolean saveBOM, @NotNull FileType fileType) {
+    Pair<Charset, byte[]> pair = doDetectCharsetAndSetBOM(virtualFile, bytes, saveBOM, fileType);
     Charset charset = pair.getFirst();
     byte[] bom = pair.getSecond();
     int offset = bom == null ? 0 : bom.length;
 
     Pair<CharSequence, String> result = convertBytes(bytes, charset, offset);
     if (saveDetectedSeparators) {
-      virtualFile.putUserData(DETECTED_LINE_SEPARATOR_KEY, result.getSecond());
+      virtualFile.setDetectedLineSeparator(result.getSecond());
     }
     return result.getFirst();
   }
@@ -421,7 +430,7 @@ public final class LoadTextUtil {
   }
 
   static String getDetectedLineSeparator(@NotNull VirtualFile file) {
-    return file.getUserData(DETECTED_LINE_SEPARATOR_KEY);
+    return file.getDetectedLineSeparator();
   }
 
   @NotNull

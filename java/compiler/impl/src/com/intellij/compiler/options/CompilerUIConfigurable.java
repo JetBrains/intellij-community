@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,13 @@ import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.compiler.options.CompilerOptionsFilter.Setting;
 
@@ -77,6 +80,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private JCheckBox            myCbAssertNotNull;
   private JBLabel              myPatternLegendLabel;
   private JCheckBox            myCbAutoShowFirstError;
+  private JCheckBox            myCbDisplayNotificationPopup;
   private JCheckBox            myCbEnableAutomake;
   private JCheckBox            myCbParallelCompilation;
   private JTextField           myHeapSizeField;
@@ -91,12 +95,12 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   public CompilerUIConfigurable(@NotNull final Project project) {
     myProject = project;
 
-    myPatternLegendLabel.setText("<html><body>" +
+    myPatternLegendLabel.setText(XmlStringUtil.wrapInHtml(
                                    "Use <b>;</b> to separate patterns and <b>!</b> to negate a pattern. " +
                                    "Accepted wildcards: <b>?</b> &mdash; exactly one symbol; <b>*</b> &mdash; zero or more symbols; " +
                                    "<b>/</b> &mdash; path separator; <b>/**/</b> &mdash; any number of directories; " +
-                                   "<i>&lt;dir_name&gt;</i>:<i>&lt;pattern&gt;</i> &mdash; restrict to source roots with the specified name" +
-                                   "</body></html>");
+                                   "<i>&lt;dir_name&gt;</i>:<i>&lt;pattern&gt;</i> &mdash; restrict to source roots with the specified name"
+    ));
     myPatternLegendLabel.setForeground(new JBColor(Gray._50, Gray._130));
     tweakControls(project);
   }
@@ -133,6 +137,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     controls.put(Setting.CLEAR_OUTPUT_DIR_ON_REBUILD, Collections.<JComponent>singleton(myCbClearOutputDirectory));
     controls.put(Setting.ADD_NOT_NULL_ASSERTIONS, Collections.<JComponent>singleton(myCbAssertNotNull));
     controls.put(Setting.AUTO_SHOW_FIRST_ERROR_IN_EDITOR, Collections.<JComponent>singleton(myCbAutoShowFirstError));
+    controls.put(Setting.DISPLAY_NOTIFICATION_POPUP, Collections.<JComponent>singleton(myCbDisplayNotificationPopup));
     controls.put(Setting.AUTO_MAKE, ContainerUtilRt.<JComponent>newArrayList(myCbEnableAutomake, myEnableAutomakeLegendLabel));
     controls.put(Setting.PARALLEL_COMPILATION,
                  ContainerUtilRt.<JComponent>newArrayList(myCbParallelCompilation, myParallelCompilationLegendLabel));
@@ -155,6 +160,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     final CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     myCbAutoShowFirstError.setSelected(workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
+    myCbDisplayNotificationPopup.setSelected(workspaceConfiguration.DISPLAY_NOTIFICATION_POPUP);
     myCbClearOutputDirectory.setSelected(workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
     myCbAssertNotNull.setSelected(configuration.isAddNotNullAssertions());
     myCbEnableAutomake.setSelected(workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
@@ -168,10 +174,14 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     configuration.convertPatterns();
 
     myResourcePatternsField.setText(patternsToString(configuration.getResourceFilePatterns()));
-    
-    myEnableAutomakeLegendLabel.setText("(only works while not running / debugging" + 
-                                        (PowerSaveMode.isEnabled() ? ", disabled in Power Save mode" : "") + 
-                                        ")");
+
+    if (PowerSaveMode.isEnabled()) {
+      myEnableAutomakeLegendLabel.setText("(disabled in Power Save mode)");
+      myEnableAutomakeLegendLabel.setFont(myEnableAutomakeLegendLabel.getFont().deriveFont(Font.BOLD));
+    } else {
+      myEnableAutomakeLegendLabel.setText("(only works while not running / debugging)");
+      myEnableAutomakeLegendLabel.setFont(myEnableAutomakeLegendLabel.getFont().deriveFont(Font.PLAIN));
+    }
   }
 
   private static String patternsToString(final String[] patterns) {
@@ -191,6 +201,9 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     if (!myDisabledSettings.contains(Setting.AUTO_SHOW_FIRST_ERROR_IN_EDITOR)) {
       workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR = myCbAutoShowFirstError.isSelected();
+    }
+    if (!myDisabledSettings.contains(Setting.DISPLAY_NOTIFICATION_POPUP)) {
+      workspaceConfiguration.DISPLAY_NOTIFICATION_POPUP = myCbDisplayNotificationPopup.isSelected();
     }
     if (!myDisabledSettings.contains(Setting.CLEAR_OUTPUT_DIR_ON_REBUILD)) {
       workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY = myCbClearOutputDirectory.isSelected();
@@ -265,6 +278,8 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     boolean isModified = !myDisabledSettings.contains(Setting.AUTO_SHOW_FIRST_ERROR_IN_EDITOR)
                          && ComparingUtils.isModified(myCbAutoShowFirstError, workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
+    isModified |= !myDisabledSettings.contains(Setting.DISPLAY_NOTIFICATION_POPUP)
+                  && ComparingUtils.isModified(myCbDisplayNotificationPopup, workspaceConfiguration.DISPLAY_NOTIFICATION_POPUP);
     isModified |= !myDisabledSettings.contains(Setting.AUTO_MAKE)
                   && ComparingUtils.isModified(myCbEnableAutomake, workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
     isModified |= !myDisabledSettings.contains(Setting.PARALLEL_COMPILATION)

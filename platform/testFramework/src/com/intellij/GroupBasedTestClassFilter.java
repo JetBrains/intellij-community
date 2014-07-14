@@ -54,17 +54,18 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
   private final Map<String, List<Pattern>> myPatterns = new HashMap<String, List<Pattern>>();
   private final List<Pattern> myAllPatterns = new ArrayList<Pattern>();
   private final List<Pattern> myTestGroupPatterns;
-  private final String myTestGroupName;
+  private boolean myAllExcludeDefinedGroup;
 
   private GroupBasedTestClassFilter(Map<String, List<String>> filters, String testGroupName) {
-    myTestGroupName = testGroupName;
+    //empty group means all patterns from each defined group should be excluded
+    myAllExcludeDefinedGroup = isAllExcludeDefinedGroup(testGroupName);
 
     for (String groupName : filters.keySet()) {
       List<String> filterList = filters.get(groupName);
       addPatterns(groupName, filterList);
     }
 
-    myTestGroupPatterns = collectPatternsFor(myTestGroupName);
+    myTestGroupPatterns = collectPatternsFor(testGroupName);
   }
 
   private void addPatterns(String groupName, List<String> filterList) {
@@ -157,8 +158,7 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
   @Override
   public boolean matches(String className) {
     boolean result = matchesAnyPattern(myTestGroupPatterns, className);
-    //null group means all patterns from each defined group should be excluded
-    if (isAllExcludeDefinedGroup(myTestGroupName)) {
+    if (myAllExcludeDefinedGroup) {
       return !result;
     }
     else {

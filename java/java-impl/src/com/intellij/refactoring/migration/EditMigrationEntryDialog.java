@@ -19,6 +19,8 @@ package com.intellij.refactoring.migration;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
@@ -114,9 +116,9 @@ public class EditMigrationEntryDialog extends DialogWrapper{
     panel.setPreferredSize(new Dimension(300, panel.getPreferredSize().height));
     panel.add(myNewNameField, gbConstraints);
 
-    final com.intellij.openapi.editor.event.DocumentAdapter documentAdapter = new com.intellij.openapi.editor.event.DocumentAdapter() {
+    final DocumentAdapter documentAdapter = new DocumentAdapter() {
       @Override
-      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+      public void documentChanged(DocumentEvent e) {
         validateOKButton();
       }
     };

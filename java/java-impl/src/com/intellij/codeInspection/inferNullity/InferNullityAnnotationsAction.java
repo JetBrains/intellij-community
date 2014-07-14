@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,16 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.LocateLibraryDialog;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -39,24 +42,35 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewUtil;
+import com.intellij.usages.*;
 import com.intellij.util.Function;
+import com.intellij.util.Processor;
 import com.intellij.util.SequentialModalProgressTask;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   @NonNls private static final String INFER_NULLITY_ANNOTATIONS = "Infer Nullity Annotations";
+  @NonNls private static final String ANNOTATE_LOCAL_VARIABLES = "annotate.local.variables";
   private JCheckBox myAnnotateLocalVariablesCb;
 
   public InferNullityAnnotationsAction() {
@@ -65,6 +79,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
 
   @Override
   protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
+    PropertiesComponent.getInstance().setValue(ANNOTATE_LOCAL_VARIABLES, String.valueOf(myAnnotateLocalVariablesCb.isSelected()));
+
     final ProgressManager progressManager = ProgressManager.getInstance();
     final int totalFiles = scope.getFileCount();
 
@@ -89,7 +105,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
               }
               progressIndicator.setFraction(((double)myFileCount) / totalFiles);
             }
-            final Module module = ModuleUtil.findModuleForPsiElement(file);
+            final Module module = ModuleUtilCore.findModuleForPsiElement(file);
             if (module != null && !processed.contains(module)) {
               processed.add(module);
               if (JavaPsiFacade.getInstance(project)
@@ -157,7 +173,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
               final String path = dialog.getResultingLibraryPath();
               new WriteCommandAction(project) {
                 @Override
-                protected void run(final Result result) throws Throwable {
+                protected void run(@NotNull final Result result) throws Throwable {
                   for (Module module : modulesWithoutAnnotations) {
                     OrderEntryFix.addBundledJarToRoots(project, null, module, null, AnnotationUtil.NOT_NULL, path);
                   }
@@ -171,12 +187,32 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       return;
     }
     if (scope.checkScopeWritable(project)) return;
+
     PsiDocumentManager.getInstance(project).commitAllDocuments();
+    final UsageInfo[] usageInfos = findUsages(project, scope);
+    if (usageInfos == null) return;
+
+    if (usageInfos.length < 5) {
+      SwingUtilities.invokeLater(applyRunnable(project, new Computable<UsageInfo[]>() {
+        @Override
+        public UsageInfo[] compute() {
+          return usageInfos;
+        }
+      }));
+    }
+    else {
+      showUsageView(project, usageInfos, scope);
+    }
+  }
+
+  private UsageInfo[] findUsages(@NotNull final Project project,
+                                 @NotNull final AnalysisScope scope) {
     final NullityInferrer inferrer = new NullityInferrer(myAnnotateLocalVariablesCb.isSelected(), project);
     final PsiManager psiManager = PsiManager.getInstance(project);
-    if (!progressManager.runProcessWithProgressSynchronously(new Runnable() {
+    final Runnable searchForUsages = new Runnable() {
       @Override
       public void run() {
+        final int totalFiles = scope.getFileCount();
         scope.accept(new PsiElementVisitor() {
           int myFileCount = 0;
 
@@ -189,9 +225,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
             if (document == null || virtualFile.getFileType().isBinary()) return; //do not inspect binary files
             final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
             if (progressIndicator != null) {
-              if (virtualFile != null) {
-                progressIndicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, project));
-              }
+              progressIndicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, project));
               progressIndicator.setFraction(((double)myFileCount) / totalFiles);
             }
             if (file instanceof PsiJavaFile) {
@@ -200,27 +234,46 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
           }
         });
       }
-    }, INFER_NULLITY_ANNOTATIONS, true, project)) {
-      return;
+    };
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(searchForUsages, INFER_NULLITY_ANNOTATIONS, true, project)) {
+        return null;
+      }
+    } else {
+      searchForUsages.run();
     }
 
-    final Runnable applyRunnable = new Runnable() {
+    final List<UsageInfo> usages = new ArrayList<UsageInfo>();
+    inferrer.collect(usages);
+    return usages.toArray(new UsageInfo[usages.size()]);
+  }
+
+  private static Runnable applyRunnable(final Project project, final Computable<UsageInfo[]> computable) {
+    return new Runnable() {
       @Override
       public void run() {
-        new WriteCommandAction(project, INFER_NULLITY_ANNOTATIONS) {
-          @Override
-          protected void run(Result result) throws Throwable {
-            if (!inferrer.nothingFoundMessage(project)) {
-              final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, INFER_NULLITY_ANNOTATIONS, false);
-              progressTask.setMinIterationTime(200);
-              progressTask.setTask(new AnnotateTask(project, inferrer, progressTask));
-              ProgressManager.getInstance().run(progressTask);
+        final LocalHistoryAction action = LocalHistory.getInstance().startAction(INFER_NULLITY_ANNOTATIONS);
+        try {
+          new WriteCommandAction(project, INFER_NULLITY_ANNOTATIONS) {
+            @Override
+            protected void run(@NotNull Result result) throws Throwable {
+              final UsageInfo[] infos = computable.compute();
+              if (infos.length > 0) {
+                final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, INFER_NULLITY_ANNOTATIONS, false);
+                progressTask.setMinIterationTime(200);
+                progressTask.setTask(new AnnotateTask(project, progressTask, infos));
+                ProgressManager.getInstance().run(progressTask);
+              } else {
+                NullityInferrer.nothingFoundMessage(project);
+              }
             }
-          }
-        }.execute();
+          }.execute();
+        }
+        finally {
+          action.finish();
+        }
       }
     };
-    SwingUtilities.invokeLater(applyRunnable);
   }
 
   private void restartAnalysis(final Project project, final AnalysisScope scope) {
@@ -233,11 +286,70 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   }
 
 
+  private void showUsageView(@NotNull Project project, final UsageInfo[] usageInfos, @NotNull AnalysisScope scope) {
+    final UsageTarget[] targets = UsageTarget.EMPTY_ARRAY;
+    final Ref<Usage[]> convertUsagesRef = new Ref<Usage[]>();
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            convertUsagesRef.set(UsageInfo2UsageAdapter.convert(usageInfos));
+          }
+        });
+      }
+    }, "Preprocess usages", true, project)) return;
+
+    if (convertUsagesRef.isNull()) return;
+    final Usage[] usages = convertUsagesRef.get();
+
+    final UsageViewPresentation presentation = new UsageViewPresentation();
+    presentation.setTabText("Infer Nullity Preview");
+    presentation.setShowReadOnlyStatusAsRed(true);
+    presentation.setShowCancelButton(true);
+    presentation.setUsagesString(RefactoringBundle.message("usageView.usagesText"));
+
+    final UsageView usageView = UsageViewManager.getInstance(project).showUsages(targets, usages, presentation, rerunFactory(project, scope));
+
+    final Runnable refactoringRunnable = applyRunnable(project, new Computable<UsageInfo[]>() {
+      @Override
+      public UsageInfo[] compute() {
+        final Set<UsageInfo> infos = UsageViewUtil.getNotExcludedUsageInfos(usageView);
+        return infos.toArray(new UsageInfo[infos.size()]);
+      }
+    });
+
+    String canNotMakeString = "Cannot perform operation.\nThere were changes in code after usages have been found.\nPlease perform operation search again.";
+
+    usageView.addPerformOperationAction(refactoringRunnable, INFER_NULLITY_ANNOTATIONS, canNotMakeString, INFER_NULLITY_ANNOTATIONS, false);
+  }
+
+  @NotNull
+  private Factory<UsageSearcher> rerunFactory(@NotNull final Project project, @NotNull final AnalysisScope scope) {
+    return new Factory<UsageSearcher>() {
+      @Override
+      public UsageSearcher create() {
+        return new UsageInfoSearcherAdapter() {
+          @Override
+          protected UsageInfo[] findUsages() {
+            return InferNullityAnnotationsAction.this.findUsages(project, scope);
+          }
+
+          @Override
+          public void generate(@NotNull Processor<Usage> processor) {
+            processUsages(processor, project);
+          }
+        };
+      }
+    };
+  }
+
   @Override
   protected JComponent getAdditionalActionSettings(Project project, BaseAnalysisActionDialog dialog) {
     final JPanel panel = new JPanel(new VerticalFlowLayout());
     panel.add(new TitledSeparator());
-    myAnnotateLocalVariablesCb = new JCheckBox("Annotate local variables", false);
+    myAnnotateLocalVariablesCb = new JCheckBox("Annotate local variables", PropertiesComponent.getInstance().getBoolean(ANNOTATE_LOCAL_VARIABLES, false));
     panel.add(myAnnotateLocalVariablesCb);
     return panel;
   }

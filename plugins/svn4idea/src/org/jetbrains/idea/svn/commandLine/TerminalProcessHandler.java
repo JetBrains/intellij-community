@@ -16,11 +16,9 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.process.CapturingProcessAdapter;
-import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,11 +30,7 @@ import java.util.regex.Matcher;
 /**
  * @author Konstantin Kolosovsky.
  */
-public class TerminalProcessHandler extends OSProcessHandler {
-
-  // see http://en.wikipedia.org/wiki/ANSI_escape_code
-  private static final String NON_CSI_ESCAPE_CODE = "\u001B.[@-_]";
-  private static final String CSI_ESCAPE_CODE = "\u001B\\[(.*?)[@-~]";
+public class TerminalProcessHandler extends SvnProcessHandler {
 
   private final List<InteractiveCommandListener> myInteractiveListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final CapturingProcessAdapter terminalOutputCapturer = new CapturingProcessAdapter();
@@ -44,8 +38,8 @@ public class TerminalProcessHandler extends OSProcessHandler {
   private final StringBuilder outputLine = new StringBuilder();
   private final StringBuilder errorLine = new StringBuilder();
 
-  public TerminalProcessHandler(@NotNull Process process) {
-    super(process);
+  public TerminalProcessHandler(@NotNull Process process, boolean forceUtf8, boolean forceBinary) {
+    super(process, forceUtf8, forceBinary);
   }
 
   public void addInteractiveListener(@NotNull InteractiveCommandListener listener) {
@@ -88,24 +82,13 @@ public class TerminalProcessHandler extends OSProcessHandler {
     }
   }
 
-  private static String filterCombinedText(@NotNull String currentLine) {
-    // for windows platform output is assumed in format suitable for terminal emulator
-    // for instance, same text could be returned twice with '\r' symbol in between (so in emulator output we'll still see correct
-    // text without duplication)
-    // because of this we manually process '\r' occurrences to get correct output
-    if (SystemInfo.isWindows) {
-      currentLine = removeAllBeforeCaretReturn(currentLine);
-    }
+  @NotNull
+  protected String filterCombinedText(@NotNull String currentLine) {
     return currentLine;
   }
 
-  private static String filterText(@NotNull String text) {
-    if (SystemInfo.isWindows) {
-      // filter terminal escape codes - they are presented in the output for windows platform
-      text = text.replaceAll(CSI_ESCAPE_CODE, "").replaceAll(NON_CSI_ESCAPE_CODE, "");
-      // trim leading '\r' symbols - as they break xml parsing logic
-      text = StringUtil.trimLeading(text, '\r');
-    }
+  @NotNull
+  protected String filterText(@NotNull String text) {
     return text;
   }
 
@@ -121,22 +104,8 @@ public class TerminalProcessHandler extends OSProcessHandler {
     }
   }
 
-  private static String removeAllBeforeCaretReturn(@NotNull String line) {
-    int caretReturn = line.lastIndexOf("\r");
-
-    while (caretReturn >= 0) {
-      if (caretReturn + 1 < line.length() && line.charAt(caretReturn + 1) != '\n') {
-        // next symbol is not '\n' - we should not treat text before found caret return symbol
-        line = line.substring(caretReturn + 1);
-        break;
-      }
-      caretReturn = line.lastIndexOf("\r", caretReturn - 1);
-    }
-
-    return line;
-  }
-
-  private static Key resolveOutputType(@NotNull String line, @NotNull Key outputType) {
+  @NotNull
+  protected Key resolveOutputType(@NotNull String line, @NotNull Key outputType) {
     Key result = outputType;
 
     if (!ProcessOutputTypes.SYSTEM.equals(outputType)) {

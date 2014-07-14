@@ -17,13 +17,15 @@ package org.jetbrains.plugins.gradle;
 
 import com.intellij.ide.projectWizard.NewProjectWizardTestCase;
 import com.intellij.ide.projectWizard.ProjectTypeStep;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
 
+import java.util.List;
+
 /**
  * @author Dmitry Avdeev
- *         Date: 18.10.13
  */
 public class GradleProjectWizardTest extends NewProjectWizardTestCase {
 
@@ -32,7 +34,9 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
       @Override
       public void consume(Step step) {
         if (step instanceof ProjectTypeStep) {
-          assertTrue(((ProjectTypeStep)step).setSelectedProjectType("Java", "Gradle"));
+          assertTrue(((ProjectTypeStep)step).setSelectedTemplate("Gradle", null));
+          List<ModuleWizardStep> steps = myWizard.getSequence().getSelectedSteps();
+          assertEquals(3, steps.size());
         }
       }
     });

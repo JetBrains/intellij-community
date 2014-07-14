@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,10 +39,7 @@ import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.*;
-import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.search.searches.MethodReferencesSearch;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.searches.*;
 import com.intellij.psi.targets.AliasingPsiTarget;
 import com.intellij.psi.targets.AliasingPsiTargetMapper;
 import com.intellij.psi.util.MethodSignature;
@@ -127,7 +124,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         elementsToSearch.add(parameters[idx]);
       }
     }
-    return elementsToSearch.toArray(new PsiElement[elementsToSearch.size()]);
+    return PsiUtilCore.toPsiElementArray(elementsToSearch);
   }
 
 
@@ -223,9 +220,10 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   }
 
   @Override
-  protected Set<String> getStringsToSearch(final PsiElement element) {
+  protected Set<String> getStringsToSearch(@NotNull final PsiElement element) {
     if (element instanceof PsiDirectory) {  // normalize a directory to a corresponding package
-      return getStringsToSearch(JavaDirectoryService.getInstance().getPackage((PsiDirectory)element));
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
+      return aPackage == null ? Collections.<String>emptySet() : getStringsToSearch(aPackage);
     }
 
     final Set<String> result = new HashSet<String>();
@@ -267,7 +265,8 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         }
         else if (element instanceof XmlAttributeValue) {
           ContainerUtil.addIfNotNull(result, ((XmlAttributeValue)element).getValue());
-        } else {
+        }
+        else {
           LOG.error("Unknown element type: " + element);
         }
       }
@@ -309,7 +308,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       @Override
       public Boolean compute() {
         if (ThrowSearchUtil.isSearchable (element) && options instanceof JavaThrowFindUsagesOptions && options.isUsages) {
-          ThrowSearchUtil.Root root = options.getUserData(ThrowSearchUtil.THROW_SEARCH_ROOT_KEY);
+          ThrowSearchUtil.Root root = ((JavaThrowFindUsagesOptions)options).getRoot();
           if (root == null) {
             final ThrowSearchUtil.Root[] roots = ThrowSearchUtil.getSearchRoots(element);
             if (roots != null && roots.length > 0) {
@@ -350,6 +349,16 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         else if (classOptions.isImplementingClasses){
           if (!addImplementingClasses(psiClass, processor, classOptions)) return false;
         }
+
+        if (classOptions.isImplementingClasses) {
+          FunctionalExpressionSearch.search(psiClass, classOptions.searchScope).forEach(new PsiElementProcessorAdapter<PsiFunctionalExpression>(
+            new PsiElementProcessor<PsiFunctionalExpression>() {
+              @Override
+              public boolean execute(@NotNull PsiFunctionalExpression expression) {
+                return addResult(processor, expression, options);
+              }
+            }));
+        }
       }
       else if (classOptions.isDerivedClasses) {
         if (!addInheritors(psiClass, processor, classOptions)) return false;
@@ -367,6 +376,13 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       final JavaMethodFindUsagesOptions methodOptions = (JavaMethodFindUsagesOptions)options;
       if (isAbstract && methodOptions.isImplementingMethods || methodOptions.isOverridingMethods) {
         if (!processOverridingMethods(psiMethod, processor, methodOptions)) return false;
+        FunctionalExpressionSearch.search(psiMethod, methodOptions.searchScope).forEach(new PsiElementProcessorAdapter<PsiFunctionalExpression>(
+          new PsiElementProcessor<PsiFunctionalExpression>() {
+            @Override
+            public boolean execute(@NotNull PsiFunctionalExpression expression) {
+              return addResult(processor, expression, options);
+            }
+          }));
       }
     }
 
@@ -744,6 +760,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
 
   }
 
+  @NotNull
   @Override
   public Collection<PsiReference> findReferencesToHighlight(@NotNull final PsiElement target, @NotNull final SearchScope searchScope) {
     if (target instanceof PsiMethod) {

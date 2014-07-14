@@ -1,0 +1,23 @@
+<root>
+  <item name="org.apache.velocity.servlet.VelocityServlet java.util.Properties loadConfiguration(javax.servlet.ServletConfig) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.servlet.VelocityServlet java.util.Properties loadConfiguration(javax.servlet.ServletConfig)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.servlet.VelocityServlet org.apache.velocity.context.Context createContext(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.servlet.VelocityServlet void error(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse, java.lang.Exception) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.servlet.VelocityServlet void error(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse, java.lang.Exception) 2">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.servlet.VelocityServlet void mergeTemplate(org.apache.velocity.Template, org.apache.velocity.context.Context, javax.servlet.http.HttpServletResponse) 2">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.servlet.VelocityServlet void setContentType(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+</root>

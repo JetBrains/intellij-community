@@ -20,6 +20,7 @@ import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,5 +52,10 @@ public class AmbiguousMethodCallTest extends LightDaemonAnalyzerTestCase {
 
   public void testMultipleInheritance() throws Exception {
     doTest(false, false);
+  }
+
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_7;
   }
 }

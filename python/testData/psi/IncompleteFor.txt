@@ -23,7 +23,8 @@ PyFile:IncompleteFor.py
           PsiErrorElement:Colon expected
             <empty list>
           PyStatementList
-            <empty list>
+            PsiErrorElement:Indent expected
+              <empty list>
   PsiWhiteSpace('\n\n')
   PyFunction('bar')
     PsiElement(Py:DEF_KEYWORD)('def')

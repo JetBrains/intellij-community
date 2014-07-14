@@ -7,6 +7,7 @@
     <action id="$Delete">
       <keyboard-shortcut first-keystroke="DELETE"/>
       <keyboard-shortcut first-keystroke="BACK_SPACE"/>
+      <keyboard-shortcut first-keystroke="meta BACK_SPACE"/>
     </action>
 
     <action id="EditorDelete">
@@ -54,7 +55,6 @@
     </action>
     <action id="SafeDelete">
       <keyboard-shortcut first-keystroke="meta DELETE"/>
-      <keyboard-shortcut first-keystroke="meta BACK_SPACE"/>
     </action>
     <action id="RemoveFromFavorites">
       <keyboard-shortcut first-keystroke="control DELETE"/>
@@ -238,6 +238,7 @@
       <keyboard-shortcut first-keystroke="meta Q"/>
     </action>
     <action id="GotoTypeDeclaration">
+      <keyboard-shortcut first-keystroke="meta shift B"/>
       <keyboard-shortcut first-keystroke="control shift B"/>
       <mouse-shortcut keystroke="meta shift button1"/>
       <mouse-shortcut keystroke="shift button2"/>
@@ -281,6 +282,10 @@
     <action id="Rerun">
       <keyboard-shortcut first-keystroke="meta R"/>
     </action>
+    <action id="RerunTests">
+      <keyboard-shortcut first-keystroke="control meta R"/>
+      <keyboard-shortcut first-keystroke="shift alt R"/>
+    </action>
     <action id="RunClass">
       <keyboard-shortcut first-keystroke="control shift F10"/>
     </action>
@@ -306,10 +311,6 @@
     </action>
     <action id="EditorUnSelectWord">
       <keyboard-shortcut first-keystroke="alt DOWN"/>
-    </action>
-
-    <action id="EditorChooseLookupItemAlways">
-      <keyboard-shortcut first-keystroke="control ENTER"/>
     </action>
 
     <action id="EditorLookupUp"> <keyboard-shortcut first-keystroke="control UP"/> </action>
@@ -348,6 +349,16 @@
     </action>
     <action id="FindPrevious">
       <keyboard-shortcut first-keystroke="meta shift G"/>
+    </action>
+    
+    <action id="SelectNextOccurrence">
+      <keyboard-shortcut first-keystroke="control G"/>
+    </action>
+    <action id="UnselectPreviousOccurrence">
+      <keyboard-shortcut first-keystroke="control shift G"/>
+    </action>
+    <action id="SelectAllOccurrences">
+      <keyboard-shortcut first-keystroke="meta control G"/>
     </action>
 
     <action id="Run">
@@ -422,6 +433,10 @@
 
     <action id="MinimizeCurrentWindow">
       <keyboard-shortcut first-keystroke="meta M"/>
+    </action>
+    
+    <action id="ZoomCurrentWindow">
+      <keyboard-shortcut first-keystroke="meta control EQUALS"/>
     </action>
 
     <action id="ToggleFullScreen">
@@ -537,6 +552,10 @@
 
     <action id ="Refactorings.QuickListPopupAction">
       <keyboard-shortcut first-keystroke="control T"/>
+    </action>
+
+    <action id="NewScratchFile">
+      <keyboard-shortcut first-keystroke="meta shift N"/>
     </action>
   </keymap>
 </component>

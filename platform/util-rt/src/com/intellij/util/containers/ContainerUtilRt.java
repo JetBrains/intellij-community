@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -139,18 +140,14 @@ public class ContainerUtilRt {
     return copy(ContainerUtilRt.<T>newArrayList(), elements);
   }
 
-  @NotNull
+  /** @deprecated Use {@link #newArrayListWithCapacity(int)} (to remove in IDEA 15) */
   public static <T> ArrayList<T> newArrayListWithExpectedSize(int size) {
-    return new ArrayList<T>(size);
+    return newArrayListWithCapacity(size);
   }
 
   @NotNull
   public static <T> ArrayList<T> newArrayListWithCapacity(int size) {
-    return new ArrayList<T>(computeArrayListCapacity(size));
-  }
-
-  private static int computeArrayListCapacity(int size) {
-    return 5 + size + size / 5;
+    return new ArrayList<T>(size);
   }
 
   @NotNull
@@ -164,6 +161,11 @@ public class ContainerUtilRt {
   @NotNull
   public static <T> HashSet<T> newHashSet() {
     return new com.intellij.util.containers.HashSet<T>();
+  }
+
+  @NotNull
+  public static <T> HashSet<T> newHashSet(int initialCapacity) {
+    return new com.intellij.util.containers.HashSet<T>(initialCapacity);
   }
 
   @NotNull
@@ -247,7 +249,9 @@ public class ContainerUtilRt {
    * A variant of {@link java.util.Collections#emptyList()},
    * except that {@link #toArray()} here does not create garbage <code>new Object[0]</code> constantly.
    */
-  private static class EmptyList<T> extends AbstractList<T> implements RandomAccess {
+  private static class EmptyList<T> extends AbstractList<T> implements RandomAccess, Serializable {
+    private static final long serialVersionUID = 1L;
+
     private static final EmptyList INSTANCE = new EmptyList();
 
     @Override

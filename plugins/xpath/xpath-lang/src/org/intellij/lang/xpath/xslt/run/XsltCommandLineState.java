@@ -213,7 +213,7 @@ public class XsltCommandLineState extends CommandLineState {
                             public void run() {
                                 if (event.getExitCode() == 0) {
                                     if (myXsltRunConfiguration.myOpenInBrowser) {
-                                        BrowserUtil.launchBrowser(myXsltRunConfiguration.myOutputFile);
+                                      BrowserUtil.browse(myXsltRunConfiguration.myOutputFile);
                                     }
                                     if (myXsltRunConfiguration.myOpenOutputFile) {
                                         final String url = VfsUtilCore.pathToUrl(myXsltRunConfiguration.myOutputFile);

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.imports;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -24,7 +25,7 @@ import com.siyeh.ig.fixes.DeleteImportFix;
 import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class SamePackageImportInspection extends BaseInspection {
+public class SamePackageImportInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

@@ -1,18 +1,16 @@
 <html>
 <body>
-Reports "magic numbers", literal numeric constants used without declaration.
-"Magic numbers" can result in code whose intention is extremely unclear, and may result in errors if a "magic
-number" is changed in one code location but not another. The numbers 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100, 1000, 0L, 1L, 2L,
+Reports "magic numbers", which are numeric literals used without being named by a constant declaration.
+Magic numbers can result in code whose intention is unclear, and may result in errors if a magic
+number is changed in one code location but not another. The numbers 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100, 1000, 0L, 1L, 2L,
 0.0, 1.0, 0.0F and 1.0F are not reported by this inspection.
 <!-- tooltip end -->
 <p>
 Use the first checkbox below to disable this inspection within <b>hashCode()</b> methods.
 <p>
-Use the second checkbox below to ignore magic numbers in test code.
+Use the second checkbox below to ignore magic numbers in annotations.
 <p>
-Use the third checkbox below to ignore magic numbers in annotations.
-<p>
-Use the fourth checkbox below to ignore magic numbers used as initial capacity when constructing <b>Collection</b>, <b>Map</b>,
+Use the third checkbox below to ignore magic numbers used as initial capacity when constructing <b>Collection</b>, <b>Map</b>,
 <b>StringBuilder</b> or <b>StringBuffer</b> objects.
 <p>
 

@@ -10,6 +10,6 @@ class Test {
     <T> void bar(I i) {}
 
     void test() {
-        bar<error descr="'bar(Test.I)' in 'Test' cannot be applied to '(<method reference>)'">(Foo::foo)</error>;
+        bar(Foo::<error descr="Cannot resolve method 'foo'">foo</error>);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     super(XmlElementType.XML_ATTRIBUTE);
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -76,10 +77,12 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     }
   }
 
+  @Override
   public XmlAttributeValue getValueElement() {
     return (XmlAttributeValue)XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(this);
   }
 
+  @Override
   public void setValue(String valueText) throws IncorrectOperationException {
     final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(this);
     final PomModel model = PomManager.getModel(getProject());
@@ -87,6 +90,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild((ASTNode)attribute);
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(this, aspect) {
+      @Override
       public PomModelEvent runInner() {
         final XmlAttributeImpl att = XmlAttributeImpl.this;
         if (value != null) {
@@ -112,6 +116,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     return (XmlElement)XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this);
   }
 
+  @Override
   @NotNull
   public String getNamespace() {
     final String name = getName();
@@ -121,22 +126,26 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     return getParent().getNamespaceByPrefix(prefixByQualifiedName);
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getNamespacePrefix() {
     return XmlUtil.findPrefixByQualifiedName(getName());
   }
 
+  @Override
   public XmlTag getParent() {
     final PsiElement parentTag = super.getParent();
     return parentTag instanceof XmlTag ? (XmlTag)parentTag : null; // Invalid elements might belong to DummyHolder instead.
   }
 
+  @Override
   @NotNull
   public String getLocalName() {
     return XmlUtil.findLocalNameByQualifiedName(getName());
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof XmlElementVisitor) {
       ((XmlElementVisitor)visitor).visitXmlAttribute(this);
@@ -146,6 +155,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     }
   }
 
+  @Override
   public String getValue() {
     final XmlAttributeValue valueElement = getValueElement();
     return valueElement != null ? valueElement.getValue() : null;
@@ -160,6 +170,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     buffer.append(child.getChars());
   }
 
+  @Override
   public String getDisplayValue() {
     String displayText = myDisplayText;
     if (displayText != null) return displayText;
@@ -216,6 +227,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     return myDisplayText = buffer.toString();
   }
 
+  @Override
   public int physicalToDisplay(int physicalIndex) {
     getDisplayValue();
     if (physicalIndex < 0 || physicalIndex > myValueTextRange.getLength()) return -1;
@@ -239,6 +251,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     return Math.max(myGapDisplayStarts[gapIndex], physicalIndex - shift);
   }
 
+  @Override
   public int displayToPhysical(int displayIndex) {
     String displayValue = getDisplayValue();
     if (displayValue == null || displayIndex < 0 || displayIndex > displayValue.length()) return -1;
@@ -262,11 +275,14 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     return displayIndex + shift;
   }
 
+  @NotNull
+  @Override
   public TextRange getValueTextRange() {
     getDisplayValue();
     return myValueTextRange;
   }
 
+  @Override
   public void clearCaches() {
     super.clearCaches();
     myDisplayText = null;
@@ -275,17 +291,20 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     myValueTextRange = null;
   }
 
+  @Override
   @NotNull
   public String getName() {
     XmlElement element = getNameElement();
     return element != null ? element.getText() : "";
   }
 
+  @Override
   public boolean isNamespaceDeclaration() {
     @NonNls final String name = getName();
     return name.startsWith("xmlns:") || name.equals("xmlns");
   }
 
+  @Override
   public PsiElement setName(@NotNull final String nameText) throws IncorrectOperationException {
     final ASTNode name = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this);
     final String oldName = name.getText();
@@ -294,6 +313,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((ASTNode)attribute);
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(getParent(), aspect) {
+      @Override
       public PomModelEvent runInner() {
         final PomModelEvent event = new PomModelEvent(model);
         final XmlAspectChangeSetImpl xmlAspectChangeSet = new XmlAspectChangeSetImpl(model, (XmlFile)getContainingFile());
@@ -307,17 +327,17 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     return this;
   }
 
+  @Override
   public PsiReference getReference() {
     final PsiReference[] refs = getReferences();
     if (refs.length > 0) return refs[0];
     return null;
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
-    final PsiElement parentElement = getParent();
-    if (!(parentElement instanceof XmlTag)) return PsiReference.EMPTY_ARRAY;
-    final PsiReference[] referencesFromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlAttribute.class);
+    final PsiReference[] referencesFromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(this);
     if (referencesFromProviders == null) return new PsiReference[]{new XmlAttributeReference(this)};
     PsiReference[] refs;
     if (isNamespaceDeclaration()) {
@@ -344,6 +364,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     return refs;
   }
 
+  @Override
   @Nullable
   public XmlAttributeDescriptor getDescriptor() {
     final PsiElement parentElement = getParent();

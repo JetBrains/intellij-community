@@ -1,4 +1,4 @@
-public class Main {
+class Main {
     public <T> T getAttribute() {return null;}
     public <T> T getAttribute(T def) {return null;}
 

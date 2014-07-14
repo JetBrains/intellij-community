@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,36 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
 public class StandardFileSystems {
-  public static final String FILE_PROTOCOL = "file";
+  public static final String FILE_PROTOCOL = URLUtil.FILE_PROTOCOL;
   public static final String FILE_PROTOCOL_PREFIX = FILE_PROTOCOL + URLUtil.SCHEME_SEPARATOR;
-  public static final String JAR_PROTOCOL = "jar";
+  public static final String JAR_PROTOCOL = URLUtil.JAR_PROTOCOL;
   public static final String JAR_PROTOCOL_PREFIX = JAR_PROTOCOL + URLUtil.SCHEME_SEPARATOR;
-  public static final String JAR_SEPARATOR = "!/";
-  public static final String HTTP_PROTOCOL = "http";
+
+  @Deprecated
+  @SuppressWarnings("UnusedDeclaration")
+  /**
+   * @deprecated use {@link com.intellij.util.io.URLUtil#JAR_SEPARATOR}
+   */
+  public static final String JAR_SEPARATOR = URLUtil.JAR_SEPARATOR;
+
+  @Deprecated
+  @SuppressWarnings("UnusedDeclaration")
+  /**
+   * @deprecated use {@link com.intellij.util.io.URLUtil#HTTP_PROTOCOL}
+   */
+  public static final String HTTP_PROTOCOL = URLUtil.HTTP_PROTOCOL;
 
   private static final NotNullLazyValue<VirtualFileSystem> ourLocal = new NotNullLazyValue<VirtualFileSystem>() {
     @NotNull
     @Override
     protected VirtualFileSystem compute() {
-      return VirtualFileManager.getInstance().getFileSystem(FILE_PROTOCOL);
+      return VirtualFileManager.getInstance().getFileSystem(URLUtil.FILE_PROTOCOL);
     }
   };
 
@@ -58,17 +66,14 @@ public class StandardFileSystems {
 
   @Nullable
   public static VirtualFile getJarRootForLocalFile(@NotNull VirtualFile virtualFile) {
-    if (virtualFile.getFileType() != ArchiveFileType.INSTANCE) return null;
-
-    final String path = virtualFile.getPath() + JAR_SEPARATOR;
-    return jar().findFileByPath(path);
+    return jar().findFileByPath(virtualFile.getPath() + URLUtil.JAR_SEPARATOR);
   }
 
   @Nullable
   public static VirtualFile getVirtualFileForJar(@Nullable VirtualFile entryVFile) {
     if (entryVFile == null) return null;
     final String path = entryVFile.getPath();
-    final int separatorIndex = path.indexOf(JAR_SEPARATOR);
+    final int separatorIndex = path.indexOf(URLUtil.JAR_SEPARATOR);
     if (separatorIndex < 0) return null;
 
     String localPath = path.substring(0, separatorIndex);

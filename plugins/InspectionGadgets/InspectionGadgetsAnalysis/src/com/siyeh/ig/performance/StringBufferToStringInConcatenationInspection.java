@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -82,7 +83,7 @@ public class StringBufferToStringInConcatenationInspection
       final PsiExpression qualifier = expression.getQualifierExpression();
       assert qualifier != null;
       final String newExpression = qualifier.getText();
-      replaceExpression(methodCall, newExpression);
+      PsiReplacementUtil.replaceExpression(methodCall, newExpression);
     }
   }
 

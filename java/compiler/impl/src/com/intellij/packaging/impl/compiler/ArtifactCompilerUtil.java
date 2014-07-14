@@ -40,7 +40,6 @@ import com.intellij.packaging.impl.elements.FileOrDirectoryCopyPackagingElement;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
@@ -49,7 +48,10 @@ import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -147,12 +149,7 @@ public class ArtifactCompilerUtil {
   }
 
   public static MultiMap<String, Artifact> createOutputToArtifactMap(final Project project) {
-    final MultiMap<String, Artifact> result = new MultiMap<String, Artifact>() {
-      @Override
-      protected Map<String, Collection<Artifact>> createMap() {
-        return new THashMap<String, Collection<Artifact>>(FileUtil.PATH_HASHING_STRATEGY);
-      }
-    };
+    final MultiMap<String, Artifact> result = MultiMap.create(FileUtil.PATH_HASHING_STRATEGY);
     new ReadAction() {
       protected void run(final Result r) {
         for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {

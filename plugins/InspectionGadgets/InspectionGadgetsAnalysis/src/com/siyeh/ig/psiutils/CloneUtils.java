@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,10 @@ public class CloneUtils {
     return false;
   }
 
-  public static boolean isClone(@NotNull PsiMethod method) {
+  public static boolean isClone(@Nullable PsiMethod method) {
+    if (method == null) {
+      return false;
+    }
     final PsiClassType javaLangObject;
     if (!PsiUtil.isLanguageLevel5OrHigher(method)) {
       javaLangObject = TypeUtils.getObjectType(method);

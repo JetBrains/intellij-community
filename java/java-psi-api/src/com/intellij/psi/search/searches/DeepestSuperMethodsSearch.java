@@ -24,7 +24,7 @@ import com.intellij.util.QueryExecutor;
  * @author max
  */
 public class DeepestSuperMethodsSearch extends ExtensibleQueryFactory<PsiMethod, PsiMethod> {
-  public static ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.deepestSuperMethodsSearch");
+  public static final ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.deepestSuperMethodsSearch");
   public static final DeepestSuperMethodsSearch DEEPEST_SUPER_METHODS_SEARCH_INSTANCE = new DeepestSuperMethodsSearch();
 
   private DeepestSuperMethodsSearch() {

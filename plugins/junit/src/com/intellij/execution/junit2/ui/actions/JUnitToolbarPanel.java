@@ -27,6 +27,7 @@ import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.execution.testframework.ToolbarPanel;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
@@ -54,7 +55,7 @@ public class JUnitToolbarPanel extends ToolbarPanel {
     actionGroup.addAction(new ToggleBooleanProperty(
       ExecutionBundle.message("junit.runing.info.include.non.started.in.rerun.failed.action.name"),
       null,
-      null,
+      AllIcons.RunConfigurations.IncludeNonStartedTests_Rerun,
       properties, TestConsoleProperties.INCLUDE_NON_STARTED_IN_RERUN_FAILED)).setAsSecondary(true);
   }
 

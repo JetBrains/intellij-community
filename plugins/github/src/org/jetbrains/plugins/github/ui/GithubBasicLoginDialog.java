@@ -16,25 +16,17 @@
 package org.jetbrains.plugins.github.ui;
 
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.util.GithubAuthData;
-import org.jetbrains.plugins.github.util.GithubSettings;
 
 /**
  * @author Aleksey Pivovarov
  */
 public class GithubBasicLoginDialog extends GithubLoginDialog {
 
-  public GithubBasicLoginDialog(@Nullable Project project) {
-    super(project);
+  public GithubBasicLoginDialog(@NotNull Project project, @NotNull GithubAuthData oldAuthData, @NotNull String host) {
+    super(project, oldAuthData);
     myGithubLoginPanel.lockAuthType(GithubAuthData.AuthType.BASIC);
-  }
-
-  @Override
-  protected void saveCredentials(GithubAuthData auth) {
-    final GithubSettings settings = GithubSettings.getInstance();
-    if (settings.getAuthType() != GithubAuthData.AuthType.TOKEN) {
-      settings.setCredentials(myGithubLoginPanel.getHost(), auth, myGithubLoginPanel.isSavePasswordSelected());
-    }
+    myGithubLoginPanel.lockHost(host);
   }
 }

@@ -19,11 +19,13 @@ import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
 
 /**
+ * @see IfToAssertionIntention
  * @author Bas Leijdekkers
  */
 public class IfToAssertionIntentionTest extends IPPTestCase {
 
   public void testRandomThrowable() { doTest(); }
+  public void testParentheses() { doTest(); }
 
   @Override
   protected String getRelativePath() {

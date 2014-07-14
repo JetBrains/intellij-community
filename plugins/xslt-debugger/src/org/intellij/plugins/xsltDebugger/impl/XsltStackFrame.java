@@ -47,7 +47,7 @@ public class XsltStackFrame extends XStackFrame {
   }
 
   @Override
-  public void customizePresentation(ColoredTextContainer component) {
+  public void customizePresentation(@NotNull ColoredTextContainer component) {
     if (myDebuggerSession.getCurrentState() == Debugger.State.SUSPENDED) {
       try {
         _customizePresentation(component);

@@ -15,50 +15,18 @@
  */
 package org.zmlx.hg4idea;
 
+import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Nadya Zabrodina
  */
 @State(
   name = "HgRememberedInputs",
-  storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/vcs.xml")
 )
-public class HgRememberedInputs implements PersistentStateComponent<HgRememberedInputs.State> {
-  private State myState = new State();
-
-  public static class State {
-    public List<String> repositoryUrls = new ArrayList<String>();
-  }
-
-
-  public static HgRememberedInputs getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, HgRememberedInputs.class);
-  }
-
-  @Override
-  public State getState() {
-    return myState;
-  }
-
-  @Override
-  public void loadState(State state) {
-    myState = state;
-  }
-
-  public void addRepositoryUrl(@NotNull String url) {
-    if (!myState.repositoryUrls.contains(url)) {  // don't add multiple entries for a single path
-      myState.repositoryUrls.add(url);
-    }
-  }
-
-  @NotNull
-  public List<String> getRepositoryUrls() {
-    return myState.repositoryUrls;
+public class HgRememberedInputs extends DvcsRememberedInputs implements PersistentStateComponent<DvcsRememberedInputs.State> {
+  public static DvcsRememberedInputs getInstance() {
+      return ServiceManager.getService(HgRememberedInputs.class);
   }
 }

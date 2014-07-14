@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,29 +76,29 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
 
   public void update(final AnActionEvent e) {
     super.update(e);
+
     final Presentation presentation = e.getPresentation();
     if (presentation.isEnabled()) {
       final DataContext context = e.getDataContext();
-      Module module = LangDataKeys.MODULE.getData(context);
-      if (module == null || !PluginModuleType.isPluginModuleOrDependency(module)) {
-        presentation.setEnabled(false);
-        presentation.setVisible(false);
-      }
-      final IdeView view = LangDataKeys.IDE_VIEW.getData(e.getDataContext());
-      final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
-      if (view != null && project != null) {
-        // from com.intellij.ide.actions.CreateClassAction.update()
-        ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-        PsiDirectory[] dirs = view.getDirectories();
-        for (PsiDirectory dir : dirs) {
-          if (projectFileIndex.isUnderSourceRootOfType(dir.getVirtualFile(), JavaModuleSourceRootTypes.SOURCES) && JavaDirectoryService.getInstance().getPackage(dir) != null) {
-            return;
+      final Module module = LangDataKeys.MODULE.getData(context);
+      if (PluginModuleType.isPluginModuleOrDependency(module)) {
+        final IdeView view = LangDataKeys.IDE_VIEW.getData(e.getDataContext());
+        final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+        if (view != null && project != null) {
+          // from com.intellij.ide.actions.CreateClassAction.update()
+          ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+          PsiDirectory[] dirs = view.getDirectories();
+          for (PsiDirectory dir : dirs) {
+            if (projectFileIndex.isUnderSourceRootOfType(dir.getVirtualFile(), JavaModuleSourceRootTypes.SOURCES) &&
+                JavaDirectoryService.getInstance().getPackage(dir) != null) {
+              return;
+            }
           }
         }
-
-        presentation.setEnabled(false);
-        presentation.setVisible(false);
       }
+
+      presentation.setEnabled(false);
+      presentation.setVisible(false);
     }
   }
 

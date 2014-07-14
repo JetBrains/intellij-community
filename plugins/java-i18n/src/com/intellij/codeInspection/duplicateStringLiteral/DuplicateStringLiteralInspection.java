@@ -200,8 +200,10 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     String msg = InspectionsBundle.message("inspection.duplicates.message", classList);
 
     Collection<LocalQuickFix> fixes = new SmartList<LocalQuickFix>();
-    final LocalQuickFix introduceConstFix = createIntroduceConstFix(foundExpr, originalExpression);
-    fixes.add(introduceConstFix);
+    if (isOnTheFly) {
+      final LocalQuickFix introduceConstFix = createIntroduceConstFix(foundExpr, originalExpression);
+      fixes.add(introduceConstFix);
+    }
     createReplaceFixes(foundExpr, originalExpression, fixes);
     LocalQuickFix[] array = fixes.toArray(new LocalQuickFix[fixes.size()]);
     holder.registerProblem(originalExpression, msg, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, array);
@@ -220,7 +222,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       PsiElement parent = expression1.getParent();
       if (parent instanceof PsiField) {
         final PsiField field = (PsiField)parent;
-        if (field.getInitializer() == expression1 && field.hasModifierProperty(PsiModifier.FINAL) && field.hasModifierProperty(PsiModifier.STATIC)) {
+        if (field.getInitializer() == expression1 && field.hasModifierProperty(PsiModifier.STATIC)) {
           constants.add(field);
           iterator.remove();
         }

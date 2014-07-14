@@ -27,6 +27,7 @@ import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -88,15 +89,6 @@ public class GitMergeDialog extends DialogWrapper {
   @NotNull private final Project myProject;
   private final GitVcs myVcs;
 
-
-
-  /**
-   * A constructor
-   *
-   * @param project     a project to select
-   * @param roots       a git repository roots for the project
-   * @param defaultRoot a guessed default root
-   */
   public GitMergeDialog(@NotNull Project project, List<VirtualFile> roots, VirtualFile defaultRoot) {
     super(project, true);
     setTitle(GitBundle.getString("merge.branch.title"));
@@ -125,9 +117,6 @@ public class GitMergeDialog extends DialogWrapper {
     init();
   }
 
-  /**
-   * Initialize {@link #myBranchChooser} component
-   */
   private void initBranchChooser() {
     myBranchChooser = new ElementsChooser<String>(true);
     myBranchChooser.setToolTipText(GitBundle.getString("merge.branches.tooltip"));
@@ -149,6 +138,11 @@ public class GitMergeDialog extends DialogWrapper {
     myBranchChooser.addElementsMarkListener(listener);
   }
 
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myBranchChooser.getComponent();
+  }
 
   /**
    * Setup branches for git root, this method should be called when root is changed.
@@ -204,32 +198,20 @@ public class GitMergeDialog extends DialogWrapper {
   }
 
 
-  /**
-   * {@inheritDoc}
-   */
   protected JComponent createCenterPanel() {
     return myPanel;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected String getDimensionServiceKey() {
     return getClass().getName();
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected String getHelpId() {
     return "reference.VersionControl.Git.MergeBranches";
   }
 
-  /**
-   * @return selected root
-   */
   public VirtualFile getSelectedRoot() {
     return (VirtualFile)myGitRoot.getSelectedItem();
   }

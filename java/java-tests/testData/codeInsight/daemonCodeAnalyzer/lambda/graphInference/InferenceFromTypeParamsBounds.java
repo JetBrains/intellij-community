@@ -1,6 +1,6 @@
 import java.util.Map;
 
-public class IDEA10166 {
+class IDEA10166 {
     interface BiConsumer<T, U> {
         void accept(T t, U u);
     }

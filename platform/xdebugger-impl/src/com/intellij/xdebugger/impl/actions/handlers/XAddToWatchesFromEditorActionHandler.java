@@ -20,8 +20,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,21 +36,21 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler
   }
 
   @Nullable
-  private static String getTextToEvaluate(DataContext dataContext, XDebugSession session) {
+  protected static String getTextToEvaluate(DataContext dataContext, XDebugSession session) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       return null;
     }
 
     String text = editor.getSelectionModel().getSelectedText();
-    if (text == null && session.isSuspended()) {
-      final XStackFrame stackFrame = session.getCurrentStackFrame();
-      if (stackFrame != null) {
-        text = XDebuggerEvaluateActionHandler.getExpressionText(stackFrame.getEvaluator(), editor.getProject(), editor);
+    if (text == null) {
+      XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
+      if (evaluator != null) {
+        text = XDebuggerEvaluateActionHandler.getExpressionText(evaluator, editor.getProject(), editor);
       }
     }
 
-    return StringUtil.isEmptyOrSpaces(text) ? null : text;
+    return StringUtil.nullize(text, true);
   }
 
   @Override
@@ -57,6 +58,6 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler
     final String text = getTextToEvaluate(dataContext, session);
     if (text == null) return;
 
-    ((XDebugSessionImpl)session).getSessionTab().getWatchesView().addWatchExpression(text, -1, true);
+    ((XDebugSessionImpl)session).getSessionTab().getWatchesView().addWatchExpression(XExpressionImpl.fromText(text), -1, true);
   }
 }

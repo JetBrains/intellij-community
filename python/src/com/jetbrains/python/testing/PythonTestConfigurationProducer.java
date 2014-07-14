@@ -18,8 +18,10 @@ package com.jetbrains.python.testing;
 import com.google.common.collect.Sets;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.module.Module;
@@ -39,6 +41,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.run.PythonRunConfigurationProducer;
+import com.jetbrains.python.testing.unittest.PythonUnitTestRunConfiguration;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,7 +93,7 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
         return confType == AbstractPythonTestRunConfiguration.TestType.TEST_FUNCTION &&
                methodName.equals(pyFunction.getName()) && isTestFileEquals;
       }
-      else if (pyFunction.getContainingClass() != null) {
+      else {
         final String className = configuration.getClassName();
 
         return confType == AbstractPythonTestRunConfiguration.TestType.TEST_METHOD &&
@@ -204,7 +209,7 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
   }
 
   protected boolean isTestFolder(@NotNull final VirtualFile virtualFile, @NotNull final Project project) {
-    final String name = virtualFile.getName();
+    @NonNls final String name = virtualFile.getName();
     final HashSet<VirtualFile> roots = Sets.newHashSet();
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     for (Module module : modules) {
@@ -254,4 +259,13 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
     return PythonUnitTestUtil.getTestCaseClassesFromFile(pyFile);
   }
 
+  @Override
+  public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
+    final RunConfiguration configuration = self.getConfiguration();
+    if (configuration instanceof PythonUnitTestRunConfiguration &&
+        ((PythonUnitTestRunConfiguration)configuration).getTestType() == AbstractPythonTestRunConfiguration.TestType.TEST_FOLDER) {
+      return true;
+    }
+    return other.isProducedBy(PythonTestConfigurationProducer.class) || other.isProducedBy(PythonRunConfigurationProducer.class);
+  }
 }

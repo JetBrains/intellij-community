@@ -9,9 +9,9 @@ Groovy script
     PsiElement(enum)('enum')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('A')
-    PsiWhiteSpace(' ')
     Implements clause
       <empty list>
+    PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')
       PsiWhiteSpace('\n  ')
@@ -22,9 +22,9 @@ Groovy script
               PsiElement(@)('@')
               Reference element
                 PsiElement(identifier)('Property')
-              PsiWhiteSpace(' ')
               Annotation arguments
                 <empty list>
+          PsiWhiteSpace(' ')
           PsiElement(identifier)('a')
       PsiElement(new line)('\n')
       PsiElement(})('}')

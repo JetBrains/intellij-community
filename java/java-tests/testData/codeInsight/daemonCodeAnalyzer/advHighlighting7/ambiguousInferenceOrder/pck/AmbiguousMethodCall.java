@@ -17,7 +17,7 @@ package pck;
 
 class Key<K>{}
 
-public class C {
+class C {
      public <T> void putCopyableUserData(Key<T> key, T value) {
      }
 }

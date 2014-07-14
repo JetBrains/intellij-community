@@ -35,6 +35,6 @@ public class CmdConflictClient extends BaseSvnClient implements ConflictClient {
 
     // for now parsing of the output is not required as command is executed only for one file
     // and will be either successful or exception will be thrown
-    CommandUtil.execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.resolve, parameters, null);
+    execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.resolve, parameters, null);
   }
 }

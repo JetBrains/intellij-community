@@ -1,6 +1,6 @@
 import org.jetbrains.annotations.Nullable;
 
-public class Goo {
+class Goo {
   Permission permission;
 
   {

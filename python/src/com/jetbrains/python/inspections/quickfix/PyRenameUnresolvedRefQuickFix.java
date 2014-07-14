@@ -30,7 +30,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -65,8 +64,10 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    final PyReferenceExpression referenceExpression = PsiTreeUtil.getParentOfType(element, PyReferenceExpression.class);
-    if (referenceExpression == null) return;
+    if (!(element instanceof PyReferenceExpression)) {
+      return;
+    }
+    final PyReferenceExpression referenceExpression = (PyReferenceExpression)element;
 
     ScopeOwner parentScope = ScopeUtil.getScopeOwner(referenceExpression);
     if (parentScope == null) return;
@@ -127,12 +128,9 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
   @Nullable
   private static Editor getEditor(@NotNull final Project project, @NotNull final PsiFile file, int offset) {
     final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile != null) {
-    return FileEditorManager.getInstance(project).openTextEditor(
+    return virtualFile != null ? FileEditorManager.getInstance(project).openTextEditor(
       new OpenFileDescriptor(project, virtualFile, offset), true
-    );
-    }
-    return null;
+    ) : null;
   }
 
   private static LookupElement[] collectLookupItems(@NotNull final ScopeOwner parentScope) {

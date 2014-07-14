@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrDynamicImplicitProperty;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.GrDynamicImplicitProperty;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -39,10 +39,12 @@ public class DPropertyElement extends DItemElement {
     super(isStatic, name, type);
   }
 
+  @Override
   public void clearCache() {
     myPsi = null;
   }
 
+  @Override
   @NotNull
   public PsiVariable getPsi(PsiManager manager, final String containingClassName) {
     if (myPsi != null) return myPsi;
@@ -50,7 +52,7 @@ public class DPropertyElement extends DItemElement {
     Boolean isStatic = isStatic();
 
     String type = getType();
-    if (type == null || type.trim().length() == 0) {
+    if (type == null || type.trim().isEmpty()) {
       type = CommonClassNames.JAVA_LANG_OBJECT;
     }
     myPsi = new GrDynamicImplicitProperty(manager, getName(), type, containingClassName);

@@ -1,12 +1,26 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <name>Git Integration</name>
   <id>Git4Idea</id>
-  <description>Provides integration with Git version control system</description>
+  <description>
+      <![CDATA[
+      Allows working with <a href="http://git-scm.com/">Git version control system</a>.
+      The following features are available:
+        <ul>
+        <li>Dedicated page under the Version Control node in the Settings/Preferences dialog.</li>
+        <li>Ability to browse, check out sources from and import into the available Git repositories, when Git is not enabled.</li>
+        <li>When Git is enabled, the Git node appears on the VCS menu, and on the context menu of the editor.</li>
+        </ul>
+         <p>Numerous plugins depend on the Git Integration plugin.</p>
+      ]]>
+   </description>
   <version>8.1</version>
   <category>VCS Integration</category>
   <vendor url="http://svn.jetbrains.org/idea/Trunk/bundled/git4idea/" logo="/general/ijLogo.png">JetBrains</vendor>
 
   <depends>com.intellij.modules.vcs</depends>
+  <xi:include href="/META-INF/remote-servers-git.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
 
   <actions>
 
@@ -45,13 +59,16 @@
       <separator/>
       <action id="Git.Fetch" class="git4idea.actions.GitFetch" text="Fetch"/>
       <action id="Git.Pull" class="git4idea.actions.GitPull" text="Pull..." icon="AllIcons.Actions.CheckOut"/>
-      <action id="Git.Push" class="git4idea.actions.GitPushAction" icon="AllIcons.Actions.Commit" text="Push..."/>
+      <action id="Git.Push" class="git4idea.actions.GitPushAction" icon="AllIcons.Actions.Commit" text="Push...">
+        <keyboard-shortcut first-keystroke="control shift K" keymap="$default"/>
+      </action>
       <separator/>
       <action id="Git.Rebase" class="git4idea.actions.GitRebase" text="Rebase..."/>
       <action id="Git.Rebase.Abort" class="git4idea.actions.GitRebaseAbort" text="Abort Rebasing"/>
       <action id="Git.Rebase.Continue" class="git4idea.actions.GitRebaseContinue" text="Continue Rebasing"/>
       <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip" text="Skip Commit in Rebasing"/>
       <separator/>
+      <action id="Git.Edit.Global.Message" class="git4idea.actions.GitEditGlobalMessageAction" text="Edit Global Message"/>
     </group>
 
     <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true" text="_Git">
@@ -94,6 +111,9 @@
     <group id="Git.Log.Toolbar">
       <reference id="Git.CherryPick"/>
       <add-to-group group-id="Vcs.Log.Toolbar" />
+      <action id="Git.Log.DeepCompare" class="git4idea.branch.DeepCompareAction" text="Highlight non-picked commits"
+              icon="Git4ideaIcons.DeepCompare"
+              description="Dims those commits which have equivalent changes in the current branch"/>
     </group>
     
 
@@ -116,8 +136,6 @@
     <logProvider implementation="git4idea.log.GitLogProvider"/>
     <vcsChangesViewRefresher implementation="git4idea.changes.GitChangesViewRefresher" />
     
-    <vcs.rootFinder implementation="git4idea.roots.GitRootFinder"/>
-
     <projectService
       serviceInterface="git4idea.history.wholeTree.LogFactoryService"
       serviceImplementation="git4idea.history.wholeTree.LogFactoryService"/>
@@ -157,14 +175,13 @@
     <projectService
         serviceInterface="git4idea.MessageManager"
         serviceImplementation="git4idea.MessageManager"/>
-    <projectService serviceInterface="git4idea.Notificator"
-                    serviceImplementation="git4idea.Notificator"/>
     <projectService serviceInterface="git4idea.history.wholeTree.GitLogSettings"
                     serviceImplementation="git4idea.history.wholeTree.GitLogSettings"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
+    <projectService serviceImplementation="git4idea.GitUserRegistry" />
 
-    <projectService serviceImplementation="git4idea.log.GitContentRevisionFactory" />
+    <projectService serviceImplementation="git4idea.branch.DeepComparatorHolder"/>
 
     <applicationService serviceImplementation="git4idea.history.wholeTree.GitCommitsSequentialIndex"
                         serviceInterface="git4idea.history.wholeTree.GitCommitsSequentially"/>
@@ -192,14 +209,6 @@
   </extensions>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="Git4Idea.GitHttpAuthDataProvider" interface="git4idea.jgit.GitHttpAuthDataProvider"/>
-
-    <extensionPoint qualifiedName="Git4Idea.remoteServer.CloudGitDeploymentSourceHandlerProvider"
-                    interface="com.intellij.remoteServer.util.CloudGitDeploymentSourceHandlerProvider"/>
+    <extensionPoint qualifiedName="Git4Idea.GitHttpAuthDataProvider" interface="git4idea.remote.GitHttpAuthDataProvider"/>
   </extensionPoints>
-
-  <extensions defaultExtensionNs="Git4Idea">
-    <remoteServer.CloudGitDeploymentSourceHandlerProvider
-        implementation="com.intellij.remoteServer.util.ModuleDeploymentSourceHandlerProvider"/>
-  </extensions>
 </idea-plugin>

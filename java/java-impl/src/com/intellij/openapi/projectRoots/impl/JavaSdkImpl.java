@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,7 @@ public class JavaSdkImpl extends JavaSdk {
       return "http://docs.oracle.com/javase/7/docs/api/";
     }
     if (version == JavaSdkVersion.JDK_1_8) {
-      return "http://download.java.net/jdk8/docs/api/";
+      return "http://docs.oracle.com/javase/8/docs/api";
     }
     return null;
   }
@@ -333,6 +333,10 @@ public class JavaSdkImpl extends JavaSdk {
     if(sources != null){
       sdkModificator.addRoot(sources, OrderRootType.SOURCES);
     }
+    final VirtualFile javaFxSources = findSources(jdkHome, "javafx-src");
+    if (javaFxSources != null) {
+      sdkModificator.addRoot(javaFxSources, OrderRootType.SOURCES);
+    }
     if(docs != null){
       sdkModificator.addRoot(docs, JavadocOrderRootType.getInstance());
     }
@@ -361,6 +365,10 @@ public class JavaSdkImpl extends JavaSdk {
         if (url != null) {
           sdkModificator.addRoot(VirtualFileManager.getInstance().findFileByUrl(url), JavadocOrderRootType.getInstance());
         }
+      }
+    } else {
+      if (getVersion(sdk) == JavaSdkVersion.JDK_1_7) {
+        sdkModificator.addRoot(VirtualFileManager.getInstance().findFileByUrl("http://docs.oracle.com/javafx/2/api/"), JavadocOrderRootType.getInstance());
       }
     }
     attachJdkAnnotations(sdkModificator);
@@ -405,19 +413,6 @@ public class JavaSdkImpl extends JavaSdk {
     }
 
     return versionString;
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return getName();
-  }
-
-  @Override
-  public void initComponent() { }
-
-  @Override
-  public void disposeComponent() {
   }
 
   @Override
@@ -493,10 +488,16 @@ public class JavaSdkImpl extends JavaSdk {
   @Nullable
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static VirtualFile findSources(File file) {
+    return findSources(file, "src");
+  }
+
+  @Nullable
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static VirtualFile findSources(File file, final String srcName) {
     File srcDir = new File(file, "src");
-    File jarFile = new File(file, "src.jar");
+    File jarFile = new File(file, srcName + ".jar");
     if (!jarFile.exists()) {
-      jarFile = new File(file, "src.zip");
+      jarFile = new File(file, srcName + ".zip");
     }
 
     if (jarFile.exists()) {

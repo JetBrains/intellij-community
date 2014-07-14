@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,15 +58,15 @@ import java.util.List;
  *
  * @author ilyas
  */
-public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
+public class GroovyBlock implements Block, ASTBlock {
   private static final Logger LOG = Logger.getInstance(GroovyBlock.class);
 
-  final protected ASTNode myNode;
+  protected final ASTNode myNode;
   protected Alignment myAlignment = null;
-  final protected Indent myIndent;
-  final protected Wrap myWrap;
+  protected final Indent myIndent;
+  protected final Wrap myWrap;
 
-  final protected FormattingContext myContext;
+  protected final FormattingContext myContext;
 
   protected List<Block> mySubBlocks = null;
 
@@ -81,11 +81,13 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
     myContext = context;
   }
 
+  @Override
   @NotNull
   public ASTNode getNode() {
     return myNode;
   }
 
+  @Override
   @NotNull
   public TextRange getTextRange() {
     return myNode.getTextRange();
@@ -112,16 +114,19 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
     return  mySubBlocks;
   }
 
+  @Override
   @Nullable
   public Wrap getWrap() {
     return myWrap;
   }
 
+  @Override
   @Nullable
   public Indent getIndent() {
     return myIndent;
   }
 
+  @Override
   @Nullable
   public Alignment getAlignment() {
     if (myAlignment == null) {
@@ -138,6 +143,7 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
    * @param child2 right element
    * @return
    */
+  @Override
   @Nullable
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
     if (child1 instanceof GroovyBlock && child2 instanceof GroovyBlock) {
@@ -154,6 +160,7 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
     return null;
   }
 
+  @Override
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     ASTNode astNode = getNode();
@@ -195,10 +202,10 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
       return getSwitchIndent((GrCaseSection)psiParent, newChildIndex);
     }
 
-    if (TokenSets.BLOCK_SET.contains(astNode.getElementType()) || SWITCH_STATEMENT.equals(astNode.getElementType())) {
+    if (TokenSets.BLOCK_SET.contains(astNode.getElementType()) || GroovyElementTypes.SWITCH_STATEMENT.equals(astNode.getElementType())) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
-    if (CASE_SECTION.equals(astNode.getElementType())) {
+    if (GroovyElementTypes.CASE_SECTION.equals(astNode.getElementType())) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
     if (psiParent instanceof GrBinaryExpression ||
@@ -244,6 +251,7 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
   }
 
 
+  @Override
   public boolean isIncomplete() {
     return isIncomplete(myNode);
   }
@@ -263,6 +271,7 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
     return lastChild != null && (lastChild.getPsi() instanceof PsiErrorElement || isIncomplete(lastChild));
   }
 
+  @Override
   public boolean isLeaf() {
     return myNode.getFirstChildNode() == null;
   }

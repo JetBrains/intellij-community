@@ -37,7 +37,7 @@ import java.awt.event.*;
 /**
  * Base class for components which allow to set up filter for the VCS Log, by displaying a popup with available choices.
  */
-abstract class FilterPopupComponent extends JPanel {
+abstract class FilterPopupComponent<Filter extends VcsLogFilter> extends JPanel {
 
   /**
    * Special value that indicates that no filtering is on.
@@ -90,13 +90,18 @@ abstract class FilterPopupComponent extends JPanel {
   protected abstract ActionGroup createActionGroup();
 
   /**
-   * Return the filter currently selected by this component.
+   * Return the filter currently selected via this component or null if no filters are selected via this component.
    */
   @Nullable
-  protected abstract VcsLogFilter getFilter();
+  protected abstract Filter getFilter();
 
   protected void setValue(@NotNull String newValue) {
-    myFilterValueLabel.setText(newValue);
+    setValue(newValue, newValue);
+  }
+
+  protected void setValue(@NotNull String value, @NotNull String tooltip) {
+    myFilterValueLabel.setText(value);
+    setToolTipText(tooltip.equals(value) ? null : tooltip);
   }
 
   @NotNull
@@ -111,6 +116,7 @@ abstract class FilterPopupComponent extends JPanel {
   /**
    * Returns the special action that indicates that no filtering is selected in this component.
    */
+  @NotNull
   protected AnAction createAllAction() {
     return new AllAction(this);
   }
@@ -143,7 +149,7 @@ abstract class FilterPopupComponent extends JPanel {
   private void showPopupMenuOnClick() {
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent event, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         showPopupMenu();
         return true;
       }

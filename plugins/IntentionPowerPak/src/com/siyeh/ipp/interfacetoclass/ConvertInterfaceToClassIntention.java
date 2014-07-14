@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 Bas Leijdekkers
+ * Copyright 2006-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,16 @@
 package com.siyeh.ipp.interfacetoclass;
 
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -70,7 +74,7 @@ public class ConvertInterfaceToClassIntention extends Intention {
       if (method.hasModifierProperty(PsiModifier.DEFAULT)) {
         PsiUtil.setModifierProperty(method, PsiModifier.DEFAULT, false);
       }
-      else {
+      else if (!method.hasModifierProperty(PsiModifier.STATIC)) {
         PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, true);
       }
     }
@@ -102,7 +106,7 @@ public class ConvertInterfaceToClassIntention extends Intention {
     final PsiClass anInterface = (PsiClass)element.getParent();
     final SearchScope searchScope = anInterface.getUseScope();
     final Query<PsiClass> query = ClassInheritorsSearch.search(anInterface, searchScope, false);
-    final MultiMap<PsiElement, String> conflicts = new MultiMap();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     query.forEach(new Processor<PsiClass>() {
       @Override
       public boolean process(PsiClass aClass) {
@@ -123,10 +127,20 @@ public class ConvertInterfaceToClassIntention extends Intention {
         return true;
       }
     });
+
+    final PsiFunctionalExpression functionalExpression = FunctionalExpressionSearch.search(anInterface, searchScope).findFirst();
+    if (functionalExpression != null) {
+      final String conflictMessage = ClassPresentationUtil.getFunctionalExpressionPresentation(functionalExpression, true) +
+                           " will not compile after converting " + RefactoringUIUtil.getDescription(anInterface, false) + " to a class";
+      conflicts.putValue(functionalExpression, conflictMessage);
+    }
     final boolean conflictsDialogOK;
     if (conflicts.isEmpty()) {
       conflictsDialogOK = true;
     } else {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
+      }
       final ConflictsDialog conflictsDialog = new ConflictsDialog(anInterface.getProject(), conflicts, new Runnable() {
         @Override
         public void run() {
@@ -166,11 +180,14 @@ public class ConvertInterfaceToClassIntention extends Intention {
     final PsiReferenceList extendsList = anInterface.getExtendsList();
     final PsiReferenceList implementsList = anInterface.getImplementsList();
     assert extendsList != null;
-    final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
-    for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
+    final PsiJavaCodeReferenceElement[] extendsRefElements = extendsList.getReferenceElements();
+    for (PsiJavaCodeReferenceElement referenceElement : extendsRefElements) {
       assert implementsList != null;
-      implementsList.add(referenceElement);
-      referenceElement.delete();
+      final PsiElement resolved = referenceElement.resolve();
+      if (resolved instanceof PsiClass && ((PsiClass)resolved).isInterface()) {
+        implementsList.add(referenceElement);
+        referenceElement.delete();
+      }
     }
   }
 

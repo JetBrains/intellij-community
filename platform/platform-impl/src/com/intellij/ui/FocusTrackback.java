@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ExpirableRunnable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
@@ -452,7 +453,8 @@ public class FocusTrackback {
   }
 
   public void cleanParentWindow() {
-    if (myParentWindow != null) {
+    if (!Registry.is("focus.fix.lost.cursor")) return;
+      if (myParentWindow != null) {
       try {
         Method tmpLost = Window.class.getDeclaredMethod("setTemporaryLostComponent", Component.class);
         tmpLost.setAccessible(true);

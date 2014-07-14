@@ -21,7 +21,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExceptionUtils;
-import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -29,8 +28,8 @@ import java.util.*;
 public class TooBroadCatchInspectionBase extends BaseInspection {
   @SuppressWarnings({"PublicField"})
   public boolean onlyWarnOnRootExceptions = false;
-  @SuppressWarnings("PublicField")
-  public boolean ignoreInTestCode = false;
+  @SuppressWarnings({"PublicField", "UnusedDeclaration"})
+  public boolean ignoreInTestCode = false; // keep for compatibility
   @SuppressWarnings("PublicField")
   public boolean ignoreThrown = false;
 
@@ -80,9 +79,6 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
       if (tryBlock == null) {
         return;
       }
-      if (ignoreInTestCode && TestUtils.isInTestCode(statement)) {
-        return;
-      }
       final Set<PsiClassType> thrownTypes = ExceptionUtils.calculateExceptionsThrown(tryBlock);
       final Set<PsiType> caughtTypes = new HashSet<PsiType>(thrownTypes.size());
       final PsiCatchSection[] catchSections = statement.getCatchSections();
@@ -107,7 +103,7 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
                 continue;
               }
               final PsiClass runtimeExceptionClass = ClassUtils.findClass(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, parameter);
-              registerError(typeElement, Collections.singletonList(runtimeExceptionClass));
+              registerError(typeElement, Collections.singletonList(runtimeExceptionClass), typeElement);
             }
           }
           else {
@@ -126,7 +122,7 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
       if (typeElement == null) {
         return;
       }
-      registerError(typeElement, maskedExceptions);
+      registerError(typeElement, maskedExceptions, typeElement);
     }
 
     private List<PsiClass> findMaskedExceptions(Set<PsiClassType> thrownTypes, Set<PsiType> caughtTypes, PsiType caughtType) {

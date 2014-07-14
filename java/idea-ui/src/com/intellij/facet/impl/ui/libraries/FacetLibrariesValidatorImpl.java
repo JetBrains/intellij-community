@@ -117,7 +117,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     private CustomLibraryDescription myDescription;
 
     public LibrariesQuickFix(CustomLibraryDescription description) {
-      super(IdeBundle.message("missing.libraries.fix.button"));
+      super(IdeBundle.message("button.fix"));
       myDescription = description;
     }
 

@@ -1,10 +1,10 @@
-public class CssPropertyValueImpl extends CssTableValueBase<CssPropertyValue, Object> implements CssPropertyValue {
+class CssPropertyValueImpl extends CssTableValueBase<CssPropertyValue, Object> implements CssPropertyValue {
   public CssPropertyValueImpl(final Type type) {
     super(type);
   }
 }
 
-public abstract class CssTableValueBase<V extends CssTableValue, T> implements CssTableValue<V, T> {
+abstract class CssTableValueBase<V extends CssTableValue, T> implements CssTableValue<V, T> {
 
   protected CssTableValueBase(final Type type) {
   }

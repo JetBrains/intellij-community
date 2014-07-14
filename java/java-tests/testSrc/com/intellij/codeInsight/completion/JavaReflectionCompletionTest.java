@@ -64,6 +64,7 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
   }
 
   public void testGenerics() throws Exception {
+    myFixture.addFileToProject("a.properties", "foo=bar"); // check that property variants don't override reflection ones
     doTest(0, "foo");
   }
 

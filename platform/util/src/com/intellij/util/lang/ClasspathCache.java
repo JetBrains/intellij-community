@@ -17,6 +17,7 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringHash;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BloomFilterBase;
 import com.intellij.util.SmartList;
@@ -126,24 +127,23 @@ public class ClasspathCache {
     }
   }
 
-  public boolean loaderHasName(String name, Loader loader) {
-    String origName = name;
-    name = transformName(name);
+  public boolean loaderHasName(String name, String shortName, Loader loader) {
+    if (StringUtil.isEmpty(name)) return true;
 
     boolean result;
     if (myTempMapMode) {
       ++requests;
-      Set<Loader> loaders = myResources2LoadersTempMap.get(name);
+      Set<Loader> loaders = myResources2LoadersTempMap.get(shortName);
       result = loaders != null && loaders.contains(loader);
 
       if (!result) ++hits;
 
       if (doDebug) {
-        boolean result2 = myDebugInfo.loaderHashName(name, loader);
+        boolean result2 = myDebugInfo.loaderHasName(shortName, loader);
         if (result2 != result) {
           ++diffs3;
         }
-        Resource resource = loader.getResource(origName, true);
+        Resource resource = loader.getResource(name, true);
         if (resource != null && !result || resource == null && result) {
           ++falseHits;
         }
@@ -155,21 +155,21 @@ public class ClasspathCache {
     }
     else {
       ++requests2;
-      result = myNameFilter.maybeContains(name, loader);
+      result = myNameFilter.maybeContains(shortName, loader);
       if (!result) ++hits2;
 
       if (doDebug) {
-        boolean result2 = myDebugInfo.loaderHashName(name, loader);
+        boolean result2 = myDebugInfo.loaderHasName(shortName, loader);
         if (result2 != result) {
           ++diffs2;
         }
 
-        Set<Loader> loaders = myResources2LoadersTempMap.get(name);
+        Set<Loader> loaders = myResources2LoadersTempMap.get(shortName);
         if (result != (loaders != null && loaders.contains(loader))) {
           ++diffs;
         }
 
-        Resource resource = loader.getResource(origName, true);
+        Resource resource = loader.getResource(name, true);
         if (resource == null && result) {
           ++falseHits2;
         }
@@ -186,7 +186,7 @@ public class ClasspathCache {
     return result;
   }
   
-  private static String transformName(String name) {
+  static String transformName(String name) {
     if (name.endsWith("/")) {
       name = name.substring(0, name.length() - 1);
     }
@@ -340,7 +340,7 @@ public class ClasspathCache {
       }
     }
 
-    protected boolean loaderHashName(String name, Loader loader) {
+    protected boolean loaderHasName(String name, Loader loader) {
       return myResourceIndex.contains(hashFromNameAndLoader(name, loader));
     }
   }
@@ -359,7 +359,7 @@ public class ClasspathCache {
     }
 
     @Override
-    protected boolean loaderHashName(String name, Loader loader) {
+    protected boolean loaderHasName(String name, Loader loader) {
       return false;
     }
   }

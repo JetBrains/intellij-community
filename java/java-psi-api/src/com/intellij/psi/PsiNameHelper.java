@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,16 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -31,6 +35,11 @@ import static com.intellij.util.ObjectUtils.notNull;
  * @see com.intellij.psi.JavaPsiFacade#getNameHelper()
  */
 public abstract class PsiNameHelper {
+
+  public static PsiNameHelper getInstance(Project project) {
+    return ServiceManager.getService(project, PsiNameHelper.class);
+  }
+
   /**
    * Checks if the specified text is a Java identifier, using the language level of the project
    * with which the name helper is associated to filter out keywords.
@@ -48,7 +57,7 @@ public abstract class PsiNameHelper {
    * @param languageLevel to check text against. For instance 'assert' or 'enum' might or might not be identifiers depending on language level
    * @return true if the text is an identifier, false otherwise
    */
-  public abstract boolean isIdentifier(@Nullable String text, LanguageLevel languageLevel);
+  public abstract boolean isIdentifier(@Nullable String text, @NotNull LanguageLevel languageLevel);
 
   /**
    * Checks if the specified text is a Java keyword, using the language level of the project
@@ -70,7 +79,9 @@ public abstract class PsiNameHelper {
 
   @NotNull
   public static String getShortClassName(@NotNull String referenceText) {
-    int lessPos = referenceText.length(), bracesBalance = 0, i;
+    int lessPos = referenceText.length();
+    int bracesBalance = 0;
+    int i;
 
     loop:
     for (i = referenceText.length() - 1; i >= 0; i--) {
@@ -114,35 +125,20 @@ public abstract class PsiNameHelper {
   }
 
   @NotNull
-  public static String getPresentableText(@Nullable String refName, @NotNull PsiAnnotation[] annotations, @NotNull PsiType[] typeParameters) {
-    if (typeParameters.length == 0 && annotations.length == 0) {
+  public static String getPresentableText(@Nullable String refName, @NotNull PsiAnnotation[] annotations, @NotNull PsiType[] types) {
+    if (types.length == 0 && annotations.length == 0) {
       return refName != null ? refName : "";
     }
 
     StringBuilder buffer = new StringBuilder();
-
-    if (annotations.length > 0) {
-      for (PsiAnnotation annotation : annotations) {
-        buffer.append(annotation.getText()).append(' ');
-      }
-    }
-
+    appendAnnotations(buffer, annotations, false);
     buffer.append(refName);
-
-    if (typeParameters.length > 0) {
-      buffer.append("<");
-      for (int i = 0; i < typeParameters.length; i++) {
-        buffer.append(typeParameters[i].getPresentableText());
-        if (i < typeParameters.length - 1) buffer.append(", ");
-      }
-      buffer.append(">");
-    }
-
+    appendTypeArgs(buffer, types, false, true);
     return buffer.toString();
   }
 
   @NotNull
-  public static String getQualifiedClassName(String referenceText, boolean removeWhitespace) {
+  public static String getQualifiedClassName(@NotNull String referenceText, boolean removeWhitespace) {
     if (removeWhitespace) {
       referenceText = removeWhitespace(referenceText);
     }
@@ -171,7 +167,7 @@ public abstract class PsiNameHelper {
   }
 
   private static final Pattern WHITESPACE_PATTERN = Pattern.compile("(?:\\s)|(?:/\\*.*\\*/)|(?://[^\\n]*)");
-  private static String removeWhitespace(String referenceText) {
+  private static String removeWhitespace(@NotNull String referenceText) {
     return WHITESPACE_PATTERN.matcher(referenceText).replaceAll("");
   }
 
@@ -183,7 +179,8 @@ public abstract class PsiNameHelper {
    * @param referenceText the text of the reference to calculate type parameters for.
    * @return the calculated array of type parameters.
    */
-  public static String[] getClassParametersText(String referenceText) {
+  @NotNull
+  public static String[] getClassParametersText(@NotNull String referenceText) {
     if (referenceText.indexOf('<') < 0) return ArrayUtil.EMPTY_STRING_ARRAY;
     referenceText = removeWhitespace(referenceText);
     final char[] chars = referenceText.toCharArray();
@@ -254,5 +251,50 @@ public abstract class PsiNameHelper {
   public static boolean isSubpackageOf(@NotNull String subpackageName, @NotNull String packageName) {
     return subpackageName.equals(packageName) ||
            subpackageName.startsWith(packageName) && subpackageName.charAt(packageName.length()) == '.';
+  }
+
+  public static void appendTypeArgs(@NotNull StringBuilder sb, @NotNull PsiType[] types, boolean canonical, boolean annotated) {
+    if (types.length == 0) return;
+
+    sb.append('<');
+    for (int i = 0; i < types.length; i++) {
+      if (i > 0) {
+        sb.append(canonical ? "," : ", ");
+      }
+
+      PsiType type = types[i];
+      if (canonical) {
+        sb.append(type.getCanonicalText(annotated));
+      }
+      else {
+        sb.append(type.getPresentableText());
+      }
+    }
+    sb.append('>');
+  }
+
+  public static boolean appendAnnotations(@NotNull StringBuilder sb, @NotNull PsiAnnotation[] annotations, boolean canonical) {
+    return appendAnnotations(sb, Arrays.asList(annotations), canonical);
+  }
+
+  public static boolean appendAnnotations(@NotNull StringBuilder sb, @NotNull List<PsiAnnotation> annotations, boolean canonical) {
+    boolean updated = false;
+    for (PsiAnnotation annotation : annotations) {
+      if (canonical) {
+        String name = annotation.getQualifiedName();
+        if (name != null) {
+          sb.append('@').append(name).append(annotation.getParameterList().getText()).append(' ');
+          updated = true;
+        }
+      }
+      else {
+        PsiJavaCodeReferenceElement refElement = annotation.getNameReferenceElement();
+        if (refElement != null) {
+          sb.append('@').append(refElement.getText()).append(' ');
+          updated = true;
+        }
+      }
+    }
+    return updated;
   }
 }

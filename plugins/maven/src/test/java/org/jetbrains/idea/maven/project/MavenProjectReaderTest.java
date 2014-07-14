@@ -414,6 +414,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
   public void testPathsWithProperties() throws Exception {
     createProjectPom("<properties>" +
                      "  <foo>subDir</foo>" +
+                     "  <emptyProperty />" +
                      "</properties>" +
                      "<build>" +
                      "  <sourceDirectory>${foo}/mySrc</sourceDirectory>" +
@@ -422,6 +423,9 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "  <resources>" +
                      "    <resource>" +
                      "      <directory>${foo}/myRes</directory>" +
+                     "    </resource>" +
+                     "    <resource>" +
+                     "      <directory>aaa/${emptyProperty}/${unexistingProperty}</directory>" +
                      "    </resource>" +
                      "  </resources>" +
                      "  <testResources>" +
@@ -440,8 +444,10 @@ public class MavenProjectReaderTest extends MavenTestCase {
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("subDir/mySrc"), p.getBuild().getSources().get(0));
     assertSize(1, p.getBuild().getTestSources());
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("subDir/myTestSrc"), p.getBuild().getTestSources().get(0));
-    assertEquals(1, p.getBuild().getResources().size());
+    assertEquals(2, p.getBuild().getResources().size());
     assertResource(p.getBuild().getResources().get(0), pathFromBasedir("subDir/myRes"),
+                   false, null, Collections.<String>emptyList(), Collections.<String>emptyList());
+    assertResource(p.getBuild().getResources().get(1), pathFromBasedir("aaa/${unexistingProperty}"),
                    false, null, Collections.<String>emptyList(), Collections.<String>emptyList());
     assertEquals(1, p.getBuild().getTestResources().size());
     assertResource(p.getBuild().getTestResources().get(0), pathFromBasedir("subDir/myTestRes"),

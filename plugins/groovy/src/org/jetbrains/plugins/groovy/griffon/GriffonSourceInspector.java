@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -215,7 +215,7 @@ public class GriffonSourceInspector {
       }
 
       if (Character.isLowerCase(c) || Character.isDigit(c)) {
-        if (Character.isLowerCase(c) && w.length() == 0) {
+        if (Character.isLowerCase(c) && w.isEmpty()) {
           c = Character.toUpperCase(c);
         }
         else if (w.length() > 1 && Character.isUpperCase(w.charAt(w.length() - 1))) {
@@ -226,7 +226,7 @@ public class GriffonSourceInspector {
         words.set(i, w + c);
       }
       else if (Character.isUpperCase(c)) {
-        if ((i == 0 && w.length() == 0) || Character.isUpperCase(w.charAt(w.length() - 1))) {
+        if ((i == 0 && w.isEmpty()) || Character.isUpperCase(w.charAt(w.length() - 1))) {
           words.set(i, w + c);
         }
         else {

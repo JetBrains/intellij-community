@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.InvokeTemplateAction;
-import com.intellij.codeInsight.template.impl.SurroundWithTemplateHandler;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.WrapWithCustomTemplateAction;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
@@ -115,6 +115,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     element1 = file.findElementAt(startOffset);
 
     final Language baseLanguage = file.getViewProvider().getBaseLanguage();
+    assert element1 != null;
     final Language l = element1.getParent().getLanguage();
     List<SurroundDescriptor> surroundDescriptors = new ArrayList<SurroundDescriptor>();
 
@@ -192,8 +193,10 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       int col = editor.getCaretModel().getLogicalPosition().column;
       int line = editor.getCaretModel().getLogicalPosition().line;
-      LogicalPosition pos = new LogicalPosition(0, 0);
-      editor.getCaretModel().moveToLogicalPosition(pos);
+      if (!editor.getCaretModel().supportsMultipleCarets()) {
+        LogicalPosition pos = new LogicalPosition(0, 0);
+        editor.getCaretModel().moveToLogicalPosition(pos);
+      }
       TextRange range = surrounder.surroundElements(project, editor, elements);
       if (TemplateManager.getInstance(project).getActiveTemplate(editor) == null) {
         LogicalPosition pos1 = new LogicalPosition(line, col);
@@ -201,6 +204,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
       }
       if (range != null) {
         int offset = range.getStartOffset();
+        editor.getCaretModel().removeSecondaryCarets();
         editor.getCaretModel().moveToOffset(offset);
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
@@ -243,8 +247,8 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
       }
     }
 
-    List<CustomLiveTemplate> customTemplates = SurroundWithTemplateHandler.getApplicableCustomTemplates(editor, file);
-    List<TemplateImpl> templates = SurroundWithTemplateHandler.getApplicableTemplates(editor, file, true);
+    List<CustomLiveTemplate> customTemplates = TemplateManagerImpl.listApplicableCustomTemplates(editor, file, true);
+    List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(editor, file, true);
 
     if (!templates.isEmpty() || !customTemplates.isEmpty()) {
       applicable.add(new Separator("Live templates"));
@@ -285,7 +289,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     public void actionPerformed(AnActionEvent e) {
       new WriteCommandAction(myProject) {
         @Override
-        protected void run(Result result) throws Exception {
+        protected void run(@NotNull Result result) throws Exception {
           doSurround(myProject, myEditor, mySurrounder, myElements);
         }
       }.execute();

@@ -1,6 +1,6 @@
 import java.util.List;
 
-public class Main<T> {
+class Main<T> {
     Object get(List<DiagramNode<T>> nodes, A a) {
         return null;
     }

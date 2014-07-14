@@ -36,7 +36,7 @@ public class DataProviderSearcher extends QueryExecutorBase<PsiReference, Method
 
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, DataProvider.class.getName());
     if (annotation == null) return;
-    final PsiAnnotationMemberValue dataProviderMethodName = annotation.findAttributeValue("name");
+    final PsiAnnotationMemberValue dataProviderMethodName = annotation.findDeclaredAttributeValue("name");
     if (dataProviderMethodName != null) {
       final String providerName = StringUtil.unquoteString(dataProviderMethodName.getText());
       queryParameters.getOptimizer().searchWord(providerName, queryParameters.getScope(), UsageSearchContext.IN_STRINGS, true, method);

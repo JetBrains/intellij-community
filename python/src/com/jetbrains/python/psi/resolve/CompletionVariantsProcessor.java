@@ -124,7 +124,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
     // special case hack to avoid the need of patching generator3.py
     PyClass containingClass = callee.getContainingClass();
     if (containingClass != null && PyNames.PROPERTY.equals(containingClass.getName()) &&
-        PyBuiltinCache.getInstance(elementInCall).hasInBuiltins(containingClass)) {
+        PyBuiltinCache.getInstance(elementInCall).isBuiltin(containingClass)) {
       return true;
     }
 

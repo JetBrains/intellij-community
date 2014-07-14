@@ -16,6 +16,7 @@
 package com.intellij.designer.palette;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -53,6 +54,9 @@ public class PaletteGroupComponent extends JCheckBox {
   public Color getBackground() {
     if (isFocusOwner()) {
       return UIUtil.getListSelectionBackground();
+    }
+    if (UIUtil.isUnderDarcula()) {
+      return Gray._100;
     }
     return super.getBackground();
   }

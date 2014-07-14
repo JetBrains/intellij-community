@@ -43,7 +43,7 @@ public class EnableOptimizeImportsOnTheFlyFix implements IntentionAction, LowPri
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return file.getManager().isInProject(file)
            && file instanceof PsiJavaFile
-           && !com.intellij.codeInsight.CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY
+           && !CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY
       ;
   }
 

@@ -18,6 +18,7 @@ package com.intellij.openapi.diagnostic;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import org.apache.log4j.Level;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -134,6 +135,7 @@ public abstract class Logger {
 
   public abstract void error(@NonNls String message, @Nullable Throwable t, @NonNls @NotNull String... details);
 
+  @Contract("false,_->fail") // wrong, but avoid quite a few warnings in the code
   public boolean assertTrue(boolean value, @Nullable @NonNls Object message) {
     if (!value) {
       @NonNls String resultMessage = "Assertion failed";
@@ -141,9 +143,11 @@ public abstract class Logger {
       error(resultMessage, new Throwable());
     }
 
+    //noinspection Contract
     return value;
   }
 
+  @Contract("false->fail") // wrong, but avoid quite a few warnings in the code
   public boolean assertTrue(boolean value) {
     return value || assertTrue(false, null);
   }

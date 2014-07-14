@@ -10,6 +10,7 @@
     <orderEntry type="module" module-name="core-api" />
     <orderEntry type="module" module-name="IntelliLang" />
     <orderEntry type="module" module-name="python-community" />
+    <orderEntry type="module" module-name="lang-impl" />
   </component>
 </module>
 

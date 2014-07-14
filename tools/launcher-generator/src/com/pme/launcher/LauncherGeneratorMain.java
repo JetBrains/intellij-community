@@ -164,6 +164,7 @@ public class LauncherGeneratorMain {
       generator.setVersionInfoString("LegalCopyright", "Copyright (C) 2000-" + year + " " + companyName);
       generator.setVersionInfoString("ProductName", productFullName);
       generator.setVersionInfoString("FileVersion", versionString);
+      generator.setVersionInfoString("FileDescription", productFullName);
       generator.setVersionInfoString("ProductVersion", versionString);
       generator.setVersionInfoString("InternalName", productShortName.toLowerCase() + ".exe");
       generator.setVersionInfoString("OriginalFilename", productShortName.toLowerCase() + ".exe");

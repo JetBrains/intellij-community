@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class FixedSizeButton extends JButton {
     setMargin(new Insets(0, 0, 0, 0));
     setDefaultCapable(false);
     setFocusable(false);
-    if (UIUtil.isUnderAquaLookAndFeel() && size == -1) {
+    if (((UIUtil.isUnderAquaLookAndFeel())&& size == -1) || UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula()) {
       putClientProperty("JButton.buttonType", "square");
     }
   }
@@ -87,14 +87,15 @@ public class FixedSizeButton extends JButton {
   public Dimension getPreferredSize() {
     if (myComponent != null) {
       int size = myComponent.getPreferredSize().height;
+      if (myComponent instanceof ComboBox && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
+        size -= 2; // decrement to match JTextField's preferred height
+      }
       return new Dimension(size, size);
     }
-    else if (mySize != -1) {
+    if (mySize != -1) {
       return new Dimension(mySize, mySize);
     }
-    else {
-      return super.getPreferredSize();
-    }
+    return super.getPreferredSize();
   }
 
   public void setAttachedComponent(JComponent component) {
@@ -108,5 +109,21 @@ public class FixedSizeButton extends JButton {
   public void setSize(int size) {
     mySize = size;
   }
-}
 
+  @Override
+  public void setBounds(int x, int y, int width, int height) {
+    int size = Math.min(width, height);
+    super.setBounds(x, y, size, size);
+  }
+
+  @Override
+  public void setBounds(Rectangle r) {
+    if (r.width != r.height) {
+      int size = Math.min(r.width, r.height);
+      r = new Rectangle(r);
+      r.width = size;
+      r.height = size;
+    }
+    super.setBounds(r);
+  }
+}

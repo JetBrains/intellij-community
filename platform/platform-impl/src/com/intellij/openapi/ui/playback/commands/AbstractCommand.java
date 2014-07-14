@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,13 @@ package com.intellij.openapi.ui.playback.commands;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.playback.PlaybackCommand;
 import com.intellij.openapi.ui.playback.PlaybackContext;
-import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.ActionCallback;
 
 import java.io.File;
 
 public abstract class AbstractCommand implements PlaybackCommand {
 
-  public static String CMD_PREFIX = "%";
+  public static final String CMD_PREFIX = "%";
 
   private final String myText;
   private final int myLine;

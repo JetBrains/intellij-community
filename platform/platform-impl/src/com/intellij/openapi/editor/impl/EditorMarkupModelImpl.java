@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,8 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
@@ -298,7 +300,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       int lineEnd = doc.getLineEndOffset(doc.getLineNumber(offset));
       myEditor.getCaretModel().moveToOffset(lineEnd);
     }
-
+    myEditor.getCaretModel().removeSecondaryCarets();
     myEditor.getCaretModel().moveToOffset(offset);
     myEditor.getSelectionModel().removeSelection();
     ScrollingModel scrollingModel = myEditor.getScrollingModel();
@@ -374,8 +376,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     repaintVerticalScrollBar();
   }
 
-  private void assertIsDispatchThread() {
-    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(myEditor.getComponent());
+  private static void assertIsDispatchThread() {
+    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
   }
 
   @Override
@@ -410,10 +412,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private boolean isMirrored() {
-    return myEditor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_LEFT;
+    return myEditor.isMirrored();
   }
 
-  private static final Dimension STRIPE_BUTTON_PREFERRED_SIZE = new Dimension(PREFERRED_WIDTH, ERROR_ICON_HEIGHT + 4);
+  private static final Dimension STRIPE_BUTTON_PREFERRED_SIZE = new Dimension(ERROR_ICON_WIDTH + 4, ERROR_ICON_HEIGHT + 4);
 
   private class ErrorStripeButton extends JButton {
     private ErrorStripeButton() {
@@ -425,24 +427,29 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
 
       final Rectangle bounds = getBounds();
+      final Rectangle errorIconBounds = new Rectangle(0, 0, ERROR_ICON_WIDTH, ERROR_ICON_HEIGHT);
+      errorIconBounds.x = bounds.width / 2 - errorIconBounds.width / 2 + 1;
+      errorIconBounds.y = bounds.height / 2 - errorIconBounds.height / 2;
+      
       try {
         if (UISettings.getInstance().PRESENTATION_MODE) {
           g.setColor(getEditor().getColorsScheme().getDefaultBackground());
           g.fillRect(0, 0, bounds.width, bounds.height);
 
           if (myErrorStripeRenderer != null) {
-            myErrorStripeRenderer.paint(this, g, new Rectangle(2, 0, 10, 7));
+            myErrorStripeRenderer.paint(this, g, errorIconBounds);
           }
         } else {
 
           g.setColor(ButtonlessScrollBarUI.getTrackBackground());
           g.fillRect(0, 0, bounds.width, bounds.height);
-
+          
           g.setColor(ButtonlessScrollBarUI.getTrackBorderColor());
-          g.drawLine(0, 0, 0, bounds.height);
+          int borderX = !isMirrored() ? 0 : bounds.width - 1;
+          g.drawLine(borderX, 0, borderX, bounds.height);
 
           if (myErrorStripeRenderer != null) {
-            myErrorStripeRenderer.paint(this, g, new Rectangle(5, 2, ERROR_ICON_WIDTH, ERROR_ICON_HEIGHT));
+            myErrorStripeRenderer.paint(this, g, errorIconBounds);
           }
         }
       }
@@ -453,7 +460,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     public Dimension getPreferredSize() {
-      return UISettings.getInstance().PRESENTATION_MODE ? new Dimension(10,7) : STRIPE_BUTTON_PREFERRED_SIZE;
+      return STRIPE_BUTTON_PREFERRED_SIZE;
     }
   }
 
@@ -466,6 +473,24 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     protected JButton createDecreaseButton(int orientation) {
       myErrorStripeButton = myErrorStripeRenderer == null ? super.createDecreaseButton(orientation) : new ErrorStripeButton();
       return myErrorStripeButton;
+    }
+
+    @Override
+    public boolean alwaysShowTrack() {
+      if (scrollbar.getOrientation() == Adjustable.VERTICAL) return true;
+      return super.alwaysShowTrack();
+    }
+
+    @Override
+    public void installUI(JComponent c) {
+      super.installUI(c);
+      myCachedTrack = null;
+    }
+
+    @Override
+    public void uninstallUI(JComponent c) {
+      super.uninstallUI(c);
+      myCachedTrack = null;
     }
 
     @Override
@@ -502,26 +527,45 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         super.paintThumb(g, c, thumbBounds);
         return;
       }
-      int shift = isMirrored() ? -9 : 9;
-      g.translate(shift, 0);
-      super.paintThumb(g, c, thumbBounds);
-      g.translate(-shift, 0);
+
+      if (isMacOverlayScrollbar()) {
+        if (!isMirrored()) {
+          super.paintThumb(g, c, thumbBounds);
+        }
+        else {
+          Graphics2D g2d = (Graphics2D)g;
+          AffineTransform old = g2d.getTransform();
+
+          AffineTransform tx = AffineTransform.getScaleInstance(-1, 1);
+          tx.translate(-c.getWidth(), 0);
+          g2d.transform(tx);
+          g.translate(1, 0);
+          super.paintThumb(g, c, thumbBounds);
+          g2d.setTransform(old);
+        }
+      }
+      else {
+        int shift = isMirrored() ? -9 : 9;
+        g.translate(shift, 0);
+        super.paintThumb(g, c, thumbBounds);
+        g.translate(-shift, 0);
+      }
     }
 
     @Override
     protected int adjustThumbWidth(int width) {
-      if (UISettings.getInstance().PRESENTATION_MODE) return super.adjustThumbWidth(width);
+      if (isMacOverlayScrollbar() || UISettings.getInstance().PRESENTATION_MODE) return super.adjustThumbWidth(width);
       return width - 2;
     }
 
     @Override
     protected int getThickness() {
       if (UISettings.getInstance().PRESENTATION_MODE) return super.getThickness();
-      return super.getThickness() + 7;
+      return super.getThickness() + (isMacOverlayScrollbar() ? 2 : 7);
     }
 
     @Override
-    protected void paintTrack(Graphics g, JComponent c, Rectangle bounds) {
+    protected void doPaintTrack(Graphics g, JComponent c, Rectangle bounds) {
       if (UISettings.getInstance().PRESENTATION_MODE) {
         g.setColor(getEditor().getColorsScheme().getDefaultBackground());
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
@@ -574,6 +618,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected Color adjustColor(Color c) {
+      if (isMacOverlayScrollbar()) return super.adjustColor(c);
+      
       if (UIUtil.isUnderDarcula()) {
         return c;
       }
@@ -1105,14 +1151,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         needDelay = true;
         final JPanel editorFragmentPreviewPanel = new JPanel() {
           private static final int R = 6;
-          private static final int LEFT_INDENT = 0;//BalloonImpl.ARC;// + 5;
 
           @Override
           public Dimension getPreferredSize() {
-            int width = myEditor.getGutterComponentEx().getWidth();
-            width += Math.min(myEditor.getScrollingModel().getVisibleArea().width, myEditor.getContentComponent().getWidth());
-            if (UISettings.getInstance().HIDE_TOOL_STRIPES) width -=2;
-            return new Dimension(width - BalloonImpl.POINTER_WIDTH - LEFT_INDENT, myEditor.getLineHeight() * (myEndVisualLine - myStartVisualLine));
+            int width = myEditor.getGutterComponentEx().getWidth() + myEditor.getScrollingModel().getVisibleArea().width;
+            if (!ToolWindowManagerEx.getInstanceEx(myEditor.getProject()).getIdsOn(ToolWindowAnchor.LEFT).isEmpty()) width--;
+            return new Dimension(width - BalloonImpl.POINTER_WIDTH, myEditor.getLineHeight() * (myEndVisualLine - myStartVisualLine));
           }
 
           @Override
@@ -1132,13 +1176,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               UISettings.setupAntialiasing(cg);
               int lineShift = -myEditor.getLineHeight() * myCacheStartLine;
 
-              AffineTransform translateInstance = AffineTransform.getTranslateInstance(-4, lineShift);
+              AffineTransform translateInstance = AffineTransform.getTranslateInstance(-3, lineShift);
               translateInstance.preConcatenate(t);
               cg.setTransform(translateInstance);
 
               cg.setClip(0, -lineShift, gutterWidth, myCacheLevel2.getHeight());
               gutterComponentEx.paint(cg);
-              translateInstance = AffineTransform.getTranslateInstance(gutterWidth - 4, lineShift);
+              translateInstance = AffineTransform.getTranslateInstance(gutterWidth  - 3, lineShift);
               translateInstance.preConcatenate(t);
               cg.setTransform(translateInstance);
               EditorComponentImpl contentComponent = myEditor.getContentComponent();
@@ -1158,7 +1202,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               g2d.setColor(myEditor.getBackgroundColor());
               g2d.fillRect(0, 0, getWidth(), getHeight());
               AffineTransform translateInstance =
-                AffineTransform.getTranslateInstance(-LEFT_INDENT + gutterWidth, myEditor.getLineHeight() * (myCacheStartLine - myStartVisualLine));
+                AffineTransform.getTranslateInstance(gutterWidth, myEditor.getLineHeight() * (myCacheStartLine - myStartVisualLine));
               translateInstance.preConcatenate(transform);
               g2d.setTransform(translateInstance);
               UIUtil.drawImage(g2d, myCacheLevel2, -gutterWidth, 0, null);
@@ -1170,6 +1214,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 if (tooltip == null) continue;
                 String s = String.valueOf(tooltip);
                 if (s.isEmpty()) continue;
+                s = s.replaceAll("&nbsp;", " ").replaceAll("\\s+", " ");
 
                 LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(hEndOffset);
                 int endOfLineOffset = myEditor.getDocument().getLineEndOffset(logicalPosition.line);
@@ -1209,7 +1254,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 double cy = 0;
                 double rx = size.width / 10;
                 int ry = myEditor.getLineHeight() * 3 / 2;
-                g2.setPaint(new GradientPaint(0, 0, new Color(255, 255, 255, 75), 0, ry, new Color(255, 255, 255, 10)));
+                g2.setPaint(new GradientPaint(0, 0, Gray._255.withAlpha(75), 0, ry, Gray._255.withAlpha(10)));
                 double pseudoMajorAxis = size.width - rx * 9 / 5;
                 Shape topShape1 = new Ellipse2D.Double(cx - rx - pseudoMajorAxis / 2, cy - ry, 2 * rx, 2 * ry);
                 Shape topShape2 = new Ellipse2D.Double(cx - rx + pseudoMajorAxis / 2, cy - ry, 2 * rx, 2 * ry);
@@ -1219,7 +1264,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 g2.fill(topArea);
                 Area bottomArea = new Area(s);
                 bottomArea.subtract(topArea);
-                g2.setPaint(new GradientPaint(0, size.height - ry, new Color(0, 0, 0, 10), 0, size.height, new Color(255, 255, 255, 30)));
+                g2.setPaint(new GradientPaint(0, size.height - ry, Gray._0.withAlpha(10), 0, size.height, Gray._255.withAlpha(30)));
                 g2.fill(bottomArea);
               }
             }
@@ -1243,10 +1288,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             myDelayed = false;
           }
         };
+        myEditorPreviewHint.setForceLightweightPopup(true);
       }
       Point point = new Point(hintInfo.getOriginalPoint());
       hintInfo.setTextBg(myEditor.getColorsScheme().getDefaultBackground());
-      hintInfo.setBorderColor(new JBColor(Gray._0, Gray._111));
+      hintInfo.setBorderColor(myEditor.getColorsScheme().getDefaultForeground());
       point = SwingUtilities.convertPoint(((EditorImpl)editor).getVerticalScrollBar(), point, myEditor.getComponent().getRootPane());
       myPointHolder.set(point);
       myHintHolder.set(hintInfo);

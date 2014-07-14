@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -65,7 +66,8 @@ public class XDebuggerTestUtil {
     XBreakpointManager manager = XDebuggerManager.getInstance(project).getBreakpointManager();
     XLineBreakpointImpl breakpoint = (XLineBreakpointImpl)manager.findBreakpointAtLine(type, file, line);
     Assert.assertNotNull(breakpoint);
-    Assert.assertEquals(validity ? AllIcons.Debugger.Db_verified_breakpoint : AllIcons.Debugger.Db_invalid_breakpoint, breakpoint.getIcon());
+    Assert
+      .assertEquals(validity ? AllIcons.Debugger.Db_verified_breakpoint : AllIcons.Debugger.Db_invalid_breakpoint, breakpoint.getIcon());
     Assert.assertEquals(errorMessage, breakpoint.getErrorMessage());
   }
 
@@ -93,7 +95,7 @@ public class XDebuggerTestUtil {
   }
 
   public static void assertPosition(XSourcePosition pos, VirtualFile file, int line) throws IOException {
-    Assert.assertNotNull(pos);
+    Assert.assertNotNull("No current position", pos);
     Assert.assertEquals(new File(file.getPath()).getCanonicalPath(), new File(pos.getFile().getPath()).getCanonicalPath());
     if (line != -1) Assert.assertEquals(line, pos.getLine());
   }
@@ -172,7 +174,7 @@ public class XDebuggerTestUtil {
 
   public static XTestValueNode computePresentation(XValue value, long timeout) throws InterruptedException {
     XTestValueNode node = new XTestValueNode();
-    if (value instanceof com.intellij.xdebugger.frame.XNamedValue) {
+    if (value instanceof XNamedValue) {
       node.myName = ((XNamedValue)value).getName();
     }
     value.computePresentation(node, XValuePlace.TREE);
@@ -303,7 +305,8 @@ public class XDebuggerTestUtil {
     expectedNames.removeAll(actualNames);
     UsefulTestCase.assertTrue("Missing variables:" + StringUtil.join(expectedNames, ", ")
                               + "\nAll Variables: " + StringUtil.join(actualNames, ", "),
-                              expectedNames.isEmpty());
+                              expectedNames.isEmpty()
+    );
   }
 
   public static void assertSourcePosition(final XValue value, VirtualFile file, int offset) {
@@ -365,15 +368,38 @@ public class XDebuggerTestUtil {
 
   public static void removeAllBreakpoints(@NotNull final Project project) {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    XBreakpoint<?>[] breakpoints = breakpointManager.getAllBreakpoints();
-    for (XBreakpoint b : breakpoints) {
-      breakpointManager.removeBreakpoint(b);
+    XBreakpoint<?>[] breakpoints = getBreakpoints(breakpointManager);
+    for (final XBreakpoint b : breakpoints) {
+      new WriteAction() {
+        @Override
+        protected void run(Result result) throws Throwable {
+          breakpointManager.removeBreakpoint(b);
+        }
+      }.execute();
+    }
+  }
+
+  public static XBreakpoint<?>[] getBreakpoints(final XBreakpointManager breakpointManager) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<XBreakpoint<?>[]>() {
+      public XBreakpoint<?>[] compute() {
+        return breakpointManager.getAllBreakpoints();
+      }
+    });
+  }
+
+  public static <B extends XBreakpoint<?>>
+  void setDefaultBreakpointEnabled(@NotNull final Project project, Class<? extends XBreakpointType<B, ?>> bpTypeClass, boolean enabled) {
+    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    XBreakpointType<B, ?> bpType = XDebuggerUtil.getInstance().findBreakpointType(bpTypeClass);
+    XBreakpoint<?> bp = breakpointManager.getDefaultBreakpoint(bpType);
+    if (bp != null) {
+      bp.setEnabled(enabled);
     }
   }
 
   public static void setBreakpointCondition(Project project, int line, final String condition) {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    for (XBreakpoint breakpoint : breakpointManager.getAllBreakpoints()) {
+    for (XBreakpoint breakpoint : getBreakpoints(breakpointManager)) {
       if (breakpoint instanceof XLineBreakpoint) {
         final XLineBreakpoint lineBreakpoint = (XLineBreakpoint)breakpoint;
 
@@ -391,7 +417,7 @@ public class XDebuggerTestUtil {
 
   public static void setBreakpointLogExpression(Project project, int line, final String logExpression) {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    for (XBreakpoint breakpoint : breakpointManager.getAllBreakpoints()) {
+    for (XBreakpoint breakpoint : getBreakpoints(breakpointManager)) {
       if (breakpoint instanceof XLineBreakpoint) {
         final XLineBreakpoint lineBreakpoint = (XLineBreakpoint)breakpoint;
 

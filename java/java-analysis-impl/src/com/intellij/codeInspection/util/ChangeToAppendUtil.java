@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.codeInspection.util;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,14 +34,10 @@ public class ChangeToAppendUtil {
   }
 
   @Nullable
-  public static StringBuilder buildAppendExpression(PsiExpression concatenation, boolean useStringValueOf, @NonNls StringBuilder out)
-    throws IncorrectOperationException {
+  public static StringBuilder buildAppendExpression(PsiExpression concatenation, boolean useStringValueOf, @NonNls StringBuilder out) {
     final PsiType type = concatenation.getType();
-    if (type == null) {
-      return null;
-    }
-    if (concatenation instanceof PsiPolyadicExpression && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-      PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)concatenation;
+    if (concatenation instanceof PsiPolyadicExpression && type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)concatenation;
       final PsiExpression[] operands = polyadicExpression.getOperands();
       boolean isConstant = true;
       boolean isString = false;
@@ -79,7 +74,7 @@ public class ChangeToAppendUtil {
       }
     }
     else {
-      append(concatenation.getText(), useStringValueOf && !type.equalsToText(CommonClassNames.JAVA_LANG_STRING), out);
+      append(concatenation.getText(), useStringValueOf && (type == null || !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)), out);
     }
     return out;
   }

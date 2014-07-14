@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementEditorPredicate;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -72,7 +73,7 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends Intention {
       newLiteralText.append(text.substring(0, escapeStart));
       final int escapeEnd = appendUnicodeEscape(text, escapeStart, newLiteralText);
       newLiteralText.append(text.substring(escapeEnd, text.length()));
-      replaceExpression(newLiteralText.toString(), literalExpression);
+      PsiReplacementUtil.replaceExpression(literalExpression, newLiteralText.toString());
     }
   }
 

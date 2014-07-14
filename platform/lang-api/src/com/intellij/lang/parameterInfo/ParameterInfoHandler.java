@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,19 +27,20 @@ public interface ParameterInfoHandler <ParameterOwner, ParameterType> {
 
   // Find element for parameter info should also set ItemsToShow in context and may set highlighted element
   @Nullable
-  ParameterOwner findElementForParameterInfo(final CreateParameterInfoContext context);
+  ParameterOwner findElementForParameterInfo(@NotNull CreateParameterInfoContext context);
   // Usually context.showHint
-  void showParameterInfo(@NotNull final ParameterOwner element, final CreateParameterInfoContext context);
+  void showParameterInfo(@NotNull final ParameterOwner element, @NotNull CreateParameterInfoContext context);
 
   // Null returns leads to removing hint
   @Nullable
-  ParameterOwner findElementForUpdatingParameterInfo(final UpdateParameterInfoContext context);
-  void updateParameterInfo(@NotNull final ParameterOwner o, final UpdateParameterInfoContext context);
+  ParameterOwner findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context);
+  void updateParameterInfo(@NotNull final ParameterOwner parameterOwner, @NotNull UpdateParameterInfoContext context);
 
   // Can be null if parameter info does not track parameter index
-  @Nullable String getParameterCloseChars();
+  @Nullable
+  String getParameterCloseChars();
   boolean tracksParameterIndex();
 
   // context.setEnabled / context.setupUIComponentPresentation
-  void updateUI(ParameterType p, ParameterInfoUIContext context);
+  void updateUI(ParameterType p, @NotNull ParameterInfoUIContext context);
 }

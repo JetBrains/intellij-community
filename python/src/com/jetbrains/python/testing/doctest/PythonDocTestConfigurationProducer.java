@@ -21,6 +21,8 @@ package com.jetbrains.python.testing.doctest;
 
 import com.intellij.execution.Location;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementVisitor;
@@ -85,4 +87,10 @@ public class PythonDocTestConfigurationProducer extends PythonTestConfigurationP
       }
     }
   }
+
+  @Override
+  protected boolean isTestFolder(@NotNull VirtualFile virtualFile, @NotNull Project project) {
+    return false;
+  }
+
 }

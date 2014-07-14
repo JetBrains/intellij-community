@@ -78,10 +78,16 @@ public class GenerateManagedDependencyAction extends GenerateDomElementAction {
                 dependency.getGroupId().setStringValue(groupId);
                 dependency.getArtifactId().setStringValue(artifactId);
                 String typeValue = parentDependency.getType().getStringValue();
+                String classifier = parentDependency.getClassifier().getStringValue();
 
                 if (!StringUtil.isEmptyOrSpaces(typeValue)) {
                   dependency.getType().setStringValue(typeValue);
                 }
+
+                if (!StringUtil.isEmptyOrSpaces(classifier)) {
+                  dependency.getClassifier().setStringValue(classifier);
+                }
+
                 dependency.getVersion().undefine();
               }
             }

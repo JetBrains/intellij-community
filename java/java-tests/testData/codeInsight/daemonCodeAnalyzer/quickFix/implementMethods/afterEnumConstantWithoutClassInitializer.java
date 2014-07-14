@@ -1,9 +1,11 @@
 // "Implement Methods" "true"
 enum E {
-  A {
-      public void foo() {
-        
-      }
-  };
-  abstract void foo();
+    A {
+        @Override
+        public int foo() {
+            return 0;
+        }
+    };
+
+    public abstract int foo();
 }

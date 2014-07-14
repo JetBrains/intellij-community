@@ -16,13 +16,17 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
@@ -40,11 +44,21 @@ public class LambdaCompletionProvider extends CompletionProvider<CompletionParam
     final ExpectedTypeInfo[] expectedTypes = JavaSmartCompletionContributor.getExpectedTypes(parameters);
     for (ExpectedTypeInfo expectedType : expectedTypes) {
       final PsiType defaultType = expectedType.getDefaultType();
-      if (LambdaHighlightingUtil.checkInterfaceFunctional(defaultType) == null) {
-        final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(defaultType);
+      if (LambdaUtil.isFunctionalType(defaultType)) {
+        final PsiType functionalInterfaceType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(defaultType);
+        final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
         if (method != null) {
-          final PsiParameter[] params = method.getParameterList().getParameters();
-          final String paramsString = "(" + StringUtil.join(params, new Function<PsiParameter, String>() {
+          PsiParameter[] params = method.getParameterList().getParameters();
+          final Project project = method.getProject();
+          final PsiElement originalPosition = parameters.getOriginalPosition();
+          final JVMElementFactory jvmElementFactory = originalPosition != null ? JVMElementFactories.getFactory(originalPosition.getLanguage(), project) : null;
+          if (jvmElementFactory != null) {
+            final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(method, PsiUtil.resolveGenericsClassInType(functionalInterfaceType));
+            final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+            params = GenerateMembersUtil.overriddenParameters(params, jvmElementFactory, codeStyleManager, substitutor, originalPosition);
+          }
+
+          final String paramsString = params.length == 1 ? params[0].getName() : "(" + StringUtil.join(params, new Function<PsiParameter, String>() {
             @Override
             public String fun(PsiParameter parameter) {
               return parameter.getName();

@@ -133,6 +133,7 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
       new MultiValuesMap<StdArrangementTokenType, ArrangementSettingsToken>();
     @Nullable private String myNamePattern;
     @Nullable private String myNamespacePattern;
+    @Nullable private String myText;
 
     /**
      * Adds given entry to context by given entry type.
@@ -151,6 +152,9 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
       }
       else if (StdArrangementTokens.Regexp.XML_NAMESPACE.equals(condition.getType())) {
         myNamespacePattern = condition.getValue().toString();
+      }
+      else if (StdArrangementTokens.Regexp.TEXT.equals(condition.getType())) {
+        myText = condition.getValue().toString();
       }
       Object v = condition.getValue();
       //Process any StdArrangementSettingsToken. No need to change it when new types of tokens will be processed.
@@ -177,6 +181,9 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
       }
       if (myNamespacePattern != null) {
         result.add(new ByNamespaceArrangementEntryMatcher(myNamespacePattern));
+      }
+      if (myText != null) {
+        result.add(new ByTextArrangementEntryMatcher(myText));
       }
       return result;
     }

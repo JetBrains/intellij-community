@@ -172,4 +172,13 @@ public class DfaVariableState {
   public DfaValue getValue() {
     return null;
   }
+
+  public Set<DfaPsiType> getInstanceofValues() {
+    return myInstanceofValues;
+  }
+
+  public Set<DfaPsiType> getNotInstanceofValues() {
+    return myNotInstanceofValues;
+  }
+
 }

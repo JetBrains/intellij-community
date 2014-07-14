@@ -52,7 +52,7 @@ public class RestoreDefault extends AnAction implements IPropertyTableAction {
   private static void setEnabled(RadPropertyTable table, Presentation presentation) {
     try {
       Property property = table.getSelectionProperty();
-      presentation.setEnabled(property != null && !table.isDefault(property));
+      presentation.setEnabled(property != null && !table.isEditing() && !table.isDefault(property));
     }
     catch (Exception e) {
       presentation.setEnabled(false);

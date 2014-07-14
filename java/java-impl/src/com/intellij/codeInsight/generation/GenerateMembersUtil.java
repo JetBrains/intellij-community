@@ -30,7 +30,10 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.light.LightTypeElement;
 import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -44,6 +47,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.UniqueNameGenerator;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -385,10 +389,25 @@ public class GenerateMembersUtil {
                                            @NotNull PsiParameterList sourceParameterList,
                                            @NotNull PsiParameterList targetParameterList,
                                            @NotNull PsiSubstitutor substitutor, PsiElement target) {
-    PsiParameter[] parameters = sourceParameterList.getParameters();
+    final PsiParameter[] parameters = sourceParameterList.getParameters();
+    final PsiParameter[] newParameters = overriddenParameters(parameters, factory, codeStyleManager, substitutor, target);
+    for (int i = 0; i < newParameters.length; i++) {
+      final PsiParameter newParameter = newParameters[i];
+      copyOrReplaceModifierList(parameters[i], newParameter);
+      targetParameterList.add(newParameter);
+    }
+  }
+
+  public static PsiParameter[] overriddenParameters(PsiParameter[] parameters,
+                                                    @NotNull JVMElementFactory factory,
+                                                    @NotNull JavaCodeStyleManager codeStyleManager,
+                                                    @NotNull PsiSubstitutor substitutor,
+                                                    PsiElement target) {
+    PsiParameter[] result = new PsiParameter[parameters.length];
     UniqueNameGenerator generator = new UniqueNameGenerator();
 
-    for (PsiParameter parameter : parameters) {
+    for (int i = 0; i < parameters.length; i++) {
+      PsiParameter parameter = parameters[i];
       final PsiType parameterType = parameter.getType();
       final PsiType substituted = substituteType(substitutor, parameterType, (PsiMethod)parameter.getDeclarationScope());
       @NonNls String paramName = parameter.getName();
@@ -413,10 +432,9 @@ public class GenerateMembersUtil {
         paramName = generator.generateUniqueName(paramName);
       }
       generator.addExistingName(paramName);
-      final PsiParameter newParameter = factory.createParameter(paramName, substituted, target);
-      copyOrReplaceModifierList(parameter, newParameter);
-      targetParameterList.add(newParameter);
+      result[i] = factory.createParameter(paramName, substituted, target);
     }
+    return result;
   }
 
   private static void substituteThrows(@NotNull JVMElementFactory factory,
@@ -568,12 +586,24 @@ public class GenerateMembersUtil {
 
   @Nullable
   public static PsiMethod generateGetterPrototype(@NotNull PsiField field) {
-    return annotateOnOverrideImplement(field.getContainingClass(), PropertyUtil.generateGetterPrototype(field));
+    return setVisibility(field, annotateOnOverrideImplement(field.getContainingClass(), PropertyUtil.generateGetterPrototype(field)));
   }
 
   @Nullable
   public static PsiMethod generateSetterPrototype(@NotNull PsiField field) {
-    return annotateOnOverrideImplement(field.getContainingClass(), PropertyUtil.generateSetterPrototype(field));
+    return setVisibility(field, annotateOnOverrideImplement(field.getContainingClass(), PropertyUtil.generateSetterPrototype(field)));
+  }
+
+  @Contract("_, null -> null")
+  public static PsiMethod setVisibility(PsiMember member, PsiMethod prototype) {
+    if (prototype == null) return null;
+    final String visibility = CodeStyleSettingsManager.getSettings(member.getProject()).VISIBILITY;
+    final PsiModifierList modifierList = prototype.getModifierList();
+    final String newVisibility = VisibilityUtil.ESCALATE_VISIBILITY.equals(visibility)
+                                 ? PsiUtil.getMaximumModifierForMember(member instanceof PsiClass ? (PsiClass)member : member.getContainingClass(), false)
+                                 : visibility;
+    VisibilityUtil.setVisibility(modifierList, newVisibility);
+    return prototype;
   }
 
   @Nullable

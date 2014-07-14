@@ -25,6 +25,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -79,7 +80,7 @@ public class CvsConfigurationPanel {
         return text;
       }
 
-      public void setText(JTextField textField, String text) {
+      public void setText(JTextField textField, @NotNull String text) {
         textField.setText(text);
       }
     });

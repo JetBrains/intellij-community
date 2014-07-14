@@ -15,13 +15,16 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,17 +32,37 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- *
- * @author Kirill Likhodedov
- */
 public class Executor {
+
+  protected static final Logger LOG = Logger.getInstance(Executor.class);
+
+  public static class ExecutionException extends RuntimeException {
+
+    private final int myExitCode;
+    @NotNull private final String myOutput;
+
+    ExecutionException(int exitCode, @NotNull String output) {
+      super("Failed with exit code " + exitCode);
+      myExitCode = exitCode;
+      myOutput = output;
+    }
+
+    public int getExitCode() {
+      return myExitCode;
+    }
+
+    @NotNull
+    public String getOutput() {
+      return myOutput;
+    }
+
+  }
 
   private static String ourCurrentDir;
 
   private static void cdAbs(String absolutePath) {
     ourCurrentDir = absolutePath;
-    log("cd " + shortenPath(absolutePath));
+    debug("# cd " + shortenPath(absolutePath));
   }
 
   private static void cdRel(String relativePath) {
@@ -63,7 +86,8 @@ public class Executor {
     return ourCurrentDir;
   }
 
-  public static String touch(String filePath) {
+  @NotNull
+  public static File touch(String filePath) {
     try {
       File file = child(filePath);
       assert !file.exists() : "File " + file + " shouldn't exist yet";
@@ -71,16 +95,17 @@ public class Executor {
       new File(file.getParent()).mkdirs(); // ensure to create the directories
       boolean fileCreated = file.createNewFile();
       assert fileCreated;
-      log("touch " + filePath);
-      return file.getPath();
+      debug("# touch " + filePath);
+      return file;
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  public static String touch(String fileName, String content) {
-    String filePath = touch(fileName);
+  @NotNull
+  public static File touch(String fileName, String content) {
+    File filePath = touch(fileName);
     echo(fileName, content);
     return filePath;
   }
@@ -94,18 +119,27 @@ public class Executor {
     }
   }
 
-  public static String mkdir(String dirName) {
+  public static void overwrite(@NotNull File file, @NotNull String content) throws IOException {
+    FileUtil.writeToFile(file, content.getBytes(), false);
+  }
+
+  public static void append(@NotNull File file, @NotNull String content) throws IOException {
+    FileUtil.writeToFile(file, content.getBytes(), true);
+  }
+
+  @NotNull
+  public static File mkdir(@NotNull String dirName) {
     File file = child(dirName);
     boolean dirMade = file.mkdir();
     assert dirMade;
-    log("mkdir " + dirName);
-    return file.getPath();
+    debug("# mkdir " + dirName);
+    return file;
   }
 
   public static String cat(String fileName) {
     try {
       String content = FileUtil.loadFile(child(fileName));
-      log("cat " + fileName);
+      debug("# cat " + fileName);
       return content;
     }
     catch (IOException e) {
@@ -122,7 +156,7 @@ public class Executor {
     }
   }
 
-  protected static String run(List<String> params) {
+  protected static String run(@NotNull List<String> params, boolean ignoreNonZeroExitCode) throws ExecutionException {
     final ProcessBuilder builder = new ProcessBuilder().command(params);
     builder.directory(ourCurrentDir());
     builder.redirectErrorStream(true);
@@ -135,17 +169,23 @@ public class Executor {
     }
 
     CapturingProcessHandler handler = new CapturingProcessHandler(clientProcess, CharsetToolkit.getDefaultSystemCharset());
-    ProcessOutput result = handler.runProcess(30*1000);
+    ProcessOutput result = handler.runProcess(30 * 1000);
     if (result.isTimeout()) {
       throw new RuntimeException("Timeout waiting for the command execution. Command: " + StringUtil.join(params, " "));
     }
 
-    if (result.getExitCode() != 0) {
-      log("{" + result.getExitCode() + "}");
-    }
     String stdout = result.getStdout().trim();
-    if (!StringUtil.isEmptyOrSpaces(stdout)) {
-      log(stdout.trim());
+    if (result.getExitCode() != 0) {
+      if (ignoreNonZeroExitCode) {
+        debug("{" + result.getExitCode() + "}");
+      }
+      debug(stdout);
+      if (!ignoreNonZeroExitCode) {
+        throw new ExecutionException(result.getExitCode(), stdout);
+      }
+    }
+    else {
+      debug(stdout);
     }
     return stdout;
   }
@@ -191,55 +231,45 @@ public class Executor {
     return split;
   }
 
-  protected static String findExecutable(String programName, String unixExec, String winExec, Collection<String> pathEnvs) {
-    String exec = findInPathEnvs(programName, pathEnvs);
+  protected static String findExecutable(String programName, String unixExec, String winExec, Collection<String> envs) {
+    String exec = findEnvValue(programName, envs);
     if (exec != null) {
       return exec;
     }
-    exec = findInPath(programName, unixExec, winExec);
-    if (exec != null) {
-      return exec;
+    File fileExec = PathEnvironmentVariableUtil.findInPath(SystemInfo.isWindows ? winExec : unixExec);
+    if (fileExec != null) {
+      return fileExec.getAbsolutePath();
     }
-    throw new IllegalStateException(programName + " executable not found. " +
-                                    "Please define a valid environment variable " + pathEnvs.iterator().next() +
-                                    " pointing to the " + programName + " executable.");
+    throw new IllegalStateException(programName + " executable not found. " + (envs.size() > 0 ?
+                                                                               "Please define a valid environment variable " +
+                                                                               envs.iterator().next() +
+                                                                               " pointing to the " +
+                                                                               programName +
+                                                                               " executable." : ""));
   }
 
-  protected static String findInPath(String programName, String unixExec, String winExec) {
-    String path = System.getenv(SystemInfo.isWindows ? "Path" : "PATH");
-    if (path != null) {
-      String name = SystemInfo.isWindows ? winExec : unixExec;
-      for (String dir : path.split(File.pathSeparator)) {
-        File file = new File(dir, name);
-        if (file.canExecute()) {
-          log("Using " + programName + " from PATH: " + file.getPath());
-          return file.getPath();
-        }
+  protected static String findEnvValue(String programNameForLog, Collection<String> envs) {
+    for (String env : envs) {
+      String val = System.getenv(env);
+      if (val != null && new File(val).canExecute()) {
+        debug(String.format("Using %s from %s: %s", programNameForLog, env, val));
+        return val;
       }
     }
     return null;
   }
 
-  protected static String findInPathEnvs(String programName, Collection<String> pathEnvs) {
-    for (String pathEnv : pathEnvs) {
-      String exec = System.getenv(pathEnv);
-      if (exec != null && new File(exec).canExecute()) {
-        log(String.format("Using %s from %s: %s", programName, pathEnv, exec));
-        return exec;
-      }
+  protected static void debug(String msg) {
+    if (!StringUtil.isEmptyOrSpaces(msg)) {
+      LOG.info(msg);
     }
-    return null;
-  }
-
-  protected static void log(String msg) {
-    System.out.println(msg);
   }
 
   private static String shortenPath(String path) {
     String[] split = path.split("/");
     if (split.length > 3) {
       // split[0] is empty, because the path starts from /
-      return String.format("/%s/.../%s/%s", split[1], split[split.length-2], split[split.length-1]);
+      return String.format("/%s/.../%s/%s", split[1], split[split.length - 2], split[split.length - 1]);
     }
     return path;
   }
@@ -253,5 +283,4 @@ public class Executor {
     assert ourCurrentDir != null : "Current dir hasn't been initialized yet. Call cd at least once before any other command.";
     return new File(ourCurrentDir);
   }
-
 }

@@ -27,7 +27,7 @@ import java.util.*;
 
 import static com.intellij.tasks.generic.GenericRepositoryUtil.concat;
 import static com.intellij.tasks.generic.GenericRepositoryUtil.substituteTemplateVariables;
-import static com.intellij.tasks.generic.TemplateVariable.*;
+import static com.intellij.tasks.generic.TemplateVariable.FactoryVariable;
 
 /**
  * @author Evgeny.Zakrevsky
@@ -139,6 +139,7 @@ public class GenericRepository extends BaseRepositoryImpl {
     myResponseHandlersMap.put(ResponseType.TEXT, getTextResponseHandlerDefault());
   }
 
+  @NotNull
   @Override
   public GenericRepository clone() {
     return new GenericRepository(this);
@@ -202,20 +203,15 @@ public class GenericRepository extends BaseRepositoryImpl {
   private String executeMethod(HttpMethod method) throws Exception {
     LOG.debug("URI is " + method.getURI());
     String responseBody;
-    try {
-      getHttpClient().executeMethod(method);
-      Header contentType = method.getResponseHeader("Content-Type");
-      if (contentType != null && contentType.getValue().contains("charset")) {
-        // ISO-8859-1 if charset wasn't specified in response
-        responseBody = StringUtil.notNullize(method.getResponseBodyAsString());
-      }
-      else {
-        InputStream stream = method.getResponseBodyAsStream();
-        responseBody = stream == null? "": StreamUtil.readText(stream, "utf-8");
-      }
+    getHttpClient().executeMethod(method);
+    Header contentType = method.getResponseHeader("Content-Type");
+    if (contentType != null && contentType.getValue().contains("charset")) {
+      // ISO-8859-1 if charset wasn't specified in response
+      responseBody = StringUtil.notNullize(method.getResponseBodyAsString());
     }
-    finally {
-      method.releaseConnection();
+    else {
+      InputStream stream = method.getResponseBodyAsStream();
+      responseBody = stream == null ? "" : StreamUtil.readText(stream, "utf-8");
     }
     switch (getResponseType()) {
       case XML:
@@ -247,7 +243,7 @@ public class GenericRepository extends BaseRepositoryImpl {
 
   @Nullable
   @Override
-  public Task findTask(final String id) throws Exception {
+  public Task findTask(@NotNull final String id) throws Exception {
     List<TemplateVariable> variables = concat(getAllTemplateVariables(), new TemplateVariable("id", id));
     String requestUrl = substituteTemplateVariables(getSingleTaskUrl(), variables);
     HttpMethod method = getHttpMethod(requestUrl, mySingleTaskMethodType);

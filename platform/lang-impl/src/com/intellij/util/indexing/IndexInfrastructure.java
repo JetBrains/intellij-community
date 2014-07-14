@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,144 +21,81 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.psi.stubs.StubUpdatingIndex;
-import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
 import java.util.Locale;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class IndexInfrastructure {
-  private static final int VERSION = 9;
-  private static final ConcurrentHashMap<ID<?, ?>, Long> ourIndexIdToCreationStamp = new ConcurrentHashMap<ID<?, ?>, Long>();
   private static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-  public static final long INVALID_STAMP = -1L;
-  public static final long INVALID_STAMP2 = -2L;
   private static final String STUB_VERSIONS = ".versions";
+  private static final String PERSISTENT_INDEX_DIRECTORY_NAME = ".persistent";
 
   private IndexInfrastructure() {
   }
 
+  @NotNull
   public static File getVersionFile(@NotNull ID<?, ?> indexName) {
     return new File(getIndexDirectory(indexName, true), indexName + ".ver");
   }
 
+  @NotNull
   public static File getStorageFile(@NotNull ID<?, ?> indexName) {
     return new File(getIndexRootDir(indexName), indexName.toString());
   }
 
+  @NotNull
   public static File getInputIndexStorageFile(@NotNull ID<?, ?> indexName) {
-    return new File(getIndexRootDir(indexName), indexName.toString()+"_inputs");
+    return new File(getIndexRootDir(indexName), indexName +"_inputs");
   }
 
+  @NotNull
   public static File getIndexRootDir(@NotNull ID<?, ?> indexName) {
     return getIndexDirectory(indexName, false);
   }
 
-  private static File getIndexDirectory(ID<?, ?> indexName, boolean forVersion) {
-    final String dirName = indexName.toString().toLowerCase(Locale.US);
-    // store StubIndices under StubUpdating index' root to ensure they are deleted
-    // when StubUpdatingIndex version is changed
-    final File indexDir = indexName instanceof StubIndexKey
-               ? new File(getIndexRootDir(StubUpdatingIndex.INDEX_ID), forVersion ? STUB_VERSIONS : dirName)
-               : new File(PathManager.getIndexRoot(), dirName);
+  public static File getPersistentIndexRoot() {
+    File indexDir = new File(PathManager.getIndexRoot() + File.separator + PERSISTENT_INDEX_DIRECTORY_NAME);
     indexDir.mkdirs();
     return indexDir;
   }
 
-  private static volatile long ourLastStamp; // ensure any file index stamp increases
-
-  public static synchronized void rewriteVersion(final File file, final int version) throws IOException {
-    final long prevLastModifiedValue = file.lastModified();
-    if (file.exists()) {
-      FileUtil.delete(file);
-    }
-    file.getParentFile().mkdirs();
-    final DataOutputStream os = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<DataOutputStream, FileNotFoundException>() {
-      @Nullable
-      @Override
-      public DataOutputStream execute(boolean lastAttempt) throws FileNotFoundException {
-        try {
-          return new DataOutputStream(new FileOutputStream(file));
-        } catch (FileNotFoundException ex) {
-          if (lastAttempt) throw ex;
-          return null;
-        }
-      }
-    });
-    assert os != null;
-    try {
-      os.writeInt(version);
-      os.writeInt(VERSION);
-    }
-    finally {
-      ourIndexIdToCreationStamp.clear();
-      os.close();
-      long max = Math.max(System.currentTimeMillis(), Math.max(prevLastModifiedValue, ourLastStamp) + 2000);
-      ourLastStamp = max;
-      file.setLastModified(max);
-    }
+  @NotNull
+  public static File getPersistentIndexRootDir(@NotNull ID<?, ?> indexName) {
+    return getIndexDirectory(indexName, false, PERSISTENT_INDEX_DIRECTORY_NAME);
   }
 
-  public static long getIndexCreationStamp(ID<?, ?> indexName) {
-    Long version = ourIndexIdToCreationStamp.get(indexName);
-    if (version != null) return version.longValue();
-
-    long stamp = getVersionFile(indexName).lastModified();
-    ourIndexIdToCreationStamp.putIfAbsent(indexName, stamp);
-
-    return stamp;
+  @NotNull
+  private static File getIndexDirectory(@NotNull ID<?, ?> indexName, boolean forVersion) {
+    return getIndexDirectory(indexName, forVersion, "");
   }
 
-  public static long getIndexCreationStamp(ID<?, ?> indexName, FileType fileType) {
-    return getIndexCreationStamp(getStubId(indexName, fileType));
-  }
+  @NotNull
+  private static File getIndexDirectory(@NotNull ID<?, ?> indexName, boolean forVersion, String relativePath) {
+    final String dirName = indexName.toString().toLowerCase(Locale.US);
+    File indexDir;
 
-  public static ID getStubId(ID<?, ?> indexName, FileType fileType) {
-    if (StubUpdatingIndex.INDEX_ID.equals(indexName)) {
-      String name = fileType.getName();
-      ID id = ID.findByName(name);
-      if (id != null) {
-        return id;
-      }
-      else {
-        return StubIndexKey.createIndexKey(name);
-      }
+    if (indexName instanceof StubIndexKey) {
+      // store StubIndices under StubUpdating index' root to ensure they are deleted
+      // when StubUpdatingIndex version is changed
+      indexDir = new File(getIndexDirectory(StubUpdatingIndex.INDEX_ID, false, relativePath), forVersion ? STUB_VERSIONS : dirName);
+    } else {
+      if (relativePath.length() > 0) relativePath = File.separator + relativePath;
+      indexDir = new File(PathManager.getIndexRoot() + relativePath, dirName);
     }
-    else {
-      return indexName;
-    }
-  }
-
-  public static boolean versionDiffers(final File versionFile, final int currentIndexVersion) {
-    try {
-      ourLastStamp = Math.max(ourLastStamp, versionFile.lastModified());
-      final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)));
-      try {
-        final int savedIndexVersion = in.readInt();
-        final int commonVersion = in.readInt();
-        return savedIndexVersion != currentIndexVersion || commonVersion != VERSION;
-      }
-      finally {
-        in.close();
-      }
-    }
-    catch (IOException e) {
-      return true;
-    }
+    indexDir.mkdirs();
+    return indexDir;
   }
 
   @Nullable
-  public static VirtualFile findFileById(final PersistentFS fs, final int id) {
+  public static VirtualFile findFileById(@NotNull PersistentFS fs, final int id) {
     if (ourUnitTestMode) {
       final VirtualFile testFile = findTestFile(id);
       if (testFile != null) {
@@ -180,7 +117,7 @@ public class IndexInfrastructure {
   }
 
   @Nullable
-  public static VirtualFile findFileByIdIfCached(final PersistentFS fs, final int id) {
+  public static VirtualFile findFileByIdIfCached(@NotNull PersistentFS fs, final int id) {
     if (ourUnitTestMode) {
       final VirtualFile testFile = findTestFile(id);
       if (testFile != null) {

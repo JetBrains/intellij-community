@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,12 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.concurrency.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -57,13 +54,13 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PsiSearchHelperImpl implements PsiSearchHelper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.PsiSearchHelperImpl");
   private final PsiManagerEx myManager;
 
   @Override
@@ -107,7 +104,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                      @NotNull final Processor<PsiElement> processor) {
     TextOccurenceProcessor occurrenceProcessor = new TextOccurenceProcessor() {
       @Override
-      public boolean execute(PsiElement element, int offsetInElement) {
+      public boolean execute(@NotNull PsiElement element, int offsetInElement) {
         if (CommentUtilCore.isCommentTextElement(element)) {
           if (element.findReferenceAt(offsetInElement) == null) {
             return processor.process(element);
@@ -313,26 +310,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return totalResult;
   }
 
-  private static class CannotRunReadActionException extends RuntimeException{
-    @Override
-    public Throwable fillInStackTrace() {
-      return this;
-    }
-  }
-  // throws exception if can't grab read action right now
-  private static <T> T tryRead(final Computable<T> computable) throws CannotRunReadActionException {
-    final Ref<T> result = new Ref<T>();
-    if (((ApplicationEx)ApplicationManager.getApplication()).tryRunReadAction(new Runnable() {
-      @Override
-      public void run() {
-        result.set(computable.compute());
-      }
-    })) {
-      return result.get();
-    }
-    throw new CannotRunReadActionException();
-  }
-
   /**
    * @param files to scan for references in this pass.
    * @param totalSize the number of files to scan in both passes. Can be different from <code>files.size()</code> in case of
@@ -360,7 +337,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
               TooManyUsagesStatus.getFrom(progress).pauseProcessingIfTooManyUsages();
               processVirtualFile(vfile, progress, localProcessor, canceled, counter, totalSize);
             }
-            catch (CannotRunReadActionException action) {
+            catch (ApplicationUtil.CannotRunReadActionException action) {
               failedFiles.add(vfile);
             }
             return !canceled.get();
@@ -368,6 +345,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         });
       if (!failedFiles.isEmpty()) {
         for (final VirtualFile vfile : failedFiles) {
+          checkCanceled(progress);
           TooManyUsagesStatus.getFrom(progress).pauseProcessingIfTooManyUsages();
           // we failed to run read action in job launcher thread
           // run read action in our thread instead
@@ -395,7 +373,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                   @NotNull final AtomicBoolean canceled,
                                   @NotNull AtomicInteger counter,
                                   int totalSize) {
-    final PsiFile file = tryRead(new Computable<PsiFile>() {
+    final PsiFile file = ApplicationUtil.tryRunReadAction(new Computable<PsiFile>() {
       @Override
       public PsiFile compute() {
         return vfile.isValid() ? myManager.findFile(vfile) : null;
@@ -404,18 +382,23 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (file != null && !(file instanceof PsiBinaryFile)) {
       // load contents outside read action
       if (FileDocumentManager.getInstance().getCachedDocument(vfile) == null) {
-        LoadTextUtil.loadText(vfile); // cache bytes in vfs
+        // cache bytes in vfs
+        try {
+          vfile.contentsToByteArray();
+        }
+        catch (IOException ignored) {
+        }
       }
-      tryRead(new Computable<Void>() {
+      ApplicationUtil.tryRunReadAction(new Computable<Void>() {
         @Override
         public Void compute() {
           if (myManager.getProject().isDisposed()) throw new ProcessCanceledException();
           List<PsiFile> psiRoots = file.getViewProvider().getAllFiles();
-          Set<PsiElement> processed = new THashSet<PsiElement>(psiRoots.size() * 2, (float)0.5);
+          Set<PsiFile> processed = new THashSet<PsiFile>(psiRoots.size() * 2, (float)0.5);
           for (final PsiFile psiRoot : psiRoots) {
             checkCanceled(progress);
-            assert psiRoot != null : "One of the roots of file " + file + " is null. All roots: " + psiRoots +
-                                     "; ViewProvider: " + file.getViewProvider() + "; Virtual file: " + file.getViewProvider().getVirtualFile();
+            assert psiRoot != null : "One of the roots of file " + file + " is null. All roots: " + psiRoots + "; ViewProvider: " +
+                                     file.getViewProvider() + "; Virtual file: " + file.getViewProvider().getVirtualFile();
             if (!processed.add(psiRoot)) continue;
             if (!psiRoot.isValid()) {
               continue;
@@ -437,7 +420,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private static void checkCanceled(ProgressIndicator progress) {
-    if (progress != null) progress.checkCanceled();
+    if (progress != null) {
+      progress.checkCanceled();
+    }
+    else {
+      ProgressManager.checkCanceled();
+    }
   }
 
   private void getFilesWithText(@NotNull GlobalSearchScope scope,
@@ -456,7 +444,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         }
       };
       boolean success = processFilesWithText(scope, searchContext, caseSensitively, text, processor);
-      LOG.assertTrue(success);
+      // success == false means exception in index
     }
     finally {
       myManager.finishBatchFilesProcessingMode();
@@ -534,14 +522,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       progress.setText(PsiBundle.message("psi.search.in.non.java.files.progress"));
     }
 
-    final SearchScope useScope = new ReadAction<SearchScope>() {
+    final SearchScope useScope = originalElement == null ? null : ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
       @Override
-      protected void run(final Result<SearchScope> result) {
-        if (originalElement != null) {
-          result.setResult(getUseScope(originalElement));
-        }
+      public SearchScope compute() {
+        return getUseScope(originalElement);
       }
-    }.execute().getResultObject();
+    });
 
     final Ref<Boolean> cancelled = new Ref<Boolean>(Boolean.FALSE);
     for (int i = 0; i < files.length; i++) {
@@ -819,7 +805,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return processPsiFileRootsAsync(files, totalSize, alreadyProcessedFiles, progress, new Processor<PsiFile>() {
       @Override
       public boolean process(final PsiFile psiRoot) {
-        return tryRead(new Computable<Boolean>() {
+        return ApplicationUtil.tryRunReadAction(new Computable<Boolean>() {
           @Override
           public Boolean compute() {
             final VirtualFile vfile = psiRoot.getVirtualFile();
@@ -860,7 +846,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final RequestResultProcessor wrapped = singleRequest.processor;
     return new TextOccurenceProcessor() {
       @Override
-      public boolean execute(PsiElement element, int offsetInElement) {
+      public boolean execute(@NotNull PsiElement element, int offsetInElement) {
         if (ignoreInjectedPsi && element instanceof PsiLanguageInjectionHost) return true;
 
         return wrapped.processTextOccurrence(element, offsetInElement, consumer);

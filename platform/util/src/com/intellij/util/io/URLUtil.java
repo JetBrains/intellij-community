@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.intellij.util.io;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.Base64Converter;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,14 +32,21 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static com.intellij.openapi.util.text.StringUtil.stripQuotesAroundValue;
+
 public class URLUtil {
   public static final String SCHEME_SEPARATOR = "://";
-  public static final String JAR_PROTOCOL = "jar";
   public static final String FILE_PROTOCOL = "file";
+  public static final String HTTP_PROTOCOL = "http";
+  public static final String JAR_PROTOCOL = "jar";
   public static final String JAR_SEPARATOR = "!/";
+
+  public static final Pattern DATA_URI_PATTERN = Pattern.compile("data:([^,;]+/[^,;]+)(;charset=[^,;]+)?(;base64)?,(.+)");
 
   private URLUtil() { }
 
@@ -87,6 +96,7 @@ public class URLUtil {
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") final ZipFile zipFile = new ZipFile(FileUtil.unquote(paths.first));
     ZipEntry zipEntry = zipFile.getEntry(paths.second);
     if (zipEntry == null) {
+      zipFile.close();
       throw new FileNotFoundException("Entry " + paths.second + " not found in " + paths.first);
     }
 
@@ -99,18 +109,35 @@ public class URLUtil {
       };
   }
 
+  /**
+   * Splits .jar URL along a separator and strips "jar" and "file" prefixes if any.
+   * Returns a pair of path to a .jar file and entry name inside a .jar, or null if the URL does not contain a separator.
+   *
+   * E.g. "jar:file:///path/to/jar.jar!/resource.xml" is converted into ["/path/to/jar.jar", "resource.xml"].
+   */
   @Nullable
-  public static Pair<String, String> splitJarUrl(@NotNull String fullPath) {
-    int delimiter = fullPath.indexOf(JAR_SEPARATOR);
-    if (delimiter >= 0) {
-      String resourcePath = fullPath.substring(delimiter + 2);
-      String jarPath = fullPath.substring(0, delimiter);
-      if (StringUtil.startsWithConcatenation(jarPath, FILE_PROTOCOL, ":")) {
-        jarPath = jarPath.substring(FILE_PROTOCOL.length() + 1);
-        return Pair.create(jarPath, resourcePath);
+  public static Pair<String, String> splitJarUrl(@NotNull String url) {
+    int pivot = url.indexOf(JAR_SEPARATOR);
+    if (pivot < 0) return null;
+
+    String resourcePath = url.substring(pivot + 2);
+    String jarPath = url.substring(0, pivot);
+
+    if (StringUtil.startsWithConcatenation(jarPath, JAR_PROTOCOL, ":")) {
+      jarPath = jarPath.substring(JAR_PROTOCOL.length() + 1);
+    }
+
+    if (jarPath.startsWith(FILE_PROTOCOL)) {
+      jarPath = jarPath.substring(FILE_PROTOCOL.length());
+      if (jarPath.startsWith(SCHEME_SEPARATOR)) {
+        jarPath = jarPath.substring(SCHEME_SEPARATOR.length());
+      }
+      else if (StringUtil.startsWithChar(jarPath, ':')) {
+        jarPath = jarPath.substring(1);
       }
     }
-    return null;
+
+    return Pair.create(jarPath, resourcePath);
   }
 
   @NotNull
@@ -165,5 +192,31 @@ public class URLUtil {
 
   public static boolean containsScheme(@NotNull String url) {
     return url.contains(SCHEME_SEPARATOR);
+  }
+
+  public static boolean isDataUri(@NotNull String value) {
+    return !value.isEmpty() && value.startsWith("data:", value.charAt(0) == '"' || value.charAt(0) == '\'' ? 1 : 0);
+  }
+
+  /**
+   * Extracts byte array from given data:URL string.
+   * data:URL will be decoded from base64 if it contains the marker of base64 encoding.
+   *
+   * @param dataUrl data:URL-like string (may be quoted)
+   * @return extracted byte array or {@code null} if it cannot be extracted.
+   */
+  @Nullable
+  public static byte[] getBytesFromDataUri(@NotNull String dataUrl) {
+    Matcher matcher = DATA_URI_PATTERN.matcher(stripQuotesAroundValue(dataUrl));
+    if (matcher.matches()) {
+      try {
+        String content = matcher.group(4);
+        return ";base64".equalsIgnoreCase(matcher.group(3)) ? Base64Converter.decode(content.getBytes(CharsetToolkit.UTF8_CHARSET)) : content.getBytes(CharsetToolkit.UTF8_CHARSET);
+      }
+      catch (IllegalArgumentException e) {
+        return null;
+      }
+    }
+    return null;
   }
 }

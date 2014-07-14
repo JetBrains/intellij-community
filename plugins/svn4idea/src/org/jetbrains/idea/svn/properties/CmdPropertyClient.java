@@ -1,17 +1,14 @@
 package org.jetbrains.idea.svn.properties;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
@@ -58,7 +55,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     // is critical for some parts of merge logic
     parameters.add("--xml");
 
-    CommandExecutor command = CommandUtil.execute(myVcs, target, SvnCommandName.propget, parameters, null);
+    CommandExecutor command = execute(myVcs, target, SvnCommandName.propget, parameters, null);
     return parseSingleProperty(target, command.getOutput());
   }
 
@@ -73,7 +70,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     parameters.add(property);
     fillListParameters(target, revision, depth, parameters, false);
 
-    CommandExecutor command = CommandUtil.execute(myVcs, target, SvnCommandName.propget, parameters, null);
+    CommandExecutor command = execute(myVcs, target, SvnCommandName.propget, parameters, null);
     parseOutput(target, command.getOutput(), handler);
   }
 
@@ -85,7 +82,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     List<String> parameters = new ArrayList<String>();
     fillListParameters(target, revision, depth, parameters, true);
 
-    CommandExecutor command = CommandUtil.execute(myVcs, target, SvnCommandName.proplist, parameters, null);
+    CommandExecutor command = execute(myVcs, target, SvnCommandName.proplist, parameters, null);
     parseOutput(target, command.getOutput(), handler);
   }
 
@@ -96,6 +93,39 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
                           @Nullable SVNDepth depth,
                           boolean force) throws VcsException {
     runSetProperty(SvnTarget.fromFile(file), property, null, depth, value, force);
+  }
+
+  @Override
+  public void setProperties(@NotNull File file, @NotNull SVNProperties properties) throws VcsException {
+    SVNProperties currentProperties = collectPropertiesToDelete(file);
+    currentProperties.putAll(properties);
+
+    for (String propertyName : currentProperties.nameSet()) {
+      setProperty(file, propertyName, currentProperties.getSVNPropertyValue(propertyName), SVNDepth.EMPTY, true);
+    }
+  }
+
+  @NotNull
+  private SVNProperties collectPropertiesToDelete(@NotNull File file) throws VcsException {
+    final SVNProperties result = new SVNProperties();
+
+    list(SvnTarget.fromFile(file), null, SVNDepth.EMPTY, new ISVNPropertyHandler() {
+      @Override
+      public void handleProperty(File path, SVNPropertyData property) throws SVNException {
+        // null indicates property will be deleted
+        result.put(property.getName(), (SVNPropertyValue)null);
+      }
+
+      @Override
+      public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
+      }
+
+      @Override
+      public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
+      }
+    });
+
+    return result;
   }
 
   @Override
@@ -133,9 +163,8 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     // "svn propset svn:ignore *.java . --depth empty") tries to set ignore also on child files and fails with error like
     // "svn: E200009: Cannot set 'svn:ignore' on a file ('...File1.java')". So here we manually force home directory to be used.
     // NOTE: that setting other properties (not svn:ignore) does not cause such error.
-    CommandUtil
-      .execute(myVcs, target, CommandUtil.getHomeDirectory(), isDelete ? SvnCommandName.propdel : SvnCommandName.propset, parameters,
-               null);
+    execute(myVcs, target, CommandUtil.getHomeDirectory(), isDelete ? SvnCommandName.propdel : SvnCommandName.propset, parameters,
+            null);
   }
 
   private void fillListParameters(@NotNull SvnTarget target,
@@ -180,7 +209,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
 
       if (properties != null) {
         for (Target childInfo : properties.targets) {
-          SvnTarget childTarget = append(target, childInfo.path);
+          SvnTarget childTarget = SvnUtil.append(target, childInfo.path);
           for (Property property : childInfo.properties) {
             invokeHandler(childTarget, create(property.name, property.value), handler);
           }
@@ -199,19 +228,6 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     catch (SVNException e) {
       throw new VcsException(e);
     }
-  }
-
-  // TODO: Create custom Target class and implement append there
-  private static SvnTarget append(@NotNull SvnTarget target, @NotNull String path) throws SVNException {
-    SvnTarget result;
-
-    if (target.isFile()) {
-      result = SvnTarget.fromFile(FileUtil.isAbsolute(path) ? new File(path) : new File(target.getFile(), path));
-    } else {
-      result = SvnTarget.fromURL(target.getURL().appendPath(path, false));
-    }
-
-    return result;
   }
 
   private static void invokeHandler(@NotNull SvnTarget target, @Nullable SVNPropertyData data, @Nullable ISVNPropertyHandler handler)

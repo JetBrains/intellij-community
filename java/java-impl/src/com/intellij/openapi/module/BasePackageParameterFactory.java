@@ -78,13 +78,15 @@ public class BasePackageParameterFactory extends ProjectTemplateParameterFactory
         HashMap<String, String> map = new HashMap<String, String>(2);
         map.put(getId(), getValue());
         map.put("IJ_BASE_PACKAGE_DIR", getValue().replace('.', '/'));
+        map.put("IJ_BASE_PACKAGE_PREFIX", StringUtil.isEmpty(getValue()) ? "" : getValue() + ".");
         return map;
       }
 
       @Override
       public boolean validate() throws ConfigurationException {
-        if (!PsiNameHelperImpl.getInstance().isQualifiedName(getValue())) {
-          throw new ConfigurationException(getValue() + " is not a valid package name");
+        String value = getValue();
+        if (!StringUtil.isEmpty(value) && !PsiNameHelperImpl.getInstance().isQualifiedName(value)) {
+          throw new ConfigurationException(value + " is not a valid package name");
         }
         return true;
       }

@@ -16,6 +16,7 @@
 package com.jetbrains.rest.psi;
 
 import com.intellij.lang.ASTNode;
+import com.jetbrains.rest.validation.RestElementVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,15 +38,13 @@ public class RestTitle extends RestElement {
 
   @Nullable
   public String getName() {
-    final String text = getNode().getText();
-    if (text.length() == 0) return null;
+    final String text = getNode().getText().trim();
+    if (text.length() < 2) return null;
     final char adorn = text.charAt(text.length()-2);
     final CharacterIterator it = new StringCharacterIterator(text);
     int finish = 0;
     for (char ch = it.last(); ch != CharacterIterator.DONE; ch = it.previous()) {
-      if (finish == 0)
-        finish++;
-      else if (ch != adorn) {
+      if (ch != adorn) {
         finish = it.getIndex();
         break;
       }
@@ -62,5 +61,26 @@ public class RestTitle extends RestElement {
     if (finish <= 0 || start < 0)
       return null;
     return text.substring(start, finish).trim();
+  }
+
+  @Nullable
+  public String getUnderline() {
+    final String text = getNode().getText().trim();
+    if (text.length() < 2) return null;
+    final char adorn = text.charAt(text.length()-2);
+    final CharacterIterator it = new StringCharacterIterator(text);
+    int start = 0;
+    for (char ch = it.last(); ch != CharacterIterator.DONE; ch = it.previous()) {
+      if (ch != adorn) {
+        start = it.getIndex() + 1;
+        break;
+      }
+    }
+    return text.substring(start, text.length());
+  }
+
+  @Override
+  protected void acceptRestVisitor(RestElementVisitor visitor) {
+    visitor.visitTitle(this);
   }
 }

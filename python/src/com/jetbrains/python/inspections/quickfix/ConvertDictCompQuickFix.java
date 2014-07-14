@@ -52,16 +52,38 @@ public class ConvertDictCompQuickFix implements LocalQuickFix {
   }
 
   private static void replaceComprehension(Project project, PyDictCompExpression expression) {
-    List<ComprhForComponent> forComponents = expression.getForComponents();
     if (expression.getResultExpression() instanceof PyKeyValueExpression) {
-      PyKeyValueExpression keyValueExpression = (PyKeyValueExpression)expression.getResultExpression();
-      PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+      final PyKeyValueExpression keyValueExpression = (PyKeyValueExpression)expression.getResultExpression();
+      final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
       assert keyValueExpression.getValue() != null;
-      expression.replace(elementGenerator.createFromText(LanguageLevel.getDefault(), PyExpressionStatement.class,
-                                                         "dict([(" + keyValueExpression.getKey().getText() + ", " +
-                                                         keyValueExpression.getValue().getText() + ") for " +
-                                                         forComponents.get(0).getIteratorVariable().getText() + " in " +
-                                                         forComponents.get(0).getIteratedList().getText() + "])"));
+
+      final List<ComprehensionComponent> components = expression.getComponents();
+      final StringBuilder replacement = new StringBuilder("dict([(" + keyValueExpression.getKey().getText() + ", " +
+                                                            keyValueExpression.getValue().getText() + ")");
+      int slashNum = 1;
+      for (ComprehensionComponent component : components) {
+        if (component instanceof ComprhForComponent) {
+          replacement.append("for ");
+          replacement.append(((ComprhForComponent)component).getIteratorVariable().getText());
+          replacement.append(" in ");
+          replacement.append(((ComprhForComponent)component).getIteratedList().getText());
+          replacement.append(" ");
+        }
+        if (component instanceof ComprhIfComponent) {
+          final PyExpression test = ((ComprhIfComponent)component).getTest();
+          if (test != null) {
+            replacement.append("if ");
+            replacement.append(test.getText());
+            replacement.append(" ");
+          }
+        }
+        for (int i = 0; i != slashNum; ++i)
+          replacement.append("\t");
+        ++slashNum;
+      }
+      replacement.append("])");
+
+      expression.replace(elementGenerator.createFromText(LanguageLevel.getDefault(), PyExpressionStatement.class, replacement.toString()));
     }
   }
 

@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.ImportFilter;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -101,17 +102,23 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       // can happen when e.g. class name happened to be in a method position
       if (element instanceof PsiClass && result.isValidResult()) return Collections.emptyList();
     }
-    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(myElement.getProject());
+
     String name = getReferenceName(myRef);
     GlobalSearchScope scope = myElement.getResolveScope();
     if (name == null) {
       return Collections.emptyList();
     }
+
+    if (!canReferenceClass(myRef)) {
+      return Collections.emptyList();
+    }
+
     boolean referenceHasTypeParameters = hasTypeParameters(myRef);
-    PsiClass[] classes = cache.getClassesByName(name, scope);
+    PsiClass[] classes = PsiShortNamesCache.getInstance(myElement.getProject()).getClassesByName(name, scope);
     if (classes.length == 0) return Collections.emptyList();
     List<PsiClass> classList = new ArrayList<PsiClass>(classes.length);
     boolean isAnnotationReference = myElement.getParent() instanceof PsiAnnotation;
+    final PsiFile file = myElement.getContainingFile();
     for (PsiClass aClass : classes) {
       if (isAnnotationReference && !aClass.isAnnotationType()) continue;
       if (JavaCompletionUtil.isInExcludedPackage(aClass, false)) continue;
@@ -119,7 +126,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       String qName = aClass.getQualifiedName();
       if (qName != null) { //filter local classes
         if (qName.indexOf('.') == -1) continue; //do not show classes from default package)
-        if (qName.endsWith(name)) {
+        if (qName.endsWith(name) && (file == null || ImportFilter.shouldImport(file, qName))) {
           if (isAccessible(aClass, myElement)) {
             classList.add(aClass);
           }
@@ -136,6 +143,10 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
     filterAlreadyImportedButUnresolved(classList);
     return classList;
+  }
+
+  protected boolean canReferenceClass(R ref) {
+    return true;
   }
 
   private List<PsiClass> filterByRequiredMemberName(List<PsiClass> classList) {

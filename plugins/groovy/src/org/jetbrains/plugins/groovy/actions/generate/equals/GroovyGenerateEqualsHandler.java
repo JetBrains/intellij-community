@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.codeInsight.generation.ui.GenerateEqualsWizard;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiAnonymousClass;
@@ -57,6 +56,7 @@ public class GroovyGenerateEqualsHandler extends GenerateMembersHandlerBase {
   }
 
 
+  @Override
   @Nullable
   protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
     myEqualsFields = null;
@@ -79,6 +79,7 @@ public class GroovyGenerateEqualsHandler extends GenerateMembersHandlerBase {
           GroovyCodeInsightBundle.message("generate.equals.and.hashcode.already.defined.title"),
           Messages.getQuestionIcon()) == Messages.YES) {
         if (!ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
+          @Override
           public Boolean compute() {
             try {
               equalsMethod.delete();
@@ -109,6 +110,7 @@ public class GroovyGenerateEqualsHandler extends GenerateMembersHandlerBase {
     return DUMMY_RESULT;
   }
 
+  @Override
   @NotNull
   protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] originalMembers) throws IncorrectOperationException {
     Project project = aClass.getProject();
@@ -117,20 +119,24 @@ public class GroovyGenerateEqualsHandler extends GenerateMembersHandlerBase {
     GroovyGenerateEqualsHelper helper = new GroovyGenerateEqualsHelper(project, aClass, myEqualsFields, myHashCodeFields, myNonNullFields, useInstanceofToCheckParameterType);
     Collection<PsiMethod> methods = helper.generateMembers();
     return ContainerUtil.map2List(methods, new Function<PsiMethod, PsiGenerationInfo<PsiMethod>>() {
+      @Override
       public PsiGenerationInfo<PsiMethod> fun(final PsiMethod s) {
         return new GroovyGenerationInfo<PsiMethod>(s);
       }
     });
   }
 
+  @Override
   protected ClassMember[] getAllOriginalMembers(PsiClass aClass) {
     return ClassMember.EMPTY_ARRAY;
   }
 
+  @Override
   protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember originalMember) throws IncorrectOperationException {
     return GenerationInfo.EMPTY_ARRAY;
   }
 
+  @Override
   protected void cleanup() {
     super.cleanup();
 
@@ -139,6 +145,7 @@ public class GroovyGenerateEqualsHandler extends GenerateMembersHandlerBase {
     myNonNullFields = null;
   }
 
+  @Override
   public boolean startInWriteAction() {
       return true;
     } 

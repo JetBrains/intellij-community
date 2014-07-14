@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,15 +47,19 @@ public class FileAttribute {
   }
 
   public FileAttribute(@NonNls @NotNull String id, int version, boolean fixedSize) {
-    myId = id;
-    myVersion = version;
-    myFixedSize = fixedSize;
+    this(version, fixedSize, id);
     boolean added = ourRegisteredIds.add(id);
     assert added : "Attribute id='" + id+ "' is not unique";
   }
 
+  private FileAttribute(int version, boolean fixedSize,@NotNull String id) {
+    myId = id;
+    myVersion = version;
+    myFixedSize = fixedSize;
+  }
+
   @Nullable
-  public DataInputStream readAttribute(VirtualFile file) {
+  public DataInputStream readAttribute(@NotNull VirtualFile file) {
     DataInputStream stream = ManagingFS.getInstance().readAttribute(file, this);
     if (stream != null) {
       try {
@@ -72,7 +76,8 @@ public class FileAttribute {
     return stream;
   }
 
-  public DataOutputStream writeAttribute(VirtualFile file) {
+  @NotNull
+  public DataOutputStream writeAttribute(@NotNull VirtualFile file) {
     final DataOutputStream stream = ManagingFS.getInstance().writeAttribute(file, this);
     try {
       DataInputOutputUtil.writeINT(stream, myVersion);
@@ -120,5 +125,10 @@ public class FileAttribute {
 
   public boolean isFixedSize() {
     return myFixedSize;
+  }
+
+  @NotNull
+  public FileAttribute newVersion(int newVersion) {
+    return new FileAttribute(newVersion, myFixedSize, myId);
   }
 }

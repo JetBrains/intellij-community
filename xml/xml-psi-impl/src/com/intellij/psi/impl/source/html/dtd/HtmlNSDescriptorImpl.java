@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,14 +41,17 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
   private final boolean myCaseSensitive;
 
   private static final SimpleFieldCache<Map<String, XmlElementDescriptor>, HtmlNSDescriptorImpl> myCachedDeclsCache = new SimpleFieldCache<Map<String, XmlElementDescriptor>, HtmlNSDescriptorImpl>() {
+    @Override
     protected Map<String, XmlElementDescriptor> compute(final HtmlNSDescriptorImpl htmlNSDescriptor) {
       return htmlNSDescriptor.doBuildCachedMap();
     }
 
+    @Override
     protected Map<String, XmlElementDescriptor> getValue(final HtmlNSDescriptorImpl htmlNSDescriptor) {
       return htmlNSDescriptor.myCachedDecls;
     }
 
+    @Override
     protected void putValue(final Map<String, XmlElementDescriptor> map, final HtmlNSDescriptorImpl htmlNSDescriptor) {
       htmlNSDescriptor.myCachedDecls = map;
     }
@@ -84,6 +87,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
     return decls;
   }
 
+  @Override
   public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
     String name = tag.getLocalName();
     if (!myCaseSensitive) name = name.toLowerCase();
@@ -95,36 +99,44 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
     return xmlElementDescriptor;
   }
 
+  @Override
   @NotNull
   public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable final XmlDocument document) {
     return myDelegate == null ? XmlElementDescriptor.EMPTY_ARRAY : myDelegate.getRootElementsDescriptors(document);
   }
 
+  @Override
   @Nullable
   public XmlFile getDescriptorFile() {
     return myDelegate == null ? null : myDelegate.getDescriptorFile();
   }
 
+  @Override
   public boolean isHierarhyEnabled() {
     return false;
   }
 
+  @Override
   public PsiElement getDeclaration() {
     return myDelegate == null ? null : myDelegate.getDeclaration();
   }
 
+  @Override
   public String getName(PsiElement context) {
     return myDelegate == null ? "" : myDelegate.getName(context);
   }
 
+  @Override
   public String getName() {
     return myDelegate == null ? "" : myDelegate.getName();
   }
 
+  @Override
   public void init(PsiElement element) {
     myDelegate.init(element);
   }
 
+  @Override
   public Object[] getDependences() {
     return myDelegate == null ? null : myDelegate.getDependences();
   }

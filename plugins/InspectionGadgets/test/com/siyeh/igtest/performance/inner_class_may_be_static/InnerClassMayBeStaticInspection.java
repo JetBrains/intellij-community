@@ -44,16 +44,54 @@ class D {
     void foo() {
         new Object() {
             class Y {}
-        }
+        };
     }
 }
 class StaticInnerClass {
 
   private int foo;
+  int bar;
 
   public class Baz extends StaticInnerClass  {
     Baz() {
       foo = -1;
+    }
+  }
+  class C extends StaticInnerClass {{
+    bar = 1;
+  }}
+}
+class SomeBeanUnitTest {
+
+  private class BeanCreator {
+
+    public BeanCreator  withQuery() {
+      return null;
+    }
+  }
+}
+class Outer {
+  class A { // may not be static
+    B b;
+  }
+  class B extends  A {} // may not be static
+
+  class C { // may be static
+    D b;
+    class D extends C {}
+  }
+
+  static class E {
+    G.F b;
+    class G { // may be static
+      class F extends  E {}
+    }
+  }
+
+  class H { // may be static
+    J.I b;
+    class J {
+      class I extends  H {}
     }
   }
 }

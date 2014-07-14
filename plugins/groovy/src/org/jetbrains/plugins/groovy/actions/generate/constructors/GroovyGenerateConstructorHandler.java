@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
 
   private static final String DEF_PSEUDO_ANNO = "_____intellij_idea_rulez_def_";
 
+  @Override
   @Nullable
   protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
     final ClassMember[] classMembers = chooseOriginalMembersImpl(aClass, project);
@@ -85,6 +86,7 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
     return super.chooseOriginalMembers(aClass, project);
   }
 
+  @Override
   @NotNull
   protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members)
     throws IncorrectOperationException {
@@ -132,6 +134,7 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
     return grConstructors;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

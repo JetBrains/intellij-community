@@ -45,6 +45,7 @@ public interface RangeHighlighter extends RangeMarker {
    *
    * @return the highlighter target area.
    */
+  @NotNull
   HighlighterTargetArea getTargetArea();
 
   /**

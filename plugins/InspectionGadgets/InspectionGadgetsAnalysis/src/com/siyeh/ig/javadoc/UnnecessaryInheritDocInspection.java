@@ -105,8 +105,11 @@ public class UnnecessaryInheritDocInspection extends BaseInspection {
       if (docComment == null) {
         return;
       }
-      final PsiDocToken[] docTokens = PsiTreeUtil.getChildrenOfType(
-        docComment, PsiDocToken.class);
+      final PsiDocTag[] docTags = docComment.getTags();
+      if (docTags.length > 0) {
+        return;
+      }
+      final PsiDocToken[] docTokens = PsiTreeUtil.getChildrenOfType(docComment, PsiDocToken.class);
       if (docTokens == null) {
         return;
       }

@@ -153,7 +153,7 @@ public class UnversionedViewDialog extends DialogWrapper {
 
     // special shortcut for deleting a file
     AnAction deleteAction = ActionManager.getInstance().getAction("ChangesView.DeleteUnversioned.From.Dialog");
-    deleteAction.registerCustomShortcutSet(CommonShortcuts.DELETE, myView);
+    deleteAction.registerCustomShortcutSet(CommonShortcuts.getDelete(), myView);
   }
 
   private void refreshViewAfterActionPerformed(@NotNull final ActionGroup opActionGroup) {

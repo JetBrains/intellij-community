@@ -15,7 +15,8 @@
  */
 package com.jetbrains.python.sdk;
 
-import com.intellij.notification.Notification;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,16 +32,22 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
+import java.util.List;
 
 /**
  * A component that initiates a refresh of all project's Python SDKs.
@@ -92,53 +99,78 @@ public class PythonSdkUpdater implements StartupActivity {
 
     // NOTE: everything is run later on the AWT thread
     if (!sdksToUpdate.isEmpty()) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        public void run() {
-          if (delay > 0) {
-            try {
-              Thread.sleep(delay); // wait until all short-term disk-hitting activity ceases
-            }
-            catch (InterruptedException ignore) {
-            }
+      updateSdks(project, delay, sdksToUpdate);
+    }
+  }
+
+  private void updateSdks(final Project project, final int delay, final Set<Sdk> sdksToUpdate) {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        if (delay > 0) {
+          try {
+            Thread.sleep(delay); // wait until all short-term disk-hitting activity ceases
           }
-          // update skeletons
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("sdk.gen.updating.skels"), false) {
-                @Override
-                public void run(@NotNull ProgressIndicator indicator) {
-                  for (final Sdk sdk : sdksToUpdate) {
-                    try {
-                      LOG.info("Performing background update of skeletons for SDK " + sdk.getHomePath());
-                      updateSdk(project, sdk);
-                    }
-                    catch (InvalidSdkException e) {
-                      if (!PythonSdkType.isInvalid(sdk)) {
-                        LOG.warn(e);
-                        final Notification notification = PythonSdkType.createInvalidSdkNotification(myProject);
-                        notification.notify(myProject);
-                      }
-                    }
-                    myAlreadyUpdated.add(sdk.getHomePath());
+          catch (InterruptedException ignore) {
+          }
+        }
+        // update skeletons
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("sdk.gen.updating.skels"), false) {
+              @Override
+              public void run(@NotNull ProgressIndicator indicator) {
+                for (final Sdk sdk : sdksToUpdate) {
+                  try {
+                    LOG.info("Performing background update of skeletons for SDK " + sdk.getHomePath());
+                    updateSdk(project, null, sdk, PythonSdkType.findSkeletonsPath(sdk));
                   }
+                  catch (InvalidSdkException e) {
+                    if (PythonSdkType.isVagrant(sdk)) {
+                      PythonSdkType.notifyRemoteSdkSkeletonsFail(e, new Runnable() {
+                        @Override
+                        public void run() {
+                          updateSdks(project, delay, Sets.newHashSet(sdk));
+                        }
+                      });
+                    }
+                    else if (!PythonSdkType.isInvalid(sdk)) {
+                      LOG.error(e);
+                    }
+                  }
+                  myAlreadyUpdated.add(sdk.getHomePath());
                 }
-              });
-            }
-          });
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+
+  public static void updateSdk(@Nullable Project project, @Nullable Component ownerComponent, @NotNull final Sdk sdk, String skeletonsPath) throws InvalidSdkException {
+    PySkeletonRefresher.refreshSkeletonsOfSdk(project, ownerComponent, skeletonsPath, new Ref<Boolean>(false), sdk); // NOTE: whole thing would need a rename
+    if (!PySdkUtil.isRemote(sdk)) {
+      updateSysPath(sdk);
+    }
+    else {
+      PyRemoteSdkAdditionalDataBase remoteSdkData = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
+      assert remoteSdkData != null;
+      final List<String> paths = Lists.newArrayList();
+      for (PathMappingSettings.PathMapping mapping : remoteSdkData.getPathMappings().getPathMappings()) {
+        paths.add(mapping.getLocalRoot());
+      }
+
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          updateSdkPath(sdk, paths);
         }
       });
     }
   }
 
-  private static void updateSdk(@NotNull Project project, @NotNull final Sdk sdk) throws InvalidSdkException {
-    PySkeletonRefresher.refreshSkeletonsOfSdk(project, sdk); // NOTE: whole thing would need a rename
-    if (!PySdkUtil.isRemote(sdk)) {
-      updateSysPath(sdk);
-    }
-  }
-
-  private static void updateSysPath(final Sdk sdk) throws InvalidSdkException {
+  private static void updateSysPath(@NotNull final Sdk sdk) throws InvalidSdkException {
     long start_time = System.currentTimeMillis();
     final List<String> sysPath = PythonSdkType.getSysPath(sdk.getHomePath());
     final VirtualFile file = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
@@ -154,9 +186,29 @@ public class PythonSdkUpdater implements StartupActivity {
     LOG.info("Updating sys.path took " + (System.currentTimeMillis() - start_time) + " ms");
   }
 
-  private static void updateSdkPath(Sdk sdk, List<String> sysPath) {
+  /**
+   * Updates SDK based on sys.path and cleans legacy information up.
+   */
+  private static void updateSdkPath(@NotNull Sdk sdk, @NotNull List<String> sysPath) {
+    final SdkModificator modificator = sdk.getSdkModificator();
+    boolean changed = addNewSysPathEntries(sdk, modificator, sysPath);
+    changed = removeSourceRoots(sdk, modificator) || changed;
+    changed = removeDuplicateClassRoots(sdk, modificator) || changed;
+    if (changed) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          modificator.commitChanges();
+        }
+      });
+    }
+  }
+
+  /**
+   * Adds new CLASSES entries found in sys.path.
+   */
+  private static boolean addNewSysPathEntries(@NotNull Sdk sdk, @NotNull SdkModificator modificator, @NotNull List<String> sysPath) {
     final List<VirtualFile> oldRoots = Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
-    final VirtualFile[] sourceRoots = sdk.getRootProvider().getFiles(OrderRootType.SOURCES);
     PythonSdkAdditionalData additionalData = sdk.getSdkAdditionalData() instanceof PythonSdkAdditionalData
                                              ? (PythonSdkAdditionalData)sdk.getSdkAdditionalData()
                                              : null;
@@ -169,37 +221,49 @@ public class PythonSdkUpdater implements StartupActivity {
         newRoots.add(root);
       }
     }
-    if (!newRoots.isEmpty() || sourceRoots.length > 0) {
-      final SdkModificator modificator = sdk.getSdkModificator();
+    if (!newRoots.isEmpty()) {
       for (String root : newRoots) {
         PythonSdkType.addSdkRoot(modificator, root);
       }
-      modificator.removeRoots(OrderRootType.SOURCES);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          modificator.commitChanges();
-        }
-      });
-    }
-  }
-
-  private static boolean wasOldRoot(String root, Collection<VirtualFile> virtualFiles) {
-    String rootPath = canonicalize(root);
-    for (VirtualFile virtualFile : virtualFiles) {
-      if (canonicalize(virtualFile.getPath()).equals(rootPath)) {
-        return true;
-      }
+      return true;
     }
     return false;
   }
 
-  private static String canonicalize(String path) {
-    try {
-      return new File(path).getCanonicalPath();
+  /**
+   * Removes duplicate roots that have been added as the result of a bug with *.egg handling.
+   */
+  private static boolean removeDuplicateClassRoots(@NotNull Sdk sdk, @NotNull SdkModificator modificator) {
+    final List<VirtualFile> sourceRoots = Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
+    final LinkedHashSet<VirtualFile> uniqueRoots = new LinkedHashSet<VirtualFile>(sourceRoots);
+    if (uniqueRoots.size() != sourceRoots.size()) {
+      modificator.removeRoots(OrderRootType.CLASSES);
+      for (VirtualFile root : uniqueRoots) {
+        modificator.addRoot(root, OrderRootType.CLASSES);
+      }
+      return true;
     }
-    catch (IOException e) {
-      return path;
+    return false;
+  }
+
+  /**
+   * Removes legacy SOURCES entries in Python SDK tables (PY-2891).
+   */
+  private static boolean removeSourceRoots(@NotNull Sdk sdk, @NotNull SdkModificator modificator) {
+    final VirtualFile[] sourceRoots = sdk.getRootProvider().getFiles(OrderRootType.SOURCES);
+    if (sourceRoots.length > 0) {
+      modificator.removeRoots(OrderRootType.SOURCES);
+      return true;
     }
+    return false;
+  }
+
+  private static boolean wasOldRoot(@NotNull String root, @NotNull Collection<VirtualFile> oldRoots) {
+    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(root);
+    if (file != null) {
+      final VirtualFile rootFile = PythonSdkType.getSdkRootVirtualFile(file);
+      return oldRoots.contains(rootFile);
+    }
+    return false;
   }
 }

@@ -4,7 +4,7 @@
   <application-components>
     <component>
       <implementation-class></implementation-class>
-      <interface-class>Intf</interface-class>
+      <interface-class>I<caret>ntf</interface-class>
     </component>
   </application-components>
 </idea-plugin>

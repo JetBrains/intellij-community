@@ -28,6 +28,7 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFileSystemItem;
@@ -39,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.List;
 
 public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
   @Nullable private final Project myProject;
@@ -74,11 +76,14 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
 
   @Override
   public String getErrorText(String inputString) {
-    if (FileTypeManager.getInstance().isFileIgnored(inputString)) {
-      return "Trying to create a " + (myIsDirectory ? "directory" : "package") + " with ignored name, result will not be visible";
-    }
-    if (!myIsDirectory && inputString.length() > 0 && !PsiDirectoryFactory.getInstance(myProject).isValidPackageName(inputString)) {
-      return "Not a valid package name, it would be impossible to create a class inside";
+    List<String> strings = StringUtil.split(inputString, ".");
+    for (String part : strings) {
+      if (FileTypeManager.getInstance().isFileIgnored(part)) {
+        return "Trying to create a " + (myIsDirectory ? "directory" : "package") + " with ignored name, result will not be visible";
+      }
+      if (!myIsDirectory && part.length() > 0 && !PsiDirectoryFactory.getInstance(myProject).isValidPackageName(part)) {
+        return "Not a valid package name, it would be impossible to create a class inside";
+      }
     }
     return null;
   }
@@ -104,7 +109,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
     }
     
     boolean createFile = false;
-    if (StringUtil.countChars(subDirName, '.') == 1) {
+    if (StringUtil.countChars(subDirName, '.') == 1 && Registry.is("ide.suggest.file.when.creating.filename.like.directory")) {
       FileType fileType = findFileTypeBoundToName(subDirName);
       if (fileType != null) {
         String message = "The name you entered looks like a file name. Do you want to create a file named " + subDirName + " instead?";

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,14 +31,16 @@ import org.jetbrains.annotations.NotNull;
  * @author ik
  */
 public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatable {
-  public XmlTokenImpl(IElementType type, CharSequence text) {
+  public XmlTokenImpl(@NotNull IElementType type, CharSequence text) {
     super(type, text);
   }
 
+  @Override
   public boolean processElements(PsiElementProcessor processor, PsiElement place) {
     return false;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof XmlElementVisitor) {
       ((XmlElementVisitor)visitor).visitXmlToken(this);
@@ -57,10 +59,12 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
 
 // Implementation specific
 
+  @Override
   public IElementType getTokenType() {
     return getElementType();
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     final IElementType elementType = getElementType();
@@ -79,6 +83,7 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
     return super.getReferences();
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     Navigatable descriptor = PsiNavigationSupport.getInstance().getDescriptor(this);
     if (descriptor != null) {
@@ -86,10 +91,12 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
     }
   }
 
+  @Override
   public boolean canNavigate() {
     return getTokenType() == XmlTokenType.XML_NAME && PsiNavigationSupport.getInstance().canNavigate(this);
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return canNavigate();
   }

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module relativePaths="false" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/source" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="util" />
+    <orderEntry type="library" name="JDOM" level="project" />
+    <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="module" module-name="xml" />
+    <orderEntry type="library" name="Groovy" level="project" />
+    <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="module" module-name="lang-api" />
+    <orderEntry type="module" module-name="openapi" />
+    <orderEntry type="module" module-name="duplicates-analysis" />
+    <orderEntry type="module" module-name="lang-impl" />
+  </component>
+  <component name="copyright">
+    <Base>
+      <setting name="state" value="1" />
+    </Base>
+  </component>
+</module>
+

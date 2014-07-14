@@ -6,6 +6,8 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.TimeUnit;
+
 @ChannelHandler.Sharable
 public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
   private final ChannelGroup openChannels = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
@@ -43,7 +45,7 @@ public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
     }
 
     try {
-      openChannels.close().awaitUninterruptibly();
+      openChannels.close().awaitUninterruptibly(30, TimeUnit.SECONDS);
     }
     finally {
       if (eventLoopGroup != null) {

@@ -1,0 +1,527 @@
+<root>
+  <item name="javax.swing.AbstractButton java.beans.PropertyChangeListener createActionPropertyChangeListener(javax.swing.Action)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.AbstractButton java.lang.String paramString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.AbstractButton javax.swing.AbstractButton.Handler access$000(javax.swing.AbstractButton) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.AbstractButton void access$100(javax.swing.AbstractButton) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JButton java.lang.String getUIClassID()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JButton java.lang.String paramString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JButton void writeObject(java.io.ObjectOutputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent boolean isLightweightComponent(java.awt.Component) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent boolean processKeyBinding(javax.swing.KeyStroke, java.awt.event.KeyEvent, int, boolean)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;_,null,_,_-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.JComponent boolean processKeyBindings(java.awt.event.KeyEvent, boolean) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent boolean processKeyBindings(java.awt.event.KeyEvent, boolean)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null,_-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.JComponent byte getWriteObjCounter(javax.swing.JComponent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent java.awt.Dimension getSize(java.awt.Dimension)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.JComponent java.awt.Graphics getComponentGraphics(java.awt.Graphics)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.JComponent java.awt.Point getLocation(java.awt.Point)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.JComponent java.awt.Point getPopupLocation(java.awt.event.MouseEvent)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;null;null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.JComponent java.awt.Point getToolTipLocation(java.awt.event.MouseEvent)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;null;null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.JComponent java.awt.Rectangle getBounds(java.awt.Rectangle)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.JComponent java.awt.Rectangle getVisibleRect()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent java.lang.String getUIClassID()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent java.lang.String paramString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent javax.swing.JToolTip createToolTip()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent void computeVisibleRect(java.awt.Component, java.awt.Rectangle) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent void computeVisibleRect(java.awt.Component, java.awt.Rectangle) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent void computeVisibleRect(java.awt.Rectangle) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent void paintImmediately(java.awt.Rectangle) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent void paintWithOffscreenBuffer(javax.swing.JComponent, java.awt.Graphics, int, int, int, int, java.awt.Image) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent void paintWithOffscreenBuffer(javax.swing.JComponent, java.awt.Graphics, int, int, int, int, java.awt.Image) 6">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent void processKeyEvent(java.awt.event.KeyEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent void readObject(java.io.ObjectInputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent void repaint(java.awt.Rectangle) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent void setWriteObjCounter(javax.swing.JComponent, byte) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent void writeObject(java.io.ObjectOutputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent.AccessibleJComponent java.lang.String getBorderTitle(javax.swing.border.Border)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.JComponent.AccessibleJComponent javax.accessibility.AccessibleExtendedComponent getAccessibleExtendedComponent()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent.AccessibleJComponent javax.swing.JComponent access$100(javax.swing.JComponent.AccessibleJComponent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JDialog java.lang.String paramString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JDialog javax.swing.JRootPane createRootPane()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JDialog void processWindowEvent(java.awt.event.WindowEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JFrame java.lang.String paramString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JFrame javax.swing.JRootPane createRootPane()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JFrame void processWindowEvent(java.awt.event.WindowEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JLabel java.lang.String getUIClassID()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JLabel java.lang.String paramString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JLabel void writeObject(java.io.ObjectOutputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JPanel java.lang.String getUIClassID()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JPanel java.lang.String paramString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JPanel void writeObject(java.io.ObjectOutputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JScrollPane java.awt.Component getCorner(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JScrollPane java.awt.Rectangle getViewportBorderBounds()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JScrollPane java.lang.String getUIClassID()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JScrollPane java.lang.String paramString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JScrollPane javax.swing.JScrollBar createHorizontalScrollBar()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JScrollPane javax.swing.JScrollBar createVerticalScrollBar()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JScrollPane javax.swing.JViewport createViewport()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JScrollPane void setCorner(java.lang.String, java.awt.Component) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JScrollPane void writeObject(java.io.ObjectOutputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable boolean print(int, java.text.MessageFormat, java.text.MessageFormat, boolean, javax.print.attribute.PrintRequestAttributeSet)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;_,_,_,false,_-&gt;true&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.JTable int columnAtPoint(java.awt.Point) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable int getScrollableBlockIncrement(java.awt.Rectangle, int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable int rowAtPoint(java.awt.Point) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable int[] getSelectedRows()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable java.awt.Component prepareEditor(javax.swing.table.TableCellEditor, int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable java.awt.Component prepareRenderer(javax.swing.table.TableCellRenderer, int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable java.awt.Dimension getIntercellSpacing()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable java.awt.print.Printable getPrintable(int, java.text.MessageFormat, java.text.MessageFormat)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable java.lang.String getToolTipText(java.awt.event.MouseEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable java.lang.String getUIClassID()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable java.lang.String paramString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable javax.swing.JScrollPane createScrollPaneForTable(javax.swing.JTable)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable javax.swing.ListSelectionModel createDefaultSelectionModel()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable javax.swing.table.JTableHeader createDefaultTableHeader()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable javax.swing.table.TableCellEditor getDefaultEditor(java.lang.Class)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.JTable javax.swing.table.TableCellRenderer getDefaultRenderer(java.lang.Class)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.JTable javax.swing.table.TableColumnModel createDefaultColumnModel()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable javax.swing.table.TableModel createDefaultDataModel()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable void addColumn(javax.swing.table.TableColumn) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable void adjustSizes(long, javax.swing.JTable.Resizable2, boolean) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable void adjustSizes(long, javax.swing.JTable.Resizable3, boolean) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable void changeSelectionModel(javax.swing.ListSelectionModel, int, boolean, boolean, boolean) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable void columnSelectionChanged(javax.swing.event.ListSelectionEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable void readObject(java.io.ObjectInputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable void setColumnModel(javax.swing.table.TableColumnModel) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable void setGridColor(java.awt.Color) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable void setIntercellSpacing(java.awt.Dimension) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable void setLazyValue(java.util.Hashtable, java.lang.Class, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable void setModel(javax.swing.table.TableModel) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable void setSelectionBackground(java.awt.Color) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable void setSelectionForeground(java.awt.Color) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable void setSelectionModel(javax.swing.ListSelectionModel) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable void tableRowsDeleted(javax.swing.event.TableModelEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable void tableRowsInserted(javax.swing.event.TableModelEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable void valueChanged(javax.swing.event.ListSelectionEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JTable void writeObject(java.io.ObjectOutputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities boolean isDescendingFrom(java.awt.Component, java.awt.Component)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null,_-&gt;true&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.SwingUtilities boolean isLeftMouseButton(java.awt.event.MouseEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities boolean isLeftToRight(java.awt.Component) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities boolean isMiddleMouseButton(java.awt.event.MouseEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities boolean isRectangleContainingRectangle(java.awt.Rectangle, java.awt.Rectangle) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities boolean isRectangleContainingRectangle(java.awt.Rectangle, java.awt.Rectangle) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities boolean isRightMouseButton(java.awt.event.MouseEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities boolean isValidKeyEventForKeyBindings(java.awt.event.KeyEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities boolean notifyAction(javax.swing.Action, javax.swing.KeyStroke, java.awt.event.KeyEvent, java.lang.Object, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;_,_,null,_,_-&gt;false;null,_,_,_,_-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.SwingUtilities boolean processKeyBindings(java.awt.event.KeyEvent)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.SwingUtilities int computeStringWidth(java.awt.FontMetrics, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities int getAccessibleChildrenCount(java.awt.Component) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities int getAccessibleIndexInParent(java.awt.Component) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Component getDeepestComponentAt(java.awt.Component, int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Container getAncestorNamed(java.lang.String, java.awt.Component)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;_,null-&gt;null;null,_-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Container getAncestorOfClass(java.lang.Class, java.awt.Component)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;_,null-&gt;null;null,_-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Point convertPoint(java.awt.Component, int, int, java.awt.Component)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_,_,_-&gt;!null;_,_,_,!null-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Point convertPoint(java.awt.Component, java.awt.Point, java.awt.Component)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_,_-&gt;!null;_,!null,_-&gt;!null;_,_,!null-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Point convertScreenLocationToParent(java.awt.Container, int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Point convertScreenLocationToParent(java.awt.Container, int, int)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Rectangle calculateInnerArea(javax.swing.JComponent, java.awt.Rectangle)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null,_-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Rectangle computeIntersection(int, int, int, int, java.awt.Rectangle) 4">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Rectangle computeIntersection(int, int, int, int, java.awt.Rectangle)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;_,_,_,_,!null-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Rectangle computeUnion(int, int, int, int, java.awt.Rectangle) 4">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Rectangle computeUnion(int, int, int, int, java.awt.Rectangle)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;_,_,_,_,!null-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Rectangle convertRectangle(java.awt.Component, java.awt.Rectangle, java.awt.Component) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Rectangle convertRectangle(java.awt.Component, java.awt.Rectangle, java.awt.Component)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Rectangle getLocalBounds(java.awt.Component) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Rectangle getLocalBounds(java.awt.Component)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Rectangle[] computeDifference(java.awt.Rectangle, java.awt.Rectangle)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Window getWindowAncestor(java.awt.Component) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Window windowForComponent(java.awt.Component) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.event.MouseEvent convertMouseEvent(java.awt.Component, java.awt.event.MouseEvent, java.awt.Component) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.event.MouseEvent convertMouseEvent(java.awt.Component, java.awt.event.MouseEvent, java.awt.Component)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.lang.String layoutCompoundLabel(java.awt.FontMetrics, java.lang.String, javax.swing.Icon, int, int, int, int, java.awt.Rectangle, java.awt.Rectangle, java.awt.Rectangle, int) 7">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.lang.String layoutCompoundLabel(java.awt.FontMetrics, java.lang.String, javax.swing.Icon, int, int, int, int, java.awt.Rectangle, java.awt.Rectangle, java.awt.Rectangle, int) 8">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.lang.String layoutCompoundLabel(java.awt.FontMetrics, java.lang.String, javax.swing.Icon, int, int, int, int, java.awt.Rectangle, java.awt.Rectangle, java.awt.Rectangle, int) 9">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.lang.String layoutCompoundLabel(java.awt.FontMetrics, java.lang.String, javax.swing.Icon, int, int, int, int, java.awt.Rectangle, java.awt.Rectangle, java.awt.Rectangle, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;_,!null,_,_,_,_,_,_,_,_,_-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.SwingUtilities java.lang.String layoutCompoundLabel(javax.swing.JComponent, java.awt.FontMetrics, java.lang.String, javax.swing.Icon, int, int, int, int, java.awt.Rectangle, java.awt.Rectangle, java.awt.Rectangle, int) 10">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.lang.String layoutCompoundLabel(javax.swing.JComponent, java.awt.FontMetrics, java.lang.String, javax.swing.Icon, int, int, int, int, java.awt.Rectangle, java.awt.Rectangle, java.awt.Rectangle, int) 8">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.lang.String layoutCompoundLabel(javax.swing.JComponent, java.awt.FontMetrics, java.lang.String, javax.swing.Icon, int, int, int, int, java.awt.Rectangle, java.awt.Rectangle, java.awt.Rectangle, int) 9">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.lang.String layoutCompoundLabel(javax.swing.JComponent, java.awt.FontMetrics, java.lang.String, javax.swing.Icon, int, int, int, int, java.awt.Rectangle, java.awt.Rectangle, java.awt.Rectangle, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;_,_,!null,_,_,_,_,_,_,_,_,_-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.SwingUtilities java.lang.String layoutCompoundLabelImpl(javax.swing.JComponent, java.awt.FontMetrics, java.lang.String, javax.swing.Icon, int, int, int, int, java.awt.Rectangle, java.awt.Rectangle, java.awt.Rectangle, int) 10">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.lang.String layoutCompoundLabelImpl(javax.swing.JComponent, java.awt.FontMetrics, java.lang.String, javax.swing.Icon, int, int, int, int, java.awt.Rectangle, java.awt.Rectangle, java.awt.Rectangle, int) 8">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.lang.String layoutCompoundLabelImpl(javax.swing.JComponent, java.awt.FontMetrics, java.lang.String, javax.swing.Icon, int, int, int, int, java.awt.Rectangle, java.awt.Rectangle, java.awt.Rectangle, int) 9">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.lang.String layoutCompoundLabelImpl(javax.swing.JComponent, java.awt.FontMetrics, java.lang.String, javax.swing.Icon, int, int, int, int, java.awt.Rectangle, java.awt.Rectangle, java.awt.Rectangle, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;_,_,!null,_,_,_,_,_,_,_,_,_-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.SwingUtilities javax.accessibility.Accessible getAccessibleAt(java.awt.Component, java.awt.Point)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null,_-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.SwingUtilities javax.accessibility.Accessible getAccessibleChild(java.awt.Component, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities javax.accessibility.AccessibleStateSet getAccessibleStateSet(java.awt.Component) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities javax.swing.ActionMap getUIActionMap(javax.swing.JComponent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities javax.swing.CellRendererPane getCellRendererPane(java.awt.Component, java.awt.Container) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities javax.swing.InputMap getUIInputMap(javax.swing.JComponent, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities javax.swing.JRootPane getRootPane(java.awt.Component)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="javax.swing.SwingUtilities void convertPointFromScreen(java.awt.Point, java.awt.Component) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities void convertPointFromScreen(java.awt.Point, java.awt.Component) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities void convertPointToScreen(java.awt.Point, java.awt.Component) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities void convertPointToScreen(java.awt.Point, java.awt.Component) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities void paintComponent(java.awt.Graphics, java.awt.Component, java.awt.Container, int, int, int, int) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities void paintComponent(java.awt.Graphics, java.awt.Component, java.awt.Container, java.awt.Rectangle) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities void paintComponent(java.awt.Graphics, java.awt.Component, java.awt.Container, java.awt.Rectangle) 3">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities void replaceUIActionMap(javax.swing.JComponent, javax.swing.ActionMap) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities void replaceUIInputMap(javax.swing.JComponent, int, javax.swing.InputMap) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities void updateComponentTreeUI(java.awt.Component) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+</root>

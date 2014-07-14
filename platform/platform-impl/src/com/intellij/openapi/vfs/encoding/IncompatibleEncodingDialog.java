@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,11 +51,10 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
-    JLabel label = new JLabel("<html><body>" +
+    JLabel label = new JLabel(XmlStringUtil.wrapInHtml(
                               "The encoding you've chosen ('" + charset.displayName() + "') may change the contents of '" + virtualFile.getName() + "'.<br>" +
                               "Do you want to reload the file from disk or<br>" +
-                              "convert the text and save in the new encoding?" +
-                              "</body></html>");
+                              "convert the text and save in the new encoding?"));
     label.setIcon(Messages.getQuestionIcon());
     label.setIconTextGap(10);
     return label;
@@ -74,23 +74,21 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
           byte[] bom = virtualFile.getBOM();
           if (bom != null) {
             Messages
-              .showErrorDialog("<html><body>" +
+              .showErrorDialog(XmlStringUtil.wrapInHtml(
                           "File '" + virtualFile.getName() + "' can't be reloaded in the '" + charset.displayName() + "' encoding.<br><br>" +
                           (failReason == null ? "" : "Why: "+ failReason +"<br>") +
-                          (autoDetected == null ? "" : "Detected encoding: '"+ autoDetected.displayName()+"'") +
-                          "</body></html>",
-                          "Incompatible Encoding: " + charset.displayName()
+                          (autoDetected == null ? "" : "Detected encoding: '"+ autoDetected.displayName()+"'")),
+                               "Incompatible Encoding: " + charset.displayName()
                           );
             res = -1;
           }
           else {
             res = Messages
-              .showDialog("<html><body>" +
+              .showDialog(XmlStringUtil.wrapInHtml(
                         "File '" + virtualFile.getName() + "' most likely isn't stored in the '" + charset.displayName() + "' encoding." +
                         "<br><br>" +
                         (failReason == null ? "" : "Why: " + failReason + "<br>") +
-                        (autoDetected == null ? "" : "Detected encoding: '" + autoDetected.displayName() + "'") +
-                        "</body></html>",
+                        (autoDetected == null ? "" : "Detected encoding: '" + autoDetected.displayName() + "'")),
                         "Incompatible Encoding: " + charset.displayName(), new String[]{"Reload anyway", "Cancel"}, 1,
                         AllIcons.General.WarningDialog);
           }
@@ -111,10 +109,9 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
       protected void doAction(ActionEvent e) {
         if (safeToConvert == EncodingUtil.Magic8.NO_WAY) {
           String error = EncodingUtil.checkCanConvert(virtualFile);
-          int res = Messages.showDialog("<html><body>" +
+          int res = Messages.showDialog(XmlStringUtil.wrapInHtml(
                                         "Please do not convert to '"+charset.displayName()+"'.<br><br>" +
-                                        (error == null ? "Encoding '" + charset.displayName() + "' does not support some characters from the text." : error)+
-                                        "</body></html>",
+                                        (error == null ? "Encoding '" + charset.displayName() + "' does not support some characters from the text." : error)),
                                         "Incompatible Encoding: " + charset.displayName(), new String[]{"Convert anyway", "Cancel"}, 1,
                                         AllIcons.General.WarningDialog);
           if (res != 0) {

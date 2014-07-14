@@ -22,11 +22,20 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.Comparator;
 
 /**
  * @author nik
  */
 public abstract class XBreakpointGroupingRule<B, G extends XBreakpointGroup> {
+  public static final Comparator<XBreakpointGroupingRule> PRIORITY_COMPARATOR = new Comparator<XBreakpointGroupingRule>() {
+    @Override
+    public int compare(XBreakpointGroupingRule o1, XBreakpointGroupingRule o2) {
+      final int res = o2.getPriority() - o1.getPriority();
+      return res != 0 ? res : (o1.getId().compareTo(o2.getId()));
+    }
+  };
+
   private final String myId;
   private final String myPresentableName;
 

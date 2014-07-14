@@ -16,16 +16,14 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.settings.DebuggerDataViewsConfigurable;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.UserRenderersConfigurable;
-import com.intellij.debugger.ui.impl.FrameVariablesTree;
-import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -33,7 +31,15 @@ import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.xdebugger.XDebugProcess;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,12 +48,20 @@ import java.util.List;
  * Date: Sep 26, 2003
  * Time: 4:39:53 PM
  */
-public class CustomizeContextViewAction extends DebuggerAction{
+public class CustomizeContextViewAction extends XDebuggerTreeActionBase {
+
+  @Override
   public void actionPerformed(AnActionEvent e) {
+    perform(null, "", e);
+  }
+
+  @Override
+  protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
     final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
 
     Disposable disposable = Disposer.newDisposable();
     final CompositeConfigurable configurable = new TabbedConfigurable(disposable) {
+      @Override
       protected List<Configurable> createConfigurables() {
         ArrayList<Configurable> array = new ArrayList<Configurable>();
         array.add(new DebuggerDataViewsConfigurable(project));
@@ -55,17 +69,29 @@ public class CustomizeContextViewAction extends DebuggerAction{
         return array;
       }
 
+      @Override
       public void apply() throws ConfigurationException {
         super.apply();
         NodeRendererSettings.getInstance().fireRenderersChanged();
       }
 
+      @Override
       public String getDisplayName() {
         return DebuggerBundle.message("title.customize.data.views");
       }
 
+      @Override
       public String getHelpTopic() {
-        return null;
+        return "reference.debug.customize.data.view";
+      }
+
+      @Override
+      protected void createConfigurableTabs() {
+        for (Configurable configurable : getConfigurables()) {
+          JComponent component = configurable.createComponent();
+          component.setBorder(new EmptyBorder(8,8,8,8));
+          myTabbedPane.addTab(configurable.getDisplayName(), component);
+        }
       }
     };
 
@@ -74,9 +100,15 @@ public class CustomizeContextViewAction extends DebuggerAction{
     editor.show();
   }
 
+  @Override
   public void update(AnActionEvent e) {
-    DebuggerTree tree = getTree(e.getDataContext());
-    e.getPresentation().setVisible(tree instanceof FrameVariablesTree);
-    e.getPresentation().setText(ActionsBundle.actionText(DebuggerActions.CUSTOMIZE_VIEWS));
+    final XDebuggerManager debuggerManager = XDebuggerManager.getInstance(getEventProject(e));
+    final XDebugSession currentSession = debuggerManager.getCurrentSession();
+    if (currentSession != null) {
+      final XDebugProcess process = currentSession.getDebugProcess();
+      e.getPresentation().setVisible(process instanceof JavaDebugProcess);
+      e.getPresentation().setEnabled(process instanceof JavaDebugProcess);
+      e.getPresentation().setText(ActionsBundle.actionText(DebuggerActions.CUSTOMIZE_VIEWS));
+    }
   }
 }

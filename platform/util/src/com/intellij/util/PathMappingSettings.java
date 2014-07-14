@@ -32,7 +32,6 @@ import java.util.List;
 /**
  * @author traff
  */
-@Tag("path-mapping-settings")
 public class PathMappingSettings implements Cloneable {
   @NotNull
   private List<PathMapping> myPathMappings;
@@ -46,7 +45,7 @@ public class PathMappingSettings implements Cloneable {
     List<PathMapping> result = ContainerUtil.newArrayList();
     if (mappings != null) {
       for (PathMapping m : mappings) {
-        if (m != null && !isEmpty(m.myLocalRoot, m.myRemoteRoot)) {
+        if (m != null && !areBothEmpty(m.myLocalRoot, m.myRemoteRoot)) {
           result.add(m);
         }
       }
@@ -64,6 +63,10 @@ public class PathMappingSettings implements Cloneable {
       result.add(convertToRemote(p));
     }
     return result;
+  }
+
+  public boolean isEmpty() {
+    return myPathMappings.isEmpty();
   }
 
   private static class BestMappingSelector {
@@ -117,7 +120,7 @@ public class PathMappingSettings implements Cloneable {
   }
 
   public void add(PathMapping mapping) {
-    if (isEmpty(mapping.myLocalRoot, mapping.myRemoteRoot)) {
+    if (areBothEmpty(mapping.myLocalRoot, mapping.myRemoteRoot)) {
       return;
     }
     myPathMappings.add(mapping);
@@ -125,10 +128,20 @@ public class PathMappingSettings implements Cloneable {
 
   public void addMapping(String local, String remote) {
     PathMapping mapping = new PathMapping(local, remote);
-    if (isEmpty(mapping.myLocalRoot, mapping.myRemoteRoot)) {
-      return;
+    add(mapping);
+  }
+
+  public void addMappingCheckUnique(String local, String remote) {
+    for (PathMapping mapping: myPathMappings) {
+      if (pathEquals(local, mapping.getLocalRoot()) && pathEquals(remote, mapping.getRemoteRoot())) {
+        return;
+      }
     }
-    myPathMappings.add(mapping);
+    addMapping(local, remote);
+  }
+
+  private static boolean pathEquals(@NotNull String path1, @NotNull String path2) {
+    return norm(path1).equals(norm(path2));
   }
 
   public boolean canReplaceRemote(String remotePath) {
@@ -176,7 +189,7 @@ public class PathMappingSettings implements Cloneable {
 
   @NotNull
   public static String mapToLocal(String path, String remoteRoot, String localRoot) {
-    if (isEmpty(localRoot, remoteRoot)) {
+    if (areBothEmpty(localRoot, remoteRoot)) {
       return path;
     }
     path = norm(path);
@@ -185,7 +198,7 @@ public class PathMappingSettings implements Cloneable {
     return path;
   }
 
-  public static boolean isEmpty(String localRoot, String remoteRoot) {
+  public static boolean areBothEmpty(String localRoot, String remoteRoot) {
     return StringUtil.isEmpty(localRoot) || StringUtil.isEmpty(remoteRoot);
   }
 
@@ -264,11 +277,11 @@ public class PathMappingSettings implements Cloneable {
       return myRemoteRoot;
     }
 
-    public int getLocalLen() {
+    private int getLocalLen() {
       return myLocalRoot != null ? myLocalRoot.length() : -1;
     }
 
-    public int getRemoteLen() {
+    private int getRemoteLen() {
       return myRemoteRoot != null ? myRemoteRoot.length() : -1;
     }
 
@@ -306,7 +319,7 @@ public class PathMappingSettings implements Cloneable {
     }
 
     private boolean isEmpty() {
-      return PathMappingSettings.isEmpty(myLocalRoot, myRemoteRoot);
+      return PathMappingSettings.areBothEmpty(myLocalRoot, myRemoteRoot);
     }
 
     private static String trimSlash(String s) {

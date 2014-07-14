@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.xml.impl;
 
 import com.intellij.util.ArrayUtil;
@@ -28,6 +43,7 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
     myGetterMethod = null;
   }
 
+  @Override
   @NotNull
   public DomNameStrategy getDomNameStrategy(@NotNull DomElement parent) {
     final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ReflectionUtil.getRawType(getType()), true);
@@ -35,6 +51,7 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
   }
 
 
+  @Override
   public final JavaMethod getGetterMethod() {
     return myGetterMethod;
   }
@@ -44,22 +61,26 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
     return "Attribute:" + getXmlName();
   }
 
+  @Override
   @Nullable
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     final JavaMethod method = getGetterMethod();
     return method == null ? super.getAnnotation(annotationClass) : method.getAnnotation(annotationClass);
   }
 
+  @Override
   @NotNull
   public List<? extends DomElement> getValues(@NotNull DomElement parent) {
     return Arrays.asList(getDomAttributeValue(parent));
   }
 
+  @Override
   @NotNull
   public String getCommonPresentableName(@NotNull DomNameStrategy strategy) {
     throw new UnsupportedOperationException("Method getCommonPresentableName is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   public GenericAttributeValue getDomAttributeValue(DomElement parent) {
     final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(parent);
     if (handler != null) {

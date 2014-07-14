@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.actions.EditSourceAction;
+import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.actionSystem.*;
@@ -38,7 +39,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitContext;
@@ -71,16 +72,18 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 
 public class ShelvedChangesViewManager implements ProjectComponent {
   private final ChangesViewContentManager myContentManager;
   private final ShelveChangesManager myShelveChangesManager;
   private final Project myProject;
-  private final Tree myTree;
+  private final ShelfTree myTree;
   private Content myContent = null;
   private final ShelvedChangeDeleteProvider myDeleteProvider = new ShelvedChangeDeleteProvider();
   private boolean myUpdatePending = false;
@@ -92,7 +95,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   public static DataKey<List<ShelvedBinaryFile>> SHELVED_BINARY_FILE_KEY = DataKey.create("ShelveChangesManager.ShelvedBinaryFile");
   private static final Object ROOT_NODE_VALUE = new Object();
   private DefaultMutableTreeNode myRoot;
-  private final Map<Pair<String, String>, String> myMoveRenameInfo;
+  private final Map<Couple<String>, String> myMoveRenameInfo;
 
   public static ShelvedChangesViewManager getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ShelvedChangesViewManager.class);
@@ -113,7 +116,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         }, ModalityState.NON_MODAL);
       }
     });
-    myMoveRenameInfo = new HashMap<Pair<String, String>, String>();
+    myMoveRenameInfo = new HashMap<Couple<String>, String>();
 
     myTree = new ShelfTree();
     myTree.setRootVisible(false);
@@ -188,9 +191,8 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }
     else {
       if (myContent == null) {
-        JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
-        scrollPane.setBorder(null);
-        myContent = ContentFactory.SERVICE.getInstance().createContent(scrollPane, VcsBundle.message("shelf.tab"), false);
+        JPanel rootPanel = createRootPanel();
+        myContent = ContentFactory.SERVICE.getInstance().createContent(rootPanel, VcsBundle.message("shelf.tab"), false);
         myContent.setCloseable(false);
         myContentManager.addContent(myContent);
       }
@@ -202,6 +204,24 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }      
     }
     myPostUpdateRunnable = null;
+  }
+
+  @NotNull
+  private JPanel createRootPanel() {
+    JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
+    pane.setBorder(null);
+
+    DefaultActionGroup actionGroup = new DefaultActionGroup();
+    actionGroup.addAll((ActionGroup)ActionManager.getInstance().getAction("ShelvedChangesToolbar"));
+    actionGroup.add(ActionManager.getInstance().getAction("ShelvedChangesToolbarGear"));
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, false);
+
+    JPanel rootPanel = new JPanel(new BorderLayout());
+    rootPanel.add(toolbar.getComponent(), BorderLayout.WEST);
+    rootPanel.add(pane, BorderLayout.CENTER);
+    DataManager.registerDataProvider(rootPanel, new TypeSafeDataProviderAdapter(myTree));
+
+    return rootPanel;
   }
 
   private TreeModel buildChangesModel() {
@@ -258,7 +278,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private void putMovedMessage(final String beforeName, final String afterName) {
     final String movedMessage = RelativePathCalculator.getMovedString(beforeName, afterName);
     if (movedMessage != null) {
-      myMoveRenameInfo.put(new Pair<String, String>(beforeName, afterName), movedMessage);
+      myMoveRenameInfo.put(Couple.of(beforeName, afterName), movedMessage);
     }
   }
 
@@ -423,9 +443,9 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
   private static class ShelfTreeCellRenderer extends ColoredTreeCellRenderer {
     private final IssueLinkRenderer myIssueLinkRenderer;
-    private final Map<Pair<String, String>, String> myMoveRenameInfo;
+    private final Map<Couple<String>, String> myMoveRenameInfo;
 
-    public ShelfTreeCellRenderer(Project project, final Map<Pair<String, String>, String> moveRenameInfo) {
+    public ShelfTreeCellRenderer(Project project, final Map<Couple<String>, String> moveRenameInfo) {
       myMoveRenameInfo = moveRenameInfo;
       myIssueLinkRenderer = new IssueLinkRenderer(project, this);
     }
@@ -450,7 +470,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
       else if (nodeValue instanceof ShelvedChange) {
         ShelvedChange change = (ShelvedChange) nodeValue;
-        final String movedMessage = myMoveRenameInfo.get(new Pair<String, String>(change.getBeforePath(), change.getAfterPath()));
+        final String movedMessage = myMoveRenameInfo.get(Couple.of(change.getBeforePath(), change.getAfterPath()));
         renderFileName(change.getBeforePath(), change.getFileStatus(), movedMessage);
       }
       else if (nodeValue instanceof ShelvedBinaryFile) {
@@ -459,7 +479,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         if (path == null) {
           path = binaryFile.AFTER_PATH;
         }
-        final String movedMessage = myMoveRenameInfo.get(new Pair<String, String>(binaryFile.BEFORE_PATH, binaryFile.AFTER_PATH));
+        final String movedMessage = myMoveRenameInfo.get(Couple.of(binaryFile.BEFORE_PATH, binaryFile.AFTER_PATH));
         renderFileName(path, binaryFile.getFileStatus(), movedMessage);
       }
     }

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,7 +22,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -15,7 +32,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ThrowableConvertor;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import git4idea.DialogManager;
 import git4idea.GitCommit;
@@ -34,21 +52,14 @@ import git4idea.util.GitCommitCompareInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.*;
-import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
 import org.jetbrains.plugins.github.ui.GithubSelectForkDialog;
-import org.jetbrains.plugins.github.util.GithubAuthData;
-import org.jetbrains.plugins.github.util.GithubNotifications;
-import org.jetbrains.plugins.github.util.GithubUrlUtil;
-import org.jetbrains.plugins.github.util.GithubUtil;
+import org.jetbrains.plugins.github.util.*;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.HashSet;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Aleksey Pivovarov
@@ -64,7 +75,7 @@ public class GithubCreatePullRequestWorker {
   @NotNull private final String myRemoteName;
   @NotNull private final String myRemoteUrl;
   @NotNull private final String myCurrentBranch;
-  @NotNull private final GithubAuthData myAuth;
+  @NotNull private final GithubAuthDataHolder myAuthHolder;
 
   @NotNull private final Map<String, FutureTask<DiffInfo>> myDiffInfos;
 
@@ -78,7 +89,7 @@ public class GithubCreatePullRequestWorker {
                                         @NotNull String remoteName,
                                         @NotNull String remoteUrl,
                                         @NotNull String currentBranch,
-                                        @NotNull GithubAuthData auth) {
+                                        @NotNull GithubAuthDataHolder authHolder) {
     myProject = project;
     myGit = git;
     myGitRepository = gitRepository;
@@ -86,7 +97,7 @@ public class GithubCreatePullRequestWorker {
     myRemoteName = remoteName;
     myRemoteUrl = remoteUrl;
     myCurrentBranch = currentBranch;
-    myAuth = auth;
+    myAuthHolder = authHolder;
 
     myDiffInfos = new HashMap<String, FutureTask<DiffInfo>>();
   }
@@ -135,25 +146,23 @@ public class GithubCreatePullRequestWorker {
       return null;
     }
 
-    GithubAuthData auth;
+    GithubAuthDataHolder authHolder;
     try {
-      auth = GithubUtil
-        .computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubAuthData, IOException>() {
+      authHolder = GithubUtil
+        .computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubAuthDataHolder, IOException>() {
+          @NotNull
           @Override
-          public GithubAuthData convert(ProgressIndicator indicator) throws IOException {
-            return GithubUtil.getValidAuthDataFromConfig(project, indicator);
+          public GithubAuthDataHolder convert(ProgressIndicator indicator) throws IOException {
+            return GithubUtil.getValidAuthDataHolderFromConfig(project, indicator);
           }
         });
-    }
-    catch (GithubAuthenticationCanceledException e) {
-      return null;
     }
     catch (IOException e) {
       GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, e);
       return null;
     }
 
-    return new GithubCreatePullRequestWorker(project, git, gitRepository, path, remoteName, remoteUrl, currentBranch.getName(), auth);
+    return new GithubCreatePullRequestWorker(project, git, gitRepository, path, remoteName, remoteUrl, currentBranch.getName(), authHolder);
   }
 
   @Nullable
@@ -161,13 +170,14 @@ public class GithubCreatePullRequestWorker {
     try {
       GithubInfo info =
         GithubUtil.computeValueInModal(myProject, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubInfo, IOException>() {
+          @NotNull
           @Override
           public GithubInfo convert(ProgressIndicator indicator) throws IOException {
             // configure remote
             GitRemote targetRemote = GithubUtil.findGithubRemote(myGitRepository, forkPath);
             String targetRemoteName = targetRemote == null ? null : targetRemote.getName();
             if (targetRemoteName == null) {
-              final AtomicReference<Integer> responseRef = new AtomicReference<Integer>();
+              final Ref<Integer> responseRef = new Ref<Integer>();
               ApplicationManager.getApplication().invokeAndWait(new Runnable() {
                 @Override
                 public void run() {
@@ -181,13 +191,21 @@ public class GithubCreatePullRequestWorker {
             }
 
             // load available branches
-            List<String> branches = ContainerUtil.map(GithubApiUtil.getRepoBranches(myAuth, forkPath.getUser(), forkPath.getRepository()),
-                                                      new Function<GithubBranch, String>() {
-                                                        @Override
-                                                        public String fun(GithubBranch githubBranch) {
-                                                          return githubBranch.getName();
-                                                        }
-                                                      });
+            List<String> branches = ContainerUtil.map(GithubUtil.runTask(myProject, myAuthHolder, indicator,
+                                                                         new ThrowableConvertor<GithubAuthData, List<GithubBranch>, IOException>() {
+                                                                           @Override
+                                                                           public List<GithubBranch> convert(@NotNull GithubAuthData auth)
+                                                                             throws IOException {
+                                                                             return GithubApiUtil.getRepoBranches(auth, forkPath.getUser(),
+                                                                                                                  forkPath.getRepository());
+                                                                           }
+                                                                         }
+            ), new Function<GithubBranch, String>() {
+              @Override
+              public String fun(GithubBranch githubBranch) {
+                return githubBranch.getName();
+              }
+            });
 
             // fetch
             if (targetRemoteName != null) {
@@ -209,6 +227,7 @@ public class GithubCreatePullRequestWorker {
       if (canShowDiff()) {
         for (final String branch : info.getBranches()) {
           myDiffInfos.put(branch, new FutureTask<DiffInfo>(new Callable<DiffInfo>() {
+            @Nullable
             @Override
             public DiffInfo call() throws Exception {
               return loadDiffInfo(myProject, myGitRepository, myCurrentBranch, myTargetRemote + "/" + branch);
@@ -218,9 +237,6 @@ public class GithubCreatePullRequestWorker {
       }
 
       return new GithubTargetInfo(info.getBranches());
-    }
-    catch (GithubAuthenticationCanceledException e) {
-      return null;
     }
     catch (IOException e) {
       GithubNotifications.showErrorDialog(myProject, CANNOT_CREATE_PULL_REQUEST, e);
@@ -244,9 +260,32 @@ public class GithubCreatePullRequestWorker {
 
   @Nullable
   public GithubFullPath showTargetDialog() {
-    final GithubInfo2 info = getAvailableForksInModal(myProject, myGitRepository, myAuth, myPath);
+    return showTargetDialog(false);
+  }
+
+  @Nullable
+  public GithubFullPath showTargetDialog(boolean firstTime) {
+    final GithubInfo2 info = getAvailableForksInModal(myProject, myGitRepository, myAuthHolder, myPath);
     if (info == null) {
       return null;
+    }
+
+    if (firstTime) {
+      if (info.getForks().size() == 1) {
+        return info.getForks().iterator().next();
+      }
+      if (info.getForks().size() == 2) {
+        Iterator<GithubFullPath> it = info.getForks().iterator();
+        GithubFullPath path1 = it.next();
+        GithubFullPath path2 = it.next();
+
+        if (myPath.equals(path1)) {
+          return path2;
+        }
+        if (myPath.equals(path2)) {
+          return path1;
+        }
+      }
     }
 
     Convertor<String, GithubFullPath> getForkPath = new Convertor<String, GithubFullPath>() {
@@ -256,8 +295,8 @@ public class GithubCreatePullRequestWorker {
         return GithubUtil.computeValueInModal(myProject, "Access to GitHub", new Convertor<ProgressIndicator, GithubFullPath>() {
           @Nullable
           @Override
-          public GithubFullPath convert(ProgressIndicator o) {
-            return findRepositoryByUser(myProject, user, info.getForks(), myAuth, info.getSource());
+          public GithubFullPath convert(ProgressIndicator indicator) {
+            return findRepositoryByUser(myProject, myAuthHolder, indicator, user, info.getForks(), info.getSource());
           }
         });
       }
@@ -275,15 +314,21 @@ public class GithubCreatePullRequestWorker {
     if (info == null) {
       return true;
     }
+
+    String localBranchName = "'" + getCurrentBranch() + "'";
+    String targetBranchName = "'" + myTargetRemote + ":" + targetBranch + "'";
     if (info.getInfo().getBranchToHeadCommits(myGitRepository).isEmpty()) {
-      GithubNotifications.showWarningDialog(myProject, CANNOT_CREATE_PULL_REQUEST,
-        "Can't create empty pull request: the branch" + getCurrentBranch() + " in fully merged to the branch " + targetBranch + ".");
+      GithubNotifications
+        .showWarningDialog(myProject, CANNOT_CREATE_PULL_REQUEST,
+                           "Can't create empty pull request: the branch " + localBranchName +
+                           " is fully merged to the branch " + targetBranchName
+        );
       return false;
     }
-    if (info.getInfo().getHeadToBranchCommits(myGitRepository).isEmpty()) {
+    if (!info.getInfo().getHeadToBranchCommits(myGitRepository).isEmpty()) {
       return GithubNotifications
-               .showYesNoDialog(myProject, "The branch" + targetBranch + " in not fully merged to the branch " + getCurrentBranch(),
-                                "Do you want to proceed anyway?") == Messages.YES;
+               .showYesNoDialog(myProject, "Do you want to proceed anyway?",
+                                "The branch " + targetBranchName + " is not fully merged to the branch " + localBranchName) == Messages.YES;
     }
 
     return true;
@@ -307,7 +352,8 @@ public class GithubCreatePullRequestWorker {
 
         LOG.info("Creating pull request");
         indicator.setText("Creating pull request...");
-        GithubPullRequest request = createPullRequest(project, myAuth, myForkPath, title, description, headBranch, targetBranch);
+        GithubPullRequest request =
+          createPullRequest(project, myAuthHolder, indicator, myForkPath, title, description, headBranch, targetBranch);
         if (request == null) {
           return;
         }
@@ -332,14 +378,21 @@ public class GithubCreatePullRequestWorker {
 
   @Nullable
   private static GithubPullRequest createPullRequest(@NotNull Project project,
-                                                     @NotNull GithubAuthData auth,
-                                                     @NotNull GithubFullPath targetRepo,
-                                                     @NotNull String title,
-                                                     @NotNull String description,
-                                                     @NotNull String head,
-                                                     @NotNull String base) {
+                                                     @NotNull GithubAuthDataHolder authHolder,
+                                                     @NotNull ProgressIndicator indicator,
+                                                     @NotNull final GithubFullPath targetRepo,
+                                                     @NotNull final String title,
+                                                     @NotNull final String description,
+                                                     @NotNull final String head,
+                                                     @NotNull final String base) {
     try {
-      return GithubApiUtil.createPullRequest(auth, targetRepo.getUser(), targetRepo.getRepository(), title, description, head, base);
+      return GithubUtil.runTask(project, authHolder, indicator, new ThrowableConvertor<GithubAuthData, GithubPullRequest, IOException>() {
+        @NotNull
+        @Override
+        public GithubPullRequest convert(@NotNull GithubAuthData auth) throws IOException {
+          return GithubApiUtil.createPullRequest(auth, targetRepo.getUser(), targetRepo.getRepository(), title, description, head, base);
+        }
+      });
     }
     catch (IOException e) {
       GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, e);
@@ -398,7 +451,7 @@ public class GithubCreatePullRequestWorker {
       Collection<Change> diff = GitChangeUtils.getDiff(repository.getProject(), repository.getRoot(), targetBranch, currentBranch, null);
       GitCommitCompareInfo info = new GitCommitCompareInfo(GitCommitCompareInfo.InfoType.BRANCH_TO_HEAD);
       info.put(repository, diff);
-      info.put(repository, Pair.create(commits1, commits2));
+      info.put(repository, Couple.of(commits1, commits2));
       return new DiffInfo(info, currentBranch, targetBranch);
     }
     catch (VcsException e) {
@@ -426,17 +479,26 @@ public class GithubCreatePullRequestWorker {
   @Nullable
   private static GithubInfo2 getAvailableForksInModal(@NotNull final Project project,
                                                       @NotNull final GitRepository gitRepository,
-                                                      @NotNull final GithubAuthData auth,
+                                                      @NotNull final GithubAuthDataHolder authHolder,
                                                       @NotNull final GithubFullPath path) {
     try {
       return GithubUtil
         .computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubInfo2, IOException>() {
+          @NotNull
           @Override
           public GithubInfo2 convert(ProgressIndicator indicator) throws IOException {
             final Set<GithubFullPath> forks = new HashSet<GithubFullPath>();
 
             // GitHub
-            GithubRepoDetailed repo = GithubApiUtil.getDetailedRepoInfo(auth, path.getUser(), path.getRepository());
+            GithubRepoDetailed repo =
+              GithubUtil.runTask(project, authHolder, indicator, new ThrowableConvertor<GithubAuthData, GithubRepoDetailed, IOException>() {
+                @NotNull
+                @Override
+                public GithubRepoDetailed convert(@NotNull GithubAuthData auth) throws IOException {
+                  return GithubApiUtil.getDetailedRepoInfo(auth, path.getUser(), path.getRepository());
+                }
+              });
+
             forks.add(path);
             if (repo.getParent() != null) {
               forks.add(repo.getParent().getFullPath());
@@ -452,9 +514,6 @@ public class GithubCreatePullRequestWorker {
             return new GithubInfo2(forks, forkTreeRoot);
           }
         });
-    }
-    catch (GithubAuthenticationCanceledException e) {
-      return null;
     }
     catch (IOException e) {
       GithubNotifications.showErrorDialog(project, CANNOT_CREATE_PULL_REQUEST, e);
@@ -481,10 +540,11 @@ public class GithubCreatePullRequestWorker {
 
   @Nullable
   private static GithubFullPath findRepositoryByUser(@NotNull Project project,
-                                                     @NotNull String user,
+                                                     @NotNull GithubAuthDataHolder authHolder,
+                                                     @NotNull ProgressIndicator indicator,
+                                                     @NotNull final String user,
                                                      @NotNull Set<GithubFullPath> forks,
-                                                     @NotNull GithubAuthData auth,
-                                                     @NotNull GithubRepo source) {
+                                                     @NotNull final GithubRepo source) {
     for (GithubFullPath path : forks) {
       if (StringUtil.equalsIgnoreCase(user, path.getUser())) {
         return path;
@@ -492,20 +552,28 @@ public class GithubCreatePullRequestWorker {
     }
 
     try {
-      GithubRepoDetailed target = GithubApiUtil.getDetailedRepoInfo(auth, user, source.getName());
-      if (target.getSource() != null && StringUtil.equals(target.getSource().getUserName(), source.getUserName())) {
-        return target.getFullPath();
-      }
-    }
-    catch (IOException ignore) {
-      // such repo may not exist
-    }
+      return GithubUtil.runTask(project, authHolder, indicator, new ThrowableConvertor<GithubAuthData, GithubFullPath, IOException>() {
+        @Nullable
+        @Override
+        public GithubFullPath convert(@NotNull GithubAuthData auth) throws IOException {
+          try {
+            GithubRepoDetailed target = GithubApiUtil.getDetailedRepoInfo(auth, user, source.getName());
+            if (target.getSource() != null && StringUtil.equals(target.getSource().getUserName(), source.getUserName())) {
+              return target.getFullPath();
+            }
+          }
+          catch (IOException ignore) {
+            // such repo may not exist
+          }
 
-    try {
-      GithubRepo fork = GithubApiUtil.findForkByUser(auth, source.getUserName(), source.getName(), user);
-      if (fork != null) {
-        return fork.getFullPath();
-      }
+          GithubRepo fork = GithubApiUtil.findForkByUser(auth, source.getUserName(), source.getName(), user);
+          if (fork != null) {
+            return fork.getFullPath();
+          }
+
+          return null;
+        }
+      });
     }
     catch (IOException e) {
       GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, e);

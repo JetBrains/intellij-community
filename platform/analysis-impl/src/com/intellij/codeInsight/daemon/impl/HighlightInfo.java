@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,6 +98,7 @@ public class HighlightInfo implements Segment {
   private static final int AFTER_END_OF_LINE_FLAG = 3;
   private static final int FILE_LEVEL_ANNOTATION_FLAG = 4;
   private static final int NEEDS_UPDATE_ON_TYPING_FLAG = 5;
+  PsiElement psiElement;
 
   @NotNull
   ProperTextRange getFixTextRange() {
@@ -432,6 +433,7 @@ public class HighlightInfo implements Segment {
         return false;
       }
     }
+    info.psiElement = psiElement;
     return true;
   }
 
@@ -725,6 +727,7 @@ public class HighlightInfo implements Segment {
     private final ProblemGroup myProblemGroup;
     private final String myDisplayName;
     private final Icon myIcon;
+    private Boolean myCanCleanup;
 
     public IntentionActionDescriptor(@NotNull IntentionAction action, final List<IntentionAction> options, final String displayName) {
       this(action, options, displayName, null);
@@ -760,6 +763,20 @@ public class HighlightInfo implements Segment {
       return myAction;
     }
 
+    public boolean canCleanup(PsiElement element) {
+      if (myCanCleanup == null) {
+        InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
+        final HighlightDisplayKey key = myKey;
+        if (key == null) {
+          myCanCleanup = false;
+        } else {
+          InspectionToolWrapper toolWrapper = profile.getInspectionTool(key.toString(), element);
+          myCanCleanup = toolWrapper != null && toolWrapper.isCleanupTool();
+        }
+      }
+      return myCanCleanup;
+    }
+
     @Nullable
     public List<IntentionAction> getOptions(@NotNull PsiElement element, @Nullable Editor editor) {
       if (editor != null && Boolean.FALSE.equals(editor.getUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY))) {
@@ -787,6 +804,9 @@ public class HighlightInfo implements Segment {
         }
       }
       if (toolWrapper != null) {
+
+        myCanCleanup = toolWrapper.isCleanupTool();
+
         InspectionProfileEntry wrappedTool;
         if (toolWrapper instanceof LocalInspectionToolWrapper) {
           wrappedTool = ((LocalInspectionToolWrapper)toolWrapper).getTool();
@@ -815,16 +835,18 @@ public class HighlightInfo implements Segment {
           if (suppressActions != null) {
             ContainerUtil.addAll(newOptions, suppressActions);
           }
+        } else {
+          SuppressQuickFix[] suppressFixes = wrappedTool.getBatchSuppressActions(element);
+          if (suppressFixes.length > 0) {
+            ContainerUtil.addAll(newOptions, ContainerUtil.map(suppressFixes, new Function<SuppressQuickFix, IntentionAction>() {
+              @Override
+              public IntentionAction fun(SuppressQuickFix fix) {
+                return SuppressIntentionActionFromFix.convertBatchToSuppressIntentionAction(fix);
+              }
+            }));
+          }
         }
-        if (wrappedTool instanceof BatchSuppressableTool) {
-          final SuppressQuickFix[] suppressActions = ((BatchSuppressableTool)wrappedTool).getBatchSuppressActions(element);
-          ContainerUtil.addAll(newOptions, ContainerUtil.map(suppressActions, new Function<SuppressQuickFix, IntentionAction>() {
-            @Override
-            public IntentionAction fun(SuppressQuickFix fix) {
-              return SuppressIntentionActionFromFix.convertBatchToSuppressIntentionAction(fix);
-            }
-          }));
-        }
+
       }
       if (myProblemGroup instanceof SuppressableProblemGroup) {
         final IntentionAction[] suppressActions = ((SuppressableProblemGroup)myProblemGroup).getSuppressActions(element);

@@ -15,10 +15,13 @@
  */
 package com.intellij.openapi.wm.ex;
 
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.IdeFrame;
+import org.jetbrains.annotations.NotNull;
 
 public interface IdeFrameEx extends IdeFrame {
   boolean isInFullScreen();
 
-  void toggleFullScreen(boolean state);
+  @NotNull
+  ActionCallback toggleFullScreen(boolean state);
 }

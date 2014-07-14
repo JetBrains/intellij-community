@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -126,7 +127,7 @@ public class ReplaceConditionalWithIfIntention extends Intention {
       if (addBraces || elseExpression == null) {
         newStatement.append('}');
       }
-      replaceStatement(newStatement.toString(), statement);
+      PsiReplacementUtil.replaceStatement(statement, newStatement.toString());
     }
   }
 

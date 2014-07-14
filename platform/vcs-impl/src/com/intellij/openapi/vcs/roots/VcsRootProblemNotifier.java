@@ -16,7 +16,8 @@
 package com.intellij.openapi.vcs.roots;
 
 import com.intellij.idea.ActionsBundle;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -24,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.VcsRootError;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
@@ -33,8 +35,6 @@ import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static com.intellij.notification.NotificationType.ERROR;
-import static com.intellij.notification.NotificationType.INFORMATION;
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
 
 /**
@@ -49,11 +49,6 @@ public class VcsRootProblemNotifier {
 
   private @Nullable Notification myNotification;
   private final @NotNull Object NOTIFICATION_LOCK = new Object();
-
-  public static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION = new NotificationGroup(
-    "Vcs Important Messages", NotificationDisplayType.STICKY_BALLOON, true);
-  public static final NotificationGroup MINOR_NOTIFICATION = new NotificationGroup(
-    "Vcs Minor Notifications", NotificationDisplayType.BALLOON, true);
 
   public static VcsRootProblemNotifier getInstance(@NotNull Project project) {
     return new VcsRootProblemNotifier(project);
@@ -85,11 +80,11 @@ public class VcsRootProblemNotifier {
 
     synchronized (NOTIFICATION_LOCK) {
       expireNotification();
-      NotificationGroup notificationGroup = invalidRoots.isEmpty() ? MINOR_NOTIFICATION : IMPORTANT_ERROR_NOTIFICATION;
-      NotificationType notificationType = invalidRoots.isEmpty() ? INFORMATION : ERROR;
-      myNotification = notificationGroup.createNotification(title, description, notificationType,
-                                                            new MyNotificationListener(myProject, mySettings));
-      myNotification.notify(myProject);
+      NotificationListener listener = new MyNotificationListener(myProject, mySettings);
+      VcsNotifier notifier = VcsNotifier.getInstance(myProject);
+      myNotification = invalidRoots.isEmpty()
+                       ? notifier.notifyMinorInfo(title, description, listener)
+                       : notifier.notifyError(title, description, listener);
     }
   }
 

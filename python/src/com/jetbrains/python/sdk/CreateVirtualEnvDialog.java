@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,15 @@
  */
 package com.jetbrains.python.sdk;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -27,16 +31,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.LocationNameFieldsBinding;
-import com.intellij.remotesdk.RemoteSdkDataHolder;
+import com.intellij.remote.RemoteSdkCredentialsHolder;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.util.NullableConsumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.packaging.PyExternalProcessException;
@@ -67,18 +76,16 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
   private JTextField myName;
   private JBCheckBox mySitePackagesCheckBox;
   private JBCheckBox myMakeAvailableToAllProjectsCheckbox;
-  private JBCheckBox mySetAsProjectInterpreterCheckbox;
   @Nullable private Project myProject;
   private String myInitialPath;
 
   public interface VirtualEnvCallback {
-    void virtualEnvCreated(Sdk sdk, boolean associateWithProject, boolean setAsProjectInterpreter);
+    void virtualEnvCreated(Sdk sdk, boolean associateWithProject);
   }
 
   private static void setupVirtualEnvSdk(List<Sdk> allSdks,
                                          final String path,
                                          boolean associateWithProject,
-                                         final boolean makeActive,
                                          VirtualEnvCallback callback) {
     final VirtualFile sdkHome =
       ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
@@ -91,31 +98,37 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
       final String name =
         SdkConfigurationUtil.createUniqueSdkName(PythonSdkType.getInstance(), sdkHome.getPath(), allSdks);
       final ProjectJdkImpl sdk = new ProjectJdkImpl(name, PythonSdkType.getInstance());
-      sdk.setHomePath(sdkHome.getPath());
-      callback.virtualEnvCreated(sdk, associateWithProject, makeActive);
+      sdk.setHomePath(FileUtil.toSystemDependentName(sdkHome.getPath()));
+      callback.virtualEnvCreated(sdk, associateWithProject);
     }
   }
 
   public CreateVirtualEnvDialog(Project project,
-                                boolean isNewProject,
                                 final List<Sdk> allSdks,
                                 @Nullable Sdk suggestedBaseSdk) {
     super(project);
-    setupDialog(project, isNewProject, allSdks, suggestedBaseSdk);
+    setupDialog(project, allSdks, suggestedBaseSdk);
   }
 
   public CreateVirtualEnvDialog(Component owner,
-                                boolean isNewProject,
                                 final List<Sdk> allSdks,
                                 @Nullable Sdk suggestedBaseSdk) {
     super(owner);
-    setupDialog(null, isNewProject, allSdks, suggestedBaseSdk);
+    setupDialog(null, allSdks, suggestedBaseSdk);
   }
 
-  private void setupDialog(Project project, boolean isNewProject, List<Sdk> allSdks, @Nullable Sdk suggestedBaseSdk) {
+  private void setupDialog(Project project, final List<Sdk> allSdks, @Nullable Sdk suggestedBaseSdk) {
     myProject = project;
+    layoutPanel(allSdks);
+
     init();
     setTitle("Create Virtual Environment");
+    Iterables.removeIf(allSdks, new Predicate<Sdk>() {
+      @Override
+      public boolean apply(Sdk s) {
+        return PythonSdkType.isInvalid(s) || PythonSdkType.isVirtualEnv(s) || RemoteSdkCredentialsHolder.isRemoteSdk(s.getHomePath());
+      }
+    });
     if (suggestedBaseSdk == null && allSdks.size() > 0) {
       List<Sdk> sortedSdks = new ArrayList<Sdk>(allSdks);
       Collections.sort(sortedSdks, new PreferredSdkComparator());
@@ -123,15 +136,9 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
     }
     updateSdkList(allSdks, suggestedBaseSdk);
 
-    myMakeAvailableToAllProjectsCheckbox.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
     if (project == null || project.isDefault() || !PlatformUtils.isPyCharm()) {
       myMakeAvailableToAllProjectsCheckbox.setSelected(true);
       myMakeAvailableToAllProjectsCheckbox.setVisible(false);
-      mySetAsProjectInterpreterCheckbox.setSelected(false);
-      mySetAsProjectInterpreterCheckbox.setVisible(false);
-    }
-    else if (isNewProject) {
-      mySetAsProjectInterpreterCheckbox.setText("Set as project interpreter for the project being created");
     }
 
     setOKActionEnabled(false);
@@ -140,16 +147,19 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
 
     final VirtualFile file = VirtualEnvSdkFlavor.getDefaultLocation();
 
-    if (file != null)
+    if (file != null) {
       myInitialPath = file.getPath();
+    }
     else {
       final String savedPath = PyPackageService.getInstance().getVirtualEnvBasePath();
-      if (!StringUtil.isEmptyOrSpaces(savedPath))
+      if (!StringUtil.isEmptyOrSpaces(savedPath)) {
         myInitialPath = savedPath;
+      }
       else if (myProject != null) {
         final VirtualFile baseDir = myProject.getBaseDir();
-        if (baseDir != null)
+        if (baseDir != null) {
           myInitialPath = baseDir.getPath();
+        }
       }
     }
 
@@ -166,6 +176,121 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
     });
     myMainPanel.setPreferredSize(new Dimension(300, 50));
     checkValid();
+  }
+
+  private void layoutPanel(final List<Sdk> allSdks) {
+    final GridBagLayout layout = new GridBagLayout();
+    myMainPanel = new JPanel(layout);
+
+    final GridBagConstraints c = new GridBagConstraints();
+    c.fill = GridBagConstraints.HORIZONTAL;
+    c.insets = new Insets(2,2,2,2);
+
+    c.gridx = 0;
+    c.gridy = 0;
+    c.weightx = 0.0;
+    myMainPanel.add(new JBLabel("Name:"), c);
+
+    c.gridx = 1;
+    c.gridy = 0;
+    c.gridwidth = 2;
+    c.weightx = 1.0;
+    myName = new JTextField();
+    myMainPanel.add(myName, c);
+
+    c.gridx = 0;
+    c.gridy = 1;
+    c.gridwidth = 1;
+    c.weightx = 0.0;
+    myMainPanel.add(new JBLabel("Location:"), c);
+
+    c.gridx = 1;
+    c.gridy = 1;
+    c.gridwidth = 2;
+    c.weightx = 1.0;
+    myDestination = new TextFieldWithBrowseButton();
+    myMainPanel.add(myDestination, c);
+
+    c.gridx = 0;
+    c.gridy = 2;
+    c.gridwidth = 1;
+    c.weightx = 0.0;
+    myMainPanel.add(new JBLabel("Base interpreter:"), c);
+
+    c.gridx = 1;
+    c.gridy = 2;
+    mySdkCombo = new ComboBox();
+    c.insets = new Insets(2,2,2,2);
+    c.weightx = 1.0;
+    myMainPanel.add(mySdkCombo, c);
+
+    c.gridx = 2;
+    c.gridy = 2;
+    c.insets = new Insets(0,0,2,2);
+    c.weightx = 0.0;
+    FixedSizeButton button = new FixedSizeButton();
+    button.setPreferredSize(myDestination.getButton().getPreferredSize());
+    myMainPanel.add(button, c);
+
+    c.gridx = 0;
+    c.gridy = 3;
+    c.gridwidth = 3;
+    c.insets = new Insets(2,2,2,2);
+    mySitePackagesCheckBox = new JBCheckBox("Inherit global site-packages");
+    myMainPanel.add(mySitePackagesCheckBox, c);
+
+    c.gridx = 0;
+    c.gridy = 4;
+    myMakeAvailableToAllProjectsCheckbox = new JBCheckBox("Make available to all projects");
+    myMainPanel.add(myMakeAvailableToAllProjectsCheckbox, c);
+    button.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final PySdkService sdkService = PySdkService.getInstance();
+
+        final PythonSdkType sdkType = PythonSdkType.getInstance();
+        final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
+
+        String suggestedPath = sdkType.suggestHomePath();
+        VirtualFile suggestedDir = suggestedPath == null
+                                   ? null
+                                   : LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(suggestedPath));
+        final NullableConsumer<Sdk> consumer = new NullableConsumer<Sdk>() {
+          @Override
+          public void consume(@Nullable Sdk sdk) {
+            if (sdk == null) return;
+            if (!allSdks.contains(sdk)) {
+              allSdks.add(sdk);
+              sdkService.addSdk(sdk);
+            }
+            updateSdkList(allSdks, sdk);
+          }
+        };
+        FileChooser.chooseFiles(descriptor, myProject, suggestedDir, new FileChooser.FileChooserConsumer() {
+          @Override
+          public void consume(List<VirtualFile> selectedFiles) {
+            String path = selectedFiles.get(0).getPath();
+            if (sdkType.isValidSdkHome(path)) {
+              path = FileUtil.toSystemDependentName(path);
+              Sdk newSdk = null;
+              for (Sdk sdk : allSdks) {
+                if (path.equals(sdk.getHomePath())) {
+                  newSdk = sdk;
+                }
+              }
+              if (newSdk == null) {
+                newSdk = new PyDetectedSdk(path);
+              }
+              consumer.consume(newSdk);
+            }
+          }
+
+          @Override
+          public void cancelled() {
+          }
+        });
+
+      }
+    });
   }
 
   private void checkValid() {
@@ -237,18 +362,9 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
   }
 
   private void updateSdkList(final List<Sdk> allSdks, @Nullable Sdk initialSelection) {
-    mySdkCombo.setRenderer(new PySdkListCellRenderer());
-    List<Sdk> baseSdks = new ArrayList<Sdk>();
-    for (Sdk s : allSdks) {
-      if (!PythonSdkType.isInvalid(s) && !PythonSdkType.isVirtualEnv(s) && !RemoteSdkDataHolder.isRemoteSdk(s.getHomePath())) {
-        baseSdks.add(s);
-      }
-      else if (s.equals(initialSelection)){
-        initialSelection = null;
-      }
-    }
-
-    mySdkCombo.setModel(new CollectionComboBoxModel(baseSdks, initialSelection));
+    mySdkCombo.setRenderer(new PySdkListCellRenderer(false));
+    mySdkCombo.setModel(new CollectionComboBoxModel(allSdks, initialSelection));
+    checkValid();
   }
 
   @Override
@@ -288,10 +404,6 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
     return !myMakeAvailableToAllProjectsCheckbox.isSelected();
   }
 
-  public boolean setAsProjectInterpreter() {
-    return mySetAsProjectInterpreterCheckbox.isSelected();
-  }
-
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myName;
@@ -326,7 +438,7 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
           application.invokeLater(new Runnable() {
             @Override
             public void run() {
-              setupVirtualEnvSdk(allSdks, myPath, associateWithProject(), setAsProjectInterpreter(), callback);
+              setupVirtualEnvSdk(allSdks, myPath, associateWithProject(), callback);
             }
           }, ModalityState.any());
         }

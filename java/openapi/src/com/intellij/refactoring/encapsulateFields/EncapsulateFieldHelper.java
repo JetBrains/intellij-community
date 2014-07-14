@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public abstract class EncapsulateFieldHelper {
                                                         @NotNull FieldDescriptor fieldDescriptor,
                                                         @NotNull PsiReference reference);
 
-  public static EncapsulateFieldHelper getHelper(Language lang) {
+  public static EncapsulateFieldHelper getHelper(@NotNull Language lang) {
     return INSTANCE.forLanguage(lang);
   }
 }

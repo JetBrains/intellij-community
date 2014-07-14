@@ -16,6 +16,7 @@
 package com.siyeh.ig.maturity;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -69,8 +70,7 @@ public class ThrowablePrintStackTraceInspectionBase extends BaseInspection {
       if (containingClass == null) {
         return;
       }
-      final String name = containingClass.getQualifiedName();
-      if (!CommonClassNames.JAVA_LANG_THROWABLE.equals(name)) {
+      if (!InheritanceUtil.isInheritor(containingClass, false, CommonClassNames.JAVA_LANG_THROWABLE)) {
         return;
       }
       registerMethodCallError(expression, expression);

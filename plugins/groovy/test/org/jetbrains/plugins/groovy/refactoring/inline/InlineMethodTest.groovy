@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ilyas
@@ -132,6 +132,8 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
+  public void testSuperCall() { doTest() }
+
   protected void doTest() {
     doTest(new GroovyInlineHandler());
   }
@@ -155,9 +157,9 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
     int endOffset = editor.selectionModel.selectionEnd;
     editor.caretModel.moveToOffset(endOffset);
 
-    GroovyPsiElement selectedArea = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, GrReferenceExpression.class);
+    GroovyPsiElement selectedArea = PsiImplUtil.findElementInRange(file, startOffset, endOffset, GrReferenceExpression.class);
     if (selectedArea == null) {
-      PsiElement identifier = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, PsiElement.class);
+      PsiElement identifier = PsiImplUtil.findElementInRange(file, startOffset, endOffset, PsiElement.class);
       if (identifier != null) {
         if (identifier.parent instanceof GrVariable) {
           selectedArea = (GroovyPsiElement)identifier.parent;

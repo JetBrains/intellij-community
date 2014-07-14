@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
@@ -49,7 +50,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
     checkin();
     sleep(100);
 
-    editFileInCommand(myProject, subTree.myS1File, "new content");
+    VcsTestUtil.editFileInCommand(myProject, subTree.myS1File, "new content");
 
     final CharSequence text1 = LoadTextUtil.loadText(subTree.myS1File);
     Assert.assertEquals("new content", text1.toString());
@@ -172,7 +173,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
     Assert.assertTrue(subTree.mySourceDir.getPath().endsWith("/target/source"));
     assertVF(subTree.myTargetDir, "source");
 
-    editFileInCommand(myProject, subTree.myS1File, "new");
+    VcsTestUtil.editFileInCommand(myProject, subTree.myS1File, "new");
     final CharSequence text1 = LoadTextUtil.loadText(subTree.myS1File);
     Assert.assertEquals("new", text1.toString());
 

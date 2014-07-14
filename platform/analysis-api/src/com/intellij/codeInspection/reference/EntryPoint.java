@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ public abstract class EntryPoint implements JDOMExternalizable , Cloneable {
 
   @NotNull
   public abstract String getDisplayName();
-  public abstract boolean isEntryPoint(RefElement refElement, PsiElement psiElement);
-  public abstract boolean isEntryPoint(PsiElement psiElement);
+  public abstract boolean isEntryPoint(@NotNull RefElement refElement, @NotNull PsiElement psiElement);
+  public abstract boolean isEntryPoint(@NotNull PsiElement psiElement);
   public abstract boolean isSelected();
   public abstract void setSelected(boolean selected);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ public class ImplementationSearcher {
 
   public static final String SEARCHING_FOR_IMPLEMENTATIONS = CodeInsightBundle.message("searching.for.implementations");
 
+  @NotNull
   public PsiElement[] searchImplementations(final Editor editor, final PsiElement element, final int offset) {
     final TargetElementUtilBase targetElementUtil = TargetElementUtilBase.getInstance();
     boolean onRef = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
@@ -49,7 +50,7 @@ public class ImplementationSearcher {
     return searchImplementations(element, editor, offset, onRef && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         @Override
         public Boolean compute() {
-          return targetElementUtil.includeSelfInGotoImplementation(element);
+          return element == null || targetElementUtil.includeSelfInGotoImplementation(element);
         }
     }), onRef);
   }

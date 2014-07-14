@@ -236,4 +236,137 @@ class Test {
   }
 
 
+  void "test dependent methods DFS"() {
+    doTest(
+            initial: '''
+public class Q {
+
+    void E() {
+        ER();
+    }
+
+    void B() {
+        E();
+        F();
+    }
+
+    void A() {
+        B();
+        C();
+    }
+
+    void F() {
+    }
+
+    void C() {
+        G();
+    }
+
+    void ER() {
+    }
+
+    void G() {
+    }
+
+}
+''',
+            expected: '''
+public class Q {
+
+    void A() {
+        B();
+        C();
+    }
+    void B() {
+        E();
+        F();
+    }
+    void E() {
+        ER();
+    }
+    void ER() {
+    }
+    void F() {
+    }
+    void C() {
+        G();
+    }
+    void G() {
+    }
+
+}
+''',
+            groups: [group(DEPENDENT_METHODS, DEPTH_FIRST)]
+    )
+  }
+
+
+  void "test dependent methods BFS"() {
+    doTest(
+            initial: '''
+public class Q {
+
+    void E() {
+        ER();
+    }
+
+    void B() {
+        E();
+        F();
+    }
+
+    void A() {
+        B();
+        C();
+    }
+
+    void F() {
+    }
+
+    void C() {
+        G();
+    }
+
+    void ER() {
+    }
+
+    void G() {
+    }
+
+}
+''',
+            expected: '''
+public class Q {
+
+    void A() {
+        B();
+        C();
+    }
+    void B() {
+        E();
+        F();
+    }
+    void C() {
+        G();
+    }
+    void E() {
+        ER();
+    }
+    void F() {
+    }
+    void G() {
+    }
+    void ER() {
+    }
+
+}
+''',
+            groups: [group(DEPENDENT_METHODS, BREADTH_FIRST)]
+    )
+  }
+
+
+
+
+
 }

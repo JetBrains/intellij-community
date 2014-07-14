@@ -4,6 +4,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.remoteServer.agent.RemoteAgent;
 import com.intellij.remoteServer.agent.RemoteAgentManager;
 import com.intellij.remoteServer.agent.RemoteAgentProxyFactory;
+import com.intellij.util.Base64;
 import com.intellij.util.PathUtil;
 
 import java.io.File;
@@ -30,6 +31,7 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
     List<Class<?>> allCommonJarClasses = new ArrayList<Class<?>>();
     allCommonJarClasses.addAll(commonJarClasses);
     allCommonJarClasses.add(RemoteAgent.class);
+    allCommonJarClasses.add(Base64.class);
     allCommonJarClasses.add(agentInterface);
 
     List<File> libraries = new ArrayList<File>();

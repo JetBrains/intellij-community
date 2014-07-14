@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,12 @@ import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +42,7 @@ import java.util.Set;
  * @author peter
  */
 public class JavaPsiClassReferenceElement extends LookupItem<Object> {
+  public static final Key<String> PACKAGE_NAME = Key.create("PACKAGE_NAME");
   public static final ClassConditionKey<JavaPsiClassReferenceElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaPsiClassReferenceElement.class);
   private final Object myClass;
   private volatile Reference<PsiClass> myCache;
@@ -48,8 +51,8 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
 
   public JavaPsiClassReferenceElement(PsiClass psiClass) {
     super(psiClass.getName(), psiClass.getName());
-    myClass = psiClass.getContainingFile().getVirtualFile() == null ? psiClass : PsiAnchor.create(psiClass);
     myQualifiedName = psiClass.getQualifiedName();
+    myClass = psiClass.getContainingFile().getVirtualFile() == null || myQualifiedName == null ? psiClass : PsiAnchor.create(psiClass);
     JavaCompletionUtil.setShowFQN(this);
     setInsertHandler(AllClassesGetter.TRY_SHORTENING);
     setTailType(TailType.NONE);
@@ -85,12 +88,9 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
   @Override
   public PsiClass getObject() {
     if (myClass instanceof PsiAnchor) {
-      Reference<PsiClass> cache = myCache;
-      if (cache != null) {
-        PsiClass psiClass = cache.get();
-        if (psiClass != null) {
-          return psiClass;
-        }
+      PsiClass psiClass = SoftReference.dereference(myCache);
+      if (psiClass != null) {
+        return psiClass;
       }
 
       final PsiClass retrieve = (PsiClass)((PsiAnchor)myClass).retrieve();
@@ -173,8 +173,9 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
     presentation.setTailText(tailText, true);
   }
 
-  public static String getLocationString(LookupItem item) {
-    return StringUtil.notNullize((String)item.getAttribute(LookupItem.TAIL_TEXT_ATTR));
+  public static String getLocationString(LookupItem<?> item) {
+    String pkgName = item.getAttribute(PACKAGE_NAME);
+    return pkgName == null ? "" : " (" + pkgName + ")";
   }
 
   private static String getName(final PsiClass psiClass, final LookupItem<?> item, boolean diamond) {

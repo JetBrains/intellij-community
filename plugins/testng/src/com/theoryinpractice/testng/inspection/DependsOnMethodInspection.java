@@ -72,7 +72,7 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
         List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
 
         for (PsiAnnotation annotation : annotations) {
-          final PsiAnnotationMemberValue value = annotation.findAttributeValue("dependsOnMethods");
+          final PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue("dependsOnMethods");
           if (value != null) {
             String text = value.getText();
             if (value instanceof PsiReferenceExpression) {

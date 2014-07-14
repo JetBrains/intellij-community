@@ -16,11 +16,9 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -39,9 +37,6 @@ public interface PyReferenceExpression extends PyQualifiedExpression, PyReferenc
    */
   @NotNull
   QualifiedResolveResult followAssignmentsChain(PyResolveContext resolveContext);
-
-  @Nullable
-  QualifiedName asQualifiedName();
 
   @NotNull
   PsiPolyVariantReference getReference();

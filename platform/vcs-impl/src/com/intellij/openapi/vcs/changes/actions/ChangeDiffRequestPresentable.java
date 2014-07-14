@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.diff.FileAwareSimpleContent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffContent;
@@ -150,8 +151,9 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
       final VirtualFile vFile = current.getVirtualFile();
       return vFile != null ? new FileContent(myProject, vFile) : new SimpleContent("");
     }
+    FilePath filePath = revision.getFile();
     if (revision instanceof BinaryContentRevision) {
-      final String name = revision.getFile().getName();
+      final String name = filePath.getName();
       try {
         return FileContent.createFromTempFile(myProject, name, name, ((BinaryContentRevision)revision).getBinaryContent());
       }
@@ -188,8 +190,8 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     }
     SimpleContent content = revisionContent == null
                             ? new SimpleContent("")
-                            : new SimpleContent(revisionContent, revision.getFile().getFileType());
-    VirtualFile vFile = revision.getFile().getVirtualFile();
+                            : new FileAwareSimpleContent(myProject, filePath, revisionContent, filePath.getFileType());
+    VirtualFile vFile = filePath.getVirtualFile();
     if (vFile != null) {
       content.setCharset(vFile.getCharset());
       content.setBOM(vFile.getBOM());

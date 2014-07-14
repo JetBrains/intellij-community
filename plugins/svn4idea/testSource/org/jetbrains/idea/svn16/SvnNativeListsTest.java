@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn16;
 
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnChangeProvider;
@@ -124,7 +125,7 @@ public class SvnNativeListsTest extends Svn16TestCase {
     myChangeListManager.ensureUpToDate(false);
     sleepABit();
     checkin();
-    editFileInCommand(myProject, file, "111");
+    VcsTestUtil.editFileInCommand(myProject, file, "111");
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
     sleepABit();
@@ -149,7 +150,7 @@ public class SvnNativeListsTest extends Svn16TestCase {
     myChangeListManager.ensureUpToDate(false);
     sleepABit();
     checkin();
-    editFileInCommand(myProject, file, "111");
+    VcsTestUtil.editFileInCommand(myProject, file, "111");
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
     sleepABit();

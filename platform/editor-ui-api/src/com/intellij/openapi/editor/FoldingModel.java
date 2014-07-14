@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,19 @@ public interface FoldingModel {
    * @param startOffset     the start offset of the region to fold.
    * @param endOffset       the end offset of the region to fold.
    * @param placeholderText the text to display instead of the region contents when the region is folded.
-   * @return the fold region, or null if folding is currently disabled.
+   * @return the fold region, or <code>null</code> if folding is currently disabled or corresponding region cannot be added (e.g. if it
+   * intersects with another existing region)
    */
   @Nullable
   FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText);
 
+  /**
+   * Tries to add given region to the folding model. This method must be called
+   * from the <code>Runnable</code> passed to {@link #runBatchFoldingOperation(Runnable)}.
+   *
+   * @return <code>true</code>, if region was added successfully, <code>false</code> if the region cannot be added, e.g. if it
+   * intersects with another existing region
+   */
   boolean addFoldRegion(@NotNull FoldRegion region);
 
   /**
@@ -57,13 +65,22 @@ public interface FoldingModel {
   FoldRegion[] getAllFoldRegions();
 
   /**
-   * Checks if the specified offset in the document belongs to a folded region.
+   * Checks if the specified offset in the document belongs to a folded region. The region must contain given offset or be located right
+   * after given offset, i.e. the following condition must hold: foldStartOffset <= offset < foldEndOffset.
    *
    * @param offset the offset to check.
    * @return true if the offset belongs to a folded region, false otherwise.
+   *
+   * @see #getCollapsedRegionAtOffset(int)
    */
   boolean isOffsetCollapsed(int offset);
 
+  /**
+   * Returns collapsed folded region at a given offset or <code>null</code> if there's no such region. Returned region will satisfy the
+   * following condition: region.getStartOffset() <= offset < region.getEndOffset()
+   *
+   * @see #isOffsetCollapsed(int)
+   */
   @Nullable
   FoldRegion getCollapsedRegionAtOffset(int offset);
 

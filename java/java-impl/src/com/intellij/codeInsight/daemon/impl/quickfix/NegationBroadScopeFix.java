@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,22 +40,23 @@ public class NegationBroadScopeFix implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    String text = myPrefixExpression.getOperand().getText();
-    text += " ";
+    PsiExpression operand = myPrefixExpression.getOperand();
+    String text = operand == null ? "" : operand.getText() + " ";
     PsiElement parent = myPrefixExpression.getParent();
-    String operation = parent instanceof PsiInstanceOfExpression
-                       ? PsiKeyword.INSTANCEOF
-                       : ((PsiBinaryExpression)parent).getOperationSign().getText();
-    text += operation + " ";
 
     String rop;
     if (parent instanceof PsiInstanceOfExpression) {
+      text += PsiKeyword.INSTANCEOF + " ";
       final PsiTypeElement type = ((PsiInstanceOfExpression)parent).getCheckType();
       rop = type == null ? "" : type.getText();
     }
-    else {
+    else if (parent instanceof PsiBinaryExpression) {
+      text += ((PsiBinaryExpression)parent).getOperationSign().getText() + " ";
       final PsiExpression rOperand = ((PsiBinaryExpression)parent).getROperand();
       rop = rOperand == null ? "" : rOperand.getText();
+    }
+    else {
+      rop = "<expr>";
     }
 
     text += rop;
@@ -70,7 +71,7 @@ public class NegationBroadScopeFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!myPrefixExpression.isValid()) return false;
+    if (!myPrefixExpression.isValid() || myPrefixExpression.getOperand() == null) return false;
 
     PsiElement parent = myPrefixExpression.getParent();
     if (parent instanceof PsiInstanceOfExpression && ((PsiInstanceOfExpression)parent).getOperand() == myPrefixExpression) {
@@ -83,7 +84,7 @@ public class NegationBroadScopeFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(myPrefixExpression)) return;
+    if (!isAvailable(project, editor, file) || !FileModificationService.getInstance().preparePsiElementForWrite(myPrefixExpression)) return;
     PsiExpression operand = myPrefixExpression.getOperand();
     PsiElement unnegated = myPrefixExpression.replace(operand);
     PsiElement parent = unnegated.getParent();

@@ -32,10 +32,14 @@ import javax.swing.*;
  */
 public class StopProcessAction extends DumbAwareAction implements AnAction.TransparentUpdate {
 
-  private final ProcessHandler myProcessHandler;
+  private ProcessHandler myProcessHandler;
 
-  public StopProcessAction(@NotNull String text, @Nullable String description, @NotNull ProcessHandler processHandler) {
+  public StopProcessAction(@NotNull String text, @Nullable String description, @Nullable ProcessHandler processHandler) {
     super(text, description, AllIcons.Actions.Suspend);
+    myProcessHandler = processHandler;
+  }
+
+  public void setProcessHandler(@Nullable ProcessHandler processHandler) {
     myProcessHandler = processHandler;
   }
 
@@ -72,7 +76,7 @@ public class StopProcessAction extends DumbAwareAction implements AnAction.Trans
     stopProcess(myProcessHandler);
   }
 
-  public static void stopProcess(@NotNull ProcessHandler processHandler) {
+  public static void stopProcess(@Nullable ProcessHandler processHandler) {
     if (processHandler instanceof KillableProcess && processHandler.isProcessTerminating()) {
       // process termination was requested, but it's still alive
       // in this case 'force quit' will be performed
@@ -80,11 +84,13 @@ public class StopProcessAction extends DumbAwareAction implements AnAction.Trans
       return;
     }
 
-    if (processHandler.detachIsDefault()) {
-      processHandler.detachProcess();
-    }
-    else {
-      processHandler.destroyProcess();
+    if (processHandler != null) {
+      if (processHandler.detachIsDefault()) {
+        processHandler.detachProcess();
+      }
+      else {
+        processHandler.destroyProcess();
+      }
     }
   }
 

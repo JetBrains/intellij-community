@@ -210,6 +210,7 @@ class PyDBFrame:
                     return self.trace_dispatch
 
             except:
+                traceback.print_exc()
                 raise
 
             #step handling. We stop when we hit the right frame
@@ -339,45 +340,46 @@ class PyDBFrame:
             pass #ok, psyco not available
 
     def shouldStopOnDjangoBreak(self, frame, event, arg):
-      mainDebugger, filename, info, thread = self._args
-      flag = False
-      filename = get_template_file_name(frame)
-      pydev_log.debug("Django is rendering a template: %s\n" % filename)
-      django_breakpoints_for_file = mainDebugger.django_breakpoints.get(filename)
-      if django_breakpoints_for_file:
-          pydev_log.debug("Breakpoints for that file: %s\n" % django_breakpoints_for_file)
-          template_line = get_template_line(frame)
-          pydev_log.debug("Tracing template line: %d\n" % template_line)
+        mainDebugger, filename, info, thread = self._args
+        flag = False
+        filename = get_template_file_name(frame)
+        pydev_log.debug("Django is rendering a template: %s\n" % filename)
+        django_breakpoints_for_file = mainDebugger.django_breakpoints.get(filename)
+        if django_breakpoints_for_file:
+            pydev_log.debug("Breakpoints for that file: %s\n" % django_breakpoints_for_file)
+            template_line = get_template_line(frame)
+            pydev_log.debug("Tracing template line: %d\n" % template_line)
 
-          if DictContains(django_breakpoints_for_file, template_line):
-              django_breakpoint = django_breakpoints_for_file[template_line]
+            if DictContains(django_breakpoints_for_file, template_line):
+                django_breakpoint = django_breakpoints_for_file[template_line]
 
-              if django_breakpoint.is_triggered(frame):
-                  pydev_log.debug("Breakpoint is triggered.\n")
-                  flag = True
-                  new_frame = DjangoTemplateFrame(frame)
+                if django_breakpoint.is_triggered(frame):
+                    pydev_log.debug("Breakpoint is triggered.\n")
+                    flag = True
+                    new_frame = DjangoTemplateFrame(frame)
 
-                  if django_breakpoint.condition is not None:
-                      try:
-                          val = eval(django_breakpoint.condition, new_frame.f_globals, new_frame.f_locals)
-                          if not val:
-                              flag = False
-                              pydev_log.debug("Condition '%s' is evaluated to %s. Not suspending.\n" %(django_breakpoint.condition, val))
-                      except:
-                          pydev_log.info('Error while evaluating condition \'%s\': %s\n' % (django_breakpoint.condition, sys.exc_info()[1]))
+                    if django_breakpoint.condition is not None:
+                        try:
+                            val = eval(django_breakpoint.condition, new_frame.f_globals, new_frame.f_locals)
+                            if not val:
+                                flag = False
+                                pydev_log.debug("Condition '%s' is evaluated to %s. Not suspending.\n" % (django_breakpoint.condition, val))
+                        except:
+                            pydev_log.info(
+                                'Error while evaluating condition \'%s\': %s\n' % (django_breakpoint.condition, sys.exc_info()[1]))
 
-                  if django_breakpoint.expression is not None:
-                          try:
-                              try:
-                                  val = eval(django_breakpoint.expression, new_frame.f_globals, new_frame.f_locals)
-                              except:
-                                  val = sys.exc_info()[1]
-                          finally:
-                              if val is not None:
-                                  thread.additionalInfo.message = val
-                  if flag:
-                      frame = suspend_django(self, mainDebugger, thread, frame)
-      return (flag, frame)
+                    if django_breakpoint.expression is not None:
+                        try:
+                            try:
+                                val = eval(django_breakpoint.expression, new_frame.f_globals, new_frame.f_locals)
+                            except:
+                                val = sys.exc_info()[1]
+                        finally:
+                            if val is not None:
+                                thread.additionalInfo.message = val
+                    if flag:
+                        frame = suspend_django(self, mainDebugger, thread, frame)
+        return (flag, frame)
 
 def add_exception_to_frame(frame, exception_info):
     frame.f_locals['__exception__'] = exception_info

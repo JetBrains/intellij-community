@@ -160,7 +160,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
     }
   }
 
-  private List<T> getApplicableExtensions(@NotNull final U configuration) {
+  protected List<T> getApplicableExtensions(@NotNull final U configuration) {
     final List<T> extensions = new ArrayList<T>();
     for (T extension : Extensions.getExtensions(myExtensionPointName)) {
       if (extension.isApplicableFor(configuration)) {
@@ -170,7 +170,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
     return extensions;
   }
 
-  private List<T> getEnabledExtensions(@NotNull final U configuration, @Nullable RunnerSettings runnerSettings) {
+  protected List<T> getEnabledExtensions(@NotNull final U configuration, @Nullable RunnerSettings runnerSettings) {
     final List<T> extensions = new ArrayList<T>();
     for (T extension : Extensions.getExtensions(myExtensionPointName)) {
       if (extension.isApplicableFor(configuration) && extension.isEnabledFor(configuration, runnerSettings)) {

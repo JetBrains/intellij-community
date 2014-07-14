@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,9 @@ package com.intellij.codeInsight.folding.impl;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import org.jetbrains.annotations.Nullable;
 
 public class JavaFoldingBuilder extends JavaFoldingBuilderBase {
 
@@ -41,15 +39,6 @@ public class JavaFoldingBuilder extends JavaFoldingBuilderBase {
 
     ExpectedTypeInfo[] types = ExpectedTypesProvider.getExpectedTypes(expression, false);
     return types.length != 1 || !types[0].getType().equals(anonymousClass.getBaseClassType());
-  }
-
-  @Nullable
-  @Override
-  public TextRange getRangeToFold(PsiElement element) {
-    if (element instanceof SyntheticElement) {
-      return null;
-    }
-    return super.getRangeToFold(element);    //To change body of overridden methods use File | Settings | File Templates.
   }
 }
 

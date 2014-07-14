@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,6 +78,8 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
   private JLabel myProxyExceptionsLabel;
   private JTextArea myProxyExceptions;
   private JLabel myNoProxyForLabel;
+  private JCheckBox myPacUrlCheckBox;
+  private JTextField myPacUrlTextField;
   private final HttpConfigurable myHttpConfigurable;
   private volatile boolean myConnectionCheckInProgress;
 
@@ -86,6 +88,8 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
     HttpConfigurable httpConfigurable = myHttpConfigurable;
     if (! Comparing.equal(myProxyExceptions.getText().trim(), httpConfigurable.PROXY_EXCEPTIONS)) return true;
     isModified |= httpConfigurable.USE_PROXY_PAC != myAutoDetectProxyRb.isSelected();
+    isModified |= httpConfigurable.USE_PAC_URL != myPacUrlCheckBox.isSelected();
+    isModified |= !Comparing.strEqual(httpConfigurable.PAC_URL, myPacUrlTextField.getText());
     isModified |= httpConfigurable.USE_HTTP_PROXY != myUseHTTPProxyRb.isSelected();
     isModified |= httpConfigurable.PROXY_AUTHENTICATION != myProxyAuthCheckBox.isSelected();
     isModified |= httpConfigurable.KEEP_PROXY_PASSWORD != myRememberProxyPasswordCheckBox.isSelected();
@@ -128,6 +132,12 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
     myProxyAuthCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         enableProxyAuthentication(myProxyAuthCheckBox.isSelected());
+      }
+    });
+    myPacUrlCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myPacUrlTextField.setEnabled(myPacUrlCheckBox.isSelected());
       }
     });
 
@@ -239,6 +249,8 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
     myNoProxyRb.setSelected(true);  // default
     HttpConfigurable httpConfigurable = myHttpConfigurable;
     myAutoDetectProxyRb.setSelected(httpConfigurable.USE_PROXY_PAC);
+    myPacUrlCheckBox.setSelected(httpConfigurable.USE_PAC_URL);
+    myPacUrlTextField.setText(httpConfigurable.PAC_URL);
     myUseHTTPProxyRb.setSelected(httpConfigurable.USE_HTTP_PROXY);
     myProxyAuthCheckBox.setSelected(httpConfigurable.PROXY_AUTHENTICATION);
 
@@ -278,6 +290,8 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
       httpConfigurable.AUTHENTICATION_CANCELLED = false;
     }
     httpConfigurable.USE_PROXY_PAC = myAutoDetectProxyRb.isSelected();
+    httpConfigurable.USE_PAC_URL = myPacUrlCheckBox.isSelected();
+    httpConfigurable.PAC_URL = trimFieldText(myPacUrlTextField);
     httpConfigurable.USE_HTTP_PROXY = myUseHTTPProxyRb.isSelected();
     httpConfigurable.PROXY_TYPE_IS_SOCKS = mySocks.isSelected();
     httpConfigurable.PROXY_AUTHENTICATION = myProxyAuthCheckBox.isSelected();
@@ -316,6 +330,11 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
     myProxyAuthCheckBox.setEnabled(enabled);
     enableProxyAuthentication(enabled && myProxyAuthCheckBox.isSelected());
     myCheckButton.setEnabled(canEnableConnectionCheck());
+
+    final boolean autoDetectProxy = myAutoDetectProxyRb.isSelected();
+    myPacUrlCheckBox.setEnabled(autoDetectProxy);
+    myClearPasswordsButton.setEnabled(autoDetectProxy);
+    myPacUrlTextField.setEnabled(autoDetectProxy && myPacUrlCheckBox.isSelected());
   }
 
   private void enableProxyAuthentication (boolean enabled) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
@@ -90,9 +90,9 @@ public class TableScrollingUtil {
     return getTrailingRow(list, visibleRect) - getLeadingRow(list, visibleRect) + 1;
   }
 
-  public static Pair<Integer, Integer> getVisibleRows(JTable list) {
+  public static Couple<Integer> getVisibleRows(JTable list) {
     Rectangle visibleRect = list.getVisibleRect();
-    return new Pair<Integer, Integer>(getLeadingRow(list, visibleRect) + 1, getTrailingRow(list, visibleRect));
+    return Couple.of(getLeadingRow(list, visibleRect) + 1, getTrailingRow(list, visibleRect));
   }
 
   private static int getLeadingRow(JTable table,Rectangle visibleRect) {
@@ -123,14 +123,13 @@ public class TableScrollingUtil {
   }
 
 
-  public static void moveDown(JTable list, @JdkConstants.InputEventMask int modifiers) {
+  public static void moveDown(JTable list, @JdkConstants.InputEventMask int modifiers, boolean cycleScrolling) {
     int size = list.getModel().getRowCount();
     if (size == 0) {
       return;
     }
     final ListSelectionModel selectionModel = list.getSelectionModel();
     int index = selectionModel.getLeadSelectionIndex();
-    boolean cycleScrolling = UISettings.getInstance().CYCLE_SCROLLING;
     final int indexToSelect;
     if (index < size - 1) {
       indexToSelect = index + 1;
@@ -153,11 +152,10 @@ public class TableScrollingUtil {
     }
   }
 
-  public static void moveUp(JTable list, @JdkConstants.InputEventMask int modifiers) {
+  public static void moveUp(JTable list, @JdkConstants.InputEventMask int modifiers, boolean cycleScrolling) {
     int size = list.getModel().getRowCount();
     final ListSelectionModel selectionModel = list.getSelectionModel();
     int index = selectionModel.getMinSelectionIndex();
-    boolean cycleScrolling = UISettings.getInstance().CYCLE_SCROLLING;
     int indexToSelect;
     if (index > 0) {
       indexToSelect = index - 1;
@@ -249,6 +247,10 @@ public class TableScrollingUtil {
   }
 
   public static void installActions(final JTable list) {
+    installActions(list, UISettings.getInstance().CYCLE_SCROLLING);
+  }
+
+  public static void installActions(final JTable list, final boolean cycleScrolling) {
     ActionMap actionMap = list.getActionMap();
     actionMap.put(ListScrollingUtil.SCROLLUP_ACTION_ID, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
@@ -262,12 +264,12 @@ public class TableScrollingUtil {
     });
     actionMap.put(ListScrollingUtil.SELECT_PREVIOUS_ROW_ACTION_ID, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        moveUp(list, e.getModifiers());
+        moveUp(list, e.getModifiers(), cycleScrolling);
       }
     });
     actionMap.put(ListScrollingUtil.SELECT_NEXT_ROW_ACTION_ID, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        moveDown(list, e.getModifiers());
+        moveDown(list, e.getModifiers(), cycleScrolling);
       }
     });
     actionMap.put(ListScrollingUtil.SELECT_LAST_ROW_ACTION_ID, new AbstractAction() {
@@ -280,6 +282,9 @@ public class TableScrollingUtil {
         moveHome(list);
       }
     });
+
+    ListScrollingUtil.maybeInstallDefaultShortcuts(list);
+
     new AnAction() {
       public void actionPerformed(AnActionEvent e) {
         moveHome(list);

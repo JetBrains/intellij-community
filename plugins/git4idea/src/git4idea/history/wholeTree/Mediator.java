@@ -1,9 +1,12 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -12,7 +15,7 @@
  */
 package git4idea.history.wholeTree;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,7 +49,7 @@ public interface Mediator {
   void forceStop();
 
   void acceptException(final VcsException e);
-  void acceptStashHead(final Ticket ticket, VirtualFile root, Pair<AbstractHash, AbstractHash> hash);
+  void acceptStashHead(final Ticket ticket, VirtualFile root, Couple<AbstractHash> hash);
 
   void oneFinished();
 

@@ -19,25 +19,32 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class FileDocumentManagerAdapter implements FileDocumentManagerListener{
+public abstract class FileDocumentManagerAdapter implements FileDocumentManagerListener {
+  @Override
   public void beforeAllDocumentsSaving() {
   }
 
+  @Override
   public void beforeDocumentSaving(@NotNull Document document) {
   }
 
+  @Override
   public void fileWithNoDocumentChanged(@NotNull VirtualFile file) {
   }
 
+  @Override
   public void beforeFileContentReload(VirtualFile file, @NotNull Document document) {
   }
 
-  public void fileContentReloaded(VirtualFile file, @NotNull Document document) {
+  @Override
+  public void fileContentReloaded(@NotNull VirtualFile file, @NotNull Document document) {
   }
 
+  @Override
   public void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
   }
 
+  @Override
   public void unsavedDocumentsDropped() {
   }
 }

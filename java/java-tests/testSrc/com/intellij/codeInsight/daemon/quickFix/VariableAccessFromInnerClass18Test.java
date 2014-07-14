@@ -15,12 +15,10 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.openapi.command.WriteCommandAction;
-
 /**
  * User: anna
  */
-public class VariableAccessFromInnerClass18Test extends LightQuickFixTestCase {
+public class VariableAccessFromInnerClass18Test extends LightQuickFixParameterizedTestCase {
   public void test() throws Exception {
     doAllTests();
   }
@@ -28,22 +26,5 @@ public class VariableAccessFromInnerClass18Test extends LightQuickFixTestCase {
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/mustBeFinal18";
-  }
-
-  @Override
-  protected void beforeActionStarted(String testName, String contents) {
-    for (int i=0;i<10;i++) {
-      WriteCommandAction.runWriteCommandAction(new Runnable() {
-        @Override
-        public void run() {
-          myEditor.getDocument().insertString(myEditor.getCaretModel().getOffset(), "//");
-        }
-      });
-
-      doHighlighting();
-      delete();
-      delete();
-      doHighlighting();
-    }
   }
 }

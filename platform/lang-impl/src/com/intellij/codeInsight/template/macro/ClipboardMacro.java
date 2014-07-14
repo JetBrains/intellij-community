@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,6 @@ import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.openapi.ide.CopyPasteManager;
 
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.io.IOException;
 
 /**
  * @author yole
@@ -34,20 +31,7 @@ public class ClipboardMacro extends SimpleMacro {
 
   @Override
   protected String evaluateSimpleMacro(Expression[] params, ExpressionContext context) {
-    Transferable contents = CopyPasteManager.getInstance().getContents();
-    if (contents != null) {
-      String result = "";
-      try {
-        result = (String) contents.getTransferData(DataFlavor.stringFlavor);
-      }
-      catch (UnsupportedFlavorException ignored) {
-      }
-      catch (IOException ignored) {
-      }
-      if (result != null) {
-        return result;
-      }
-    }
-    return "";
+    String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+    return text != null ? text : "";
   }
 }

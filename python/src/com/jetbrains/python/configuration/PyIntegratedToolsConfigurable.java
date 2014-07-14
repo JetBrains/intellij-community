@@ -21,11 +21,16 @@ import com.intellij.facet.impl.ui.FacetErrorPanel;
 import com.intellij.facet.ui.FacetConfigurationQuickFix;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.ValidationResult;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -82,6 +87,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     myModule = module;
     myProject = myModule.getProject();
     myDocumentationSettings = PyDocumentationSettings.getInstance(myModule);
+    //noinspection unchecked
     myDocstringFormatComboBox.setModel(new CollectionComboBoxModel(DocStringFormat.ALL, myDocumentationSettings.myDocStringFormat));
 
     final FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
@@ -116,9 +122,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     facetErrorPanel.getValidatorsManager().registerValidator(new FacetEditorValidator() {
       @Override
       public ValidationResult check() {
-        Module[] modules = ModuleManager.getInstance(myProject).getModules();
-        if (modules.length == 0) return ValidationResult.OK;
-        final Sdk sdk = PythonSdkType.findPythonSdk(modules[0]);
+        final Sdk sdk = PythonSdkType.findPythonSdk(myModule);
         if (sdk != null) {
           final Object selectedItem = myTestRunnerComboBox.getSelectedItem();
           if (PythonTestConfigurationsModel.PY_TEST_NAME.equals(selectedItem)) {
@@ -192,6 +196,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
   }
 
   private void updateConfigurations() {
+    //noinspection unchecked
     myTestRunnerComboBox.setModel(myModel);
   }
 
@@ -242,25 +247,43 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     reSTService.setWorkdir(myWorkDir.getText());
     if (txtIsRst.isSelected() != reSTService.txtIsRst()) {
       reSTService.setTxtIsRst(txtIsRst.isSelected());
-      reparseRstFiles();
+      reparseFiles(Collections.singletonList(PlainTextFileType.INSTANCE.getDefaultExtension()));
     }
     myDocumentationSettings.analyzeDoctest = analyzeDoctest.isSelected();
     PyPackageRequirementsSettings.getInstance(myModule).setRequirementsPath(myRequirementsPathField.getText());
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
-  public void reparseRstFiles() {
+  public void reparseFiles(final List<String> extensions) {
     final List<VirtualFile> filesToReparse = Lists.newArrayList();
     ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(new ContentIterator() {
       @Override
       public boolean processFile(VirtualFile fileOrDir) {
-        if (!fileOrDir.isDirectory() && PlainTextFileType.INSTANCE.getDefaultExtension().equals(fileOrDir.getExtension())) {
+        if (!fileOrDir.isDirectory() && extensions.contains(fileOrDir.getExtension())) {
           filesToReparse.add(fileOrDir);
         }
         return true;
       }
     });
     FileContentUtilCore.reparseFiles(filesToReparse);
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+
+        for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+          if (editor instanceof EditorEx && editor.getProject() == myProject) {
+            final VirtualFile vFile = ((EditorEx)editor).getVirtualFile();
+            if (vFile != null) {
+              final EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, vFile);
+              ((EditorEx)editor).setHighlighter(highlighter);
+            }
+          }
+        }
+      }
+    });
+
+    DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
   @Override

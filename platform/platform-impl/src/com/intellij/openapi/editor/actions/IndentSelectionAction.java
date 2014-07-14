@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,7 @@ import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.IndentStrategy;
-import com.intellij.openapi.editor.LanguageIndentStrategy;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -40,7 +37,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,8 +50,12 @@ public class IndentSelectionAction extends EditorAction {
   }
 
   private static class Handler extends EditorWriteActionHandler {
+    public Handler() {
+      super(true);
+    }
+
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
+    public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (isEnabled(editor, dataContext)) {
         indentSelection(editor, project);
@@ -75,7 +78,20 @@ public class IndentSelectionAction extends EditorAction {
   }
 
   protected static boolean originalIsEnabled(Editor editor, boolean wantSelection) {
-    return (!wantSelection || editor.getSelectionModel().hasSelection()) && !editor.isOneLineMode();
+    return (!wantSelection || hasSuitableSelection(editor)) && !editor.isOneLineMode();
+  }
+
+  /**
+   * Returns true if there is a selection in the editor and it contains at least one non-whitespace character
+   */
+  private static boolean hasSuitableSelection(Editor editor) {
+    if (!editor.getSelectionModel().hasSelection()) {
+      return false;
+    }
+    Document document = editor.getDocument();
+    int selectionStart = editor.getSelectionModel().getSelectionStart();
+    int selectionEnd = editor.getSelectionModel().getSelectionEnd();
+    return !CharArrayUtil.containsOnlyWhiteSpaces(document.getCharsSequence().subSequence(selectionStart, selectionEnd));
   }
 
   private static void indentSelection(Editor editor, Project project) {

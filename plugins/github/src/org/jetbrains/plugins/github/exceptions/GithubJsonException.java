@@ -15,8 +15,6 @@
  */
 package org.jetbrains.plugins.github.exceptions;
 
-import java.io.IOException;
-
 /**
  * @author Aleksey Pivovarov
  */

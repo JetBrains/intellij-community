@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,15 @@
 package com.intellij.openapi.actionSystem.ex;
 
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.PluginId;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collections;
+import java.awt.event.InputEvent;
 import java.util.Comparator;
-import java.util.List;
 
 
 public abstract class ActionManagerEx extends ActionManager {
@@ -31,7 +32,7 @@ public abstract class ActionManagerEx extends ActionManager {
     return (ActionManagerEx)getInstance();
   }
 
-  public abstract ActionToolbar createActionToolbar(String place, ActionGroup group, boolean horizontal, boolean decorateButtons);
+  public abstract ActionToolbar createActionToolbar(String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons);
 
   public abstract void fireBeforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event);
 
@@ -67,48 +68,28 @@ public abstract class ActionManagerEx extends ActionManager {
    *
    * @return null if string cannot be parsed.
    */
-
   @Nullable
-
   public static KeyStroke getKeyStroke(String s) {
-
     KeyStroke result = null;
-
     try {
-
       result = KeyStroke.getKeyStroke(s);
-
     }
     catch (Exception ex) {
-
       //ok
-
     }
-
-
     if (result == null && s != null && s.length() >= 2 && s.charAt(s.length() - 2) == ' ') {
-
       try {
-
         String s1 = s.substring(0, s.length() - 1) + Character.toUpperCase(s.charAt(s.length() - 1));
-
         result = KeyStroke.getKeyStroke(s1);
-
       }
-      catch (Exception ex) {
-
-        // ok
-
+      catch (Exception ignored) {
       }
-
     }
-
-
     return result;
-
   }
 
 
+  @NotNull
   public abstract String[] getPluginActions(PluginId pluginId);
 
   public abstract void queueActionPerformedEvent(final AnAction action, DataContext context, AnActionEvent event);
@@ -117,12 +98,13 @@ public abstract class ActionManagerEx extends ActionManager {
 
   public abstract boolean isTransparentOnlyActionsUpdateNow();
 
-  public List<String> getAbbreviations() {
-    return Collections.emptyList();
-  }
-
-  public List<String> findActionIdsByAbbreviation(String abbreviation) {
-    return Collections.emptyList();
+  public void fireBeforeActionPerformed(String actionId, InputEvent event) {
+    final AnAction action = getAction(actionId);
+    if (action != null) {
+      final DataContext context = DataManager.getInstance().getDataContext();
+      final AnActionEvent e = new AnActionEvent(event, context, ActionPlaces.UNKNOWN, action.getTemplatePresentation(), this, 0);
+      fireBeforeActionPerformed(action, context, e);
+    }
   }
 }
 

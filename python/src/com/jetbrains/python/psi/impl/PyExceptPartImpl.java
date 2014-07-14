@@ -63,6 +63,7 @@ public class PyExceptPartImpl extends PyBaseElementImpl<PyExceptPartStub> implem
   }
 
   public PyElement getElementNamed(final String the_name) {
+    // Requires switching from stubs to AST in getTarget()
     return IterHelper.findName(iterateNames(), the_name);
   }
 

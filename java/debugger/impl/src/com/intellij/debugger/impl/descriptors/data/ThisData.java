@@ -18,12 +18,13 @@ package com.intellij.debugger.impl.descriptors.data;
 import com.intellij.debugger.ui.impl.watch.ThisDescriptorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
 
 public final class ThisData extends DescriptorData<ThisDescriptorImpl>{
 
   private static final Key THIS = new Key("THIS");
 
-  protected ThisDescriptorImpl createDescriptorImpl(Project project) {
+  protected ThisDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new ThisDescriptorImpl(project);
   }
 

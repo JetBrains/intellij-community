@@ -97,10 +97,6 @@ public class DummyCompileContext implements CompileContext {
     return VirtualFile.EMPTY_ARRAY;
   }
 
-  public VirtualFile[] getAllOutputDirectories() {
-    return VirtualFile.EMPTY_ARRAY;
-  }
-
   public VirtualFile getModuleOutputDirectory(final Module module) {
     return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
       public VirtualFile compute() {

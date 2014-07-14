@@ -68,7 +68,7 @@ public class EclipseEmlTest extends IdeaTestCase {
   }
 
   private static Module doLoadModule(final String path, final Project project) throws IOException, JDOMException, InvalidDataException {
-    final Module module = WriteCommandAction.runWriteCommandAction(new Computable<Module>() {
+    final Module module = WriteCommandAction.runWriteCommandAction(null, new Computable<Module>() {
       @Override
       public Module compute() {
         return ModuleManager.getInstance(project)

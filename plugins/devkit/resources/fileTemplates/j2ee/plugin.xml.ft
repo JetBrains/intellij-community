@@ -6,23 +6,27 @@
 
   <description><![CDATA[
       Enter short description for your plugin here.<br>
-      <small>most HTML tags may be used</small>
-      ]]></description>
+      <em>most HTML tags may be used</em>
+    ]]></description>
 
   <change-notes><![CDATA[
       Add change notes here.<br>
-      <small>most HTML tags may be used</small>
-      ]]>
+      <em>most HTML tags may be used</em>
+    ]]>
   </change-notes>
 
-  <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Build+Number+Ranges for description -->
-  <idea-version since-build="107.105"/>
+  <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
+  <idea-version since-build="131"/>
 
-  <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
+  <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
        on how to target different products -->
   <!-- uncomment to enable plugin in all products
   <depends>com.intellij.modules.lang</depends>
   -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Add your extensions here -->
+  </extensions>
 
   <application-components>
     <!-- Add your application components here -->
@@ -36,7 +40,4 @@
     <!-- Add your actions here -->
   </actions>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <!-- Add your extensions here -->
-  </extensions>
 </idea-plugin>

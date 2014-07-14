@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2013 Bas Leijdekkers
+ * Copyright 2011-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,33 +15,35 @@
  */
 package com.siyeh.ig.migration;
 
-import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.psiutils.SwitchUtils.IfStatementBranch;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
 import java.awt.*;
+import java.lang.String;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -49,6 +51,8 @@ import java.util.List;
 
 public class IfCanBeSwitchInspection extends BaseInspection {
 
+  @NonNls private static final String ONLY_SAFE = "onlySuggestNullSafe";
+  
   @SuppressWarnings({"PublicField"})
   public int minimumBranches = 3;
 
@@ -57,6 +61,8 @@ public class IfCanBeSwitchInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean suggestEnumSwitches = false;
+
+  private boolean onlySuggestNullSafe = true;
 
   @Override
   public boolean isEnabledByDefault() {
@@ -121,27 +127,21 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     constraints.gridx = 0;
     constraints.gridy = 1;
     constraints.gridwidth = 2;
-    final JCheckBox checkBox1 = new JCheckBox(InspectionGadgetsBundle.message("if.can.be.switch.int.option"), suggestIntSwitches);
-    final ButtonModel model1 = checkBox1.getModel();
-    model1.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        suggestIntSwitches = model1.isSelected();
-      }
-    });
+    final CheckBox checkBox1 = new CheckBox(InspectionGadgetsBundle.message("if.can.be.switch.int.option"), this, "suggestIntSwitches");
     panel.add(checkBox1, constraints);
     constraints.gridy = 2;
-    constraints.weighty = 1.0;
-    final JCheckBox checkBox2 = new JCheckBox(InspectionGadgetsBundle.message("if.can.be.switch.enum.option"), suggestEnumSwitches);
-    final ButtonModel model2 = checkBox2.getModel();
-    model2.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        suggestEnumSwitches = model2.isSelected();
-      }
-    });
+    final CheckBox checkBox2 = new CheckBox(InspectionGadgetsBundle.message("if.can.be.switch.enum.option"), this, "suggestEnumSwitches");
     panel.add(checkBox2, constraints);
+    constraints.gridy = 3;
+    constraints.weighty = 1.0;
+    final CheckBox checkBox3 =
+      new CheckBox(InspectionGadgetsBundle.message("if.can.be.switch.null.safe.option"), this, "onlySuggestNullSafe");
+    panel.add(checkBox3, constraints);
     return panel;
+  }
+
+  public void setOnlySuggestNullSafe(boolean onlySuggestNullSafe) {
+    this.onlySuggestNullSafe = onlySuggestNullSafe;
   }
 
   private static class IfCanBeSwitchFix extends InspectionGadgetsFix {
@@ -499,6 +499,28 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     return new IfCanBeSwitchVisitor();
   }
 
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    super.writeSettings(node);
+    if (!onlySuggestNullSafe) {
+      final Element e = new Element("option");
+      e.setAttribute("name", ONLY_SAFE);
+      e.setAttribute("value", Boolean.toString(onlySuggestNullSafe));
+      node.addContent(e);
+    }
+  }
+
+  @Override
+  public void readSettings(@NotNull Element node) throws InvalidDataException {
+    super.readSettings(node);
+    for (Element child : node.getChildren("option")) {
+      if (Comparing.strEqual(child.getAttributeValue("name"), ONLY_SAFE)) {
+        onlySuggestNullSafe = Boolean.parseBoolean(child.getAttributeValue("value"));
+        break;
+      }
+    }
+  }
+
   private class IfCanBeSwitchVisitor extends BaseInspectionVisitor {
 
     @Override
@@ -508,17 +530,9 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       if (parent instanceof PsiIfStatement) {
         return;
       }
-      final PsiExpression switchExpression = SwitchUtils.getSwitchExpression(statement, minimumBranches);
+      final PsiExpression switchExpression = SwitchUtils.getSwitchExpression(statement, minimumBranches, onlySuggestNullSafe);
       if (switchExpression == null) {
         return;
-      }
-      final PsiExpression unwrappedExpression = ParenthesesUtils.stripParentheses(switchExpression);
-      if (unwrappedExpression instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)unwrappedExpression;
-        final PsiElement target = referenceExpression.resolve();
-        if (target instanceof PsiModifierListOwner && NullableNotNullManager.isNullable((PsiModifierListOwner)target)) {
-          return;
-        }
       }
       final PsiType type = switchExpression.getType();
       if (!suggestIntSwitches) {

@@ -18,6 +18,7 @@ package com.siyeh.ipp.asserttoif;
 import com.intellij.psi.PsiAssertStatement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -43,6 +44,6 @@ public class AssertToIfIntention extends Intention {
       newStatement.append(description.getText());
     }
     newStatement.append(");");
-    replaceStatement(newStatement.toString(), assertStatement);
+    PsiReplacementUtil.replaceStatement(assertStatement, newStatement.toString());
   }
 }

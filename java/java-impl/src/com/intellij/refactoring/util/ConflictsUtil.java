@@ -75,7 +75,7 @@ public class ConflictsUtil {
       }
     }
 
-    if (method != null && method != refactoredMethod) {
+    if (method != null && method != refactoredMethod && !isStaticInterfaceMethods(aClass, refactoredMethod, method)) {
       if (aClass.equals(method.getContainingClass())) {
         final String classDescr = aClass instanceof PsiAnonymousClass ?
                                   RefactoringBundle.message("current.class") :
@@ -114,6 +114,11 @@ public class ConflictsUtil {
         }
       });
     }
+  }
+
+  private static boolean isStaticInterfaceMethods(PsiClass aClass, PsiMethod refactoredMethod, PsiMethod method) {
+    return aClass.isInterface() && method.hasModifierProperty(PsiModifier.STATIC) &&
+           refactoredMethod != null && refactoredMethod.hasModifierProperty(PsiModifier.STATIC);
   }
 
   private static String getMethodPrototypeString(final PsiMethod prototype) {

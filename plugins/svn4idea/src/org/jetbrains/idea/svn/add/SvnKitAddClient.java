@@ -16,6 +16,10 @@ import java.io.File;
  */
 public class SvnKitAddClient extends BaseSvnClient implements AddClient {
 
+  /**
+   * TODO: Implement correct support for includeIgnored parameter. Also check that correct depth will be used for all cases (when another
+   * TODO: overload of doAdd() is used) as, for instance, SVNDepth.recurseFromDepth(EMPTY) = false, SVNDepth.fromRecursive(false) = FILES.
+   */
   @Override
   public void add(@NotNull File file,
                   @Nullable SVNDepth depth,
@@ -24,7 +28,7 @@ public class SvnKitAddClient extends BaseSvnClient implements AddClient {
                   boolean force,
                   @Nullable ISVNEventHandler handler) throws VcsException {
     try {
-      SVNWCClient client = myVcs.createWCClient();
+      SVNWCClient client = myVcs.getSvnKitManager().createWCClient();
 
       client.setEventHandler(handler);
       client.doAdd(file, force,

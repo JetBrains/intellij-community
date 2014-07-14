@@ -2,7 +2,7 @@ package pck;
 import static pck.C.foo;
 import static pck.D.foo;
 
-public class C {
+class C {
      public static void foo(){}
 }
 class D {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -666,7 +666,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
   @Nullable
   public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
     final Image image = DragImageFactory.createImage(this);
-    return new Pair<Image, Point>(image, new Point(-image.getWidth(null), -image.getHeight(null)));
+    return Pair.create(image, new Point(-image.getWidth(null), -image.getHeight(null)));
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,10 @@ public class Gray extends Color {
   }
 
   public Color withAlpha(int alpha) {
+    if (alpha == 0) {
+      return TRANSPARENT;
+    }
+
     assert 0 <= alpha && alpha <= 255 : "Alpha " + alpha + "is incorrect. Alpha should be in range 0..255";
     return new Gray(getRed(), alpha);
   }
@@ -575,6 +579,9 @@ public class Gray extends Color {
     _208, _209, _210, _211, _212, _213, _214, _215, _216, _217, _218, _219, _220, _221, _222, _223,
     _224, _225, _226, _227, _228, _229, _230, _231, _232, _233, _234, _235, _236, _237, _238, _239,
     _240, _241, _242, _243, _244, _245, _246, _247, _248, _249, _250, _251, _252, _253, _254, _255};
+
+  @SuppressWarnings("UseJBColor")
+  public static final Color TRANSPARENT = new Color(0,0,0,0);
 
   //public static void main(String[] args) {
   //  for (int i = 0; i < 256; i++) {

@@ -127,13 +127,25 @@ public class BuildProcessClasspathManager {
         return extraDirFile;
       }
     }
-    return PluginPathManager.getPluginHome(pluginDirName);
+    File pluginHome = PluginPathManager.getPluginHome(pluginDirName);
+    if (!pluginHome.isDirectory() && StringUtil.isCapitalized(pluginDirName)) {
+      pluginHome = PluginPathManager.getPluginHome(StringUtil.decapitalize(pluginDirName));
+    }
+    return pluginHome.isDirectory() ? pluginHome : null;
   }
 
   private static List<String> getDynamicClasspath(Project project) {
     final List<String> classpath = ContainerUtil.newArrayList();
     for (BuildProcessParametersProvider provider : project.getExtensions(BuildProcessParametersProvider.EP_NAME)) {
       classpath.addAll(provider.getClassPath());
+    }
+    return classpath;
+  }
+
+  public static List<String> getLauncherClasspath(Project project) {
+    final List<String> classpath = ContainerUtil.newArrayList();
+    for (BuildProcessParametersProvider provider : project.getExtensions(BuildProcessParametersProvider.EP_NAME)) {
+      classpath.addAll(provider.getLauncherClassPath());
     }
     return classpath;
   }

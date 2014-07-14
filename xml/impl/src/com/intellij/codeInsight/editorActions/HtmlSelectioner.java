@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,11 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.editorActions.wordSelection.AbstractWordSelectioner;
-import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.FileViewProvider;
@@ -58,6 +56,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
   };
   private static final String CLASS_ATTRIBUTE_NAME = "class";
 
+  @Override
   public boolean canSelect(PsiElement e) {
     return canSelectElement(e);
   }
@@ -69,6 +68,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
     return false;
   }
 
+  @Override
   public List<TextRange> select(PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result;
 
@@ -87,7 +87,6 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
     }
 
     PsiFile psiFile = e.getContainingFile();
-    FileType fileType = psiFile.getVirtualFile().getFileType();
 
     addAttributeSelection(result, editor, editorText, e);
     final FileViewProvider fileViewProvider = psiFile.getViewProvider();
@@ -99,53 +98,34 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
     EditorHighlighter highlighter = HighlighterFactory.createHighlighter(e.getProject(), psiFile.getVirtualFile());
     highlighter.setText(editorText);
 
-    addTagSelection(editorText, cursorOffset, fileType, highlighter, result);
+    addTagSelection2(e, result);
 
     return result;
   }
 
-  private static void addTagSelection(CharSequence editorText, int cursorOffset, FileType fileType,
-                                      @NotNull EditorHighlighter highlighter, @NotNull List<TextRange> result) {
-    int start = cursorOffset;
-
-    while (true) {
-      if (start < 0) return;
-      HighlighterIterator i = highlighter.createIterator(start);
-      if (i.atEnd()) return;
-
-      while (true) {
-        if (i.getTokenType() == XmlTokenType.XML_START_TAG_START) break;
-        i.retreat();
-        if (i.atEnd()) return;
+  private static void addTagSelection2(PsiElement e, List<TextRange> result) {
+    XmlTag tag = PsiTreeUtil.getParentOfType(e, XmlTag.class, true);
+    while (tag != null) {
+      result.add(tag.getTextRange());
+      final ASTNode tagStartEnd = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
+      final ASTNode tagEndStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(tag.getNode());
+      if (tagStartEnd != null && tagEndStart != null) {
+        result.add(new UnfairTextRange(tagStartEnd.getTextRange().getEndOffset(),
+                                       tagEndStart.getTextRange().getStartOffset()));
       }
-
-      start = i.getStart();
-      final boolean matched = BraceMatchingUtil.matchBrace(editorText, fileType, i, true);
-
-      if (matched) {
-        final int tagEnd = i.getEnd();
-        result.add(new TextRange(start, tagEnd));
-
-        HighlighterIterator j = highlighter.createIterator(start);
-        while (!j.atEnd() && j.getTokenType() != XmlTokenType.XML_TAG_END) j.advance();
-        while (!i.atEnd() && i.getTokenType() != XmlTokenType.XML_END_TAG_START) i.retreat();
-
-        if (!i.atEnd() && !j.atEnd()) {
-          result.add(new UnfairTextRange(j.getEnd(), i.getStart()));
-        }
-        if (!j.atEnd()) {
-          result.add(new TextRange(start, j.getEnd()));
-        }
-        if (!i.atEnd()) {
-          result.add(new TextRange(i.getStart(), tagEnd));
-        }
+      if (tagStartEnd != null) {
+        result.add(new TextRange(tag.getTextRange().getStartOffset(),
+                                 tagStartEnd.getTextRange().getEndOffset()));
       }
-
-      start--;
+      if (tagEndStart != null) {
+        result.add(new TextRange(tagEndStart.getTextRange().getStartOffset(),
+                                 tag.getTextRange().getEndOffset()));
+      }
+      tag = PsiTreeUtil.getParentOfType(tag, XmlTag.class, true);
     }
   }
 
-  private static void addAttributeSelection(@NotNull List<TextRange> result, @NotNull Editor editor, 
+  private static void addAttributeSelection(@NotNull List<TextRange> result, @NotNull Editor editor,
                                             @NotNull CharSequence editorText, @Nullable PsiElement e) {
     final XmlAttribute attribute = PsiTreeUtil.getParentOfType(e, XmlAttribute.class);
 
@@ -169,7 +149,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
 
   @Override
   public int getMinimalTextRangeLength(@NotNull PsiElement element, @NotNull CharSequence text, int cursorOffset) {
-    if (WebEditorOptions.getInstance().isSelectWholeCssSelectorSuffixOnDoubleClick()) {
+    if (WebEditorOptions.getInstance().isSelectWholeCssIdentifierOnDoubleClick()) {
       final XmlAttribute attribute = PsiTreeUtil.getParentOfType(element, XmlAttribute.class);
       final XmlAttributeValue attributeValue = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class);
       if (attribute != null && attributeValue != null) {

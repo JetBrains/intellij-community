@@ -1,0 +1,8 @@
+Types:
+PsiMethod:foo : java.lang.String[]
+
+Conversions:
+"" -> new java.lang.String[]{$qualifier$} $qualifier$ ""
+
+New expression type changes:
+Fails:

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.messages.Topic;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,8 @@ import java.util.List;
  * @author nik
  */
 public abstract class XDebuggerManager {
+  public static final Topic<XDebuggerManagerListener> TOPIC =
+    new Topic<XDebuggerManagerListener>("XDebuggerManager events", XDebuggerManagerListener.class);
 
   public static XDebuggerManager getInstance(@NotNull Project project) {
     return project.getComponent(XDebuggerManager.class);

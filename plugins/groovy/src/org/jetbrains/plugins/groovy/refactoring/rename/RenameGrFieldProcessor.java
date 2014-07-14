@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -30,9 +31,8 @@ import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.hash.HashMap;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -41,6 +41,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitField;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -52,13 +54,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.findGetterForField;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.findSetterForField;
-
 /**
  * @author ilyas
  */
 public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
+
+  private static final Logger LOG = Logger.getInstance(RenameGrFieldProcessor.class);
 
   @NotNull
   @Override
@@ -88,29 +89,11 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
                             @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     final GrField field = (GrField)psiElement;
     String fieldName = field.getName();
-    Map<PsiElement, String> renames = new HashMap<PsiElement, String>();
-    renames.put(field, newName);
 
-    for (GrAccessorMethod getter : field.getGetters()) {
-      renames.put(getter, RenamePropertyUtil.getGetterNameByOldName(newName, getter.getName()));
-    }
-    final GrAccessorMethod setter = field.getSetter();
-    if (setter != null) {
-      renames.put(setter, GroovyPropertyUtils.getSetterName(newName));
-    }
+    NameProvider nameProvider = new NameProvider(field, newName);
 
-    MultiMap<PsiNamedElement, UsageInfo> propertyUsages = new MultiMap<PsiNamedElement, UsageInfo>() {
-      @Override
-      protected Map<PsiNamedElement, Collection<UsageInfo>> createMap() {
-        return new LinkedHashMap<PsiNamedElement, Collection<UsageInfo>>();
-      }
-    };
-    MultiMap<PsiNamedElement, UsageInfo> simpleUsages = new MultiMap<PsiNamedElement, UsageInfo>() {
-      @Override
-      protected Map<PsiNamedElement, Collection<UsageInfo>> createMap() {
-        return new LinkedHashMap<PsiNamedElement, Collection<UsageInfo>>();
-      }
-    };
+    MultiMap<PsiNamedElement, UsageInfo> propertyUsages = MultiMap.createLinked();
+    MultiMap<PsiNamedElement, UsageInfo> simpleUsages = MultiMap.createLinked();
 
     List<PsiReference> unknownUsages = new ArrayList<PsiReference>();
 
@@ -120,12 +103,7 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
         final GroovyResolveResult resolveResult = ((GrReferenceExpression)ref).advancedResolve();
         final PsiElement element = resolveResult.getElement();
         if (resolveResult.isInvokedOnProperty()) {
-          if (element == null) {
-            unknownUsages.add(ref);
-          }
-          else {
-            propertyUsages.putValue((PsiNamedElement)element, usage);
-          }
+          propertyUsages.putValue((PsiNamedElement)element, usage);
         }
         else {
           simpleUsages.putValue((PsiNamedElement)element, usage);
@@ -142,22 +120,13 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
 
     field.setName(newName);
 
-    final GrAccessorMethod[] newGetters = field.getGetters();
-    final GrAccessorMethod newSetter = field.getSetter();
-    Map<String, PsiNamedElement> newElements = new HashMap<String, PsiNamedElement>();
-    newElements.put(newName, field);
-    for (GrAccessorMethod newGetter : newGetters) {
-      newElements.put(newGetter.getName(), newGetter);
-    }
-    if (newSetter != null) {
-      newElements.put(newSetter.getName(), newSetter);
-    }
+    nameProvider.putNewElements(field);
 
     PsiManager manager = field.getManager();
     for (PsiNamedElement element : simpleUsages.keySet()) {
       for (UsageInfo info : simpleUsages.get(element)) {
-        final String name = renames.get(element);
-        rename(newElements.get(name), info, name == null ? newName : name, name != null, manager);
+        final String name = nameProvider.getNewName(element);
+        rename(nameProvider.getNewElement(element), info, name == null ? newName : name, name != null, manager);
       }
     }
     for (PsiNamedElement element : propertyUsages.keySet()) {
@@ -167,6 +136,72 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
     }
     if (listener != null) {
       listener.elementRenamed(field);
+    }
+  }
+
+  private static class NameProvider {
+
+    private final Map<PsiElement, String> myNameMap = ContainerUtil.newHashMap();
+    private final Map<String, PsiNamedElement> myNewElements = ContainerUtil.newHashMap();
+
+
+    public NameProvider(GrField field, String newName) {
+      myNameMap.put(field, newName);
+
+      if (field.isProperty()) {
+        for (GrAccessorMethod getter : field.getGetters()) {
+          myNameMap.put(getter, RenamePropertyUtil.getGetterNameByOldName(newName, getter.getName()));
+        }
+        final GrAccessorMethod setter = field.getSetter();
+        if (setter != null) {
+          myNameMap.put(setter, GroovyPropertyUtils.getSetterName(newName));
+        }
+      }
+    }
+
+    String getNewName(@NotNull PsiElement element) {
+      String name = myNameMap.get(element);
+      if (name != null) {
+        return name;
+      }
+
+      if (element instanceof GrTraitField) {
+        PsiField prototype = ((GrTraitField)element).getPrototype();
+        String newPrototypeName = getNewName(prototype);
+        return GrTraitUtil.getTraitFieldPrefix(prototype.getContainingClass()) + newPrototypeName;
+      }
+
+      return null;
+    }
+
+    public void putNewElements(@NotNull GrField field) {
+      myNewElements.put(field.getName(), field);
+
+      if (field.isProperty()) {
+        for (GrAccessorMethod newGetter : field.getGetters()) {
+          myNewElements.put(newGetter.getName(), newGetter);
+        }
+
+        final GrAccessorMethod newSetter = field.getSetter();
+        if (newSetter != null) {
+          myNewElements.put(newSetter.getName(), newSetter);
+        }
+      }
+    }
+
+    public PsiNamedElement getNewElement(PsiNamedElement element) {
+      String newName = getNewName(element);
+      PsiNamedElement newElement = myNewElements.get(newName);
+      if (newElement != null) {
+        return newElement;
+      }
+
+      if (element instanceof GrTraitField) {
+        PsiField prototype = ((GrTraitField)element).getPrototype();
+        return getNewElement(prototype);
+      }
+
+      return null;
     }
   }
 
@@ -255,7 +290,7 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
 
   @Override
   public boolean canProcessElement(@NotNull final PsiElement element) {
-    return element instanceof GrField && ((GrField)element).isProperty() || element instanceof GrAccessorMethod;
+    return element instanceof GrField /*&& ((GrField)element).isProperty()*/ || element instanceof GrAccessorMethod;
   }
 
   @Override
@@ -305,7 +340,7 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
     final PsiClass containingClass = field.getContainingClass();
     if (containingClass == null) return;
 
-    final PsiMethod getter = findGetterForField(field);
+    final PsiMethod getter = GroovyPropertyUtils.findGetterForField(field);
     if (getter instanceof GrAccessorMethod) {
       final PsiMethod newGetter =
         PropertyUtil.findPropertyGetter(containingClass, newName, field.hasModifierProperty(PsiModifier.STATIC), true);
@@ -314,7 +349,7 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
           .message("implicit.getter.will.by.overriden.by.method", field.getName(), newGetter.getName()));
       }
     }
-    final PsiMethod setter = findSetterForField(field);
+    final PsiMethod setter = GroovyPropertyUtils.findSetterForField(field);
     if (setter instanceof GrAccessorMethod) {
       final PsiMethod newSetter =
         PropertyUtil.findPropertySetter(containingClass, newName, field.hasModifierProperty(PsiModifier.STATIC), true);

@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.cache.CacheUtil;
 import com.intellij.psi.impl.cache.TodoCacheManager;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternOccurrence;
@@ -187,15 +188,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
         if (lexer.getTokenStart() >= range.getEndOffset()) break;
       }
 
-      boolean isComment = commentTokens.contains(tokenType);
-      if (!isComment) {
-        final Language commentLang = tokenType.getLanguage();
-        final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(commentLang);
-        if (parserDefinition != null) {
-          final TokenSet langCommentTokens = parserDefinition.getCommentTokens();
-          isComment = langCommentTokens.contains(tokenType);
-        }
-      }
+      boolean isComment = commentTokens.contains(tokenType) || CacheUtil.isInComments(tokenType);
 
       if (isComment) {
         final int startDelta = builderForFile != null ? builderForFile.getCommentStartDelta(lexer.getTokenType()) : 0;

@@ -14,9 +14,9 @@
     <orderEntry type="module" module-name="execution-impl" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="library" name="Velocity" level="project" />
-    <orderEntry type="module" module-name="java-i18n" />
+    <orderEntry type="module" module-name="java-i18n" exported="" />
     <orderEntry type="module" module-name="compiler-impl" />
-    <orderEntry type="library" name="asm4" level="project" />
+    <orderEntry type="library" name="asm5" level="project" />
     <orderEntry type="module" module-name="instrumentation-util" />
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="module" module-name="IntelliLang-java" scope="RUNTIME" />
@@ -30,6 +30,8 @@
     <orderEntry type="module" module-name="java-indexing-api" scope="TEST" />
     <orderEntry type="module" module-name="external-system-impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="junit_rt" scope="TEST" />
+    <orderEntry type="module" module-name="xml-psi-impl" scope="TEST" />
+    <orderEntry type="module" module-name="properties-psi-api" scope="TEST" />
   </component>
 </module>
 

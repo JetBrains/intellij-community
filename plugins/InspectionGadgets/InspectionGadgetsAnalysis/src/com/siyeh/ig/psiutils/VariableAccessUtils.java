@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public class VariableAccessUtils {
@@ -445,5 +448,44 @@ public class VariableAccessUtils {
       }
     }
     return child;
+  }
+
+  public static Set<PsiVariable> collectUsedVariables(PsiElement context) {
+    if (context == null) {
+      return Collections.emptySet();
+    }
+    final VariableCollectingVisitor visitor = new VariableCollectingVisitor();
+    context.accept(visitor);
+    return visitor.getUsedVariables();
+  }
+
+  public static boolean isAnyVariableAssigned(@NotNull Collection<PsiVariable> variables, @Nullable PsiElement context) {
+    if (context == null) {
+      return false;
+    }
+    final VariableAssignedVisitor visitor = new VariableAssignedVisitor(variables, true);
+    context.accept(visitor);
+    return visitor.isAssigned();
+  }
+
+  private static class VariableCollectingVisitor extends JavaRecursiveElementVisitor {
+
+    private final Set<PsiVariable> usedVariables = new HashSet();
+
+    @Override
+    public void visitReferenceExpression(
+      PsiReferenceExpression expression) {
+      super.visitReferenceExpression(expression);
+      final PsiElement target = expression.resolve();
+      if (!(target instanceof PsiVariable)) {
+        return;
+      }
+      final PsiVariable variable = (PsiVariable)target;
+      usedVariables.add(variable);
+    }
+
+    public Set<PsiVariable> getUsedVariables() {
+      return usedVariables;
+    }
   }
 }

@@ -39,6 +39,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -116,10 +117,16 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     final String newFileName =
       StringUtil.notNullize(language.getDisplayName(), "Injected") + " Fragment " + "(" +
       origFile.getName() + ":" + shreds.get(0).getHost().getTextRange().getStartOffset() + ")" + "." + fileType.getDefaultExtension();
+
+    // preserve \r\n as it is done in MultiHostRegistrarImpl
     myNewFile = factory.createFileFromText(newFileName, language, text, true, true);
-    myNewVirtualFile = (LightVirtualFile)myNewFile.getVirtualFile();
+    myNewVirtualFile = ObjectUtils.assertNotNull((LightVirtualFile)myNewFile.getVirtualFile());
     myNewVirtualFile.setOriginalFile(origFile.getVirtualFile());
-    assert myNewVirtualFile != null;
+
+    assert myNewFile != null : "PSI file is null";
+    assert myNewFile.getTextLength() == myNewVirtualFile.getContent().length() : "PSI / Virtual file text mismatch";
+
+    myNewVirtualFile.setOriginalFile(origFile.getVirtualFile());
     // suppress possible errors as in injected mode
     myNewFile.putUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION,
                           injectedFile.getUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION));
@@ -164,6 +171,9 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
       public void editorReleased(@NotNull EditorFactoryEvent event) {
         if (event.getEditor().getDocument() != myNewDocument) return;
         if (-- myEditorCount > 0) return;
+
+        if (Boolean.TRUE.equals(myNewVirtualFile.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) return;
+
         Disposer.dispose(QuickEditHandler.this);
       }
     }, this);

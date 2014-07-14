@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
@@ -29,16 +30,16 @@ import java.util.*;
  * @author max
  */
 public class FeatureStatisticsBundle {
+
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+    return CommonBundle.message(getBundle(key), key, params);
+  }
+
   private static Reference<ResourceBundle> ourBundle;
   private static final Logger LOG = Logger.getInstance(FeatureStatisticsBundle.class);
-
   @NonNls private static final String BUNDLE = "messages.FeatureStatisticsBundle";
 
   private FeatureStatisticsBundle() {
-  }
-
-  public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
-    return CommonBundle.message(getBundle(key), key, params);
   }
 
   private static ResourceBundle getBundle(final String key) {
@@ -54,8 +55,7 @@ public class FeatureStatisticsBundle {
       }
     }
 
-    ResourceBundle bundle = null;
-    if (ourBundle != null) bundle = ourBundle.get();
+    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
     if (bundle == null) {
       bundle = ResourceBundle.getBundle(BUNDLE);
       ourBundle = new SoftReference<ResourceBundle>(bundle);

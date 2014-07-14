@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,6 +102,7 @@ public class DefaultGroovyVariableNameValidator implements NameValidator {
     });
   }
 
+  @Override
   public String validateName(String name, boolean increaseNumber) {
     if (!mySet.contains(name)) return name;
     if (increaseNumber) {
@@ -115,6 +116,7 @@ public class DefaultGroovyVariableNameValidator implements NameValidator {
     }
   }
 
+  @Override
   public Project getProject() {
     return myContext.getProject();
   }

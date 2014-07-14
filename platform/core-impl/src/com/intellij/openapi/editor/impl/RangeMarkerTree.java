@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -98,7 +99,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     marker.setValid(true);
     RMNode<T> node = (RMNode)super.addInterval(interval, start, end, greedyToLeft, greedyToRight, layer);
 
-    if (DEBUG && node.intervals.size() > DUPLICATE_LIMIT) {
+    if (DEBUG && !ApplicationInfoImpl.isInPerformanceTest() && node.intervals.size() > DUPLICATE_LIMIT) {
       l.readLock().lock();
       try {
         String msg = errMsg(node);
@@ -305,14 +306,14 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   public boolean sweep(final int start, final int end, @NotNull final SweepProcessor<T> sweepProcessor) {
     return sweep(new Generator<T>() {
       @Override
-      public boolean generate(Processor<T> processor) {
+      public boolean generateInStartOffsetOrder(@NotNull Processor<T> processor) {
         return processOverlappingWith(start, end, processor);
       }
     }, sweepProcessor);
   }
 
   public interface Generator<T> {
-    boolean generate(Processor<T> processor);
+    boolean generateInStartOffsetOrder(@NotNull Processor<T> processor);
   }
 
   public static <T extends Segment> boolean sweep(@NotNull Generator<T> generator, @NotNull final SweepProcessor<T> sweepProcessor) {
@@ -323,7 +324,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       }
     });
     final List<T> starts = new ArrayList<T>();
-    if (!generator.generate(new Processor<T>() {
+    if (!generator.generateInStartOffsetOrder(new Processor<T>() {
       @Override
       public boolean process(T marker) {
         // decide whether previous marker ends here or new marker begins

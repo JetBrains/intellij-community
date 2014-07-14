@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.lang.folding.CompositeFoldingBuilder;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +33,7 @@ public class I18nMessageGotoDeclarationHandler extends GotoDeclarationHandlerBas
   private static final Key<FoldingBuilder> KEY = CompositeFoldingBuilder.FOLDING_BUILDER;
 
   @Override
-  public PsiElement getGotoDeclarationTarget(PsiElement element, Editor editor) {
+  public PsiElement getGotoDeclarationTarget(@Nullable PsiElement element, Editor editor) {
     if (!(element instanceof PsiJavaToken)) return null;
 
     int i = 4; //some street magic

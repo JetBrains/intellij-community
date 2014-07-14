@@ -50,14 +50,20 @@ public class HgCommitCommand {
   private final VirtualFile myRoot;
   private final String myMessage;
   @NotNull private final Charset myCharset;
+  private final boolean myAmend;
 
   private Set<HgFile> myFiles = Collections.emptySet();
 
-  public HgCommitCommand(Project project, @NotNull VirtualFile root, String message) {
+  public HgCommitCommand(Project project, @NotNull VirtualFile root, String message, boolean amend) {
     myProject = project;
     myRoot = root;
     myMessage = message;
     myCharset = HgEncodingUtil.getDefaultCharset(myProject);
+    myAmend = amend;
+  }
+
+  public HgCommitCommand(Project project, @NotNull VirtualFile root, String message) {
+    this(project, root, message, false);
   }
 
   public void setFiles(@NotNull Set<HgFile> files) {
@@ -71,7 +77,7 @@ public class HgCommitCommand {
     //if it's merge commit, so myFiles is Empty. Need to commit all files in changeList.
     // see HgCheckinEnviroment->commit() method
     if (myFiles.isEmpty()) {
-      commitChunkFiles(Collections.<String>emptyList(), false);
+      commitChunkFiles(Collections.<String>emptyList(), myAmend);
     }
     else {
       List<String> relativePaths = ContainerUtil.map2List(myFiles, new Function<HgFile, String>() {
@@ -82,7 +88,7 @@ public class HgCommitCommand {
       });
       List<List<String>> chunkedCommits = VcsFileUtil.chunkRelativePaths(relativePaths);
       int size = chunkedCommits.size();
-      commitChunkFiles(chunkedCommits.get(0), false);
+      commitChunkFiles(chunkedCommits.get(0), myAmend);
       HgVcs vcs = HgVcs.getInstance(myProject);
       boolean amendCommit = vcs != null && vcs.getVersion().isAmendSupported();
       for (int i = 1; i < size; i++) {

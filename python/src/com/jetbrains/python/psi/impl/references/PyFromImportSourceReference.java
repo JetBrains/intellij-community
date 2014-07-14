@@ -18,7 +18,6 @@ package com.jetbrains.python.psi.impl.references;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -53,7 +52,6 @@ public class PyFromImportSourceReference extends PyImportReference {
 
   @Override
   public HighlightSeverity getUnresolvedHighlightSeverity(TypeEvalContext context) {
-    PyExpression qualifier = myElement.getQualifier();
-    return qualifier == null ? HighlightSeverity.ERROR : HighlightSeverity.WARNING;
+    return myElement.isQualified() ? HighlightSeverity.WARNING : HighlightSeverity.ERROR;
   }
 }

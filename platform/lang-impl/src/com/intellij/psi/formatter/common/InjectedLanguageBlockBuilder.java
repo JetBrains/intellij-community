@@ -107,11 +107,12 @@ public abstract class InjectedLanguageBlockBuilder {
           }
       }
     };
-    InjectedLanguageUtil.enumerate(injectionHost.getPsi(), injectedPsiVisitor);
+    final PsiElement injectionHostPsi = injectionHost.getPsi();
+    InjectedLanguageUtil.enumerate(injectionHostPsi, injectionHostPsi.getContainingFile(), false, injectedPsiVisitor);
 
     if  (injectedFile[0] != null) {
       final Language childLanguage = injectedFile[0].getLanguage();
-      final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(childLanguage, injectionHost.getPsi());
+      final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(childLanguage, injectionHostPsi);
 
       if (builder != null) {
         final int startOffset = injectedRangeInsideHost.get().getStartOffset();

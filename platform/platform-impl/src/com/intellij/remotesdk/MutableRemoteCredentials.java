@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,31 +15,9 @@
  */
 package com.intellij.remotesdk;
 
-import org.jetbrains.annotations.Nullable;
-
 /**
+ * @deprecated Remove in IDEA 14
  * @author traff
  */
-public interface MutableRemoteCredentials extends RemoteCredentials {
-  void setHost(String host);
-
-  void setPort(int port);
-
-  void setUserName(String userName);
-
-  void setPassword(@Nullable String password);
-
-  void setStorePassword(boolean storePassword);
-
-  void setStorePassphrase(boolean storePassphrase);
-
-  void setAnonymous(boolean anonymous);
-
-  void setPrivateKeyFile(String privateKeyFile);
-
-  void setKnownHostsFile(String knownHostsFile);
-
-  void setPassphrase(@Nullable String passphrase);
-
-  void setUseKeyPair(boolean useKeyPair);
+public interface MutableRemoteCredentials extends com.intellij.remote.MutableRemoteCredentials {
 }

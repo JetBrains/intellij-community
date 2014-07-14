@@ -27,7 +27,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ActionUtil {
@@ -166,5 +168,10 @@ public class ActionUtil {
     }
   }
 
-
+  @NotNull
+  public static List<AnAction> getActions(@NotNull JComponent component) {
+    Object property = component.getClientProperty(AnAction.ourClientProperty);
+    //noinspection unchecked
+    return property == null ? Collections.<AnAction>emptyList() : (List<AnAction>)property;
+  }
 }

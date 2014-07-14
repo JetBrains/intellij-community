@@ -26,15 +26,15 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Provides reaction on ctrl+click for {@code break} and {@code continue} statements.
- * User: dcheryasov
- * Date: Nov 5, 2009 4:58:54 AM
+ * @author dcheryasov
  */
 public class PyBreakContinueGotoProvider extends GotoDeclarationHandlerBase {
-
-  public PsiElement getGotoDeclarationTarget(PsiElement source, Editor editor) {
+  @Override
+  public PsiElement getGotoDeclarationTarget(@Nullable PsiElement source, Editor editor) {
     if (source != null && source.getLanguage() instanceof PythonLanguage) {
       final PyLoopStatement loop = PsiTreeUtil.getParentOfType(source, PyLoopStatement.class, false, PyFunction.class, PyClass.class);
       if (loop != null) {
@@ -66,6 +66,7 @@ public class PyBreakContinueGotoProvider extends GotoDeclarationHandlerBase {
         }
       }
     }
+
     return null;
   }
 }

@@ -1,4 +1,4 @@
-public class Pos03<U> {
+class Pos03<U> {
 
     class Foo<V> {
         Foo(V x) {}

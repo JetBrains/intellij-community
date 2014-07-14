@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public class SvnContentRevision implements ContentRevision, MarkerVcsContentRevi
                                                                @Override
                                                                public Pair<VcsRevisionNumber, byte[]> get()
                                                                  throws VcsException, IOException {
-                                                                 return new Pair<VcsRevisionNumber, byte[]>(getRevisionNumber(), getUpToDateBinaryContent());
+                                                                 return Pair.create(getRevisionNumber(), getUpToDateBinaryContent());
                                                                }
                                                              }).getSecond();
       } else {

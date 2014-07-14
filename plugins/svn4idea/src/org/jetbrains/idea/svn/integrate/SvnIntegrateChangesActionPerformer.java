@@ -69,7 +69,7 @@ public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.Bra
       return;
     }
     final SvnIntegrateChangesTask task = new SvnIntegrateChangesTask(myVcs, info, myMergerFactory, sourceUrl, SvnBundle.message("action.Subversion.integrate.changes.messages.title"),
-                                                                     SvnConfiguration.getInstance(myVcs.getProject()).MERGE_DRY_RUN, name);
+                                                                     SvnConfiguration.getInstance(myVcs.getProject()).isMergeDryRun(), name);
     ProgressManager.getInstance().run(task);
   }
 

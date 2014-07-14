@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.editor.ex;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Collection;
 
 public interface SweepProcessor<T> {
-  boolean process(int offset, T interval, boolean atStart, Collection<T> overlappingIntervals);
+  boolean process(int offset, @NotNull T interval, boolean atStart, @NotNull Collection<T> overlappingIntervals);
 }

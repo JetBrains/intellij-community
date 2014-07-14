@@ -14,9 +14,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -220,11 +218,8 @@ public class InternetAttachSourceProvider implements AttachSourcesProvider {
   private static boolean isRootInExistingFile(VirtualFile root) {
     if (root.getFileSystem() instanceof JarFileSystem) {
       VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(root);
-      if (jar == null) return false;
-
-      jar.refresh(false, false);
-
-      return root.isValid();
+      // we might be invoked outside EDT, so sync VFS refresh is impossible, so we check java.io.File existence
+      if (jar == null || !VfsUtilCore.virtualToIoFile(jar).exists()) return false;
     }
 
     return true;

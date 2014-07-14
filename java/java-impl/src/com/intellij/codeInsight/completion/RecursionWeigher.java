@@ -28,10 +28,11 @@ import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ExcludeSillyAssignment;
+import com.intellij.psi.impl.search.MethodDeepestSuperSearcher;
 import com.intellij.psi.scope.ElementClassFilter;
-import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.CommonProcessors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -209,7 +210,9 @@ class RecursionWeigher extends LookupElementWeigher {
 
   @NotNull
   public static PsiMethod findDeepestSuper(@NotNull final PsiMethod method) {
-    final PsiMethod first = DeepestSuperMethodsSearch.search(method).findFirst();
+    CommonProcessors.FindFirstProcessor<PsiMethod> processor = new CommonProcessors.FindFirstProcessor<PsiMethod>();
+    MethodDeepestSuperSearcher.processDeepestSuperMethods(method, processor);
+    final PsiMethod first = processor.getFoundValue();
     return first == null ? method : first;
   }
 }

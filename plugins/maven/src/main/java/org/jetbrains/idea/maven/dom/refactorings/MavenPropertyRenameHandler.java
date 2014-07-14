@@ -46,15 +46,7 @@ public class MavenPropertyRenameHandler extends PsiElementRenameHandler {
     PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) element = findTarget(dataContext);
 
-    RenameDialog dialog = new RenameDialog(project, element, null, CommonDataKeys.EDITOR.getData(dataContext));
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      String name = DEFAULT_NAME.getData(dataContext);
-      dialog.performRename(name);
-      dialog.close(DialogWrapper.OK_EXIT_CODE);
-    }
-    else {
-      dialog.show();
-    }
+    RenameDialog.showRenameDialog(dataContext, new RenameDialog(project, element, null, CommonDataKeys.EDITOR.getData(dataContext)));
   }
 
   private static PsiElement findTarget(DataContext context) {

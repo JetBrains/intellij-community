@@ -172,7 +172,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         DotProjectFileHelper.saveDotProjectFile(module, fileCache.getParent(EclipseXml.PROJECT_FILE));
         fileCache.delete(oldEmlName);
         fileCache.register(newName + EclipseXml.IDEA_SETTINGS_POSTFIX, ClasspathStorage.getModuleDir(module));
-        fileCache.load(newName + EclipseXml.IDEA_SETTINGS_POSTFIX);
+        fileCache.load(newName + EclipseXml.IDEA_SETTINGS_POSTFIX, true);
       }
       catch (IOException ignore) {
       }
@@ -202,13 +202,19 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
       try {
         final HashSet<String> usedVariables = new HashSet<String>();
         final CachedXmlDocumentSet documentSet = getFileSet();
-        final String path = documentSet.getParent(EclipseXml.PROJECT_FILE);
-        LOG.assertTrue(documentSet.exists(EclipseXml.PROJECT_FILE));
+        String path = documentSet.getParent(EclipseXml.PROJECT_FILE);
+        if (!documentSet.exists(EclipseXml.PROJECT_FILE)) {
+          if (!documentSet.exists(EclipseXml.CLASSPATH_FILE)) {
+            return usedVariables;
+          }
+
+          path = documentSet.getParent(EclipseXml.CLASSPATH_FILE);
+        }
         final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, module.getProject(), null);
         classpathReader.init(model);
         if (documentSet.exists(EclipseXml.CLASSPATH_FILE)) {
           classpathReader.readClasspath(model, new ArrayList<String>(), new ArrayList<String>(), usedVariables, new HashSet<String>(), null,
-                                        documentSet.read(EclipseXml.CLASSPATH_FILE).getRootElement());
+                                        documentSet.read(EclipseXml.CLASSPATH_FILE, false).getRootElement());
         }
         else {
           EclipseClasspathReader.setOutputUrl(model, path + "/bin");

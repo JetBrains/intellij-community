@@ -66,7 +66,7 @@ public abstract class ChooseByNameFilter<T> {
   private final Project myProject;
 
   /**
-   * A constuctor
+   * A constructor
    *
    * @param popup               a parent popup
    * @param model               a model for popup

@@ -44,4 +44,7 @@ public interface PyClassLikeType extends PyCallableType {
                                                    boolean inherited);
 
   boolean isValid();
+
+  @Nullable
+  PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context, boolean inherited);
 }

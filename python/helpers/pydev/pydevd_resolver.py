@@ -3,6 +3,7 @@ try:
 except:
     import io as StringIO
 import traceback
+from os.path import basename
 
 try:
     __setFalse = False
@@ -357,9 +358,100 @@ class JyArrayResolver:
         ret['__len__'] = len(obj)
         return ret
 
+
+#=======================================================================================================================
+# NdArrayResolver
+#=======================================================================================================================
+class NdArrayResolver:
+    '''
+        This resolves a numpy ndarray returning some metadata about the NDArray
+    '''
+
+    def resolve(self, obj, attribute):
+        if attribute == '__internals__':
+            return defaultResolver.getDictionary(obj)
+        if attribute == 'min':
+            return obj.min()
+        if attribute == 'max':
+            return obj.max()
+        if attribute == 'shape':
+            return obj.shape
+        if attribute == 'dtype':
+            return obj.dtype
+        if attribute == 'size':
+            return obj.size
+        return None
+
+    def getDictionary(self, obj):
+        ret = dict()
+        ret['__internals__'] = defaultResolver.getDictionary(obj)
+        if obj.size > 1024 * 1024:
+            ret['min'] = 'ndarray too big, calculating min would slow down debugging'
+            ret['max'] = 'ndarray too big, calculating max would slow down debugging'
+        else:
+            ret['min'] = obj.min()
+            ret['max'] = obj.max()
+        ret['shape'] = obj.shape
+        ret['dtype'] = obj.dtype
+        ret['size'] = obj.size
+        return ret
+
+
+#=======================================================================================================================
+# FrameResolver
+#=======================================================================================================================
+class FrameResolver:
+    '''
+    This resolves a frame.
+    '''
+
+    def resolve(self, obj, attribute):
+        if attribute == '__internals__':
+            return defaultResolver.getDictionary(obj)
+
+        if attribute == 'stack':
+            return self.getFrameStack(obj)
+
+        if attribute == 'f_locals':
+            return obj.f_locals
+
+        return None
+
+
+    def getDictionary(self, obj):
+        ret = dict()
+        ret['__internals__'] = defaultResolver.getDictionary(obj)
+        ret['stack'] = self.getFrameStack(obj)
+        ret['f_locals'] = obj.f_locals
+        return ret
+
+
+    def getFrameStack(self, frame):
+        ret = []
+        if frame is not None:
+            ret.append(self.getFrameName(frame))
+
+            while frame.f_back:
+                frame = frame.f_back
+                ret.append(self.getFrameName(frame))
+
+        return ret
+
+    def getFrameName(self, frame):
+        if frame is None:
+            return 'None'
+        try:
+            name = basename(frame.f_code.co_filename)
+            return 'frame: %s [%s:%s]  id:%s' % (frame.f_code.co_name, name, frame.f_lineno, id(frame))
+        except:
+            return 'frame object'
+
+
 defaultResolver = DefaultResolver()
 dictResolver = DictResolver()
 tupleResolver = TupleResolver()
 instanceResolver = InstanceResolver()
 jyArrayResolver = JyArrayResolver()
 setResolver = SetResolver()
+ndarrayResolver = NdArrayResolver()
+frameResolver = FrameResolver()

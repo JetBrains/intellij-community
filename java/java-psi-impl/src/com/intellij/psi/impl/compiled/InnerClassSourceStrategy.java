@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.compiled;
 
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.asm4.ClassReader;
 
+/**
+ * @author max
+ */
 public interface InnerClassSourceStrategy<T> {
   @Nullable
   T findInnerClass(String name, T outerClass);
 
-  @Nullable
-  ClassReader readerForInnerClass(T innerClass);
+  void accept(T innerClass, StubBuildingVisitor<T> visitor);
 }

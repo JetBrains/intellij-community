@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,8 +60,10 @@ public class DomSemContributor extends SemContributor {
     mySemService = semService;
   }
 
+  @Override
   public void registerSemProviders(SemRegistrar registrar) {
     registrar.registerSemElementProvider(DomManagerImpl.FILE_DESCRIPTION_KEY, xmlFile(), new NullableFunction<XmlFile, FileDescriptionCachedValueProvider>() {
+      @Override
       public FileDescriptionCachedValueProvider fun(XmlFile xmlFile) {
         ApplicationManager.getApplication().assertReadAccessAllowed();
         return new FileDescriptionCachedValueProvider(DomManagerImpl.getDomManager(xmlFile.getProject()), xmlFile);
@@ -69,6 +71,7 @@ public class DomSemContributor extends SemContributor {
     });
 
     registrar.registerSemElementProvider(DomManagerImpl.DOM_HANDLER_KEY, xmlTag().withParent(psiElement(XmlElementType.XML_DOCUMENT).withParent(xmlFile())), new NullableFunction<XmlTag, DomInvocationHandler>() {
+      @Override
       public DomInvocationHandler fun(XmlTag xmlTag) {
         final FileDescriptionCachedValueProvider provider =
           mySemService.getSemElement(DomManagerImpl.FILE_DESCRIPTION_KEY, xmlTag.getContainingFile());
@@ -86,6 +89,7 @@ public class DomSemContributor extends SemContributor {
 
     final ElementPattern<XmlTag> nonRootTag = xmlTag().withParent(or(xmlTag(), xmlEntityRef().withParent(xmlTag())));
     registrar.registerSemElementProvider(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, nonRootTag, new NullableFunction<XmlTag, IndexedElementInvocationHandler>() {
+      @Override
       public IndexedElementInvocationHandler fun(XmlTag tag) {
         final XmlTag parentTag = PhysicalDomParentStrategy.getParentTag(tag);
         assert parentTag != null;
@@ -129,6 +133,7 @@ public class DomSemContributor extends SemContributor {
     });
 
     registrar.registerSemElementProvider(DomManagerImpl.DOM_COLLECTION_HANDLER_KEY, nonRootTag, new NullableFunction<XmlTag, CollectionElementInvocationHandler>() {
+      @Override
       public CollectionElementInvocationHandler fun(XmlTag tag) {
         final XmlTag parentTag = PhysicalDomParentStrategy.getParentTag(tag);
         assert parentTag != null;
@@ -156,6 +161,7 @@ public class DomSemContributor extends SemContributor {
     registrar.registerSemElementProvider(DomManagerImpl.DOM_CUSTOM_HANDLER_KEY, nonRootTag, new NullableFunction<XmlTag, CollectionElementInvocationHandler>() {
       private final RecursionGuard myGuard = RecursionManager.createGuard("customDomParent");
 
+      @Override
       public CollectionElementInvocationHandler fun(XmlTag tag) {
         if (StringUtil.isEmpty(tag.getName())) return null;
 
@@ -199,6 +205,7 @@ public class DomSemContributor extends SemContributor {
     });
 
     registrar.registerSemElementProvider(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, xmlAttribute(), new NullableFunction<XmlAttribute, AttributeChildInvocationHandler>() {
+      @Override
       public AttributeChildInvocationHandler fun(final XmlAttribute attribute) {
         final XmlTag tag = PhysicalDomParentStrategy.getParentTag(attribute);
         final DomInvocationHandler handler = getParentDom(tag);
@@ -207,6 +214,7 @@ public class DomSemContributor extends SemContributor {
         final String localName = attribute.getLocalName();
         final Ref<AttributeChildInvocationHandler> result = Ref.create(null);
         handler.getGenericInfo().processAttributeChildrenDescriptions(new Processor<AttributeChildDescriptionImpl>() {
+          @Override
           public boolean process(AttributeChildDescriptionImpl description) {
             if (description.getXmlName().getLocalName().equals(localName)) {
               final EvaluatedXmlName evaluatedXmlName = handler.createEvaluatedXmlName(description.getXmlName());

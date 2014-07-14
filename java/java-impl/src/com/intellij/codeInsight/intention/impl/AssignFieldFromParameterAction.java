@@ -99,19 +99,19 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     return field;
   }
 
-  public static void addFieldAssignmentStatement(@NotNull Project project,
-                                                 @NotNull PsiField field,
-                                                 @NotNull PsiParameter parameter,
-                                                 @NotNull Editor editor) throws IncorrectOperationException {
+  public static PsiElement addFieldAssignmentStatement(@NotNull Project project,
+                                                       @NotNull PsiField field,
+                                                       @NotNull PsiParameter parameter,
+                                                       @NotNull Editor editor) throws IncorrectOperationException {
     final PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
     final PsiCodeBlock methodBody = method.getBody();
-    if (methodBody == null) return;
+    if (methodBody == null) return null;
     final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     final String fieldName = field.getName();
     final String parameterName = parameter.getName();
     final boolean isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);
     final PsiClass targetClass = method.getContainingClass();
-    if (targetClass == null) return;
+    if (targetClass == null) return null;
 
     String stmtText = fieldName + " = " + parameterName + ";";
     if (Comparing.strEqual(fieldName, parameterName) || JavaPsiFacade.getInstance(project).getResolveHelper().resolveReferencedVariable(fieldName, methodBody) != field) {
@@ -131,5 +131,6 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     }
     editor.getCaretModel().moveToOffset(inserted.getTextRange().getEndOffset());
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    return inserted;
   }
 }

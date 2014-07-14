@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.util.ReflectionCache;
 import gnu.trove.THashMap;
 
 import java.util.Collection;
@@ -46,14 +45,14 @@ public class ClassMap<T> {
     if (t != null) {
       return t;
     }
-    for (final Class aClass1 : ReflectionCache.getInterfaces(aClass)) {
+    for (final Class aClass1 : aClass.getInterfaces()) {
       t = get(aClass1);
       if (t != null) {
         myMap.put(aClass, t);
         return t;
       }
     }
-    final Class superclass = ReflectionCache.getSuperClass(aClass);
+    final Class superclass = aClass.getSuperclass();
     if (superclass != null) {
       t = get(superclass);
       if (t != null) {

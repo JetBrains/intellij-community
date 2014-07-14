@@ -22,6 +22,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil;
@@ -56,7 +57,7 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
 
     myEditorPanel.add(myExpressionEditor.getComponent(), BorderLayout.CENTER);
     final String value = myModifier != null ? myModifier.getInitialValueEditorText() : null;
-    myExpressionEditor.setText(value != null ? value : "");
+    myExpressionEditor.setExpression(XExpressionImpl.fromText(value));
     myExpressionEditor.selectAll();
   }
 
@@ -72,7 +73,7 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
     myExpressionEditor.saveTextInHistory();
     final XDebuggerTreeState treeState = XDebuggerTreeState.saveState(myTree);
     myValueNode.setValueModificationStarted();
-    myModifier.setValue(myExpressionEditor.getText(), new XValueModifier.XModificationCallback() {
+    myModifier.setValue(myExpressionEditor.getExpression().getExpression(), new XValueModifier.XModificationCallback() {
       @Override
       public void valueModified() {
         AppUIUtil.invokeOnEdt(new Runnable() {

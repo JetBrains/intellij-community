@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ public abstract class BasicDomElementsInspection<T extends DomElement> extends D
    * @param holder  a place to add problems to
    * @param helper  helper object
    */
+  @Override
   protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
     final int oldSize = holder.getSize();
     if (element instanceof GenericDomValue) {

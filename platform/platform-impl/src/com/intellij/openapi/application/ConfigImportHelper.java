@@ -114,19 +114,15 @@ public class ConfigImportHelper {
     if (parent == null || !parent.exists()) return null;
     File maxFile = null;
     long lastModified = 0;
-    final String selector;
-    if (customPathSelector != null) {
-      selector = customPathSelector;
-    }
-    else {
-      selector = PathManager.getPathsSelector() != null ? PathManager.getPathsSelector() : selectorDir.getName();
-    }
+    final String selector = PathManager.getPathsSelector() != null ? PathManager.getPathsSelector() : selectorDir.getName();
 
-    final String prefix = (SystemInfo.isMac ? "" : ".") + selector.replaceAll("\\d", "");
+    final String prefix = getPrefixFromSelector(selector);
+    final String customPrefix = customPathSelector != null ? getPrefixFromSelector(customPathSelector) : null;
     for (File file : parent.listFiles(new FilenameFilter() {
       @Override
       public boolean accept(File file, String name) {
-        return StringUtil.startsWithIgnoreCase(name, prefix);
+        return StringUtil.startsWithIgnoreCase(name, prefix) ||
+               customPrefix != null && StringUtil.startsWithIgnoreCase(name, customPrefix);
       }
     })) {
       final File options = new File(file, CONFIG_RELATED_PATH + OPTIONS_XML);
@@ -138,6 +134,10 @@ public class ConfigImportHelper {
       }
     }
     return maxFile != null ? new File(maxFile, CONFIG_RELATED_PATH) : null;
+  }
+
+  private static String getPrefixFromSelector(String selector) {
+    return (SystemInfo.isMac ? "" : ".") + selector.replaceAll("\\d", "");
   }
 
   public static void doImport(final String newConfigPath, final File oldConfigDir) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 public abstract class TextEditorHighlightingPass implements HighlightingPass {
@@ -74,7 +75,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     return myDumb;
   }
 
-  private boolean isValid() {
+  protected boolean isValid() {
     if (isDumbMode() && !DumbService.isDumbAware(this)) {
       return false;
     }
@@ -113,9 +114,9 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     myId = id;
   }
 
-  @Nullable
+  @NotNull
   public List<HighlightInfo> getInfos() {
-    return null;
+    return Collections.emptyList();
   }
 
   @NotNull

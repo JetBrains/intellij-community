@@ -34,7 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.remotesdk.RemoteProcessHandlerBase;
+import com.intellij.remote.RemoteProcessHandlerBase;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
@@ -45,7 +45,6 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.pydev.*;
-import com.jetbrains.python.remote.RemoteDebuggableProcessHandler;
 import com.jetbrains.python.run.PythonProcessHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,6 +76,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private final List<PyThreadInfo> mySuspendedThreads = Collections.synchronizedList(Lists.<PyThreadInfo>newArrayList());
   private final Map<String, XValueChildrenList> myStackFrameCache = Maps.newHashMap();
   private final Map<String, PyDebugValue> myNewVariableValue = Maps.newHashMap();
+  private boolean myDownloadSources = false;
 
   private boolean myClosing = false;
 
@@ -113,8 +113,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if (myProcessHandler != null) {
       myProcessHandler.addProcessListener(this);
     }
-    if (processHandler instanceof RemoteDebuggableProcessHandler) {
-      myPositionConverter = ((RemoteDebuggableProcessHandler)processHandler).createPositionConverter(this);
+    if (processHandler instanceof PositionConverterProvider) {
+      myPositionConverter = ((PositionConverterProvider)processHandler).createPositionConverter(this);
     }
     else {
       myPositionConverter = new PyLocalPositionConverter();
@@ -185,6 +185,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return myPositionConverter;
   }
 
+  @NotNull
   @Override
   public XBreakpointHandler<?>[] getBreakpointHandlers() {
     return myBreakpointHandlers;
@@ -261,18 +262,21 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Override
   public int handleDebugPort(int localPort) throws IOException {
     if (myProcessHandler instanceof RemoteProcessHandlerBase) {
-      RemoteProcessHandlerBase remoteProcessHandler = (RemoteProcessHandlerBase)myProcessHandler;
-      try {
-        Pair<String, Integer> remoteSocket = remoteProcessHandler.obtainRemoteSocket();
-        remoteProcessHandler.addRemoteForwarding(remoteSocket.getSecond(), localPort);
-        return remoteSocket.getSecond();
-      }
-      catch (Exception e) {
-        throw new IOException(e);
-      }
+      return getRemoteTunneledPort(localPort, (RemoteProcessHandlerBase)myProcessHandler);
     }
     else {
       return localPort;
+    }
+  }
+
+  protected static int getRemoteTunneledPort(int localPort, @NotNull RemoteProcessHandlerBase handler) throws IOException {
+    try {
+      Pair<String, Integer> remoteSocket = handler.obtainRemoteSocket();
+      handler.addRemoteForwarding(remoteSocket.getSecond(), localPort);
+      return remoteSocket.getSecond();
+    }
+    catch (Exception e) {
+      throw new IOException(e);
     }
   }
 
@@ -422,8 +426,17 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     cleanUp();
   }
 
+  public boolean isDownloadSources() {
+    return myDownloadSources;
+  }
+
+  public void setDownloadSources(boolean downloadSources) {
+    myDownloadSources = downloadSources;
+  }
+
   protected void cleanUp() {
     mySuspendedThreads.clear();
+    myDownloadSources = false;
   }
 
   @Override
@@ -662,7 +675,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   public PyStackFrame createStackFrame(PyStackFrameInfo frameInfo) {
-    return new PyStackFrame(this.getSession().getProject(), this, frameInfo,
+    return new PyStackFrame(getSession().getProject(), this, frameInfo,
                             getPositionConverter().convertFromPython(frameInfo.getPosition()));
   }
 

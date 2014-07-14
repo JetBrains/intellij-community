@@ -20,12 +20,12 @@ import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ExpandRegionAction extends EditorAction {
@@ -47,10 +47,14 @@ public class ExpandRegionAction extends EditorAction {
   public static void expandRegionAtCaret(final Project project, @Nullable final Editor editor) {
     if (editor == null) return;
 
+    expandRegionAtOffset(project, editor, editor.getCaretModel().getOffset());
+  }
+
+  public static void expandRegionAtOffset(@NotNull Project project, @NotNull final Editor editor, final int offset) {
     CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(project);
     foldingManager.updateFoldRegions(editor);
 
-    final int line = editor.getCaretModel().getLogicalPosition().line;
+    final int line = editor.getDocument().getLineNumber(offset);
     Runnable processor = new Runnable() {
       @Override
       public void run() {
@@ -59,7 +63,6 @@ public class ExpandRegionAction extends EditorAction {
           region.setExpanded(true);
         }
         else{
-          int offset = editor.getCaretModel().getOffset();
           FoldRegion[] regions = FoldingUtil.getFoldRegionsAtOffset(editor, offset);
           for(int i = regions.length - 1; i >= 0; i--){
             region = regions[i];

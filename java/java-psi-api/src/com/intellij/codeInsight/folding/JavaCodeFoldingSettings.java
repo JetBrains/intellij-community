@@ -39,6 +39,8 @@ public abstract class JavaCodeFoldingSettings {
   public abstract boolean isCollapseAccessors();
   public abstract void setCollapseAccessors(boolean value);
 
+  public abstract boolean isCollapseOneLineMethods();
+
   public abstract boolean isCollapseInnerClasses();
   public abstract void setCollapseInnerClasses(boolean value);
 
@@ -62,4 +64,7 @@ public abstract class JavaCodeFoldingSettings {
 
   public abstract boolean isCollapseEndOfLineComments();
   public abstract void setCollapseEndOfLineComments(boolean value);
+
+  public abstract boolean isInlineParameterNamesForLiteralCallArguments();
+  public abstract void setInlineParameterNamesForLiteralCallArguments(boolean value);
 }

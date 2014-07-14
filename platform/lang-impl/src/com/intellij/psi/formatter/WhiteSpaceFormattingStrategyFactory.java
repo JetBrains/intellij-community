@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.PatchedWeakReference;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,11 +75,9 @@ public class WhiteSpaceFormattingStrategyFactory {
   @NotNull
   public static Collection<WhiteSpaceFormattingStrategy> getAllStrategies() {
     final WeakReference<Collection<WhiteSpaceFormattingStrategy>> reference = myCachedStrategies.get();
-    if (reference != null) {
-      final Collection<WhiteSpaceFormattingStrategy> strategies = reference.get();
-      if (strategies != null) {
-        return strategies;
-      }
+    final Collection<WhiteSpaceFormattingStrategy> strategies = SoftReference.dereference(reference);
+    if (strategies != null) {
+      return strategies;
     }
     final Collection<Language> languages = Language.getRegisteredLanguages();
     if (languages == null) {

@@ -29,15 +29,15 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
 import java.util.Set;
 
 public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
 
-  private static final Set<IElementType> binaryPromotionOperators = new HashSet();
+  private static final Set<IElementType> binaryPromotionOperators = new THashSet<IElementType>();
 
   static {
     binaryPromotionOperators.add(JavaTokenType.ASTERISK);
@@ -128,10 +128,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
         return;
       }
       final PsiType operandType = operand.getType();
-      if (operandType == null || operandType.equals(castType)) {
-        return;
-      }
-      if (isPrimitiveNumericCastNecessary(expression)) {
+      if (castType.equals(operandType) || isPrimitiveNumericCastNecessary(expression)) {
         return;
       }
       final PsiTypeElement typeElement = expression.getCastType();
@@ -151,6 +148,9 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
       return true;
     }
     final PsiType operandType = operand.getType();
+    if (operandType == null) {
+      return true;
+    }
     PsiElement parent = expression.getParent();
     while (parent instanceof PsiParenthesizedExpression) {
       parent = parent.getParent();
@@ -237,10 +237,12 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
       final Project project = expression.getProject();
       final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = javaPsiFacade.getElementFactory();
-      final PsiCallExpression newMethodCall = (PsiCallExpression)
-        factory.createExpressionFromText(newMethodCallText.toString(), expression);
-      if (targetMethod != newMethodCall.resolveMethod()) {
-        return true;
+      final PsiExpression expressionFromText = factory.createExpressionFromText(newMethodCallText.toString(), expression);
+      if (expressionFromText instanceof PsiCallExpression) {
+        final PsiCallExpression newMethodCall = (PsiCallExpression)expressionFromText;
+        if (targetMethod != newMethodCall.resolveMethod()) {
+          return true;
+        }
       }
     }
     final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false);

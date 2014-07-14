@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,41 +65,50 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
     myTypeName = typeName;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return DomBundle.message("create.new.element", myTypeName, myNewName);
   }
 
+  @Override
   @NotNull
   public String getText() {
     return getName();
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return DomBundle.message("quick.fixes.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return true;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     applyFix();
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     applyFix();
   }
 
   private void applyFix() {
     chooseParent(myParents, new Consumer<DomElement>() {
+      @Override
       public void consume(final DomElement parent) {
         new WriteCommandAction.Simple(parent.getManager().getProject(), DomUtil.getFile(parent)) {
+          @Override
           protected void run() throws Throwable {
             doFix(parent, myChildDescription, myNewName);
           }
@@ -125,15 +134,18 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
         return;
       default:
         JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<DomElement>(DomBundle.message("choose.file"), files) {
+          @Override
           public PopupStep onChosen(final DomElement selectedValue, final boolean finalChoice) {
             onChoose.consume(selectedValue);
             return super.onChosen(selectedValue, finalChoice);
           }
 
+          @Override
           public Icon getIconFor(final DomElement aValue) {
             return DomUtil.getFile(aValue).getIcon(0);
           }
 
+          @Override
           @NotNull
           public String getTextFor(final DomElement value) {
             final String name = DomUtil.getFile(value).getName();

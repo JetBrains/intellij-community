@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.externalSystem.service.notification;
 
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.project.Project;
@@ -24,8 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Allows to customize {@link ExternalSystemIdeNotificationManager external system notifications} shown to end-user by the ide.
- * 
+ * Allows to customize {@link ExternalSystemNotificationManager external system notifications} shown to end-user by the ide.
+ *
  * @author Denis Zhdanov
  * @since 8/5/13 8:52 AM
  */
@@ -33,61 +31,18 @@ public interface ExternalSystemNotificationExtension {
 
   ExtensionPointName<ExternalSystemNotificationExtension> EP_NAME
     = ExtensionPointName.create("com.intellij.externalSystemNotificationExtension");
-  
+
   @NotNull
   ProjectSystemId getTargetExternalSystemId();
 
   /**
-   * Allows to customize external system processing error.
-   * 
-   * @param project  target ide project
-   * @param error    error occurred during external system processing
-   * @param hint     hint for a use-case during processing of which given error occurs
-   * @return         customization result (if applicable)
+   * Allows to customize external system processing notification.
+   *
+   * @param notificationData notification data
+   * @param project target ide project
+   * @param error   error occurred during external system processing
    */
-  @Nullable
-  CustomizationResult customize(@NotNull Project project, @NotNull Throwable error, @Nullable UsageHint hint);
-  
-  enum UsageHint {
-    PROJECT_REFRESH
-  }
-  
-  class CustomizationResult {
-
-    @Nullable private final String               myTitle;
-    @Nullable private final String               myMessage;
-    @Nullable private final NotificationType     myNotificationType;
-    @Nullable private final NotificationListener myListener;
-
-    public CustomizationResult(@Nullable String title,
-                               @Nullable String message,
-                               @Nullable NotificationType notificationType,
-                               @Nullable NotificationListener listener)
-    {
-      myTitle = title;
-      myMessage = message;
-      myNotificationType = notificationType;
-      myListener = listener;
-    }
-
-    @Nullable
-    public String getTitle() {
-      return myTitle;
-    }
-
-    @Nullable
-    public String getMessage() {
-      return myMessage;
-    }
-
-    @Nullable
-    public NotificationType getNotificationType() {
-      return myNotificationType;
-    }
-
-    @Nullable
-    public NotificationListener getListener() {
-      return myListener;
-    }
-  }
+  void customize(@NotNull NotificationData notificationData,
+                 @NotNull Project project,
+                 @Nullable Throwable error);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotationMethodNameIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrMethodNameIndex;
@@ -35,6 +38,7 @@ import java.util.Set;
  * @author ilyas
  */
 public class GroovyGoToSymbolContributor implements ChooseByNameContributor {
+  @Override
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     Set<String> symbols = new HashSet<String>();
@@ -44,14 +48,15 @@ public class GroovyGoToSymbolContributor implements ChooseByNameContributor {
     return ArrayUtil.toStringArray(symbols);
   }
 
+  @Override
   @NotNull
   public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
     GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
 
     List<NavigationItem> symbols = new ArrayList<NavigationItem>();
-    symbols.addAll(StubIndex.getInstance().get(GrFieldNameIndex.KEY, name, project, scope));
-    symbols.addAll(StubIndex.getInstance().get(GrMethodNameIndex.KEY, name, project, scope));
-    symbols.addAll(StubIndex.getInstance().get(GrAnnotationMethodNameIndex.KEY, name, project, scope));
+    symbols.addAll(StubIndex.getElements(GrFieldNameIndex.KEY, name, project, scope, GrField.class));
+    symbols.addAll(StubIndex.getElements(GrMethodNameIndex.KEY, name, project, scope, GrMethod.class));
+    symbols.addAll(StubIndex.getElements(GrAnnotationMethodNameIndex.KEY, name, project, scope, GrAnnotationMethod.class));
 
     return symbols.toArray(new NavigationItem[symbols.size()]);
   }

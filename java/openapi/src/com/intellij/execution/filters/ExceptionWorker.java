@@ -21,13 +21,12 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
@@ -62,16 +61,16 @@ public class ExceptionWorker {
   }
 
   private final Project myProject;
-  private final GlobalSearchScope mySearchScope;
   private Filter.Result myResult;
   private PsiClass[] myClasses = PsiClass.EMPTY_ARRAY;
   private PsiFile[] myFiles = PsiFile.EMPTY_ARRAY;
   private String myMethod;
   private Trinity<TextRange, TextRange, TextRange> myInfo;
+  private final ExceptionInfoCache myCache;
 
-  public ExceptionWorker(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
-    myProject = project;
-    mySearchScope = searchScope;
+  public ExceptionWorker(@NotNull ExceptionInfoCache cache) {
+    myProject = cache.getProject();
+    myCache = cache;
   }
 
   public void execute(final String line, final int textEndOffset) {
@@ -90,82 +89,71 @@ public class ExceptionWorker {
     final int colonIndex = fileAndLine.lastIndexOf(':');
     if (colonIndex < 0) return;
 
-    final String lineString = fileAndLine.substring(colonIndex + 1);
-    try {
-      final int lineNumber = Integer.parseInt(lineString);
-      myClasses = findPositionClasses(line);
-      myFiles = new PsiFile[myClasses.length];
-      for (int i = 0; i < myClasses.length; i++) {
-        myFiles[i] = (PsiFile)myClasses[i].getContainingFile().getNavigationElement();
-      }
-      if (myFiles.length == 0) {
-        // try find the file with the required name
-        //todo[nik] it would be better to use FilenameIndex here to honor the scope by it isn't accessible in Open API
-        myFiles = PsiShortNamesCache.getInstance(myProject).getFilesByName(fileAndLine.substring(0, colonIndex).trim());
-      }
-      if (myFiles.length == 0) return;
+    final int lineNumber = getLineNumber(fileAndLine.substring(colonIndex + 1));
+    if (lineNumber < 0) return;
 
-      /*
-       IDEADEV-4976: Some scramblers put something like SourceFile mock instead of real class name.
-      final String filePath = fileAndLine.substring(0, colonIndex).replace('/', File.separatorChar);
-      final int slashIndex = filePath.lastIndexOf(File.separatorChar);
-      final String shortFileName = slashIndex < 0 ? filePath : filePath.substring(slashIndex + 1);
-      if (!file.getName().equalsIgnoreCase(shortFileName)) return null;
-      */
+    Pair<PsiClass[], PsiFile[]> pair = myCache.resolveClass(myInfo.first.substring(line).trim());
+    myClasses = pair.first;
+    myFiles = pair.second;
+    if (myFiles.length == 0) {
+      // try find the file with the required name
+      //todo[nik] it would be better to use FilenameIndex here to honor the scope by it isn't accessible in Open API
+      myFiles = PsiShortNamesCache.getInstance(myProject).getFilesByName(fileAndLine.substring(0, colonIndex).trim());
+    }
+    if (myFiles.length == 0) return;
 
-      final int textStartOffset = textEndOffset - line.length();
+    /*
+     IDEADEV-4976: Some scramblers put something like SourceFile mock instead of real class name.
+    final String filePath = fileAndLine.substring(0, colonIndex).replace('/', File.separatorChar);
+    final int slashIndex = filePath.lastIndexOf(File.separatorChar);
+    final String shortFileName = slashIndex < 0 ? filePath : filePath.substring(slashIndex + 1);
+    if (!file.getName().equalsIgnoreCase(shortFileName)) return null;
+    */
 
-      final int highlightStartOffset = textStartOffset + lparenthIndex + 1;
-      final int highlightEndOffset = textStartOffset + rparenthIndex;
+    final int textStartOffset = textEndOffset - line.length();
 
-      ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-      List<VirtualFile> virtualFilesInLibraries = new ArrayList<VirtualFile>();
-      List<VirtualFile> virtualFilesInContent = new ArrayList<VirtualFile>();
-      for (PsiFile file : myFiles) {
-        VirtualFile virtualFile = file.getVirtualFile();
-        if (index.isInContent(virtualFile)) {
-          virtualFilesInContent.add(virtualFile);
-        }
-        else {
-          virtualFilesInLibraries.add(virtualFile);
-        }
-      }
+    final int highlightStartOffset = textStartOffset + lparenthIndex + 1;
+    final int highlightEndOffset = textStartOffset + rparenthIndex;
 
-      List<VirtualFile> virtualFiles;
-      TextAttributes attributes;
-      if (virtualFilesInContent.isEmpty()) {
-        attributes = LIBRARY_HYPERLINK_ATTRIBUTES;
-        virtualFiles = virtualFilesInLibraries;
+    ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+    List<VirtualFile> virtualFilesInLibraries = new ArrayList<VirtualFile>();
+    List<VirtualFile> virtualFilesInContent = new ArrayList<VirtualFile>();
+    for (PsiFile file : myFiles) {
+      VirtualFile virtualFile = file.getVirtualFile();
+      if (index.isInContent(virtualFile)) {
+        virtualFilesInContent.add(virtualFile);
       }
       else {
-        attributes = HYPERLINK_ATTRIBUTES;
-        virtualFiles = virtualFilesInContent;
+        virtualFilesInLibraries.add(virtualFile);
       }
-      HyperlinkInfo linkInfo = HyperlinkInfoFactory.getInstance().createMultipleFilesHyperlinkInfo(virtualFiles, lineNumber - 1, myProject);
-      myResult = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, attributes);
+    }
+
+    List<VirtualFile> virtualFiles;
+    TextAttributes attributes;
+    if (virtualFilesInContent.isEmpty()) {
+      attributes = LIBRARY_HYPERLINK_ATTRIBUTES;
+      virtualFiles = virtualFilesInLibraries;
+    }
+    else {
+      attributes = HYPERLINK_ATTRIBUTES;
+      virtualFiles = virtualFilesInContent;
+    }
+    HyperlinkInfo linkInfo = HyperlinkInfoFactory.getInstance().createMultipleFilesHyperlinkInfo(virtualFiles, lineNumber - 1, myProject);
+    myResult = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, attributes);
+  }
+
+  private static int getLineNumber(String lineString) {
+    // some quick checks to avoid costly exceptions
+    if (lineString.isEmpty() || lineString.length() > 9 || !Character.isDigit(lineString.charAt(0))) {
+      return -1;
+    }
+
+    try {
+      return Integer.parseInt(lineString);
     }
     catch (NumberFormatException e) {
-      //
+      return -1;
     }
-  }
-
-  private PsiClass[] findPositionClasses(String line) {
-    String className = myInfo.first.substring(line).trim();
-    PsiClass[] result = findClassesPreferringMyScope(className);
-    if (result.length == 0) {
-      final int dollarIndex = className.indexOf('$');
-      if (dollarIndex >= 0) {
-        result = findClassesPreferringMyScope(className.substring(0, dollarIndex));
-      }
-    }
-    return result;
-  }
-
-  @NotNull
-  private PsiClass[] findClassesPreferringMyScope(String className) {
-    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
-    PsiClass[] result = psiFacade.findClasses(className, mySearchScope);
-    return result.length != 0 ? result : psiFacade.findClasses(className, GlobalSearchScope.allScope(myProject));
   }
 
   public Filter.Result getResult() {
@@ -206,18 +194,19 @@ public class ExceptionWorker {
       }
     }
 
-    final int lparenIdx = line.indexOf('(', startIdx);
-    if (lparenIdx < 0) return null;
-    final int dotIdx = line.lastIndexOf('.', lparenIdx);
-    if (dotIdx < 0 || dotIdx < startIdx) return null;
+    final int rParenIdx = line.lastIndexOf(')');
+    if (rParenIdx < 0) return null;
 
-    final int rparenIdx = line.indexOf(')', lparenIdx);
-    if (rparenIdx < 0) return null;
+    final int lParenIdx = line.lastIndexOf('(', rParenIdx);
+    if (lParenIdx < 0) return null;
+    
+    final int dotIdx = line.lastIndexOf('.', lParenIdx);
+    if (dotIdx < 0 || dotIdx < startIdx) return null;
 
     // class, method, link
     return Trinity.create(new TextRange(startIdx + 1 + (startIdx >= 0 ? AT.length() : 0), handleSpaces(line, dotIdx, -1, true)),
-                          new TextRange(handleSpaces(line, dotIdx + 1, 1, true), handleSpaces(line, lparenIdx + 1, -1, true)),
-                          new TextRange(lparenIdx, rparenIdx));
+                          new TextRange(handleSpaces(line, dotIdx + 1, 1, true), handleSpaces(line, lParenIdx + 1, -1, true)),
+                          new TextRange(lParenIdx, rParenIdx));
   }
 
   private static int handleSpaces(String line, int pos, int delta, boolean skip) {

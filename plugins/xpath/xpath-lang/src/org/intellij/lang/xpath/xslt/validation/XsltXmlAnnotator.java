@@ -73,7 +73,7 @@ public class XsltXmlAnnotator extends XmlElementVisitor implements Annotator {
         final List<Integer> singleBraces = collectClosingBraceOffsets(s);
 
         if (singleBraces != null) {
-          InjectedLanguageUtil.enumerate(value, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+          boolean enumerated = InjectedLanguageUtil.enumerate(value, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
             @Override
             public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
               if (injectedPsi instanceof XPathFile) {
@@ -91,8 +91,10 @@ public class XsltXmlAnnotator extends XmlElementVisitor implements Annotator {
             }
           });
 
-          for (Integer brace : singleBraces) {
-            myHolder.createErrorAnnotation(TextRange.from(value.getTextOffset() + brace, 1), "Invalid single closing brace. Escape as '}}'");
+          if (enumerated) {
+            for (Integer brace : singleBraces) {
+              myHolder.createErrorAnnotation(TextRange.from(value.getTextOffset() + brace, 1), "Invalid single closing brace. Escape as '}}'");
+            }
           }
         }
       }

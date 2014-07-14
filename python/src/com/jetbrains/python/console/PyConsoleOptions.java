@@ -60,6 +60,13 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     myState.myShowSeparatorLine = showSeparatorLine;
   }
 
+  public boolean isIpythonEnabled(){
+    return myState.myIpythonEnabled;
+  }
+
+  public void setIpythonEnabled(boolean enabled){
+    myState.myIpythonEnabled = enabled;
+  }
 
   public static PyConsoleOptions getInstance(Project project) {
     return ServiceManager.getService(project, PyConsoleOptions.class);
@@ -75,6 +82,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     myState.myShowDebugConsoleByDefault = state.myShowDebugConsoleByDefault;
     myState.myShowSeparatorLine = state.myShowSeparatorLine;
     myState.myPythonConsoleState = state.myPythonConsoleState;
+    myState.myIpythonEnabled = state.myIpythonEnabled;
   }
 
   public static class State {
@@ -82,11 +90,12 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
 
     public boolean myShowDebugConsoleByDefault = false;
     public boolean myShowSeparatorLine = true;
+    public boolean myIpythonEnabled = true;
   }
 
   @Tag("console-settings")
   public static class PyConsoleSettings {
-    public String myCustomStartScript = "";
+    public String myCustomStartScript = RunPythonConsoleAction.CONSOLE_START_COMMAND;
     public String mySdkHome = null;
     public String myInterpreterOptions = "";
     public boolean myUseModuleSdk;
@@ -97,6 +106,13 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public boolean myAddSourceRoots;
     @NotNull
     private PathMappingSettings myMappings = new PathMappingSettings();
+
+    public PyConsoleSettings(){
+    }
+
+    public PyConsoleSettings(String myCustomStartScript){
+      this.myCustomStartScript = myCustomStartScript;
+    }
 
     public void apply(AbstractPyCommonOptionsForm form) {
       mySdkHome = form.getSdkHome();

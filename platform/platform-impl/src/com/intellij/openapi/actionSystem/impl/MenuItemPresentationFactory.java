@@ -33,13 +33,12 @@ public class MenuItemPresentationFactory extends PresentationFactory {
     myForceHide = forceHide;
   }
 
-  protected Presentation processPresentation(Presentation presentation) {
+  protected void processPresentation(Presentation presentation) {
     if (!UISettings.getInstance().SHOW_ICONS_IN_MENUS || myForceHide) {
       presentation.setIcon(null);
       presentation.setDisabledIcon(null);
       presentation.setHoveredIcon(null);
       presentation.putClientProperty(HIDE_ICON, Boolean.TRUE);
     }
-    return presentation;
   }
 }

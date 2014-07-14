@@ -96,8 +96,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   @Override
   public VirtualFile getFile() {
     //assert !isDisposed();
-    final VirtualFile file = myRoot.getFile();
-    return file == null || !file.isDirectory() ? null : file;
+    return myRoot.getFile();
   }
 
   @Override

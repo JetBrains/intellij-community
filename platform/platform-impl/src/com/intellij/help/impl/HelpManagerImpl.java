@@ -64,7 +64,7 @@ public class HelpManagerImpl extends HelpManager {
     }
 
     if (myHelpSet == null) {
-      BrowserUtil.launchBrowser(ApplicationInfoEx.getInstanceEx().getWebHelpUrl() + "?" + id);
+      BrowserUtil.browse(ApplicationInfoEx.getInstanceEx().getWebHelpUrl() + "?" + id);
       return;
     }
 

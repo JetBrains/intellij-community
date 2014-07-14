@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ public class GroovyTypedHandler extends TypedHandlerDelegate {
   static final TokenSet INVALID_INSIDE_REFERENCE = TokenSet.create(GroovyTokenTypes.mSEMI, GroovyTokenTypes.mLCURLY, GroovyTokenTypes.mRCURLY);
   private boolean myJavaLTTyped;
 
+  @Override
   public Result beforeCharTyped(final char c, final Project project, final Editor editor, final PsiFile file, final FileType fileType) {
     int offsetBefore = editor.getCaretModel().getOffset();
 
@@ -57,6 +58,7 @@ public class GroovyTypedHandler extends TypedHandlerDelegate {
 
     if (c == '@' && file instanceof GroovyFile) {
       autoPopupMemberLookup(project, editor, new Condition<PsiFile>() {
+        @Override
         public boolean value(final PsiFile file) {
           int offset = editor.getCaretModel().getOffset();
 
@@ -71,6 +73,7 @@ public class GroovyTypedHandler extends TypedHandlerDelegate {
 
     if (c == '&' && file instanceof GroovyFile) {
       autoPopupMemberLookup(project, editor, new Condition<PsiFile>() {
+        @Override
         public boolean value(final PsiFile file) {
           int offset = editor.getCaretModel().getOffset();
 
@@ -89,6 +92,7 @@ public class GroovyTypedHandler extends TypedHandlerDelegate {
   }
 
 
+  @Override
   public Result charTyped(final char c, final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     if (myJavaLTTyped) {
       myJavaLTTyped = false;

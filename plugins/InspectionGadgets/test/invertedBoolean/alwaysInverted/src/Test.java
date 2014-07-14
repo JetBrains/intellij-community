@@ -7,6 +7,7 @@ class Test {
     if (!foo()){
       return;
     }
+    System.out.println(!foo());
   }
 
   int bah() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 
 /**
  * @author peter
@@ -58,11 +61,13 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   }
 
   public Self andNot(final ElementPattern pattern) {
-    return and(StandardPatterns.not(pattern));
+    ElementPattern<T> not = StandardPatterns.not(pattern);
+    return and(not);
   }
 
-  public Self andOr(final ElementPattern... patterns) {
-    return and(StandardPatterns.or(patterns));
+  public Self andOr(@NotNull ElementPattern... patterns) {
+    ElementPattern or = StandardPatterns.or(patterns);
+    return and(or);
   }
 
   public Self and(final ElementPattern pattern) {
@@ -91,7 +96,11 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   public Self oneOf(final T... values) {
     final Collection<T> list;
 
-    if (values.length >= 11) {
+    final int length = values.length;
+    if (length == 1) {
+      list = Collections.singletonList(values[0]);
+    }
+    else if (length >= 11) {
       list = new HashSet<T>(Arrays.asList(values));
     }
     else {

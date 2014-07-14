@@ -42,6 +42,6 @@ public class PyVariableNameIndex extends StringStubIndexExtension<PyTargetExpres
   }
 
   public static Collection<PyTargetExpression> find(String name, Project project, GlobalSearchScope scope) {
-    return StubIndex.getInstance().get(KEY, name, project, scope);
+    return StubIndex.getElements(KEY, name, project, scope, PyTargetExpression.class);
   }
 }

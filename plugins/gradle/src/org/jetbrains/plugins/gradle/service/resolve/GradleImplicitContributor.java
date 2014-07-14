@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
@@ -50,30 +51,30 @@ import static org.jetbrains.plugins.gradle.service.resolve.GradleResolverUtil.ca
  */
 public class GradleImplicitContributor implements GradleMethodContextContributor {
   private final static Map<String, String> BUILT_IN_TASKS = newHashMap(
-    new Pair<String, String>("assemble", GRADLE_API_DEFAULT_TASK),
-    new Pair<String, String>("build", GRADLE_API_DEFAULT_TASK),
-    new Pair<String, String>("buildDependents", GRADLE_API_DEFAULT_TASK),
-    new Pair<String, String>("buildNeeded", GRADLE_API_DEFAULT_TASK),
-    new Pair<String, String>("clean", GRADLE_API_TASKS_DELETE),
-    new Pair<String, String>("jar", GRADLE_API_TASKS_BUNDLING_JAR),
-    new Pair<String, String>("war", GRADLE_API_TASKS_BUNDLING_WAR),
-    new Pair<String, String>("classes", GRADLE_API_DEFAULT_TASK),
-    new Pair<String, String>("compileJava", GRADLE_API_TASKS_COMPILE_JAVA_COMPILE),
-    new Pair<String, String>("compileTestJava", GRADLE_API_DEFAULT_TASK),
-    new Pair<String, String>("processTestResources", GRADLE_API_DEFAULT_TASK),
-    new Pair<String, String>("testClasses", GRADLE_API_DEFAULT_TASK),
-    new Pair<String, String>("processResources", GRADLE_LANGUAGE_JVM_TASKS_PROCESS_RESOURCES),
-    new Pair<String, String>("setupBuild", GRADLE_BUILDSETUP_TASKS_SETUP_BUILD),
-    new Pair<String, String>("wrapper", GRADLE_API_TASKS_WRAPPER_WRAPPER),
-    new Pair<String, String>("javadoc", GRADLE_API_TASKS_JAVADOC_JAVADOC),
-    new Pair<String, String>("dependencies", GRADLE_API_TASKS_DIAGNOSTICS_DEPENDENCY_REPORT_TASK),
-    new Pair<String, String>("dependencyInsight", GRADLE_API_TASKS_DIAGNOSTICS_DEPENDENCY_INSIGHT_REPORT_TASK),
-    new Pair<String, String>("projects", GRADLE_API_TASKS_DIAGNOSTICS_PROJECT_REPORT_TASK),
-    new Pair<String, String>("properties", GRADLE_API_TASKS_DIAGNOSTICS_PROPERTY_REPORT_TASK),
-    new Pair<String, String>("tasks", GRADLE_API_TASKS_DIAGNOSTICS_TASK_REPORT_TASK),
-    new Pair<String, String>("check", GRADLE_API_DEFAULT_TASK),
-    new Pair<String, String>("test", GRADLE_API_TASKS_TESTING_TEST),
-    new Pair<String, String>("uploadArchives", GRADLE_API_TASKS_UPLOAD)
+    Couple.of("assemble", GRADLE_API_DEFAULT_TASK),
+    Couple.of("build", GRADLE_API_DEFAULT_TASK),
+    Couple.of("buildDependents", GRADLE_API_DEFAULT_TASK),
+    Couple.of("buildNeeded", GRADLE_API_DEFAULT_TASK),
+    Couple.of("clean", GRADLE_API_TASKS_DELETE),
+    Couple.of("jar", GRADLE_API_TASKS_BUNDLING_JAR),
+    Couple.of("war", GRADLE_API_TASKS_BUNDLING_WAR),
+    Couple.of("classes", GRADLE_API_DEFAULT_TASK),
+    Couple.of("compileJava", GRADLE_API_TASKS_COMPILE_JAVA_COMPILE),
+    Couple.of("compileTestJava", GRADLE_API_DEFAULT_TASK),
+    Couple.of("processTestResources", GRADLE_API_DEFAULT_TASK),
+    Couple.of("testClasses", GRADLE_API_DEFAULT_TASK),
+    Couple.of("processResources", GRADLE_LANGUAGE_JVM_TASKS_PROCESS_RESOURCES),
+    Couple.of("setupBuild", GRADLE_BUILDSETUP_TASKS_SETUP_BUILD),
+    Couple.of("wrapper", GRADLE_API_TASKS_WRAPPER_WRAPPER),
+    Couple.of("javadoc", GRADLE_API_TASKS_JAVADOC_JAVADOC),
+    Couple.of("dependencies", GRADLE_API_TASKS_DIAGNOSTICS_DEPENDENCY_REPORT_TASK),
+    Couple.of("dependencyInsight", GRADLE_API_TASKS_DIAGNOSTICS_DEPENDENCY_INSIGHT_REPORT_TASK),
+    Couple.of("projects", GRADLE_API_TASKS_DIAGNOSTICS_PROJECT_REPORT_TASK),
+    Couple.of("properties", GRADLE_API_TASKS_DIAGNOSTICS_PROPERTY_REPORT_TASK),
+    Couple.of("tasks", GRADLE_API_TASKS_DIAGNOSTICS_TASK_REPORT_TASK),
+    Couple.of("check", GRADLE_API_DEFAULT_TASK),
+    Couple.of("test", GRADLE_API_TASKS_TESTING_TEST),
+    Couple.of("uploadArchives", GRADLE_API_TASKS_UPLOAD)
   );
 
   @Override
@@ -94,7 +95,7 @@ public class GradleImplicitContributor implements GradleMethodContextContributor
         checkForAvailableTasks(1, place.getText(), processor, state, place);
       }
       if (methodCallInfo.size() == 2) {
-        processAvailableTasks(methodCall, processor, state, place);
+        processAvailableTasks(methodCallInfo, methodCall, processor, state, place);
       }
     }
 
@@ -120,7 +121,7 @@ public class GradleImplicitContributor implements GradleMethodContextContributor
         if (psiType != null) {
           final GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
           GradleResolverUtil.processDeclarations(
-            psiManager, processor, state, place, psiType.getCanonicalText());
+            psiManager, processor, state, place, TypesUtil.getQualifiedName(psiType));
         }
       }
     }
@@ -192,7 +193,7 @@ public class GradleImplicitContributor implements GradleMethodContextContributor
     }
   }
 
-  private static void processAvailableTasks(@NotNull String taskName,
+  private static void processAvailableTasks(List<String> methodCallInfo, @NotNull String taskName,
                                             @NotNull PsiScopeProcessor processor,
                                             @NotNull ResolveState state,
                                             @NotNull PsiElement place) {
@@ -202,7 +203,8 @@ public class GradleImplicitContributor implements GradleMethodContextContributor
     if (canBeMethodOf(GroovyPropertyUtils.getGetterNameNonBoolean(taskName), gradleApiProjectClass)) return;
     final String className = BUILT_IN_TASKS.get(taskName);
     if (className != null) {
-      GradleResolverUtil.processDeclarations(psiManager, processor, state, place, className);
+      GradleResolverUtil.processDeclarations(
+        methodCallInfo.size() > 0 ? methodCallInfo.get(0) : null, psiManager, processor, state, place, className);
     }
   }
 }

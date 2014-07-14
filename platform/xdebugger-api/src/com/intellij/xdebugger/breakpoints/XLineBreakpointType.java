@@ -100,4 +100,12 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   public Icon getTemporaryIcon() {
     return AllIcons.Debugger.Db_temporary_breakpoint;
   }
+
+  /**
+   * Priority is considered when several breakpoint types can be set on the same code line,
+   * in this case we choose type with the highest priority
+   */
+  public int getPriority() {
+    return 0;
+  }
 }

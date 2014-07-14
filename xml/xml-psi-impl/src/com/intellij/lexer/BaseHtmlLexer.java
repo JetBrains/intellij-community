@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,20 @@ import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.lang.HtmlScriptContentProvider;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageHtmlScriptContentProvider;
+import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.xml.util.documentation.HtmlDescriptorsTable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 
 /**
@@ -44,7 +47,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
   private static final int SEEN_CONTENT_TYPE = 0x400;
   protected static final int BASE_STATE_SHIFT = 11;
   @Nullable
-  protected static Language ourDefaultLanguage = Language.findLanguageByID("JavaScript");
+  protected static final Language ourDefaultLanguage = Language.findLanguageByID("JavaScript");
 
   private boolean seenTag;
   private boolean seenAttribute;
@@ -111,7 +114,8 @@ abstract class BaseHtmlLexer extends DelegateLexer {
       final boolean style = name.equals(TOKEN_STYLE);
       final int state = getState() & BASE_STATE_MASK;
       final boolean script = name.equals(TOKEN_SCRIPT) ||
-                       ((name.startsWith(TOKEN_ON) && name.indexOf(':') == -1 && !isHtmlTagState(state)));
+                       ((name.startsWith(TOKEN_ON) && name.indexOf(':') == -1 && !isHtmlTagState(state) &&
+                         HtmlDescriptorsTable.getAttributeDescriptor(name) != null));
 
       if (style || script) {
         // encountered tag name in end of tag
@@ -176,7 +180,10 @@ abstract class BaseHtmlLexer extends DelegateLexer {
     if (StringUtil.isEmpty(mimeType)) {
       return ourDefaultLanguage != null ? LanguageHtmlScriptContentProvider.getScriptContentProvider(ourDefaultLanguage) : null;
     }
-    Collection<Language> instancesByMimeType = Language.findInstancesByMimeType(mimeType != null ? mimeType.trim() : null);
+    Collection<Language> instancesByMimeType = Language.findInstancesByMimeType(mimeType.trim());
+    if (instancesByMimeType.isEmpty() && mimeType.contains("template")) {
+      instancesByMimeType = Collections.<Language>singletonList(HTMLLanguage.INSTANCE);
+    }
     for (Language language : instancesByMimeType) {
       HtmlScriptContentProvider scriptContentProvider = LanguageHtmlScriptContentProvider.getScriptContentProvider(language);
       if (scriptContentProvider != null) {

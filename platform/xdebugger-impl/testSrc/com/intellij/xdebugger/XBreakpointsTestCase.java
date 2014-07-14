@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.xdebugger;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TempFiles;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -54,7 +56,11 @@ public abstract class XBreakpointsTestCase extends XDebuggerTestCase {
   }
 
   protected List<XBreakpoint<?>> getAllBreakpoints() {
-    final XBreakpointBase<?,?,?>[] breakpoints = myBreakpointManager.getAllBreakpoints();
+    final XBreakpointBase<?,?,?>[] breakpoints = ApplicationManager.getApplication().runReadAction(new Computable<XBreakpointBase<?,?,?>[]>() {
+            public XBreakpointBase<?,?,?>[] compute() {
+              return myBreakpointManager.getAllBreakpoints();
+            }
+          });
     final List<XBreakpoint<?>> result = new ArrayList<XBreakpoint<?>>();
     for (XBreakpointBase<?, ?, ?> breakpoint : breakpoints) {
       final XBreakpointType type = breakpoint.getType();

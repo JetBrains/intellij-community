@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class SegmentArray {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.SegmentArray");
-  private int[] myStarts;
-  private int[] myEnds;
+  protected int[] myStarts;
+  protected int[] myEnds;
 
   protected int mySegmentCount = 0;
   protected static final int INITIAL_SIZE = 64;
@@ -84,26 +84,32 @@ public class SegmentArray {
     return newArray;
   }
 
+  protected int noSegmentsAvailable(int offset) {
+    throw new IllegalStateException("no segments available. offset = " + offset);
+  }
+
+  protected int offsetOutOfRange(int offset, int lastValidOffset) {
+    throw new IndexOutOfBoundsException("Wrong offset: " + offset + ". Should be in range: [0, " + lastValidOffset + "]");
+  }
+
   public final int findSegmentIndex(int offset) {
     if (mySegmentCount <= 0) {
-      if (offset == 0) return 0;
-      throw new IllegalStateException("no segments available. offset = "+offset);
+      return offset == 0 ? 0 : noSegmentsAvailable(offset);
     }
 
     final int lastValidOffset = getLastValidOffset();
-
     if (offset > lastValidOffset || offset < 0) {
-      throw new IndexOutOfBoundsException("Wrong offset: " + offset + ". Should be in range: [0, " + lastValidOffset + "]");
+      return offsetOutOfRange(offset, lastValidOffset);
     }
 
-    final int lastValidIndex = mySegmentCount - 1;
-    if (offset == lastValidOffset) return lastValidIndex;
+    int end = mySegmentCount - 1;
+    if (offset == lastValidOffset) {
+      return end;
+    }
 
     int start = 0;
-    int end = lastValidIndex;
-
-    while (start < end) {
-      int i = (start + end) / 2;
+    while (start <= end) {
+      int i = (start + end) >>> 1;
       if (offset < myStarts[i]) {
         end = i - 1;
       }
@@ -115,9 +121,12 @@ public class SegmentArray {
       }
     }
 
+    return segmentNotFound(offset, start);
+  }
+
+  protected int segmentNotFound(int offset, int start) {
     // This means that there is a gap at given offset
     assert myStarts[start] <= offset && offset < myEnds[start] : start;
-
     return start;
   }
 

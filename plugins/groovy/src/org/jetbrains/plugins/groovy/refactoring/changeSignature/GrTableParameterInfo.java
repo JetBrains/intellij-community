@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
  * @author Maxim.Medvedev
  */
 public class GrTableParameterInfo {
-  private GroovyCodeFragment myName;
-  private GroovyCodeFragment myDefaultValue;
-  private PsiTypeCodeFragment myType;
-  private GroovyCodeFragment myDefaultInitializer;
+  private final GroovyCodeFragment myName;
+  private final GroovyCodeFragment myDefaultValue;
+  private final PsiTypeCodeFragment myType;
+  private final GroovyCodeFragment myDefaultInitializer;
   private final int myPosition;
   private boolean myUseAnyVar = false;
 

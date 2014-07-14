@@ -136,10 +136,10 @@ public class PagedFileStorage implements Forceable {
     return myFile;
   }
 
-  public void putInt(int addr, int value) {
+  public void putInt(long addr, int value) {
     if (myValuesAreBufferAligned) {
-      int page = addr / myPageSize;
-      int page_offset = addr % myPageSize;
+      long page = addr / myPageSize;
+      int page_offset = (int)(addr % myPageSize);
       getBuffer(page).putInt(page_offset, value);
     } else {
       Bits.putInt(myTypedIOBuffer, 0, value);
@@ -147,10 +147,10 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  public int getInt(int addr) {
+  public int getInt(long addr) {
     if (myValuesAreBufferAligned) {
-      int page = addr / myPageSize;
-      int page_offset = addr % myPageSize;
+      long page = addr / myPageSize;
+      int page_offset = (int) (addr % myPageSize);
       return getBuffer(page, false).getInt(page_offset);
     } else {
       get(addr, myTypedIOBuffer, 0, 4);
@@ -158,10 +158,10 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  public final void putShort(int addr, short value) {
+  public final void putShort(long addr, short value) {
     if (myValuesAreBufferAligned) {
-      int page = addr / myPageSize;
-      int page_offset = addr % myPageSize;
+      long page = addr / myPageSize;
+      int page_offset = (int)(addr % myPageSize);
       getBuffer(page).putShort(page_offset, value);
     } else {
       Bits.putShort(myTypedIOBuffer, 0, value);
@@ -169,18 +169,18 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  int getOffsetInPage(int addr) {
-    return addr % myPageSize;
+  int getOffsetInPage(long addr) {
+    return (int)(addr % myPageSize);
   }
 
-  ByteBuffer getByteBuffer(int address, boolean modify) {
+  ByteBuffer getByteBuffer(long address, boolean modify) {
     return getBuffer(address / myPageSize, modify);
   }
 
-  public final short getShort(int addr) {
+  public final short getShort(long addr) {
     if (myValuesAreBufferAligned) {
-      int page = addr / myPageSize;
-      int page_offset = addr % myPageSize;
+      long page = addr / myPageSize;
+      int page_offset = (int)(addr % myPageSize);
       return getBuffer(page, false).getShort(page_offset);
     } else {
       get(addr, myTypedIOBuffer, 0, 2);
@@ -188,10 +188,10 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  public void putLong(int addr, long value) {
+  public void putLong(long addr, long value) {
     if (myValuesAreBufferAligned) {
-      int page = addr / myPageSize;
-      int page_offset = addr % myPageSize;
+      long page = addr / myPageSize;
+      int page_offset = (int)(addr % myPageSize);
       getBuffer(page).putLong(page_offset, value);
     } else {
       Bits.putLong(myTypedIOBuffer, 0, value);
@@ -200,18 +200,18 @@ public class PagedFileStorage implements Forceable {
   }
 
   @SuppressWarnings({"UnusedDeclaration"})
-  public void putByte(final int addr, final byte b) {
+  public void putByte(final long addr, final byte b) {
     put(addr, b);
   }
 
-  public byte getByte(int addr) {
+  public byte getByte(long addr) {
     return get(addr);
   }
 
-  public long getLong(int addr) {
+  public long getLong(long addr) {
     if (myValuesAreBufferAligned) {
-      int page = addr / myPageSize;
-      int page_offset = addr % myPageSize;
+      long page = addr / myPageSize;
+      int page_offset = (int)(addr % myPageSize);
       return getBuffer(page, false).getLong(page_offset);
     } else {
       get(addr, myTypedIOBuffer, 0, 8);
@@ -219,28 +219,28 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  public byte get(int index) {
-    int page = index / myPageSize;
-    int offset = index % myPageSize;
+  public byte get(long index) {
+    long page = index / myPageSize;
+    int offset = (int)(index % myPageSize);
 
     return getBuffer(page, false).get(offset);
   }
 
-  public void put(int index, byte value) {
-    int page = index / myPageSize;
-    int offset = index % myPageSize;
+  public void put(long index, byte value) {
+    long page = index / myPageSize;
+    int offset = (int)(index % myPageSize);
 
     getBuffer(page).put(offset, value);
   }
 
-  public void get(int index, byte[] dst, int offset, int length) {
-    int i = index;
+  public void get(long index, byte[] dst, int offset, int length) {
+    long i = index;
     int o = offset;
     int l = length;
 
     while (l > 0) {
-      int page = i / myPageSize;
-      int page_offset = i % myPageSize;
+      long page = i / myPageSize;
+      int page_offset = (int) (i % myPageSize);
 
       int page_len = Math.min(l, myPageSize - page_offset);
       final ByteBuffer buffer = getBuffer(page, false);
@@ -262,14 +262,14 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  public void put(int index, byte[] src, int offset, int length) {
-    int i = index;
+  public void put(long index, byte[] src, int offset, int length) {
+    long i = index;
     int o = offset;
     int l = length;
 
     while (l > 0) {
-      int page = i / myPageSize;
-      int page_offset = i % myPageSize;
+      long page = i / myPageSize;
+      int page_offset = (int) (i % myPageSize);
 
       int page_len = Math.min(l, myPageSize - page_offset);
       final ByteBuffer buffer = getBuffer(page);
@@ -311,12 +311,12 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  public void resize(int newSize) throws IOException {
-    int oldSize = (int)myFile.length();
+  public void resize(long newSize) throws IOException {
+    long oldSize = myFile.length();
     if (oldSize == newSize && oldSize == length()) return;
 
     final long started = IOStatistics.DEBUG ? System.currentTimeMillis():0;
-    myStorageLockContext.myStorageLock.invalidateBuffer(myStorageIndex | (oldSize / myPageSize));
+    myStorageLockContext.myStorageLock.invalidateBuffer(myStorageIndex | (int)(oldSize / myPageSize)); // TODO long page
     //unmapAll(); // we do not need it since all page alighned buffers can be reused
     final long unmapAllFinished = IOStatistics.DEBUG ? System.currentTimeMillis():0;
 
@@ -324,7 +324,7 @@ public class PagedFileStorage implements Forceable {
 
     // it is not guaranteed that new partition will consist of null
     // after resize, so we should fill it manually
-    int delta = newSize - oldSize;
+    long delta = newSize - oldSize;
     if (delta > 0) fillWithZeros(oldSize, delta);
 
     if (IOStatistics.DEBUG) {
@@ -335,7 +335,7 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  private void resizeFile(int newSize) throws IOException {
+  private void resizeFile(long newSize) throws IOException {
     RandomAccessFile raf = new RandomAccessFile(myFile, RW);
     mySize = -1;
     try {
@@ -348,12 +348,12 @@ public class PagedFileStorage implements Forceable {
   }
 
   private static final int MAX_FILLER_SIZE = 8192;
-  private void fillWithZeros(int from, int length) {
+  private void fillWithZeros(long from, long length) {
     byte[] buff = new byte[MAX_FILLER_SIZE];
     Arrays.fill(buff, (byte)0);
 
     while (length > 0) {
-      final int filled = Math.min(length, MAX_FILLER_SIZE);
+      final int filled = Math.min((int)length, MAX_FILLER_SIZE);
       put(from, buff, 0, filled);
       length -= filled;
       from += filled;
@@ -368,11 +368,11 @@ public class PagedFileStorage implements Forceable {
     return size;
   }
 
-  private ByteBuffer getBuffer(int page) {
+  private ByteBuffer getBuffer(long page) {
     return getBuffer(page, true);
   }
 
-  private ByteBuffer getBuffer(int page, boolean modify) {
+  private ByteBuffer getBuffer(long page, boolean modify) {
     synchronized (myLastAccessedBufferCacheLock) {
       if (myLastPage == page) {
         ByteBuffer buf = myLastBuffer.getCachedBuffer();
@@ -401,7 +401,7 @@ public class PagedFileStorage implements Forceable {
       if (myStorageIndex == -1) {
         myStorageIndex = myStorageLockContext.myStorageLock.registerPagedFileStorage(this);
       }
-      ByteBufferWrapper byteBufferWrapper = myStorageLockContext.myStorageLock.get(myStorageIndex | page);
+      ByteBufferWrapper byteBufferWrapper = myStorageLockContext.myStorageLock.get(myStorageIndex | (int)page); // TODO: long page
       if (modify) markDirty(byteBufferWrapper);
       ByteBuffer buf = byteBufferWrapper.getBuffer();
       if (myNativeBytesOrder && buf.order() != ourNativeByteOrder) {
@@ -419,7 +419,7 @@ public class PagedFileStorage implements Forceable {
           myLastChangeCount2 = myLastChangeCount;
 
           myLastBuffer = byteBufferWrapper;
-          myLastPage = page;
+          myLastPage = (int)page; // TODO long page
         } else {
           myLastBuffer = byteBufferWrapper;
         }

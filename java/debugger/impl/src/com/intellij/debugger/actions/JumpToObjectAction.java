@@ -30,11 +30,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public class JumpToObjectAction extends DebuggerAction{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.JumpToObjectAction");
+  @Override
   public void actionPerformed(AnActionEvent e) {
     DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
     if(selectedNode == null) {
@@ -55,6 +57,7 @@ public class JumpToObjectAction extends DebuggerAction{
     debugProcess.getManagerThread().schedule(new NavigateCommand(debuggerContext, (ValueDescriptor)descriptor, debugProcess, e));
   }
 
+  @Override
   public void update(final AnActionEvent e) {
     if(!isFirstStart(e)) {
       return;
@@ -82,7 +85,7 @@ public class JumpToObjectAction extends DebuggerAction{
     }
   }
 
-  private SourcePosition calcPosition(final ValueDescriptor descriptor, final DebugProcessImpl debugProcess) throws ClassNotLoadedException {
+  private static SourcePosition calcPosition(final ValueDescriptor descriptor, final DebugProcessImpl debugProcess) throws ClassNotLoadedException {
     final Value value = descriptor.getValue();
     if(value == null) {
       return null;
@@ -103,11 +106,12 @@ public class JumpToObjectAction extends DebuggerAction{
         if(locations.size() > 0) {
           final Location location = locations.get(0);
           return ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {
+            @Override
             public SourcePosition compute() {
               SourcePosition position = debugProcess.getPositionManager().getSourcePosition(location);
               // adjust position for non-anonymous classes
-              if (clsType.name().indexOf("$") < 0) {
-                final PsiClass classAt = position != null? JVMNameUtil.getClassAt(position) : null;
+              if (clsType.name().indexOf('$') < 0) {
+                final PsiClass classAt = JVMNameUtil.getClassAt(position);
                 if (classAt != null) {
                   final SourcePosition classPosition = SourcePosition.createFromElement(classAt);
                   if (classPosition != null) {
@@ -130,13 +134,15 @@ public class JumpToObjectAction extends DebuggerAction{
     return null;
   }
 
-  private class NavigateCommand extends SourcePositionCommand {
+  public static class NavigateCommand extends SourcePositionCommand {
     public NavigateCommand(final DebuggerContextImpl debuggerContext, final ValueDescriptor descriptor, final DebugProcessImpl debugProcess, final AnActionEvent e) {
       super(debuggerContext, descriptor, debugProcess, e);
     }
+    @Override
     protected NavigateCommand createRetryCommand() {
       return new NavigateCommand(myDebuggerContext, myDescriptor, myDebugProcess, myActionEvent);
     }
+    @Override
     protected void doAction(final SourcePosition sourcePosition) {
       if (sourcePosition != null) {
         sourcePosition.navigate(true);
@@ -144,19 +150,21 @@ public class JumpToObjectAction extends DebuggerAction{
     }
   }
 
-  private class EnableCommand extends SourcePositionCommand {
+  private static class EnableCommand extends SourcePositionCommand {
     public EnableCommand(final DebuggerContextImpl debuggerContext, final ValueDescriptor descriptor, final DebugProcessImpl debugProcess, final AnActionEvent e) {
       super(debuggerContext, descriptor, debugProcess, e);
     }
+    @Override
     protected EnableCommand createRetryCommand() {
       return new EnableCommand(myDebuggerContext, myDescriptor, myDebugProcess, myActionEvent);
     }
+    @Override
     protected void doAction(final SourcePosition sourcePosition) {
       enableAction(myActionEvent, sourcePosition != null);
     }
   }
 
-  public abstract class SourcePositionCommand extends SuspendContextCommandImpl {
+  public abstract static class SourcePositionCommand extends SuspendContextCommandImpl {
     protected final DebuggerContextImpl myDebuggerContext;
     protected final ValueDescriptor myDescriptor;
     protected final DebugProcessImpl myDebugProcess;
@@ -173,6 +181,7 @@ public class JumpToObjectAction extends DebuggerAction{
       myActionEvent = actionEvent;
     }
 
+    @Override
     public final void contextAction() throws Exception {
       try {
         doAction(calcPosition(myDescriptor, myDebugProcess));
@@ -187,7 +196,7 @@ public class JumpToObjectAction extends DebuggerAction{
 
     protected abstract SourcePositionCommand createRetryCommand();
 
-    protected abstract void doAction(SourcePosition sourcePosition);
+    protected abstract void doAction(@Nullable SourcePosition sourcePosition);
 
     private ReferenceType loadClass(final String className) {
       final EvaluationContextImpl eContext = myDebuggerContext.createEvaluationContext();

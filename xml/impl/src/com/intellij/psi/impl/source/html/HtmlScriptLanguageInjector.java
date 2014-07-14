@@ -39,21 +39,12 @@ public class HtmlScriptLanguageInjector implements MultiHostInjector {
       return;
     }
     XmlTag scriptTag = ((XmlText)host).getParentTag();
-    if (scriptTag == null || !"script".equalsIgnoreCase(scriptTag.getLocalName())) {
+    if (scriptTag == null || !HtmlUtil.isScriptTag(scriptTag)) {
       return;
     }
     String mimeType = scriptTag.getAttributeValue("type");
     Collection<Language> languages = Language.findInstancesByMimeType(mimeType);
-    Language language;
-    if (!languages.isEmpty()) {
-      language = languages.iterator().next();
-    }
-    else if (mimeType != null && mimeType.contains("template")) {
-      language = StdLanguages.HTML;
-    }
-    else {
-      language = StdLanguages.TEXT;
-    }
+    Language language = !languages.isEmpty() ? languages.iterator().next() : StdLanguages.TEXT;
     if (LanguageUtil.isInjectableLanguage(language)) {
       registrar
         .startInjecting(language)

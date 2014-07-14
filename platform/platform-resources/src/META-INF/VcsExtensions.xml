@@ -13,6 +13,15 @@
     <projectService serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings"/>
     <projectService serviceImplementation="com.intellij.openapi.diff.impl.settings.MergeToolSettings"/>
     <projectService serviceImplementation="com.intellij.openapi.diff.impl.settings.DiffToolSettings"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.roots.VcsRootDetector"
+                    serviceImplementation="com.intellij.openapi.vcs.roots.VcsRootDetectorImpl"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.VcsNotifier"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.changes.patch.PatchBaseDirectoryDetector"
+                    serviceImplementation="com.intellij.openapi.vcs.changes.patch.PsiPatchBaseDirectoryDetector"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.changes.ui.ChangesFileNameDecorator"
+                    serviceImplementation="com.intellij.openapi.vcs.changes.ui.WolfChangesFileNameDecorator"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.CodeSmellDetector"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.CodeSmellDetectorImpl"/>
 
     <selectInTarget implementation="com.intellij.openapi.vcs.changes.SelectInChangesViewTarget"/>
 
@@ -22,6 +31,16 @@
                         predicateClassName="com.intellij.openapi.vcs.changes.committed.CommittedChangesVisibilityPredicate"/>
     <changesViewContent tabName="Incoming" className="com.intellij.openapi.vcs.changes.committed.IncomingChangesViewProvider"
                         predicateClassName="com.intellij.openapi.vcs.changes.committed.IncomingChangesVisibilityPredicate"/>
+
+    <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.ReformatCheckinHandlerFactory"/>
+    <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.RearrangeCheckinHandlerFactory"/>
+    <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.OptimizeOptionsCheckinHandlerFactory"/>
+    <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.CodeAnalysisCheckinHandlerFactory"/>
+    <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.TodoCheckinHandlerFactory"/>
+    <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.CodeCleanupCheckinHandlerFactory"/>
+
+    <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.CommitCompletionContributor" id="commitCompletion"
+                            order="first, before liveTemplates"/>
 
     <vcs.fileStatusProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictFileStatusProvider"/>
     <writingAccessProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictAccessProvider"/>
@@ -39,6 +58,7 @@
                         serviceImplementation="com.intellij.openapi.vcs.impl.CheckinHandlersManagerImpl"/>
     <pathMacroFilter implementation="com.intellij.openapi.vcs.VcsPathMacroFilter"/>
     <search.topHitProvider implementation="com.intellij.openapi.vcs.actions.VcsTopHitProvider"/>
+    <actionPromoter implementation="com.intellij.openapi.vcs.actions.VcsActionPromoter"/>
   </extensions>
 </idea-plugin>
 

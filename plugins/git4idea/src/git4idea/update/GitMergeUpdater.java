@@ -30,7 +30,6 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
-import git4idea.GitPlatformFacade;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
@@ -120,15 +119,15 @@ public class GitMergeUpdater extends GitUpdater {
       LOG.info("Local changes would be overwritten by merge");
       final List<FilePath> paths = getFilesOverwrittenByMerge(mergeLineListener.getOutput());
       final Collection<Change> changes = getLocalChangesFilteredByFiles(paths);
-      final ChangeListViewerDialog dialog = new ChangeListViewerDialog(myProject, changes, false) {
-        @Override protected String getDescription() {
-          return "Your local changes to the following files would be overwritten by merge.<br/>" +
-                            "Please, commit your changes or stash them before you can merge.";
-        }
-      };
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         @Override
         public void run() {
+          ChangeListViewerDialog dialog = new ChangeListViewerDialog(myProject, changes, false) {
+            @Override protected String getDescription() {
+              return "Your local changes to the following files would be overwritten by merge.<br/>" +
+                                "Please, commit your changes or stash them before you can merge.";
+            }
+          };
           dialog.show();
         }
       });
@@ -136,8 +135,9 @@ public class GitMergeUpdater extends GitUpdater {
     }
     else if (untrackedFilesWouldBeOverwrittenByMergeDetector.wasMessageDetected()) {
       LOG.info("handleMergeFailure: untracked files would be overwritten by merge");
-      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, ServiceManager.getService(myProject, GitPlatformFacade.class),
-                                                               untrackedFilesWouldBeOverwrittenByMergeDetector.getFiles(), "merge", null);
+      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, myRoot,
+                                                               untrackedFilesWouldBeOverwrittenByMergeDetector.getRelativeFilePaths(),
+                                                               "merge", null);
       return GitUpdateResult.ERROR;
     }
     else {

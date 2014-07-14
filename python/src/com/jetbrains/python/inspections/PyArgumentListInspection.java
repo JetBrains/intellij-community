@@ -15,7 +15,9 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.google.common.collect.Lists;
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
@@ -24,6 +26,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.inspections.quickfix.PyRemoveArgumentQuickFix;
+import com.jetbrains.python.inspections.quickfix.PyRenameArgumentQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyABCUtil;
@@ -33,6 +37,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -68,32 +73,29 @@ public class PyArgumentListInspection extends PyInspection {
 
     @Override
     public void visitPyDecoratorList(final PyDecoratorList node) {
-      PyDecorator[] decos = node.getDecorators();
-      for (PyDecorator deco : decos) {
-        if (! deco.hasArgumentList()) {
-          // empty arglist; deco function must have a non-kwarg first arg
-          PyCallExpression.PyMarkedCallee mkfunc = deco.resolveCallee(resolveWithoutImplicits());
-          if (mkfunc != null && !mkfunc.isImplicitlyResolved()) {
-            Callable callable = mkfunc.getCallable();
-            int first_param_offset =  mkfunc.getImplicitOffset();
-            final List<PyParameter> params = PyUtil.getParameters(callable, myTypeEvalContext);
-            final PyNamedParameter alleged_first_param = params.size() < first_param_offset ?
-                                                         null : params.get(first_param_offset-1).getAsNamed();
-            if (alleged_first_param == null || alleged_first_param.isKeywordContainer()) {
-              // no parameters left to pass function implicitly, or wrong param type
-              registerProblem(deco, PyBundle.message("INSP.func.$0.lacks.first.arg", callable.getName())); // TODO: better names for anon lambdas
-            }
-            else {
-              // possible unfilled params
-              for (int i=first_param_offset; i < params.size(); i += 1) {
-                PyNamedParameter par = params.get(i).getAsNamed();
-                // param tuples, non-starred or non-default won't do
-                if (par == null || (! par.isKeywordContainer() && ! par.isPositionalContainer() && !par.hasDefaultValue())) {
-                  String par_name;
-                  if (par != null) par_name = par.getName();
-                  else par_name = "(...)"; // can't be bothered to find the first non-tuple inside it
-                  registerProblem(deco, PyBundle.message("INSP.parameter.$0.unfilled", par_name));
-                }
+      PyDecorator[] decorators = node.getDecorators();
+      for (PyDecorator deco : decorators) {
+        if (deco.hasArgumentList()) continue;
+        final PyCallExpression.PyMarkedCallee markedCallee = deco.resolveCallee(getResolveContext());
+        if (markedCallee != null && !markedCallee.isImplicitlyResolved()) {
+          final Callable callable = markedCallee.getCallable();
+          int firstParamOffset =  markedCallee.getImplicitOffset();
+          final List<PyParameter> params = PyUtil.getParameters(callable, myTypeEvalContext);
+          final PyNamedParameter allegedFirstParam = params.size() < firstParamOffset ?
+                                                       null : params.get(firstParamOffset-1).getAsNamed();
+          if (allegedFirstParam == null || allegedFirstParam.isKeywordContainer()) {
+            // no parameters left to pass function implicitly, or wrong param type
+            registerProblem(deco, PyBundle.message("INSP.func.$0.lacks.first.arg", callable.getName())); // TODO: better names for anon lambdas
+          }
+          else { // possible unfilled params
+            for (int i = firstParamOffset; i < params.size(); i += 1) {
+              final PyParameter parameter = params.get(i);
+              if (parameter instanceof PySingleStarParameter) continue;
+              final PyNamedParameter par = parameter.getAsNamed();
+              // param tuples, non-starred or non-default won't do
+              if (par == null || (!par.isKeywordContainer() && !par.isPositionalContainer() &&!par.hasDefaultValue())) {
+                String parameterName = par != null ? par.getName() : "(...)";
+                registerProblem(deco, PyBundle.message("INSP.parameter.$0.unfilled", parameterName));
               }
             }
           }
@@ -130,19 +132,23 @@ public class PyArgumentListInspection extends PyInspection {
       if (!flags.isEmpty()) { // something's wrong
         PyExpression arg = argEntry.getKey();
         if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP)) {
-          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.argument"));
+          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.argument"), new PyRemoveArgumentQuickFix());
         }
         if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP_KWD)) {
-          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.doublestar.arg"));
+          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.doublestar.arg"), new PyRemoveArgumentQuickFix());
         }
         if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP_TUPLE)) {
-          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.star.arg"));
+          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.star.arg"), new PyRemoveArgumentQuickFix());
         }
         if (flags.contains(CallArgumentsMapping.ArgFlag.IS_POS_PAST_KWD)) {
-          holder.registerProblem(arg, PyBundle.message("INSP.cannot.appear.past.keyword.arg"), ProblemHighlightType.ERROR);
+          holder.registerProblem(arg, PyBundle.message("INSP.cannot.appear.past.keyword.arg"), ProblemHighlightType.ERROR, new PyRemoveArgumentQuickFix());
         }
         if (flags.contains(CallArgumentsMapping.ArgFlag.IS_UNMAPPED)) {
-          holder.registerProblem(arg, PyBundle.message("INSP.unexpected.arg"));
+          ArrayList<LocalQuickFix> quickFixes = Lists.<LocalQuickFix>newArrayList(new PyRemoveArgumentQuickFix());
+          if (arg instanceof PyKeywordArgument) {
+            quickFixes.add(new PyRenameArgumentQuickFix());
+          }
+          holder.registerProblem(arg, PyBundle.message("INSP.unexpected.arg"), quickFixes.toArray(new LocalQuickFix[quickFixes.size()-1]));
         }
         if (flags.contains(CallArgumentsMapping.ArgFlag.IS_TOO_LONG)) {
           final PyCallExpression.PyMarkedCallee markedCallee = result.getMarkedCallee();
@@ -176,12 +182,12 @@ public class PyArgumentListInspection extends PyInspection {
           PyType inside_type = context.getType(content);
           if (inside_type != null && !PyTypeChecker.isUnknown(inside_type)) {
             if (((PyStarArgument)arg).isKeyword()) {
-              if (!PyABCUtil.isSubtype(inside_type, PyNames.MAPPING)) {
+              if (!PyABCUtil.isSubtype(inside_type, PyNames.MAPPING, context)) {
                 holder.registerProblem(arg, PyBundle.message("INSP.expected.dict.got.$0", inside_type.getName()));
               }
             }
             else { // * arg
-              if (!PyABCUtil.isSubtype(inside_type, PyNames.ITERABLE)) {
+              if (!PyABCUtil.isSubtype(inside_type, PyNames.ITERABLE, context)) {
                 holder.registerProblem(arg, PyBundle.message("INSP.expected.iter.got.$0", inside_type.getName()));
               }
             }

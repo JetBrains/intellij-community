@@ -47,7 +47,7 @@ public class MavenPropertyResolver {
   public static void doFilterText(Module module,
                                   String text,
                                   Properties additionalProperties,
-                                  String propertyEscapeString,
+                                  @Nullable String propertyEscapeString,
                                   Appendable out) throws IOException {
     MavenProjectsManager manager = MavenProjectsManager.getInstance(module.getProject());
     MavenProject mavenProject = manager.findProject(module);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,15 @@ package com.jetbrains.rest.psi;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User : ktisha
  */
 public class RestLineManipulator extends AbstractElementManipulator<RestLine> {
 
-  public RestLine handleContentChange(RestLine element, TextRange range, String newContent) {
+  @Override
+  public RestLine handleContentChange(@NotNull RestLine element, @NotNull TextRange range, String newContent) {
     final String oldText = element.getText();
     final String newText = oldText.substring(0, range.getStartOffset()) + newContent + oldText.substring(range.getEndOffset());
     element.updateText(newText);

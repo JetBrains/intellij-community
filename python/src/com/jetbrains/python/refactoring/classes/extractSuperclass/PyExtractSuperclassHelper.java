@@ -15,95 +15,89 @@
  */
 package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.google.common.base.Predicate;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.PathUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
-import com.jetbrains.python.refactoring.classes.PyMemberInfo;
+import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Dennis.Ushakov
  */
-public class PyExtractSuperclassHelper {
+public final class PyExtractSuperclassHelper {
   private static final Logger LOG = Logger.getInstance(PyExtractSuperclassHelper.class.getName());
+  /**
+   * Accepts only those members whose element is PyClass object (new classes)
+   */
+  private static final Predicate<PyMemberInfo<PyElement>> ALLOW_OBJECT = new PyUtil.ObjectPredicate(true);
 
-  private PyExtractSuperclassHelper() {}
+  private PyExtractSuperclassHelper() {
+  }
 
-  public static PsiElement extractSuperclass(final PyClass clazz,
-                                             final Collection<PyMemberInfo> selectedMemberInfos,
-                                             final String superBaseName,
-                                             final String targetFile) {
-    final Set<String> superClasses = new HashSet<String>();
-    final Set<PsiNamedElement> extractedClasses = new HashSet<PsiNamedElement>();
-    final List<PyFunction> methods = new ArrayList<PyFunction>();
-    for (PyMemberInfo member : selectedMemberInfos) {
-      final PyElement element = member.getMember();
-      if (element instanceof PyFunction) methods.add((PyFunction)element);
-      else if (element instanceof PyClass) {
-        extractedClasses.add((PyClass)element);
-        superClasses.add(element.getName());
+  static void extractSuperclass(final PyClass clazz,
+                                @NotNull Collection<PyMemberInfo<PyElement>> selectedMemberInfos,
+                                final String superBaseName,
+                                final String targetFile) {
+    //We will need to change it probably while param may be read-only
+    //noinspection AssignmentToMethodParameter
+    selectedMemberInfos = new ArrayList<PyMemberInfo<PyElement>>(selectedMemberInfos);
+
+    // PY-12171
+    final PyMemberInfo<PyElement> objectMember = MembersManager.findMember(selectedMemberInfos, ALLOW_OBJECT);
+    if (LanguageLevel.forElement(clazz).isPy3K()) {
+      // Remove object from list if Py3
+      if (objectMember != null) {
+        selectedMemberInfos.remove(objectMember);
       }
-      else LOG.error("unmatched member class " + element.getClass());
-    }
-
-    // 'object' superclass is always pulled up, even if not selected explicitly
-    for (PyExpression expr : clazz.getSuperClassExpressions()) {
-      if (PyNames.OBJECT.equals(expr.getText()) && !superClasses.contains(PyNames.OBJECT)) {
-        superClasses.add(PyNames.OBJECT);
+    } else {
+      // Always add object if < Py3
+      if (objectMember == null) {
+        final PyMemberInfo<PyElement> object = MembersManager.findMember(clazz, ALLOW_OBJECT);
+        if (object != null) {
+          selectedMemberInfos.add(object);
+        }
       }
     }
 
     final Project project = clazz.getProject();
-    final Ref<PyClass> newClassRef = new Ref<PyClass>();
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            final PyElement[] elements = methods.toArray(new PyElement[methods.size()]);
-            final String text = "class " + superBaseName + ":\n  pass" + "\n";
-            PyClass newClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class, text);
-            newClass = placeNewClass(project, newClass, clazz, targetFile);
-            newClassRef.set(newClass);
-            PyClassRefactoringUtil.moveMethods(methods, newClass);
-            PyClassRefactoringUtil.moveSuperclasses(clazz, superClasses, newClass);
-            PyClassRefactoringUtil.addSuperclasses(project, clazz, null, Collections.singleton(superBaseName));
-            PyClassRefactoringUtil.insertImport(newClass, extractedClasses);
-            if (elements.length > 0) {
-              PyPsiUtils.removeElements(elements);
-            }
-            PyClassRefactoringUtil.insertPassIfNeeded(clazz);
-          }
-        });
-      }
-    }, RefactoringBundle.message("extract.superclass.command.name", superBaseName, clazz.getName()), null);
-    return newClassRef.get();
+
+    final String text = "class " + superBaseName + ":\n  pass" + "\n";
+    PyClass newClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class, text);
+
+    newClass = placeNewClass(project, newClass, clazz, targetFile);
+    MembersManager.moveAllMembers(selectedMemberInfos, clazz, newClass);
+    if (! newClass.getContainingFile().equals(clazz.getContainingFile())) {
+      PyClassRefactoringUtil.optimizeImports(clazz.getContainingFile()); // To remove unneeded imports only if user used different file
+    }
+    PyClassRefactoringUtil.addSuperclasses(project, clazz, null, newClass);
+
   }
 
-  private static PyClass placeNewClass(Project project, PyClass newClass, @NotNull PyClass clazz, String targetFile) {
-    VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(ApplicationManagerEx.getApplicationEx().isUnitTestMode() ? targetFile : VfsUtil.pathToUrl(targetFile));
+  private static PyClass placeNewClass(final Project project, PyClass newClass, @NotNull final PyClass clazz, final String targetFile) {
+    VirtualFile file = VirtualFileManager.getInstance()
+      .findFileByUrl(ApplicationManagerEx.getApplicationEx().isUnitTestMode() ? targetFile : VfsUtilCore.pathToUrl(targetFile));
     // file is the same as the source
     if (Comparing.equal(file, clazz.getContainingFile().getVirtualFile())) {
       return (PyClass)clazz.getParent().addBefore(newClass, clazz);
@@ -131,7 +125,8 @@ public class PyExtractSuperclassHelper {
       else { // existing file
         psiFile = PsiManager.getInstance(project).findFile(file);
       }
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       LOG.error(e);
     }
 
@@ -147,6 +142,7 @@ public class PyExtractSuperclassHelper {
 
   /**
    * Places a file at the end of given path, creating intermediate dirs and inits.
+   *
    * @param project
    * @param path
    * @param filename
@@ -157,6 +153,7 @@ public class PyExtractSuperclassHelper {
     return placeFile(project, path, filename, null);
   }
 
+  //TODO: Mover to the other class? That is not good to dependent PyUtils on this class
   public static PsiFile placeFile(Project project, String path, String filename, @Nullable String content) throws IOException {
     PsiDirectory psiDir = createDirectories(project, path);
     LOG.assertTrue(psiDir != null);
@@ -177,8 +174,9 @@ public class PyExtractSuperclassHelper {
 
   /**
    * Create all intermediate dirs with inits from one of roots up to target dir.
+   *
    * @param project
-   * @param target a full path to target dir
+   * @param target  a full path to target dir
    * @return deepest child directory, or null if target is not in roots or process fails at some point.
    */
   @Nullable
@@ -198,7 +196,7 @@ public class PyExtractSuperclassHelper {
       }
     }
     if (the_root == null) {
-      throw new IOException("Can't find '"+ target +"' among roots");
+      throw new IOException("Can't find '" + target + "' among roots");
     }
     if (the_rest != null) {
       final LocalFileSystem lfs = LocalFileSystem.getInstance();
@@ -213,7 +211,9 @@ public class PyExtractSuperclassHelper {
             throw new IOException("Expected dir, but got non-dir: " + subdir.getPath());
           }
         }
-        else subdir = the_root.createChildDirectory(lfs, dirs[i]);
+        else {
+          subdir = the_root.createChildDirectory(lfs, dirs[i]);
+        }
         VirtualFile init_vfile = subdir.findChild(PyNames.INIT_DOT_PY);
         if (init_vfile == null) init_vfile = subdir.createChildData(lfs, PyNames.INIT_DOT_PY);
         /*
@@ -235,5 +235,4 @@ public class PyExtractSuperclassHelper {
     }
     return ret;
   }
-
 }

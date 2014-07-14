@@ -21,11 +21,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.library.PythonLibraryType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -40,7 +43,10 @@ public class FacetLibraryConfigurator {
   private FacetLibraryConfigurator() {
   }
 
-  public static void attachLibrary(final Module module, @Nullable final ModifiableRootModel existingModel, final String libraryName, final List<String> paths) {
+  public static void attachPythonLibrary(final Module module,
+                                         @Nullable final ModifiableRootModel existingModel,
+                                         final String libraryName,
+                                         final List<String> paths) {
     final ModifiableModelsProvider modelsProvider = ModifiableModelsProvider.SERVICE.getInstance();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -51,6 +57,12 @@ public class FacetLibraryConfigurator {
           // update existing
           Library lib = orderEntry.getLibrary();
           if (lib != null) {
+            if (lib instanceof LibraryImpl && ((LibraryImpl)lib).getKind() == null) {   // replace old python libraries with python specific ones
+              model.removeOrderEntry(orderEntry);
+              ProjectLibraryTable.getInstance(model.getProject()).removeLibrary(lib);
+              createNewLibrary(model);
+              return;
+            }
             fillLibrary(module.getProject(), lib, paths);
             if (existingModel == null) {
               modelsProvider.commitModuleModifiableModel(model);
@@ -59,8 +71,13 @@ public class FacetLibraryConfigurator {
           }
         }
         // create new
-        final LibraryTable.ModifiableModel projectLibrariesModel = modelsProvider.getLibraryTableModifiableModel(model.getProject());
-        Library lib = projectLibrariesModel.createLibrary(libraryName);
+        createNewLibrary(model);
+      }
+
+      private void createNewLibrary(ModifiableRootModel model) {
+        final LibraryTableBase.ModifiableModelEx projectLibrariesModel =
+          (LibraryTableBase.ModifiableModelEx)modelsProvider.getLibraryTableModifiableModel(model.getProject());
+        Library lib = projectLibrariesModel.createLibrary(libraryName, PythonLibraryType.getInstance().getKind());
         fillLibrary(module.getProject(), lib, paths);
         projectLibrariesModel.commit();
         model.addLibraryEntry(lib);
@@ -101,7 +118,7 @@ public class FacetLibraryConfigurator {
     modifiableModel.commit();
   }
 
-  public static void detachLibrary(final Module module, final String libraryName) {
+  public static void detachPythonLibrary(final Module module, final String libraryName) {
     final ModifiableModelsProvider modelsProvider = ModifiableModelsProvider.SERVICE.getInstance();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {

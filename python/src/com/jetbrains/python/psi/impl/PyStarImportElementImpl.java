@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
@@ -22,7 +24,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.toolbox.ChainIterable;
@@ -51,12 +52,29 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
       for (PsiElement importedFile : new HashSet<PsiElement>(importedFiles)) { // resolver gives lots of duplicates
         final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
         if (source instanceof PyFile) {
-          chain.add(((PyFile) source).iterateNames());
+          Iterable<PyElement> declaredNames = ((PyFile)source).iterateNames();
+          if (((PyFile)source).getDunderAll() == null) {
+            declaredNames = excludeUnderscoredNames(declaredNames);
+          }
+          chain.add(declaredNames);
         }
       }
       return chain;
     }
     return Collections.emptyList();
+  }
+
+  private static Iterable<PyElement> excludeUnderscoredNames(Iterable<PyElement> declaredNames) {
+    return Iterables.filter(declaredNames, new Predicate<PyElement>() {
+      @Override
+      public boolean apply(@Nullable PyElement input) {
+        final String name = input != null ? input.getName() : null;
+        if (name != null && name.startsWith("_")) {
+          return false;
+        }
+        return true;
+      }
+    });
   }
 
   @Nullable
@@ -77,7 +95,7 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
           final PsiElement result = results != null && !results.isEmpty() ? results.get(0).getElement() : null;
           if (result != null) {
             final List<String> all = sourceFile.getDunderAll();
-            if (all != null && !all.contains(name)) {
+            if (all != null ? !all.contains(name) : name.startsWith("_")) {
               continue;
             }
             return result;
@@ -101,7 +119,7 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
         if (elt != null) { // always? who knows :)
           PyReferenceExpression imp_src = elt.getImportSource();
           if (imp_src != null) {
-            return PyResolveUtil.toPath(imp_src);
+            return PyPsiUtils.toPath(imp_src);
           }
         }
         return "<?>";

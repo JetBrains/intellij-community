@@ -1,0 +1,1 @@
+var = dict([(k, v) for k, v in zip('abc', range(3)) if k % 2])

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -33,7 +34,7 @@ import com.intellij.util.IncorrectOperationException;
  */
 public class PlainFileManipulator extends AbstractElementManipulator<PsiPlainTextFile> {
   @Override
-  public PsiPlainTextFile handleContentChange(PsiPlainTextFile file, TextRange range, String newContent)
+  public PsiPlainTextFile handleContentChange(@NotNull PsiPlainTextFile file, @NotNull TextRange range, String newContent)
   throws IncorrectOperationException {
     final Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
     document.replaceString(range.getStartOffset(), range.getEndOffset(), newContent);

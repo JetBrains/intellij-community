@@ -53,6 +53,8 @@ public class MavenSettings implements SearchableConfigurable.Parent {
 
     myChildren.add(new MyMavenRunnerConfigurable(project));
 
+    myChildren.add(new MavenTestRunningConfigurable(project));
+
     if (!myProject.isDefault()) {
       myChildren.add(new MavenRepositoriesConfigurable(myProject));
     }

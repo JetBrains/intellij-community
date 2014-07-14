@@ -1,0 +1,1 @@
+def phones = [Pet<caret>er: 45678, Max : 78564, Ann : 23467]

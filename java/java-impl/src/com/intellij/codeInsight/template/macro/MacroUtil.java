@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -164,7 +164,7 @@ public class MacroUtil {
     final List<PsiVariable> list = new ArrayList<PsiVariable>();
     VariablesProcessor varproc = new VariablesProcessor(prefix, true, list) {
       @Override
-      public boolean execute(@NotNull PsiElement pe, ResolveState state) {
+      public boolean execute(@NotNull PsiElement pe, @NotNull ResolveState state) {
         if (pe instanceof PsiVariable) {
           if (!usedNames.add(((PsiVariable)pe).getName())) {
             return false;

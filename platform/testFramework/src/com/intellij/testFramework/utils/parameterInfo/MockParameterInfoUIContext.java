@@ -27,6 +27,7 @@ public class MockParameterInfoUIContext<T extends PsiElement> implements Paramet
   private boolean enabled;
   private String text;
   private int highlightStart;
+  private int highlightEnd;
   private final T myFunction;
   private int parameterIndex;
 
@@ -40,6 +41,7 @@ public class MockParameterInfoUIContext<T extends PsiElement> implements Paramet
                                              final Color background) {
     text = _text;
     highlightStart = highlightStartOffset;
+    highlightEnd = highlightEndOffset;
     return _text;
   }
 
@@ -78,5 +80,9 @@ public class MockParameterInfoUIContext<T extends PsiElement> implements Paramet
 
   public int getHighlightStart() {
     return highlightStart;
+  }
+
+  public int getHighlightEnd() {
+    return highlightEnd;
   }
 }

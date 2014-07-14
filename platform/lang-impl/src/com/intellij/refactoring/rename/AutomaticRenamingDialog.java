@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,7 +84,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     myRenamer = renamer;
-    myUsagePreviewPanel = new UsagePreviewPanel(myProject);
+    myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation());
     myUsageFileLabel = new JLabel();
     populateData();
     myTableModel = new MyTableModel(renamer.allowChangeSuggestedName());
@@ -176,9 +177,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
 
     final TableColumnModel columnModel = myTable.getColumnModel();
     columnModel.getColumn(CHECK_COLUMN).setCellRenderer(new BooleanTableCellRenderer());
-    final int checkBoxWidth = new JCheckBox().getPreferredSize().width;
-    columnModel.getColumn(CHECK_COLUMN).setMaxWidth(checkBoxWidth);
-    columnModel.getColumn(CHECK_COLUMN).setMinWidth(checkBoxWidth);
+    TableUtil.setupCheckboxColumn(columnModel.getColumn(CHECK_COLUMN));
 
     columnModel.getColumn(NEW_NAME_COLUMN).setCellEditor(new StringTableCellEditor(myProject));
     mySelectAllButton.addActionListener(new ActionListener() {

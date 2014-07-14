@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.doc;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
@@ -26,19 +27,16 @@ import java.util.ResourceBundle;
 
 public class GroovyDocBundle {
 
-  private static Reference<ResourceBundle> ourBundle;
-
-  @NonNls
-  private static final String BUNDLE = "org.jetbrains.plugins.groovy.doc.GroovyDocBundle";
-
-  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
 
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = null;
+  private static Reference<ResourceBundle> ourBundle;
+  @NonNls
+  private static final String BUNDLE = "org.jetbrains.plugins.groovy.doc.GroovyDocBundle";
 
-    if (ourBundle != null) bundle = ourBundle.get();
+  private static ResourceBundle getBundle() {
+    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
 
     if (bundle == null) {
       bundle = ResourceBundle.getBundle(BUNDLE);
@@ -46,6 +44,5 @@ public class GroovyDocBundle {
     }
     return bundle;
   }
-
 }
 

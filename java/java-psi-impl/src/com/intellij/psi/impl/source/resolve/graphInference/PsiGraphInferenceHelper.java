@@ -38,9 +38,9 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
                                                  @NotNull PsiSubstitutor partialSubstitutor,
                                                  @Nullable PsiElement parent,
                                                  @NotNull ParameterTypeInferencePolicy policy) {
-    final InferenceSession inferenceSession = new InferenceSession(new PsiTypeParameter[]{typeParameter}, partialSubstitutor, myManager);
-    inferenceSession.initExpressionConstraints(parameters, arguments, parent);
-    return inferenceSession.infer(parameters, arguments, parent, policy).substitute(typeParameter);
+    final InferenceSession inferenceSession = new InferenceSession(new PsiTypeParameter[]{typeParameter}, partialSubstitutor, myManager, parent);
+    inferenceSession.initExpressionConstraints(parameters, arguments, parent, null);
+    return inferenceSession.infer(parameters, arguments, parent).substitute(typeParameter);
   }
 
   @NotNull
@@ -53,9 +53,9 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
                                            @NotNull ParameterTypeInferencePolicy policy,
                                            @NotNull LanguageLevel languageLevel) {
     if (typeParameters.length == 0) return partialSubstitutor;
-    final InferenceSession inferenceSession = new InferenceSession(typeParameters, partialSubstitutor, myManager);
-    inferenceSession.initExpressionConstraints(parameters, arguments, parent);
-    return inferenceSession.infer(parameters, arguments, parent, policy);
+    final InferenceSession inferenceSession = new InferenceSession(typeParameters, partialSubstitutor, myManager, parent);
+    inferenceSession.initExpressionConstraints(parameters, arguments, parent, null);
+    return inferenceSession.infer(parameters, arguments, parent);
   }
 
   @NotNull
@@ -65,7 +65,7 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
                                            @NotNull PsiType[] rightTypes,
                                            @NotNull LanguageLevel languageLevel) {
     if (typeParameters.length == 0) return PsiSubstitutor.EMPTY;
-    InferenceSession session = new InferenceSession(typeParameters, leftTypes, rightTypes, PsiSubstitutor.EMPTY, myManager);
+    InferenceSession session = new InferenceSession(typeParameters, leftTypes, rightTypes, PsiSubstitutor.EMPTY, myManager, null);
     for (PsiType leftType : leftTypes) {
       if (!session.isProperType(leftType)) {
         return session.infer();
@@ -86,6 +86,14 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
                                                  boolean isContraVariantPosition,
                                                  LanguageLevel languageLevel) {
     if (arg == PsiType.VOID || param == PsiType.VOID) return PsiType.NULL;
+    if (param instanceof PsiArrayType && arg instanceof PsiArrayType) {
+      return getSubstitutionForTypeParameter(typeParam, ((PsiArrayType)param).getComponentType(), ((PsiArrayType)arg).getComponentType(), isContraVariantPosition, languageLevel);
+    } 
+
+    if (!(param instanceof PsiClassType)) return PsiType.NULL;
+    if (arg == null) {
+      return PsiType.NULL;
+    }
     final PsiType[] leftTypes;
     final PsiType[] rightTypes;
     if (isContraVariantPosition) {
@@ -96,7 +104,7 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
       leftTypes = new PsiType[] {arg};
       rightTypes = new PsiType[]{param};
     }
-    final InferenceSession inferenceSession = new InferenceSession(new PsiTypeParameter[]{typeParam}, leftTypes, rightTypes, PsiSubstitutor.EMPTY, myManager);
+    final InferenceSession inferenceSession = new InferenceSession(new PsiTypeParameter[]{typeParam}, leftTypes, rightTypes, PsiSubstitutor.EMPTY, myManager, null);
     if (inferenceSession.isProperType(param) && inferenceSession.isProperType(arg)) {
       boolean proceed = false;
       for (PsiClassType classType : typeParam.getExtendsListTypes()) {

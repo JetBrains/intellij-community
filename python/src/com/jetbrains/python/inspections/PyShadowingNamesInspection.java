@@ -26,6 +26,7 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
@@ -77,7 +78,7 @@ public class PyShadowingNamesInspection extends PyInspection {
 
     @Override
     public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
-      if (node.getQualifier() == null) {
+      if (!node.isQualified()) {
         processElement(node);
       }
     }

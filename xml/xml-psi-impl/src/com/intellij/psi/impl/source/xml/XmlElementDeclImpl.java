@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
     super(XML_ELEMENT_DECL);
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -55,34 +56,41 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
     }
   }
 
+  @Override
   public int getTextOffset() {
     final XmlElement name = getNameElement();
     return name != null ? name.getTextOffset() : super.getTextOffset();
   }
 
+  @Override
   public XmlElement getNameElement() {
     return (XmlElement)findChildByRoleAsPsiElement(XmlChildRole.XML_NAME);
   }
 
+  @Override
   public XmlElementContentSpec getContentSpecElement() {
     return (XmlElementContentSpec)findChildByRoleAsPsiElement(XmlChildRole.XML_ELEMENT_CONTENT_SPEC);
   }
 
+  @Override
   public PsiMetaData getMetaData() {
     return MetaRegistry.getMeta(this);
   }
 
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     XmlElementChangeUtil.doNameReplacement(this, getNameElement(), name);
 
     return null;
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this,XmlElementDecl.class);
   }
   
+  @Override
   public PsiElement getOriginalElement() {
     if (isPhysical()) return super.getOriginalElement();
 
@@ -95,6 +103,7 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
     return this;
   }
 
+  @Override
   public boolean canNavigate() {
     if (!isPhysical()) {
       return getOriginalElement() != this;
@@ -103,6 +112,7 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
     return super.canNavigate();
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     if (!isPhysical()) {
       PsiElement element = getOriginalElement();
@@ -116,6 +126,7 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
     super.navigate(requestFocus);
   }
 
+  @Override
   public String getName() {
     XmlElement xmlElement = getNameElement();
     if (xmlElement != null) return xmlElement.getText();
@@ -134,10 +145,12 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
     return element1 == element2;
   }
 
+  @Override
   public PsiElement getNameIdentifier() {
     return null;
   }
 
+  @Override
   @NotNull
   public PsiElement getNavigationElement() {
     return this;

@@ -15,8 +15,6 @@
  */
 package com.jetbrains.python.psi.search;
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
@@ -36,6 +34,11 @@ import org.jetbrains.annotations.NotNull;
  * @author traff
  */
 public class PyStringReferenceSearch extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+
+  public PyStringReferenceSearch() {
+    super(true);
+  }
+
   public void processQuery(@NotNull final ReferencesSearch.SearchParameters params,
                            @NotNull final Processor<PsiReference> consumer) {
     final PsiElement element = params.getElementToSearch();
@@ -43,20 +46,12 @@ public class PyStringReferenceSearch extends QueryExecutorBase<PsiReference, Ref
       return;
     }
 
-    AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-    String name;
-    SearchScope searchScope;
-    try {
-      searchScope = params.getEffectiveSearchScope();
-      if (searchScope instanceof GlobalSearchScope) {
-        searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope, PythonFileType.INSTANCE);
-      }
+    SearchScope searchScope = params.getEffectiveSearchScope();
+    if (searchScope instanceof GlobalSearchScope) {
+      searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope, PythonFileType.INSTANCE);
+    }
 
-      name = PyUtil.computeElementNameForStringSearch(element);
-    }
-    finally {
-      token.finish();
-    }
+    String name = PyUtil.computeElementNameForStringSearch(element);
 
     if (StringUtil.isEmpty(name)) {
       return;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +22,15 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
-import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.MutablyNamedIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
-import org.jetbrains.plugins.groovy.intentions.utils.ComparisonUtils;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 public class FlipComparisonIntention extends MutablyNamedIntention {
+  @Override
   protected String getTextForElement(PsiElement element) {
     final GrBinaryExpression binaryExpression =
         (GrBinaryExpression) element;
@@ -44,11 +45,13 @@ public class FlipComparisonIntention extends MutablyNamedIntention {
     return GroovyIntentionsBundle.message("flip.comparison.intention.name", comparison, flippedComparison);
   }
 
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new ComparisonPredicate();
   }
 
+  @Override
   public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
       throws IncorrectOperationException {
     final GrBinaryExpression exp =
@@ -65,7 +68,7 @@ public class FlipComparisonIntention extends MutablyNamedIntention {
 
     final String newExpression =
         rhsText + flippedComparison + lhsText;
-    IntentionUtils.replaceExpression(newExpression, exp);
+    PsiImplUtil.replaceExpression(newExpression, exp);
   }
 
 }

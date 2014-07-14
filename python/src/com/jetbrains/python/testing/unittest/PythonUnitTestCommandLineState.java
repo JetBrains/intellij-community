@@ -65,11 +65,12 @@ public class PythonUnitTestCommandLineState extends
         specs.add(scriptName + "::" + myConfig.getClassName() + "::" + myConfig.getMethodName());
         break;
       case TEST_FOLDER:
+        final String folderName = FileUtil.toSystemDependentName(myConfig.getFolderName() + "/");
         if (!StringUtil.isEmpty(myConfig.getPattern()) && myConfig.usePattern()) {
-          specs.add(myConfig.getFolderName() + "/" + ";" + myConfig.getPattern());
+          specs.add(folderName + ";" + myConfig.getPattern());
         }
         else {
-          specs.add(myConfig.getFolderName() + "/");
+          specs.add(folderName);
         }
         break;
       case TEST_FUNCTION:

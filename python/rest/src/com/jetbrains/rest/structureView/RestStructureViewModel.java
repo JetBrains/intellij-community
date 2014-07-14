@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class RestStructureViewModel extends StructureViewModelBase implements St
   }
 
   @Override
-  public boolean isAutoExpand(StructureViewTreeElement element) {
+  public boolean isAutoExpand(@NotNull StructureViewTreeElement element) {
     return element.getValue() instanceof PsiFile;
   }
 

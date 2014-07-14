@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
@@ -38,12 +35,14 @@ import java.util.Set;
 public class FileContentUtilCore {
   @NonNls public static final String FORCE_RELOAD_REQUESTOR = "FileContentUtilCore.saveOrReload";
 
+  public static void reparseFiles(@NotNull VirtualFile... files) {
+    reparseFiles(Arrays.asList(files));
+  }
   public static void reparseFiles(@NotNull final Collection<VirtualFile> files) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
         // files must be processed under one write action to prevent firing event for invalid files.
-
         final Set<VFilePropertyChangeEvent> events = new THashSet<VFilePropertyChangeEvent>();
         for (VirtualFile file : files) {
           saveOrReload(file, events);
@@ -57,7 +56,7 @@ public class FileContentUtilCore {
     });
   }
 
-  private static void saveOrReload(VirtualFile file, Collection<VFilePropertyChangeEvent> events) {
+  private static void saveOrReload(VirtualFile file, @NotNull Collection<VFilePropertyChangeEvent> events) {
     if (file == null || file.isDirectory() || !file.isValid()) {
       return;
     }

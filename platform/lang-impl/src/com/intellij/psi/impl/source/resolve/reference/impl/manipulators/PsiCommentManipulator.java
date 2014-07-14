@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
 public class PsiCommentManipulator extends AbstractElementManipulator<PsiComment> {
   @Override
-  public PsiComment handleContentChange(PsiComment psiComment, TextRange range, String newContent) throws IncorrectOperationException {
+  public PsiComment handleContentChange(@NotNull PsiComment psiComment, @NotNull TextRange range, String newContent) throws IncorrectOperationException {
     String oldText = psiComment.getText();
     String newText = oldText.substring(0, range.getStartOffset()) + newContent + oldText.substring(range.getEndOffset());
     FileType type = psiComment.getContainingFile().getFileType();
@@ -40,8 +41,9 @@ public class PsiCommentManipulator extends AbstractElementManipulator<PsiComment
     return (PsiComment)psiComment.replace(newElement);
   }
 
+  @NotNull
   @Override
-  public TextRange getRangeInElement(final PsiComment element) {
+  public TextRange getRangeInElement(@NotNull final PsiComment element) {
     final String text = element.getText();
     if (text.startsWith("//")) return new TextRange(2, element.getTextLength());
     final int length = text.length();

@@ -22,10 +22,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitBranch;
-import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
-import git4idea.GitVcs;
+import git4idea.*;
 import git4idea.branch.GitBranchPair;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
@@ -103,9 +100,13 @@ public abstract class GitUpdater {
                                                        @NotNull Map<VirtualFile, GitBranchPair> trackedBranches,
                                                        @NotNull ProgressIndicator progressIndicator, @NotNull UpdatedFiles updatedFiles) {
     try {
-      final GitBranch branchName = GitBranchUtil.getCurrentBranch(project, root);
-      final String rebase = GitConfigUtil.getValue(project, root, "branch." + branchName + ".rebase");
-      if (rebase != null && rebase.equalsIgnoreCase("true")) {
+      GitLocalBranch branch = GitBranchUtil.getCurrentBranch(project, root);
+      boolean rebase = false;
+      if (branch != null) {
+        String rebaseValue = GitConfigUtil.getValue(project, root, "branch." + branch.getName() + ".rebase");
+        rebase = rebaseValue != null && rebaseValue.equalsIgnoreCase("true");
+      }
+      if (rebase) {
         return new GitRebaseUpdater(project, git, root, trackedBranches, progressIndicator, updatedFiles);
       }
     } catch (VcsException e) {

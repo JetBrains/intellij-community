@@ -16,6 +16,7 @@
 package com.siyeh.ipp.whileloop;
 
 import com.intellij.psi.*;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -69,6 +70,6 @@ public class ReplaceWhileLoopWithDoWhileLoopIntention extends Intention {
     if (!infiniteLoop) {
       doWhileStatementText.append("\n}");
     }
-    replaceStatement(doWhileStatementText.toString(), whileStatement);
+    PsiReplacementUtil.replaceStatement(whileStatement, doWhileStatementText.toString());
   }
 }

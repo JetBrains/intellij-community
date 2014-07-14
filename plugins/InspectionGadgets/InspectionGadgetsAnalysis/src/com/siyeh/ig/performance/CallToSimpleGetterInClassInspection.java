@@ -27,6 +27,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,14 +132,14 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
           return;
         }
         if (variable.equals(field)) {
-          replaceExpression(call, fieldName);
+          PsiReplacementUtil.replaceExpression(call, fieldName);
         }
         else {
-          replaceExpression(call, "this." + fieldName);
+          PsiReplacementUtil.replaceExpression(call, "this." + fieldName);
         }
       }
       else {
-        replaceExpression(call, qualifier.getText() + '.' + fieldName);
+        PsiReplacementUtil.replaceExpression(call, qualifier.getText() + '.' + fieldName);
       }
     }
   }

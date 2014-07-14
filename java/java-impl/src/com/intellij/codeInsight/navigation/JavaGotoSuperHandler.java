@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,20 +66,27 @@ public class JavaGotoSuperHandler implements CodeInsightActionHandler {
 
   @Nullable
   private PsiElement[] findSuperElements(PsiFile file, int offset) {
-    PsiNameIdentifierOwner parent = getElement(file, offset);
-    if (parent == null) return null;
+    PsiElement element = getElement(file, offset);
+    if (element == null) return null;
+
+    final PsiExpression expression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class, PsiMethodReferenceExpression.class);
+    if (expression != null) {
+      final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(expression);
+      if (interfaceMethod != null) {
+        return ArrayUtil.prepend(interfaceMethod, interfaceMethod.findSuperMethods(false));
+      }
+    }
+
+    final PsiNameIdentifierOwner parent = PsiTreeUtil.getNonStrictParentOfType(element, PsiMethod.class, PsiClass.class);
+    if (parent == null) {
+      return null;
+    }
 
     return FindSuperElementsHelper.findSuperElements(parent);
   }
 
-  protected PsiNameIdentifierOwner getElement(PsiFile file, int offset) {
-    PsiElement element = file.findElementAt(offset);
-    if (element == null) return null;
-
-    PsiNameIdentifierOwner parent = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
-    if (parent == null)
-      return null;
-    return parent;
+  protected PsiElement getElement(PsiFile file, int offset) {
+    return file.findElementAt(offset);
   }
 
   @Override

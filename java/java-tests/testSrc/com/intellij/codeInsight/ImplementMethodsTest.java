@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,12 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixAvailabilityTestCase;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 
 /**
- * User: anna
- * Date: 10/7/11
+ * @author anna
  */
-public class ImplementMethodsTest extends LightQuickFixAvailabilityTestCase {
+public class ImplementMethodsTest extends LightQuickFixParameterizedTestCase {
   public void test() throws Exception {
     doAllTests();
   }

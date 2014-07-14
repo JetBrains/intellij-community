@@ -24,6 +24,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +59,7 @@ public class KeymapUtil {
   private KeymapUtil() {
   }
 
-  public static String getShortcutText(Shortcut shortcut) {
+  public static String getShortcutText(@NotNull Shortcut shortcut) {
     String s = "";
 
     if (shortcut instanceof KeyboardShortcut) {
@@ -184,14 +185,18 @@ public class KeymapUtil {
     }
   }
 
+  @NotNull
+  public static String getFirstKeyboardShortcutText(@NotNull String actionId) {
+    Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
+    KeyboardShortcut shortcut = ContainerUtil.findInstance(shortcuts, KeyboardShortcut.class);
+    return shortcut == null? "" : getShortcutText(shortcut);
+  }
+
+  @NotNull
   public static String getFirstKeyboardShortcutText(@NotNull AnAction action) {
     Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
-    for (Shortcut shortcut : shortcuts) {
-      if (shortcut instanceof KeyboardShortcut) {
-        return getShortcutText(shortcut);
-      }
-    }
-    return "";
+    KeyboardShortcut shortcut = ContainerUtil.findInstance(shortcuts, KeyboardShortcut.class);
+    return shortcut == null ? "" : getShortcutText(shortcut);
   }
 
   public static String getShortcutsText(Shortcut[] shortcuts) {

@@ -1,4 +1,4 @@
-public class Foo {
+class Foo {
   private final boolean field = hashCode() == 2;
 
   public void main(boolean b) {

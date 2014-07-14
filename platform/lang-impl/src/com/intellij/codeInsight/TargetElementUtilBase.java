@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ public class TargetElementUtilBase {
   }
 
   @Nullable
-  public static PsiReference findReference(Editor editor, int offset) {
+  public static PsiReference findReference(@NotNull Editor editor, int offset) {
     Project project = editor.getProject();
     if (project == null) return null;
 
@@ -118,9 +118,6 @@ public class TargetElementUtilBase {
 
   /**
    * @deprecated adjust offset with PsiElement should be used instead to provide correct checking for identifier part
-   * @param document
-   * @param offset
-   * @return
    */
   public static int adjustOffset(Document document, final int offset) {
     return adjustOffset(null, document, offset);
@@ -175,7 +172,7 @@ public class TargetElementUtilBase {
   }
 
   @Nullable
-  public PsiElement findTargetElement(Editor editor, int flags, int offset) {
+  public PsiElement findTargetElement(@NotNull Editor editor, int flags, int offset) {
     Project project = editor.getProject();
     if (project == null) return null;
 
@@ -223,9 +220,11 @@ public class TargetElementUtilBase {
     Lookup activeLookup = LookupManager.getInstance(project).getActiveLookup();
     if (activeLookup != null) {
       LookupElement item = activeLookup.getCurrentItem();
-      final PsiElement psi = item == null ? null : CompletionUtil.getTargetElement(item);
-      if (psi != null && psi.isValid()) {
-        return psi;
+      if (item != null && item.isValid()) {
+        final PsiElement psi = CompletionUtil.getTargetElement(item);
+        if (psi != null && psi.isValid()) {
+          return psi;
+        }
       }
     }
     return null;
@@ -296,6 +295,7 @@ public class TargetElementUtilBase {
         return parent;
       }
     }
+
     return null;
   }
 
@@ -349,8 +349,8 @@ public class TargetElementUtilBase {
     return navElement;
   }
 
-  public boolean includeSelfInGotoImplementation(final PsiElement element) {
-    final TargetElementEvaluator elementEvaluator = element != null ? targetElementEvaluator.forLanguage(element.getLanguage()):null;
+  public boolean includeSelfInGotoImplementation(@NotNull final PsiElement element) {
+    final TargetElementEvaluator elementEvaluator = targetElementEvaluator.forLanguage(element.getLanguage());
     return elementEvaluator == null || elementEvaluator.includeSelfInGotoImplementation(element);
   }
 

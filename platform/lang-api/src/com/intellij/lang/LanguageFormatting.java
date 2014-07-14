@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.formatting.CustomFormattingModelBuilder;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LanguageFormatting extends LanguageExtension<FormattingModelBuilder> {
@@ -33,12 +34,12 @@ public class LanguageFormatting extends LanguageExtension<FormattingModelBuilder
   }
 
   @Nullable
-  public FormattingModelBuilder forContext(PsiElement context) {
+  public FormattingModelBuilder forContext(@NotNull PsiElement context) {
     return forContext(context.getLanguage(), context);
   }
 
   @Nullable
-  public FormattingModelBuilder forContext(Language language, PsiElement context) {
+  public FormattingModelBuilder forContext(@NotNull Language language, @NotNull PsiElement context) {
     for (LanguageFormattingRestriction each : Extensions.getExtensions(LanguageFormattingRestriction.EXTENSION)) {
       if (!each.isFormatterAllowed(context)) return null;
     }

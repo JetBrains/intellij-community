@@ -15,52 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.metrics;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.utils.LibraryUtil;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.codeInspection.utils.InspectionUtil;
 
-public class GroovyMethodParameterCountInspection extends GroovyMethodMetricInspection {
+import javax.swing.*;
 
-  @NotNull
-  public String getDisplayName() {
-    return "Method with too many parameters";
-  }
+public class GroovyMethodParameterCountInspection extends GroovyMethodParameterCountInspectionBase {
 
-  @NotNull
-  public String getGroupDisplayName() {
-    return METHOD_METRICS;
-  }
-
-  protected int getDefaultLimit() {
-    return 5;
-  }
-
-  protected String getConfigurationLabel() {
-    return "Maximum number of parameters:";
-  }
-
-  public String buildErrorString(Object... args) {
-    return "Method '#ref' contains too many parameters (" + args[0] + '>' + args[1] + ')';
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new Visitor();
-  }
-
-  private class Visitor extends BaseInspectionVisitor {
-    public void visitMethod(GrMethod grMethod) {
-      super.visitMethod(grMethod);
-      final GrParameter[] parameters = grMethod.getParameters();
-      final int limit = getLimit();
-      if (parameters == null || parameters.length <= limit) {
-        return;
-      }
-      if (LibraryUtil.isOverrideOfLibraryMethod(grMethod)) {
-        return;
-      }
-      registerMethodError(grMethod, parameters.length, limit);
-    }
+  @Override
+  public JComponent createOptionsPanel() {
+    return InspectionUtil.createSingleIntegerFieldOptionsPanel(this, "m_limit", getConfigurationLabel());
   }
 }

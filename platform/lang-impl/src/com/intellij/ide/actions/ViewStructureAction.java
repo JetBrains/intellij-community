@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.util.FileStructureDialog;
 import com.intellij.ide.util.FileStructurePopup;
+import com.intellij.ide.util.treeView.smartTree.TreeStructureUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -41,7 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ViewStructureAction extends AnAction {
-  private static final String PLACE = "StructureViewPopup";
 
   public ViewStructureAction() {
     setEnabledInModalContext(true);
@@ -56,15 +56,15 @@ public class ViewStructureAction extends AnAction {
     final VirtualFile virtualFile;
 
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
-    if (editor != null) {
+    if (editor == null) {
+      virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    }
+    else {
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (psiFile == null) return;
 
       virtualFile = psiFile.getVirtualFile();
-    }
-    else {
-      virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     }
     String title = virtualFile == null? fileEditor.getName() : virtualFile.getName();
 
@@ -79,6 +79,7 @@ public class ViewStructureAction extends AnAction {
       popup.show();
     }
     else {
+      assert editor != null;
       DialogWrapper dialog = createDialog(editor, project, navigatable, fileEditor);
       if (dialog == null) return;
 
@@ -88,7 +89,10 @@ public class ViewStructureAction extends AnAction {
   }
 
   @Nullable
-  private static DialogWrapper createDialog(@Nullable Editor editor, @NotNull Project project, @Nullable Navigatable navigatable, @NotNull FileEditor fileEditor) {
+  private static DialogWrapper createDialog(@NotNull Editor editor,
+                                            @NotNull Project project,
+                                            @Nullable Navigatable navigatable,
+                                            @NotNull FileEditor fileEditor) {
     final StructureViewBuilder structureViewBuilder = fileEditor.getStructureViewBuilder();
     if (structureViewBuilder == null) return null;
     StructureView structureView = structureViewBuilder.createStructureView(fileEditor, project);
@@ -103,18 +107,15 @@ public class ViewStructureAction extends AnAction {
     StructureViewModel model = structureView.getTreeModel();
     if (model instanceof PlaceHolder) {
       //noinspection unchecked
-      ((PlaceHolder)model).setPlace(PLACE);
+      ((PlaceHolder)model).setPlace(TreeStructureUtil.PLACE);
     }
     return createStructureViewPopup(project, fileEditor, structureView);
   }
 
-  public static boolean isInStructureViewPopup(@NotNull PlaceHolder<String> model) {
-    return PLACE.equals(model.getPlace());
-  }
-
-  private static FileStructureDialog createStructureViewBasedDialog(StructureViewModel structureViewModel,
-                                                                    Editor editor,
-                                                                    Project project,
+  @NotNull
+  private static FileStructureDialog createStructureViewBasedDialog(@NotNull StructureViewModel structureViewModel,
+                                                                    @NotNull Editor editor,
+                                                                    @NotNull Project project,
                                                                     Navigatable navigatable,
                                                                     @NotNull Disposable alternativeDisposable) {
     return new FileStructureDialog(structureViewModel, editor, project, navigatable, alternativeDisposable, true);

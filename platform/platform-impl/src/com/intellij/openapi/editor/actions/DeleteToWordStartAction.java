@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,7 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -74,12 +72,17 @@ public class DeleteToWordStartAction extends TextComponentEditorAction {
     private final boolean myNegateCamelMode;
 
     Handler(boolean negateCamelMode) {
+      super(true);
       myNegateCamelMode = negateCamelMode;
     }
 
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
+      if (editor.getSelectionModel().hasSelection()) {
+        BackspaceAction.doBackspaceAction(editor);
+        return;
+      }
       deleteToWordStart(editor);
     }
 

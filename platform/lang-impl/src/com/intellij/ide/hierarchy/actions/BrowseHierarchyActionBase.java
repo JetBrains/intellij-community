@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.ide.hierarchy.HierarchyProvider;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -41,6 +42,7 @@ import java.util.List;
  * @author yole
  */
 public abstract class BrowseHierarchyActionBase extends AnAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.actions.BrowseHierarchyActionBase");
   private final LanguageExtension<HierarchyProvider> myExtension;
 
   protected BrowseHierarchyActionBase(final LanguageExtension<HierarchyProvider> extension) {
@@ -50,7 +52,7 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
   @Override
   public final void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    final Project project = e.getProject();
     if (project == null) return;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments(); // prevents problems with smart pointers creation
@@ -110,12 +112,24 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
 
   private boolean isEnabled(final AnActionEvent e) {
     final HierarchyProvider provider = getProvider(e);
-    return provider != null && provider.getTarget(e.getDataContext()) != null;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Using provider " + provider);
+    }
+    if (provider == null) return false;
+    PsiElement target = provider.getTarget(e.getDataContext());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Target: " + target);
+    }
+    return target != null;
   }
 
   @Nullable
   private HierarchyProvider getProvider(final AnActionEvent e) {
-    return findBestHierarchyProvider(myExtension, e.getData(CommonDataKeys.PSI_FILE), e.getDataContext());
+    final HierarchyProvider provider = findBestHierarchyProvider(myExtension, e.getData(CommonDataKeys.PSI_ELEMENT), e.getDataContext());
+    if (provider == null) {
+      return findBestHierarchyProvider(myExtension, e.getData(CommonDataKeys.PSI_FILE), e.getDataContext());
+    }
+    return provider;
   }
 
   @Nullable

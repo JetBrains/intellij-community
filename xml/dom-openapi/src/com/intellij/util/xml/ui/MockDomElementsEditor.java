@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ public class MockDomElementsEditor {
   protected final <T extends DomElement> T addEditedElement(final Class<T> aClass, final EditedElementDescription<T> description) {
     final DomManager domManager = DomManager.getDomManager(myModule.getProject());
     final T t = domManager.createStableValue(new Factory<T>() {
+      @Override
       public T create() {
         T t = description.find();
         if (t == null) {
@@ -68,6 +69,7 @@ public class MockDomElementsEditor {
 
   protected final DomFileEditor initFileEditor(final BasicDomElementComponent component, final VirtualFile virtualFile, final String name) {
     initFileEditor(component.getProject(), virtualFile, name, new Factory<BasicDomElementComponent>() {
+      @Override
       public BasicDomElementComponent create() {
         return component;
       }
@@ -78,10 +80,12 @@ public class MockDomElementsEditor {
 
   protected final DomFileEditor initFileEditor(final Project project, final VirtualFile virtualFile, final String name, final Factory<? extends BasicDomElementComponent> component) {
     myFileEditor = new DomFileEditor<BasicDomElementComponent>(project, virtualFile, name, component) {
+      @Override
       public JComponent getPreferredFocusedComponent() {
         return null;
       }
 
+      @Override
       @NotNull
       protected JComponent createCustomComponent() {
         final JComponent customComponent = super.createCustomComponent();
@@ -89,6 +93,7 @@ public class MockDomElementsEditor {
         return customComponent;
       }
 
+      @Override
       public void reset() {
         for (final Map.Entry<EditedElementDescription<? extends DomElement>, DomElement> entry : myDomElements.entrySet()) {
           final DomElement newValue = entry.getKey().find();
@@ -100,6 +105,7 @@ public class MockDomElementsEditor {
         super.reset();
       }
 
+      @Override
       public void commit() {
         super.commit();
         final List<EditedElementDescription> descriptions = new ArrayList<EditedElementDescription>();
@@ -116,6 +122,7 @@ public class MockDomElementsEditor {
             }
         }
         new WriteCommandAction(project, PsiUtilCore.toPsiFileArray(changedFiles)) {
+          @Override
           protected void run(Result result) throws Throwable {
             for (EditedElementDescription description : descriptions) {
               final DomElement editedElement = myDomElements.get(description);
@@ -145,6 +152,7 @@ public class MockDomElementsEditor {
   private <T extends DomElement> T createMockElement(final Class<T> aClass, final Module module) {
     final Project project = module.getProject();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (myFileEditor.isInitialised()) {
           myContents.reset();

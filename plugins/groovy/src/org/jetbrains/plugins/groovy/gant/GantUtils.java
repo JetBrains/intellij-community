@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,6 +150,7 @@ public class GantUtils {
   @Nullable
   public static String getSdkHomeFromClasspath(@NotNull Module module) {
     Library[] libraries = LibrariesUtil.getLibrariesByCondition(module, new Condition<Library>() {
+      @Override
       public boolean value(Library library1) {
         return isSDKLibrary(library1);
       }
@@ -164,6 +165,6 @@ public class GantUtils {
   }
 
   public static boolean isSDKConfiguredToRun(@NotNull Module module) {
-    return getSDKInstallPath(module, module.getProject()).length() > 0;
+    return !getSDKInstallPath(module, module.getProject()).isEmpty();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ import java.util.List;
  * @author max
  */
 public class EditorTextField extends NonOpaquePanel implements DocumentListener, TextComponent, DataProvider,
-                                                       DocumentBasedComponent {
+                                                       DocumentBasedComponent, FocusListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.EditorTextField");
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
 
@@ -73,6 +73,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   private Component myNextFocusable = null;
   private boolean myWholeTextSelected = false;
   private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<FocusListener> myFocusListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myIsListenerInstalled = false;
   private boolean myIsViewer;
   private boolean myIsSupplementary;
@@ -119,7 +120,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     // todo[dsl,max]
     setFocusable(true);
     // dsl: this is a weird way of doing things....
-    addFocusListener(new FocusListener() {
+    super.addFocusListener(new FocusListener() {
       @Override
       public void focusGained(FocusEvent e) {
         requestFocus();
@@ -204,13 +205,6 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   public void setDocument(Document document) {
     if (myDocument != null) {
-      /*
-      final UndoManager undoManager = myProject != null
-      ? UndoManager.getInstance(myProject)
-      : UndoManager.getGlobalInstance();
-      undoManager.clearUndoRedoQueue(myDocument);
-      */
-
       uninstallDocumentListener(true);
     }
 
@@ -321,6 +315,9 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
 
     remove(editor.getComponent());
+
+    editor.getContentComponent().removeFocusListener(this);
+
     final Application application = ApplicationManager.getApplication();
     final Runnable runnable = new Runnable() {
       @Override
@@ -522,6 +519,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
     editor.putUserData(SUPPLEMENTARY_KEY, myIsSupplementary);
     editor.getContentComponent().setFocusCycleRoot(false);
+    editor.getContentComponent().addFocusListener(this);
     
     editor.setPlaceholder(myHintText);
 
@@ -598,13 +596,19 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
   }
 
+  @Override
+  public Color getBackground() {
+    final Color color = getBackgroundColor(isEnabled(), EditorColorsManager.getInstance().getGlobalScheme());
+    return color != null ? color : super.getBackground();
+  }
+
   private Color getBackgroundColor(boolean enabled, final EditorColorsScheme colorsScheme){
     if (myEnforcedBgColor != null) return myEnforcedBgColor;
-    if (UIUtil.getParentOfType(CellRendererPane.class, this) != null && UIUtil.isUnderDarcula()) {
+    if (UIUtil.getParentOfType(CellRendererPane.class, this) != null && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
       return getParent().getBackground();
     }
 
-    if (UIUtil.isUnderDarcula()) return UIUtil.getTextFieldBackground();
+    if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) return UIUtil.getTextFieldBackground();
 
     return enabled
            ? colorsScheme.getDefaultBackground()
@@ -744,6 +748,30 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   public JComponent getFocusTarget() {
     return myEditor == null ? this : myEditor.getContentComponent();
+  }
+
+  @Override
+  public synchronized void addFocusListener(FocusListener l) {
+    myFocusListeners.add(l);
+  }
+
+  @Override
+  public synchronized void removeFocusListener(FocusListener l) {
+    myFocusListeners.remove(l);
+  }
+
+  @Override
+  public void focusGained(FocusEvent e) {
+    for (FocusListener listener : myFocusListeners) {
+      listener.focusGained(e);
+    }
+  }
+
+  @Override
+  public void focusLost(FocusEvent e) {
+    for (FocusListener listener : myFocusListeners) {
+      listener.focusLost(e);
+    }
   }
 
   @Override

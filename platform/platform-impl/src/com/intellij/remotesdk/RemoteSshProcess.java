@@ -1,22 +1,23 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.remotesdk;
 
-import com.intellij.execution.process.SelfKiller;
-
 /**
+ * @deprecated Remove in IDEA 14
  * @author traff
  */
-abstract public class RemoteSshProcess extends Process implements SelfKiller {
-  /**
-   * Makes host:localPort server which is available on local side available on remote side as localhost:remotePort.
-   */
-  public abstract void addRemoteTunnel(int remotePort, String host, int localPort) throws RemoteInterpreterException;
-
-  /**
-   * Makes host:remotePort server which is available on remote side available on local side as localhost:localPort.
-   */
-  public abstract void addLocalTunnel(int localPort, String host, int remotePort) throws RemoteInterpreterException;
-
-  public abstract boolean hasPty();
-
-  public abstract boolean sendCtrlC();
+public abstract class RemoteSshProcess extends com.intellij.remote.RemoteSshProcess {
 }

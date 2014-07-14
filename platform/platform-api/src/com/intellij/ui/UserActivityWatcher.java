@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 
@@ -51,6 +52,7 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
       fireUIChanged();
     }
   };
+
   private final PropertyChangeListener myTableListener = new PropertyChangeListener() {
     public void propertyChange(PropertyChangeEvent evt) {
       TableModel oldModel = (TableModel)evt.getOldValue();
@@ -68,9 +70,16 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
       }
     }
   };
+
   private final ChangeListener myChangeListener = new ChangeListener() {
     public void stateChanged(final ChangeEvent e) {
       fireUIChanged();
+    }
+  };
+
+  private final PropertyChangeListener myCellEditorChangeListener = new PropertyChangeListener() {
+    public void propertyChange(PropertyChangeEvent e) {
+      if (e.getOldValue() != null && e.getNewValue() == null) fireUIChanged();
     }
   };
 
@@ -147,6 +156,10 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
 
   }
 
+  protected boolean processChildren(Container container) {
+    return !(container instanceof JTable);
+  }
+
   protected void processComponent(final Component parentComponent) {
     if (parentComponent instanceof JTextComponent) {
       ((JTextComponent)parentComponent).getDocument().addDocumentListener(myDocumentListener);
@@ -177,6 +190,7 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
       if (model != null) {
         model.addTableModelListener(myTableModelListener);
       }
+      table.addPropertyChangeListener(ComboBox.TABLE_CELL_EDITOR_PROPERTY, myCellEditorChangeListener);
     }
 
     if (parentComponent instanceof JSlider) {
@@ -206,6 +220,7 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
       if (model != null) {
         model.removeTableModelListener(myTableModelListener);
       }
+      component.removePropertyChangeListener(myCellEditorChangeListener);
     }
 
     if (component instanceof JSlider){

@@ -557,7 +557,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
       addLink(parent, returnType);
     }
 
-    final PsiReturnStatement[] returnStatements = RefactoringUtil.findReturnStatements(method);
+    final PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements(method);
     for (final PsiReturnStatement returnStatement : returnStatements) {
       final PsiExpression returnValue = returnStatement.getReturnValue();
       if (returnValue != null) {

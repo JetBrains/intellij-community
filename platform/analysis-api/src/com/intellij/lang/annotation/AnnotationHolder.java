@@ -142,6 +142,17 @@ public interface AnnotationHolder {
    */
   Annotation createInfoAnnotation(@NotNull TextRange range, @Nullable String message);
 
+  /**
+   * Creates an annotation with the given severity (colored highlighting only, with no gutter mark and not participating in
+   * "Next Error/Warning" navigation) with the specified message over the specified text range.
+   *
+   * @param severity the severity.
+   * @param range    the text range over which the annotation is created.
+   * @param message  the information message.
+   * @return the annotation (which can be modified to set additional annotation parameters)
+   */
+  Annotation createAnnotation(@NotNull HighlightSeverity severity, @NotNull TextRange range, @Nullable String message);
+
   @NotNull
   AnnotationSession getCurrentAnnotationSession();
 

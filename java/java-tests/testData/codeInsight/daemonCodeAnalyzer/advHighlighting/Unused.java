@@ -1,4 +1,4 @@
-public class a extends Exception {
+class a extends Exception {
   private <warning descr="Private constructor 'a(java.lang.String)' is never used">a</warning>(String s) {
     super(s);
   }

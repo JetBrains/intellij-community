@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ public abstract class CachedValueBase<T> {
   }
 
   protected void setValue(final T value, final CachedValueProvider.Result<T> result) {
+    //noinspection unchecked
     myData = new SoftReference<Data<T>>(computeData(value == null ? (T)ObjectUtils.NULL : value, getDependencies(result)));
   }
 
@@ -66,7 +67,7 @@ public abstract class CachedValueBase<T> {
     else {
       Object[] items = result.getDependencyItems();
       T value = result.getValue();
-      return value == null ? items : items == null ? new Object[] {value}: ArrayUtil.append(items, value);
+      return value == null ? items : ArrayUtil.append(items, value);
     }
   }
 
@@ -96,8 +97,7 @@ public abstract class CachedValueBase<T> {
 
   @Nullable
   private Data<T> getData() {
-    final SoftReference<Data<T>> ref = myData;
-    return ref == null ? null : ref.get();
+    return SoftReference.dereference(myData);
   }
 
   protected boolean isUpToDate(@NotNull Data data) {

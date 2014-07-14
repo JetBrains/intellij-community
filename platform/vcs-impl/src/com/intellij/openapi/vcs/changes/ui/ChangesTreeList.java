@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
@@ -189,7 +190,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         final int idx = myList.locationToIndex(e.getPoint());
         if (idx >= 0) {
           final Rectangle baseRect = myList.getCellBounds(idx, idx);
@@ -544,7 +545,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
           //noinspection unchecked
           List<T> list = getSelectedObjects((ChangesBrowserNode)path.getLastPathComponent());
           for (T object : list) {
-            if (!checkSet.add(object.hashCode()) || !changes.contains(object)) {
+            if (checkSet.add(object.hashCode()) || !changes.contains(object)) {
               changes.add(object);
             }
           }
@@ -844,14 +845,14 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     }
   }
 
-  private class MyToggleSelectionAction extends AnAction {
+  private class MyToggleSelectionAction extends AnAction implements DumbAware {
     @Override
     public void actionPerformed(AnActionEvent e) {
       toggleSelection();
     }
   }
 
-  public class ToggleShowDirectoriesAction extends ToggleAction {
+  public class ToggleShowDirectoriesAction extends ToggleAction implements DumbAware {
     public ToggleShowDirectoriesAction() {
       super(VcsBundle.message("changes.action.show.directories.text"),
             VcsBundle.message("changes.action.show.directories.description"),

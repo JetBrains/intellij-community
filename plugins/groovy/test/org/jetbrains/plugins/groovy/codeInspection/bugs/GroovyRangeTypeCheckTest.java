@@ -49,7 +49,7 @@ public class GroovyRangeTypeCheckTest extends LightCodeInsightFixtureTestCase {
 
     LocalQuickFix[] fixes = {fix};
     final ProblemDescriptor descriptor = InspectionManager.getInstance(getProject()).createProblemDescriptor(range, "bla-bla", false, fixes, ProblemHighlightType.WEAK_WARNING);
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         fix.applyFix(myFixture.getProject(), descriptor);

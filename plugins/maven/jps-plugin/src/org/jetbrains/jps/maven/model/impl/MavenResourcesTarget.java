@@ -30,6 +30,7 @@ import org.jetbrains.jps.maven.model.JpsMavenExtensionService;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -65,14 +66,17 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
   public List<MavenResourceRootDescriptor> computeRootDescriptors(JpsModel model, ModuleExcludeIndex index, IgnoredFileIndex ignoredFileIndex, BuildDataPaths dataPaths) {
     // todo: should we honor ignored and excluded roots here?
     final List<MavenResourceRootDescriptor> result = new ArrayList<MavenResourceRootDescriptor>();
-    for (ResourceRootConfiguration resource : getRootConfigurations(dataPaths)) {
-      result.add(new MavenResourceRootDescriptor(this, resource));
+
+    MavenProjectConfiguration projectConfig = JpsMavenExtensionService.getInstance().getMavenProjectConfiguration(dataPaths);
+    MavenModuleResourceConfiguration moduleConfig = projectConfig.moduleConfigurations.get(myModule.getName());
+    if (moduleConfig == null) return Collections.emptyList();
+
+    int i = 0;
+
+    for (ResourceRootConfiguration resource : getRootConfigurations(moduleConfig)) {
+      result.add(new MavenResourceRootDescriptor(this, resource, i++, moduleConfig.overwrite));
     }
     return result;
-  }
-
-  private Collection<ResourceRootConfiguration> getRootConfigurations(BuildDataPaths dataPaths) {
-    return getRootConfigurations(getModuleResourcesConfiguration(dataPaths));
   }
 
   private Collection<ResourceRootConfiguration> getRootConfigurations(@Nullable MavenModuleResourceConfiguration moduleConfig) {
@@ -111,10 +115,12 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
   @NotNull
   @Override
   public Collection<File> getOutputRoots(CompileContext context) {
+    MavenModuleResourceConfiguration configuration =
+      getModuleResourcesConfiguration(context.getProjectDescriptor().dataManager.getDataPaths());
     final Set<File> result = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
     final File moduleOutput = getModuleOutputDir();
-    for (ResourceRootConfiguration resConfig : getRootConfigurations(context.getProjectDescriptor().dataManager.getDataPaths())) {
-      final File output = getOutputDir(moduleOutput, resConfig);
+    for (ResourceRootConfiguration resConfig : getRootConfigurations(configuration)) {
+      final File output = getOutputDir(moduleOutput, resConfig, configuration.outputDirectory);
       if (output != null) {
         result.add(output);
       }
@@ -128,7 +134,11 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
   }
 
   @Nullable
-  public static File getOutputDir(@Nullable File moduleOutput, ResourceRootConfiguration config) {
+  public static File getOutputDir(@Nullable File moduleOutput, ResourceRootConfiguration config, @Nullable String outputDirectory) {
+    if(outputDirectory != null) {
+      moduleOutput = JpsPathUtil.urlToFile(outputDirectory);
+    }
+
     if (moduleOutput == null) {
       return null;
     }

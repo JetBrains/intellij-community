@@ -1,6 +1,7 @@
 package com.intellij.remoteServer.util;
 
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationBase;
+import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 
 /**
  * @author michael.golubev
@@ -26,5 +27,13 @@ public class CloudDeploymentNameConfiguration<Self extends CloudDeploymentNameCo
 
   public void setDeploymentName(String deploymentName) {
     myDeploymentName = deploymentName;
+  }
+
+  public String getDeploymentSourceName(DeploymentSource deploymentSource) {
+    return isDefaultDeploymentName() ? getDefaultDeploymentSourceName(deploymentSource) : getDeploymentName();
+  }
+
+  protected String getDefaultDeploymentSourceName(DeploymentSource deploymentSource) {
+    return CloudDeploymentNameProvider.DEFAULT_NAME_PROVIDER.getDeploymentName(deploymentSource);
   }
 }

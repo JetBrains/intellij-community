@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * Date: 11.08.2007
  */
 public interface RncInclude extends RncFileReference, Include<RncElement, RncDefine> {
+  @Override
   @NotNull
   RncDefine[] getOverrides();
 }

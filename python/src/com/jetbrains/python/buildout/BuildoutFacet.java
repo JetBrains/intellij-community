@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
 
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
       @Override
-      public void contentsChanged(VirtualFileEvent event) {
+      public void contentsChanged(@NotNull VirtualFileEvent event) {
         if (Comparing.equal(event.getFile(), getScript())) {
           updatePaths();
           attachLibrary(module);
@@ -365,10 +365,10 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
       return;
     }
     final List<String> paths = facet.getConfiguration().getPaths();
-    FacetLibraryConfigurator.attachLibrary(module, null, BUILDOUT_LIB_NAME, paths);
+    FacetLibraryConfigurator.attachPythonLibrary(module, null, BUILDOUT_LIB_NAME, paths);
   }
 
   public static void detachLibrary(final Module module) {
-    FacetLibraryConfigurator.detachLibrary(module, BUILDOUT_LIB_NAME);
+    FacetLibraryConfigurator.detachPythonLibrary(module, BUILDOUT_LIB_NAME);
   }
 }

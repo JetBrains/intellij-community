@@ -60,19 +60,18 @@ public abstract class MetaManager extends ModelLoader {
 
     Map<MetaModel, List<String>> modelToMorphing = new HashMap<MetaModel, List<String>>();
 
-    for (Object element : rootElement.getChildren(META)) {
-      loadModel(classLoader, (Element)element, modelToMorphing);
+    for (Element element : rootElement.getChildren(META)) {
+      loadModel(classLoader, element, modelToMorphing);
     }
 
-    for (Object element : rootElement.getChild(PALETTE).getChildren(GROUP)) {
-      loadGroup((Element)element);
+    for (Element element : rootElement.getChild(PALETTE).getChildren(GROUP)) {
+      loadGroup(element);
     }
 
     Element wrapInElement = rootElement.getChild(WRAP_IN);
     if (wrapInElement != null) {
-      for (Object element : wrapInElement.getChildren(ITEM)) {
-        Element item = (Element)element;
-        myWrapModels.add(myTag2Model.get(item.getAttributeValue("tag")));
+      for (Element element : wrapInElement.getChildren(ITEM)) {
+        myWrapModels.add(myTag2Model.get(element.getAttributeValue("tag")));
       }
     }
 
@@ -210,8 +209,7 @@ public abstract class MetaManager extends ModelLoader {
   protected PaletteGroup loadGroup(Element element) throws Exception {
     PaletteGroup group = createPaletteGroup(element.getAttributeValue(NAME));
 
-    for (Object child : element.getChildren(ITEM)) {
-      Element itemElement = (Element)child;
+    for (Element itemElement : element.getChildren(ITEM)) {
       MetaModel model = getModelByTag(itemElement.getAttributeValue(TAG));
       PaletteItem paletteItem = model.getPaletteItem();
 
@@ -230,8 +228,8 @@ public abstract class MetaManager extends ModelLoader {
         }
         group.addItem(paletteItem);
 
-        for (Object grandChild : itemElement.getChildren(ITEM)) {
-          group.addItem(createVariationPaletteItem(paletteItem, model, (Element)grandChild));
+        for (Element grandChild : itemElement.getChildren(ITEM)) {
+          group.addItem(createVariationPaletteItem(paletteItem, model, grandChild));
         }
       }
       else {

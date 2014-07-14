@@ -3,7 +3,7 @@ class A{
    * @param x<caret> abc
    * dfgdsfgdjkg
    * @param y sdgfhjsd
-   * @param <caret>
+   * @param
    */
   def abc(def xx, def xy) {
 

@@ -14,6 +14,9 @@
   <item name='java.util.regex.Pattern java.util.regex.Matcher matcher(java.lang.CharSequence)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.util.regex.Pattern java.util.regex.Matcher matcher(java.lang.CharSequence) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.util.regex.Pattern java.util.regex.Pattern compile(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
     <annotation name="org.jetbrains.annotations.NotNull" />

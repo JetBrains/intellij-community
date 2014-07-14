@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -29,8 +28,7 @@ import java.awt.*;
 
 public abstract class ModuleWizardStep extends StepAdapter {
 
-  protected static final Icon ICON = IconLoader.getIcon("/addmodulewizard.png");
-  public static final ModuleWizardStep[] EMPTY_ARRAY = new ModuleWizardStep[0];
+  public static final ModuleWizardStep[] EMPTY_ARRAY = {};
 
   @Override
   public abstract JComponent getComponent();
@@ -55,11 +53,6 @@ public abstract class ModuleWizardStep extends StepAdapter {
   }
 
   public void onWizardFinished() throws CommitStepException {
-  }
-
-  @Override
-  public Icon getIcon() {
-    return ICON;
   }
 
   public boolean isStepVisible() {

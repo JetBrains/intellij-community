@@ -308,7 +308,7 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
     protected void after() {}
   }
 
-  public static enum ID {
+  public enum ID {
     MODEL(0),
     UI(1),
     REVALIDATE(2),

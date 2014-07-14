@@ -42,11 +42,12 @@ public class PyUserSkeletonsTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
+  @Nullable
   @Override
-  public PyType getReturnType(@NotNull PyFunction function, @Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context) {
-    final PyFunction functionSkeleton = PyUserSkeletonsUtil.getUserSkeleton(function);
-    if (functionSkeleton != null) {
-      return functionSkeleton.getReturnType(context, callSite);
+  public PyType getReturnType(@NotNull Callable callable, @NotNull TypeEvalContext context) {
+    final Callable callableSkeleton = PyUserSkeletonsUtil.getUserSkeleton(callable);
+    if (callableSkeleton != null) {
+      return context.getReturnType(callableSkeleton);
     }
     return null;
   }

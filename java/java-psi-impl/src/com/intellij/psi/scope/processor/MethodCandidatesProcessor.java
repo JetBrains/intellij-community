@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,31 +43,62 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
   }
 
   @Override
-  public void add(PsiElement element, PsiSubstitutor substitutor) {
+  public void add(@NotNull PsiElement element, @NotNull PsiSubstitutor substitutor) {
     if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
       addMethod(method, substitutor, isInStaticScope() && !method.hasModifierProperty(PsiModifier.STATIC));
     }
   }
 
-  public void addMethod(final PsiMethod method, final PsiSubstitutor substitutor, final boolean staticProblem) {
-    final boolean isAccessible = JavaResolveUtil.isAccessible(method, method.getContainingClass(), method.getModifierList(),
+  public void addMethod(@NotNull PsiMethod method, final PsiSubstitutor substitutor, final boolean staticProblem) {
+    final boolean isAccessible = JavaResolveUtil.isAccessible(method, getContainingClass(method), method.getModifierList(),
                                                               myPlace, myAccessClass, myCurrentFileContext, myPlaceFile) &&
                                  !isShadowed(method);
     if (isAccepted(method)) {
-      add(createCandidateInfo(method, substitutor, staticProblem, isAccessible));
+      add(createCandidateInfo(method, substitutor, staticProblem, isAccessible, false));
+      if (acceptVarargs() && method.isVarArgs() && PsiUtil.isLanguageLevel8OrHigher(myPlace)) {
+        add(createCandidateInfo(method, substitutor, staticProblem, isAccessible, true));
+      }
       myHasAccessibleStaticCorrectCandidate |= isAccessible && !staticProblem;
     }
   }
 
-  protected MethodCandidateInfo createCandidateInfo(final PsiMethod method, final PsiSubstitutor substitutor,
-                                                    final boolean staticProblem, final boolean accessible) {
-    final PsiExpressionList argumentList = getArgumentList();
-    return new MethodCandidateInfo(method, substitutor, !accessible, staticProblem, argumentList, myCurrentFileContext,
-                                   getExpressionTypes(argumentList), getTypeArguments(), getLanguageLevel());
+  protected PsiClass getContainingClass(PsiMethod method) {
+    return method.getContainingClass();
   }
 
-  protected PsiType[] getExpressionTypes(PsiExpressionList argumentList) {
+  protected boolean acceptVarargs() {
+    return false;
+  }
+
+  protected MethodCandidateInfo createCandidateInfo(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor,
+                                                    final boolean staticProblem, final boolean accessible, final boolean varargs) {
+    final PsiExpressionList argumentList = getArgumentList();
+    return new MethodCandidateInfo(method, substitutor, !accessible, staticProblem, argumentList, myCurrentFileContext,
+                                   null, getTypeArguments(), getLanguageLevel()) {
+
+      private PsiType[] myExpressionTypes;
+
+      @Override
+      public PsiType[] getArgumentTypes() {
+        if (myExpressionTypes == null && argumentList != null) {
+          final PsiType[] expressionTypes = getExpressionTypes(argumentList);
+          if (!MethodCandidateInfo.ourOverloadGuard.currentStack().isEmpty()) {
+            return expressionTypes;
+          }
+          myExpressionTypes = expressionTypes;
+        }
+        return myExpressionTypes;
+      }
+
+      @Override
+      public boolean isVarargs() {
+        return varargs;
+      }
+    };
+  }
+
+  protected static PsiType[] getExpressionTypes(PsiExpressionList argumentList) {
     return argumentList != null ? argumentList.getExpressionTypes() : null;
   }
 
@@ -78,10 +110,10 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
       if (!candidate.isConstructor()) return false;
       if (myAccessClass == null) return true;
       if (myAccessClass instanceof PsiAnonymousClass) {
-        final PsiClass containingClass = candidate.getContainingClass();
+        final PsiClass containingClass = getContainingClass(candidate);
         return containingClass != null && containingClass.equals(myAccessClass.getSuperClass());
       }
-      return myAccessClass.isEquivalentTo(candidate.getContainingClass());
+      return myAccessClass.isEquivalentTo(getContainingClass(candidate));
     }
   }
 

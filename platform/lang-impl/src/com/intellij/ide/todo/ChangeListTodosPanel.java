@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListAdapter;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
 
@@ -54,7 +55,12 @@ public abstract class ChangeListTodosPanel extends TodoPanel{
     @Override
     public void defaultListChanged(final ChangeList oldDefaultList, final ChangeList newDefaultList) {
       rebuildWithAlarm(myAlarm);
-      setDisplayName(IdeBundle.message("changelist.todo.title", newDefaultList.getName()));
+      AppUIUtil.invokeOnEdt(new Runnable() {
+        @Override
+        public void run() {
+          setDisplayName(IdeBundle.message("changelist.todo.title", newDefaultList.getName()));
+        }
+      });
     }
 
     @Override

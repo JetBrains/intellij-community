@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,10 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.openapi.vfs.VirtualFileVisitor.VisitorException;
 
@@ -132,7 +129,7 @@ public class VfsUtilCore {
       if (length > 0) {
         length++;
       }
-      length += parent.getName().length();
+      length += parent.getNameSequence().length();
       parent = parent.getParent();
     }
 
@@ -144,7 +141,7 @@ public class VfsUtilCore {
       if (index < length) {
         chars[--index] = separator;
       }
-      String name = parent.getName();
+      CharSequence name = parent.getNameSequence();
       for (int i = name.length() - 1; i >= 0; i--) {
         chars[--index] = name.charAt(i);
       }
@@ -175,6 +172,7 @@ public class VfsUtilCore {
    * @return a copy of the file
    * @throws java.io.IOException if file failed to be copied
    */
+  @NotNull
   public static VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir) throws IOException {
     return copyFile(requestor, file, toDir, file.getName());
   }
@@ -191,6 +189,7 @@ public class VfsUtilCore {
    * @return a copy of the file
    * @throws java.io.IOException if file failed to be copied
    */
+  @NotNull
   public static VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull @NonNls String newName)
     throws IOException {
     final VirtualFile newChild = toDir.createChildData(requestor, newName);
@@ -358,7 +357,7 @@ public class VfsUtilCore {
 
   @NotNull
   public static String pathToUrl(@NonNls @NotNull String path) {
-    return VirtualFileManager.constructUrl(StandardFileSystems.FILE_PROTOCOL, path);
+    return VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, path);
   }
 
   public static List<File> virtualToIoFiles(@NotNull Collection<VirtualFile> scope) {
@@ -389,7 +388,7 @@ public class VfsUtilCore {
       if (SystemInfoRt.isWindows) {
         return prefix + URLUtil.SCHEME_SEPARATOR + suffix;
       }
-      else if (removeLocalhostPrefix && prefix.equals(StandardFileSystems.FILE_PROTOCOL) && suffix.startsWith(LOCALHOST_URI_PATH_PREFIX)) {
+      else if (removeLocalhostPrefix && prefix.equals(URLUtil.FILE_PROTOCOL) && suffix.startsWith(LOCALHOST_URI_PATH_PREFIX)) {
         // sometimes (e.g. in Google Chrome for Mac) local file url is prefixed with 'localhost' so we need to remove it
         return prefix + ":///" + suffix.substring(LOCALHOST_URI_PATH_PREFIX.length());
       }
@@ -423,8 +422,8 @@ public class VfsUtilCore {
   public static String convertFromUrl(@NotNull URL url) {
     String protocol = url.getProtocol();
     String path = url.getPath();
-    if (protocol.equals(StandardFileSystems.JAR_PROTOCOL)) {
-      if (StringUtil.startsWithConcatenation(path, StandardFileSystems.FILE_PROTOCOL, PROTOCOL_DELIMITER)) {
+    if (protocol.equals(URLUtil.JAR_PROTOCOL)) {
+      if (StringUtil.startsWithConcatenation(path, URLUtil.FILE_PROTOCOL, PROTOCOL_DELIMITER)) {
         try {
           URL subURL = new URL(path);
           path = subURL.getPath();
@@ -501,7 +500,7 @@ public class VfsUtilCore {
       }
     }
 
-    if (file == null && uri.contains(StandardFileSystems.JAR_SEPARATOR)) {
+    if (file == null && uri.contains(URLUtil.JAR_SEPARATOR)) {
       file = StandardFileSystems.jar().findFileByPath(uri);
       if (file == null && base == null) {
         file = VirtualFileManager.getInstance().findFileByUrl(uri);
@@ -540,6 +539,56 @@ public class VfsUtilCore {
     }
 
     return true;
+  }
+
+  /**
+   * Gets the common ancestor for passed files, or null if the files do not have common ancestors.
+   *
+   * @param file1 fist file
+   * @param file2 second file
+   * @return common ancestor for the passed files. Returns <code>null</code> if
+   *         the files do not have common ancestor
+   */
+  @Nullable
+  public static VirtualFile getCommonAncestor(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
+    if (!file1.getFileSystem().equals(file2.getFileSystem())) {
+      return null;
+    }
+
+    VirtualFile[] path1 = getPathComponents(file1);
+    VirtualFile[] path2 = getPathComponents(file2);
+
+    int lastEqualIdx = -1;
+    for (int i = 0; i < path1.length && i < path2.length; i++) {
+      if (path1[i].equals(path2[i])) {
+        lastEqualIdx = i;
+      }
+      else {
+        break;
+      }
+    }
+    return lastEqualIdx == -1 ? null : path1[lastEqualIdx];
+  }
+
+  /**
+   * Gets an array of files representing paths from root to the passed file.
+   *
+   * @param file the file
+   * @return virtual files which represents paths from root to the passed file
+   */
+  @NotNull
+  static VirtualFile[] getPathComponents(@NotNull VirtualFile file) {
+    ArrayList<VirtualFile> componentsList = new ArrayList<VirtualFile>();
+    while (file != null) {
+      componentsList.add(file);
+      file = file.getParent();
+    }
+    int size = componentsList.size();
+    VirtualFile[] components = new VirtualFile[size];
+    for (int i = 0; i < size; i++) {
+      components[i] = componentsList.get(size - i - 1);
+    }
+    return components;
   }
 
   /**

@@ -41,7 +41,7 @@ public class AddNullableNotNullAnnotationFix extends AddAnnotationPsiFix {
     if (!super.isAvailable(project, file, startElement, endElement)) {
       return false;
     }
-    PsiModifierListOwner owner = getContainer(startElement);
+    PsiModifierListOwner owner = getContainer(file, startElement.getTextRange().getStartOffset());
     if (owner == null || AnnotationUtil.isAnnotated(owner, getAnnotationsToRemove()[0], false, false)) {
       return false;
     }

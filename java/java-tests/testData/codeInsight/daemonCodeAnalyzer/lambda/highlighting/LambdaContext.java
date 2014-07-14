@@ -23,5 +23,6 @@ interface II {
 class Test1 {
   void bar(boolean b){
     II ik = b ? (s)-> true : (s)->false;
+    II ik1 = (II)(b ? <error descr="Lambda expression not expected here">(s)-> true</error> : <error descr="Lambda expression not expected here">(s)->false</error>);
   }
 }

@@ -1,8 +1,8 @@
 <html>
 <body>
 Reports any calls to overridden methods of the current class during object construction.
-A call is during object construction if it is made inside a constructor, in an non-static instance initializer,
-in a non-static field initializer or inside a <b>clone()</b>, <b>readObject()</b> or <b>readObjectNoData()</b> method.
+A call is made during object construction if it is performed in a constructor, in an non-static instance initializer,
+in a non-static field initializer or in a <b>clone()</b>, <b>readObject()</b> or <b>readObjectNoData()</b> method.
 Such calls may result in subtle bugs, as the object is not guaranteed to be initialized
 before the method call occurs.
 <!-- tooltip end -->

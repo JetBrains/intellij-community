@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,14 +43,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class TypeMigrationProcessor extends BaseRefactoringProcessor {
+import static com.intellij.util.ObjectUtils.assertNotNull;
 
+public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   private PsiElement[] myRoot;
   private final TypeMigrationRules myRules;
   private TypeMigrationLabeler myLabeler;
 
   public TypeMigrationProcessor(final Project project, final PsiElement root, final TypeMigrationRules rules) {
     this(project, getRoots(root), rules);
+  }
+
+  public TypeMigrationProcessor(final Project project, final PsiElement[] roots, final TypeMigrationRules rules) {
+    super(project);
+    myRoot = roots;
+    myRules = rules;
   }
 
   private static PsiElement[] getRoots(PsiElement root) {
@@ -75,12 +82,6 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
       }
     }
     return new PsiElement[]{root};
-  }
-
-  public TypeMigrationProcessor(final Project project, final PsiElement[] roots, final TypeMigrationRules rules) {
-    super(project);
-    myRoot = roots;
-    myRules = rules;
   }
 
   public static void runHighlightingTypeMigration(final Project project,
@@ -115,10 +116,12 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   }
 
   @NotNull
+  @Override
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new TypeMigrationViewDescriptor(myRoot[0]);
   }
 
+  @Override
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     if (hasFailedConversions()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -162,19 +165,16 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     else {
       text = Arrays.toString(myRoot);
     }
-    Content content =  UsageViewManager.getInstance(myProject)
-        .addContent("Migrate Type of " +
-                    text +
-                    " from \'" +
-                    TypeMigrationLabeler.getElementType(myRoot[0]).getPresentableText() +
-                    "\' to \'" +
-                    myRules.getMigrationRootType().getPresentableText() +
-                    "\'", false, panel, true, true);
+    String fromType = assertNotNull(TypeMigrationLabeler.getElementType(myRoot[0])).getPresentableText();
+    String toType = myRules.getMigrationRootType().getPresentableText();
+    String name = "Migrate Type of " + text + " from \'" + fromType + "\' to \'" + toType + "\'";
+    Content content = UsageViewManager.getInstance(myProject).addContent(name, false, panel, true, true);
     panel.setContent(content);
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.FIND).activate(null);
   }
 
   @NotNull
+  @Override
   public UsageInfo[] findUsages() {
     myLabeler = new TypeMigrationLabeler(myRules);
 
@@ -187,10 +187,12 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   protected void refreshElements(PsiElement[] elements) {
     myRoot = elements;
   }
 
+  @Override
   public void performRefactoring(UsageInfo[] usages) {
     change(myLabeler, usages);
   }
@@ -200,9 +202,13 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     for (UsageInfo usage : usages) {
       if (((TypeMigrationUsageInfo)usage).isExcluded()) continue;
       final PsiElement element = usage.getElement();
-      if (element instanceof PsiVariable || element instanceof PsiMember || element instanceof PsiExpression || element instanceof PsiReferenceParameterList) {
+      if (element instanceof PsiVariable ||
+          element instanceof PsiMember ||
+          element instanceof PsiExpression ||
+          element instanceof PsiReferenceParameterList) {
         labeler.change((TypeMigrationUsageInfo)usage);
-      } else {
+      }
+      else {
         nonCodeUsages.add(usage);
       }
     }
@@ -216,9 +222,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
             try {
               reference.bindToElement((PsiElement)target);
             }
-            catch (IncorrectOperationException e) {
-              //skip
-            }
+            catch (IncorrectOperationException ignored) { }
           }
         }
       }
@@ -229,6 +233,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     return myLabeler;
   }
 
+  @Override
   protected String getCommandName() {
     return "TypeMigration";
   }

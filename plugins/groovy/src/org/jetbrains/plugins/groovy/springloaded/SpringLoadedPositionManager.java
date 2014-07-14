@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.springloaded;
 
 import com.intellij.debugger.NoDataException;
@@ -52,7 +67,7 @@ public class SpringLoadedPositionManager implements PositionManager {
 
   @NotNull
   @Override
-  public List<ReferenceType> getAllClasses(final SourcePosition classPosition) throws NoDataException {
+  public List<ReferenceType> getAllClasses(@NotNull final SourcePosition classPosition) throws NoDataException {
     int line;
     String className;
 
@@ -85,7 +100,7 @@ public class SpringLoadedPositionManager implements PositionManager {
 
   @NotNull
   @Override
-  public List<Location> locationsOfLine(ReferenceType type, SourcePosition position) throws NoDataException {
+  public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
     throw new NoDataException();
   }
 
@@ -146,7 +161,7 @@ public class SpringLoadedPositionManager implements PositionManager {
   }
 
   @Override
-  public ClassPrepareRequest createPrepareRequest(ClassPrepareRequestor requestor, SourcePosition position) throws NoDataException {
+  public ClassPrepareRequest createPrepareRequest(@NotNull ClassPrepareRequestor requestor, @NotNull SourcePosition position) throws NoDataException {
     String className = getOuterClassName(position);
     if (className == null) {
       throw new NoDataException();
@@ -190,7 +205,7 @@ public class SpringLoadedPositionManager implements PositionManager {
 
       ReferenceType effectiveRef = springLoadedGeneratedClass == null ? fromClass : springLoadedGeneratedClass;
 
-      if (effectiveRef.locationsOfLine(lineNumber).size() > 0) {
+      if (!effectiveRef.locationsOfLine(lineNumber).isEmpty()) {
         res.add(effectiveRef);
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -34,18 +35,21 @@ import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementDescriptorWithCDataContent;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.Collection;
+
 public class XmlGtTypedHandler extends TypedHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.TypedHandler");
 
+  @Override
   public Result beforeCharTyped(final char c, final Project project, Editor editor, PsiFile editedFile, final FileType fileType) {
     final WebEditorOptions webEditorOptions = WebEditorOptions.getInstance();
     if (c == '>' && webEditorOptions != null && webEditorOptions.isAutomaticallyInsertClosingTag() && fileContainsXmlLanguage(editedFile)) {
@@ -88,9 +92,8 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
             }
 
             if (tokenType == XmlTokenType.XML_TAG_END ||
-                tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END && element.getTextOffset() == offset - 1
-               ) {
-              editor.getCaretModel().moveToOffset(offset + 1);
+                tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END && element.getTextOffset() == offset - 1) {
+              EditorModificationUtil.moveCaretRelatively(editor, 1);
               editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
               return Result.STOP;
             }
@@ -149,10 +152,9 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
       if (!(element instanceof XmlTag)) {
         if (element instanceof XmlTokenImpl &&
             element.getPrevSibling() !=null &&
-            element.getPrevSibling().getText().equals("<")
-           ) {
+            element.getPrevSibling().getText().equals("<")) {
           // tag is started and there is another text in the end
-          editor.getDocument().insertString(offset, "</" + element.getText() + ">");
+          EditorModificationUtil.insertStringAtCaret(editor, "</" + element.getText() + ">", false, 0);
         }
         return Result.CONTINUE;
       }
@@ -179,87 +181,56 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
       if (BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), editedFile.getFileType(), iterator, true,true)) {
         PsiElement parent = tag.getParent();
         boolean hasBalance = true;
-        
-        while(parent instanceof XmlTag && name.equals(((XmlTag)parent).getName())) {
-          ASTNode astNode = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(parent.getNode());
-          if (astNode == null) {
+        loop: while(parent instanceof XmlTag) {
+          if (name.equals(((XmlTag)parent).getName())) {
             hasBalance = false;
-            break;
+            ASTNode astNode = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(parent.getNode());
+            if (astNode == null) {
+              hasBalance = true;
+              break;
+            }
+            for (PsiElement el = parent.getNextSibling(); el != null; el = el.getNextSibling()) {
+              if (el instanceof PsiErrorElement && el.getText().startsWith("</" + name)) {
+                hasBalance = true;
+                break loop;
+              }
+            }
           }
-
           parent = parent.getParent();
         }
-        
-        if (hasBalance) {
-          hasBalance = false;
-          for(ASTNode node=parent.getNode().getLastChildNode(); node != null; node = node.getTreePrev()) {
-            ASTNode leaf = node;
-            if (leaf.getElementType() == TokenType.ERROR_ELEMENT) {
-              ASTNode firstChild = leaf.getFirstChildNode();
-              if (firstChild != null) leaf = firstChild;
-              else {
-                PsiElement psiElement = PsiTreeUtil.nextLeaf(leaf.getPsi());
-                leaf = psiElement != null ? psiElement.getNode() : null;
-              }
-              if (leaf != null && leaf.getElementType() == TokenType.WHITE_SPACE) {
-                PsiElement psiElement = PsiTreeUtil.nextLeaf(leaf.getPsi());
-                if (psiElement != null) leaf = psiElement.getNode();
-              }
-            }
-            
-            if (leaf != null && leaf.getElementType() == XmlTokenType.XML_END_TAG_START) {
-              ASTNode treeNext = leaf.getTreeNext();
-              IElementType treeNextType;
-              if (treeNext != null && 
-                  ((treeNextType = treeNext.getElementType()) == XmlTokenType.XML_NAME ||
-                   treeNextType == XmlTokenType.XML_TAG_NAME
-                  )
-                ) {
-                if (name.equals(treeNext.getText())) {
-                  ASTNode parentEndName = parent instanceof XmlTag ?
-                                          XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(parent.getNode()):null;
-                  hasBalance = !(parent instanceof XmlTag) || 
-                    parentEndName != null && !parentEndName.getText().equals(name);
-                  break;
-                }
-              }
-            }
-          }
-        }
-        
-        if (hasBalance) return Result.CONTINUE; 
+        if (hasBalance) return Result.CONTINUE;
       }
 
-      TextRange cdataReformatRange = null;
+      Collection<TextRange> cdataReformatRanges = null;
       final XmlElementDescriptor descriptor = tag.getDescriptor();
 
+      EditorModificationUtil.insertStringAtCaret(editor, "</" + name + ">", false, 0);
+      
       if (descriptor instanceof XmlElementDescriptorWithCDataContent) {
         final XmlElementDescriptorWithCDataContent cDataContainer = (XmlElementDescriptorWithCDataContent)descriptor;
 
+        cdataReformatRanges = ContainerUtil.newSmartList();
         if (cDataContainer.requiresCdataBracesInContext(tag)) {
-          int rangeStart = offset;
           @NonNls final String cDataStart = "><![CDATA[";
           final String inserted = cDataStart + "\n]]>";
-          editor.getDocument().insertString(offset, inserted);
-          final int newoffset = offset + cDataStart.length();
-          editor.getCaretModel().moveToOffset(newoffset);
-          offset += inserted.length();
-          cdataReformatRange = new TextRange(rangeStart, offset + 1);
+          EditorModificationUtil.insertStringAtCaret(editor, inserted, false, cDataStart.length());
+          int caretOffset = editor.getCaretModel().getOffset();
+          if (caretOffset >= cDataStart.length()) {
+            cdataReformatRanges.add(TextRange.from(caretOffset - cDataStart.length(), inserted.length() + 1));
+          }
         }
       }
 
-      editor.getDocument().insertString(offset, "</" + name + ">");
-
-      if (cdataReformatRange != null) {
+      if (cdataReformatRanges != null && !cdataReformatRanges.isEmpty()) {
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
         try {          
-          CodeStyleManager.getInstance(project).reformatText(file, cdataReformatRange.getStartOffset(), cdataReformatRange.getEndOffset());
+          CodeStyleManager.getInstance(project).reformatText(file, cdataReformatRanges);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
         }
       }
-      return cdataReformatRange != null ? Result.STOP : Result.CONTINUE;
+      return cdataReformatRanges != null && !cdataReformatRanges.isEmpty() ? Result.STOP : Result.CONTINUE;
     }
     return Result.CONTINUE;
   }

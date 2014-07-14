@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,28 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.HashSet;
 
 public class DynamicRegexReplaceableByCompiledPatternInspectionBase extends BaseInspection {
+
+  @SuppressWarnings("UnusedDeclaration")
+  public boolean ignoreForSplitOptimization = true;
+
   @NonNls
   protected static final Collection<String> regexMethodNames = new HashSet<String>(4);
   static {
@@ -52,6 +61,19 @@ public class DynamicRegexReplaceableByCompiledPatternInspectionBase extends Base
       "dynamic.regex.replaceable.by.compiled.pattern.problem.descriptor");
   }
 
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel("Ignore for String.split() optimizations (since Java 7)", this, "ignoreForSplitOptimization");
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    if (!ignoreForSplitOptimization) {
+      node.addContent(new Element("option").setAttribute("name", "ignoreForSplitOptimization").setAttribute("value", "false"));
+    }
+  }
+
   @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
@@ -62,7 +84,7 @@ public class DynamicRegexReplaceableByCompiledPatternInspectionBase extends Base
     return new DynamicRegexReplaceableByCompiledPatternVisitor();
   }
 
-  private static class DynamicRegexReplaceableByCompiledPatternVisitor extends BaseInspectionVisitor {
+  private class DynamicRegexReplaceableByCompiledPatternVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
@@ -73,8 +95,7 @@ public class DynamicRegexReplaceableByCompiledPatternInspectionBase extends Base
       registerMethodCallError(expression);
     }
 
-
-    private static boolean isCallToRegexMethod(PsiMethodCallExpression expression) {
+    private boolean isCallToRegexMethod(PsiMethodCallExpression expression) {
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final String name = methodExpression.getReferenceName();
       if (!regexMethodNames.contains(name)) {
@@ -82,10 +103,16 @@ public class DynamicRegexReplaceableByCompiledPatternInspectionBase extends Base
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
-      for (PsiExpression argument : arguments) {
-        if (!PsiUtil.isConstantExpression(argument)) {
-          return false;
-        }
+      if (arguments.length == 0) {
+        return false;
+      }
+      final Object value = ExpressionUtils.computeConstantExpression(arguments[0]);
+      if (!(value instanceof String)) {
+        return false;
+      }
+      final String regex = (String)value;
+      if (ignoreForSplitOptimization && "split".equals(name) && isOptimizedPattern(regex)) {
+        return false;
       }
       final PsiMethod method = expression.resolveMethod();
       if (method == null) {
@@ -97,6 +124,20 @@ public class DynamicRegexReplaceableByCompiledPatternInspectionBase extends Base
       }
       final String className = containingClass.getQualifiedName();
       return CommonClassNames.JAVA_LANG_STRING.equals(className);
+    }
+
+    private boolean isOptimizedPattern(String regex) {
+      // from String.split()
+      int ch;
+      return ((regex.length() == 1 &&
+               ".$|()[{^?*+\\".indexOf(ch = regex.charAt(0)) == -1) ||
+              (regex.length() == 2 &&
+               regex.charAt(0) == '\\' &&
+               (((ch = regex.charAt(1))-'0')|('9'-ch)) < 0 &&
+               ((ch-'a')|('z'-ch)) < 0 &&
+               ((ch-'A')|('Z'-ch)) < 0)) &&
+             (ch < Character.MIN_HIGH_SURROGATE ||
+              ch > Character.MAX_LOW_SURROGATE);
     }
   }
 }

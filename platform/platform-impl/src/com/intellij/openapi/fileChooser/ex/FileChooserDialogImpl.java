@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -196,7 +196,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     label.setToolTipText("Recent files");
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent event, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         showRecentFilesPopup();
         return true;
       }
@@ -335,14 +335,10 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
 
     ApplicationManager.getApplication().getMessageBus().connect(getDisposable())
-      .subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
+      .subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener.Adapter() {
         @Override
         public void applicationActivated(IdeFrame ideFrame) {
           SaveAndSyncHandlerImpl.getInstance().maybeRefresh(ModalityState.current());
-        }
-
-        @Override
-        public void applicationDeactivated(IdeFrame ideFrame) {
         }
       });
 

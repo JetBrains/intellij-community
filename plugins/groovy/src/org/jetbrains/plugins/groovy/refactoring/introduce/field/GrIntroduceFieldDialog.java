@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.ui.components.JBRadioButton;
@@ -45,9 +46,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
@@ -60,10 +60,6 @@ import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-
-import static com.intellij.openapi.ui.Messages.getWarningIcon;
-import static com.intellij.openapi.ui.Messages.showYesNoDialog;
-import static com.intellij.refactoring.introduceField.IntroduceFieldHandler.REFACTORING_NAME;
 
 public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduceDialog<GrIntroduceFieldSettings>, GrIntroduceFieldSettings {
   private JPanel myContentPane;
@@ -82,9 +78,9 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   private JLabel myNameLabel;
   private JLabel myTypeLabel;
   private final boolean myIsStatic;
-  private boolean isInvokedInAlwaysInvokedConstructor;
-  private boolean hasLHSUsages;
-  private String myInvokedOnLocalVar;
+  private final boolean isInvokedInAlwaysInvokedConstructor;
+  private final boolean hasLHSUsages;
+  private final String myInvokedOnLocalVar;
   private final boolean myCanBeInitializedOutsideBlock;
 
   @Override
@@ -197,7 +193,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
                                           isAlwaysInvokedConstructor((PsiMethod)container, clazz);
     hasLHSUsages = hasLhsUsages(myContext);
 
-    setTitle(REFACTORING_NAME);
+    setTitle(IntroduceFieldHandler.REFACTORING_NAME);
     init();
     checkErrors();
   }
@@ -377,7 +373,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   private static String getInvokedOnLocalVar(GrExpression expression) {
     if (expression instanceof GrReferenceExpression) {
       final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
-      if (GroovyRefactoringUtil.isLocalVariable(resolved)) {
+      if (PsiUtil.isLocalVariable(resolved)) {
         return ((GrVariable)resolved).getName();
       }
     }
@@ -394,7 +390,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
 
       if (expression instanceof GrReferenceExpression) {
         final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
-        if (GroovyRefactoringUtil.isLocalVariable(resolved)) {
+        if (PsiUtil.isLocalVariable(resolved)) {
           expression = ((GrVariable)resolved).getInitializerGroovy();
           if (expression == null) return false;
         }
@@ -464,7 +460,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     final String name = getName();
     String message = RefactoringBundle.message("field.exists", name, clazz.getQualifiedName());
     if (clazz.findFieldByName(name, true) != null &&
-        showYesNoDialog(myContext.getProject(), message, REFACTORING_NAME, getWarningIcon()) != Messages.YES) {
+        Messages.showYesNoDialog(myContext.getProject(), message, IntroduceFieldHandler.REFACTORING_NAME, Messages.getWarningIcon()) != Messages.YES) {
       return;
     }
     super.doOKAction();

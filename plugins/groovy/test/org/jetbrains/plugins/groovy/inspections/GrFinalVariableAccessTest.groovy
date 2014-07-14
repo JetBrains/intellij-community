@@ -448,8 +448,9 @@ import groovy.transform.Immutable
 
 @Immutable
 class Money {
-    String <warning>currency</warning>
-    int <warning>amount</warning>
+    String currency
+    int amount
+    private final <warning>privateField</warning>
 
     void doubleYourMoney() {
         <error>amount</error> *= 2

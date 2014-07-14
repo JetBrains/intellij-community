@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -28,6 +29,9 @@ class RefParser {
   // e25b7d8f (HEAD, refs/remotes/origin/master, refs/remotes/origin/HEAD, refs/heads/master)
   public List<VcsRef> parseCommitRefs(@NotNull String input, @NotNull VirtualFile root) {
     int firstSpaceIndex = input.indexOf(' ');
+    if (firstSpaceIndex < 0) {
+      return Collections.emptyList();
+    }
     String strHash = input.substring(0, firstSpaceIndex);
     Hash hash = HashImpl.build(strHash);
     String refPaths = input.substring(firstSpaceIndex + 2, input.length() - 1);

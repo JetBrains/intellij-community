@@ -1,9 +1,25 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.Nullable;
@@ -67,11 +83,13 @@ public class InvocationCache {
     addCoreInvocations(AnnotatedElement.class);
     addCoreInvocations(Object.class);
     ourCoreInvocations.put(new JavaMethodSignature("getUserData", Key.class), new Invocation() {
+      @Override
       public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
         return handler.getUserData((Key<?>)args[0]);
       }
     });
     ourCoreInvocations.put(new JavaMethodSignature("putUserData", Key.class, Object.class), new Invocation() {
+      @Override
       public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
         //noinspection unchecked
         handler.putUserData((Key)args[0], args[1]);
@@ -79,49 +97,58 @@ public class InvocationCache {
       }
     });
     ourCoreInvocations.put(new JavaMethodSignature("getXmlElement"), new Invocation() {
+      @Override
       public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
         return handler.getXmlElement();
       }
     });
     ourCoreInvocations.put(new JavaMethodSignature("getXmlTag"), new Invocation() {
+      @Override
       public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
         return handler.getXmlTag();
       }
     });
     ourCoreInvocations.put(new JavaMethodSignature("getParent"), new Invocation() {
+      @Override
       public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
         return handler.getParent();
       }
     });
     ourCoreInvocations.put(new JavaMethodSignature("accept", DomElementVisitor.class), new Invocation() {
+      @Override
       public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
         handler.accept((DomElementVisitor)args[0]);
         return null;
       }
     });
     ourCoreInvocations.put(new JavaMethodSignature("acceptChildren", DomElementVisitor.class), new Invocation() {
+      @Override
       public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
         handler.acceptChildren((DomElementVisitor)args[0]);
         return null;
       }
     });
     ourCoreInvocations.put(new JavaMethodSignature("getAnnotation", Class.class), new Invocation() {
+      @Override
       public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
         //noinspection unchecked
         return handler.getAnnotation((Class<Annotation>)args[0]);
       }
     });
     ourCoreInvocations.put(new JavaMethodSignature("getRawText"), new Invocation() {
+      @Override
       public final Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
         return handler.getValue();
       }
     });
     ourCoreInvocations.put(new JavaMethodSignature("getXmlAttribute"), new Invocation() {
+      @Override
       public final Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
         return handler.getXmlElement();
       }
     });
     ourCoreInvocations.put(new JavaMethodSignature("getXmlAttributeValue"), new Invocation() {
+      @Override
       @Nullable
       public final Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
         final XmlAttribute attribute = (XmlAttribute)handler.getXmlElement();
@@ -129,6 +156,7 @@ public class InvocationCache {
       }
     });
     ourCoreInvocations.put(new JavaMethodSignature("getConverter"), new Invocation() {
+      @Override
       public final Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
         try {
           return handler.getScalarConverter();
@@ -145,9 +173,10 @@ public class InvocationCache {
   }
 
   private static void addCoreInvocations(final Class<?> aClass) {
-    for (final Method method : aClass.getDeclaredMethods()) {
+    for (final Method method : ReflectionUtil.getClassDeclaredMethods(aClass)) {
       if ("equals".equals(method.getName())) {
         ourCoreInvocations.put(new JavaMethodSignature(method), new Invocation() {
+          @Override
           public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
             final DomElement proxy = handler.getProxy();
             final Object arg = args[0];
@@ -166,6 +195,7 @@ public class InvocationCache {
       }
       else if ("hashCode".equals(method.getName())) {
         ourCoreInvocations.put(new JavaMethodSignature(method), new Invocation() {
+          @Override
           public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
             return handler.hashCode();
           }
@@ -173,6 +203,7 @@ public class InvocationCache {
       }
       else {
         ourCoreInvocations.put(new JavaMethodSignature(method), new Invocation() {
+          @Override
           public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
             return method.invoke(handler, args);
           }

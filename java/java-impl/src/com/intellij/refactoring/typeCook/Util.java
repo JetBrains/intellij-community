@@ -225,7 +225,7 @@ public class Util {
       return bound != null && wct.isExtends() && bindsTypeParameters(bound, params);
     }
 
-    final PsiClassType.ClassResolveResult result = Util.resolveType(t);
+    final PsiClassType.ClassResolveResult result = resolveType(t);
     final PsiClass theClass = result.getElement();
     final PsiSubstitutor theSubst = result.getSubstitutor();
 
@@ -371,7 +371,7 @@ public class Util {
       }
       else if (element instanceof PsiNewExpression) {
         final PsiNewExpression newx = (PsiNewExpression)element;
-        final PsiClassType.ClassResolveResult result = Util.resolveType(type);
+        final PsiClassType.ClassResolveResult result = resolveType(type);
 
         if (result == null) {
           return;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.DisposableIterator;
 import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -295,14 +295,14 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     }
 
     /**
-     *     packing/unpacking cachedDeltaUpToRoot field parts
-     *     Bits layout:
-     *     XXXXXXXXNMMMMMMMM where
-     *     XXXXXXXX - 31bit int containing cached delta up to root
-     *     N        - 1bit flag.  if set then all deltas up to root are null
-     *     MMMMMMMM - 32bit int containing this node modification count
+     * packing/unpacking cachedDeltaUpToRoot field parts
+     * Bits layout:
+     * XXXXXXXXNMMMMMMMM where
+     * XXXXXXXX - 31bit int containing cached delta up to root
+     * N        - 1bit flag.  if set then all deltas up to root are null
+     * MMMMMMMM - 32bit int containing this node modification count
      */
-    private static AtomicFieldUpdater<IntervalNode, Long> cachedDeltaUpdater = AtomicFieldUpdater.forLongField(IntervalNode.class);
+    private static final AtomicFieldUpdater<IntervalNode, Long> cachedDeltaUpdater = AtomicFieldUpdater.forLongFieldIn(IntervalNode.class);
 
     private void setCachedValues(int deltaUpToRoot, boolean allDeltaUpToRootAreNull, int modCount) {
       cachedDeltaUpToRoot = packValues(deltaUpToRoot, allDeltaUpToRootAreNull, modCount);
@@ -558,23 +558,55 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     return processContaining(root.getRight(), offset, processor, modCountBefore, delta);
   }
 
+  public interface PeekableIterator<T> extends DisposableIterator<T> {
+    T peek();
+    PeekableIterator EMPTY = new PeekableIterator() {
+      @Override
+      public Object peek() {
+        return null;
+      }
+
+      @Override
+      public void dispose() {
+
+      }
+
+      @Override
+      public boolean hasNext() {
+        return false;
+      }
+
+      @Override
+      public Object next() {
+        return null;
+      }
+
+      @Override
+      public void remove() {
+        throw new UnsupportedOperationException("remove");
+      }
+    };
+  }
+
   @NotNull
-  DisposableIterator<T> overlappingIterator(final int startOffset, final int endOffset) {
-    ProperTextRange.assertProperRange(startOffset, endOffset, "");
+  PeekableIterator<T> overlappingIterator(@NotNull final TextRangeInterval rangeInterval) {
+    TextRange.assertProperRange(rangeInterval);
 
     l.readLock().lock();
 
     try {
-      final IntervalNode<T> firstOverlap = findMinOverlappingWith(getRoot(), new TextRangeInterval(startOffset, endOffset), modCount, 0);
+      final int startOffset = rangeInterval.getStartOffset();
+      final int endOffset = rangeInterval.getEndOffset();
+      final IntervalNode<T> firstOverlap = findMinOverlappingWith(getRoot(), rangeInterval, modCount, 0);
       if (firstOverlap == null) {
         l.readLock().unlock();
-        return DisposableIterator.EMPTY;
+        return PeekableIterator.EMPTY;
       }
       final int firstOverlapDelta = firstOverlap.computeDeltaUpToRoot();
       final int firstOverlapStart = firstOverlap.intervalStart() + firstOverlapDelta;
       final int modCountBefore = modCount;
 
-      return new DisposableIterator<T>() {
+      return new PeekableIterator<T>() {
         private IntervalNode<T> currentNode = firstOverlap;
         private int deltaUpToRootExclusive = firstOverlapDelta-firstOverlap.delta;
         private int indexInCurrentList = 0;
@@ -599,7 +631,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
             if (currentNode == null) {
               return false;
             }
-            if (overlaps(currentNode, startOffset, endOffset, deltaUpToRootExclusive)) {
+            if (overlaps(currentNode, rangeInterval, deltaUpToRootExclusive)) {
               assert currentNode.intervalStart() + deltaUpToRootExclusive + currentNode.delta >= firstOverlapStart;
               indexInCurrentList = 0;
               while (indexInCurrentList != currentNode.intervals.size()) {
@@ -620,6 +652,12 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
           T t = current;
           current = null;
           return t;
+        }
+
+        @Override
+        public T peek() {
+          if (!hasNext()) throw new NoSuchElementException();
+          return current;
         }
 
         @Override
@@ -680,12 +718,12 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     }
   }
 
-  private boolean overlaps(IntervalNode<T> root, int startOffset, int endOffset, int deltaUpToRootExclusive) {
+  private boolean overlaps(IntervalNode<T> root, @NotNull TextRangeInterval rangeInterval, int deltaUpToRootExclusive) {
     if (root == null) return false;
     int delta = root.delta + deltaUpToRootExclusive;
     int start = root.intervalStart() + delta;
     int end = root.intervalEnd() + delta;
-    return Math.max(start, startOffset) <= Math.min(end, endOffset);
+    return rangeInterval.intersects(start, end);
   }
 
   protected IntervalNode<T> findOrInsert(@NotNull IntervalNode<T> node) {

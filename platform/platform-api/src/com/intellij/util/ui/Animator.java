@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class Animator implements Disposable {
-  private final static ScheduledExecutorService scheduler = ConcurrencyUtil.newSingleScheduledThreadExecutor("Animations");
+  private static final ScheduledExecutorService scheduler = ConcurrencyUtil.newSingleScheduledThreadExecutor("Animations");
 
   private final int myTotalFrames;
   private final int myCycleDuration;
@@ -40,7 +40,8 @@ public abstract class Animator implements Disposable {
 
   private int myCurrentFrame;
   private long myStartTime;
-  private long myStopTime;
+  private long myStartDeltaTime;
+  private boolean myInitialStep;
   private volatile boolean myDisposed = false;
 
   public Animator(@NonNls final String name,
@@ -60,40 +61,41 @@ public abstract class Animator implements Disposable {
     myCycleDuration = cycleDuration;
     myRepeatable = repeatable;
     myForward = forward;
-    myCurrentFrame = forward ? 0 : totalFrames;
+
+    reset();
 
     if (ApplicationManager.getApplication() == null) {
       animationDone();
     }
-    else {
-      reset();
-    }
   }
-  
+
   private void onTick() {
     if (isDisposed()) return;
-    
-    if (myStartTime == -1) {
-      myStartTime = System.currentTimeMillis();
-      myStopTime = myStartTime + myCycleDuration * (myTotalFrames - myCurrentFrame) / myTotalFrames;
+
+    if (myInitialStep) {
+      myInitialStep = false;
+      myStartTime = System.currentTimeMillis() - myStartDeltaTime; // keep animation state on suspend
+      paint();
+      return;
     }
 
-    final double passedTime = System.currentTimeMillis() - myStartTime;
-    final double totalTime = myStopTime - myStartTime;
-    
-    final int newFrame = (int)(passedTime * myTotalFrames / totalTime);
-    if (myCurrentFrame > 0 && newFrame == myCurrentFrame) return;
-    myCurrentFrame = newFrame;
+    double cycleTime = System.currentTimeMillis() - myStartTime;
+    if (cycleTime < 0) return; // currentTimeMillis() is not monotonic - let's pretend that animation didn't changed
 
-    if (myCurrentFrame >= myTotalFrames) {
-      if (myRepeatable) {
-        reset();
-      }
-      else {
-        animationDone();
-        return;
-      }
+    long newFrame = (long)(cycleTime * myTotalFrames / myCycleDuration);
+
+    if (myRepeatable) {
+      newFrame = newFrame % myTotalFrames;
     }
+
+    if (newFrame == myCurrentFrame) return;
+
+    if (!myRepeatable && newFrame >= myTotalFrames) {
+      animationDone();
+      return;
+    }
+
+    myCurrentFrame = (int)(newFrame);
 
     paint();
   }
@@ -106,6 +108,7 @@ public abstract class Animator implements Disposable {
     stopTicker();
 
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         paintCycleEnd();
       }
@@ -124,13 +127,17 @@ public abstract class Animator implements Disposable {
   }
 
   public void suspend() {
-    myStartTime = -1;
+    myStartDeltaTime = System.currentTimeMillis() - myStartTime;
+    myInitialStep = true;
     stopTicker();
   }
 
   public void resume() {
     final Application app = ApplicationManager.getApplication();
-    if (app == null || app.isUnitTestMode()) return;
+    if (app == null || app.isUnitTestMode()) {
+      animationDone();
+      return;
+    }
 
     if (myCycleDuration == 0) {
       myCurrentFrame = myTotalFrames - 1;
@@ -159,6 +166,7 @@ public abstract class Animator implements Disposable {
 
   public abstract void paintNow(int frame, int totalFrames, int cycle);
 
+  @Override
   public void dispose() {
     myDisposed = true;
     stopTicker();
@@ -170,7 +178,8 @@ public abstract class Animator implements Disposable {
 
   public void reset() {
     myCurrentFrame = 0;
-    myStartTime = -1;
+    myStartDeltaTime = 0;
+    myInitialStep = true;
   }
 
   public final boolean isForward() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,10 +39,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.refactoring.GroovyChangeContextUtil;
-
-import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.isWhiteSpace;
 
 /**
  * @author peter
@@ -72,7 +71,7 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
     final T member = getPsiMember();
     if (member == null) return;
 
-    LOG.assertTrue(member instanceof GroovyPsiElement);
+    LOG.assertTrue(member instanceof GroovyPsiElement, member);
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(member.getProject());
 
     final PsiElement prev = member.getPrevSibling();
@@ -147,12 +146,12 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
       if (body != null) {
         PsiElement l = body.getLBrace();
         if (l != null) l = l.getNextSibling();
-        while (isWhiteSpace(l)) l = l.getNextSibling();
+        while (PsiImplUtil.isWhiteSpaceOrNls(l)) l = l.getNextSibling();
         if (l == null) l = body;
 
         PsiElement r = body.getRBrace();
         if (r != null) r = r.getPrevSibling();
-        while (isWhiteSpace(r)) r = r.getPrevSibling();
+        while (PsiImplUtil.isWhiteSpaceOrNls(r)) r = r.getPrevSibling();
         if (r == null) r = body;
 
         int start = l.getTextRange().getStartOffset();

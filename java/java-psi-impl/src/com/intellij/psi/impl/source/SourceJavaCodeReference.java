@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * This interface should be implemented by all PsiJavaCodeReference implementations
@@ -35,9 +36,8 @@ public interface SourceJavaCodeReference {
    * Helper method for ReferenceAdjuster. Tries to qualify this reference as if
    * it references <code>targetClass</code>. Does not check that it indeed references
    * targetClass
-   * @param targetClass
    */
-  void fullyQualify(PsiClass targetClass);
+  void fullyQualify(@NotNull PsiClass targetClass);
 
   boolean isQualified();
 

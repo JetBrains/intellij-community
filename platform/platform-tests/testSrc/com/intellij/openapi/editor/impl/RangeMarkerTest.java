@@ -1,8 +1,21 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -10,31 +23,41 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author mike
  */
 public class RangeMarkerTest extends LightPlatformTestCase {
+  private PsiDocumentManagerImpl documentManager;
+  private PsiToDocumentSynchronizer synchronizer;
+  private Document document;
+  private PsiFile psiFile;
+
   @Override
   protected void runTest() throws Throwable {
     if (getTestName(false).contains("NoVerify")) {
@@ -42,35 +65,33 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       return;
     }
     boolean oldVerify = RedBlackTree.VERIFY;
-    RedBlackTree.VERIFY = true;
+    RedBlackTree.VERIFY = !isPerformanceTest();
     final Throwable[] ex = {null};
     try {
       if (getTestName(false).contains("NoCommand")) {
         super.runTest();
         return;
       }
-      CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  RangeMarkerTest.super.runTest();
-                }
-                catch (Throwable throwable) {
-                  ex[0] = throwable;
-                }
-              }
-            });
-          }
-        }, "", null);
+      WriteCommandAction.runWriteCommandAction(getProject(), new ThrowableComputable<Void, Throwable>() {
+        @Override
+        public Void compute() throws Throwable {
+          RangeMarkerTest.super.runTest();
+          return null;
+        }
+      });
     }
     finally {
       RedBlackTree.VERIFY = oldVerify;
     }
 
     if (ex[0] != null) throw ex[0];
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject());
+    synchronizer = documentManager.getSynchronizer();
   }
 
   public void testCreation() throws Exception {
@@ -329,28 +350,26 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
   public void testPsi2Doc1() throws Exception {
     StringBuilder buffer = new StringBuilder("0123456789");
-    RangeMarker marker = createMarker("0123456789", 2, 5);
-    PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).getSynchronizer();
-    synchronizer.startTransaction(getProject(), marker.getDocument(), null);
+    RangeMarker marker = createMarker(buffer.toString(), 2, 5);
+    synchronizer.startTransaction(getProject(), document, psiFile);
 
-    synchronizer.insertString(marker.getDocument(), 3, "a");
+    synchronizer.insertString(document, 3, "a");
     buffer.insert(3, "a");
 
-    synchronizer.doCommitTransaction(marker.getDocument());
+    synchronizer.commitTransaction(this.document);
 
-    assertEquals(buffer.toString(), marker.getDocument().getText());
+    assertEquals(buffer.toString(), document.getText());
 
     assertValidMarker(marker, 2, 6);
   }
 
   public void testDocSynchronizerPrefersLineBoundaryChanges() throws Exception {
-    RangeMarker marker = createMarker("import java.awt.List;\n" +
-                                      "[import java.util.ArrayList;\n]" +
-                                      "import java.util.HashMap;\n" +
-                                      "import java.util.Map;");
-    PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).getSynchronizer();
-    Document document = marker.getDocument();
-    synchronizer.startTransaction(getProject(), document, null);
+    String text = "import java.awt.List;\n" +
+                    "[import java.util.ArrayList;\n]" +
+                    "import java.util.HashMap;\n" +
+                    "import java.util.Map;";
+    RangeMarker marker = createMarker(text);
+    synchronizer.startTransaction(getProject(), document, psiFile);
 
     String newText = StringUtil.replaceSubstring(document.getText(), TextRange.create(marker), "");
     synchronizer.replaceString(document, 0, document.getTextLength(), newText);
@@ -362,7 +381,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
         events.add(e);
       }
     });
-    synchronizer.doCommitTransaction(document);
+    synchronizer.commitTransaction(document);
 
     assertEquals(newText, document.getText());
     DocumentEvent event = assertOneElement(events);
@@ -371,131 +390,125 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
   public void testPsi2DocReplaceAfterAdd() throws Exception {
     StringBuilder buffer = new StringBuilder("0123456789");
-    RangeMarker marker = createMarker("0123456789", 2, 5);
-    PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).getSynchronizer();
-    synchronizer.startTransaction(getProject(), marker.getDocument(), null);
+    RangeMarker marker = createMarker(buffer.toString(), 2, 5);
+    synchronizer.startTransaction(getProject(), document, psiFile);
 
-    synchronizer.insertString(marker.getDocument(), 1, "a");
+    synchronizer.insertString(document, 1, "a");
     buffer.insert(1, "a");
 
-    synchronizer.replaceString(marker.getDocument(), 3, 4, "a");
+    synchronizer.replaceString(document, 3, 4, "a");
     buffer.replace(3, 4, "a");
 
-    synchronizer.doCommitTransaction(marker.getDocument());
+    synchronizer.commitTransaction(document);
 
-    assertEquals(buffer.toString(), marker.getDocument().getText());
+    assertEquals(buffer.toString(), document.getText());
 
     assertValidMarker(marker, 3, 6);
   }
 
   public void testPsi2DocMergeReplaceAfterAdd() throws Exception {
     StringBuilder buffer = new StringBuilder("0123456789");
-    RangeMarker marker = createMarker("0123456789", 2, 5);
-    PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).getSynchronizer();
-    synchronizer.startTransaction(getProject(), marker.getDocument(), null);
+    RangeMarker marker = createMarker(buffer.toString(), 2, 5);
+    synchronizer.startTransaction(getProject(), document, psiFile);
 
-    synchronizer.insertString(marker.getDocument(), 1, "a");
+    synchronizer.insertString(document, 1, "a");
     buffer.insert(1, "a");
 
-    synchronizer.replaceString(marker.getDocument(), 3, 4, "a");
+    synchronizer.replaceString(document, 3, 4, "a");
     buffer.replace(3, 4, "a");
 
-    synchronizer.replaceString(marker.getDocument(), 3, 5, "bb");
+    synchronizer.replaceString(document, 3, 5, "bb");
     buffer.replace(3, 5, "bb");
-    final PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = synchronizer.getTransaction(marker.getDocument());
+    final PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = synchronizer.getTransaction(document);
     final Set<Pair<PsiToDocumentSynchronizer.MutableTextRange, StringBuffer>> affectedFragments = transaction.getAffectedFragments();
     assertEquals(affectedFragments.size(), 2);
 
-    synchronizer.doCommitTransaction(marker.getDocument());
+    synchronizer.commitTransaction(document);
 
-    assertEquals(buffer.toString(), marker.getDocument().getText());
+    assertEquals(buffer.toString(), document.getText());
 
     assertValidMarker(marker, 3, 6);
   }
 
   public void testPsi2DocMergeReplaceWithMultipleAdditions() throws Exception {
     StringBuilder buffer = new StringBuilder("0123456789");
-    RangeMarker marker = createMarker("0123456789", 2, 5);
-    PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).getSynchronizer();
-    synchronizer.startTransaction(getProject(), marker.getDocument(), null);
+    RangeMarker marker = createMarker(buffer.toString(), 2, 5);
+    synchronizer.startTransaction(getProject(), document, psiFile);
 
-    synchronizer.replaceString(marker.getDocument(), 0, 10, "0");
+    synchronizer.replaceString(document, 0, 10, "0");
     buffer.replace(0, 10, "0");
 
     for (int i = 1; i < 10; i++) {
-      synchronizer.insertString(marker.getDocument(), i, "" + i);
+      synchronizer.insertString(document, i, "" + i);
       buffer.insert(i, "" + i);
     }
-    final PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = synchronizer.getTransaction(marker.getDocument());
+    final PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = synchronizer.getTransaction(document);
     final Set<Pair<PsiToDocumentSynchronizer.MutableTextRange, StringBuffer>> affectedFragments = transaction.getAffectedFragments();
     assertEquals(1, affectedFragments.size());
 
-    synchronizer.doCommitTransaction(marker.getDocument());
+    synchronizer.commitTransaction(document);
 
-    assertEquals(buffer.toString(), marker.getDocument().getText());
+
+    assertEquals(buffer.toString(), document.getText());
 
     assertValidMarker(marker, 2, 5);
   }
 
   public void testPsi2DocMergeMultipleAdditionsWithReplace() throws Exception {
     StringBuilder buffer = new StringBuilder("0123456789");
-    RangeMarker marker = createMarker("0123456789", 2, 5);
-    PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).getSynchronizer();
-    synchronizer.startTransaction(getProject(), marker.getDocument(), null);
-    final PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = synchronizer.getTransaction(marker.getDocument());
+    RangeMarker marker = createMarker(buffer.toString(), 2, 5);
+    synchronizer.startTransaction(getProject(), document, psiFile);
+    final PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = synchronizer.getTransaction(document);
     final Set<Pair<PsiToDocumentSynchronizer.MutableTextRange, StringBuffer>> affectedFragments = transaction.getAffectedFragments();
 
 
     for (int i = 0; i < 10; i++) {
-      synchronizer.insertString(marker.getDocument(), i, "" + i);
+      synchronizer.insertString(document, i, "" + i);
       buffer.insert(i, "" + i);
     }
 
     assertEquals(1, affectedFragments.size());
-    synchronizer.replaceString(marker.getDocument(), 0, 20, "0123456789");
+    synchronizer.replaceString(document, 0, 20, "0123456789");
     buffer.replace(0, 20, "0123456789");
 
     assertEquals(1, affectedFragments.size());
 
-    synchronizer.doCommitTransaction(marker.getDocument());
+    synchronizer.commitTransaction(document);
 
-    assertEquals(buffer.toString(), marker.getDocument().getText());
+    assertEquals(buffer.toString(), document.getText());
 
     assertValidMarker(marker, 2, 5);
   }
 
   public void testPsi2DocSurround() throws Exception {
     StringBuilder buffer = new StringBuilder("0123456789");
-    RangeMarker marker = createMarker("0123456789", 2, 5);
-    PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).getSynchronizer();
-    synchronizer.startTransaction(getProject(), marker.getDocument(), null);
+    RangeMarker marker = createMarker(buffer.toString(), 2, 5);
+    synchronizer.startTransaction(getProject(), document, psiFile);
 
-    synchronizer.replaceString(marker.getDocument(), 3, 5, "3a4");
+    synchronizer.replaceString(document, 3, 5, "3a4");
     buffer.replace(3, 5, "3a4");
 
-    synchronizer.insertString(marker.getDocument(), 3, "b");
+    synchronizer.insertString(document, 3, "b");
     buffer.insert(3, "b");
 
-    synchronizer.insertString(marker.getDocument(), 7, "d");
+    synchronizer.insertString(document, 7, "d");
     buffer.insert(7, "d");
 
-    final PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = synchronizer.getTransaction(marker.getDocument());
+    final PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = synchronizer.getTransaction(document);
     final Set<Pair<PsiToDocumentSynchronizer.MutableTextRange, StringBuffer>> affectedFragments = transaction.getAffectedFragments();
     assertEquals(3, affectedFragments.size());
 
-    synchronizer.doCommitTransaction(marker.getDocument());
+    synchronizer.commitTransaction(document);
 
-    assertEquals(buffer.toString(), marker.getDocument().getText());
+    assertEquals(buffer.toString(), document.getText());
 
     assertValidMarker(marker, 2, 7);
   }
 
   public void testPsi2DocForwardRangesChanges() throws Exception {
     StringBuilder buffer = new StringBuilder("0123456789");
-    RangeMarker marker = createMarker("0123456789", 2, 5);
-    PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).getSynchronizer();
-    Document document = marker.getDocument();
-    synchronizer.startTransaction(getProject(), document, null);
+    RangeMarker marker = createMarker(buffer.toString(), 2, 5);
+    synchronizer.startTransaction(getProject(), document, psiFile);
 
     synchronizer.replaceString(document, 4, 5, "3a4");
     buffer.replace(4, 5, "3a4");
@@ -506,7 +519,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     synchronizer.insertString(document, 1, "b");
     buffer.insert(1, "b");
 
-    synchronizer.doCommitTransaction(document);
+    synchronizer.commitTransaction(document);
 
     assertEquals(buffer.toString(), document.getText());
 
@@ -923,12 +936,17 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     }
   }
 
-  private static RangeMarkerEx createMarker(String s, final int start, final int end) {
-    final Document document = EditorFactory.getInstance().createDocument(s);
+  private RangeMarkerEx createMarker(String text, final int start, final int end) {
+    psiFile = createFile("x.txt", text);
+    return createMarker(psiFile, start, end);
+  }
+
+  private RangeMarkerEx createMarker(PsiFile psiFile, final int start, final int end) {
+    document = documentManager.getDocument(psiFile);
     return (RangeMarkerEx)document.createRangeMarker(start, end);
   }
 
-  private static RangeMarkerEx createMarker(@NonNls String string) {
+  private RangeMarkerEx createMarker(@NonNls String string) {
     int start = string.indexOf('[');
     assertTrue(start != -1);
     string = string.replace("[", "");
@@ -1042,5 +1060,53 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     assertValidMarker(marker1, 2, 2);
     assertValidMarker(marker2, 2, 4);
+  }
+
+  public void testRangeHighlighterDisposeVsRemoveAllConflict() throws Exception {
+    Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
+
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(document, ourProject, true);
+    RangeMarker m = markupModel.addRangeHighlighter(1, 6, 0, null, HighlighterTargetArea.EXACT_RANGE);
+    assertTrue(m.isValid());
+    markupModel.removeAllHighlighters();
+    assertFalse(m.isValid());
+    assertEmpty(markupModel.getAllHighlighters());
+    m.dispose();
+    assertFalse(m.isValid());
+  }
+
+  public void testRangeHighlighterLinesInRangeForLongLinePerformance() throws Exception {
+    final int N = 50000;
+    Document document = EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol('x', 2*N));
+
+    final MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, ourProject, true);
+    for (int i=0; i<N-1;i++) {
+      markupModel.addRangeHighlighter(2*i, 2*i+1, 0, null, HighlighterTargetArea.EXACT_RANGE);
+    }
+    markupModel.addRangeHighlighter(N/2, N/2+1, 0, null, HighlighterTargetArea.LINES_IN_RANGE);
+
+    PlatformTestUtil.startPerformanceTest("slow highlighters lookup", (int)(N*Math.log(N)/1000), new ThrowableRunnable() {
+      @Override
+      public void run() {
+        List<RangeHighlighterEx> list = new ArrayList<RangeHighlighterEx>();
+        CommonProcessors.CollectProcessor<RangeHighlighterEx> coll = new CommonProcessors.CollectProcessor<RangeHighlighterEx>(list);
+        for (int i=0; i<N-1;i++) {
+          list.clear();
+          markupModel.processRangeHighlightersOverlappingWith(2*i, 2*i+1, coll);
+          assertEquals(2, list.size());  // 1 line plus one exact range marker
+        }
+      }
+    }).assertTiming();
+  }
+
+  public void testRangeHighlighterIteratorOrder() throws Exception {
+    Document document = EditorFactory.getInstance().createDocument("1234567890");
+
+    final MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, ourProject, true);
+    RangeHighlighter exact = markupModel.addRangeHighlighter(3, 6, 0, null, HighlighterTargetArea.EXACT_RANGE);
+    RangeHighlighter line = markupModel.addRangeHighlighter(4, 5, 0, null, HighlighterTargetArea.LINES_IN_RANGE);
+    List<RangeHighlighter> list = new ArrayList<RangeHighlighter>();
+    markupModel.processRangeHighlightersOverlappingWith(2, 9, new CommonProcessors.CollectProcessor<RangeHighlighter>(list));
+    assertEquals(Arrays.asList(line,exact), list);
   }
 }

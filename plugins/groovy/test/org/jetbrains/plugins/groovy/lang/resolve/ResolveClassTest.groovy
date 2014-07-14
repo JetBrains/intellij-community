@@ -306,5 +306,176 @@ public interface OuterInterface {
 ''', PsiClass)
   }
 
+  void testCollisionOfClassAndPackage() {
+    myFixture.addFileToProject('foo/Bar.groovy', '''\
+package foo
+
+class Bar {
+  static void xyz(){}
+}
+''')
+    def ref = configureByText('foo.groovy', '''\
+import foo.B<caret>ar
+
+print new Bar()
+''')
+
+    assertNotNull(ref.resolve())
+  }
+
+  void testCollisionOfClassAndPackage2() {
+    myFixture.addFileToProject('foo/Bar.groovy', '''\
+package foo
+
+class Bar {
+  static void xyz(){}
+}
+''')
+    def ref = configureByText('foo.groovy', '''\
+import static foo.Bar.xyz
+
+class foo {
+  public static void main(args) {
+    x<caret>yz()      //should resolve to inner class
+  }
+
+  static class Bar {
+    static void xyz() {}
+  }
+}
+''')
+
+    PsiElement resolved = ref.resolve()
+    assertInstanceOf(resolved, PsiMethod)
+
+    PsiClass clazz = resolved.containingClass
+    assertNotNull(clazz.containingClass)
+  }
+
+
+  void testCollisionOfClassAndPackage3() {
+    myFixture.addFileToProject('foo/Bar.groovy', '''\
+package foo
+
+class Bar {
+  static void xyz(){}
+}
+''')
+    def ref = configureByText('foo.groovy', '''\
+import static foo.Bar.xyz
+
+x<caret>yz()
+''')
+
+    assertNotNull(ref.resolve())
+  }
+
+  void testCollisionOfClassAndPackage4() {
+    myFixture.addFileToProject('foo/Bar.groovy', '''\
+package foo
+
+class Bar {
+  static void xyz(){}
+}
+''')
+
+    def ref = configureByText('foo.groovy', '''\
+import static foo.Bar.xyz
+
+class foo {
+  public static void main(String[] args) {
+    x<caret>yz()
+  }
+}
+''')
+
+    PsiElement resolved = ref.resolve()
+    assertInstanceOf(resolved, PsiMethod)
+  }
+
+  void testSuperInTrait1() {
+    def clazz = resolveByText('''
+trait T1 {
+    void on() {
+        println "T1"
+    }
+}
+
+trait T2 {
+    void on() {
+        println "T2"
+    }
+}
+
+trait LoggingHandler extends T1 implements T2 {
+    void on() {
+        super.o<caret>n()
+    }
+}
+''', PsiMethod).containingClass
+
+    assertEquals("T1", clazz.qualifiedName)
+  }
+
+  void testSuperInTrait2() {
+    def clazz = resolveByText('''
+trait T1 {
+    void on() {
+        println "T1"
+    }
+}
+
+trait T2 {
+    void on() {
+        println "T2"
+    }
+}
+
+trait LoggingHandler implements T1, T2 {
+    void on() {
+        super.o<caret>n()
+    }
+}
+''', PsiMethod).containingClass
+
+    assertEquals("T2", clazz.qualifiedName)
+  }
+
+  void testSuperInTrait3() {
+    def clazz = resolveByText('''
+trait T1 {
+    void on() {
+        println "T1"
+    }
+}
+
+trait LoggingHandler extends T1 {
+    void on() {
+        super.o<caret>n()
+    }
+}
+''', PsiMethod).containingClass
+
+    assertEquals("T1", clazz.qualifiedName)
+  }
+
+  void testSuperInTrait4() {
+    def clazz = resolveByText('''
+trait T1 {
+    void on() {
+        println "T1"
+    }
+}
+
+trait LoggingHandler implements T1 {
+    void on() {
+        super.o<caret>n()
+    }
+}
+''', PsiMethod).containingClass
+
+    assertEquals("T1", clazz.qualifiedName)
+  }
+
   private void doTest(String fileName = getTestName(false) + ".groovy") { resolve(fileName, PsiClass) }
 }

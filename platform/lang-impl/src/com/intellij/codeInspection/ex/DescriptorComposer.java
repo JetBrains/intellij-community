@@ -24,14 +24,13 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -81,11 +80,15 @@ public class DescriptorComposer extends HTMLComposerImpl {
     }
     List<String> texts = new ArrayList<String>();
     for (QuickFixAction quickFix : quickFixes) {
-      final String text = quickFix.getText(where);
+      String text = quickFix.getText(where);
       if (text == null) continue;
-      texts.add(text);
+      texts.add(escapeQuickFixText(text));
     }
     return texts.toArray(new String[texts.size()]);
+  }
+
+  private static String escapeQuickFixText(String text) {
+    return XmlStringUtil.isWrappedInHtml(text) ? XmlStringUtil.stripHtml(text) : StringUtil.escapeXml(text);
   }
 
   protected void composeAdditionalDescription(@NotNull StringBuffer buf, @NotNull RefEntity refEntity) {}
@@ -132,7 +135,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
         //noinspection HardCodedStringLiteral
         buf.append("<a HREF=\"file://bred.txt#invokelocal:" + (idx++));
         buf.append("\">");
-        buf.append(fix.getName());
+        buf.append(escapeQuickFixText(fix.getName()));
         //noinspection HardCodedStringLiteral
         buf.append("</a>");
         //noinspection HardCodedStringLiteral
@@ -153,17 +156,12 @@ public class DescriptorComposer extends HTMLComposerImpl {
 
       //noinspection HardCodedStringLiteral
       anchor.append("<a HREF=\"");
-      try {
-        if (myExporter == null){
-          //noinspection HardCodedStringLiteral
-          anchor.append(new URL(vFile.getUrl() + "#descr:" + i));
-        }
-        else {
-          anchor.append(myExporter.getURL(refElement));
-        }
+      if (myExporter == null){
+        //noinspection HardCodedStringLiteral
+        anchor.append(appendURL(vFile, "descr:" + i));
       }
-      catch (MalformedURLException e) {
-        LOG.error(e);
+      else {
+        anchor.append(myExporter.getURL(refElement));
       }
 
       anchor.append("\">");
@@ -192,14 +190,9 @@ public class DescriptorComposer extends HTMLComposerImpl {
       if (myExporter == null) {
         //noinspection HardCodedStringLiteral
         lineAnchor.append("<a HREF=\"");
-        try {
-          int offset = doc.getLineStartOffset(lineNumber - 1);
-          offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
-          lineAnchor.append(new URL(vFile.getUrl() + "#" + offset));
-        }
-        catch (MalformedURLException e) {
-          LOG.error(e);
-        }
+        int offset = doc.getLineStartOffset(lineNumber - 1);
+        offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
+        lineAnchor.append(appendURL(vFile, String.valueOf(offset)));
         lineAnchor.append("\">");
       }
       lineAnchor.append(Integer.toString(lineNumber));
@@ -217,5 +210,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
     composeAdditionalDescription(buf, refElement);
   }
 
-
+  private static String appendURL(VirtualFile vFile, String anchor) {
+    return vFile.getUrl() + "#" + anchor;
+  }
 }

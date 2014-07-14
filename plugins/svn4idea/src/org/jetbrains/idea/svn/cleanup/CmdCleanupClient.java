@@ -24,6 +24,6 @@ public class CmdCleanupClient extends BaseSvnClient implements CleanupClient {
     List<String> parameters = new ArrayList<String>();
 
     CommandUtil.put(parameters, path);
-    CommandUtil.execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.cleanup, parameters, null);
+    execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.cleanup, parameters, null);
   }
 }

@@ -41,6 +41,7 @@ import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
 import com.jetbrains.python.psi.types.PyModuleType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -50,11 +51,11 @@ import java.util.Collection;
 public class PyClassNameCompletionContributor extends CompletionContributor {
 
   @Override
-  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     if (parameters.isExtendedCompletion()) {
       final PsiElement element = parameters.getPosition();
       final PsiElement parent = element.getParent();
-      if (parent instanceof PyReferenceExpression && ((PyReferenceExpression)parent).getQualifier() != null) {
+      if (parent instanceof PyReferenceExpression && ((PyReferenceExpression)parent).isQualified()) {
         return;
       }
       if (parent instanceof PyStringLiteralExpression) {
@@ -71,12 +72,12 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
       final PsiFile originalFile = parameters.getOriginalFile();
       addVariantsFromIndex(result, originalFile, PyClassNameIndex.KEY,
                            parent instanceof PyStringLiteralExpression ? STRING_LITERAL_INSERT_HANDLER : IMPORTING_INSERT_HANDLER,
-                           Conditions.<PyClass>alwaysTrue());
+                           Conditions.<PyClass>alwaysTrue(), PyClass.class);
       addVariantsFromIndex(result, originalFile, PyFunctionNameIndex.KEY,
-                           getFunctionInsertHandler(parent), IS_TOPLEVEL);
+                           getFunctionInsertHandler(parent), IS_TOPLEVEL, PyFunction.class);
       addVariantsFromIndex(result, originalFile, PyVariableNameIndex.KEY,
                            parent instanceof PyStringLiteralExpression ? STRING_LITERAL_INSERT_HANDLER : IMPORTING_INSERT_HANDLER,
-                           IS_TOPLEVEL);
+                           IS_TOPLEVEL, PyTargetExpression.class);
       addVariantsFromModules(result, originalFile, parent instanceof PyStringLiteralExpression);
     }
   }
@@ -117,13 +118,13 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
                                                                        final PsiFile targetFile,
                                                                        final StubIndexKey<String, T> key,
                                                                        final InsertHandler<LookupElement> insertHandler,
-                                                                       final Condition<? super T> condition) {
+                                                                       final Condition<? super T> condition, Class<T> elementClass) {
     final Project project = targetFile.getProject();
     GlobalSearchScope scope = PyProjectScopeBuilder.excludeSdkTestsScope(targetFile);
 
     Collection<String> keys = StubIndex.getInstance().getAllKeys(key, project);
     for (final String elementName : CompletionUtil.sortMatching(resultSet.getPrefixMatcher(), keys)) {
-      for (T element : StubIndex.getInstance().get(key, elementName, project, scope)) {
+      for (T element : StubIndex.getElements(key, elementName, project, scope, elementClass)) {
         if (condition.value(element)) {
           resultSet.addElement(LookupElementBuilder.createWithIcon(element)
                                  .withTailText(" " + ((NavigationItem)element).getPresentation().getLocationString(), true)

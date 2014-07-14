@@ -54,7 +54,7 @@ public abstract class FileTemplateBase implements FileTemplate {
   }
 
   public static String getQualifiedName(final String name, final String extension) {
-    return name + "." + extension;
+    return FTManager.encodeFileName(name, extension);
   }
 
   @Override

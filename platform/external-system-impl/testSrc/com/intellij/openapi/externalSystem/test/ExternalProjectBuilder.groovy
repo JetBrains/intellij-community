@@ -60,8 +60,7 @@ class ExternalProjectBuilder extends BuilderSupport {
     switch (name) {
       case 'project':
         ProjectSystemId projectSystemId = attributes.projectSystemId ?: TEST_EXTERNAL_SYSTEM_ID
-        ProjectData projectData = new ProjectData(projectSystemId, projectDir.path, projectDir.path)
-        projectData.name = attributes.name ?: 'project'
+        ProjectData projectData = new ProjectData(projectSystemId, attributes.name ?: 'project', projectDir.path, projectDir.path)
         projectNode = new DataNode<ProjectData>(ProjectKeys.PROJECT, projectData, null)
         return projectNode
       case 'module':
@@ -107,7 +106,7 @@ class ExternalProjectBuilder extends BuilderSupport {
   @NotNull
   private LibraryData getLibrary(@NotNull String name, @NotNull Map attributes) {
     DataNode<LibraryData> existing = ExternalSystemApiUtil.find(projectNode, ProjectKeys.LIBRARY, {
-      DataNode<LibraryData> node -> node.data.name == name
+      DataNode<LibraryData> node -> node.data.externalName == name
     } as BooleanFunction)
     if (existing != null) {
       return existing.data

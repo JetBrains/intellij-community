@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.HashSet;
@@ -48,7 +48,7 @@ public class ActionMacroConfigurationPanel implements Disposable {
   private JList myMacrosList;
   private JList myMacroActionsList;
   final DefaultListModel myMacrosModel = new DefaultListModel();
-  private List<Pair<String, String>> myRenamingList;
+  private List<Couple<String>> myRenamingList;
 
 
   public ActionMacroConfigurationPanel() {
@@ -81,7 +81,7 @@ public class ActionMacroConfigurationPanel implements Disposable {
 
   public void apply() {
     if (myRenamingList != null) {
-      for (Pair<String, String> pair : myRenamingList) {
+      for (Couple<String> pair : myRenamingList) {
         Keymap[] allKeymaps = KeymapManagerEx.getInstanceEx().getAllKeymaps();
         for (Keymap keymap : allKeymaps) {
           keymap.removeAllActionShortcuts(ActionMacro.MACRO_ACTION_PREFIX + pair.getSecond());
@@ -164,8 +164,8 @@ public class ActionMacroConfigurationPanel implements Disposable {
               }
               while (!canRenameMacro(newName));
 
-              if (myRenamingList == null) myRenamingList = new ArrayList<Pair<String, String>>();
-              myRenamingList.add(new Pair<String, String>(macro.getName(), newName));
+              if (myRenamingList == null) myRenamingList = new ArrayList<Couple<String>>();
+              myRenamingList.add(Couple.of(macro.getName(), newName));
               macro.setName(newName);
               myMacrosList.repaint();
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiMatchers;
@@ -28,6 +29,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,8 +44,8 @@ public class RefCountHolder {
   private final PsiFile myFile;
   private final BidirectionalMap<PsiReference,PsiElement> myLocalRefsMap = new BidirectionalMap<PsiReference, PsiElement>();
 
-  private final Map<PsiNamedElement, Boolean> myDclsUsedMap = new ConcurrentHashMap<PsiNamedElement, Boolean>();
-  private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new ConcurrentHashMap<PsiReference, PsiImportStatementBase>();
+  private final Map<PsiAnchor, Boolean> myDclsUsedMap = ContainerUtil.newConcurrentMap();
+  private final Map<PsiReference, PsiImportStatementBase> myImportStatements = ContainerUtil.newConcurrentMap();
   private final AtomicReference<ProgressIndicator> myState = new AtomicReference<ProgressIndicator>(VIRGIN);
   private static final ProgressIndicator VIRGIN = new DaemonProgressIndicator(); // just created or cleared
   private static final ProgressIndicator READY = new DaemonProgressIndicator();
@@ -77,7 +79,7 @@ public class RefCountHolder {
 
   private static RefCountHolder getInstance(@NotNull PsiFile file, @NotNull ProgressIndicator indicator, boolean acquire) {
     HolderReference ref = file.getUserData(REF_COUNT_HOLDER_IN_FILE_KEY);
-    RefCountHolder holder = ref == null ? null : ref.get();
+    RefCountHolder holder = com.intellij.reference.SoftReference.dereference(ref);
     if (holder == null && acquire) {
       holder = new RefCountHolder(file);
       HolderReference newRef = new HolderReference(holder);
@@ -88,7 +90,7 @@ public class RefCountHolder {
           break;
         }
         ref = file.getUserData(REF_COUNT_HOLDER_IN_FILE_KEY);
-        RefCountHolder newHolder = ref == null ? null : ref.get();
+        RefCountHolder newHolder = com.intellij.reference.SoftReference.dereference(ref);
         if (newHolder != null) {
           holder = newHolder;
           break;
@@ -130,7 +132,7 @@ public class RefCountHolder {
   }
 
   public void registerLocallyReferenced(@NotNull PsiNamedElement result) {
-    myDclsUsedMap.put(result,Boolean.TRUE);
+    myDclsUsedMap.put(PsiAnchor.create(result), Boolean.TRUE);
   }
 
   public void registerReference(@NotNull PsiJavaReference ref, @NotNull JavaResolveResult resolveResult) {
@@ -185,10 +187,10 @@ public class RefCountHolder {
     removeInvalidFrom(myDclsUsedMap.keySet());
   }
 
-  private static void removeInvalidFrom(@NotNull Collection<? extends PsiElement> collection) {
-    for (Iterator<? extends PsiElement> it = collection.iterator(); it.hasNext();) {
-      PsiElement element = it.next();
-      if (!element.isValid()) it.remove();
+  private static void removeInvalidFrom(@NotNull Collection<? extends PsiAnchor> collection) {
+    for (Iterator<? extends PsiAnchor> it = collection.iterator(); it.hasNext();) {
+      PsiAnchor element = it.next();
+      if (element.retrieve() == null) it.remove();
     }
   }
 
@@ -199,8 +201,28 @@ public class RefCountHolder {
     }
     if (array != null && !array.isEmpty() && !isParameterUsedRecursively(element, array)) return true;
 
-    Boolean usedStatus = myDclsUsedMap.get(element);
+    Boolean usedStatus = myDclsUsedMap.get(PsiAnchor.create(element));
     return usedStatus == Boolean.TRUE;
+  }
+
+  public boolean isReferencedByMethodReference(@NotNull PsiMethod method, @NotNull LanguageLevel languageLevel) {
+    if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) return false;
+
+    List<PsiReference> array;
+    synchronized (myLocalRefsMap) {
+      array = myLocalRefsMap.getKeysByValue(method);
+    }
+
+    if (array != null && !array.isEmpty()) {
+      for (PsiReference reference : array) {
+        final PsiElement element = reference.getElement();
+        if (element != null && element instanceof PsiMethodReferenceExpression) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   private static boolean isParameterUsedRecursively(@NotNull PsiElement element, @NotNull List<PsiReference> array) {
@@ -232,11 +254,10 @@ public class RefCountHolder {
     return true;
   }
 
-  public boolean isReferencedForRead(@NotNull PsiElement element) {
-    LOG.assertTrue(element instanceof PsiVariable);
+  public boolean isReferencedForRead(@NotNull PsiVariable variable) {
     List<PsiReference> array;
     synchronized (myLocalRefsMap) {
-      array = myLocalRefsMap.getKeysByValue(element);
+      array = myLocalRefsMap.getKeysByValue(variable);
     }
     if (array == null) return false;
     for (PsiReference ref : array) {
@@ -256,11 +277,10 @@ public class RefCountHolder {
     return false;
   }
 
-  public boolean isReferencedForWrite(@NotNull PsiElement element) {
-    LOG.assertTrue(element instanceof PsiVariable);
+  public boolean isReferencedForWrite(@NotNull PsiVariable variable) {
     List<PsiReference> array;
     synchronized (myLocalRefsMap) {
-      array = myLocalRefsMap.getKeysByValue(element);
+      array = myLocalRefsMap.getKeysByValue(variable);
     }
     if (array == null) return false;
     for (PsiReference ref : array) {

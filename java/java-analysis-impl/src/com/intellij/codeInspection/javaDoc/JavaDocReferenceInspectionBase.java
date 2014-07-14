@@ -31,7 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class JavaDocReferenceInspectionBase extends AbstractBaseJavaLocalInspectionTool {
+public class JavaDocReferenceInspectionBase  extends BaseJavaBatchLocalInspectionTool {
   @NonNls private static final String SHORT_NAME = "JavadocReference";
 
   private static ProblemDescriptor createDescriptor(@NotNull PsiElement element, String template, InspectionManager manager,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.execution.*;
+import com.intellij.execution.configuration.CompatibilityAwareRunProfile;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -40,11 +41,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Predicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,6 +60,7 @@ import java.util.List;
  * @author dyoma
  */
 public class ExecutionManagerImpl extends ExecutionManager implements ProjectComponent {
+  public static final Key<Object> EXECUTION_SESSION_ID_KEY = Key.create("EXECUTION_SESSION_ID_KEY");
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.impl.ExecutionManagerImpl");
 
   private final Project myProject;
@@ -138,13 +143,15 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
 
       if (!activeTasks.isEmpty()) {
         final long finalId = id;
+        final Long executionSessionId = new Long(id);
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           /** @noinspection SSBasedInspection*/
           @Override
           public void run() {
             for (BeforeRunTask task : activeTasks) {
-              if (myProject.isDisposed())
+              if (myProject.isDisposed()) {
                 return;
+              }
               BeforeRunTaskProvider<BeforeRunTask> provider = BeforeRunTaskProvider.getProvider(myProject, task.getProviderId());
               if (provider == null) {
                 LOG.warn("Cannot find BeforeRunTaskProvider for id='" + task.getProviderId() + "'");
@@ -152,6 +159,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
               }
               ExecutionEnvironment taskEnvironment = new ExecutionEnvironmentBuilder(env).setContentToReuse(null).build();
               taskEnvironment.setExecutionId(finalId);
+              EXECUTION_SESSION_ID_KEY.set(taskEnvironment, executionSessionId);
               if (!provider.executeTask(projectContext, runConfiguration, taskEnvironment, task)) {
                 if (onCancelRunnable != null) {
                   SwingUtilities.invokeLater(onCancelRunnable);
@@ -216,7 +224,9 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
             ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor, reuseContent);
             final ProcessHandler processHandler = descriptor.getProcessHandler();
             if (processHandler != null) {
-              processHandler.startNotify();
+              if (!processHandler.isStartNotified()) {
+                processHandler.startNotify();
+              }
               project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarted(executor.getId(), env, processHandler);
               started = true;
               processHandler.addProcessListener(new ProcessExecutionListener(project, profile, processHandler));
@@ -299,35 +309,57 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
 
 
   private void restartRunProfile(@NotNull final Project project,
-                                @Nullable final DataContext context,
-                                @Nullable ProgramRunner r,
-                                @Nullable final RunProfile runProfile,
-                                @Nullable final RunnerSettings runnerSettings,
-                                @Nullable final ConfigurationPerRunnerSettings configurationPerRunnerSettings,
-                                @NotNull final Executor executor,
-                                @NotNull final ExecutionTarget target,
-                                @Nullable final RunnerAndConfigurationSettings configuration,
-                                @Nullable final RunContentDescriptor currentDescriptor) {
-    final ProgramRunner runner = r != null ? r : ProgramRunnerUtil.getRunner(executor.getId(), configuration);
+                                 @Nullable final DataContext context,
+                                 @Nullable ProgramRunner r,
+                                 @Nullable final RunProfile runProfile,
+                                 @Nullable final RunnerSettings runnerSettings,
+                                 @Nullable final ConfigurationPerRunnerSettings configurationPerRunnerSettings,
+                                 @NotNull final Executor executor,
+                                 @NotNull final ExecutionTarget target,
+                                 @Nullable final RunnerAndConfigurationSettings configuration,
+                                 @Nullable final RunContentDescriptor currentDescriptor) {
+    final ProgramRunner runner = r != null ?
+                                 r :
+                                 RunnerRegistry.getInstance().getRunner(executor.getId(),
+                                                                        configuration != null && configuration.getConfiguration() != null
+                                                                        ? configuration.getConfiguration()
+                                                                        : runProfile
+                                 );
     if (configuration != null && runner == null) {
       LOG.error("Cannot find runner for " + configuration.getName());
       return;
     }
 
-    final List<RunContentDescriptor> descriptorsToStop = new ArrayList<RunContentDescriptor>();
+    final List<RunContentDescriptor> runningConfigurationsOfTheSameType = new ArrayList<RunContentDescriptor>();
+    final List<RunContentDescriptor> runningIncompatibleConfigurations = new ArrayList<RunContentDescriptor>();
+
+    if (configuration != null) {
+      runningIncompatibleConfigurations.addAll(getIncompatibleRunningDescriptors(configuration));
+    }
     if (configuration != null && configuration.isSingleton()) {
-      descriptorsToStop.addAll(getRunningDescriptors(configuration));
+      runningConfigurationsOfTheSameType.addAll(getRunningDescriptorsOfTheSameConfigType(configuration));
     }
     else if (currentDescriptor != null) {
-      descriptorsToStop.add(currentDescriptor);
+      runningConfigurationsOfTheSameType.add(currentDescriptor);
     }
 
-    if (!descriptorsToStop.isEmpty()) {
-      if (configuration != null && (descriptorsToStop.size() > 1 || currentDescriptor == null || descriptorsToStop.get(0) != currentDescriptor) &&
-          !userApprovesStop(project, configuration.getName(), descriptorsToStop.size())) {
-        return;
+    final List<RunContentDescriptor> runningConfigurationsToStop = ContainerUtil.concat(runningConfigurationsOfTheSameType,
+                                                                                        runningIncompatibleConfigurations);
+    if (!runningConfigurationsToStop.isEmpty()) {
+      if (configuration != null) {
+        if (!runningConfigurationsOfTheSameType.isEmpty()
+            && (runningConfigurationsOfTheSameType.size() > 1 ||
+                currentDescriptor == null ||
+                runningConfigurationsOfTheSameType.get(0) != currentDescriptor) &&
+            !userApprovesStopForSameTypeConfigurations(project, configuration.getName(), runningConfigurationsOfTheSameType.size())) {
+          return;
+        }
+        if (!runningIncompatibleConfigurations.isEmpty()
+            && !userApprovesStopForIncompatibleConfigurations(myProject, configuration.getName(), runningIncompatibleConfigurations)) {
+          return;
+        }
       }
-      for (RunContentDescriptor descriptor : descriptorsToStop) {
+      for (RunContentDescriptor descriptor : runningConfigurationsToStop) {
         stop(descriptor);
       }
     }
@@ -339,14 +371,15 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
           awaitingTerminationAlarm.addRequest(this, 100);
           return;
         }
-        for (RunContentDescriptor descriptor : descriptorsToStop) {
+        for (RunContentDescriptor descriptor : runningConfigurationsOfTheSameType) {
           ProcessHandler processHandler = descriptor.getProcessHandler();
           if (processHandler != null && !processHandler.isProcessTerminated()) {
             awaitingTerminationAlarm.addRequest(this, 100);
             return;
           }
         }
-        start(project, context, runner, runProfile, runnerSettings, configurationPerRunnerSettings, configuration, executor, target, currentDescriptor);
+        start(project, context, runner, runProfile, runnerSettings, configurationPerRunnerSettings, configuration, executor, target,
+              currentDescriptor);
       }
     };
     awaitingTerminationAlarm.addRequest(runnable, 50);
@@ -375,7 +408,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     }
   }
 
-  private static boolean userApprovesStop(Project project, String configName, int instancesCount) {
+  private static boolean userApprovesStopForSameTypeConfigurations(Project project, String configName, int instancesCount) {
     RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
     final RunManagerConfig config = runManager.getConfig();
     if (!config.isRestartRequiresConfirmation()) return true;
@@ -401,6 +434,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
         return false;
       }
 
+      @NotNull
       @Override
       public String getDoNotShowMessage() {
         return CommonBundle.message("dialog.options.do.not.show");
@@ -415,10 +449,91 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       Messages.getQuestionIcon(), option) == Messages.OK;
   }
 
-  private List<RunContentDescriptor> getRunningDescriptors(RunnerAndConfigurationSettings configuration) {
+  private static boolean userApprovesStopForIncompatibleConfigurations(Project project,
+                                                                       String configName,
+                                                                       List<RunContentDescriptor> runningIncompatibleDescriptors) {
+    RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
+    final RunManagerConfig config = runManager.getConfig();
+    if (!config.isStopIncompatibleRequiresConfirmation()) return true;
+
+    DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
+      @Override
+      public boolean isToBeShown() {
+        return config.isStopIncompatibleRequiresConfirmation();
+      }
+
+      @Override
+      public void setToBeShown(boolean value, int exitCode) {
+        config.setStopIncompatibleRequiresConfirmation(value);
+      }
+
+      @Override
+      public boolean canBeHidden() {
+        return true;
+      }
+
+      @Override
+      public boolean shouldSaveOptionsOnCancel() {
+        return false;
+      }
+
+      @NotNull
+      @Override
+      public String getDoNotShowMessage() {
+        return CommonBundle.message("dialog.options.do.not.show");
+      }
+    };
+
+    final StringBuilder names = new StringBuilder();
+    for (final RunContentDescriptor descriptor : runningIncompatibleDescriptors) {
+      String name = descriptor.getDisplayName();
+      if (names.length() > 0) {
+        names.append(", ");
+      }
+      names.append(StringUtil.isEmpty(name) ? ExecutionBundle.message("run.configuration.no.name")
+                                                       : String.format("'%s'", name));
+    }
+
+    //noinspection DialogTitleCapitalization
+    return Messages.showOkCancelDialog(
+      project,
+      ExecutionBundle.message("stop.incompatible.confirmation.message",
+                              configName, names.toString(), runningIncompatibleDescriptors.size()),
+      ExecutionBundle.message("incompatible.configuration.is.running.dialog.title", runningIncompatibleDescriptors.size()),
+      ExecutionBundle.message("stop.incompatible.confirmation.button.text"),
+      CommonBundle.message("button.cancel"),
+      Messages.getQuestionIcon(), option) == Messages.OK;
+  }
+
+  private List<RunContentDescriptor> getRunningDescriptorsOfTheSameConfigType(
+    @NotNull final RunnerAndConfigurationSettings configurationAndSettings) {
+    return getRunningDescriptors(new Predicate<RunnerAndConfigurationSettings>() {
+      @Override
+      public boolean apply(@Nullable RunnerAndConfigurationSettings runningConfigurationAndSettings) {
+        return configurationAndSettings == runningConfigurationAndSettings;
+      }
+    });
+  }
+
+  private List<RunContentDescriptor> getIncompatibleRunningDescriptors(
+    @NotNull final RunnerAndConfigurationSettings configurationAndSettings) {
+    final RunConfiguration configurationToCheckCompatibility = configurationAndSettings.getConfiguration();
+    return getRunningDescriptors(new Predicate<RunnerAndConfigurationSettings>() {
+      @Override
+      public boolean apply(@Nullable RunnerAndConfigurationSettings runningConfigurationAndSettings) {
+        if (runningConfigurationAndSettings == null) return false;
+        RunConfiguration runningConfiguration = runningConfigurationAndSettings.getConfiguration();
+        if (runningConfiguration == null || !(runningConfiguration instanceof CompatibilityAwareRunProfile)) return false;
+        return ((CompatibilityAwareRunProfile)runningConfiguration).mustBeStoppedToRun(configurationToCheckCompatibility);
+      }
+    });
+  }
+
+  private List<RunContentDescriptor> getRunningDescriptors(
+    Predicate<RunnerAndConfigurationSettings> condition) {
     List<RunContentDescriptor> result = new ArrayList<RunContentDescriptor>();
     for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
-      if (trinity.getSecond() == configuration) {
+      if (condition.apply(trinity.getSecond())) {
         ProcessHandler processHandler = trinity.getFirst().getProcessHandler();
         if (processHandler != null && !processHandler.isProcessTerminating() && !processHandler.isProcessTerminated()) {
           result.add(trinity.getFirst());
@@ -427,7 +542,6 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     }
     return result;
   }
-
 
   private static void stop(RunContentDescriptor runContentDescriptor) {
     ProcessHandler processHandler = runContentDescriptor != null ? runContentDescriptor.getProcessHandler() : null;

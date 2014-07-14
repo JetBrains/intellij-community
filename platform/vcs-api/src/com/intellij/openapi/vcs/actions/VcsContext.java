@@ -30,7 +30,7 @@ import java.io.File;
 import java.util.Collection;
 
 public interface VcsContext extends PlaceProvider<String> {
-  Project getProject();
+  @Nullable Project getProject();
 
   @Nullable
   VirtualFile getSelectedFile();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,8 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlElementType;
-import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -40,11 +38,14 @@ public class XmlCopyPastePreProcessor implements CopyPastePreProcessor {
 
   private static final EncodeEachSymbolPolicy ENCODE_EACH_SYMBOL_POLICY = new EncodeEachSymbolPolicy();
 
+  @Override
   @Nullable
   public String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
     return null;
   }
 
+  @Override
+  @NotNull
   public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
     final Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).commitDocument(document);
@@ -55,8 +56,8 @@ public class XmlCopyPastePreProcessor implements CopyPastePreProcessor {
     if (node != null) {
       boolean hasMarkup = text.indexOf('>') >= 0 || text.indexOf('<') >= 0;
       if (element.getTextOffset() == caretOffset &&
-          node.getElementType() == XmlElementType.XML_END_TAG_START &&
-          node.getTreePrev().getElementType() == XmlElementType.XML_TAG_END) {
+          node.getElementType() == XmlTokenType.XML_END_TAG_START &&
+          node.getTreePrev().getElementType() == XmlTokenType.XML_TAG_END) {
 
          return hasMarkup ? text : encode(text, element);
       } else {

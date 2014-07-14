@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ package com.intellij.formatting;
  *
  * @see com.intellij.formatting.Block#getWrap()
  */
-
 public abstract class Wrap {
   /**
    * Converts a low-priority wrap setting to a regular wrap setting.
@@ -32,29 +31,20 @@ public abstract class Wrap {
 
   private static WrapFactory myFactory;
 
-  /**
-   * @deprecated    use {@link WrapType#ALWAYS} instead
-   */
-  @Deprecated
+  /** @deprecated use {@link WrapType#ALWAYS} (to remove in IDEA 14) */
+  @SuppressWarnings({"UnusedDeclaration"})
   public static WrapType ALWAYS = WrapType.ALWAYS;
 
-  /**
-   * @deprecated    use {@link WrapType#NORMAL} instead
-   */
-  @Deprecated
+  /** @deprecated use {@link WrapType#NORMAL} (to remove in IDEA 14) */
+  @SuppressWarnings({"UnusedDeclaration"})
   public static WrapType NORMAL = WrapType.NORMAL;
 
-  /**
-   * @deprecated    use {@link WrapType#NONE} instead
-   */
-  @Deprecated
+  /** @deprecated use {@link WrapType#NONE} (to remove in IDEA 14) */
+  @SuppressWarnings({"UnusedDeclaration"})
   public static WrapType NONE = WrapType.NONE;
 
-  /**
-   * @deprecated    use {@link WrapType#CHOP_DOWN_IF_LONG} instead
-   */
+  /** @deprecated use {@link WrapType#CHOP_DOWN_IF_LONG} (to remove in IDEA 14) */
   @SuppressWarnings({"UnusedDeclaration"})
-  @Deprecated
   public static WrapType CHOP_DOWN_IF_LONG = WrapType.CHOP_DOWN_IF_LONG;
 
   static void setFactory(WrapFactory factory) {
@@ -82,7 +72,7 @@ public abstract class Wrap {
    * <p/>
    * Example:
    * <pre>
-   *             |   
+   *             |
    *   foo(123, 4|56
    *             |
    *             | &lt;- right margin
@@ -121,10 +111,9 @@ public abstract class Wrap {
    * @param wrapFirstElement if true, the first element in a sequence of elements of the same type
    *                         is also wrapped.
    * @return the wrap setting instance.
-   * @see #ignoreParentWraps() 
+   * @see #ignoreParentWraps()
    */
   public static Wrap createChildWrap(final Wrap parentWrap, final WrapType wrapType, final boolean wrapFirstElement) {
-    return myFactory.createChildWrap(parentWrap, wrapType, wrapFirstElement);    
+    return myFactory.createChildWrap(parentWrap, wrapType, wrapFirstElement);
   }
-
 }

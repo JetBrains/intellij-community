@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class ListTack {
+class ListTack {
 
     void f(String s) {
         String <caret>p = s;

@@ -1,0 +1,89 @@
+<root>
+  <item name="org.apache.velocity.app.event.EventCartridge boolean addEventHandler(org.apache.velocity.app.event.EventHandler)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.app.event.EventCartridge boolean attachToContext(org.apache.velocity.context.Context)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.app.event.EventCartridge boolean removeEventHandler(org.apache.velocity.app.event.EventHandler)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.app.event.EventHandlerUtil boolean shouldLogOnNullSet(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.EventHandlerUtil boolean shouldLogOnNullSet(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.EventHandlerUtil java.lang.Object invalidGetMethod(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, java.lang.String, java.lang.Object, java.lang.String, org.apache.velocity.util.introspection.Info) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.EventHandlerUtil java.lang.Object invalidGetMethod(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, java.lang.String, java.lang.Object, java.lang.String, org.apache.velocity.util.introspection.Info) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.EventHandlerUtil java.lang.Object invalidMethod(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, java.lang.String, java.lang.Object, java.lang.String, org.apache.velocity.util.introspection.Info) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.EventHandlerUtil java.lang.Object invalidMethod(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, java.lang.String, java.lang.Object, java.lang.String, org.apache.velocity.util.introspection.Info) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.EventHandlerUtil java.lang.Object invalidReferenceHandlerCall(org.apache.velocity.app.event.EventHandlerMethodExecutor, org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.EventHandlerUtil java.lang.Object invalidReferenceHandlerCall(org.apache.velocity.app.event.EventHandlerMethodExecutor, org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.EventHandlerUtil java.lang.Object invalidReferenceHandlerCall(org.apache.velocity.app.event.EventHandlerMethodExecutor, org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter) 2">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.EventHandlerUtil java.lang.Object methodException(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, java.lang.Class, java.lang.String, java.lang.Exception) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.EventHandlerUtil java.lang.Object methodException(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, java.lang.Class, java.lang.String, java.lang.Exception) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.EventHandlerUtil java.lang.Object referenceInsert(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, java.lang.String, java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.EventHandlerUtil java.lang.Object referenceInsert(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, java.lang.String, java.lang.Object) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.EventHandlerUtil java.lang.String includeEvent(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, java.lang.String, java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.EventHandlerUtil java.lang.String includeEvent(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, java.lang.String, java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.EventHandlerUtil void invalidSetMethod(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, java.lang.String, java.lang.String, org.apache.velocity.util.introspection.Info) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.EventHandlerUtil void invalidSetMethod(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, java.lang.String, java.lang.String, org.apache.velocity.util.introspection.Info) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.IncludeEventHandler.IncludeEventExecutor void execute(org.apache.velocity.app.event.EventHandler) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.InvalidReferenceEventHandler.InvalidGetMethodExecutor void execute(org.apache.velocity.app.event.EventHandler) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.InvalidReferenceEventHandler.InvalidMethodExecutor void execute(org.apache.velocity.app.event.EventHandler) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.InvalidReferenceEventHandler.InvalidSetMethodExecutor void execute(org.apache.velocity.app.event.EventHandler) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.MethodExceptionEventHandler.MethodExceptionExecutor void execute(org.apache.velocity.app.event.EventHandler) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.NullSetEventHandler.ShouldLogOnNullSetExecutor void execute(org.apache.velocity.app.event.EventHandler) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.ReferenceInsertionEventHandler.referenceInsertExecutor void execute(org.apache.velocity.app.event.EventHandler) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+</root>

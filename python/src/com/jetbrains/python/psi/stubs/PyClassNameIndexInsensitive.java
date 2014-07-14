@@ -38,6 +38,6 @@ public class PyClassNameIndexInsensitive extends StringStubIndexExtension<PyClas
   }
 
   public static Collection<PyClass> find(String name, Project project) {
-    return StubIndex.getInstance().get(KEY, name.toLowerCase(), project, ProjectScope.getProjectScope(project));
+    return StubIndex.getElements(KEY, name.toLowerCase(), project, ProjectScope.getProjectScope(project), PyClass.class);
   }
 }

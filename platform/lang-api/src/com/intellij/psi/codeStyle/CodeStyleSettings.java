@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -206,6 +206,9 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 //----------------- 'final' modifier settings -------
   public boolean GENERATE_FINAL_LOCALS = false;
   public boolean GENERATE_FINAL_PARAMETERS = false;
+
+//----------------- visibility -----------------------------
+  public String VISIBILITY = "public";
 
 //----------------- generate parentheses around method arguments ----------
   public boolean PARENTHESES_AROUND_METHOD_ARGUMENTS = true;
@@ -572,7 +575,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
     for (final CustomCodeStyleSettings settings : customSettings) {
       final CustomCodeStyleSettings parentCustomSettings = parentSettings.getCustomSettings(settings.getClass());
-      assert parentCustomSettings != null;
+      assert parentCustomSettings != null : "Custom settings are null for " + settings.getClass();
       settings.writeExternal(element, parentCustomSettings);
     }
 
@@ -854,7 +857,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     }
 
     @Override
-    public String getCharset(@NotNull VirtualFile file, byte[] content) {
+    public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
       return null;
     }
   }

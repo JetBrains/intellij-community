@@ -48,7 +48,15 @@ public interface GitSSHHandler {
    * Name of the handler
    */
   @NonNls String HANDLER_NAME = "Git4ideaSSHHandler";
-
+  /**
+   * Proxy settings
+   */
+  @NonNls String SSH_USE_PROXY_ENV = "GIT4IDEA_SSH_USE_PROXY";
+  @NonNls String SSH_PROXY_HOST_ENV = "GIT4IDEA_SSH_PROXY_HOST";
+  @NonNls String SSH_PROXY_PORT_ENV = "GIT4IDEA_SSH_PROXY_PORT";
+  @NonNls String SSH_PROXY_AUTHENTICATION_ENV = "GIT4IDEA_SSH_PROXY_AUTHENTICATION";
+  @NonNls String SSH_PROXY_USER_ENV = "GIT4IDEA_SSH_PROXY_USER";
+  @NonNls String SSH_PROXY_PASSWORD_ENV = "GIT4IDEA_SSH_PROXY_PASSWORD";
   /**
    * Verify server host key
    *

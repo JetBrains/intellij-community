@@ -16,9 +16,12 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.lang.ASTNode;
+import com.jetbrains.python.FunctionParameter;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * Represents an argument list of a function call.
@@ -27,12 +30,31 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PyArgumentList extends PyElement {
 
-  @NotNull PyExpression[] getArguments();
+  /**
+   * @return all argument list param expressions (keyword argument or nameless)
+   */
+  @NotNull
+  Collection<PyExpression> getArgumentExpressions();
 
-  @Nullable PyKeywordArgument getKeywordArgument(String name);
+  @NotNull
+  PyExpression[] getArguments();
 
-  void addArgument(PyExpression arg);
+  @Nullable
+  PyKeywordArgument getKeywordArgument(String name);
+
+  /**
+   * TODO: Copy/Paste with {@link com.jetbrains.python.psi.PyCallExpression#addArgument(PyExpression)} ?
+   * Adds argument to the appropriate place:
+   * {@link com.jetbrains.python.psi.PyKeywordArgument} goes to the end.
+   * All other go before key arguments (if any) but after last non-key arguments.
+   * Commas should be set correctly as well.
+   *
+   * @param arg argument to add
+   */
+  void addArgument(@NotNull PyExpression arg);
+
   void addArgumentFirst(PyExpression arg);
+
   void addArgumentAfter(PyExpression argument, PyExpression afterThis);
 
   /**
@@ -43,9 +65,10 @@ public interface PyArgumentList extends PyElement {
 
   /**
    * Tries to map the argument list to callee's idea of parameters.
-   * @return a result object with mappings and diagnostic flags.
+   *
    * @param resolveContext the reference resolution context
    * @param implicitOffset known from the context implicit offset
+   * @return a result object with mappings and diagnostic flags.
    */
   @NotNull
   CallArgumentsMapping analyzeCall(PyResolveContext resolveContext, int implicitOffset);
@@ -56,4 +79,13 @@ public interface PyArgumentList extends PyElement {
 
   @Nullable
   ASTNode getClosingParen();
+
+  /**
+   * Searches parameter value and returns it if exists.
+   *
+   * @param parameter param to search
+   * @return function parameter value expression or null if does not exist
+   */
+  @Nullable
+  PyExpression getValueExpressionForParam(@NotNull FunctionParameter parameter);
 }

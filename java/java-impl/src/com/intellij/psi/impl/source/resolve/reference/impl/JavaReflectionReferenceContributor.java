@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.psi.PsiLiteral;
 import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.PsiReferenceRegistrar;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiExpression;
 import static com.intellij.patterns.PsiJavaPatterns.psiLiteral;
@@ -38,7 +39,7 @@ public class JavaReflectionReferenceContributor extends PsiReferenceContributor 
                                                      .definedInClass(JAVA_LANG_CLASS)));
 
   @Override
-  public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+  public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(PATTERN, new JavaReflectionReferenceProvider());
   }
 }

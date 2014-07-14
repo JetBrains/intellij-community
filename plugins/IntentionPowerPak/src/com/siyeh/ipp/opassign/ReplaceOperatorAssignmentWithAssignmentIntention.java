@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -97,7 +98,7 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention extends MutablyNam
     if (!cast.isEmpty()) {
       newExpression.append(')');
     }
-    replaceExpression(newExpression.toString(), assignmentExpression);
+    PsiReplacementUtil.replaceExpression(assignmentExpression, newExpression.toString());
   }
 
   private static String getCastString(PsiExpression lhs, PsiExpression rhs) {

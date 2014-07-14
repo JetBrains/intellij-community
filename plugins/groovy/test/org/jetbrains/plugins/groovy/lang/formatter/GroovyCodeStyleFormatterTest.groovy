@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.lang.formatter
-
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.plugins.groovy.GroovyFileType
+import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 import java.lang.reflect.Field
 import java.util.regex.Matcher
 import java.util.regex.Pattern
-
 /**
  * @author peter
  */
@@ -64,7 +62,7 @@ public class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
   private List findSettings(String name) {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project)
     try {
-      return [CommonCodeStyleSettings.getField(name), settings.getCommonSettings(GroovyFileType.GROOVY_LANGUAGE)]
+      return [CommonCodeStyleSettings.getField(name), settings.getCommonSettings(GroovyLanguage.INSTANCE)]
     }
     catch (NoSuchFieldException ignored) {
       return [GroovyCodeStyleSettings.getField(name), settings.getCustomSettings(GroovyCodeStyleSettings)]

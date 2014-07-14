@@ -1,4 +1,4 @@
-public class Pos4<U> {
+class Pos4<U> {
 
     void test() {
         class Foo<V> {

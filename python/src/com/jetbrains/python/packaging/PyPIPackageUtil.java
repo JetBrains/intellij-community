@@ -239,6 +239,8 @@ public class PyPIPackageUtil {
       if (connection instanceof HttpsURLConnection) {
         ((HttpsURLConnection)connection).setSSLSocketFactory(sslContext.getSocketFactory());
       }
+      connection.setConnectTimeout(5000);
+      connection.setReadTimeout(5000);
       InputStream is = connection.getInputStream();
       Reader reader = new InputStreamReader(is);
       try{
@@ -257,8 +259,8 @@ public class PyPIPackageUtil {
     return packages;
   }
 
-  public Collection<String> getPackageNames() throws IOException {
-    Map<String, String> pyPIPackages = loadAndGetPackages();
+  public Collection<String> getPackageNames() {
+    Map<String, String> pyPIPackages = getPyPIPackages();
     ArrayList<String> list = Lists.newArrayList(pyPIPackages.keySet());
     Collections.sort(list);
     return list;

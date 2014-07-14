@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,21 +19,16 @@ package com.intellij.find.impl;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesManager;
-import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.usageView.UsageViewBundle;
-import com.intellij.usageView.UsageViewUtil;
+import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,7 +55,7 @@ public class ShowRecentFindUsagesAction extends AnAction {
     UsageView usageView = e.getData(UsageView.USAGE_VIEW_KEY);
     Project project = e.getData(CommonDataKeys.PROJECT);
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
-    List<FindUsagesManager.SearchData> history = new ArrayList<FindUsagesManager.SearchData>(findUsagesManager.getFindUsageHistory());
+    List<ConfigurableUsageTarget> history = new ArrayList<ConfigurableUsageTarget>(findUsagesManager.getHistory().getAll());
 
     if (!history.isEmpty()) {
       // skip most recent find usage, it's under your nose
@@ -68,42 +63,32 @@ public class ShowRecentFindUsagesAction extends AnAction {
       Collections.reverse(history);
     }
     if (history.isEmpty()) {
-      history.add(new FindUsagesManager.SearchData()); // to fill the popup
+      history.add(null); // to fill the popup
     }
 
-    BaseListPopupStep<FindUsagesManager.SearchData> step =
-      new BaseListPopupStep<FindUsagesManager.SearchData>(FindBundle.message("recent.find.usages.action.title"), history) {
+    BaseListPopupStep<ConfigurableUsageTarget> step =
+      new BaseListPopupStep<ConfigurableUsageTarget>(FindBundle.message("recent.find.usages.action.title"), history) {
         @Override
-        public Icon getIconFor(final FindUsagesManager.SearchData data) {
-          if (data.myElements == null) {
-            return null;
-          }
-          PsiElement psiElement = data.myElements[0].getElement();
-          if (psiElement == null) return null;
-          return psiElement.getIcon(0);
+        public Icon getIconFor(final ConfigurableUsageTarget data) {
+          ItemPresentation presentation = data == null ? null : data.getPresentation();
+          return presentation == null ? null : presentation.getIcon(false);
         }
 
         @Override
         @NotNull
-        public String getTextFor(final FindUsagesManager.SearchData data) {
-          if (data.myElements == null) {
+        public String getTextFor(final ConfigurableUsageTarget data) {
+          if (data == null) {
             return FindBundle.message("recent.find.usages.action.nothing");
           }
-          PsiElement psiElement = data.myElements[0].getElement();
-          if (psiElement == null) return UsageViewBundle.message("node.invalid");
-          String scopeString = data.myOptions.searchScope == null ? null : data.myOptions.searchScope.getDisplayName();
-          return FindBundle.message("recent.find.usages.action.description",
-                                    StringUtil.capitalize(UsageViewUtil.getType(psiElement)),
-                                    DescriptiveNameUtil.getDescriptiveName(psiElement),
-                                    scopeString == null ? ProjectScope.getAllScope(psiElement.getProject()).getDisplayName() : scopeString);
+          return data.getLongDescriptiveName();
         }
 
         @Override
-        public PopupStep onChosen(final FindUsagesManager.SearchData selectedValue, final boolean finalChoice) {
+        public PopupStep onChosen(final ConfigurableUsageTarget selectedValue, final boolean finalChoice) {
           return doFinalStep(new Runnable() {
             @Override
             public void run() {
-              if (selectedValue.myElements != null) {
+              if (selectedValue != null) {
                 findUsagesManager.rerunAndRecallFromHistory(selectedValue);
               }
             }
@@ -118,6 +103,5 @@ public class ShowRecentFindUsagesAction extends AnAction {
       point = new RelativePoint(usageView.getComponent(), new Point(4, 4));
     }
     JBPopupFactory.getInstance().createListPopup(step).show(point);
-
   }
 }

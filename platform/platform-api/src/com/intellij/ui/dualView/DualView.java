@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -178,8 +178,8 @@ public class DualView extends JPanel {
 
   public void switchToTheFlatMode() {
     if (myFlatView == myCurrentView) return;
-    changeViewTo(myFlatView);
     copySelection(myTreeView, myFlatView);
+    changeViewTo(myFlatView);
     myCardLayout.show(this, FLAT);
   }
 
@@ -195,7 +195,7 @@ public class DualView extends JPanel {
     }
   }
 
-  private void copySelection(SelectionProvider from, SelectionProvider to) {
+  private static void copySelection(SelectionProvider from, SelectionProvider to) {
     to.clearSelection();
 
     Collection selection = from.getSelection();
@@ -207,8 +207,8 @@ public class DualView extends JPanel {
 
   public void switchToTheTreeMode() {
     if (myTreeView == myCurrentView) return;
-    changeViewTo(myTreeView);
     copySelection(myFlatView, myTreeView);
+    changeViewTo(myTreeView);
     myCardLayout.show(this, TREE);
   }
 

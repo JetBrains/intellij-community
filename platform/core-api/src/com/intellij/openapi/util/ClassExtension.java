@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@
  */
 package com.intellij.openapi.util;
 
-import com.intellij.util.ReflectionCache;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -32,33 +32,35 @@ public class ClassExtension<T> extends KeyedExtensionCollector<T, Class> {
     super(epName);
   }
 
+  @NotNull
   @Override
-  protected String keyToString(final Class key) {
+  protected String keyToString(@NotNull final Class key) {
     return key.getName();
   }
 
+  @NotNull
   @Override
-  protected List<T> buildExtensions(final String key, final Class classKey) {
+  protected List<T> buildExtensions(@NotNull final String key, @NotNull final Class classKey) {
     final Set<String> allSupers = new THashSet<String>();
     collectSupers(classKey, allSupers);
     return buildExtensions(allSupers);
   }
 
-  private static void collectSupers(Class classKey, Set<String> allSupers) {
+  private static void collectSupers(@NotNull Class classKey, @NotNull Set<String> allSupers) {
     allSupers.add(classKey.getName());
-    final Class[] interfaces = ReflectionCache.getInterfaces(classKey);
+    final Class[] interfaces = classKey.getInterfaces();
     for (final Class anInterface : interfaces) {
       collectSupers(anInterface, allSupers);
     }
 
-    final Class superClass = ReflectionCache.getSuperClass(classKey);
+    final Class superClass = classKey.getSuperclass();
     if (superClass != null) {
       collectSupers(superClass, allSupers);
     }
   }
 
   @Nullable
-  public T forClass(Class t) {
+  public T forClass(@NotNull Class t) {
     final List<T> ts = forKey(t);
     return ts.isEmpty() ? null : ts.get(0);
   }

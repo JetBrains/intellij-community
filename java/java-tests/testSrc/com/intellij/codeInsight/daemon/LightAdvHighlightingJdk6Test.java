@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,4 +59,14 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   public void testRedundantCastInConditionalExpression() throws Exception { setLanguageLevel(LanguageLevel.JDK_1_6); doTest(true, false); }
   public void testJava5CastConventions() { setLanguageLevel(LanguageLevel.JDK_1_5); doTest(true, false); }
   public void testUnhandledExceptions() { doTest(true, false); }
+  public void testUnhandledExceptionsValueOf() { doTest(true, false); }
+  public void testUnsupportedFeatures7() { doTest(false, false); }
+  public void testEnumInitializers() { doTest(false, false); }
+  public void testEnumSynthetics() { doTest(false, false); }
+  public void testIDEA79251() { doTest(false, false); }
+  public void testIDEA65473() { doTest(false, false); }
+  public void testIDEA61415() { doTest(false, false); }
+  public void testAgentPremain() {
+    doTest(false, false); 
+  }
 }

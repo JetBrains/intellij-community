@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +73,7 @@ public class DoubleNegationInspection extends BaseInspection {
       if (expression instanceof PsiPrefixExpression) {
         final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
         final PsiExpression operand = ParenthesesUtils.stripParentheses(prefixExpression.getOperand());
-        replaceExpression(prefixExpression, BoolUtils.getNegatedExpressionText(operand));
+        PsiReplacementUtil.replaceExpression(prefixExpression, BoolUtils.getNegatedExpressionText(operand));
       } else if (expression instanceof PsiPolyadicExpression) {
         final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
         final PsiExpression[] operands = polyadicExpression.getOperands();
@@ -81,10 +82,12 @@ public class DoubleNegationInspection extends BaseInspection {
           final PsiExpression firstOperand = operands[0];
           final PsiExpression secondOperand = operands[1];
           if (isNegation(firstOperand)) {
-            replaceExpression(polyadicExpression, BoolUtils.getNegatedExpressionText(firstOperand) + "==" + secondOperand.getText());
+            PsiReplacementUtil
+              .replaceExpression(polyadicExpression, BoolUtils.getNegatedExpressionText(firstOperand) + "==" + secondOperand.getText());
           }
           else {
-            replaceExpression(polyadicExpression, firstOperand.getText() + "==" + BoolUtils.getNegatedExpressionText(secondOperand));
+            PsiReplacementUtil
+              .replaceExpression(polyadicExpression, firstOperand.getText() + "==" + BoolUtils.getNegatedExpressionText(secondOperand));
           }
         }
         else {
@@ -100,7 +103,7 @@ public class DoubleNegationInspection extends BaseInspection {
             }
             newExpressionText.append(operands[i].getText());
           }
-          replaceExpression(polyadicExpression, newExpressionText.toString());
+          PsiReplacementUtil.replaceExpression(polyadicExpression, newExpressionText.toString());
         }
       }
     }

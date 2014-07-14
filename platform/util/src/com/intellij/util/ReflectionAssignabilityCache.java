@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 
 /**
  * @author peter
- * @see ReflectionCache
  */
 public class ReflectionAssignabilityCache {
   private final ConcurrentFactoryMap<Class, ConcurrentFactoryMap<Class, Boolean>> myCache = new ConcurrentFactoryMap<Class, ConcurrentFactoryMap<Class, Boolean>>() {

@@ -252,7 +252,7 @@ public class PyTypeParserTest extends PyTestCase {
     final PyCallableType callableType = (PyCallableType)type;
     assertNotNull(callableType);
     final TypeEvalContext context = getTypeEvalContext();
-    final PyType returnType = callableType.getCallType(context, null);
+    final PyType returnType = callableType.getReturnType(context);
     assertInstanceOf(returnType, PyGenericType.class);
     final List<PyCallableParameter> parameterTypes = callableType.getParameters(context);
     assertNotNull(parameterTypes);
@@ -271,7 +271,7 @@ public class PyTypeParserTest extends PyTestCase {
     assertInstanceOf(type, PyCallableType.class);
     final PyCallableType callableType = (PyCallableType)type;
     assertNotNull(callableType);
-    final PyType returnType = callableType.getCallType(getTypeEvalContext(), null);
+    final PyType returnType = callableType.getReturnType(getTypeEvalContext());
     assertNotNull(returnType);
     assertEquals("int", returnType.getName());
     final List<PyCallableParameter> parameterTypes = callableType.getParameters(getTypeEvalContext());

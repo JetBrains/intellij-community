@@ -9,7 +9,7 @@ interface Bar {
     <T extends FooObject, I extends FooId<? extends T>> Collection<T> get(Collection<I> keys);
 }
 
-public class Target {
+class Target {
     void foo(Bar bar) {
         final Set<FooId<?>> keys = null;
         final Collection<FooObject> values = bar.get(keys);

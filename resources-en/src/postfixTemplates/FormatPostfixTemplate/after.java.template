@@ -1,0 +1,3 @@
+public void m(String value) {
+  String.format(value, <spot></spot>);
+}

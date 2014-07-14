@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,26 @@
  */
 package com.intellij.openapi.editor.event;
 
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EventObject;
 
 public class CaretEvent extends EventObject {
+  private final Caret myCaret;
   private final LogicalPosition myOldPosition;
   private final LogicalPosition myNewPosition;
 
   public CaretEvent(@NotNull Editor editor, @NotNull LogicalPosition oldPosition, @NotNull LogicalPosition newPosition) {
+    this(editor, null, oldPosition, newPosition);
+  }
+
+  public CaretEvent(@NotNull Editor editor, @Nullable Caret caret, @NotNull LogicalPosition oldPosition, @NotNull LogicalPosition newPosition) {
     super(editor);
+    myCaret = caret;
     myOldPosition = oldPosition;
     myNewPosition = newPosition;
   }
@@ -34,6 +42,11 @@ public class CaretEvent extends EventObject {
   @NotNull
   public Editor getEditor() {
     return (Editor) getSource();
+  }
+
+  @Nullable
+  public Caret getCaret() {
+    return myCaret;
   }
 
   @NotNull

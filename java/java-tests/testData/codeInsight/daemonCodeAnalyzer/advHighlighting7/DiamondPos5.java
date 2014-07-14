@@ -1,4 +1,4 @@
-public class Pos05 {
+class Pos05 {
 
     static class Foo<X> {
         Foo(X x) {}

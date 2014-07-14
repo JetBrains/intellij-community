@@ -27,7 +27,10 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -90,6 +93,18 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pe
   @Override
   public <F extends Facet> List<F> getFacets(@NotNull FacetTypeId<F> typeId) {
     return getFacets(typeId, ModuleManager.getInstance(myProject).getModules());
+  }
+
+  @NotNull
+  @Override
+  public List<Module> getModulesWithFacet(@NotNull FacetTypeId<?> typeId) {
+    List<Module> result = new ArrayList<Module>();
+    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+      if (!FacetManager.getInstance(module).getFacetsByType(typeId).isEmpty()) {
+        result.add(module);
+      }
+    }
+    return result;
   }
 
   @Override

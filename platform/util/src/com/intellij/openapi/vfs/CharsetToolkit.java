@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,6 +85,7 @@ public class CharsetToolkit {
   private static final byte EF = (byte)0xef;
   private static final byte BB = (byte)0xbb;
   private static final byte BF = (byte)0xbf;
+  private static final int BINARY_THRESHOLD = 9; // characters with codes below this considered to be binary
 
   private final byte[] buffer;
   private final Charset defaultCharset;
@@ -283,6 +284,10 @@ public class CharsetToolkit {
         return defaultCharset;
       case VALID_UTF8:
         return UTF8_CHARSET;
+      case BINARY:
+        break;
+      default:
+        break;
     }
     return null;
   }
@@ -290,15 +295,17 @@ public class CharsetToolkit {
   @NotNull
   public static String bytesToString(@NotNull byte[] bytes, @NotNull final Charset defaultCharset) {
     Charset charset = new CharsetToolkit(bytes, defaultCharset).guessEncoding(bytes.length);
+    if (charset == null) charset = defaultCharset; // binary content. This is silly but method contract says to return something anyway
     int bomLength = getBOMLength(bytes, charset);
     final CharBuffer charBuffer = charset.decode(ByteBuffer.wrap(bytes, bomLength, bytes.length - bomLength));
     return charBuffer.toString();
   }
 
   public enum GuessedEncoding {
-    SEVEN_BIT,
-    VALID_UTF8,
-    INVALID_UTF8,
+    SEVEN_BIT,     // ASCII
+    VALID_UTF8,    // UTF-8
+    INVALID_UTF8,  // invalid UTF
+    BINARY         // binary
   }
 
   @NotNull
@@ -310,6 +317,9 @@ public class CharsetToolkit {
     // if the file is in UTF-8, high order bytes must have a certain value, in order to be valid
     // if it's not the case, we can assume the encoding is the default encoding of the system
     boolean validU8Char = true;
+
+    // true if char bytes < BINARY_THRESHOLD occurred
+    boolean hasBinary = false;
 
     int length = Math.min(buffer.length, guess_length);
     int i = 0;
@@ -387,17 +397,23 @@ public class CharsetToolkit {
           validU8Char = false;
         }
       }
+      else if (b0 < BINARY_THRESHOLD) {
+        hasBinary = true;
+      }
       if (!validU8Char) break;
       i++;
     }
-    if (!highOrderBit) {
+
+    if (!highOrderBit && !hasBinary) {
       return GuessedEncoding.SEVEN_BIT;
     }
+    // finally, if it's not UTF-8 nor US-ASCII
+    if (!validU8Char) return GuessedEncoding.INVALID_UTF8;
+    if (hasBinary) return GuessedEncoding.BINARY;
+
     // if no invalid UTF-8 were encountered, we can assume the encoding is UTF-8,
     // otherwise the file would not be human readable
-    if (validU8Char) return GuessedEncoding.VALID_UTF8;
-    // finally, if it's not UTF-8 nor US-ASCII
-    return GuessedEncoding.INVALID_UTF8;
+    return GuessedEncoding.VALID_UTF8;
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Function;
-import junit.framework.Assert;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assert;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -40,7 +40,7 @@ public class ProjectViewTestUtil {
   public static VirtualFile[] getFiles(AbstractTreeNode kid, Function<AbstractTreeNode, VirtualFile[]> converterFunction) {
     if (kid instanceof BasePsiNode) {
       Object value = kid.getValue();
-      VirtualFile virtualFile = PsiUtilBase.getVirtualFile((PsiElement)value);
+      VirtualFile virtualFile = PsiUtilCore.getVirtualFile((PsiElement)value);
       return new VirtualFile[]{virtualFile};
     }
     if (converterFunction != null) {

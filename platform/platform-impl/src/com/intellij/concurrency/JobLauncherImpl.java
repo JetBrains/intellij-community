@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,7 +185,6 @@ public class JobLauncherImpl extends JobLauncher {
 
     @Override
     protected void setRawResult(Void value) {
-
     }
 
     @Override
@@ -247,7 +246,7 @@ public class JobLauncherImpl extends JobLauncher {
     }
 
     @Override
-    public void waitForCompletion(int millis) throws InterruptedException, ExecutionException, TimeoutException {
+    public void waitForCompletion(int millis) throws InterruptedException, ExecutionException, TimeoutException, CancellationException {
       get(millis, TimeUnit.MILLISECONDS);
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,11 +82,13 @@ public class XmlTagRenameDialog extends RefactoringDialog {
     validateButtons();
   }
 
+  @Override
   protected void dispose() {
     myNameSuggestionsField.removeDataChangedListener(myNameChangedListener);
     super.dispose();
   }
 
+  @Override
   protected boolean hasHelpAction() {
     return false;
   }
@@ -104,6 +106,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
   private void createNewNameComponent() {
     myNameSuggestionsField = new NameSuggestionsField(new String[] { myTag.getName() }, myProject, FileTypes.PLAIN_TEXT, myEditor);
     myNameChangedListener = new NameSuggestionsField.DataChanged() {
+      @Override
       public void dataChanged() {
         validateButtons();
       }
@@ -111,6 +114,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
     myNameSuggestionsField.addDataChangedListener(myNameChangedListener);
 
     myNameSuggestionsField.getComponent().registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         completeVariable(myNameSuggestionsField.getEditor());
       }
@@ -129,12 +133,15 @@ public class XmlTagRenameDialog extends RefactoringDialog {
     }
   }
 
+  @Override
   protected void doAction() {
     LOG.assertTrue(myElement.isValid());
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             try {
               myTag.setName(getNewName());
@@ -150,15 +157,18 @@ public class XmlTagRenameDialog extends RefactoringDialog {
     close(DialogWrapper.OK_EXIT_CODE);
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     return null;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameSuggestionsField.getFocusableComponent();
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     final JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -172,6 +182,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
     return panel;
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(myHelpID);
   }
@@ -180,12 +191,14 @@ public class XmlTagRenameDialog extends RefactoringDialog {
     return myNameSuggestionsField.getEnteredName().trim();
   }
 
+  @Override
   protected void validateButtons() {
     super.validateButtons();
 
     getPreviewAction().setEnabled(false);
   }
 
+  @Override
   protected boolean areButtonsValid() {
     final String newName = getNewName();
     return !StringUtil.containsAnyChar(newName, "\t ;*'\"\\/,()^&<>={}"); // RenameUtil.isValidName(myProject, myTag, newName); // IDEADEV-34531

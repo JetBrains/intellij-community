@@ -86,16 +86,21 @@ target(name: "compile", description: "Compile module python") {
     fileset(dir: "${ideaPlugins}/terminal/lib") {
       include(name: "*.jar")
     }
+    fileset(dir: "${ideaPlugins}/IntelliLang/lib") {
+      include(name: "*.jar")
+    }
   }
 
   ant.path(id: "sourcepath") {
     dirset(dir: "${pluginHome}") {
       include(name: "resources")
       include(name: "src")
+      include(name: "gen")
       include(name: "pluginSrc")
       include(name: "pydevSrc")
       include(name: "openapi/src")
       include(name: "psi-api/src")
+      include(name: "IntelliLang-python/src")
     }
   }
   //The task requires the following libraries from IntelliJ IDEA distribution:
@@ -135,6 +140,10 @@ target(name: "compile", description: "Compile module python") {
       patternset(refid: "resources.pt")
       type(type: "file")
     }
+    fileset(dir: "${pluginHome}/IntelliLang-python/src") {
+      patternset(refid: "resources.pt")
+      type(type: "file")
+    }
     fileset(dir: "${pluginHome}/resources") {
       patternset(refid: "resources.pt")
       type(type: "file")
@@ -147,6 +156,10 @@ target(name: "compile", description: "Compile module python") {
   ant.copy(todir: "${classesDir}/META-INF") {
     fileset(file: "${pluginHome}/pluginSrc/META-INF/*.xml")
     fileset(file: "${pluginHome}/pluginResources/META-INF/*.xml")
+  }
+
+  ant.replace(file: "${classesDir}/META-INF/plugin.xml") {
+    replacefilter(token: "@@BUILD_NUMBER@@", value: "${buildNumber}")
   }
 
   ant.replaceregexp(file: "${classesDir}/META-INF/plugin.xml",

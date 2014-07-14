@@ -88,51 +88,51 @@ public class ConcurrencyUtil {
   }
 
   @NotNull
-  public static ThreadPoolExecutor newSingleThreadExecutor(@NotNull @NonNls final String threadFactoryName) {
-    return newSingleThreadExecutor(threadFactoryName, Thread.NORM_PRIORITY);
+  public static ThreadPoolExecutor newSingleThreadExecutor(@NotNull @NonNls String name) {
+    return newSingleThreadExecutor(name, Thread.NORM_PRIORITY);
   }
 
   @NotNull
-  public static ThreadPoolExecutor newSingleThreadExecutor(@NonNls @NotNull final String threadFactoryName, final int threadPriority) {
-    return new ThreadPoolExecutor(1, 1,
-                                    0L, TimeUnit.MILLISECONDS,
-                                    new LinkedBlockingQueue<Runnable>(), newNamedThreadFactory(threadFactoryName, true, threadPriority));
+  public static ThreadPoolExecutor newSingleThreadExecutor(@NonNls @NotNull String name, int priority) {
+    return new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
+                                  new LinkedBlockingQueue<Runnable>(), newNamedThreadFactory(name, true, priority));
   }
 
   @NotNull
-  public static ScheduledThreadPoolExecutor newSingleScheduledThreadExecutor(@NotNull @NonNls final String threadFactoryName) {
-    return newSingleScheduledThreadExecutor(threadFactoryName, Thread.NORM_PRIORITY);
+  public static ScheduledThreadPoolExecutor newSingleScheduledThreadExecutor(@NotNull @NonNls String name) {
+    return newSingleScheduledThreadExecutor(name, Thread.NORM_PRIORITY);
   }
 
   @NotNull
-  public static ScheduledThreadPoolExecutor newSingleScheduledThreadExecutor(@NonNls @NotNull final String threadFactoryName, final int threadPriority) {
-    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, newNamedThreadFactory(threadFactoryName, true, threadPriority));
+  public static ScheduledThreadPoolExecutor newSingleScheduledThreadExecutor(@NonNls @NotNull String name, int priority) {
+    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, newNamedThreadFactory(name, true, priority));
     executor.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
     executor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
     return executor;
   }
 
   @NotNull
-  public static ThreadFactory newNamedThreadFactory(@NonNls @NotNull final String threadName, final boolean isDaemon, final int threadPriority) {
+  public static ThreadFactory newNamedThreadFactory(@NonNls @NotNull final String name, final boolean isDaemon, final int priority) {
     return new ThreadFactory() {
-          @NotNull
-          @Override
-          public Thread newThread(@NotNull final Runnable r) {
-            final Thread thread = new Thread(r, threadName);
-            thread.setDaemon(isDaemon);
-            thread.setPriority(threadPriority);
-            return thread;
-          }
-        };
+      @NotNull
+      @Override
+      public Thread newThread(@NotNull Runnable r) {
+        Thread thread = new Thread(r, name);
+        thread.setDaemon(isDaemon);
+        thread.setPriority(priority);
+        return thread;
+      }
+    };
   }
+
   @NotNull
-  public static ThreadFactory newNamedThreadFactory(@NonNls @NotNull final String threadName) {
+  public static ThreadFactory newNamedThreadFactory(@NonNls @NotNull final String name) {
     return new ThreadFactory() {
-          @NotNull
-          @Override
-          public Thread newThread(@NotNull final Runnable r) {
-            return new Thread(r, threadName);
-          }
-        };
+      @NotNull
+      @Override
+      public Thread newThread(@NotNull final Runnable r) {
+        return new Thread(r, name);
+      }
+    };
   }
 }

@@ -44,7 +44,7 @@ public class TagNameVariantCollector {
                                                              @Nullable List<String> nsInfo) {
 
     XmlElementDescriptor elementDescriptor = null;
-    String elementNamespace = null;
+    String elementNamespace = element.getNamespacePrefix().isEmpty() ? null : element.getNamespace();
 
     final Map<String, XmlElementDescriptor> descriptorsMap = new HashMap<String, XmlElementDescriptor>();
     PsiElement context = element.getParent();
@@ -62,7 +62,9 @@ public class TagNameVariantCollector {
             descriptorsMap.put(namespace, descriptor);
             if(elementDescriptor == null) {
               elementDescriptor = descriptor;
-              elementNamespace = namespace;
+              if (elementNamespace == null) {
+                elementNamespace = namespace;
+              }
             }
           }
         }

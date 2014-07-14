@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,19 +23,19 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class ChangeReturnType extends FixableUsageInfo {
-    @NotNull
-    private final PsiMethod method;
-    @NotNull
-    private final String type;
+  private final PsiMethod myMethod;
+  private final String myType;
 
-    public ChangeReturnType(@NotNull PsiMethod method, @NotNull String type) {
-        super(method);
-        this.type = type;
-        this.method = method;
-    }
+  public ChangeReturnType(@NotNull PsiMethod method, @NotNull String type) {
+    super(method);
+    myMethod = method;
+    myType = type;
+  }
 
-    public void fixUsage() throws IncorrectOperationException {
-        final PsiTypeElement returnType = method.getReturnTypeElement();
-        MutationUtils.replaceType(type, returnType);
-    }
+  @Override
+  public void fixUsage() throws IncorrectOperationException {
+    PsiTypeElement returnType = myMethod.getReturnTypeElement();
+    assert returnType != null : myMethod;
+    MutationUtils.replaceType(myType, returnType);
+  }
 }

@@ -71,7 +71,7 @@ abstract class ContentLayout {
   public abstract boolean shouldDrawDecorations();
   
   protected void updateIdLabel(BaseLabel label) {
-    label.setText(myUi.myWindow.getId() + (shouldDrawDecorations() ? ":" : ""));
+    label.setText(myUi.myWindow.getStripeTitle() + (shouldDrawDecorations() ? ":" : ""));
     label.setBorder(new EmptyBorder(0, 2, 0, 8));
 
     if (myUi.myManager.getContentCount() == 1) {

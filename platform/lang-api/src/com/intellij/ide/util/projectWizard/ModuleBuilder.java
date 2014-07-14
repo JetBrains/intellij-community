@@ -18,7 +18,6 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -51,6 +50,7 @@ import java.io.IOException;
 import java.util.*;
 
 public abstract class ModuleBuilder extends AbstractModuleBuilder {
+
   public static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleBuilder");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ModuleBuilder");
@@ -106,6 +106,10 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   @Override
   @Nullable
   public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
+    return modifyStep(settingsStep);
+  }
+
+  public ModuleWizardStep modifyStep(SettingsStep settingsStep) {
     ModuleType type = getModuleType();
     if (type == null) {
       return null;
@@ -142,9 +146,9 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     }
   }
 
-  @Nullable
-  public JComponent getCustomOptionsPanel(Disposable parentDisposable) {
-    return null;
+  public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep) {
+    ModuleType type = getModuleType();
+    return type == null ? null : type.modifyProjectTypeStep(settingsStep, this);
   }
 
   protected List<WizardInputField> getAdditionalFields() {
@@ -348,12 +352,30 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   }
 
   public String getPresentableName() {
+    return getModuleTypeName();
+  }
+
+  protected String getModuleTypeName() {
     String name = getModuleType().getName();
     return StringUtil.trimEnd(name, " Module");
   }
 
   public String getGroupName() {
     return getPresentableName().split(" ")[0];
+  }
+
+  public String getParentGroup() {
+    return null;
+  }
+
+  public int getWeight() { return 0; }
+
+  public boolean isTemplate() {
+    return false;
+  }
+
+  public boolean isTemplateBased() {
+    return false;
   }
 
   public void updateFrom(ModuleBuilder from) {
@@ -368,18 +390,6 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
 
   public Sdk getModuleJdk() {
     return myJdk;
-  }
-
-  private Map<String, Boolean> myAvailableFrameworks;
-
-  /** @deprecated will be removed */
-  public Map<String, Boolean> getAvailableFrameworks() {
-    return myAvailableFrameworks;
-  }
-
-  /** @deprecated will be removed */
-  public void setAvailableFrameworks(Map<String, Boolean> availableFrameworks) {
-    myAvailableFrameworks = availableFrameworks;
   }
 
   @NotNull

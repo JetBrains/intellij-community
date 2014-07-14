@@ -71,7 +71,7 @@ public class CopyClassTest extends CodeInsightTestCase {
   private PsiElement performAction(final String oldName, final String copyName) throws IncorrectOperationException {
     final PsiClass oldClass = JavaPsiFacade.getInstance(myProject).findClass(oldName, ProjectScope.getAllScope(myProject));
 
-    return WriteCommandAction.runWriteCommandAction(new Computable<PsiElement>(){
+    return WriteCommandAction.runWriteCommandAction(null, new Computable<PsiElement>(){
       @Override
       public PsiElement compute() {
         return     CopyClassesHandler.doCopyClasses(

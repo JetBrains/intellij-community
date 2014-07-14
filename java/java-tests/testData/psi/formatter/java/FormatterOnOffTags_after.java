@@ -17,8 +17,13 @@ public class CollectionTest {
              str3 = "Green",
               str4 = "Blue";
     // @formatter:on
+        if (true) {
+            System.out.println("True");
+        }
         Iterator iterator;
         // @formatter:off
+    if    (true)
+          System.out.println("True");
     collection.add(str1);
       collection.add(str2);
         collection.add(str3);
@@ -39,6 +44,9 @@ public class CollectionTest {
    *     And yet another one.
    */
   public void doSomething(String x, String y) {
+    if
+       (true)
+          System.out.println("True");
   }
   // @formatter:on
 
@@ -48,6 +56,9 @@ public class CollectionTest {
      * @param z Parameter Z.
      */
     public void doSomethingElse(String z) {
+        if (true) {
+            System.out.println("True");
+        }
     }
 
     // @formatter:off
@@ -58,6 +69,10 @@ public class CollectionTest {
    *   @param j
    *      Parameter J.
    */
-  public void evenMore(int i, int j) {}
+  public void evenMore(int i, int j) {
+    if
+       (true)
+          System.out.println("True");
+  }
   // @formatter:on
 }

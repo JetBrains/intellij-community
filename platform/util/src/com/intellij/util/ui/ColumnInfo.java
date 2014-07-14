@@ -80,6 +80,10 @@ public abstract class ColumnInfo <Item, Aspect> {
   }
 
   @Nullable
+  /**
+   * @see com.intellij.util.ui.table.IconTableCellRenderer
+   * @see com.intellij.util.ui.LocalPathCellEditor
+   */
   public TableCellRenderer getRenderer(Item item) {
     return null;
   }
@@ -89,7 +93,10 @@ public abstract class ColumnInfo <Item, Aspect> {
   }
 
   @Nullable
-  public TableCellEditor getEditor(Item o) {
+  /**
+   * @see com.intellij.util.ui.table.ComboBoxTableCellEditor
+   */
+  public TableCellEditor getEditor(Item item) {
     return null;
   }
 

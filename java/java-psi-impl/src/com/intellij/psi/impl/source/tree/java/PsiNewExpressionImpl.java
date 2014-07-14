@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,12 +136,12 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
     return new PsiPolyVariantCachingReference() {
       @Override
       @NotNull
-      public JavaResolveResult[] resolveInner(boolean incompleteCode) {
+      public JavaResolveResult[] resolveInner(boolean incompleteCode, @NotNull PsiFile containingFile) {
         ASTNode classRef = findChildByRole(ChildRole.TYPE_REFERENCE);
         if (classRef != null) {
           ASTNode argumentList = PsiImplUtil.skipWhitespaceAndComments(classRef.getTreeNext());
           if (argumentList != null && argumentList.getElementType() == JavaElementType.EXPRESSION_LIST) {
-            final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+            final JavaPsiFacade facade = JavaPsiFacade.getInstance(containingFile.getProject());
             PsiType aClass = facade.getElementFactory().createType((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(classRef));
             return facade.getResolveHelper().multiResolveConstructor((PsiClassType)aClass,
                                                                       (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
@@ -151,7 +151,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
         else{
           ASTNode anonymousClassElement = findChildByType(JavaElementType.ANONYMOUS_CLASS);
           if (anonymousClassElement != null) {
-            final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+            final JavaPsiFacade facade = JavaPsiFacade.getInstance(containingFile.getProject());
             final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)SourceTreeToPsiMap.treeElementToPsi(anonymousClassElement);
             PsiType aClass = anonymousClass.getBaseClassType();
             ASTNode argumentList = anonymousClassElement.findChildByType(JavaElementType.EXPRESSION_LIST);
@@ -176,7 +176,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
       @Override
       @NotNull
       public String getCanonicalText() {
-        return null;
+        throw new UnsupportedOperationException();
       }
 
       @Override

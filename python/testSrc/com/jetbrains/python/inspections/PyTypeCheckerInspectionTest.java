@@ -228,4 +228,13 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testSecondFormIter() {
     doTest();
   }
+
+  public void testMetaClassIteration() {
+    doTest();
+  }
+
+  // PY-10967
+  public void testDefaultTupleParameter() {
+    doTest();
+  }
 }

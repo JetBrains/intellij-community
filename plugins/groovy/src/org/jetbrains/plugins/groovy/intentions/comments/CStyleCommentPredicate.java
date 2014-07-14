@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 class CStyleCommentPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiComment)) {
       return false;
@@ -51,6 +52,6 @@ class CStyleCommentPredicate implements PsiElementPredicate {
   }
 
   private static boolean isWhitespace(PsiElement element) {
-    return element.getText().replace("\n", "").trim().length() == 0;
+    return element.getText().replace("\n", "").trim().isEmpty();
   }
 }

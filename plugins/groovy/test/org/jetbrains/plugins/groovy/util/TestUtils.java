@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ public abstract class TestUtils {
   public static final String GROOVY_JAR_18 = "groovy-1.8.0-beta-2.jar";
   public static final String GROOVY_JAR_21 = "groovy-all-2.1.3.jar";
   public static final String GROOVY_JAR_22 = "groovy-all-2.2.0-beta-1.jar";
+  public static final String GROOVY_JAR_23 = "groovy-all-2.3.0.jar";
 
   public static String getMockJdkHome() {
     return getAbsoluteTestDataPath() + "/mockJDK";
@@ -92,6 +93,10 @@ public abstract class TestUtils {
     return getAbsoluteTestDataPath() + "/mockGroovyLib2.2";
   }
 
+  private static String getMockGroovy2_3LibraryHome() {
+    return getAbsoluteTestDataPath() + "/mockGroovyLib2.3";
+  }
+
   public static String getMockGroovy1_8LibraryName() {
     return getMockGroovy1_8LibraryHome()+"/"+GROOVY_JAR_18;
   }
@@ -102,6 +107,10 @@ public abstract class TestUtils {
 
   public static String getMockGroovy2_2LibraryName() {
     return getMockGroovy2_2LibraryHome() + "/" + GROOVY_JAR_22;
+  }
+
+  public static String getMockGroovy2_3LibraryName() {
+    return getMockGroovy2_3LibraryHome() + "/" + GROOVY_JAR_23;
   }
 
   public static PsiFile createPseudoPhysicalGroovyFile(final Project project, final String text) throws IncorrectOperationException {

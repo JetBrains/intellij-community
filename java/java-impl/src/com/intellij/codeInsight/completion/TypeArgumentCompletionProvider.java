@@ -24,6 +24,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -47,6 +48,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 * @author peter
 */
 class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParameters> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.TypeArgumentCompletionProvider");
   private final boolean mySmart;
   @Nullable private final InheritorsHolder myInheritors;
 
@@ -244,7 +246,12 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
     public void handleInsert(InsertionContext context) {
       context.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
       for (int i = 0; i < myTypeItems.size(); i++) {
-        CompletionUtil.emulateInsertion(context, context.getTailOffset(), myTypeItems.get(i));
+        PsiTypeLookupItem typeItem = myTypeItems.get(i);
+        CompletionUtil.emulateInsertion(context, context.getTailOffset(), typeItem);
+        if (context.getTailOffset() < 0) {
+          LOG.error("tail offset spoiled by " + typeItem);
+          return;
+        }
         context.setTailOffset(getTail(i == myTypeItems.size() - 1).processTail(context.getEditor(), context.getTailOffset()));
       }
       context.setAddCompletionChar(false);

@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
@@ -46,16 +47,19 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement expression = descriptor.getPsiElement();
     if (expression != null && expression.isWritable() && expression instanceof PyReferenceExpression) {
-      PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      if ("print".equals(expression.getText()))
-        replacePrint(expression, elementGenerator);
+      final String expressionText = expression.getText();
+      if (PyNames.PRINT.equals(expressionText) || PyNames.EXEC.equals(expressionText))
+        replacePrintExec(expression);
       else
-        expression.replace(elementGenerator.createCallExpression(LanguageLevel.forElement(expression), expression.getText()));
+        expression.replace(PyElementGenerator.getInstance(project).createCallExpression(LanguageLevel.forElement(expression),
+                                                                                        expressionText));
     }
   }
 
-  private static void replacePrint(PsiElement expression, PyElementGenerator elementGenerator) {
-    StringBuilder stringBuilder = new StringBuilder("print (");
+  private static void replacePrintExec(@NotNull final PsiElement expression) {
+    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(expression.getProject());
+    final String expressionText = expression.getText();
+    final StringBuilder stringBuilder = new StringBuilder(expressionText + " (");
 
     final PsiElement whiteSpace = expression.getContainingFile().findElementAt(expression.getTextOffset() + expression.getTextLength());
     PsiElement next = null;
@@ -76,7 +80,7 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
     if (next != null) {
       final String text = next.getText();
       stringBuilder.append(text);
-      if (text.endsWith(","))
+      if (text.endsWith(",") && PyNames.PRINT.equals(expressionText))
         stringBuilder.append(" end=' '");
       next.delete();
     }

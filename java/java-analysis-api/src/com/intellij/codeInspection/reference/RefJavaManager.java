@@ -65,6 +65,8 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
 
   public abstract PsiMethod getAppPremainPattern();
 
+  public abstract PsiMethod getAppAgentmainPattern();
+
   public abstract PsiClass getApplet();
 
   public abstract PsiClass getServlet();

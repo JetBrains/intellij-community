@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -86,6 +87,161 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testEllipsis() throws Exception {
+    doTest();
+  }
+
+  public void testOuterMethodPropagation() throws Exception {
+    doTest();
+  }
+
+  public void testRecursiveCalls() throws Exception {
+    doTest();
+  }
+
+  public void testGroundTargetTypeForImplicitLambdas() throws Exception {
+    doTest();
+  }
+
+  public void testAdditionalConstraintsReduceOrder() throws Exception {
+    doTest();
+  }
+
+  public void testAdditionalConstraintSubstitution() throws Exception {
+    doTest();
+  }
+  public void testFunctionalInterfacesCalculation() throws Exception {
+    doTest();
+  }
+
+  public void testMissedSiteSubstitutorDuringDeepAdditionalConstraintsGathering() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA120992() throws Exception {
+    doTest();
+  }
+
+  public void testTargetTypeConflictResolverShouldNotTryToEvaluateCurrentArgumentType() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA119535() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA119003() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA117124() throws Exception {
+    doTest();
+  }
+
+  public void testWildcardParameterization() throws Exception {
+    doTest();
+  }
+
+  public void testDiamondInLambdaReturn() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA118965() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA121315() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA118965comment() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA122074() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA122084() throws Exception {
+    doTest();
+  }
+
+  public void testAdditionalConstraintDependsOnNonMentionedVars() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA122616() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA122700() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA122406() throws Exception {
+    doTest();
+  }
+
+  public void testNestedCallsInsideLambdaReturnExpression() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA123731() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA123869() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA123848() throws Exception {
+    doTest();
+  }
+
+  public void testOnlyLambdaAtTypeParameterPlace() throws Exception {
+    doTest();
+  }
+
+  public void testLiftedIntersectionType() throws Exception {
+    doTest();
+  }
+
+  public void testInferenceFromReturnStatements() throws Exception {
+    doTest();
+  }
+
+  public void testDownUpThroughLambdaReturnStatements() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA124547() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA118362() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA126056() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA125254() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA124961() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA126109() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA126809() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
@@ -93,5 +249,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   private void doTest(boolean warnings) {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
     doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk18();
   }
 }

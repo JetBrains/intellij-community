@@ -49,6 +49,10 @@ public class InProcessExternalSystemCommunicationManager implements ExternalSyst
   }
 
   @Override
+  public void release(@NotNull String id, @NotNull ProjectSystemId externalSystemId) throws Exception {
+  }
+
+  @Override
   public boolean isAlive(@NotNull RemoteExternalSystemFacade facade) {
     RemoteExternalSystemFacade toCheck = facade;
     if (facade instanceof ExternalSystemFacadeWrapper) {

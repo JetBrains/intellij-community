@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 
 
@@ -121,44 +122,46 @@ public class IconUtil {
     return new ImageIcon(second);
   }
 
+  private static final NullableFunction<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = new NullableFunction<FileIconKey, Icon>() {
+    @Override
+    public Icon fun(final FileIconKey key) {
+      final VirtualFile file = key.getFile();
+      final int flags = key.getFlags();
+      final Project project = key.getProject();
+
+      if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
+
+      final Icon providersIcon = getProvidersIcon(file, flags, project);
+      Icon icon = providersIcon == null ? VirtualFilePresentation.getIcon(file) : providersIcon;
+
+      final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
+      for (FileIconPatcher patcher : getPatchers()) {
+        if (dumb && !DumbService.isDumbAware(patcher)) {
+          continue;
+        }
+
+        icon = patcher.patchIcon(icon, file, flags, project);
+      }
+
+      if ((flags & Iconable.ICON_FLAG_READ_STATUS) != 0 &&
+          (!file.isWritable() || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
+        icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
+      }
+      if (file.is(VFileProperty.SYMLINK)) {
+        icon = new LayeredIcon(icon, PlatformIcons.SYMLINK_ICON);
+      }
+
+      Iconable.LastComputedIcon.put(file, icon, flags);
+
+      return icon;
+    }
+  };
+
   public static Icon getIcon(@NotNull final VirtualFile file, @Iconable.IconFlags final int flags, @Nullable final Project project) {
     Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);
 
     final Icon base = lastIcon != null ? lastIcon : VirtualFilePresentation.getIcon(file);
-    return IconDeferrer.getInstance().defer(base, new FileIconKey(file, project, flags), new NullableFunction<FileIconKey, Icon>() {
-      @Override
-      public Icon fun(final FileIconKey key) {
-        final VirtualFile file = key.getFile();
-        final int flags = key.getFlags();
-        final Project project = key.getProject();
-
-        if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
-
-        final Icon providersIcon = getProvidersIcon(file, flags, project);
-        Icon icon = providersIcon == null ? VirtualFilePresentation.getIcon(file) : providersIcon;
-
-        final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
-        for (FileIconPatcher patcher : getPatchers()) {
-          if (dumb && !DumbService.isDumbAware(patcher)) {
-            continue;
-          }
-
-          icon = patcher.patchIcon(icon, file, flags, project);
-        }
-
-        if ((flags & Iconable.ICON_FLAG_READ_STATUS) != 0 &&
-            (!file.isWritable() || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
-          icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
-        }
-        if (file.is(VFileProperty.SYMLINK)) {
-          icon = new LayeredIcon(icon, PlatformIcons.SYMLINK_ICON);
-        }
-
-        Iconable.LastComputedIcon.put(file, icon, flags);
-
-        return icon;
-      }
-    });
+    return IconDeferrer.getInstance().defer(base, new FileIconKey(file, project, flags), ICON_NULLABLE_FUNCTION);
   }
 
   @Nullable
@@ -365,5 +368,42 @@ public class IconUtil {
     public int getIconHeight() {
       return myCrop.height;
     }
+  }
+
+  public static Icon scale(@NotNull final Icon source, double _scale) {
+    final int hiDPIscale;
+    if (source instanceof ImageIcon) {
+      Image image = ((ImageIcon)source).getImage();
+      hiDPIscale = RetinaImage.isAppleHiDPIScaledImage(image) || image instanceof JBHiDPIScaledImage ? 2 : 1;
+    } else {
+      hiDPIscale = 1;
+    }
+    final double scale = Math.min(32, Math.max(.1, _scale));
+    return new Icon() {
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        Graphics2D g2d = (Graphics2D)g.create();
+        try {
+          AffineTransform transform = AffineTransform.getScaleInstance(scale, scale);
+          transform.preConcatenate(g2d.getTransform());
+          g2d.setTransform(transform);
+          g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+          source.paintIcon(c, g2d, x, y);
+        } finally {
+          g2d.dispose();
+        }
+      }
+
+      @Override
+      public int getIconWidth() {
+        return (int)(source.getIconWidth() * scale) / hiDPIscale;
+      }
+
+      @Override
+      public int getIconHeight() {
+        return (int)(source.getIconHeight() * scale) / hiDPIscale;
+      }
+    };
+
   }
 }

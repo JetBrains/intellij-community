@@ -32,8 +32,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-
 /**
  * User: ktisha
  *
@@ -66,17 +64,17 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
       final PyClass containingClass = node.getContainingClass();
       if (containingClass == null) return;
       if (PythonUnitTestUtil.isUnitTestCaseClass(containingClass)) return;
-      final Collection<PsiElement> supers = PySuperMethodsSearch.search(node).findAll();
-      if (!supers.isEmpty()) return;
-      final Collection<PyFunction> overrides = PyOverridingMethodsSearch.search(node, true).findAll();
-      if (!overrides.isEmpty()) return;
-      if (PyUtil.isDecoratedAsAbstract(node) || node.getModifier() != null) return;
+      final PsiElement firstSuper = PySuperMethodsSearch.search(node).findFirst();
+      if (firstSuper != null) return;
+      final PyFunction firstOverride = PyOverridingMethodsSearch.search(node, true).findFirst();
+      if (firstOverride != null) return;
+      final PyDecoratorList decoratorList = node.getDecoratorList();
+      if (decoratorList != null) return;
+      if (node.getModifier() != null) return;
       final Property property = containingClass.findPropertyByCallable(node);
       if (property != null) return;
 
       final PyStatementList statementList = node.getStatementList();
-      if (statementList == null) return;
-
       final PyStatement[] statements = statementList.getStatements();
 
       if (statements.length == 1 && statements[0] instanceof PyPassStatement) return;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ public abstract class EncodingRegistry {
   public static Getter<EncodingRegistry> ourInstanceGetter;
 
   public abstract boolean isNative2Ascii(@NotNull VirtualFile virtualFile);
+  public abstract boolean isNative2AsciiForPropertiesFiles();
 
   /**
    * @return charset configured in Settings|File Encodings|IDE encoding
@@ -49,9 +50,15 @@ public abstract class EncodingRegistry {
   @Nullable
   public abstract Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults);
 
+  @Deprecated // return true always
   public abstract boolean isUseUTFGuessing(VirtualFile virtualFile);
 
   public abstract void setEncoding(@Nullable("null means project") VirtualFile virtualFileOrDir, @Nullable("null means remove mapping") Charset charset);
+
+  @Nullable("null means 'use system-default'")
+  public Charset getDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile) {
+    return null;
+  }
 
   public static EncodingRegistry getInstance() {
     if (ourInstanceGetter == null) {

@@ -94,7 +94,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
     if (ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace()) ||
         ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace()) ||
         ActionPlaces.FAVORITES_VIEW_POPUP.equals(event.getPlace()) ||
-        ActionPlaces.NAVIGATION_BAR.equals(event.getPlace())) {
+        ActionPlaces.NAVIGATION_BAR_POPUP.equals(event.getPlace())) {
       final PsiElement psiElement = event.getData(CommonDataKeys.PSI_ELEMENT);
       if(psiElement instanceof PsiMethod) {
         final PsiFile containingFile = psiElement.getContainingFile();
@@ -122,21 +122,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
       }
     }
 
-    if(method != null) {
-      final PsiElement method1 = method;
-      final Document document1 = document;
-
-      return new PlaceInDocument() {
-        public Document getDocument() {
-          return document1;
-        }
-
-        public int getOffset() {
-          return method1.getTextOffset();
-        }
-      };
-    }
-    return null;
+    return method != null ? new PlaceInDocument(document, method.getTextOffset()) : null;
   }
 
   @Nullable

@@ -78,7 +78,7 @@ class ArrayBackedFMap implements KeyFMap {
         if (oldSize == 3) {
           int i1 = (2-i)/2;
           int i2 = 3 - (i+2)/2;
-          return new PairElementsFMap(keys[i1], values[i1], keys[i2], values[i2]);
+          return new PairElementsFMap(Key.getKeyByIndex(keys[i1]), values[i1], Key.getKeyByIndex(keys[i2]), values[i2]);
         }
         int newSize = oldSize - 1;
         int[] newKeys = new int[newSize];

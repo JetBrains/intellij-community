@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ public class GroovyTestGenerator implements TestGenerator {
     try {
       final PsiClass test = (PsiClass)PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(
         new Computable<PsiElement>() {
+          @Override
           public PsiElement compute() {
             try {
               IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
@@ -154,6 +155,7 @@ public class GroovyTestGenerator implements TestGenerator {
 
   private static void showErrorLater(final Project project, final String targetClassName) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         Messages.showErrorDialog(project,
                                  CodeInsightBundle.message("intention.error.cannot.create.class.message", targetClassName),

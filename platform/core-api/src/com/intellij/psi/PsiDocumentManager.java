@@ -101,6 +101,15 @@ public abstract class PsiDocumentManager {
   public abstract void commitDocument(@NotNull Document document);
 
   /**
+   * @param document
+   * @return the document text that PSI should be based upon. For changed documents, it's their old text until the document is committed.
+   * This sequence is immutable.
+   * @see com.intellij.util.text.ImmutableCharSequence
+   */
+  @NotNull
+  public abstract CharSequence getLastCommittedText(@NotNull Document document);
+
+  /**
    * Returns the list of documents which have been modified but not committed.
    *
    * @return the list of uncommitted documents.

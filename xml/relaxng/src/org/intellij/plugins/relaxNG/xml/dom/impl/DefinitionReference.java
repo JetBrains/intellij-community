@@ -67,6 +67,7 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
     return true;
   }
 
+  @Override
   @NotNull
   public ResolveResult[] multiResolve(boolean incompleteCode) {
     final RngGrammar scope = getScope();
@@ -92,12 +93,14 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
     return scope;
   }
 
+  @Override
   public ResolveResult fun(Define define) {
     final XmlElement xmlElement = (XmlElement)define.getPsiElement();
     assert xmlElement != null;
     return new PsiElementResolveResult(xmlElement);
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     final RngGrammar scope = getScope();
@@ -109,6 +112,7 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
     if (map == null || map.size() == 0) return ArrayUtil.EMPTY_OBJECT_ARRAY;
 
     return ContainerUtil.mapNotNull(map.values(), new Function<Set<Define>, Object>() {
+      @Override
       public Object fun(Set<Define> defines) {
         final Define define = defines.iterator().next();
         if (defines.size() == 0) {
@@ -130,6 +134,7 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
     }).toArray();
   }
 
+  @Override
   public LocalQuickFix[] getQuickFixes() {
     final XmlTag tag = PsiTreeUtil.getParentOfType(getElement(), XmlTag.class);
     assert tag != null;
@@ -140,6 +145,7 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
     return LocalQuickFix.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public String getUnresolvedMessagePattern() {
     return "Unresolved pattern reference ''{0}''";

@@ -18,12 +18,13 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public class I18nQuickFixTest extends LightQuickFix15TestCase {
+public class I18nQuickFixTest extends LightQuickFixParameterizedTestCase {
   private boolean myMustBeAvailableAfterInvoke;
 
   @NotNull
@@ -49,5 +50,10 @@ public class I18nQuickFixTest extends LightQuickFix15TestCase {
   @Override
   protected boolean shouldBeAvailableAfterExecution() {
     return myMustBeAvailableAfterInvoke;
+  }
+
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_5;
   }
 }

@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -111,8 +112,8 @@ public class RandomDoubleForRandomIntegerInspection
       assert multiplierExpression != null;
       final String multiplierText = multiplierExpression.getText();
       @NonNls final String nextInt = ".nextInt((int) ";
-      replaceExpression(cast, qualifierText + nextInt + multiplierText +
-                              ')');
+      PsiReplacementUtil.replaceExpression(cast, qualifierText + nextInt + multiplierText +
+                                                 ')');
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
@@ -79,14 +80,14 @@ public class PsiImplUtil {
 
   @NotNull
   public static PsiMethod[] getConstructors(@NotNull PsiClass aClass) {
-    final List<PsiMethod> constructorsList = new SmartList<PsiMethod>();
-
-    final PsiMethod[] methods = aClass.getMethods();
-    for (final PsiMethod method : methods) {
-      if (method.isConstructor()) constructorsList.add(method);
+    List<PsiMethod> result = null;
+    for (PsiMethod method : aClass.getMethods()) {
+      if (method.isConstructor()) {
+        if (result == null) result = ContainerUtil.newSmartList();
+        result.add(method);
+      }
     }
-
-    return constructorsList.toArray(new PsiMethod[constructorsList.size()]);
+    return result == null ? PsiMethod.EMPTY_ARRAY : result.toArray(new PsiMethod[result.size()]);
   }
 
   @Nullable
@@ -275,7 +276,7 @@ public class PsiImplUtil {
 
   @NotNull
   public static PsiType[] typesByTypeElements(@NotNull PsiTypeElement[] typeElements) {
-    PsiType[] types = new PsiType[typeElements.length];
+    PsiType[] types = PsiType.createArray(typeElements.length);
     for (int i = 0; i < types.length; i++) {
       types[i] = typeElements[i].getType();
     }
@@ -370,7 +371,7 @@ public class PsiImplUtil {
 
   // todo[r.sh] cache?
   @Nullable
-  public static Set<TargetType> getAnnotationTargets(PsiClass annotationType) {
+  public static Set<TargetType> getAnnotationTargets(@NotNull PsiClass annotationType) {
     if (!annotationType.isAnnotationType()) return null;
     PsiModifierList modifierList = annotationType.getModifierList();
     if (modifierList == null) return null;
@@ -480,8 +481,8 @@ public class PsiImplUtil {
   }
 
   public static PsiType normalizeWildcardTypeByPosition(@NotNull PsiType type, @NotNull PsiExpression expression) {
-    LOG.assertTrue(expression.isValid());
-    LOG.assertTrue(type.isValid());
+    PsiUtilCore.ensureValid(expression);
+    PsiUtil.ensureValidType(type);
 
     PsiExpression toplevel = expression;
     while (toplevel.getParent() instanceof PsiArrayAccessExpression &&
@@ -536,39 +537,37 @@ public class PsiImplUtil {
 
   @NotNull
   public static SearchScope getMemberUseScope(@NotNull PsiMember member) {
-    final GlobalSearchScope maximalUseScope = ResolveScopeManager.getElementUseScope(member);
     PsiFile file = member.getContainingFile();
+    PsiElement topElement = file == null ? member : file;
+    Project project = topElement.getProject();
+    final GlobalSearchScope maximalUseScope = ResolveScopeManager.getInstance(project).getUseScope(topElement);
     if (isInServerPage(file)) return maximalUseScope;
 
     PsiClass aClass = member.getContainingClass();
     if (aClass instanceof PsiAnonymousClass) {
       //member from anonymous class can be called from outside the class
-      PsiElement methodCallExpr = PsiTreeUtil.getParentOfType(aClass, PsiMethodCallExpression.class);
+      PsiElement methodCallExpr = PsiUtil.isLanguageLevel8OrHigher(aClass) ? PsiTreeUtil.getTopmostParentOfType(aClass, PsiStatement.class) 
+                                                                           : PsiTreeUtil.getParentOfType(aClass, PsiMethodCallExpression.class);
       return new LocalSearchScope(methodCallExpr != null ? methodCallExpr : aClass);
     }
 
-    if (member.hasModifierProperty(PsiModifier.PUBLIC)) {
+    PsiModifierList modifierList = member.getModifierList();
+    int accessLevel = modifierList == null ? PsiUtil.ACCESS_LEVEL_PUBLIC : PsiUtil.getAccessLevel(modifierList);
+    if (accessLevel == PsiUtil.ACCESS_LEVEL_PUBLIC || accessLevel == PsiUtil.ACCESS_LEVEL_PROTECTED) {
       return maximalUseScope; // class use scope doesn't matter, since another very visible class can inherit from aClass
     }
-    else if (member.hasModifierProperty(PsiModifier.PROTECTED)) {
-      return maximalUseScope; // class use scope doesn't matter, since another very visible class can inherit from aClass
-    }
-    else if (member.hasModifierProperty(PsiModifier.PRIVATE)) {
+    if (accessLevel == PsiUtil.ACCESS_LEVEL_PRIVATE) {
       PsiClass topClass = PsiUtil.getTopLevelClass(member);
-      return topClass != null ? new LocalSearchScope(topClass) : file != null ? new LocalSearchScope(file) : maximalUseScope;
+      return topClass != null ? new LocalSearchScope(topClass) : file == null ? maximalUseScope : new LocalSearchScope(file);
     }
-    else {
-      if (file instanceof PsiJavaFile) {
-        PsiPackage aPackage = JavaPsiFacade.getInstance(member.getProject()).findPackage(((PsiJavaFile)file).getPackageName());
-        if (aPackage != null) {
-          SearchScope scope = PackageScope.packageScope(aPackage, false);
-          scope = scope.intersectWith(maximalUseScope);
-          return scope;
-        }
+    if (file instanceof PsiJavaFile) {
+      PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(((PsiJavaFile)file).getPackageName());
+      if (aPackage != null) {
+        SearchScope scope = PackageScope.packageScope(aPackage, false);
+        return scope.intersectWith(maximalUseScope);
       }
-
-      return maximalUseScope;
     }
+    return maximalUseScope;
   }
 
   public static boolean isInServerPage(@Nullable final PsiElement element) {
@@ -702,10 +701,9 @@ public class PsiImplUtil {
     if (count == 0) return result;
     int idx = 0;
     for (ASTNode child = psiCodeBlock.getFirstChildNode(); child != null && idx < count; child = child.getTreeNext()) {
-      if (child.getPsi() instanceof PsiStatement) {
-        PsiStatement element = (PsiStatement)child.getPsi();
-        LOG.assertTrue(element != null, child);
-        result[idx++] = element;
+      PsiElement element = child.getPsi();
+      if (element instanceof PsiStatement) {
+        result[idx++] = (PsiStatement)element;
       }
     }
     return result;
@@ -733,18 +731,47 @@ public class PsiImplUtil {
     return null;
   }
 
+  public static boolean isTypeAnnotation(@Nullable PsiElement element) {
+    return element instanceof PsiAnnotation &&
+           findApplicableTarget((PsiAnnotation)element, TargetType.TYPE_USE) == TargetType.TYPE_USE;
+  }
+
   @Nullable
   public static List<PsiAnnotation> getTypeUseAnnotations(@NotNull PsiModifierList modifierList) {
     SmartList<PsiAnnotation> result = null;
 
     for (PsiAnnotation annotation : modifierList.getAnnotations()) {
-      if (findApplicableTarget(annotation, TargetType.TYPE_USE) == TargetType.TYPE_USE) {
+      if (isTypeAnnotation(annotation)) {
         if (result == null) result = new SmartList<PsiAnnotation>();
         result.add(annotation);
       }
     }
 
     return result;
+  }
+
+  private static final Key<Boolean> TYPE_ANNO_MARK = Key.create("type.annotation.mark");
+
+  public static void markTypeAnnotations(@NotNull PsiTypeElement typeElement) {
+    PsiElement left = PsiTreeUtil.skipSiblingsBackward(typeElement, PsiComment.class, PsiWhiteSpace.class, PsiTypeParameterList.class);
+    if (left instanceof PsiModifierList) {
+      for (PsiAnnotation annotation : ((PsiModifierList)left).getAnnotations()) {
+        if (isTypeAnnotation(annotation)) {
+          annotation.putUserData(TYPE_ANNO_MARK, Boolean.TRUE);
+        }
+      }
+    }
+  }
+
+  public static void deleteTypeAnnotations(@NotNull PsiTypeElement typeElement) {
+    PsiElement left = PsiTreeUtil.skipSiblingsBackward(typeElement, PsiComment.class, PsiWhiteSpace.class, PsiTypeParameterList.class);
+    if (left instanceof PsiModifierList) {
+      for (PsiAnnotation annotation : ((PsiModifierList)left).getAnnotations()) {
+        if (TYPE_ANNO_MARK.get(annotation) == Boolean.TRUE) {
+          annotation.delete();
+        }
+      }
+    }
   }
 
   public static boolean isLeafElementOfType(@Nullable PsiElement element, IElementType type) {

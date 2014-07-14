@@ -18,6 +18,7 @@ package org.jetbrains.plugins.gradle.documentation;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -58,7 +59,7 @@ public class GradleDocumentationProvider implements DocumentationProvider {
   @Override
   public String generateDoc(PsiElement element, PsiElement originalElement) {
     PsiFile file = element.getContainingFile();
-    if (file == null || !file.getName().endsWith(GradleConstants.EXTENSION)) return null;
+    if (file == null || !FileUtilRt.extensionEquals(file.getName(), GradleConstants.EXTENSION)) return null;
     return element instanceof GrLiteral ? findDoc(element, GrLiteral.class.cast(element).getValue()) : null;
   }
 
@@ -66,7 +67,7 @@ public class GradleDocumentationProvider implements DocumentationProvider {
   @Override
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     final PsiFile file = element.getContainingFile();
-    if (file == null || !file.getName().endsWith(GradleConstants.EXTENSION)) return null;
+    if (file == null || !FileUtilRt.extensionEquals(file.getName(), GradleConstants.EXTENSION)) return null;
     final String doc = findDoc(element, object);
     return !StringUtil.isEmpty(doc) ? new CustomMembersGenerator.GdslNamedParameter(String.valueOf(object), doc, element, null) : null;
   }

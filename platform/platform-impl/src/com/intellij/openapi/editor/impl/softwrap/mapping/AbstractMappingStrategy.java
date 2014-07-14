@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,11 @@
  */
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
-import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import org.jetbrains.annotations.NotNull;
@@ -166,34 +164,19 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
 
     Document document = myEditor.getDocument();
     int endOffsetLogicalLine = document.getLineNumber(foldRegion.getEndOffset());
-    int collapsedSymbolsWidthInColumns = -1;
-    if (position.logicalLine == endOffsetLogicalLine) {
-      // Single-line fold region.
-      FoldingData foldingData = getFoldRegionData(foldRegion);
-      if (foldingData != null) {
-        collapsedSymbolsWidthInColumns = foldingData.getCollapsedSymbolsWidthInColumns();
-      }
-      else {
-        String details = "";
-        if (myEditor instanceof EditorImpl) {
-          details = ((EditorImpl)myEditor).dumpState();
-        }
-        LogMessageEx.error(LOG, "Unexpected fold region is found: " + foldRegion, details);
-      }
-    }
-    else {
+    if (position.logicalLine != endOffsetLogicalLine) {
       // Multi-line fold region.
       position.softWrapColumnDiff = 0;
       position.softWrapLinesBefore += position.softWrapLinesCurrent;
       position.softWrapLinesCurrent = 0;
     }
-    
-    if (collapsedSymbolsWidthInColumns < 0) {
-      collapsedSymbolsWidthInColumns = myRepresentationHelper.toVisualColumnSymbolsNumber(
-        document.getCharsSequence(), foldRegion.getStartOffset(), foldRegion.getEndOffset(), 0
-      );
+
+    int collapsedSymbolsWidthInColumns = -1;
+    FoldingData foldingData = getFoldRegionData(foldRegion);
+    if (foldingData != null) {
+      collapsedSymbolsWidthInColumns = foldingData.getCollapsedSymbolsWidthInColumns();
     }
-    
+
     position.advance(foldRegion, collapsedSymbolsWidthInColumns);
     return null;
   }

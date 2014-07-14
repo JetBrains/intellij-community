@@ -73,7 +73,9 @@ public class MarqueeTracker extends InputTool {
       myState = STATE_INVALID;
       eraseFeedback();
     }
-    refreshCursor();
+    if (button != MouseEvent.BUTTON3) {
+      refreshCursor();
+    }
   }
 
   @Override
@@ -149,7 +151,7 @@ public class MarqueeTracker extends InputTool {
     myFeedback.setBounds(getSelectionRectangle());
     if (ApplicationManager.getApplication().isInternal()) {
       Dimension size = myFeedback.getSize();
-      myArea.setDescription(size.width + " : " + size.height);
+      myArea.setDescription("Size [" + size.width + " : " + size.height + "]");
     }
     layer.repaint();
   }

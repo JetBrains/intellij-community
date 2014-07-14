@@ -22,6 +22,7 @@ package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -29,10 +30,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateRuntimeException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.sun.jdi.ClassType;
-import com.sun.jdi.Method;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.ReferenceType;
+import com.sun.jdi.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,10 +51,12 @@ public class MethodEvaluator implements Evaluator {
     myArgumentEvaluators = argumentEvaluators;
   }
 
+  @Override
   public Modifier getModifier() {
     return null;
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     if(!context.getDebugProcess().isAttached()) return null;
     DebugProcessImpl debugProcess = context.getDebugProcess();
@@ -83,8 +83,8 @@ public class MethodEvaluator implements Evaluator {
       ReferenceType referenceType = null;
 
       if(object instanceof ObjectReference) {
-        final ReferenceType qualifierType = ((ObjectReference)object).referenceType();
-        referenceType = debugProcess.findClass(context, qualifierType.name(), qualifierType.classLoader());
+        // it seems that if we have an object of the class, the class must be ready, so no need to use findClass here
+        referenceType = ((ObjectReference)object).referenceType();
       }
       else if(object instanceof ClassType) {
         final ClassType qualifierType = (ClassType)object;
@@ -126,7 +126,18 @@ public class MethodEvaluator implements Evaluator {
       if (requiresSuperObject && (referenceType instanceof ClassType)) {
         _refType = ((ClassType)referenceType).superclass();
       }
-      final Method jdiMethod = DebuggerUtilsEx.findMethod(_refType, myMethodName, signature);
+      Method jdiMethod = DebuggerUtils.findMethod(_refType, myMethodName, signature);
+      if (jdiMethod == null || jdiMethod.argumentTypes().size() != args.size()) {
+        // dummy matching, may be improved with types matching later
+        List<Method> methods = _refType.methodsByName(myMethodName);
+        for (Method method : methods) {
+          List<Type> types = method.argumentTypes();
+          if (types.size() == args.size()) {
+            jdiMethod = method;
+            break;
+          }
+        }
+      }
       if (jdiMethod == null) {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.no.instance.method", methodName));
       }

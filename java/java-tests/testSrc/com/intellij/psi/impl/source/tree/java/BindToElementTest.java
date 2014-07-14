@@ -40,7 +40,7 @@ public class BindToElementTest extends CodeInsightTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    VirtualFile root = WriteCommandAction.runWriteCommandAction(new Computable<VirtualFile>() {
+    VirtualFile root = WriteCommandAction.runWriteCommandAction(null, new Computable<VirtualFile>() {
       @Override
       public VirtualFile compute() {
         return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(

@@ -384,14 +384,21 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     return UIManager.getFont("ToolTip.font");
   }
 
+  public boolean hasCurrent() {
+    return myCurrentTooltip != null;
+  }
+
   public boolean hideCurrent(@Nullable MouseEvent me, @Nullable AnAction action, @Nullable AnActionEvent event) {
     return hideCurrent(me, action, event, myCurrentTipUi != null && myCurrentTipUi.isAnimationEnabled());
   }
 
   public boolean hideCurrent(@Nullable MouseEvent me, @Nullable AnAction action, @Nullable AnActionEvent event, final boolean animationEnabled) {
     if (myCurrentTooltip != null && me != null && myCurrentTooltip.isInside(RelativePoint.fromScreen(me.getLocationOnScreen()))) {
-      return false;
+      if (me.getButton() == MouseEvent.NOBUTTON || myCurrentTipUi == null || myCurrentTipUi.isBlockClicks()) {
+        return false;
+      }
     }
+
     myShowRequest = null;
     myQueuedComponent = null;
     myQueuedTooltip = null;
@@ -426,7 +433,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       }
     };
 
-    if (me != null) {
+    if (me != null && me.getButton() == MouseEvent.NOBUTTON) {
       myAlarm.addRequest(myHideRunnable, Registry.intValue("ide.tooltip.autoDismissDeadZone"));
     }
     else {

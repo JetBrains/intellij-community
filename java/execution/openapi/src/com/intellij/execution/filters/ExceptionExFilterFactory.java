@@ -39,16 +39,17 @@ import java.util.Map;
  * @author gregsh
  */
 public class ExceptionExFilterFactory implements ExceptionFilterFactory {
+  @NotNull
   @Override
-  public Filter create(GlobalSearchScope searchScope) {
+  public Filter create(@NotNull GlobalSearchScope searchScope) {
     return new MyFilter(searchScope);
   }
 
   private static class MyFilter implements Filter, FilterMixin {
-    private final GlobalSearchScope myScope;
+    private final ExceptionInfoCache myCache;
 
     public MyFilter(@NotNull final GlobalSearchScope scope) {
-      myScope = scope;
+      myCache = new ExceptionInfoCache(scope);
     }
 
     public Result applyFilter(final String line, final int textEndOffset) {
@@ -68,7 +69,7 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
       Map<String, Trinity<TextRange, TextRange, TextRange>> visited = new THashMap<String, Trinity<TextRange, TextRange, TextRange>>();
       final Trinity<TextRange, TextRange, TextRange> emptyInfo = Trinity.create(null, null, null);
 
-      final ExceptionWorker worker = new ExceptionWorker(myScope.getProject(), myScope);
+      final ExceptionWorker worker = new ExceptionWorker(myCache);
       for (int i = 0; i < copiedFragment.getLineCount(); i++) {
         final int lineStartOffset = copiedFragment.getLineStartOffset(i);
         final int lineEndOffset = copiedFragment.getLineEndOffset(i);
@@ -85,7 +86,7 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
             worker.execute(text, lineEndOffset);
             Result result = worker.getResult();
             if (result == null) continue;
-            HyperlinkInfo hyperlinkInfo = result.hyperlinkInfo;
+            HyperlinkInfo hyperlinkInfo = result.getHyperlinkInfo();
             if (!(hyperlinkInfo instanceof FileHyperlinkInfo)) continue;
 
             OpenFileDescriptor descriptor = ((FileHyperlinkInfo)hyperlinkInfo).getDescriptor();

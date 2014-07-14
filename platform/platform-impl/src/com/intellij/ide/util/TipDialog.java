@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,11 @@ package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -63,6 +65,7 @@ public class TipDialog extends DialogWrapper{
 
     public void actionPerformed(ActionEvent e){
       myTipPanel.prevTip();
+      UsageTrigger.trigger("tips.of.the.day.prev");
     }
   }
 
@@ -70,10 +73,18 @@ public class TipDialog extends DialogWrapper{
     public NextTipAction(){
       super(IdeBundle.message("action.next.tip"));
       putValue(DialogWrapper.DEFAULT_ACTION,Boolean.TRUE);
+      putValue(DialogWrapper.FOCUSED_ACTION,Boolean.TRUE); // myPreferredFocusedComponent
     }
 
     public void actionPerformed(ActionEvent e){
       myTipPanel.nextTip();
+      UsageTrigger.trigger("tips.of.the.day.next");
     }
+  }
+
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myPreferredFocusedComponent;
   }
 }

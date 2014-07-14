@@ -20,5 +20,16 @@
 package com.intellij.util;
 
 public enum ThreeState {
-  YES, NO, UNSURE
+  YES, NO, UNSURE;
+
+  public static ThreeState fromBoolean(boolean value) {
+    return value ? YES : NO;
+  }
+
+  public boolean toBoolean() {
+    if (this == UNSURE) {
+      throw new IllegalStateException("Must be or YES, or NO");
+    }
+    return this == YES;
+  }
 }

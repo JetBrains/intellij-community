@@ -63,7 +63,9 @@ public class BuiltInServer implements Disposable {
     return port;
   }
 
-  static ServerBootstrap createServerBootstrap(EventLoopGroup eventLoopGroup, final ChannelRegistrar channelRegistrar, @Nullable Map<String, Object> xmlRpcHandlers) {
+  static ServerBootstrap createServerBootstrap(@NotNull EventLoopGroup eventLoopGroup,
+                                               @NotNull final ChannelRegistrar channelRegistrar,
+                                               @Nullable Map<String, Object> xmlRpcHandlers) {
     ServerBootstrap bootstrap = NettyUtil.nioServerBootstrap(eventLoopGroup);
     if (xmlRpcHandlers == null) {
       final PortUnificationServerHandler portUnificationServerHandler = new PortUnificationServerHandler();
@@ -80,7 +82,7 @@ public class BuiltInServer implements Disposable {
         @Override
         protected void initChannel(Channel channel) throws Exception {
           channel.pipeline().addLast(channelRegistrar);
-          NettyUtil.initHttpHandlers(channel.pipeline());
+          NettyUtil.addHttpServerCodec(channel.pipeline());
           channel.pipeline().addLast(handler, ChannelExceptionHandler.getInstance());
         }
       });
@@ -154,8 +156,8 @@ public class BuiltInServer implements Disposable {
     LOG.info("web server stopped");
   }
 
-  public static void replaceDefaultHandler(@NotNull ChannelHandlerContext context, @NotNull SimpleChannelInboundHandler messageChannelHandler) {
-    context.pipeline().replace(DelegatingHttpRequestHandler.class, "replacedDefaultHandler", messageChannelHandler);
+  public static void replaceDefaultHandler(@NotNull ChannelHandlerContext context, @NotNull ChannelHandler channelHandler) {
+    context.pipeline().replace(DelegatingHttpRequestHandler.class, "replacedDefaultHandler", channelHandler);
   }
 
   @ChannelHandler.Sharable

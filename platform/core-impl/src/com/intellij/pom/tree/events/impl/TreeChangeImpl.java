@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,7 +130,7 @@ public class TreeChangeImpl implements TreeChange {
   private void addChangeAtOffset(final ASTNode child, final int nodeOffset) {
     int optimizedIndex = haveNotCalculated;
 
-    Pair<ASTNode, Integer> element = new Pair<ASTNode, Integer>(child, Integer.valueOf(nodeOffset));
+    Pair<ASTNode, Integer> element = Pair.create(child, Integer.valueOf(nodeOffset));
 
     if (mySortedChanges.size() > 0) { // check adding at end
       Pair<ASTNode, Integer> pair = mySortedChanges.get(mySortedChanges.size() - 1);

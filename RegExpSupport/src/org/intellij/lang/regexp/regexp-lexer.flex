@@ -32,6 +32,7 @@ import com.intellij.psi.StringEscapesTokenTypes;
     private boolean allowNestedCharacterClasses;
     private boolean allowOctalNoLeadingZero;
     private boolean allowHexDigitClass;
+    private boolean allowEmptyCharacterClass;
 
     _RegExLexer(EnumSet<RegExpCapability> capabilities) {
       this((java.io.Reader)null);
@@ -41,6 +42,7 @@ import com.intellij.psi.StringEscapesTokenTypes;
       this.allowOctalNoLeadingZero = capabilities.contains(RegExpCapability.OCTAL_NO_LEADING_ZERO);
       this.commentMode = capabilities.contains(RegExpCapability.COMMENT_MODE);
       this.allowHexDigitClass = capabilities.contains(RegExpCapability.ALLOW_HEX_DIGIT_CLASS);
+      this.allowEmptyCharacterClass = capabilities.contains(RegExpCapability.ALLOW_EMPTY_CHARACTER_CLASS);
     }
 
     private void yypushstate(int state) {
@@ -217,7 +219,7 @@ HEX_CHAR=[0-9a-fA-F]
                             return RegExpTT.CLASS_BEGIN; }
 
 /* Python understands that, Java doesn't */
-{LBRACKET} / "^" {RBRACKET} { if (!allowNestedCharacterClasses) {
+{LBRACKET} / "^" {RBRACKET} { if (allowEmptyCharacterClass) {
                                 yypushstate(CLASS1PY);
                               }
                               else {

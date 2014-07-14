@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,54 +29,62 @@ import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterStubImpl;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.ClsFormatException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.CharacterIterator;
-import java.util.ArrayList;
+import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class SignatureParsing {
-  private SignatureParsing() {
-  }
+  private SignatureParsing() { }
 
-  public static PsiTypeParameterListStub parseTypeParametersDeclaration(CharacterIterator signatureIterator, StubElement parentStub)
-      throws ClsFormatException {
+  public static PsiTypeParameterListStub parseTypeParametersDeclaration(CharacterIterator iterator, StubElement parentStub) throws ClsFormatException {
     PsiTypeParameterListStub list = new PsiTypeParameterListStubImpl(parentStub);
-    if (signatureIterator.current() == '<') {
-      signatureIterator.next();
-      while (signatureIterator.current() != '>') {
-        parseTypeParameter(signatureIterator, list);
+    if (iterator.current() == '<') {
+      iterator.next();
+      while (iterator.current() != '>') {
+        parseTypeParameter(iterator, list);
       }
-      signatureIterator.next();
+      iterator.next();
     }
 
     return list;
   }
 
-  private static PsiTypeParameterStub parseTypeParameter(CharacterIterator signatureIterator, PsiTypeParameterListStub parent)
-      throws ClsFormatException {
+  private static PsiTypeParameterStub parseTypeParameter(CharacterIterator iterator, PsiTypeParameterListStub parent) throws ClsFormatException {
     StringBuilder name = new StringBuilder();
-    while (signatureIterator.current() != ':' && signatureIterator.current() != CharacterIterator.DONE) {
-      name.append(signatureIterator.current());
-      signatureIterator.next();
+    while (iterator.current() != ':' && iterator.current() != CharacterIterator.DONE) {
+      name.append(iterator.current());
+      iterator.next();
     }
-    if (signatureIterator.current() == CharacterIterator.DONE) {
+    if (iterator.current() == CharacterIterator.DONE) {
       throw new ClsFormatException();
     }
 
     //todo parse annotations on type param
     PsiTypeParameterStub parameterStub = new PsiTypeParameterStubImpl(parent, StringRef.fromString(name.toString()));
 
-    ArrayList<String> bounds = null;
-    while (signatureIterator.current() == ':') {
-      signatureIterator.next();
-      String bound = parseTopLevelClassRefSignature(signatureIterator);
-      if (bound != null && !bound.equals(CommonClassNames.JAVA_LANG_OBJECT)) {
-        if (bounds == null) bounds = new ArrayList<String>();
-        bounds.add(bound);
+    // postpone list allocation till a second bound is seen; ignore sole Object bound
+    List<String> bounds = null;
+    boolean jlo = false;
+    while (iterator.current() == ':') {
+      iterator.next();
+      String bound = parseTopLevelClassRefSignature(iterator);
+      if (bound == null) continue;
+      if (bounds == null) {
+        if (CommonClassNames.JAVA_LANG_OBJECT.equals(bound)) {
+          jlo = true;
+          continue;
+        }
+        bounds = ContainerUtil.newSmartList();
+        if (jlo) {
+          bounds.add(CommonClassNames.JAVA_LANG_OBJECT);
+        }
       }
+      bounds.add(bound);
     }
 
     StubBuildingVisitor.newReferenceList(JavaStubElementTypes.EXTENDS_BOUND_LIST, parameterStub, ArrayUtil.toStringArray(bounds));

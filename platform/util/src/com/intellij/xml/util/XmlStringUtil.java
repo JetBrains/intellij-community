@@ -108,6 +108,11 @@ public class XmlStringUtil {
     return HTML_HEADER + result + HTML_FOOTER;
   }
 
+  public static boolean isWrappedInHtml(@NotNull String tooltip) {
+    return StringUtil.startsWithIgnoreCase(tooltip, HTML_HEADER) &&
+           StringUtil.endsWithIgnoreCase(tooltip, HTML_FOOTER);
+  }
+
   @NotNull
   public static String stripHtml(@NotNull String toolTip) {
     toolTip = StringUtil.trimStart(toolTip, HTML_HEADER);

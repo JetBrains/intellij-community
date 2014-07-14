@@ -42,7 +42,7 @@ public abstract class DeleteScopeAction extends AnAction {
   public DeleteScopeAction(Tree tree) {
     super("Delete Scope", "Delete Scope", PlatformIcons.DELETE_ICON);
     myTree = tree;
-    registerCustomShortcutSet(CommonShortcuts.DELETE, myTree);
+    registerCustomShortcutSet(CommonShortcuts.getDelete(), myTree);
   }
 
   @Override

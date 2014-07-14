@@ -15,11 +15,9 @@
  */
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.RealLookupElementPresentation;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,66 +27,56 @@ import java.awt.event.KeyEvent;
 /**
  * @author peter
  */
-public class LiveTemplateLookupElement extends LookupElement {
-  private final String myPrefix;
-  @NotNull private final TemplateImpl myTemplate;
+abstract public class LiveTemplateLookupElement extends LookupElement {
   private final String myLookupString;
   public final boolean sudden;
   private final boolean myWorthShowingInAutoPopup;
+  private final String myDescription;
 
-  public LiveTemplateLookupElement(@NotNull TemplateImpl template, boolean sudden) {
-    this(template, null, sudden, false);
-  }
-  
-  public LiveTemplateLookupElement(@NotNull TemplateImpl template, @Nullable String lookupString, boolean sudden, boolean worthShowingInAutoPopup) {
+  public LiveTemplateLookupElement(@NotNull String lookupString, @Nullable String description, boolean sudden, boolean worthShowingInAutoPopup) {
+    myDescription = description;
     this.sudden = sudden;
     myLookupString = lookupString;
-    myPrefix = template.getKey();
-    myTemplate = template;
     myWorthShowingInAutoPopup = worthShowingInAutoPopup;
   }
+
   @NotNull
   @Override
   public String getLookupString() {
-    return myPrefix;
+    return myLookupString;
   }
 
   @NotNull
-  public TemplateImpl getTemplate() {
-    return myTemplate;
+  protected String getItemText() {
+    return myLookupString;
   }
 
   @Override
   public void renderElement(LookupElementPresentation presentation) {
     super.renderElement(presentation);
-    presentation.setItemText(StringUtil.notNullize(myLookupString, myPrefix));
+    char shortcut = getTemplateShortcut();
+    presentation.setItemText(getItemText());
     if (sudden) {
       presentation.setItemTextBold(true);
       if (!presentation.isReal() || !((RealLookupElementPresentation)presentation).isLookupSelectionTouched()) {
-        char shortcutChar = myTemplate.getShortcutChar();
-        if (shortcutChar == TemplateSettings.DEFAULT_CHAR) {
-          shortcutChar = TemplateSettings.getInstance().getDefaultShortcutChar();
+        if (shortcut == TemplateSettings.DEFAULT_CHAR) {
+          shortcut = TemplateSettings.getInstance().getDefaultShortcutChar();
         }
-        presentation.setTypeText("  [" + KeyEvent.getKeyText(shortcutChar) + "] ");
+        presentation.setTypeText("  [" + KeyEvent.getKeyText(shortcut) + "] ");
       }
-      String description = myTemplate.getDescription();
-      if (description != null) {
-        presentation.setTailText(" (" + description + ")", true);
+      if (StringUtil.isNotEmpty(myDescription)) {
+        presentation.setTailText(" (" + myDescription + ")", true);
       }
-    } else {
-      presentation.setTypeText(myTemplate.getDescription());
     }
-  }
-
-  @Override
-  public void handleInsert(InsertionContext context) {
-    context.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
-    context.setAddCompletionChar(false);
-    TemplateManager.getInstance(context.getProject()).startTemplate(context.getEditor(), myTemplate);
+    else {
+      presentation.setTypeText(myDescription);
+    }
   }
 
   @Override
   public boolean isWorthShowingInAutoPopup() {
     return myWorthShowingInAutoPopup;
   }
+
+  public abstract char getTemplateShortcut();
 }

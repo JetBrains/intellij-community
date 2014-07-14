@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
@@ -28,6 +29,9 @@ import org.jetbrains.annotations.NotNull;
  * @author spleaner
  */
 public class HtmlClosingTagErrorFilter extends HighlightErrorFilter {
+  public HtmlClosingTagErrorFilter(XmlHighlightVisitor xmlHighlightVisitor) {
+    assert xmlHighlightVisitor != null;
+  }
 
   @Override
   public boolean shouldHighlightErrorElement(@NotNull final PsiErrorElement element) {

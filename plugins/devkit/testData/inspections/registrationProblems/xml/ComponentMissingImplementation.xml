@@ -1,0 +1,7 @@
+<idea-plugin>
+  <application-components>
+    <error descr="Missing implementation-class"><component>
+      <interface-class>java.lang.Runnable</interface-class>
+    </component></error>
+  </application-components>
+</idea-plugin>

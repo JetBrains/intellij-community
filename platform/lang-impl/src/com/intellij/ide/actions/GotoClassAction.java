@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,7 +185,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     return null;
   }
 
-  private static PsiElement getElement(PsiElement element, ChooseByNamePopup popup) {
+  private static PsiElement getElement(@NotNull PsiElement element, ChooseByNamePopup popup) {
     final String path = popup.getPathToAnonymous();
     if (path != null) {
       final String[] classes = path.split("\\$");
@@ -214,10 +214,11 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     return element;
   }
 
-  static PsiElement[] getAnonymousClasses(PsiElement element) {
+  @NotNull
+  private static PsiElement[] getAnonymousClasses(@NotNull PsiElement element) {
     for (AnonymousElementProvider provider : Extensions.getExtensions(AnonymousElementProvider.EP_NAME)) {
       final PsiElement[] elements = provider.getAnonymousElements(element);
-      if (elements != null && elements.length > 0) {
+      if (elements.length > 0) {
         return elements;
       }
     }

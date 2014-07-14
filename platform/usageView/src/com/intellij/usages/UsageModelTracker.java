@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public class UsageModelTracker implements Disposable {
 
   private final List<UsageModelTrackerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public UsageModelTracker(Project project) {
+  public UsageModelTracker(@NotNull Project project) {
     final PsiTreeChangeListener myPsiListener = new PsiTreeChangeAdapter() {
       @Override
       public void childAdded(@NotNull PsiTreeChangeEvent event) {
@@ -68,7 +68,7 @@ public class UsageModelTracker implements Disposable {
     PsiManager.getInstance(project).addPsiTreeChangeListener(myPsiListener, this);
   }
 
-  private void doFire(final PsiTreeChangeEvent event, boolean propertyChange) {
+  private void doFire(@NotNull PsiTreeChangeEvent event, boolean propertyChange) {
     if (!(event.getFile() instanceof PsiCodeFragment)) {
       for (UsageModelTrackerListener listener : myListeners) {
         listener.modelChanged(propertyChange);
@@ -80,11 +80,11 @@ public class UsageModelTracker implements Disposable {
   public void dispose() {
   }
 
-  public void addListener(UsageModelTrackerListener listener) {
+  public void addListener(@NotNull UsageModelTrackerListener listener) {
     myListeners.add(listener);
   }
 
-  public void removeListener(UsageModelTrackerListener listener) {
+  public void removeListener(@NotNull UsageModelTrackerListener listener) {
     myListeners.remove(listener);
   }
 }

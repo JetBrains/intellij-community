@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -208,7 +208,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     if (cvsResult.hasErrors()) {
       throw cvsResult.composeError();
     }
-    return new Pair<CvsChangeList, FilePath>(result.get(), filePath);
+    return Pair.create(result.get(), filePath);
   }
 
   @Override

@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEdito
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,8 +44,8 @@ import java.util.Map;
 */
 public class LibraryCompositionSettings implements Disposable {
   private final CustomLibraryDescription myLibraryDescription;
+  @NotNull private final NotNullComputable<String> myPathProvider;
   private FrameworkLibraryVersionFilter myVersionFilter;
-  private String myBaseDirectoryPath;
   private final List<? extends FrameworkLibraryVersion> myAllVersions;
   private LibrariesContainer.LibraryLevel myNewLibraryLevel;
   private NewLibraryEditor myNewLibraryEditor;
@@ -56,13 +57,13 @@ public class LibraryCompositionSettings implements Disposable {
   private FrameworkLibraryProvider myLibraryProvider;
 
   public LibraryCompositionSettings(final @NotNull CustomLibraryDescription libraryDescription,
-                                    final @NotNull String baseDirectoryPath,
+                                    final @NotNull NotNullComputable<String> pathProvider,
                                     @NotNull FrameworkLibraryVersionFilter versionFilter,
                                     final List<? extends FrameworkLibraryVersion> allVersions) {
     myLibraryDescription = libraryDescription;
+    myPathProvider = pathProvider;
     myVersionFilter = versionFilter;
     myNewLibraryLevel = libraryDescription.getDefaultLevel();
-    myBaseDirectoryPath = baseDirectoryPath;
     myAllVersions = allVersions;
     final List<? extends FrameworkLibraryVersion> versions = getCompatibleVersions();
     if (!versions.isEmpty()) {
@@ -72,7 +73,7 @@ public class LibraryCompositionSettings implements Disposable {
 
   private LibraryDownloadSettings createDownloadSettings(final FrameworkLibraryVersion version) {
     return new LibraryDownloadSettings(version, myLibraryDescription.getDownloadableLibraryType(),
-                                                     myNewLibraryLevel, getDefaultDownloadPath(myBaseDirectoryPath));
+                                                     myNewLibraryLevel, getDefaultDownloadPath(getBaseDirectoryPath()));
   }
 
   public void setVersionFilter(@NotNull FrameworkLibraryVersionFilter versionFilter) {
@@ -99,7 +100,7 @@ public class LibraryCompositionSettings implements Disposable {
   }
 
   private static String getDefaultDownloadPath(@NotNull String baseDirectoryPath) {
-    return baseDirectoryPath + "/lib";
+    return baseDirectoryPath.isEmpty() ? "lib" : baseDirectoryPath + "/lib";
   }
 
   public void setDownloadSettings(LibraryDownloadSettings downloadSettings) {
@@ -128,17 +129,7 @@ public class LibraryCompositionSettings implements Disposable {
 
   @NotNull
   public String getBaseDirectoryPath() {
-    return myBaseDirectoryPath;
-  }
-
-  public void changeBaseDirectoryPath(@NotNull String baseDirectoryPath) {
-    if (!myBaseDirectoryPath.equals(baseDirectoryPath)) {
-      if (myDownloadSettings != null &&
-          myDownloadSettings.getDirectoryForDownloadedLibrariesPath().equals(getDefaultDownloadPath(myBaseDirectoryPath))) {
-        myDownloadSettings.setDirectoryForDownloadedLibrariesPath(getDefaultDownloadPath(baseDirectoryPath));
-      }
-      myBaseDirectoryPath = baseDirectoryPath;
-    }
+    return myPathProvider.compute();
   }
 
   public void setDownloadLibraries(final boolean downloadLibraries) {
@@ -155,7 +146,7 @@ public class LibraryCompositionSettings implements Disposable {
 
   public boolean downloadFiles(final @NotNull JComponent parent) {
     if (myDownloadLibraries && myDownloadSettings != null) {
-      final NewLibraryEditor libraryEditor = myDownloadSettings.download(parent);
+      final NewLibraryEditor libraryEditor = myDownloadSettings.download(parent, getBaseDirectoryPath());
       if (libraryEditor != null) {
         myNewLibraryEditor = libraryEditor;
       }

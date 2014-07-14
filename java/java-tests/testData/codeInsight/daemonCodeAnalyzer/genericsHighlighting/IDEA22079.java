@@ -1,6 +1,6 @@
 import java.util.List;
 
-public class SubClass extends BaseClass<String> {
+class SubClass extends BaseClass<String> {
     public static void main(String[] args) {
         new SubClass().method(null);
     }

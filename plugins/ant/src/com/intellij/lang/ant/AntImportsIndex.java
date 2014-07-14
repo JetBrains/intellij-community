@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
   private static final DataIndexer<Integer,Void,FileContent> DATA_INDEXER = new DataIndexer<Integer, Void, FileContent>() {
     @Override
     @NotNull
-    public Map<Integer, Void> map(final FileContent inputData) {
+    public Map<Integer, Void> map(@NotNull final FileContent inputData) {
       final Map<Integer, Void> map = new HashMap<Integer, Void>();
 
       NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlUtil.IXMLBuilderAdapter() {
@@ -98,11 +98,13 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
     return DATA_INDEXER;
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<Integer> getKeyDescriptor() {
     return EnumeratorIntegerDescriptor.INSTANCE;
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML);

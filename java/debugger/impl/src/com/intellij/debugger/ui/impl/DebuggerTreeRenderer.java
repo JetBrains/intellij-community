@@ -22,15 +22,14 @@ import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.PlatformIcons;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -69,31 +68,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
       nodeIcon = stackDescriptor.getIcon();
     }
     else if (descriptor instanceof ValueDescriptorImpl) {
-      final ValueDescriptorImpl valueDescriptor = (ValueDescriptorImpl)descriptor;
-      if (valueDescriptor instanceof FieldDescriptorImpl && ((FieldDescriptorImpl)valueDescriptor).isStatic()) {
-        nodeIcon = PlatformIcons.FIELD_ICON;
-      }
-      else if (valueDescriptor.isArray()) {
-        nodeIcon = AllIcons.Debugger.Db_array;
-      }
-      else if (valueDescriptor.isPrimitive()) {
-        nodeIcon = AllIcons.Debugger.Db_primitive;
-      }
-      else {
-        if (valueDescriptor instanceof WatchItemDescriptor) {
-          nodeIcon = AllIcons.Debugger.Watch;
-        }
-        else {
-          nodeIcon = AllIcons.Debugger.Value;
-        }
-      }
-      final Icon valueIcon = valueDescriptor.getValueIcon();
-      if (nodeIcon != null && valueIcon != null) {
-        final RowIcon composite = new RowIcon(2);
-        composite.setIcon(nodeIcon, 0);
-        composite.setIcon(valueIcon, 1);
-        nodeIcon = composite;
-      }
+      nodeIcon = getValueIcon((ValueDescriptorImpl)descriptor);
     }
     else if (descriptor instanceof MessageDescriptor) {
       MessageDescriptor messageDescriptor = (MessageDescriptor)descriptor;
@@ -114,16 +89,33 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     return nodeIcon;
   }
 
-  @NotNull
-  public static EditorColorsScheme getColorScheme(@Nullable JComponent component) {
-    EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    if (component != null && ColorUtil.isDark(component.getBackground()) != ColorUtil.isDark(globalScheme.getDefaultBackground())) {
-      EditorColorsScheme scheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
-      if (scheme != null) {
-        return scheme;
+  public static Icon getValueIcon(ValueDescriptorImpl valueDescriptor) {
+    Icon nodeIcon;
+    if (valueDescriptor instanceof FieldDescriptorImpl && ((FieldDescriptorImpl)valueDescriptor).isStatic()) {
+      nodeIcon = PlatformIcons.FIELD_ICON;
+    }
+    else if (valueDescriptor.isArray()) {
+      nodeIcon = AllIcons.Debugger.Db_array;
+    }
+    else if (valueDescriptor.isPrimitive()) {
+      nodeIcon = AllIcons.Debugger.Db_primitive;
+    }
+    else {
+      if (valueDescriptor instanceof WatchItemDescriptor) {
+        nodeIcon = AllIcons.Debugger.Watch;
+      }
+      else {
+        nodeIcon = AllIcons.Debugger.Value;
       }
     }
-    return globalScheme;
+    final Icon valueIcon = valueDescriptor.getValueIcon();
+    if (nodeIcon != null && valueIcon != null) {
+      final RowIcon composite = new RowIcon(2);
+      composite.setIcon(nodeIcon, 0);
+      composite.setIcon(valueIcon, 1);
+      nodeIcon = composite;
+    }
+    return nodeIcon;
   }
 
   public static SimpleColoredText getDescriptorText(DebuggerContextImpl debuggerContext,
@@ -134,11 +126,11 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
   }
 
   public static SimpleColoredText getDescriptorText(final DebuggerContextImpl debuggerContext, NodeDescriptorImpl descriptor, boolean multiline) {
-    return getDescriptorText(debuggerContext, descriptor, getColorScheme(null), multiline, true);
+    return getDescriptorText(debuggerContext, descriptor, DebuggerUIUtil.getColorScheme(null), multiline, true);
   }
 
   public static SimpleColoredText getDescriptorTitle(final DebuggerContextImpl debuggerContext, NodeDescriptorImpl descriptor) {
-    return getDescriptorText(debuggerContext, descriptor, getColorScheme(null), false, false);
+    return getDescriptorText(debuggerContext, descriptor, DebuggerUIUtil.getColorScheme(null), false, false);
   }
 
   private static SimpleColoredText getDescriptorText(DebuggerContextImpl debuggerContext,

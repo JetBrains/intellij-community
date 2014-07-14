@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 package com.intellij.psi.controlFlow;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 public class LocalsOrMyInstanceFieldsControlFlowPolicy implements ControlFlowPolicy {
   private static final LocalsOrMyInstanceFieldsControlFlowPolicy INSTANCE = new LocalsOrMyInstanceFieldsControlFlowPolicy();
@@ -33,7 +34,7 @@ public class LocalsOrMyInstanceFieldsControlFlowPolicy implements ControlFlowPol
   }
 
   @Override
-  public PsiVariable getUsedVariable(PsiReferenceExpression refExpr) {
+  public PsiVariable getUsedVariable(@NotNull PsiReferenceExpression refExpr) {
     PsiExpression qualifier = refExpr.getQualifierExpression();
     if (qualifier == null || qualifier instanceof PsiThisExpression) {
       PsiElement resolved = refExpr.resolve();
@@ -45,12 +46,12 @@ public class LocalsOrMyInstanceFieldsControlFlowPolicy implements ControlFlowPol
   }
 
   @Override
-  public boolean isParameterAccepted(PsiParameter psiParameter) {
+  public boolean isParameterAccepted(@NotNull PsiParameter psiParameter) {
     return true;
   }
 
   @Override
-  public boolean isLocalVariableAccepted(PsiLocalVariable psiVariable) {
+  public boolean isLocalVariableAccepted(@NotNull PsiLocalVariable psiVariable) {
     return true;
   }
 

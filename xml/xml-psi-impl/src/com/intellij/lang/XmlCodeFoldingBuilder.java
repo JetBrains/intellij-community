@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.html.HtmlFileImpl;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlTagUtil;
@@ -45,6 +46,7 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
   private static final int MIN_TEXT_RANGE_LENGTH = 3;
   private static final String STYLE_ATTRIBUTE = "style";
 
+  @Override
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
     final PsiElement psiElement = node.getPsi();
@@ -194,7 +196,7 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
   }
 
   protected boolean addToFold(List<FoldingDescriptor> foldings, PsiElement elementToFold, Document document) {
-    LOG.assertTrue(elementToFold.isValid());
+    PsiUtilCore.ensureValid(elementToFold);
     TextRange range = getRangeToFold(elementToFold);
     if (range == null) return false;
 
@@ -216,6 +218,7 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
     return false;
   }
 
+  @Override
   public String getPlaceholderText(@NotNull ASTNode node) {
     final PsiElement psi = node.getPsi();
     if (psi instanceof XmlTag ||
@@ -226,6 +229,7 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
     return null;
   }
 
+  @Override
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
     final PsiElement psi = node.getPsi();
     final XmlCodeFoldingSettings foldingSettings = getFoldingSettings();

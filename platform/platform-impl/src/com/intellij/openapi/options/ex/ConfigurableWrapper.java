@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class ConfigurableWrapper implements SearchableConfigurable {
   }
 
   public static <T extends UnnamedConfigurable> List<T> createConfigurables(ExtensionPointName<? extends ConfigurableEP<T>> name) {
-    return ContainerUtil.mapNotNull(Extensions.getExtensions(name), new NullableFunction<ConfigurableEP<T>, T>() {
+    return ContainerUtil.mapNotNull(name.getExtensions(), new NullableFunction<ConfigurableEP<T>, T>() {
       @Override
       public T fun(ConfigurableEP<T> ep) {
         return wrapConfigurable(ep);
@@ -76,7 +76,7 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
   private final ConfigurableEP myEp;
 
-  private ConfigurableWrapper(ConfigurableEP ep) {
+  private ConfigurableWrapper(@NotNull ConfigurableEP ep) {
     myEp = ep;
   }
 
@@ -96,6 +96,13 @@ public class ConfigurableWrapper implements SearchableConfigurable {
   @Override
   public String getDisplayName() {
     return myEp.getDisplayName();
+  }
+
+  public String getInstanceClass() {
+    return myEp.instanceClass;
+  }
+  public String getProviderClass() {
+    return myEp.providerClass;
   }
 
   @Nullable

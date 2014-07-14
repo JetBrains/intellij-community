@@ -10,7 +10,7 @@ package codeInsight.completion.variables.locals;
 public class TestSource4 {
     int aaa = 0;
     public static void foo(){
-        int abc = 0;
+        final int abc = 0;
         class Inner1{
            int sbe=abc<caret>
         }

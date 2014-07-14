@@ -43,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubFullPath;
 import org.jetbrains.plugins.github.api.GithubRepoDetailed;
-import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
+import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.util.*;
 
 import java.io.IOException;
@@ -105,8 +105,6 @@ public class GithubRebaseAction extends DumbAwareAction {
       GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Can't find git repository");
       return;
     }
-    final VirtualFile root = gitRepository.getRoot();
-
     BasicAction.saveAll();
 
     new Task.Backgroundable(project, "Rebasing GitHub fork...") {
@@ -118,7 +116,7 @@ public class GithubRebaseAction extends DumbAwareAction {
         if (upstreamRemoteUrl == null) {
           LOG.info("Configuring upstream remote");
           indicator.setText("Configuring upstream remote...");
-          upstreamRemoteUrl = configureUpstreamRemote(project, root, gitRepository, indicator);
+          upstreamRemoteUrl = configureUpstreamRemote(project, gitRepository, indicator);
           if (upstreamRemoteUrl == null) {
             return;
           }
@@ -149,14 +147,13 @@ public class GithubRebaseAction extends DumbAwareAction {
 
         LOG.info("Rebasing current branch");
         indicator.setText("Rebasing current branch...");
-        rebaseCurrentBranch(project, root, gitRepository, indicator);
+        rebaseCurrentBranch(project, gitRepository, indicator);
       }
     }.queue();
   }
 
   @Nullable
   static String configureUpstreamRemote(@NotNull Project project,
-                                        @NotNull VirtualFile root,
                                         @NotNull GitRepository gitRepository,
                                         @NotNull ProgressIndicator indicator) {
     GithubRepoDetailed repositoryInfo = loadRepositoryInfo(project, gitRepository, indicator);
@@ -177,15 +174,16 @@ public class GithubRebaseAction extends DumbAwareAction {
 
     if (GithubUtil.addGithubRemote(project, gitRepository, "upstream", parentRepoUrl)) {
       return parentRepoUrl;
-    } else {
+    }
+    else {
       return null;
     }
   }
 
   @Nullable
   private static GithubRepoDetailed loadRepositoryInfo(@NotNull Project project,
-                                                             @NotNull GitRepository gitRepository,
-                                                             @NotNull ProgressIndicator indicator) {
+                                                       @NotNull GitRepository gitRepository,
+                                                       @NotNull ProgressIndicator indicator) {
     final String remoteUrl = GithubUtil.findGithubRemoteUrl(gitRepository);
     if (remoteUrl == null) {
       GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Can't find github remote");
@@ -198,16 +196,14 @@ public class GithubRebaseAction extends DumbAwareAction {
     }
 
     try {
-      return GithubUtil.runWithValidAuth(project, indicator, new ThrowableConvertor<GithubAuthData, GithubRepoDetailed, IOException>() {
-          @Override
-          @NotNull
-          public GithubRepoDetailed convert(GithubAuthData authData) throws IOException {
-            return GithubApiUtil.getDetailedRepoInfo(authData, userAndRepo.getUser(), userAndRepo.getRepository());
-          }
-        });
-    }
-    catch (GithubAuthenticationCanceledException e) {
-      return null;
+      return GithubUtil.runTask(project, GithubAuthDataHolder.createFromSettings(), indicator,
+                                new ThrowableConvertor<GithubAuthData, GithubRepoDetailed, IOException>() {
+                                  @NotNull
+                                  @Override
+                                  public GithubRepoDetailed convert(@NotNull GithubAuthData auth) throws IOException {
+                                    return GithubApiUtil.getDetailedRepoInfo(auth, userAndRepo.getUser(), userAndRepo.getRepository());
+                                  }
+                                });
     }
     catch (IOException e) {
       GithubNotifications.showError(project, "Can't load repository info", e);
@@ -227,7 +223,6 @@ public class GithubRebaseAction extends DumbAwareAction {
   }
 
   private static void rebaseCurrentBranch(@NotNull final Project project,
-                                          @NotNull final VirtualFile root,
                                           @NotNull final GitRepository gitRepository,
                                           @NotNull final ProgressIndicator indicator) {
     final Git git = ServiceManager.getService(project, Git.class);
@@ -237,9 +232,10 @@ public class GithubRebaseAction extends DumbAwareAction {
                                new Runnable() {
                                  @Override
                                  public void run() {
-                                   doRebaseCurrentBranch(project, root, indicator);
+                                   doRebaseCurrentBranch(project, gitRepository.getRoot(), indicator);
                                  }
-                               });
+                               }
+      );
     process.execute();
   }
 
@@ -251,6 +247,7 @@ public class GithubRebaseAction extends DumbAwareAction {
     final GitRebaser rebaser = new GitRebaser(project, ServiceManager.getService(Git.class), indicator);
 
     final GitLineHandler handler = new GitLineHandler(project, root, GitCommand.REBASE);
+    handler.setStdoutSuppressed(false);
     handler.addParameters("upstream/master");
 
     final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();

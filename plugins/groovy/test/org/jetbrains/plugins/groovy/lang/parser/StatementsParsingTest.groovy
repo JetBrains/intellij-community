@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,6 +95,7 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testImports$imp5() throws Throwable { doTest(); }
   public void testImports$imp6() throws Throwable { doTest(); }
   public void testImports$imp7() throws Throwable { doTest(); }
+  public void testImports$imp8() throws Throwable { doTest(); }
   public void testKing_regex$king1() throws Throwable { doTest(); }
   public void testKing_regex$king2() throws Throwable { doTest(); }
   public void testKing_regex$king3() throws Throwable { doTest(); }
@@ -116,6 +117,7 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testMultiple_assign$grvy2086() throws Throwable { doTest("multiple_assign/grvy-2086.test"); }
   public void testMultiple_assign$mult_assign() throws Throwable { doTest(); }
   public void testMultiple_assign$mult_def() throws Throwable { doTest(); }
+  public void testMultiple_assign$without_assign() throws Throwable { doTest(); }
   public void testSwitch$laforge1() throws Throwable { doTest(); }
   public void testSwitch$swit1() throws Throwable { doTest(); }
   public void testSwitch$swit2() throws Throwable { doTest(); }
@@ -148,6 +150,8 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testTuples$tupleWithoutDef() throws Throwable { doTest(); }
   public void testTypedef$classes$abstr() throws Throwable { doTest(); }
   public void testTypedef$classes$class1() throws Throwable { doTest(); }
+  public void testTypedef$classes$class10() throws Throwable { doTest(); }
+  public void testTypedef$classes$class11() throws Throwable { doTest(); }
   public void testTypedef$classes$class2() throws Throwable { doTest(); }
   public void testTypedef$classes$class3() throws Throwable { doTest(); }
   public void testTypedef$classes$class4() throws Throwable { doTest(); }
@@ -176,12 +180,18 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testTypedef$constructors$constructor8() throws Throwable { doTest(); }
   public void testTypedef$constructors$constructor9() throws Throwable { doTest(); }
   public void testTypedef$enums$enum1() throws Throwable { doTest(); }
+  public void testTypedef$enums$enum10() throws Throwable { doTest(); }
+  public void testTypedef$enums$enum11() throws Throwable { doTest(); }
+  public void testTypedef$enums$enum12() throws Throwable { doTest(); }
+  public void testTypedef$enums$enum13() throws Throwable { doTest(); }
   public void testTypedef$enums$enum2() throws Throwable { doTest(); }
   public void testTypedef$enums$enum3() throws Throwable { doTest(); }
   public void testTypedef$enums$enum4() throws Throwable { doTest(); }
   public void testTypedef$enums$enum5() throws Throwable { doTest(); }
   public void testTypedef$enums$enum6() throws Throwable { doTest(); }
   public void testTypedef$enums$enum7() throws Throwable { doTest(); }
+  public void testTypedef$enums$enum8() throws Throwable { doTest(); }
+  public void testTypedef$enums$enum9() throws Throwable { doTest(); }
   public void testTypedef$interfaces$errors$interfaceerr1() throws Throwable { doTest(); }
   public void testTypedef$interfaces$errors$interfaceerr2() throws Throwable { doTest(); }
   public void testTypedef$interfaces$errors$interfaceerr3() throws Throwable { doTest(); }
@@ -198,6 +208,7 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testTypedef$interfaces$members$member5() throws Throwable { doTest(); }
   public void testTypedef$interfaces$members$member6() throws Throwable { doTest(); }
   public void testTypedef$interfaces$members$memeber7() throws Throwable { doTest(); }
+  public void testTypedef$traits$trait1() {doTest()}
   public void testTypedef$methods$method2() throws Throwable { doTest(); }
   public void testTypedef$methods$method3() throws Throwable { doTest(); }
   public void testTypedef$methods$method4() throws Throwable { doTest(); }

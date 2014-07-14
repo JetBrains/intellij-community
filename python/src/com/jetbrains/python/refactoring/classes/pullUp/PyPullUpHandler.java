@@ -15,24 +15,15 @@
  */
 package com.jetbrains.python.refactoring.classes.pullUp;
 
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.PsiNavigateUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.refactoring.classes.PyClassMembersRefactoringSupport;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringHandler;
-import com.jetbrains.python.refactoring.classes.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
-
-import java.util.Collection;
+import com.jetbrains.python.vp.Creator;
+import com.jetbrains.python.vp.ViewPresenterUtils;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author: Dennis.Ushakov
@@ -41,34 +32,36 @@ public class PyPullUpHandler extends PyClassRefactoringHandler {
   public static final String REFACTORING_NAME = PyBundle.message("refactoring.pull.up.dialog.title");
 
   @Override
-  protected void doRefactor(Project project, PsiElement element1, PsiElement element2, Editor editor, PsiFile file, DataContext dataContext) {
-    CommonRefactoringUtil.checkReadOnlyStatus(project, file);
+  protected void doRefactorImpl(@NotNull final Project project,
+                                @NotNull final PyClass classUnderRefactoring,
+                                @NotNull final PyMemberInfoStorage infoStorage,
+                                @NotNull final Editor editor) {
+    //TODO: Move to vp (presenter) as well
+    final PyPullUpNothingToRefactorMessage nothingToRefactor = new PyPullUpNothingToRefactorMessage(project, editor, classUnderRefactoring);
 
-    final PyClass clazz = PyUtil.getContainingClassOrSelf(element1);
-    if (!inClass(clazz, project, editor, "refactoring.pull.up.error.cannot.perform.refactoring.not.inside.class")) return;
-
-    final PyMemberInfoStorage infoStorage = PyClassMembersRefactoringSupport.getSelectedMemberInfos(clazz, element1, element2);
-    final Collection<PyClass> classes = infoStorage.getClasses();
-    if (classes.size() == 0) {
-      assert clazz != null;
-      CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message("refactoring.pull.up.error.cannot.perform.refactoring.no.base.classes", clazz.getName()),
-                                          RefactoringBundle.message("pull.members.up.title"),
-                                          "members.pull.up");
+    if (PyAncestorsUtils.getAncestorsUnderUserControl(classUnderRefactoring).isEmpty()) {
+      nothingToRefactor.showNothingToRefactor();
       return;
     }
 
-    if (ApplicationManagerEx.getApplicationEx().isUnitTestMode()) return;
-       
-    final PyPullUpDialog dialog = new PyPullUpDialog(project, clazz, classes, infoStorage);
-    dialog.show();
-    if(dialog.isOK()) {
-      pullUpWithHelper(clazz, dialog.getSelectedMemberInfos(), dialog.getSuperClass());
-    }
+
+    ViewPresenterUtils
+      .linkViewWithPresenterAndLaunch(PyPullUpPresenter.class, PyPullUpView.class, new Creator<PyPullUpView, PyPullUpPresenter>() {
+                                        @NotNull
+                                        @Override
+                                        public PyPullUpPresenter createPresenter(@NotNull final PyPullUpView view) {
+                                          return new PyPullUpPresenterImpl(view, infoStorage, classUnderRefactoring);
+                                        }
+
+                                        @NotNull
+                                        @Override
+                                        public PyPullUpView createView(@NotNull final PyPullUpPresenter presenter) {
+                                          return new PyPullUpViewSwingImpl(project, presenter, classUnderRefactoring, nothingToRefactor);
+                                        }
+                                      }
+      );
   }
 
-  private static void pullUpWithHelper(PyClass clazz, Collection<PyMemberInfo> selectedMemberInfos, PyClass superClass) {
-    PsiNavigateUtil.navigate(PyPullUpHelper.pullUp(clazz, selectedMemberInfos, superClass));
-  }
 
   @Override
   protected String getTitle() {

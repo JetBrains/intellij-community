@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -302,7 +302,7 @@ public class JDParser {
           result.add(new Pair<String, Boolean>(sb.toString(), false));
           sb.setLength(0);
         }
-        result.add(new Pair<String, Boolean>(s1, marks[i]));
+        result.add(Pair.create(s1, marks[i]));
       }
       else {
         if (s1.isEmpty()) {
@@ -310,10 +310,10 @@ public class JDParser {
             result.add(new Pair<String, Boolean>(sb.toString(), false));
             sb.setLength(0);
           }
-          result.add(new Pair<String, Boolean>("", marks[i]));
+          result.add(Pair.create("", marks[i]));
         }
         else if (mySettings.JD_PRESERVE_LINE_FEEDS) {
-          result.add(new Pair<String, Boolean>(s1, marks[i]));
+          result.add(Pair.create(s1, marks[i]));
         }
         else {
           if (sb.length() != 0) sb.append(' ');

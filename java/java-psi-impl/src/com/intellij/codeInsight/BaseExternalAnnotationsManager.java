@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -52,7 +51,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.BaseExternalAnnotationsManager");
   @NotNull private static final List<PsiFile> NULL_LIST = new ArrayList<PsiFile>(0);
   @NotNull
-  private final ConcurrentMap<String, List<PsiFile>> myExternalAnnotations = new ConcurrentSoftValueHashMap<String, List<PsiFile>>(10, 0.75f, 2);
+  private final ConcurrentMap<VirtualFile, List<PsiFile>> myExternalAnnotations = new ConcurrentSoftValueHashMap<VirtualFile, List<PsiFile>>(10, 0.75f, 2);
   protected final PsiManager myPsiManager;
 
   @SuppressWarnings("UnusedDeclaration")
@@ -70,13 +69,6 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   @Nullable
   protected static String getExternalName(@NotNull PsiModifierListOwner listOwner, boolean showParamName) {
     return PsiFormatUtil.getExternalName(listOwner, showParamName, Integer.MAX_VALUE);
-  }
-
-  @Nullable
-  private static String getFQN(@NotNull String packageName, @NotNull PsiFile psiFile) {
-    VirtualFile virtualFile = psiFile.getVirtualFile();
-    if (virtualFile == null) return null;
-    return StringUtil.getQualifiedName(packageName, virtualFile.getNameWithoutExtension());
   }
 
   protected abstract boolean hasAnyAnnotationsRoots();
@@ -230,9 +222,9 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
     final String packageName = javaFile.getPackageName();
     final VirtualFile virtualFile = containingFile.getVirtualFile();
-    String fqn = getFQN(packageName, containingFile);
-    if (fqn == null) return null;
-    final List<PsiFile> files = myExternalAnnotations.get(fqn);
+    if (virtualFile == null) return null;
+    
+    final List<PsiFile> files = myExternalAnnotations.get(virtualFile);
     if (files == NULL_LIST) return null;
     if (files != null) {
       boolean allValid = true;
@@ -258,7 +250,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     }
     List<PsiFile> result;
     if (possibleAnnotationsXmls.isEmpty()) {
-      myExternalAnnotations.put(fqn, NULL_LIST);
+      myExternalAnnotations.put(virtualFile, NULL_LIST);
       result = null;
     }
     else {
@@ -276,7 +268,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
         }
       });
 
-      myExternalAnnotations.put(fqn, result);
+      myExternalAnnotations.put(virtualFile, result);
     }
     return result;
   }
@@ -344,9 +336,9 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   protected void cacheExternalAnnotations(@NotNull String packageName, @NotNull PsiFile fromFile, @NotNull List<PsiFile> annotationFiles) {
-    String fqn = getFQN(packageName, fromFile);
-    if (fqn != null) {
-      myExternalAnnotations.put(fqn, annotationFiles);
+    VirtualFile virtualFile = fromFile.getVirtualFile();
+    if (virtualFile != null) {
+      myExternalAnnotations.put(virtualFile, annotationFiles);
     }
   }
 

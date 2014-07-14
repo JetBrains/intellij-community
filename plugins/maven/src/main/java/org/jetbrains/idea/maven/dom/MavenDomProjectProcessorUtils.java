@@ -182,13 +182,11 @@ public class MavenDomProjectProcessorUtils {
     final Set<MavenDomDependency> usages = new HashSet<MavenDomDependency>();
     Processor<MavenDomProjectModel> collectProcessor = new Processor<MavenDomProjectModel>() {
       public boolean process(MavenDomProjectModel mavenDomProjectModel) {
-        if (!model.equals(mavenDomProjectModel)) {
-          for (MavenDomDependency domDependency : mavenDomProjectModel.getDependencies().getDependencies()) {
-            if (excludes.contains(domDependency)) continue;
+        for (MavenDomDependency domDependency : mavenDomProjectModel.getDependencies().getDependencies()) {
+          if (excludes.contains(domDependency)) continue;
 
-            if (dependencyId.equals(DependencyConflictId.create(domDependency))) {
-              usages.add(domDependency);
-            }
+          if (dependencyId.equals(DependencyConflictId.create(domDependency))) {
+            usages.add(domDependency);
           }
         }
         return false;

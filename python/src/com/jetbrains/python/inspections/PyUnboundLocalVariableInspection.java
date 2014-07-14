@@ -79,7 +79,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
         return;
       }
       // Ignore qualifier inspections
-      if (node.getQualifier() != null) {
+      if (node.isQualified()) {
         return;
       }
       // Ignore import subelements
@@ -127,12 +127,12 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
         if (!isFirstUnboundRead(node, owner)) {
           return;
         }
-        final PsiPolyVariantReference ref = node.getReference(resolveWithoutImplicits());
+        final PsiPolyVariantReference ref = node.getReference(getResolveContext());
         if (ref == null) {
           return;
         }
         final PsiElement resolved = ref.resolve();
-        final boolean isBuiltin = PyBuiltinCache.getInstance(node).hasInBuiltins(resolved);
+        final boolean isBuiltin = PyBuiltinCache.getInstance(node).isBuiltin(resolved);
         if (owner instanceof PyClass) {
           if (isBuiltin || ScopeUtil.getDeclarationScopeOwner(owner, name) != null) {
             return;

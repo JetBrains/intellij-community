@@ -19,16 +19,14 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.util.config.*;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.lang.UrlClassLoader;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.util.Comparator;
 import java.util.Properties;
@@ -162,27 +160,9 @@ public class AntInstallation {
   }
 
   private static Properties loadProperties(File antJar) throws MalformedURLException, ConfigurationException {
-    Properties properties = new Properties();
-    InputStream stream = null;
-    try {
-      stream = UrlClassLoader.build().urls(antJar.toURI().toURL()).allowUnescaped().noPreload().get().getResourceAsStream(VERSION_RESOURCE);
-      properties.load(stream);
-    }
-    catch (MalformedURLException e) {
-      throw e;
-    }
-    catch (IOException e) {
+    Properties properties = JarUtil.loadProperties(antJar, VERSION_RESOURCE);
+    if (properties == null) {
       throw new ConfigurationException(AntBundle.message("cant.read.from.ant.jar.error.message", antJar.getAbsolutePath()));
-    }
-    finally {
-      if (stream != null) {
-        try {
-          stream.close();
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
     }
     return properties;
   }
@@ -204,7 +184,7 @@ public class AntInstallation {
   private static void registerProperties(ExternalizablePropertyContainer container) {
     container.registerProperty((StringProperty)NAME);
     container.registerProperty(HOME_DIR);
-    container.registerProperty(CLASS_PATH, "classpathItem", SinglePathEntry.EXTERNALIZER);
+    container.registerProperty(CLASS_PATH, "classpathItem", AntClasspathEntry.EXTERNALIZER);
     container.registerProperty((StringProperty)VERSION);
   }
 }

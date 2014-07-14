@@ -25,13 +25,18 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,6 +51,31 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
                                        @NotNull final InspectionToolWrapper toolWrapper) {
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     presentation.updateContent();
+
+    final SearchScope searchScope = context.getCurrentScope().toSearchScope();
+    if (searchScope instanceof LocalSearchScope) {
+      final Map<String, Set<RefEntity>> contents = presentation.getContent();
+      if (contents != null) {
+        final Map<RefEntity, CommonProblemDescriptor[]> problemElements = presentation.getProblemElements();
+        for (Set<RefEntity> entities : contents.values()) {
+          for (Iterator<RefEntity> iterator = entities.iterator(); iterator.hasNext(); ) {
+            RefEntity entity = iterator.next();
+            if (entity instanceof RefElement) {
+              final PsiElement element = ((RefElement)entity).getElement();
+              if (element != null) {
+                final TextRange range = element.getTextRange();
+                if (range != null && ((LocalSearchScope)searchScope).containsRange(element.getContainingFile(), range)) {
+                  continue;
+                }
+              }
+            }
+            problemElements.remove(entity);
+            iterator.remove();
+          }
+        }
+      }
+    }
+
     return presentation.hasReportedProblems();
   }
 

@@ -427,7 +427,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         }
         else if (resolveResult instanceof PsiDirectory) {
           final PsiDirectory directory = (PsiDirectory)resolveResult;
-          if (PyUtil.isPackage(directory) && directory == element) {
+          if (PyUtil.isPackage(directory, null) && directory == element) {
             return true;
           }
         }
@@ -550,10 +550,10 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   private boolean haveQualifiers(PsiElement element) {
-    if (myElement.getQualifier() != null) {
+    if (myElement.isQualified()) {
       return true;
     }
-    if (element instanceof PyQualifiedExpression && ((PyQualifiedExpression)element).getQualifier() != null) {
+    if (element instanceof PyQualifiedExpression && ((PyQualifiedExpression)element).isQualified()) {
       return true;
     }
     return false;

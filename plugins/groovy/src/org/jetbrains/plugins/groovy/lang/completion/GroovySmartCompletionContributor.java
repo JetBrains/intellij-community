@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -55,37 +57,36 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.CompleteReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-import static com.intellij.patterns.StandardPatterns.or;
-
 /**
  * @author Maxim.Medvedev
  */
 public class GroovySmartCompletionContributor extends CompletionContributor {
-  private static final ElementPattern<PsiElement> INSIDE_EXPRESSION = psiElement().withParent(GrExpression.class);
+  private static final ElementPattern<PsiElement> INSIDE_EXPRESSION = PlatformPatterns.psiElement().withParent(GrExpression.class);
   private static final ElementPattern<PsiElement> IN_CAST_PARENTHESES =
-    psiElement().withSuperParent(3, psiElement(GrTypeCastExpression.class).withParent(
-      or(psiElement(GrAssignmentExpression.class), psiElement(GrVariable.class))));
+    PlatformPatterns.psiElement().withSuperParent(3, PlatformPatterns.psiElement(GrTypeCastExpression.class).withParent(
+      StandardPatterns.or(PlatformPatterns.psiElement(GrAssignmentExpression.class), PlatformPatterns.psiElement(GrVariable.class))));
 
-  static final ElementPattern<PsiElement> AFTER_NEW = psiElement().afterLeaf(psiElement(GroovyTokenTypes.kNEW));
+  static final ElementPattern<PsiElement> AFTER_NEW = PlatformPatterns.psiElement().afterLeaf(PlatformPatterns.psiElement(
+    GroovyTokenTypes.kNEW));
 
-  private static final ElementPattern<PsiElement> IN_ANNOTATION = psiElement().withParent(psiElement(GrReferenceExpression.class).withParent(GrAnnotationNameValuePair.class));
+  private static final ElementPattern<PsiElement> IN_ANNOTATION = PlatformPatterns
+    .psiElement().withParent(PlatformPatterns.psiElement(GrReferenceExpression.class).withParent(GrAnnotationNameValuePair.class));
 
   private static final TObjectHashingStrategy<TypeConstraint> EXPECTED_TYPE_INFO_STRATEGY =
     new TObjectHashingStrategy<TypeConstraint>() {
+      @Override
       public int computeHashCode(final TypeConstraint object) {
         return object.getType().hashCode();
       }
 
+      @Override
       public boolean equals(final TypeConstraint o1, final TypeConstraint o2) {
         return o1.getClass().equals(o2.getClass()) && o1.getType().equals(o2.getType());
       }
@@ -107,33 +108,35 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         final PsiElement reference = position.getParent();
         if (reference == null) return;
         if (reference instanceof GrReferenceElement) {
-          ((GrReferenceElement)reference).processVariants(result.getPrefixMatcher(), params, new Consumer<LookupElement>() {
-            public void consume(LookupElement variant) {
-              PsiType type = null;
+          GroovyCompletionUtil.processVariants((GrReferenceElement)reference, result.getPrefixMatcher(), params,
+                                               new Consumer<LookupElement>() {
+                                                 @Override
+                                                 public void consume(LookupElement variant) {
+                                                   PsiType type = null;
 
-              Object o = variant.getObject();
-              if (o instanceof GroovyResolveResult) {
-                if (!((GroovyResolveResult)o).isAccessible()) return;
-                o = ((GroovyResolveResult)o).getElement();
-              }
+                                                   Object o = variant.getObject();
+                                                   if (o instanceof GroovyResolveResult) {
+                                                     if (!((GroovyResolveResult)o).isAccessible()) return;
+                                                     o = ((GroovyResolveResult)o).getElement();
+                                                   }
 
-              if (o instanceof PsiElement) {
-                type = getTypeByElement((PsiElement)o, position);
-              }
-              else if (o instanceof String) {
-                if ("true".equals(o) || "false".equals(o)) {
-                  type = PsiType.BOOLEAN;
-                }
-              }
-              if (type == null) return;
-              for (TypeConstraint info : infos) {
-                if (info.satisfied(type, position)) {
-                  result.addElement(variant);
-                  break;
-                }
-              }
-            }
-          });
+                                                   if (o instanceof PsiElement) {
+                                                     type = getTypeByElement((PsiElement)o, position);
+                                                   }
+                                                   else if (o instanceof String) {
+                                                     if ("true".equals(o) || "false".equals(o)) {
+                                                       type = PsiType.BOOLEAN;
+                                                     }
+                                                   }
+                                                   if (type == null) return;
+                                                   for (TypeConstraint info : infos) {
+                                                     if (info.satisfied(type, position)) {
+                                                       result.addElement(variant);
+                                                       break;
+                                                     }
+                                                   }
+                                                 }
+                                               });
         }
 
         addExpectedClassMembers(params, result);
@@ -153,8 +156,8 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
           return;
         }
 
-        final boolean overwrite = psiElement()
-          .afterLeaf(psiElement().withText("(").withParent(GrTypeCastExpression.class))
+        final boolean overwrite = PlatformPatterns.psiElement()
+          .afterLeaf(PlatformPatterns.psiElement().withText("(").withParent(GrTypeCastExpression.class))
           .accepts(parameters.getOriginalPosition());
         final Set<TypeConstraint> typeConstraints = getExpectedTypeInfos(parameters);
         for (TypeConstraint typeConstraint : typeConstraints) {
@@ -194,6 +197,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     });
 
     extend(CompletionType.SMART, AFTER_NEW, new CompletionProvider<CompletionParameters>() {
+      @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters,
                                  final ProcessingContext matchingContext,
                                  @NotNull final CompletionResultSet result) {
@@ -225,7 +229,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
               result.addElement(element);
             }
           }
-        });
+        }, params);
       }
     });
 
@@ -287,14 +291,14 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
       placeToInferType = (GrExpression)expression.getParent();
     }
 
-    final Set<PsiType> types = GroovyExpectedTypesProvider.getDefaultExpectedTypes(placeToInferType);
-    for (PsiType type : types) {
+    for (PsiType type : GroovyExpectedTypesProvider.getDefaultExpectedTypes(placeToInferType)) {
       if (type instanceof PsiArrayType) {
         final PsiType _type = GenericsUtil.eliminateWildcards(type);
         final LookupItem item = PsiTypeLookupItem.createLookupItem(_type, place, PsiTypeLookupItem.isDiamond(_type), ChooseTypeExpression.IMPORT_FIXER);
         if (item.getObject() instanceof PsiClass) {
           JavaCompletionUtil.setShowFQN(item);
           item.setInsertHandler(new InsertHandler<LookupItem>() {
+            @Override
             public void handleInsert(InsertionContext context, LookupItem item) {
               GroovyCompletionUtil.addImportForItem(context.getFile(), context.getStartOffset(), item);
             }
@@ -307,7 +311,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
 
     final List<PsiClassType> expectedClassTypes = new SmartList<PsiClassType>();
 
-    for (PsiType psiType : types) {
+    for (PsiType psiType : GroovyExpectedTypesProvider.getDefaultExpectedTypes(placeToInferType)) {
       if (psiType instanceof PsiClassType) {
         PsiType type = GenericsUtil.eliminateWildcards(JavaCompletionUtil.originalize(psiType));
         final PsiClassType classType = (PsiClassType)type;
@@ -320,6 +324,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     final PsiType diamond = inferDiamond(place);
 
     JavaInheritorsGetter.processInheritors(parameters, expectedClassTypes, matcher, new Consumer<PsiType>() {
+      @Override
       public void consume(final PsiType type) {
         final LookupElement element = addExpectedType(type, place, parameters, diamond);
         if (element != null) {
@@ -372,7 +377,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
   }
 
   @Override
-  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     super.fillCompletionVariants(parameters, result);
   }
 
@@ -411,7 +416,9 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     }
 
     final LookupItem item = PsiTypeLookupItem.createLookupItem(GenericsUtil.eliminateWildcards(type), place, isDiamond, ChooseTypeExpression.IMPORT_FIXER);
-    JavaCompletionUtil.setShowFQN(item);
+    if (item.getObject() instanceof PsiClass) {
+      JavaCompletionUtil.setShowFQN(item);
+    }
     item.setInsertHandler(new AfterNewClassInsertHandler((PsiClassType)type, true));
     return item;
   }
@@ -465,7 +472,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
       return PsiUtil.getSmartReturnType((PsiMethod)element);
     }
     if (element instanceof GrVariable) {
-      if (GroovyRefactoringUtil.isLocalVariable(element)) {
+      if (PsiUtil.isLocalVariable(element)) {
         return TypeInferenceHelper.getInferredType(context, ((GrVariable)element).getName());
       }
       else {

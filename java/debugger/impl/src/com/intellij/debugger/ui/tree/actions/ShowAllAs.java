@@ -20,6 +20,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
+import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
@@ -65,7 +66,7 @@ public class ShowAllAs extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    DebuggerTreeNode selectedNode = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).getSelectedNode(e.getDataContext());
+    DebuggerTreeNodeImpl selectedNode = (DebuggerTreeNodeImpl)((DebuggerUtilsEx)DebuggerUtils.getInstance()).getSelectedNode(e.getDataContext());
     if(selectedNode == null) return;
     
     if(!isPrimitiveArray(selectedNode)) return;

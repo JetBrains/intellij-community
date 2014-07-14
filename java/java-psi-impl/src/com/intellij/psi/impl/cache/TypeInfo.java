@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.io.StringRef;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.List;
 
-import static com.intellij.psi.PsiAnnotation.TargetType;
 import static com.intellij.util.BitUtil.isSet;
 
 /**
@@ -82,19 +81,19 @@ public class TypeInfo {
   private static final int HAS_ARRAY_COUNT = 0x40;
   private static final int HAS_ELLIPSIS = 0x80;
 
-  private static final TypeInfo NULL = new TypeInfo((StringRef)null, (byte)0, false, ContainerUtil.<PsiAnnotationStub>emptyList());
+  private static final TypeInfo NULL = new TypeInfo((StringRef)null, (byte)0, false, PsiAnnotationStub.EMPTY_ARRAY);
 
   public final StringRef text;
   public final byte arrayCount;
   public final boolean isEllipsis;
 
-  private final List<PsiAnnotationStub> myAnnotationStubs;
+  private final PsiAnnotationStub[] myAnnotationStubs;
 
-  public TypeInfo(String text, byte arrayCount, boolean ellipsis, @NotNull List<PsiAnnotationStub> annotationStubs) {
+  public TypeInfo(String text, byte arrayCount, boolean ellipsis, @NotNull PsiAnnotationStub[] annotationStubs) {
     this(StringRef.fromString(text == null ? null : internFrequentType(text)), arrayCount, ellipsis, annotationStubs);
   }
 
-  private TypeInfo(StringRef text, byte arrayCount, boolean isEllipsis, @NotNull List<PsiAnnotationStub> annotationStubs) {
+  private TypeInfo(StringRef text, byte arrayCount, boolean isEllipsis, @NotNull PsiAnnotationStub[] annotationStubs) {
     this.text = text;
     this.arrayCount = arrayCount;
     this.isEllipsis = isEllipsis;
@@ -106,15 +105,19 @@ public class TypeInfo {
     PsiModifierListStub modifierList = (PsiModifierListStub)owner.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
     if (modifierList == null) return this;
 
-    List<PsiAnnotationStub> annotationStubs = ContainerUtil.newArrayList();
+    List<PsiAnnotationStub> annotationStubs = null;
     for (StubElement child : modifierList.getChildrenStubs()) {
       if (!(child instanceof PsiAnnotationStub)) continue;
       PsiAnnotationStub annotationStub = (PsiAnnotationStub)child;
-      if (PsiImplUtil.findApplicableTarget(annotationStub.getPsiElement(), TargetType.TYPE_USE) == TargetType.TYPE_USE) {
+      if (PsiImplUtil.isTypeAnnotation(annotationStub.getPsiElement())) {
+        if (annotationStubs == null) annotationStubs = new SmartList<PsiAnnotationStub>();
         annotationStubs.add(annotationStub);
       }
     }
-    return new TypeInfo(text, arrayCount, isEllipsis, annotationStubs);
+
+    PsiAnnotationStub[] stubArray = PsiAnnotationStub.EMPTY_ARRAY;
+    if (annotationStubs != null) stubArray = annotationStubs.toArray(new PsiAnnotationStub[annotationStubs.size()]);
+    return new TypeInfo(text, arrayCount, isEllipsis, stubArray);
   }
 
   @NotNull
@@ -186,7 +189,7 @@ public class TypeInfo {
       text = LightTreeUtil.toFilteredString(tree, typeElement, null);
     }
 
-    return new TypeInfo(text, arrayCount, isEllipsis, ContainerUtil.<PsiAnnotationStub>emptyList());
+    return new TypeInfo(text, arrayCount, isEllipsis, PsiAnnotationStub.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -199,7 +202,7 @@ public class TypeInfo {
       typeText = typeText.substring(0, typeText.length() - 2);
     }
 
-    return new TypeInfo(typeText, arrayCount, isEllipsis, ContainerUtil.<PsiAnnotationStub>emptyList());
+    return new TypeInfo(typeText, arrayCount, isEllipsis, PsiAnnotationStub.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -226,7 +229,7 @@ public class TypeInfo {
 
     StringRef text = frequentIndex == 0 ? record.readName() : StringRef.fromString(ourIndexFrequentType[frequentIndex]);
 
-    return new TypeInfo(text, arrayCount, hasEllipsis, ContainerUtil.<PsiAnnotationStub>emptyList());
+    return new TypeInfo(text, arrayCount, hasEllipsis, PsiAnnotationStub.EMPTY_ARRAY);
   }
 
   public static void writeTYPE(@NotNull StubOutputStream dataStream, @NotNull TypeInfo typeInfo) throws IOException {
@@ -255,7 +258,7 @@ public class TypeInfo {
     if (typeInfo == NULL || typeInfo.text == null) {
       return null;
     }
-    if (typeInfo.arrayCount == 0 && typeInfo.myAnnotationStubs.isEmpty()) {
+    if (typeInfo.arrayCount == 0 && typeInfo.myAnnotationStubs.length == 0) {
       return typeInfo.text.getString();
     }
 

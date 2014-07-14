@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,14 @@ import com.intellij.designer.model.PropertyContext;
 import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -83,7 +85,7 @@ public abstract class PropertyTable extends JBTable {
   private final TableSpeedSearch mySpeedSearch;
 
   private final AbstractTableModel myModel = new PropertyTableModel();
-  private List<PropertiesContainer> myContainers = Collections.emptyList();
+  protected List<PropertiesContainer> myContainers = Collections.emptyList();
   protected List<Property> myProperties = Collections.emptyList();
   protected final Set<String> myExpandedProperties = new HashSet<String>();
 
@@ -635,7 +637,7 @@ public abstract class PropertyTable extends JBTable {
   }
 
   @Nullable
-  private Object getValue(Property property) throws Exception {
+  protected final Object getValue(Property property) throws Exception {
     int size = myContainers.size();
     if (size == 0) {
       return null;
@@ -814,6 +816,15 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
+  @Override
+  public void removeEditor() {
+    super.removeEditor();
+    updateEditActions();
+  }
+
+  protected void updateEditActions() {
+  }
+
   private boolean setValueAtRow(int row, final Object newValue) {
     final Property property = myProperties.get(row);
 
@@ -847,7 +858,7 @@ public abstract class PropertyTable extends JBTable {
 
     if (isSetValue) {
       if (property.needRefreshPropertyList() || needRefresh[0]) {
-        update(myContainers, null, false);
+        update(myContainers, null, property.closeEditorDuringRefresh());
       }
       else {
         myModel.fireTableRowsUpdated(row, row);
@@ -1056,7 +1067,7 @@ public abstract class PropertyTable extends JBTable {
     }
 
     public boolean isCellEditable(int row, int column) {
-      return column == 1 && myProperties.get(row).getEditor() != null;
+      return column == 1 && myProperties.get(row).isEditable(getCurrentComponent());
     }
 
     @Override
@@ -1084,7 +1095,7 @@ public abstract class PropertyTable extends JBTable {
   }
 
   @NotNull
-  private static Pair<Integer, Integer> getBeforeIconAndAfterIndents(@NotNull Property property, @NotNull Icon icon) {
+  private static Couple<Integer> getBeforeIconAndAfterIndents(@NotNull Property property, @NotNull Icon icon) {
     int nodeIndent = UIUtil.getTreeLeftChildIndent() + UIUtil.getTreeRightChildIndent();
     int beforeIcon = nodeIndent * getDepth(property);
 
@@ -1093,7 +1104,7 @@ public abstract class PropertyTable extends JBTable {
 
     int afterIcon = Math.max(0, nodeIndent - leftIconOffset - icon.getIconWidth());
 
-    return Pair.create(beforeIcon, afterIcon);
+    return Couple.of(beforeIcon, afterIcon);
   }
 
   private class PropertyCellEditorListener implements PropertyEditorListener {
@@ -1112,7 +1123,7 @@ public abstract class PropertyTable extends JBTable {
         }
 
         if (setValueAtRow(editingRow, value)) {
-          if (!continueEditing) {
+          if (!continueEditing && editingRow != -1) {
             PropertyEditor editor = myProperties.get(editingRow).getEditor();
             editor.removePropertyEditorListener(myPropertyEditorListener);
             removeEditor();
@@ -1149,8 +1160,7 @@ public abstract class PropertyTable extends JBTable {
         JComponent component = myEditor.getComponent(getCurrentComponent(), getPropertyContext(), getValue((Property)value), null);
 
         if (component instanceof JComboBox) {
-          component.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-          component.putClientProperty("tableCellEditor", this);
+          ComboBox.registerTableCellEditor((JComboBox)component, this);
         }
         else if (component instanceof JCheckBox) {
           component.putClientProperty("JComponent.sizeVariant", UIUtil.isUnderAquaLookAndFeel() ? "small" : null);
@@ -1164,6 +1174,13 @@ public abstract class PropertyTable extends JBTable {
         errComponent
           .append(MessageFormat.format("Error getting value: {0}", e.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
         return errComponent;
+      }
+      finally {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            updateEditActions();
+          }
+        });
       }
     }
 
@@ -1298,7 +1315,7 @@ public abstract class PropertyTable extends JBTable {
 
         renderer.setIcon(hasChildren ? icon : null);
 
-        Pair<Integer, Integer> indents = getBeforeIconAndAfterIndents(property, icon);
+        Couple<Integer> indents = getBeforeIconAndAfterIndents(property, icon);
         int indent = indents.first;
 
         if (hasChildren) {

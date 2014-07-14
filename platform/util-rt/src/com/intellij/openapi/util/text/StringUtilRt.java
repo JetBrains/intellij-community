@@ -92,6 +92,11 @@ public class StringUtilRt {
   }
 
   @NotNull
+  public static CharSequence convertLineSeparators(@NotNull CharSequence text, @NotNull String newSeparator) {
+    return unifyLineSeparators(text, newSeparator, null, false);
+  }
+
+  @NotNull
   public static String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, @Nullable int[] offsetsToKeep) {
     return convertLineSeparators(text, newSeparator, offsetsToKeep, false);
   }
@@ -239,5 +244,37 @@ public class StringUtilRt {
     final int prefixLength = prefix.length();
     return stringLength >= prefixLength && str.regionMatches(true, 0, prefix, 0, prefixLength);
   }
+
+  public static boolean endsWithIgnoreCase(@NonNls @NotNull CharSequence text, @NonNls @NotNull CharSequence suffix) {
+    int l1 = text.length();
+    int l2 = suffix.length();
+    if (l1 < l2) return false;
+
+    for (int i = l1 - 1; i >= l1 - l2; i--) {
+      if (!charsEqualIgnoreCase(text.charAt(i), suffix.charAt(i + l2 - l1))) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Allows to retrieve index of last occurrence of the given symbols at <code>[start; end)</code> sub-sequence of the given text.
+   *
+   * @param s     target text
+   * @param c     target symbol which last occurrence we want to check
+   * @param start start offset of the target text (inclusive)
+   * @param end   end offset of the target text (exclusive)
+   * @return index of the last occurrence of the given symbol at the target sub-sequence of the given text if any;
+   * <code>-1</code> otherwise
+   */
+  public static int lastIndexOf(@NotNull CharSequence s, char c, int start, int end) {
+    for (int i = end - 1; i >= start; i--) {
+      if (s.charAt(i) == c) return i;
+    }
+    return -1;
+  }
+
 
 }

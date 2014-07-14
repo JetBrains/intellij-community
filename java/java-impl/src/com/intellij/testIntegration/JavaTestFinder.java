@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +62,7 @@ public class JavaTestFinder implements TestFinder {
     for (Pair<String, Integer> eachNameWithWeight : TestFinderHelper.collectPossibleClassNamesWithWeights(klass.getName())) {
       for (PsiClass eachClass : cache.getClassesByName(eachNameWithWeight.first, scope)) {
         if (isTestSubjectClass(eachClass)) {
-          classesWithWeights.add(new Pair<PsiClass, Integer>(eachClass, eachNameWithWeight.second));
+          classesWithWeights.add(Pair.create(eachClass, eachNameWithWeight.second));
         }
       }
     }
@@ -80,36 +82,44 @@ public class JavaTestFinder implements TestFinder {
     PsiClass klass = findSourceElement(element);
     if (klass == null) return Collections.emptySet();
 
+    List<Pair<? extends PsiNamedElement, Integer>> classesWithProximities = new ArrayList<Pair<? extends PsiNamedElement, Integer>>();
+    final CommonProcessors.CollectProcessor<Pair<? extends PsiNamedElement, Integer>> processor =
+      new CommonProcessors.CollectProcessor<Pair<? extends PsiNamedElement, Integer>>(classesWithProximities);
+    collectTests(klass, processor);
+
+    return TestFinderHelper.getSortedElements(classesWithProximities, true);
+  }
+
+  private static boolean collectTests(PsiClass klass, Processor<Pair<? extends PsiNamedElement, Integer>> processor) {
     GlobalSearchScope scope;
-    Module module = getModule(element);
+    Module module = getModule(klass);
     if (module != null) {
       scope = GlobalSearchScope.moduleWithDependentsScope(module);
     }
     else {
-      scope = GlobalSearchScope.projectScope(element.getProject());
+      scope = GlobalSearchScope.projectScope(klass.getProject());
     }
 
-    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(element.getProject());
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(klass.getProject());
 
     String klassName = klass.getName();
     Pattern pattern = Pattern.compile(".*" + klassName + ".*");
 
-    List<Pair<? extends PsiNamedElement, Integer>> classesWithProximities = new ArrayList<Pair<? extends PsiNamedElement, Integer>>();
-
     HashSet<String> names = new HashSet<String>();
     cache.getAllClassNames(names);
+    final TestFrameworks frameworks = TestFrameworks.getInstance();
     for (String eachName : names) {
       if (pattern.matcher(eachName).matches()) {
         for (PsiClass eachClass : cache.getClassesByName(eachName, scope)) {
-          if (TestFrameworks.getInstance().isTestClass(eachClass)) {
-            classesWithProximities.add(
-                new Pair<PsiClass, Integer>(eachClass, TestFinderHelper.calcTestNameProximity(klassName, eachName)));
+          if (frameworks.isTestClass(eachClass) || frameworks.isPotentialTestClass(eachClass)) {
+            if (!processor.process(Pair.create(eachClass, TestFinderHelper.calcTestNameProximity(klassName, eachName)))) {
+              return true;
+            }
           }
         }
       }
     }
-
-    return TestFinderHelper.getSortedElements(classesWithProximities, true);
+    return false;
   }
 
   @Nullable
@@ -120,5 +130,14 @@ public class JavaTestFinder implements TestFinder {
 
   public boolean isTest(@NotNull PsiElement element) {
     return TestIntegrationUtils.isTest(element);
+  }
+
+  public static boolean hasTestsForClass(PsiClass aClass) {
+    return collectTests(aClass, new CommonProcessors.FindProcessor<Pair<? extends PsiNamedElement, Integer>>() {
+      @Override
+      protected boolean accept(Pair<? extends PsiNamedElement, Integer> pair) {
+        return true;
+      }
+    });
   }
 }

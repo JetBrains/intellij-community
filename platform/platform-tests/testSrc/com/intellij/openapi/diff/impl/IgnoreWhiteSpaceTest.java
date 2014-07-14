@@ -31,4 +31,13 @@ public class IgnoreWhiteSpaceTest extends TestCase {
     assertEquals(keys[1], keys[2]);
     assertFalse(keys[2].equals(keys[3]));
   }
+
+  public static void assertEquals(Object obj1, Object obj2) {
+    if (obj1 instanceof CharSequence && obj2 instanceof CharSequence) {
+      assertEquals(obj1.toString(), obj2.toString());
+      return;
+    }
+
+    assertEquals(obj1, obj2);
+  }
 }

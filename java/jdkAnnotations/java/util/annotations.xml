@@ -10,6 +10,15 @@
       <val name="targetIsContainer" val="true"/>
     </annotation>
   </item>
+  <item name='java.util.ArrayList java.util.Iterator&lt;E&gt; iterator()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ArrayList java.util.ListIterator&lt;E&gt; listIterator()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ArrayList java.util.ListIterator&lt;E&gt; listIterator(int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.util.Arrays T[] copyOf(T[], int)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -872,8 +881,59 @@
   <item name="java.util.Deque java.util.Iterator&lt;E&gt; descendingIterator()">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Formatter Formatter(java.io.File) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.io.File, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.io.File, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.io.File, java.lang.String, java.util.Locale) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.io.File, java.lang.String, java.util.Locale) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.io.OutputStream) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.io.OutputStream, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.io.OutputStream, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.io.OutputStream, java.lang.String, java.util.Locale) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.io.OutputStream, java.lang.String, java.util.Locale) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.io.PrintStream) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.lang.String, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.lang.String, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.lang.String, java.lang.String, java.util.Locale) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.lang.String, java.lang.String, java.util.Locale) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.util.Formatter java.util.Formatter format(java.lang.String, java.lang.Object...) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Formatter java.util.Formatter format(java.util.Locale, java.lang.String, java.lang.Object...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.HashSet HashSet(java.util.Collection&lt;? extends E&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1046,6 +1106,176 @@
   </item>
   <item name="java.util.NavigableSet java.util.NavigableSet&lt;E&gt; tailSet(E, boolean)">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Objects T requireNonNull(T)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val val="&quot;null-&gt;fail&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Objects T requireNonNull(T, java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val val="&quot;null,_-&gt;fail&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.ResourceBundle boolean containsKey(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.lang.Object getObject(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.lang.Object handleGetObject(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.lang.String getString(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.lang.String[] getStringArray(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.util.Enumeration&lt;java.lang.String&gt; getKeys()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale, java.lang.ClassLoader) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale, java.lang.ClassLoader) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale, java.lang.ClassLoader) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+      name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale, java.lang.ClassLoader, java.util.ResourceBundle.Control) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+      name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale, java.lang.ClassLoader, java.util.ResourceBundle.Control) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+      name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale, java.lang.ClassLoader, java.util.ResourceBundle.Control) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+      name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale, java.lang.ClassLoader, java.util.ResourceBundle.Control) 3'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+      name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale, java.util.ResourceBundle.Control) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+      name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale, java.util.ResourceBundle.Control) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+      name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale, java.util.ResourceBundle.Control) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.ResourceBundle.Control) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.ResourceBundle.Control) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.util.Set&lt;java.lang.String&gt; handleKeySet()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.util.Set&lt;java.lang.String&gt; keySet()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle void clearCache(java.lang.ClassLoader) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.io.File) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.io.File, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.io.File, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.io.InputStream) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.io.InputStream, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.io.InputStream, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.lang.Readable) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.nio.channels.ReadableByteChannel) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.nio.channels.ReadableByteChannel, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.nio.channels.ReadableByteChannel, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.nio.file.Path, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.nio.file.Path, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner boolean hasNext(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner boolean hasNext(java.util.regex.Pattern) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner java.lang.String findInLine(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner java.lang.String findInLine(java.util.regex.Pattern) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner java.lang.String findWithinHorizon(java.lang.String, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner java.lang.String findWithinHorizon(java.util.regex.Pattern, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner java.lang.String next(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner java.lang.String next(java.util.regex.Pattern) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner java.util.Scanner skip(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner java.util.Scanner skip(java.util.regex.Pattern) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner java.util.Scanner useDelimiter(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner java.util.Scanner useDelimiter(java.util.regex.Pattern) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner java.util.Scanner useLocale(java.util.Locale) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.Set T[] toArray(T[])'>
     <annotation name='org.jetbrains.annotations.NotNull'/>

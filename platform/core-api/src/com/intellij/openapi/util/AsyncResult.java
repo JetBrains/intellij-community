@@ -22,10 +22,25 @@ import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
+
 public class AsyncResult<T> extends ActionCallback {
   private static final Logger LOG = Logger.getInstance(AsyncResult.class);
 
+  private static final AsyncResult REJECTED = new Rejected();
+  private static final AsyncResult DONE_LIST = new Done<Object>(Collections.EMPTY_LIST);
+
   protected T myResult;
+
+  public AsyncResult() {
+  }
+
+  AsyncResult(int countToDone, @Nullable T result) {
+    super(countToDone);
+
+    myResult = result;
+  }
 
   @NotNull
   public AsyncResult<T> setDone(T result) {
@@ -63,9 +78,9 @@ public class AsyncResult<T> extends ActionCallback {
   @NotNull
   @Deprecated
   /**
-   * @deprecated Please use {@link #doWhenDone(com.intellij.util.Consumer)}
+   * @deprecated Use {@link #doWhenDone(com.intellij.util.Consumer)} (to remove in IDEA 16)
    */
-  public AsyncResult<T> doWhenDone(@NotNull final Handler<T> handler) {
+  public AsyncResult<T> doWhenDone(@SuppressWarnings("deprecation") @NotNull final Handler<T> handler) {
     doWhenDone(new Runnable() {
       @Override
       public void run() {
@@ -89,9 +104,9 @@ public class AsyncResult<T> extends ActionCallback {
   @NotNull
   @Deprecated
   /**
-   * @deprecated use {@link #doWhenRejected(com.intellij.util.Consumer)}
+   * @deprecated Use {@link #doWhenRejected(com.intellij.util.Consumer)} (to remove in IDEA 16)
    */
-  public AsyncResult<T> doWhenRejected(@NotNull final Handler<T> handler) {
+  public AsyncResult<T> doWhenRejected(@SuppressWarnings("deprecation") @NotNull final Handler<T> handler) {
     doWhenRejected(new Runnable() {
       @Override
       public void run() {
@@ -133,6 +148,22 @@ public class AsyncResult<T> extends ActionCallback {
     return myResult;
   }
 
+  @NotNull
+  public final ActionCallback doWhenProcessed(@NotNull final Consumer<T> consumer) {
+    doWhenDone(consumer);
+    doWhenRejected(new PairConsumer<T, String>() {
+      @Override
+      public void consume(T result, String error) {
+        consumer.consume(result);
+      }
+    });
+    return this;
+  }
+
+  @Deprecated
+  /**
+   * @deprecated Use {@link com.intellij.util.Consumer} (to remove in IDEA 16)
+   */
   public interface Handler<T> {
     void run(T t);
   }
@@ -151,6 +182,30 @@ public class AsyncResult<T> extends ActionCallback {
     public Rejected(T value) {
       setRejected(value);
     }
+  }
+
+  @NotNull
+  public static <R> AsyncResult<R> rejected() {
+    //noinspection unchecked
+    return REJECTED;
+  }
+
+  @NotNull
+  public static <R> AsyncResult<R> rejected(@NotNull String errorMessage) {
+    AsyncResult<R> result = new AsyncResult<R>();
+    result.reject(errorMessage);
+    return result;
+  }
+
+  @NotNull
+  public static <R> AsyncResult<R> done(@Nullable R result) {
+    return new AsyncResult<R>().setDone(result);
+  }
+
+  @NotNull
+  public static <R extends List> AsyncResult<R> doneList() {
+    //noinspection unchecked
+    return DONE_LIST;
   }
 
   // we don't use inner class, avoid memory leak, we don't want to hold this result while dependent is computing

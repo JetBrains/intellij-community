@@ -30,6 +30,7 @@ import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.StringUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
@@ -180,7 +181,7 @@ public class WhileCanBeForeachInspection extends WhileCanBeForeachInspectionBase
         iterator.delete();
       }
       final String result = out.toString();
-      replaceStatementAndShortenClassNames(whileStatement, result);
+      PsiReplacementUtil.replaceStatementAndShortenClassNames(whileStatement, result);
     }
 
     @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,15 +31,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ImageLoader;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -189,7 +188,7 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
     Pair<Long, Icon> iconInfo = iconsCache.get(path);
     if (iconInfo == null || iconInfo.getFirst() < stamp) {
       try {
-        final Icon icon = createOrFindBetterIcon(file, PlatformUtils.isIdeaProject(project));
+        final Icon icon = createOrFindBetterIcon(file, isIdeaProject(project));
         iconInfo = new Pair<Long, Icon>(stamp, hasProperSize(icon) ? icon : null);
         iconsCache.put(file.getPath(), iconInfo);
       }
@@ -201,40 +200,17 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
     return iconInfo == null ? null : iconInfo.getSecond();
   }
 
-  private Icon createOrFindBetterIcon(VirtualFile file, boolean tryToFindBetter) throws IOException {
-    if (tryToFindBetter) {
-      VirtualFile parent = file.getParent();
-      String name = file.getNameWithoutExtension();
-      String ext = file.getExtension();
-      VirtualFile newFile;
-      boolean retina = UIUtil.isRetina();
-      boolean dark = UIUtil.isUnderDarcula();
-      if (retina && dark) {
-        newFile = parent.findChild(name + "@2x_dark." + ext);
-        if (newFile != null) {
-          return loadIcon(newFile, 2);
-        }
-      }
-
-      if (dark) {
-        newFile = parent.findChild(name + "_dark." + ext);
-        if (newFile != null) {
-          return loadIcon(file, 1);
-        }
-      }
-
-      if (retina) {
-        newFile = parent.findChild(name + "@2x." + ext);
-        if (newFile != null) {
-          return loadIcon(newFile, 2);
-        }
-      }
-    }
-    return new ImageIcon(file.contentsToByteArray());
+  private static boolean isIdeaProject(Project project) {
+    if (project == null) return false;
+    VirtualFile baseDir = project.getBaseDir();
+    return baseDir != null && (baseDir.findChild("idea.iml") != null || baseDir.findChild("community-main.iml") != null);
   }
 
-  private ImageIcon loadIcon(VirtualFile file, int scale) throws IOException {
-    return new ImageIcon(ImageLoader.loadFromStream(file.getInputStream(), scale));
+  private static Icon createOrFindBetterIcon(VirtualFile file, boolean tryToFindBetter) throws IOException {
+    if (tryToFindBetter) {
+      return IconLoader.findIcon(new File(file.getPath()).toURI().toURL());
+    }
+    return new ImageIcon(file.contentsToByteArray());
   }
 
   private static boolean isIconClassType(PsiType type) {

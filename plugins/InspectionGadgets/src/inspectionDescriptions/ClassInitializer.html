@@ -1,11 +1,14 @@
 <html>
 <body>
-Reports any of non-<b>static</b> initializers
-in classes. Some coding standards prohibit such initializers, preferring initialization to be done
+Reports any non-<b>static</b> initializers
+in classes. Some coding standards prohibit instance initializers, preferring initialization to be done
 in constructors or field initializers. Non-<b>static</b> initializers
 may also be inadvertently created by deleting the <b>static</b> keyword,
 resulting in obscure bugs.
+This inspection does not warn on instance initializers in anonymous classes.
 <!-- tooltip end -->
+<p>
+Use the checkbox below to ignore instance initializers in classes which do not have any constructors.
 <p>
 
 </body>

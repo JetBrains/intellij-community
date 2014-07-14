@@ -2,11 +2,26 @@
   <id>org.jetbrains.idea.maven</id>
 
   <name>Maven Integration</name>
-  <description>Import Maven projects and execute Maven goals</description>
+  <description>
+      <![CDATA[
+      This plugin provides <a href="http://maven.apache.org/">Maven</a> support.
+      The following features are available:
+        <ul>
+        <li>Maven Projects tool window.</li>
+        <li>Dedicated module type.</li>
+        <li>Maven repositories support.</li>
+        <li>Full editing support for pom.xml file.</li>
+        <li>Possibility to import Maven projects.</li>
+        <li>Running and debugging Maven goals.</li>
+        <li>Compiling.</li>
+        </ul>
+      ]]>
+   </description>
   <vendor>JetBrains</vendor>
 
   <extensionPoints>
     <extensionPoint name="importer" interface="org.jetbrains.idea.maven.importing.MavenImporter"/>
+    <extensionPoint name="manifestImporter" interface="org.jetbrains.idea.maven.importing.ManifestImporter"/>
     <extensionPoint name="additional.importing.settings" interface="org.jetbrains.idea.maven.project.AdditionalMavenImportingSettings"/>
     <extensionPoint name="archetypesProvider" interface="org.jetbrains.idea.maven.indices.MavenArchetypesProvider"/>
 
@@ -25,6 +40,7 @@
     <projectImportBuilder implementation="org.jetbrains.idea.maven.wizards.MavenProjectBuilder"/>
     <moduleBuilder builderClass="org.jetbrains.idea.maven.wizards.MavenModuleBuilder"/>
     <frameworkSupport implementation="org.jetbrains.idea.maven.wizards.MavenFrameworkSupportProvider"/>
+    <moduleExtension implementation="org.jetbrains.idea.maven.importing.MavenSourceFoldersModuleExtension"/>
 
     <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenServerManager"/>
     <applicationService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager"/>
@@ -37,6 +53,9 @@
                     id="reference.settings.project.maven.ignored.files" key="maven.tab.ignored.files" bundle="ProjectBundle"/>
       <configurable instance="org.jetbrains.idea.maven.utils.MavenSettings$MyMavenRunnerConfigurable"
                     id="reference.settings.project.maven.runner" key="maven.tab.runner" bundle="RunnerBundle"/>
+      <configurable instance="org.jetbrains.idea.maven.project.MavenTestRunningConfigurable"
+                    id="reference.settings.project.maven.testRunning" key="maven.testRunning" bundle="ProjectBundle"
+                    nonDefaultProject="true"/>
       <configurable instance="org.jetbrains.idea.maven.indices.MavenRepositoriesConfigurable"
                     id="reference.settings.project.maven.repository.indices" key="maven.repositories.title" bundle="IndicesBundle"
                     nonDefaultProject="true"/>
@@ -51,7 +70,6 @@
 
     <junitPatcher implementation="org.jetbrains.idea.maven.execution.MavenJUnitPatcher" />
 
-    <compiler implementation="org.jetbrains.idea.maven.compiler.MavenResourceCompiler" order="last"/>
     <compileServer.plugin classpath="maven-jps-plugin.jar;maven3/plexus-utils-2.0.6.jar"/>
 
     <languageInjector implementation="org.jetbrains.idea.maven.plugins.api.MavenPluginConfigurationLanguageInjector"/>
@@ -156,7 +174,7 @@
 
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.execution.MavenRunner"/>
-
+    <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectSettings"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
@@ -169,6 +187,9 @@
       <param name="reportFormat" values="brief, plain" soft="true"/>
       <param name="runOrder" values="alphabetical, reversealphabetical, random, hourly, failedfirst, balanced, filesystem" soft="true"/>
       <param name="testNGArtifactName" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$DependencyWithoutVersion"/>
+
+      <property name="surefire.threadNumber" insideConfigurationOnly="true" />
+      <property name="surefire.forkNumber" insideConfigurationOnly="true" />
     </pluginDescriptor>
 
     <pluginDescriptor mavenId="org.apache.maven.plugins:maven-failsafe-plugin">
@@ -437,9 +458,6 @@
             icon="AllIcons.Nodes.ExceptionClass">
     </action>
 
-    <action id="Maven.Help"
-            class="com.intellij.ide.actions.ContextHelpAction" text="Help"/>
-
     <action id="Maven.ExpandAll" class="org.jetbrains.idea.maven.navigator.actions.MavenTreeAction$ExpandAll" text="Expand All"
             icon="AllIcons.Actions.Expandall"
             use-shortcut-of="ExpandAll"/>
@@ -527,7 +545,6 @@
       <reference id="Maven.CollapseAll"/>
       <separator/>
       <reference id="Maven.ShowSettings"/>
-      <reference id="Maven.Help"/>
     </group>
 
     <group id="Maven.DependencyMenu">

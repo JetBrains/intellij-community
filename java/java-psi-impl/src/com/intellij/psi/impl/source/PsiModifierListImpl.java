@@ -130,7 +130,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
           return false;
         }
         if (type == JavaTokenType.ABSTRACT_KEYWORD) {
-          return getNode().findChildByType(JavaTokenType.DEFAULT_KEYWORD) == null;
+          return getNode().findChildByType(JavaTokenType.DEFAULT_KEYWORD) == null && getNode().findChildByType(JavaTokenType.STATIC_KEYWORD) == null;
         }
       }
     }

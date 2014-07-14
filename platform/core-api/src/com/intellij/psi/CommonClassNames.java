@@ -58,15 +58,19 @@ public interface CommonClassNames {
   @NonNls String JAVA_UTIL_MAP = "java.util.Map";
   @NonNls String JAVA_UTIL_MAP_ENTRY = "java.util.Map.Entry";
   @NonNls String JAVA_UTIL_HASH_MAP = "java.util.HashMap";
+  @NonNls String JAVA_UTIL_CONCURRENT_HASH_MAP = "java.util.concurrent.ConcurrentHashMap";
   @NonNls String JAVA_UTIL_LIST = "java.util.List";
   @NonNls String JAVA_UTIL_ARRAY_LIST = "java.util.ArrayList";
   @NonNls String JAVA_UTIL_SET = "java.util.Set";
+  @NonNls String JAVA_UTIL_HASH_SET = "java.util.HashSet";
   @NonNls String JAVA_UTIL_PROPERTIES = "java.util.Properties";
   @NonNls String JAVA_UTIL_PROPERTY_RESOURCE_BUNDLE = "java.util.PropertyResourceBundle";
   @NonNls String JAVA_UTIL_DATE = "java.util.Date";
   @NonNls String JAVA_UTIL_CALENDAR = "java.util.Calendar";
   @NonNls String JAVA_UTIL_DICTIONARY = "java.util.Dictionary";
   @NonNls String JAVA_UTIL_COMPARATOR = "java.util.Comparator";
+
+  @NonNls String JAVA_UTIL_OPTIONAL = "java.util.Optional";
 
   @NonNls String JAVA_IO_SERIALIZABLE = "java.io.Serializable";
   @NonNls String JAVA_IO_EXTERNALIZABLE = "java.io.Externalizable";
@@ -99,4 +103,5 @@ public interface CommonClassNames {
   @NonNls String JAVA_LANG_INVOKE_MH_POLYMORPHIC = "java.lang.invoke.MethodHandle.PolymorphicSignature";
 
   @NonNls String CLASS_FILE_EXTENSION = ".class";
+  @NonNls String JAVA_LANG_FUNCTIONAL_INTERFACE = "java.lang.FunctionalInterface";
 }

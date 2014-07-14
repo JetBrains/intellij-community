@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -99,7 +100,7 @@ public class NonReproducibleMathCallInspection extends BaseInspection {
         (PsiReferenceExpression)nameIdentifier.getParent();
       assert reference != null;
       final String name = reference.getReferenceName();
-      replaceExpression(reference, "StrictMath." + name);
+      PsiReplacementUtil.replaceExpression(reference, "StrictMath." + name);
     }
   }
 

@@ -336,36 +336,23 @@ public class NameUtil {
     }
 
     int i = start;
-    boolean prevIsLetterOrDigit = i > 0 && Character.isLetterOrDigit(text.charAt(i - 1));
-    while (i < text.length()) {
-      char c = text.charAt(i);
-      if (!isWordStart(c)) {
-        if (!Character.isLetterOrDigit(c)) {
-          break;
-        }
-        if (prevIsLetterOrDigit) {
-          break;
-        }
-      }
-      prevIsLetterOrDigit = true;
-      i++;
+    while (i < text.length() && Character.isDigit(text.charAt(i))) i++;
+    if (i > start) {
+      // digits form a separate hump
+      return i;
     }
 
+    while (i < text.length() && Character.isUpperCase(text.charAt(i))) i++;
+    
     if (i > start + 1) {
-      if (i == text.length() || !Character.isLetterOrDigit(text.charAt(i))) {
+      // several consecutive uppercase letter form a hump
+      if (i == text.length() || !Character.isLetter(text.charAt(i))) {
         return i;
       }
       return i - 1;
     }
-    /*boolean */prevIsLetterOrDigit = i > 0 && Character.isLetterOrDigit(text.charAt(i - 1));
-    while (i < text.length()){
-      char c = text.charAt(i);
-      if (!Character.isLetterOrDigit(c)) break;
-      if (isWordStart(c)) break;
-      if (!prevIsLetterOrDigit) break;
-      prevIsLetterOrDigit = true;
-      i++;
-    }
+    
+    while (i < text.length() && Character.isLetter(text.charAt(i)) && !Character.isUpperCase(text.charAt(i))) i++;
     return i;
   }
 

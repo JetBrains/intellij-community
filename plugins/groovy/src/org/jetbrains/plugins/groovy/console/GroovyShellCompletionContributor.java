@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  */
 public class GroovyShellCompletionContributor extends CompletionContributor {
   @Override
-  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     PsiFile file = parameters.getOriginalFile();
     if (!(file instanceof GroovyShellCodeFragment)) return;
 

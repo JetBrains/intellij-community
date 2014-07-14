@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import javax.swing.*;
@@ -223,10 +224,18 @@ public class GroovyMarkerTypes {
         if (!(parent instanceof GrMethod)) return null;
         GrMethod method = (GrMethod)parent;
 
-        PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
+        final PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
 
         for (GrMethod m : PsiImplUtil.getMethodOrReflectedMethods(method)) {
-          OverridingMethodsSearch.search(m, true).forEach(new PsiElementProcessorAdapter<PsiMethod>(processor));
+          OverridingMethodsSearch.search(m, true).forEach(new ReadActionProcessor<PsiMethod>() {
+            @Override
+            public boolean processInReadAction(PsiMethod method) {
+              if (method instanceof GrTraitMethod) {
+                return true;
+              }
+              return processor.execute(method);
+            }
+          });
         }
 
         boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
@@ -328,8 +337,8 @@ public class GroovyMarkerTypes {
   }
 
   private static class OverridingMethodsUpdater extends ListBackgroundUpdaterTask {
-    private GrMethod myMethod;
-    private PsiElementListCellRenderer myRenderer;
+    private final GrMethod myMethod;
+    private final PsiElementListCellRenderer myRenderer;
 
     public OverridingMethodsUpdater(GrMethod method, PsiElementListCellRenderer renderer) {
       super(method.getProject(), MarkerType.SEARCHING_FOR_OVERRIDING_METHODS);

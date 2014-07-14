@@ -297,7 +297,7 @@ public class XPathEvalAction extends XPathAction {
         });
     }
 
-    public static void showUsageView(final Project project, MyUsageTarget usageTarget, Factory<UsageSearcher> searcherFactory, final EditExpressionAction editAction) {
+    public static void showUsageView(@NotNull final Project project, MyUsageTarget usageTarget, Factory<UsageSearcher> searcherFactory, final EditExpressionAction editAction) {
         final UsageViewPresentation presentation = new UsageViewPresentation();
         presentation.setTargetsNodeText("Expression");
         presentation.setCodeUsages(false);
@@ -310,7 +310,7 @@ public class XPathEvalAction extends XPathAction {
 
         presentation.setOpenInNewTab(XPathAppComponent.getInstance().getConfig().OPEN_NEW_TAB);
 
-        final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation();
+        final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);
         processPresentation.setProgressIndicatorFactory(new Factory<ProgressIndicator>() {
             @Override
             public ProgressIndicator create() {

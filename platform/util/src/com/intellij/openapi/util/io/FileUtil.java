@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,6 +105,7 @@ public class FileUtil extends FileUtilRt {
     return !ThreeState.NO.equals(isAncestorThreeState(ancestor, file, strict));
   }
 
+  @NotNull
   public static ThreeState isAncestorThreeState(@NotNull String ancestor, @NotNull String file, boolean strict) {
     String ancestorPath = toCanonicalPath(ancestor);
     String filePath = toCanonicalPath(file);
@@ -127,6 +128,7 @@ public class FileUtil extends FileUtilRt {
   /**
    * @return ThreeState.YES if same path or immediate parent
    */
+  @NotNull
   private static ThreeState startsWith(@NotNull String path, @NotNull String start, boolean strict, boolean caseSensitive,
                                        boolean checkImmediateParent) {
     final int length1 = path.length();
@@ -138,12 +140,11 @@ public class FileUtil extends FileUtilRt {
       return strict ? ThreeState.NO : ThreeState.YES;
     }
     char last2 = start.charAt(length2 - 1);
-    char next1;
     int slashOrSeparatorIdx = length2;
     if (last2 == '/' || last2 == File.separatorChar) {
       slashOrSeparatorIdx = length2 - 1;
     }
-    next1 = path.charAt(slashOrSeparatorIdx);
+    char next1 = path.charAt(slashOrSeparatorIdx);
     if (next1 == '/' || next1 == File.separatorChar) {
       if (!checkImmediateParent) return ThreeState.YES;
 
@@ -374,7 +375,7 @@ public class FileUtil extends FileUtilRt {
       final Method executeOnPooledThreadMethod = application.getClass().getMethod("executeOnPooledThread", Runnable.class);
       executeOnPooledThreadMethod.invoke(application, deleteFilesTask);
     }
-    catch (Exception e) {
+    catch (Exception ignored) {
       new Thread(deleteFilesTask, "File deletion thread").start();
     }
     return deleteFilesTask;
@@ -599,16 +600,13 @@ public class FileUtil extends FileUtilRt {
     return findSequentNonexistentFile(aParentFolder, aFilePrefix, aExtension).getName();
   }
 
-  public static File findSequentNonexistentFile(@NotNull File aParentFolder,
-                                                @NotNull @NonNls final String aFilePrefix,
-                                                @NotNull String aExtension) {
+  public static File findSequentNonexistentFile(@NotNull File parentFolder, @NotNull  String filePrefix, @NotNull String extension) {
     int postfix = 0;
-    String ext = aExtension.isEmpty() ? "" : "." + aExtension;
-
-    File candidate = new File(aParentFolder, aFilePrefix + ext);
+    String ext = extension.isEmpty() ? "" : '.' + extension;
+    File candidate = new File(parentFolder, filePrefix + ext);
     while (candidate.exists()) {
       postfix++;
-      candidate = new File(aParentFolder, aFilePrefix + Integer.toString(postfix) + ext);
+      candidate = new File(parentFolder, filePrefix + Integer.toString(postfix) + ext);
     }
     return candidate;
   }
@@ -635,7 +633,7 @@ public class FileUtil extends FileUtilRt {
    */
   @Contract("null -> null")
   public static String toCanonicalPath(@Nullable String path) {
-    return toCanonicalPath(path, File.separatorChar);
+    return toCanonicalPath(path, File.separatorChar, true);
   }
 
   @Contract("null, _ -> null")
@@ -662,11 +660,9 @@ public class FileUtil extends FileUtilRt {
       return path;
     }
 
-    int start = pathRootEnd(path) + 1, dots = 0;
-    boolean separator = true;
-
     StringBuilder result = new StringBuilder(path.length());
-    result.append(path, 0, start);
+    int start = processRoot(path, result), dots = 0;
+    boolean separator = true;
 
     for (int i = start; i < path.length(); ++i) {
       char c = path.charAt(i);
@@ -708,17 +704,39 @@ public class FileUtil extends FileUtilRt {
     return result.toString();
   }
 
-  private static int pathRootEnd(CharSequence path) {
-    if (path.length() > 0 && path.charAt(0) == '/') {
-      return 0;
+  private static int processRoot(String path, StringBuilder result) {
+    if (SystemInfo.isWindows && path.length() > 1 && path.charAt(0) == '/' && path.charAt(1) == '/') {
+      result.append("//");
+
+      int hostStart = 2;
+      while (hostStart < path.length() && path.charAt(hostStart) == '/') hostStart++;
+      if (hostStart == path.length()) return hostStart;
+      int hostEnd = path.indexOf('/', hostStart);
+      if (hostEnd < 0) hostEnd = path.length();
+      result.append(path, hostStart, hostEnd);
+      result.append('/');
+
+      int shareStart = hostEnd;
+      while (shareStart < path.length() && path.charAt(shareStart) == '/') shareStart++;
+      if (shareStart == path.length()) return shareStart;
+      int shareEnd = path.indexOf('/', shareStart);
+      if (shareEnd < 0) shareEnd = path.length();
+      result.append(path, shareStart, shareEnd);
+      result.append('/');
+
+      return shareEnd;
     }
-    else if (path.length() > 1 && path.charAt(0) == '/' && path.charAt(1) == '/') {
+    else if (path.length() > 0 && path.charAt(0) == '/') {
+      result.append('/');
       return 1;
     }
     else if (path.length() > 2 && path.charAt(1) == ':' && path.charAt(2) == '/') {
-      return 2;
+      result.append(path, 0, 3);
+      return 3;
     }
-    return -1;
+    else {
+      return 0;
+    }
   }
 
   private static void processDots(StringBuilder result, int dots, int start) {
@@ -755,15 +773,48 @@ public class FileUtil extends FileUtilRt {
    */
   @NotNull
   public static String normalize(@NotNull String path) {
-    final StringBuilder result = new StringBuilder(path.length());
-
     int start = 0;
-    if (SystemInfo.isWindows && (path.startsWith("//") || path.startsWith("\\\\"))) {
-      start = 2;
-      result.append("//");
+    boolean separator = false;
+    if (SystemInfo.isWindows) {
+      if (path.startsWith("//")) {
+        start = 2;
+        separator = true;
+      }
+      else if (path.startsWith("\\\\")) {
+        return normalizeTail(0, path, false);
+      }
     }
 
-    boolean separator = false;
+    for (int i = start; i < path.length(); ++i) {
+      final char c = path.charAt(i);
+      if (c == '/') {
+        if (separator) {
+          return normalizeTail(i, path, true);
+        }
+        separator = true;
+      }
+      else if (c == '\\') {
+        return normalizeTail(i, path, separator);
+      }
+      else {
+        separator = false;
+      }
+    }
+
+    return path;
+  }
+
+  @NotNull
+  private static String normalizeTail(int prefixEnd, @NotNull String path, boolean separator) {
+    final StringBuilder result = new StringBuilder(path.length());
+    result.append(path, 0, prefixEnd);
+    int start = prefixEnd;
+    if (start==0 && SystemInfo.isWindows && (path.startsWith("//") || path.startsWith("\\\\"))) {
+      start = 2;
+      result.append("//");
+      separator = true;
+    }
+
     for (int i = start; i < path.length(); ++i) {
       final char c = path.charAt(i);
       if (c == '/' || c == '\\') {
@@ -843,7 +894,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static int pathHashCode(@Nullable String path) {
-    return StringUtil.isEmpty(path) || path == null ? 0 : PATH_HASHING_STRATEGY.computeHashCode(toCanonicalPath(path));
+    return StringUtil.isEmpty(path) ? 0 : PATH_HASHING_STRATEGY.computeHashCode(toCanonicalPath(path));
   }
 
   /**
@@ -989,6 +1040,7 @@ public class FileUtil extends FileUtilRt {
       File toFile = new File(toDir, fromFile.getName());
       success = success && fromFile.renameTo(toFile);
     }
+    //noinspection ResultOfMethodCallIgnored
     fromDir.delete();
 
     return success;
@@ -1022,7 +1074,7 @@ public class FileUtil extends FileUtilRt {
     return file.canExecute();
   }
 
-  public static void setReadOnlyAttribute(@NotNull String path, boolean readOnlyFlag) throws IOException {
+  public static void setReadOnlyAttribute(@NotNull String path, boolean readOnlyFlag) {
     final boolean writableFlag = !readOnlyFlag;
     final File file = new File(path);
     if (!file.setWritable(writableFlag) && file.canWrite() != writableFlag) {
@@ -1073,11 +1125,11 @@ public class FileUtil extends FileUtilRt {
     while (!queue.isEmpty()) {
       final File file = queue.removeFirst();
       if (!processor.process(file)) return false;
-      if (file.isDirectory() && (directoryFilter == null || directoryFilter.process(file))) {
-        final File[] children = file.listFiles();
-        if (children != null) {
-          ContainerUtil.addAll(queue, children);
-        }
+      if (directoryFilter != null && (!file.isDirectory() || !directoryFilter.process(file))) continue;
+
+      final File[] children = file.listFiles();
+      if (children != null) {
+        ContainerUtil.addAll(queue, children);
       }
     }
     return true;
@@ -1314,6 +1366,12 @@ public class FileUtil extends FileUtilRt {
     FileUtilRt.setExecutableAttribute(path, executableFlag);
   }
 
+  public static void setLastModified(@NotNull File file, long timeStamp) throws IOException {
+    if (!file.setLastModified(timeStamp)) {
+      LOG.warn(file.getPath());
+    }
+  }
+
   @NotNull
   public static String loadFile(@NotNull File file) throws IOException {
     return FileUtilRt.loadFile(file);
@@ -1351,28 +1409,27 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static List<String> loadLines(@NotNull File file) throws IOException {
-    return loadLines(file.getPath());
+    return FileUtilRt.loadLines(file);
+  }
+
+  @NotNull
+  public static List<String> loadLines(@NotNull File file, @Nullable @NonNls String encoding) throws IOException {
+    return FileUtilRt.loadLines(file, encoding);
   }
 
   @NotNull
   public static List<String> loadLines(@NotNull String path) throws IOException {
-    BufferedReader reader = new BufferedReader(new FileReader(path));
-    try {
-      return loadLines(reader);
-    }
-    finally {
-      reader.close();
-    }
+    return FileUtilRt.loadLines(path);
+  }
+
+  @NotNull
+  public static List<String> loadLines(@NotNull String path, @Nullable @NonNls String encoding) throws IOException {
+    return FileUtilRt.loadLines(path, encoding);
   }
 
   @NotNull
   public static List<String> loadLines(@NotNull BufferedReader reader) throws IOException {
-    List<String> lines = new ArrayList<String>();
-    String line;
-    while ((line = reader.readLine()) != null) {
-      lines.add(line);
-    }
-    return lines;
+    return FileUtilRt.loadLines(reader);
   }
 
   /** @deprecated unclear closing policy, do not use (to remove in IDEA 14) */
@@ -1440,5 +1497,32 @@ public class FileUtil extends FileUtilRt {
     }
 
     return true;
+  }
+
+  /**
+   * Like {@link Properties#load(java.io.Reader)}, but preserves the order of key/value pairs.
+   */
+  @NotNull
+  public static Map<String, String> loadProperties(@NotNull Reader reader) throws IOException {
+    final Map<String, String> map = ContainerUtil.newLinkedHashMap();
+
+    new Properties() {
+      @Override
+      public synchronized Object put(Object key, Object value) {
+        map.put(String.valueOf(key), String.valueOf(value));
+        //noinspection UseOfPropertiesAsHashtable
+        return super.put(key, value);
+      }
+    }.load(reader);
+
+    return map;
+  }
+
+  public static boolean isRootPath(@NotNull File file) {
+    return isRootPath(file.getPath());
+  }
+
+  public static boolean isRootPath(@NotNull String path) {
+    return path.equals("/") || path.matches("[a-zA-Z]:[/\\\\]");
   }
 }

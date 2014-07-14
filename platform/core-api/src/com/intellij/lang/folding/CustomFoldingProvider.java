@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.folding;
 
+import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 
@@ -43,6 +44,6 @@ public abstract class CustomFoldingProvider {
   public abstract String getEndString();
   
   public boolean isCollapsedByDefault(String text) {
-    return false;
+    return CodeFoldingSettings.getInstance().COLLAPSE_CUSTOM_FOLDING_REGIONS;
   }
 }

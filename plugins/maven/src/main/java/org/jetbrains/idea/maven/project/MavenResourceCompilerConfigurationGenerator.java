@@ -7,13 +7,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Document;
@@ -22,12 +26,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenResource;
+import org.jetbrains.idea.maven.utils.ManifestBuilder;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.jps.maven.model.impl.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -96,7 +102,7 @@ public class MavenResourceCompilerConfigurationGenerator {
       Module module = fileIndex.getModuleForFile(pomXml);
       if (module == null) continue;
 
-      if (mavenProject.getDirectoryFile() != fileIndex.getContentRootForFile(pomXml)) continue;
+      if (!Comparing.equal(mavenProject.getDirectoryFile(), fileIndex.getContentRootForFile(pomXml))) continue;
 
       MavenModuleResourceConfiguration resourceConfig = new MavenModuleResourceConfiguration();
 
@@ -116,10 +122,15 @@ public class MavenResourceCompilerConfigurationGenerator {
           resourceConfig.modelMap.put(key, value);
         }
       }
+
+      Element pluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
+      resourceConfig.outputDirectory = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "outputDirectory", null);
+
       addResources(resourceConfig.resources, mavenProject.getResources());
       addResources(resourceConfig.testResources, mavenProject.getTestResources());
 
       addWebResources(module, projectConfig, mavenProject);
+      addEjbClientArtifactConfiguration(module, projectConfig, mavenProject);
 
       resourceConfig.filteringExclusions.addAll(MavenProjectsTree.getFilterExclusions(mavenProject));
 
@@ -128,14 +139,20 @@ public class MavenResourceCompilerConfigurationGenerator {
         resourceConfig.properties.put((String)propEntry.getKey(), (String)propEntry.getValue());
       }
 
-      Element pluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
-      resourceConfig.escapeString = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeString", "\\");
+      resourceConfig.escapeString = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeString", null);
       String escapeWindowsPaths = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeWindowsPaths");
       if (escapeWindowsPaths != null) {
         resourceConfig.escapeWindowsPaths = Boolean.parseBoolean(escapeWindowsPaths);
       }
 
+      String overwrite = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "overwrite");
+      if (overwrite != null) {
+        resourceConfig.overwrite = Boolean.parseBoolean(overwrite);
+      }
+
       projectConfig.moduleConfigurations.put(module.getName(), resourceConfig);
+
+      generateManifest(mavenProject, module);
     }
 
     addNonMavenResources(projectConfig);
@@ -165,10 +182,39 @@ public class MavenResourceCompilerConfigurationGenerator {
     });
   }
 
+  private static void generateManifest(@NotNull MavenProject mavenProject, @NotNull Module module) {
+    try {
+      String jdkVersion = null;
+      Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+      if (sdk != null && (jdkVersion = sdk.getVersionString()) != null) {
+        final int quoteIndex = jdkVersion.indexOf('"');
+        if (quoteIndex != -1) {
+          jdkVersion = jdkVersion.substring(quoteIndex + 1, jdkVersion.length() - 1);
+        }
+      }
+      Manifest manifest = new ManifestBuilder(mavenProject).withJdkVersion(jdkVersion).build();
+      File manifestFile = new File(mavenProject.getBuildDirectory(), ManifestFileUtil.MANIFEST_FILE_NAME);
+      FileUtil.createIfDoesntExist(manifestFile);
+      OutputStream outputStream = new FileOutputStream(manifestFile);
+      try {
+        manifest.write(outputStream);
+      }
+      finally {
+        StreamUtil.closeStream(outputStream);
+      }
+    }
+    catch (ManifestBuilder.ManifestBuilderException e) {
+      LOG.error("Unable to generate artifact manifest", e);
+    }
+    catch (IOException e) {
+      LOG.error("Unable to save generated artifact manifest", e);
+    }
+  }
+
   private Properties getFilteringProperties(MavenProject mavenProject) {
     final Properties properties = new Properties();
 
-    for (String each : mavenProject.getFilters()) {
+    for (String each : mavenProject.getFilterPropertiesFiles()) {
       try {
         FileInputStream in = new FileInputStream(each);
         try {
@@ -199,7 +245,8 @@ public class MavenResourceCompilerConfigurationGenerator {
     return properties;
   }
 
-  private static void addResources(final List<ResourceRootConfiguration> container, Collection<MavenResource> resources) {
+  private static void addResources(final List<ResourceRootConfiguration> container, @NotNull Collection<MavenResource> resources) {
+
     for (MavenResource resource : resources) {
       final String dir = resource.getDirectory();
       if (dir == null) {
@@ -229,56 +276,105 @@ public class MavenResourceCompilerConfigurationGenerator {
     Element warCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-war-plugin");
     if (warCfg == null) return;
 
+    boolean filterWebXml = Boolean.parseBoolean(warCfg.getChildTextTrim("filteringDeploymentDescriptors"));
     Element webResources = warCfg.getChild("webResources");
-    if (webResources == null) return;
+
+    if (webResources == null && !filterWebXml) return;
 
     String webArtifactName = MavenUtil.getArtifactName("war", module, true);
 
-    MavenArtifactResourceConfiguration artifactResourceCfg = projectCfg.artifactsResources.get(webArtifactName);
+    MavenWebArtifactConfiguration artifactResourceCfg = projectCfg.webArtifactConfigs.get(webArtifactName);
     if (artifactResourceCfg == null) {
-      artifactResourceCfg = new MavenArtifactResourceConfiguration();
-      artifactResourceCfg.webArtifactName = webArtifactName;
-      projectCfg.artifactsResources.put(webArtifactName, artifactResourceCfg);
+      artifactResourceCfg = new MavenWebArtifactConfiguration();
+      artifactResourceCfg.moduleName = module.getName();
+      projectCfg.webArtifactConfigs.put(webArtifactName, artifactResourceCfg);
     }
     else {
-      LOG.error("MavenArtifactResourceConfiguration already exists.");
+      LOG.error("MavenWebArtifactConfiguration already exists.");
     }
 
-    for (Element resource : webResources.getChildren("resource")) {
+    if (webResources != null) {
+      for (Element resource : webResources.getChildren("resource")) {
+        ResourceRootConfiguration r = new ResourceRootConfiguration();
+        String directory = resource.getChildTextTrim("directory");
+        if (StringUtil.isEmptyOrSpaces(directory)) continue;
+
+        if (!FileUtil.isAbsolute(directory)) {
+          directory = mavenProject.getDirectory() + '/' + directory;
+        }
+
+        r.directory = directory;
+        r.isFiltered = Boolean.parseBoolean(resource.getChildTextTrim("filtering"));
+
+        r.targetPath = resource.getChildTextTrim("targetPath");
+
+        Element includes = resource.getChild("includes");
+        if (includes != null) {
+          for (Element include : includes.getChildren("include")) {
+            String includeText = include.getTextTrim();
+            if (!includeText.isEmpty()) {
+              r.includes.add(includeText);
+            }
+          }
+        }
+
+        Element excludes = resource.getChild("excludes");
+        if (excludes != null) {
+          for (Element exclude : excludes.getChildren("exclude")) {
+            String excludeText = exclude.getTextTrim();
+            if (!excludeText.isEmpty()) {
+              r.excludes.add(excludeText);
+            }
+          }
+        }
+
+        artifactResourceCfg.webResources.add(r);
+      }
+    }
+
+    if (filterWebXml) {
       ResourceRootConfiguration r = new ResourceRootConfiguration();
-      String directory = resource.getChildTextTrim("directory");
-      if (StringUtil.isEmptyOrSpaces(directory)) continue;
-
-      if (!FileUtil.isAbsolute(directory)) {
-        directory = mavenProject.getDirectory() + '/' + directory;
-      }
-
-      r.directory = directory;
-      r.isFiltered = Boolean.parseBoolean(resource.getChildTextTrim("filtering"));
-
-      r.targetPath = resource.getChildTextTrim("targetPath");
-
-      Element includes = resource.getChild("includes");
-      if (includes != null) {
-        for (Element include : includes.getChildren("include")) {
-          String includeText = include.getTextTrim();
-          if (!includeText.isEmpty()) {
-            r.includes.add(includeText);
-          }
-        }
-      }
-
-      Element excludes = resource.getChild("excludes");
-      if (excludes != null) {
-        for (Element exclude : excludes.getChildren("exclude")) {
-          String excludeText = exclude.getTextTrim();
-          if (!excludeText.isEmpty()) {
-            r.excludes.add(excludeText);
-          }
-        }
-      }
-
+      r.directory = mavenProject.getDirectory() + "/src/main/webapp";
+      r.includes = Collections.singleton("WEB-INF/web.xml");
+      r.isFiltered = true;
+      r.targetPath = "";
       artifactResourceCfg.webResources.add(r);
+    }
+  }
+
+  private void addEjbClientArtifactConfiguration(Module module, MavenProjectConfiguration projectCfg, MavenProject mavenProject) {
+    Element pluginCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-ejb-plugin");
+
+    if (pluginCfg == null || !Boolean.parseBoolean(pluginCfg.getChildTextTrim("generateClient"))) {
+      return;
+    }
+
+    String ejbClientArtifactName = MavenUtil.getEjbClientArtifactName(module);
+
+    MavenEjbClientConfiguration ejbClientCfg = new MavenEjbClientConfiguration();
+
+    Element includes = pluginCfg.getChild("clientIncludes");
+    if (includes != null) {
+      for (Element include : includes.getChildren("clientInclude")) {
+        String includeText = include.getTextTrim();
+        if (!includeText.isEmpty()) {
+          ejbClientCfg.includes.add(includeText);
+        }
+      }
+    }
+
+    Element excludes = pluginCfg.getChild("clientExcludes");
+    if (excludes != null) {
+      for (Element exclude : excludes.getChildren("clientExclude")) {
+        String excludeText = exclude.getTextTrim();
+        if (!excludeText.isEmpty()) {
+          ejbClientCfg.excludes.add(excludeText);
+        }
+      }
+    }
+
+    if (!ejbClientCfg.isEmpty()) {
+      projectCfg.ejbClientArtifactConfigs.put(ejbClientArtifactName, ejbClientCfg);
     }
   }
 

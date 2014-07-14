@@ -143,7 +143,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
       writeFile(LocalArchivedTemplate.DESCRIPTION_PATH, description, project, dir, stream, true);
       if (replaceParameters) {
         String text = getInputFieldsText(parameters);
-        writeFile(LocalArchivedTemplate.IDEA_INPUT_FIELDS_XML, text, project, dir, stream, false);
+        writeFile(LocalArchivedTemplate.TEMPLATE_DESCRIPTOR, text, project, dir, stream, false);
       }
 
       FileIndex index = moduleToSave == null
@@ -299,7 +299,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
   private static String getInputFieldsText(Map<String, String> parameters) {
     Element element = new Element(RemoteTemplatesFactory.TEMPLATE);
     for (Map.Entry<String, String> entry : parameters.entrySet()) {
-      Element field = new Element(RemoteTemplatesFactory.INPUT_FIELD);
+      Element field = new Element(ArchivedProjectTemplate.INPUT_FIELD);
       field.setText(entry.getValue());
       field.setAttribute(RemoteTemplatesFactory.INPUT_DEFAULT, entry.getKey());
       element.addContent(field);

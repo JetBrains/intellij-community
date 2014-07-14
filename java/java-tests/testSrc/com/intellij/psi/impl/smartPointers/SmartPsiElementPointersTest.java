@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -414,6 +414,24 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
       boolean removed1 = smartPointerManager.removePointer(pointer1);
       assertFalse(removed1);
       Assert.assertNotNull(pointer1.getRange());
+    }
+  }
+
+  public void testSmartPointerCreationDoesNotLoadDocument() {
+    PsiPackage aPackage = myJavaFacade.findPackage("java.io");
+    SmartPointerManagerImpl smartPointerManager = (SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject);
+    for (PsiClass aClass : aPackage.getClasses()) {
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+      PsiFile file = aClass.getContainingFile();
+      Document document = documentManager.getCachedDocument(file);
+      if (document == null) { //ignore already loaded documents
+        SmartPsiElementPointer pointer = smartPointerManager.createSmartPsiElementPointer(aClass);
+        assertNull(documentManager.getCachedDocument(file));
+        //System.out.println("file = " + file);
+      }
+      else {
+        System.out.println("already loaded file = " + file);
+      }
     }
   }
 }

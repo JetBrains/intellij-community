@@ -121,7 +121,7 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
   public FrameworkSupportConfigurable getFrameworkConfigurable(@NotNull @NonNls String providerId) {
     FrameworkSupportConfigurable configurable = findFrameworkConfigurable(providerId);
     if (configurable == null) {
-      throw new IllegalArgumentException("provider '" + providerId + " not found");
+      throw new IllegalArgumentException("provider '" + providerId + "' not found");
     }
     return configurable;
   }
@@ -180,17 +180,28 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
   }
 
   public void onFrameworkSelectionChanged(FrameworkSupportNode node) {
-    final FrameworkSupportModelListener multicaster = myDispatcher.getMulticaster();
     final FrameworkSupportInModuleProvider provider = node.getUserObject();
     //todo[nik]
+    boolean checked = node.isChecked();
     if (provider instanceof OldFrameworkSupportProviderWrapper) {
       final FrameworkSupportProvider oldProvider = ((OldFrameworkSupportProviderWrapper) provider).getProvider();
-      if (node.isChecked()) {
-        multicaster.frameworkSelected(oldProvider);
+      selectFramework(oldProvider, checked);
+    }
+    for (FrameworkSupportInModuleProvider.FrameworkDependency dependency : provider.getDependenciesFrameworkIds()) {
+      if (!dependency.isOptional()) {
+        String id = dependency.getFrameworkId();
+        setFrameworkComponentEnabled(id, true);
       }
-      else {
-        multicaster.frameworkUnselected(oldProvider);
-      }
+    }
+  }
+
+  public void selectFramework(FrameworkSupportProvider provider, boolean checked) {
+    final FrameworkSupportModelListener multicaster = myDispatcher.getMulticaster();
+    if (checked) {
+      multicaster.frameworkSelected(provider);
+    }
+    else {
+      multicaster.frameworkUnselected(provider);
     }
   }
 

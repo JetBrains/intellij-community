@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,9 +44,9 @@ public class ImportUtils {
         return;
       }
     }
-    else {
-      if (PsiTreeUtil.isAncestor(outerClass, context, true) &&
-          !PsiTreeUtil.isAncestor(outerClass.getModifierList(), context, true)) {
+    else if (PsiTreeUtil.isAncestor(outerClass, context, true)) {
+      final PsiElement brace = outerClass.getLBrace();
+      if (brace != null && brace.getTextOffset() < context.getTextOffset()) {
         return;
       }
     }
@@ -247,20 +247,22 @@ public class ImportUtils {
         continue;
       }
       final PsiElement element = importReference.resolve();
-      if (element == null || !(element instanceof PsiPackage)) {
+      if (!(element instanceof PsiPackage)) {
         continue;
       }
       final PsiPackage aPackage = (PsiPackage)element;
-      if (!strict) {
-        return aPackage.containsClassNamed(shortName);
+      if (!strict && aPackage.containsClassNamed(shortName)) {
+        return true;
       }
-      final PsiClass[] classes = aPackage.findClassByShortName(shortName, file.getResolveScope());
-      for (final PsiClass aClass : classes) {
-        final String qualifiedClassName = aClass.getQualifiedName();
-        if (qualifiedClassName == null || fqName.equals(qualifiedClassName)) {
-          continue;
+      else {
+        final PsiClass[] classes = aPackage.findClassByShortName(shortName, file.getResolveScope());
+        for (final PsiClass aClass : classes) {
+          final String qualifiedClassName = aClass.getQualifiedName();
+          if (qualifiedClassName == null || fqName.equals(qualifiedClassName)) {
+            continue;
+          }
+          return containsConflictingReference(file, qualifiedClassName);
         }
-        return containsConflictingReference(file, qualifiedClassName);
       }
     }
     return hasJavaLangImportConflict(fqName, file);
@@ -386,6 +388,14 @@ public class ImportUtils {
     }
     final PsiImportStatementBase existingImportStatement = importList.findSingleImportStatement(memberName);
     if (existingImportStatement != null) {
+      if (existingImportStatement instanceof PsiImportStaticStatement) {
+        final PsiImportStaticStatement importStaticStatement = (PsiImportStaticStatement)existingImportStatement;
+        if (!memberName.equals(importStaticStatement.getReferenceName())) {
+          return false;
+        }
+        final PsiClass targetClass = importStaticStatement.resolveTargetClass();
+        return targetClass != null && qualifierClass.equals(targetClass.getQualifiedName());
+      }
       return false;
     }
     final PsiImportStaticStatement onDemandImportStatement = findOnDemandImportStaticStatement(importList, qualifierClass);
@@ -404,7 +414,7 @@ public class ImportUtils {
       return false;
     }
     final List<PsiImportStaticStatement> imports = getMatchingImports(importList, qualifiedName);
-    int onDemandCount = JavaCodeStyleSettingsFacade.getInstance(project).getNamesCountToUseImportOnDemand();
+    final int onDemandCount = JavaCodeStyleSettingsFacade.getInstance(project).getNamesCountToUseImportOnDemand();
     final PsiElementFactory elementFactory = psiFacade.getElementFactory();
     if (imports.size() < onDemandCount) {
       importList.add(elementFactory.createImportStaticStatement(aClass, memberName));

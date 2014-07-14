@@ -27,7 +27,7 @@ public final class StaticFieldData extends DescriptorData<FieldDescriptorImpl>{
     myField = field;
   }
 
-  protected FieldDescriptorImpl createDescriptorImpl(Project project) {
+  protected FieldDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new FieldDescriptorImpl(project, null, myField);
   }
 

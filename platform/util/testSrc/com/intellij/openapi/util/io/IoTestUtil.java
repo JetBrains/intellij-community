@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,9 @@ import java.io.*;
 import java.net.URL;
 import java.util.Locale;
 import java.util.Set;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
+import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static org.junit.Assert.*;
 
@@ -122,7 +123,7 @@ public class IoTestUtil {
   }
 
   public static void deleteSubst(@NotNull String substRoot) throws InterruptedException, IOException {
-    runCommand(new ProcessBuilder("subst", StringUtil.trimEnd(substRoot,"\\"), "/d"));
+    runCommand(new ProcessBuilder("subst", StringUtil.trimEnd(substRoot, "\\"), "/d"));
   }
 
   private static char getFirstFreeDriveLetter() {
@@ -211,20 +212,28 @@ public class IoTestUtil {
   @NotNull
   public static File createTestJar() throws IOException {
     File jarFile = FileUtil.createTempFile("test.", ".jar");
-    writeEntry(jarFile, "entry.txt", "test");
-    return jarFile;
+    return createTestJar(jarFile);
   }
 
-  public static void writeEntry(@NotNull File jarFile, @NotNull String name, @NotNull String content) throws IOException {
-    JarOutputStream stream = new JarOutputStream(new FileOutputStream(jarFile));
+  @NotNull
+  public static File createTestJar(File jarFile) throws IOException {
+    return createTestJar(jarFile, JarFile.MANIFEST_NAME, "");
+  }
+
+  @NotNull
+  public static File createTestJar(@NotNull File jarFile, @NotNull String... data) throws IOException {
+    ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile));
     try {
-      stream.putNextEntry(new JarEntry(name));
-      stream.write(content.getBytes("UTF-8"));
-      stream.closeEntry();
+      for (int i = 0; i < data.length; i += 2) {
+        stream.putNextEntry(new ZipEntry(data[i]));
+        stream.write(data[i + 1].getBytes("UTF-8"));
+        stream.closeEntry();
+      }
     }
     finally {
       stream.close();
     }
+    return jarFile;
   }
 
   @NotNull

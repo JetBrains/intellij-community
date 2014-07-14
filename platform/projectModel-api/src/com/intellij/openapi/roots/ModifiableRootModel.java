@@ -36,7 +36,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
   Project getProject();
 
   /**
-   * Adds the specified directory as a content root.
+   * Adds the specified file or directory as a content root.
    *
    * @param root root of a content
    * @return new content entry
@@ -45,7 +45,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
   ContentEntry addContentEntry(@NotNull VirtualFile root);
 
   /**
-   * Adds the specified directory as a content root.
+   * Adds the specified file or directory as a content root.
    *
    * @param url root of a content
    * @return new content entry
@@ -113,11 +113,15 @@ public interface ModifiableRootModel extends ModuleRootModel {
    * Commits changes to a <code>{@link ModuleRootManager}</code>.
    * Should be invoked in a write action. After <code>commit()<code>, the model
    * becomes read-only.
+   *
+   * Use of ModuleRootModificationUtil.updateModel() is recommended.
    */
   void commit();
 
   /**
-   * Must be invoked for uncommited models that are no longer needed.
+   * Must be invoked for uncommitted models that are no longer needed.
+   *
+   * Use of ModuleRootModificationUtil.updateModel() is recommended.
    */
   void dispose();
 

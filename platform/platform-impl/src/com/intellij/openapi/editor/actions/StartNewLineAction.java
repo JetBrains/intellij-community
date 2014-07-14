@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.ide.CopyPasteManager;
 
 /**
  * @author max
@@ -33,6 +34,10 @@ public class StartNewLineAction extends EditorAction {
   }
 
   private static class Handler extends EditorWriteActionHandler {
+    public Handler() {
+      super(true);
+    }
+
     @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       return getEnterHandler().isEnabled(editor, dataContext);
@@ -40,6 +45,7 @@ public class StartNewLineAction extends EditorAction {
 
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
+      CopyPasteManager.getInstance().stopKillRings();
       if (editor.getDocument().getLineCount() != 0) {
         editor.getSelectionModel().removeSelection();
         LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();

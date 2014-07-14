@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,6 +104,7 @@ public class GroovyIntroduceParameterUtil {
 
   public static void removeParametersFromCall(final GrClosureSignatureUtil.ArgInfo<PsiElement>[] actualArgs, final TIntArrayList parametersToRemove) {
     parametersToRemove.forEach(new TIntProcedure() {
+      @Override
       public boolean execute(final int paramNum) {
         try {
           final GrClosureSignatureUtil.ArgInfo<PsiElement> actualArg = actualArgs[paramNum];
@@ -139,6 +140,7 @@ public class GroovyIntroduceParameterUtil {
     }
 
     parametersToRemove.forEachDescending(new TIntProcedure() {
+      @Override
       public boolean execute(int paramNum) {
         try {
           if (paramNum == 0 && hasNamedArgs) {
@@ -379,6 +381,9 @@ public class GroovyIntroduceParameterUtil {
 
   @Nullable
   static GrVariable findVar(IntroduceParameterInfo info) {
+    GrVariable variable = info.getVar();
+    if (variable != null) return variable;
+
     final GrStatement[] statements = info.getStatements();
     if (statements.length != 1) return null;
     return GrIntroduceHandlerBase.findVariable(statements[0]);

@@ -49,11 +49,13 @@ public class KnownElementWeigher extends ProximityWeigher {
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass != null) {
         String methodName = method.getName();
-        if ("finalize".equals(methodName) || "registerNatives".equals(methodName) || "getClass".equals(methodName) ||
-            methodName.startsWith("wait") || methodName.startsWith("notify")) {
+        if ("finalize".equals(methodName) || "registerNatives".equals(methodName) || methodName.startsWith("wait") || methodName.startsWith("notify")) {
           if (CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
             return -1;
           }
+        }
+        if (isGetClass(method)) {
+          return -1;
         }
         if ("subSequence".equals(methodName)) {
           if (CommonClassNames.JAVA_LANG_STRING.equals(containingClass.getQualifiedName())) {
@@ -72,6 +74,10 @@ public class KnownElementWeigher extends ProximityWeigher {
     return 0;
   }
 
+  public static boolean isGetClass(PsiMethod method) {
+    return "getClass".equals(method.getName()) && method.getParameterList().getParametersCount() <= 0;
+  }
+
   private static Comparable getJdkClassProximity(@Nullable PsiClass element) {
     if (element == null || element.getContainingClass() != null) {
       return 0;
@@ -81,18 +87,29 @@ public class KnownElementWeigher extends ProximityWeigher {
     if (qname != null) {
       String pkg = StringUtil.getPackageName(qname);
       if (qname.equals(CommonClassNames.JAVA_LANG_OBJECT)) return 5;
-      if (pkg.equals("java.lang")) return 7;
-      if (pkg.equals("java.util")) return 6;
+      if (isPopularJdkClass(qname)) return 8;
+      if (pkg.equals("java.lang")) return 6;
+      if (pkg.equals("java.util")) return 7;
 
       if (qname.startsWith("java.lang")) return 5;
       if (qname.startsWith("java.util")) return 4;
 
-      if (pkg.equals("javax.swing")) return element instanceof PsiClass ? 3 : 2;
+      if (pkg.equals("javax.swing")) return 3;
       if (qname.startsWith("java.")) return 2;
       if (qname.startsWith("javax.")) return 1;
       if (qname.startsWith("com.")) return -1;
       if (qname.startsWith("net.")) return -1;
     }
     return 0;
+  }
+
+  private static boolean isPopularJdkClass(String qname) {
+    return qname.equals(CommonClassNames.JAVA_LANG_STRING) || 
+           qname.equals(System.class.getName()) || 
+           qname.equals(CommonClassNames.JAVA_LANG_EXCEPTION) || 
+           qname.equals(CommonClassNames.JAVA_LANG_THROWABLE) || 
+           qname.equals(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION) || 
+           qname.equals(CommonClassNames.JAVA_LANG_RUNNABLE) || 
+           qname.equals(CommonClassNames.JAVA_LANG_CLASS);
   }
 }

@@ -56,10 +56,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     // TODO: Visit decorators with arguments
     @Override
     public void visitPyCallExpression(PyCallExpression node) {
-      final PyExpression callee = node.getCallee();
-      if (callee instanceof PyQualifiedExpression) {
-        checkCallSite((PyQualifiedExpression)callee);
-      }
+      checkCallSite(node);
     }
 
     @Override
@@ -78,14 +75,14 @@ public class PyTypeCheckerInspection extends PyInspection {
       final PyExpression source = node.getForPart().getSource();
       if (source != null) {
         final PyType type = myTypeEvalContext.getType(source);
-        if (type != null && !PyTypeChecker.isUnknown(type) && !PyABCUtil.isSubtype(type, PyNames.ITERABLE)) {
+        if (type != null && !PyTypeChecker.isUnknown(type) && !PyABCUtil.isSubtype(type, PyNames.ITERABLE, myTypeEvalContext)) {
           registerProblem(source, String.format("Expected 'collections.Iterable', got '%s' instead",
                                                 PythonDocumentationProvider.getTypeName(type, myTypeEvalContext)));
         }
       }
     }
 
-    private void checkCallSite(@Nullable PyQualifiedExpression callSite) {
+    private void checkCallSite(@Nullable PyCallSiteExpression callSite) {
       final Map<PyGenericType, PyType> substitutions = new LinkedHashMap<PyGenericType, PyType>();
       final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, myTypeEvalContext);
       if (results != null) {
@@ -102,7 +99,7 @@ public class PyTypeCheckerInspection extends PyInspection {
           }
           final PyType argType = myTypeEvalContext.getType(entry.getKey());
           if (!genericsCollected) {
-            substitutions.putAll(PyTypeChecker.collectCallGenerics(results.getCallable(), results.getReceiver(), myTypeEvalContext));
+            substitutions.putAll(PyTypeChecker.unifyReceiver(results.getReceiver(), myTypeEvalContext));
             genericsCollected = true;
           }
           checkTypes(paramType, argType, entry.getKey(), myTypeEvalContext, substitutions);

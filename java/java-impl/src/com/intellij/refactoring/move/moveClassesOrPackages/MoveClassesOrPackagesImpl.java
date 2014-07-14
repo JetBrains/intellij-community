@@ -23,6 +23,7 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.DirectoryChooser;
+import com.intellij.ide.util.PlatformPackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -266,7 +267,8 @@ public class MoveClassesOrPackagesImpl {
       return aPackage != null ? getTargetPackageNameForMovedElement(aPackage) : "";
     }
     else if (psiElement != null) {
-      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiElement.getContainingFile().getContainingDirectory());
+      PsiDirectory directory = PlatformPackageUtil.getDirectory(psiElement);
+      PsiPackage aPackage = directory == null ? null : JavaDirectoryService.getInstance().getPackage(directory);
       return aPackage != null ? aPackage.getQualifiedName() : "";
     }
     else {

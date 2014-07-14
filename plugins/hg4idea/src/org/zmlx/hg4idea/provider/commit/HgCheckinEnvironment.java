@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.commit;
 
+import com.intellij.dvcs.DvcsCommitAdditionalComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -24,6 +25,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,9 +35,15 @@ import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.execution.HgCommandException;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.repo.HgRepositoryManager;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.*;
 
@@ -43,6 +51,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
   private final Project myProject;
   private boolean myNextCommitIsPushed;
+  private boolean myNextCommitAmend; // If true, the next commit is amended
 
   public HgCheckinEnvironment(Project project) {
     myProject = project;
@@ -51,7 +60,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
                                                              PairConsumer<Object, Object> additionalDataConsumer) {
     myNextCommitIsPushed = false;
-    return null;
+    return new HgCommitAdditionalComponent(myProject,panel);
   }
 
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
@@ -78,7 +87,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
       VirtualFile repo = entry.getKey();
       Set<HgFile> selectedFiles = entry.getValue();
 
-      HgCommitCommand command = new HgCommitCommand(myProject, repo, preparedComment);
+      HgCommitCommand command = new HgCommitCommand(myProject, repo, preparedComment, myNextCommitAmend);
       
       if (isMergeCommit(repo)) {
         //partial commits are not allowed during merges
@@ -101,6 +110,11 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
             //abort
             return exceptions;
           }
+          //firstly selected changes marked dirty in CommitHelper -> postRefresh, so we need to mark others
+          VcsDirtyScopeManager dirtyManager = VcsDirtyScopeManager.getInstance(myProject);
+          for (HgFile hgFile : changedFilesNotInCommit) {
+            dirtyManager.fileDirty(hgFile.toFilePath());
+          }
         }
         // else : all was included, or it was OK to commit everything,
         // so no need to set the files on the command, because then mercurial will complain
@@ -119,9 +133,12 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     // push if needed
     if (myNextCommitIsPushed && exceptions.isEmpty()) {
       final VirtualFile preselectedRepo = repositoriesMap.size() == 1 ? repositoriesMap.keySet().iterator().next() : null;
+      HgRepositoryManager repositoryManager = HgUtil.getRepositoryManager(myProject);
+      final HgRepository repo = preselectedRepo != null ? repositoryManager.getRepositoryForFile(preselectedRepo) : null;
+      final Collection<HgRepository> repositories = repositoryManager.getRepositories();
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         public void run() {
-          new HgPusher(myProject).showDialogAndPush(preselectedRepo);
+          new HgPusher(myProject).showDialogAndPush(repositories, repo);
         }
       });
     }
@@ -174,7 +191,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
-    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant(), null);
+    return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
@@ -246,7 +263,54 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     hgFiles.add(new HgFile(repo, filePath));
   }
 
-  public void setNextCommitIsPushed(boolean pushed) {
+  public void setNextCommitIsPushed() {
     myNextCommitIsPushed = true;
+  }
+
+  /**
+   * Commit options for hg
+   */
+  private class HgCommitAdditionalComponent extends DvcsCommitAdditionalComponent {
+
+    public HgCommitAdditionalComponent(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
+      super(project, panel);
+      HgVcs myVcs = HgVcs.getInstance(myProject);
+      myAmend.setEnabled(myVcs != null && myVcs.getVersion().isAmendSupported());
+    }
+
+    @Override
+    public void refresh() {
+      super.refresh();
+      myNextCommitAmend = false;
+    }
+
+    @Override
+    public void saveState() {
+      myNextCommitAmend = myAmend.isSelected();
+    }
+
+    @Override
+    public void restoreState() {
+      myNextCommitAmend = false;
+    }
+
+    @NotNull
+    @Override
+    protected Set<VirtualFile> getVcsRoots(@NotNull Collection<FilePath> filePaths) {
+      return HgUtil.hgRoots(myProject, filePaths);
+    }
+
+    @Nullable
+    @Override
+    protected String getLastCommitMessage(@NotNull VirtualFile repo) throws VcsException {
+      HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
+      List<String> args = new ArrayList<String>();
+      args.add("-r");
+      args.add(".");
+      args.add("--template");
+      args.add("{desc}");
+      HgCommandResult result = commandExecutor.executeInCurrentThread(repo, "log", args);
+      return result == null ? "" : result.getRawOutput();
+    }
   }
 }

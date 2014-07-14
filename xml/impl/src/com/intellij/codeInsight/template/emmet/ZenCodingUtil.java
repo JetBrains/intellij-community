@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,11 @@ public class ZenCodingUtil {
     int n = s.length();
     while (i <= n) {
       char c = i < n ? s.charAt(i) : 0;
-      if (c == NUMBER_IN_ITERATION_PLACE_HOLDER && (i == n - 1 || s.charAt(i + 1) != '#')) {
+      if (c == '\\' && i < n - 1) {
+        i++;
+        builder.append(s.charAt(i));
+      }
+      else if (c == NUMBER_IN_ITERATION_PLACE_HOLDER && (i == n - 1 || s.charAt(i + 1) != '#')) {
         if (markerStartIndex == -1) {
           markerStartIndex = i;
         }

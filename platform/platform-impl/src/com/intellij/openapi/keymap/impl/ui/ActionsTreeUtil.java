@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,13 +146,24 @@ public class ActionsTreeUtil {
         if (action == null) return false;
         final String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
         if (id != null) {
-          boolean actionBound = isActionBound(keymap, id);
-          return filter == null ? !actionBound : !actionBound && filter.value(action);
+          String binding = getActionBinding(keymap, id);
+          boolean bound = binding != null
+                          && actionManager.getAction(binding) != null // do not hide bound action, that miss the 'bound-with'
+                          && !hasAssociatedShortcutsInHierarchy(id, keymap); // do not hide bound actions when they are redefined
+          return filter == null ? !bound : !bound && filter.value(action);
         }
 
         return filter == null || filter.value(action);
       }
     };
+  }
+
+  private static boolean hasAssociatedShortcutsInHierarchy(String id, Keymap keymap) {
+    while (keymap != null) {
+      if (((KeymapImpl)keymap).hasOwnActionId(id)) return true;
+      keymap = keymap.getParent();
+    }
+    return false;
   }
 
   private static void fillGroupIgnorePopupFlag(ActionGroup actionGroup, Group group, Condition<AnAction> filtered) {
@@ -267,10 +278,16 @@ public class ActionsTreeUtil {
     return group;
   }
 
-  private static boolean isActionBound(final Keymap keymap, final String id) {
-    if (keymap == null) return false;
+  @Nullable
+  private static String getActionBinding(final Keymap keymap, final String id) {
+    if (keymap == null) return null;
+    
     Keymap parent = keymap.getParent();
-    return ((KeymapImpl)keymap).isActionBound(id) || (parent != null && ((KeymapImpl)parent).isActionBound(id));
+    String result = ((KeymapImpl)keymap).getActionBinding(id);
+    if (result == null && parent != null) {
+      result = ((KeymapImpl)parent).getActionBinding(id);
+    }
+    return result;
   }
 
   private static void addEditorActions(final Condition<AnAction> filtered,
@@ -285,10 +302,6 @@ public class ActionsTreeUtil {
       else {
         String actionId = editorAction instanceof ActionStub ? ((ActionStub)editorAction).getId() : actionManager.getId(editorAction);
         if (actionId == null) continue;
-        if (actionId.startsWith(EDITOR_PREFIX)) {
-          AnAction action = actionManager.getActionOrStub('$' + actionId.substring(6));
-          if (action != null) continue;
-        }
         if (filtered == null || filtered.value(editorAction)) {
           ids.add(actionId);
         }
@@ -485,26 +498,18 @@ public class ActionsTreeUtil {
         if (filter == null) return true;
         if (action == null) return false;
         final String insensitiveFilter = filter.toLowerCase();
-        final String text = action.getTemplatePresentation().getText();
-        if (text != null) {
-          final String lowerText = text.toLowerCase();
-          if (SearchUtil
-            .isComponentHighlighted(lowerText, insensitiveFilter, force, null)) {
-            return true;
-          }
-          else if (lowerText.contains(insensitiveFilter)) {
-            return true;
-          }
-        }
-        final String description = action.getTemplatePresentation().getDescription();
-        if (description != null) {
-          final String insensitiveDescription = description.toLowerCase();
-          if (SearchUtil
-            .isComponentHighlighted(insensitiveDescription, insensitiveFilter, force, null)) {
-            return true;
-          }
-          else if (insensitiveDescription.contains(insensitiveFilter)) {
-            return true;
+        for (String text : new String[]{action.getTemplatePresentation().getText(),
+                                        action.getTemplatePresentation().getDescription(),
+                                        action instanceof ActionStub ? ((ActionStub)action).getId() : ActionManager.getInstance().getId(action)}) {
+          if (text != null) {
+            final String lowerText = text.toLowerCase();
+
+            if (SearchUtil.isComponentHighlighted(lowerText, insensitiveFilter, force, null)) {
+              return true;
+            }
+            else if (lowerText.contains(insensitiveFilter)) {
+              return true;
+            }
           }
         }
         return false;

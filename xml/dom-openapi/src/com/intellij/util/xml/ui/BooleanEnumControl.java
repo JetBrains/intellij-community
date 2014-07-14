@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,10 +40,12 @@ public class BooleanEnumControl extends BaseModifiableControl<JCheckBox, String>
     assert enumClass.getEnumConstants().length == 2 : enumClass;
   }
 
+  @Override
   protected JCheckBox createMainComponent(JCheckBox boundComponent) {
     JCheckBox checkBox = boundComponent == null ? new JCheckBox() : boundComponent;
 
     checkBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myUndefined = false;
         setModified();
@@ -54,10 +56,12 @@ public class BooleanEnumControl extends BaseModifiableControl<JCheckBox, String>
     return checkBox;
   }
 
+  @Override
   protected String getValue() {
     return myUndefined ? null : (getComponent().isSelected() ? mySelectedValue : myUnselectedValue);
   }
 
+  @Override
   protected void setValue(final String value) {
     myUndefined = value == null;
     getComponent().setSelected(mySelectedValue.equals(value));

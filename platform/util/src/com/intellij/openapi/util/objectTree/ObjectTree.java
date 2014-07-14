@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 public final class ObjectTree<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectTree");
@@ -41,7 +42,7 @@ public final class ObjectTree<T> {
 
   final Object treeLock = new Object();
 
-  private long myModification;
+  private AtomicLong myModification = new AtomicLong(0);
 
   public ObjectNode<T> getNode(@NotNull T object) {
     synchronized (treeLock) {
@@ -114,7 +115,7 @@ public final class ObjectTree<T> {
   }
 
   public long getNextModification() {
-    return ++myModification;
+    return myModification.incrementAndGet();
   }
 
   public final boolean executeAll(@NotNull T object, boolean disposeTree, @NotNull ObjectTreeAction<T> action, boolean processUnregistered) {
@@ -178,9 +179,11 @@ public final class ObjectTree<T> {
 
   @TestOnly
   public void assertNoReferenceKeptInTree(@NotNull T disposable) {
-    Collection<ObjectNode<T>> nodes = myObject2NodeMap.values();
-    for (ObjectNode<T> node : nodes) {
-      node.assertNoReferencesKept(disposable);
+    synchronized (treeLock) {
+      Collection<ObjectNode<T>> nodes = myObject2NodeMap.values();
+      for (ObjectNode<T> node : nodes) {
+        node.assertNoReferencesKept(disposable);
+      }
     }
   }
 
@@ -260,6 +263,6 @@ public final class ObjectTree<T> {
   }
 
   public long getModification() {
-    return myModification;
+    return myModification.get();
   }
 }

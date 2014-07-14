@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.util.xml.ElementPresentation;
 import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.tree.DomFileElementNode;
 import com.intellij.util.xml.tree.DomModelTreeView;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: Sergey.Vasiliev
@@ -43,6 +44,7 @@ public class DeleteDomElement extends BaseDomTreeAction {
     super(treeView);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e, DomModelTreeView treeView) {
     final SimpleNode selectedNode = treeView.getTree().getSelectedNode();
 
@@ -55,11 +57,12 @@ public class DeleteDomElement extends BaseDomTreeAction {
       
       final DomElement domElement = ((BaseDomElementNode)selectedNode).getDomElement();
 
-      final int ret = Messages.showOkCancelDialog(getPresentationText(selectedNode) + "?", ApplicationBundle.message("action.remove"),
+      final int ret = Messages.showOkCancelDialog(getPresentationText(selectedNode, "Remove") + "?", "Remove",
                                                   Messages.getQuestionIcon());
       if (ret == Messages.OK) {
       new WriteCommandAction(domElement.getManager().getProject(), DomUtil.getFile(domElement)) {
-        protected void run(final Result result) throws Throwable {
+        @Override
+        protected void run(@NotNull final Result result) throws Throwable {
           domElement.undefine();
         }
       }.execute();
@@ -67,6 +70,7 @@ public class DeleteDomElement extends BaseDomTreeAction {
     }
   }
 
+  @Override
   public void update(AnActionEvent e, DomModelTreeView treeView) {
     final SimpleNode selectedNode = treeView.getTree().getSelectedNode();
 
@@ -87,7 +91,7 @@ public class DeleteDomElement extends BaseDomTreeAction {
 
 
     if (enabled) {
-      e.getPresentation().setText(getPresentationText(selectedNode));
+      e.getPresentation().setText(getPresentationText(selectedNode, ApplicationBundle.message("action.remove")));
     }
     else {
       e.getPresentation().setText(ApplicationBundle.message("action.remove"));
@@ -96,8 +100,7 @@ public class DeleteDomElement extends BaseDomTreeAction {
     e.getPresentation().setIcon(AllIcons.General.Remove);
   }
 
-  private static String getPresentationText(final SimpleNode selectedNode) {
-    String removeString = ApplicationBundle.message("action.remove");
+  private static String getPresentationText(final SimpleNode selectedNode, String removeString) {
     final ElementPresentation presentation = ((BaseDomElementNode)selectedNode).getDomElement().getPresentation();
     removeString += " " + presentation.getTypeName() +
                                 (presentation.getElementName() == null || presentation.getElementName().trim().length() == 0? "" : ": " + presentation.getElementName());

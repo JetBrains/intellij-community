@@ -375,7 +375,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    * from revision numbers.
    *
    * @param revisionNumberString the string to be parsed
-   * @param path                 the path for which revsion number is queried
+   * @param path                 the path for which revision number is queried
    * @return the parsed revision number
    */
   @Nullable
@@ -589,8 +589,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
         }
       }
     };
-    final boolean succeded = VcsSynchronousProgressWrapper.wrap(runnable, getProject(), "Load revision contents");
-    return succeded ? list[0] : null;
+    return VcsSynchronousProgressWrapper.wrap(runnable, getProject(), "Load revision contents") ? list[0] : null;
   }
 
   @Nullable

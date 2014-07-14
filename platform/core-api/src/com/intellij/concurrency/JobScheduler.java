@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,11 +70,11 @@ public abstract class JobScheduler {
 
   private static Object info(Runnable r) {
     if (!(r instanceof FutureTask)) return r;
-    Object sync = ReflectionUtil.getField(FutureTask.class, r, Object.class, "sync"); // FutureTask.sync in <=JDK7
+    Object sync = ReflectionUtil.getField(FutureTask.class, r, null, "sync"); // FutureTask.sync in <=JDK7
     Object o = sync == null ? r : sync;
     Object callable = ReflectionUtil.getField(o.getClass(), o, Callable.class, "callable"); // FutureTask.callable or Sync.callable
     if (callable == null) return null;
-    Object task = ReflectionUtil.getField(callable.getClass(), callable, Object.class, "task"); // java.util.concurrent.Executors.RunnableAdapter.task
+    Object task = ReflectionUtil.getField(callable.getClass(), callable, null, "task"); // java.util.concurrent.Executors.RunnableAdapter.task
     return task == null ? callable : task;
   }
 

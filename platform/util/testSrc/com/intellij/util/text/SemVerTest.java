@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.util.text;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -24,15 +24,17 @@ import org.junit.Test;
 public class SemVerTest {
   @Test
   public void testParsing() throws Exception {
-    SemVer semVer = SemVer.parseFromText("0.9.2");
+    String version = "0.9.2";
+    SemVer semVer = SemVer.parseFromText(version);
     Assert.assertNotNull(semVer);
-    Assert.assertEquals(new SemVer(0, 9, 2), semVer);
+    Assert.assertEquals(new SemVer(version, 0, 9, 2), semVer);
   }
 
   @Test
   public void testExtendedVersion() throws Exception {
-    SemVer semVer = SemVer.parseFromText("0.9.2-dart");
+    String version = "0.9.2-dart";
+    SemVer semVer = SemVer.parseFromText(version);
     Assert.assertNotNull(semVer);
-    Assert.assertEquals(new SemVer(0, 9, 2), semVer);
+    Assert.assertEquals(new SemVer(version, 0, 9, 2), semVer);
   }
 }

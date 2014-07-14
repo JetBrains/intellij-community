@@ -33,9 +33,11 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,6 +46,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupPositionManager;
@@ -53,6 +56,7 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -76,9 +80,31 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     performForContext(e.getDataContext(), true);
   }
 
+  @TestOnly
   public void performForContext(DataContext dataContext) {
     performForContext(dataContext, true);
   }
+
+  @Override
+  public void update(final AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
+
+    DataContext dataContext = e.getDataContext();
+    Editor editor = getEditor(dataContext);
+
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+    element = getElement(project, file, editor, element);
+
+    PsiFile containingFile = element != null ? element.getContainingFile() : file;
+    boolean enabled = !(containingFile == null || !containingFile.getViewProvider().isPhysical());
+    e.getPresentation().setEnabled(enabled);
+  }
+
 
   protected Editor getEditor(DataContext dataContext) {
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
@@ -97,13 +123,11 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
   public void performForContext(DataContext dataContext, boolean invokedByShortcut) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
-
     if (project == null) return;
-
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    final Editor editor = getEditor(dataContext);
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+    Editor editor = getEditor(dataContext);
 
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     boolean isInvokedFromEditor = CommonDataKeys.EDITOR.getData(dataContext) != null;
@@ -161,7 +185,8 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         TargetElementUtilBase.getInstance().adjustElement(editor, TargetElementUtilBase.getInstance().getAllAccepted(), element, null);
       if (adjustedElement != null) {
         element = adjustedElement;
-      } else if (file != null) {
+      }
+      else if (file != null) {
         element = DocumentationManager.getInstance(project).getElementFromLookup(editor, file);
       }
     }
@@ -226,18 +251,16 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
     final Ref<UsageView> usageView = new Ref<UsageView>();
     final String title = CodeInsightBundle.message("implementation.view.title", text);
-    if (myPopupRef != null) {
-      final JBPopup popup = myPopupRef.get();
-      if (popup != null && popup.isVisible() && popup instanceof AbstractPopup) {
-        final ImplementationViewComponent component = (ImplementationViewComponent) ((AbstractPopup)popup).getComponent();
-        ((AbstractPopup)popup).setCaption(title);
-        component.update(impls, index);
-        updateInBackground(editor, element, component, title, (AbstractPopup)popup, usageView);
-        if (invokedByShortcut) {
-          ((AbstractPopup)popup).focusPreferredComponent();
-        }
-        return;
+    JBPopup popup = SoftReference.dereference(myPopupRef);
+    if (popup != null && popup.isVisible() && popup instanceof AbstractPopup) {
+      final ImplementationViewComponent component = (ImplementationViewComponent) ((AbstractPopup)popup).getComponent();
+      ((AbstractPopup)popup).setCaption(title);
+      component.update(impls, index);
+      updateInBackground(editor, element, component, title, (AbstractPopup)popup, usageView);
+      if (invokedByShortcut) {
+        ((AbstractPopup)popup).focusPreferredComponent();
       }
+      return;
     }
 
     final ImplementationViewComponent component = new ImplementationViewComponent(impls, index);
@@ -250,7 +273,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         }
       };
 
-      final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPreferredFocusableComponent())
+      popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPreferredFocusableComponent())
         .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
         .setProject(project)
         .addListener(updateProcessor)
@@ -264,8 +287,19 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
           @Override
           public boolean process(JBPopup popup) {
             usageView.set(component.showInUsageView());
+            myTaskRef = new WeakReference<BackgroundUpdaterTask>(null);
             popup.cancel();
             return false;
+          }
+        })
+        .setCancelCallback(new Computable<Boolean>() {
+          @Override
+          public Boolean compute() {
+            final BackgroundUpdaterTask task = SoftReference.dereference(myTaskRef);
+            if (task != null) {
+              task.setCanceled();
+            }
+            return Boolean.TRUE;
           }
         })
         .createPopup();
@@ -284,11 +318,9 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
                                   ImplementationViewComponent component,
                                   String title,
                                   AbstractPopup popup, Ref<UsageView> usageView) {
-    if (myTaskRef != null) {
-      final BackgroundUpdaterTask updaterTask = myTaskRef.get();
-      if (updaterTask != null) {
-        updaterTask.setCanceled();
-      }
+    final BackgroundUpdaterTask updaterTask = SoftReference.dereference(myTaskRef);
+    if (updaterTask != null) {
+      updaterTask.setCanceled();
     }
 
     if (element == null) return; //already found
@@ -296,7 +328,12 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     task.init(popup, component, usageView);
 
     myTaskRef = new WeakReference<BackgroundUpdaterTask>(task);
-    ProgressManager.getInstance().run(task);
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, new BackgroundableProcessIndicator(task) {
+      @Override
+      public boolean isCanceled() {
+        return super.isCanceled() || task.isCanceled();
+      }
+    });
   }
 
   protected boolean isIncludeAlwaysSelf() {
@@ -355,12 +392,6 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       }
     }
     return PsiUtilCore.toPsiElementArray(unique);
-  }
-
-  @Override
-  public void update(final AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    e.getPresentation().setEnabled(project != null);
   }
 
   private static class ImplementationsUpdaterTask extends BackgroundUpdaterTask<ImplementationViewComponent> {

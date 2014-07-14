@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 26-Dec-2007
- */
 package com.intellij.openapi.roots.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,16 +26,20 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+/**
+ * @author anna
+ * @since 26-Dec-2007
+ */
 public interface OrderRootTypeUIFactory {
   ExtensionPointName<KeyedFactoryEPBean> EP_NAME = ExtensionPointName.create("com.intellij.OrderRootTypeUI");
-  KeyedExtensionFactory<OrderRootTypeUIFactory, OrderRootType> FACTORY = new KeyedExtensionFactory<OrderRootTypeUIFactory, OrderRootType>(OrderRootTypeUIFactory.class, EP_NAME,
-                                                                                                                                          ApplicationManager
-                                                                                                                                            .getApplication().getPicoContainer()) {
-    @Override
-    public String getKey(@NotNull final OrderRootType key) {
-      return key.name();
-    }
-  };
+
+  KeyedExtensionFactory<OrderRootTypeUIFactory, OrderRootType> FACTORY =
+    new KeyedExtensionFactory<OrderRootTypeUIFactory, OrderRootType>(OrderRootTypeUIFactory.class, EP_NAME, ApplicationManager.getApplication().getPicoContainer()) {
+      @Override
+      public String getKey(@NotNull final OrderRootType key) {
+        return key.name();
+      }
+    };
 
   SdkPathEditor createPathEditor(Sdk sdk);
 

@@ -255,8 +255,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
 
     @Override
     public void startServer(@NotNull Executor executor) {
-      ServerConnection<?> connection = ServerConnectionManager.getInstance().getOrCreateConnection(getValue());
-      connection.computeDeployments(EmptyRunnable.INSTANCE);
+      ServerConnectionManager.getInstance().getOrCreateConnection(getValue());
     }
 
     @Override
@@ -286,16 +285,6 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       super(doGetProject(), value);
       myConnection = connection;
       myParentNode = parentNode;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-      return object instanceof DeploymentNodeImpl && getValue().getName().equals(((DeploymentNodeImpl)object).getValue().getName());
-    }
-
-    @Override
-    public int hashCode() {
-      return getValue().getName().hashCode();
     }
 
     @NotNull
@@ -378,10 +367,14 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       return (DeploymentLogManagerImpl)myConnection.getLogManager(getValue());
     }
 
+    public String getId() {
+      return myParentNode.getName() + ";deployment" + getValue().getName();
+    }
+
     @NotNull
     @Override
     public String getLogId() {
-      return "deployment:" + getValue().getName();
+      return getId() + ";main-log";
     }
 
     @NotNull
@@ -452,7 +445,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     @NotNull
     @Override
     public String getLogId() {
-      return "deployment:" + myDeploymentNode.getValue().getName() + ";log:" + getLogName();
+      return myDeploymentNode.getId() + ";log:" + getLogName();
     }
   }
 }

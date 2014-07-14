@@ -1,0 +1,14 @@
+default namespace = "http://www.w3.org/1999/xhtml"
+include "common.rnc" {
+		XMLonly = empty
+		HTMLonly = notAllowed
+		v5only = notAllowed
+}
+start = html.elem
+include "phrase.rnc"
+include "block.rnc"
+include "sectional.rnc"
+include "revision.rnc"
+include "embed.rnc"
+include "core-scripting.rnc"
+include "meta.rnc"

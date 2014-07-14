@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,20 +21,22 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
-import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 public class IndexedExpressionConversionIntention extends Intention {
 
+    @Override
     @NotNull
     public PsiElementPredicate getElementPredicate() {
         return new IndexedExpressionConversionPredicate();
     }
 
+    @Override
     public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
             throws IncorrectOperationException {
 
@@ -61,11 +63,11 @@ public class IndexedExpressionConversionIntention extends Intention {
     }
 
     private static void rewriteAsGetAt(GrIndexProperty arrayIndexExpression, GrExpression arrayExpression, GrExpression argument) throws IncorrectOperationException {
-        IntentionUtils.replaceExpression(arrayExpression.getText() + ".getAt(" + argument.getText() + ')', arrayIndexExpression);
+        PsiImplUtil.replaceExpression(arrayExpression.getText() + ".getAt(" + argument.getText() + ')', arrayIndexExpression);
     }
 
     private static void rewriteAsSetAt(GrAssignmentExpression assignment, GrExpression arrayExpression, GrExpression argument, GrExpression value) throws IncorrectOperationException {
-        IntentionUtils.replaceExpression(arrayExpression.getText() + ".putAt(" + argument.getText() + ", " + value.getText() + ')', assignment);
+        PsiImplUtil.replaceExpression(arrayExpression.getText() + ".putAt(" + argument.getText() + ", " + value.getText() + ')', assignment);
     }
 
 }

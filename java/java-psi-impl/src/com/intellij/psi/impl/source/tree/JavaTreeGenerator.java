@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ public class JavaTreeGenerator implements TreeGenerator {
 
         boolean isFQ = false;
         if (original instanceof PsiJavaCodeReferenceElementImpl) {
-          int kind = ((PsiJavaCodeReferenceElementImpl)original).getKind();
+          int kind = ((PsiJavaCodeReferenceElementImpl)original).getKind(original.getContainingFile());
           switch (kind) {
             case PsiJavaCodeReferenceElementImpl.CLASS_OR_PACKAGE_NAME_KIND:
             case PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND:
@@ -131,7 +131,7 @@ public class JavaTreeGenerator implements TreeGenerator {
         type = PsiType.getJavaLangObject(manager, GlobalSearchScope.projectScope(manager.getProject()));
       }
 
-      String text = type.getPresentableText();
+      String text = type.getCanonicalText(true);
       PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(original.getProject()).getParserFacade();
       PsiTypeElement element = parserFacade.createTypeElementFromText(text, original);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,35 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-public abstract class JarFileSystem extends NewVirtualFileSystem implements JarCopyingFileSystem, LocalFileProvider {
-  @NonNls public static final String PROTOCOL = StandardFileSystems.JAR_PROTOCOL;
-  @NonNls public static final String PROTOCOL_PREFIX = "jar://";
-  @NonNls public static final String JAR_SEPARATOR = StandardFileSystems.JAR_SEPARATOR;
+public abstract class JarFileSystem extends ArchiveFileSystem implements JarCopyingFileSystem, LocalFileProvider {
+  public static final String PROTOCOL = StandardFileSystems.JAR_PROTOCOL;
+  public static final String PROTOCOL_PREFIX = StandardFileSystems.JAR_PROTOCOL_PREFIX;
+  public static final String JAR_SEPARATOR = URLUtil.JAR_SEPARATOR;
 
-  public static JarFileSystem getInstance(){
+  public static JarFileSystem getInstance() {
     return (JarFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
   }
 
   @Nullable
-  public abstract VirtualFile getVirtualFileForJar(@Nullable VirtualFile entryVFile);
-  @Nullable
-  public abstract JarFile getJarFile(@NotNull VirtualFile entryVFile) throws IOException;
-
-  @SuppressWarnings("MethodMayBeStatic")
-  @Nullable
-  public VirtualFile getJarRootForLocalFile(@NotNull VirtualFile virtualFile) {
-    return StandardFileSystems.getJarRootForLocalFile(virtualFile);
+  public VirtualFile getVirtualFileForJar(@Nullable VirtualFile entryFile) {
+    return entryFile == null ? null : getLocalByEntry(entryFile);
   }
+
+  @Nullable
+  public VirtualFile getJarRootForLocalFile(@NotNull VirtualFile file) {
+    return getRootByLocal(file);
+  }
+
+  /** @deprecated to be removed in IDEA 15 */
+  @SuppressWarnings({"UnusedDeclaration", "deprecation"})
+  public abstract JarFile getJarFile(@NotNull VirtualFile entryVFile) throws IOException;
 
   @Nullable
   @Override

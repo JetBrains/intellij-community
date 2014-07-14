@@ -20,14 +20,20 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.WarModel;
-import org.jetbrains.plugins.gradle.model.data.WarModelData;
+import org.jetbrains.plugins.gradle.model.data.War;
+import org.jetbrains.plugins.gradle.model.data.WarDirectory;
+import org.jetbrains.plugins.gradle.model.data.WebConfigurationModelData;
+import org.jetbrains.plugins.gradle.model.data.WebResource;
+import org.jetbrains.plugins.gradle.model.web.WebConfiguration;
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -42,14 +48,23 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
 
   @Override
   public void populateModuleExtraModels(@NotNull IdeaModule gradleModule, @NotNull DataNode<ModuleData> ideModule) {
-    WarModel warModel = resolverCtx.getExtraProject(gradleModule, WarModel.class);
-    if (warModel != null) {
-      WarModelData warModelData = new WarModelData(GradleConstants.SYSTEM_ID, warModel.getWebAppDirName(), warModel.getWebAppDir());
-      warModelData.setWebXml(warModel.getWebXml());
-      warModelData.setWebRoots(warModel.getWebRoots());
-      warModelData.setClasspath(warModel.getClasspath());
-      warModelData.setManifestContent(warModel.getManifestContent());
-      ideModule.createChild(WarModelData.KEY, warModelData);
+    final WebConfiguration webConfiguration = resolverCtx.getExtraProject(gradleModule, WebConfiguration.class);
+    if (webConfiguration != null) {
+      List<War> warModels =
+        ContainerUtil.map(webConfiguration.getWarModels(), new Function<WebConfiguration.WarModel, War>() {
+          @Override
+          public War fun(WebConfiguration.WarModel model) {
+            War war =
+              new War(model.getWarName(), model.getWebAppDirName(), model.getWebAppDir());
+            war.setWebXml(model.getWebXml());
+            war.setWebResources(map(model.getWebResources()));
+            war.setClasspath(model.getClasspath());
+            war.setManifestContent(model.getManifestContent());
+            return war;
+          }
+        });
+
+      ideModule.createChild(WebConfigurationModelData.KEY, new WebConfigurationModelData(GradleConstants.SYSTEM_ID, warModels));
     }
 
     nextResolver.populateModuleExtraModels(gradleModule, ideModule);
@@ -58,6 +73,18 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
   @NotNull
   @Override
   public Set<Class> getExtraProjectModelClasses() {
-    return ContainerUtil.<Class>set(WarModel.class);
+    return Collections.<Class>singleton(WebConfiguration.class);
+  }
+
+  private static List<WebResource> map(List<WebConfiguration.WebResource> webResources) {
+    return ContainerUtil.mapNotNull(webResources, new Function<WebConfiguration.WebResource, WebResource>() {
+      @Override
+      public WebResource fun(WebConfiguration.WebResource resource) {
+        if (resource == null) return null;
+
+        final WarDirectory warDirectory = WarDirectory.fromPath(resource.getWarDirectory());
+        return new WebResource(warDirectory, resource.getRelativePath(), resource.getFile());
+      }
+    });
   }
 }

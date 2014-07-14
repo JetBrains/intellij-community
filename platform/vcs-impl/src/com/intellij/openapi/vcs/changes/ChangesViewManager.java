@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -246,7 +246,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
     ActionManager.getInstance().getAction("ChangesView.Refresh").registerCustomShortcutSet(CommonShortcuts.getRerun(), panel);
     ActionManager.getInstance().getAction("ChangesView.NewChangeList").registerCustomShortcutSet(CommonShortcuts.getNew(), panel);
-    ActionManager.getInstance().getAction("ChangesView.RemoveChangeList").registerCustomShortcutSet(CommonShortcuts.DELETE, panel);
+    ActionManager.getInstance().getAction("ChangesView.RemoveChangeList").registerCustomShortcutSet(CommonShortcuts.getDelete(), panel);
     ActionManager.getInstance().getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST).registerCustomShortcutSet(CommonShortcuts.getMove(), panel);
     ActionManager.getInstance().getAction("ChangesView.Rename").registerCustomShortcutSet(CommonShortcuts.getRename(), panel);
     ActionManager.getInstance().getAction("ChangesView.SetDefault").registerCustomShortcutSet(
@@ -409,7 +409,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
     ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
 
-    final Pair<Integer, Integer> unv = changeListManager.getUnversionedFilesSize();
+    final Couple<Integer> unv = changeListManager.getUnversionedFilesSize();
     final boolean manyUnversioned = unv.getFirst() > UNVERSIONED_MAX_SIZE;
     final Trinity<List<VirtualFile>, Integer, Integer> unversionedPair =
       new Trinity<List<VirtualFile>, Integer, Integer>(manyUnversioned ? Collections.<VirtualFile>emptyList() : changeListManager.getUnversionedFiles(), unv.getFirst(),

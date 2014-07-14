@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.*;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -29,11 +29,11 @@ import java.util.Map;
 
 public class RepositoryLocationCache {
   private final Project myProject;
-  private final Map<Pair<String, String>, RepositoryLocation> myMap;
+  private final Map<Couple<String>, RepositoryLocation> myMap;
 
   public RepositoryLocationCache(final Project project) {
     myProject = project;
-    myMap = Collections.synchronizedMap(new HashMap<Pair<String, String>, RepositoryLocation>());
+    myMap = Collections.synchronizedMap(new HashMap<Couple<String>, RepositoryLocation>());
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     final VcsListener listener = new VcsListener() {
       @Override
@@ -46,7 +46,7 @@ public class RepositoryLocationCache {
   }
 
   public RepositoryLocation getLocation(final AbstractVcs vcs, final FilePath filePath, final boolean silent) {
-    final Pair<String, String> key = new Pair<String, String>(vcs.getName(), filePath.getIOFile().getAbsolutePath());
+    final Couple<String> key = Couple.of(vcs.getName(), filePath.getIOFile().getAbsolutePath());
     RepositoryLocation location = myMap.get(key);
     if (location != null) {
       return location;

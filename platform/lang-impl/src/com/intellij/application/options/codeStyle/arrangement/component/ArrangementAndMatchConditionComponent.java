@@ -59,7 +59,8 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
   public ArrangementAndMatchConditionComponent(@NotNull StdArrangementMatchRule rule,
                                                @NotNull ArrangementCompositeMatchCondition setting,
                                                @NotNull ArrangementMatchNodeComponentFactory factory,
-                                               @NotNull ArrangementStandardSettingsManager manager)
+                                               @NotNull ArrangementStandardSettingsManager manager,
+                                               boolean allowModification)
   {
     mySetting = setting;
     setOpaque(false);
@@ -85,7 +86,7 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
     for (ArrangementSettingsToken key : ordered) {
       ArrangementMatchCondition operand = operands.get(key);
       assert operand != null;
-      ArrangementUiComponent component = factory.getComponent(operand, rule, true);
+      ArrangementUiComponent component = factory.getComponent(operand, rule, allowModification);
       myComponents.add(component);
       myAvailableTokens.addAll(component.getAvailableTokens());
       JComponent uiComponent = component.getUiComponent();

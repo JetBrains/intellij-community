@@ -15,13 +15,17 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
+import com.intellij.ide.projectWizard.ProjectCategory;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
+ * The groups are shown in "Project Type" selection list.
  * @author Dmitry Avdeev
- *         Date: 11/20/12
  */
 public class TemplatesGroup implements Comparable<TemplatesGroup> {
 
@@ -29,13 +33,40 @@ public class TemplatesGroup implements Comparable<TemplatesGroup> {
   private final String myDescription;
   private final Icon myIcon;
   private final int myWeight;
+  private final String myParentGroup;
+  private final String myId;
+  private final ModuleBuilder myModuleBuilder;
+  private ProjectCategory myProjectCategory;
 
-  public TemplatesGroup(String name, String description, Icon icon, int weight) {
+  public TemplatesGroup(String name, String description, Icon icon, int weight, String parentGroup, String id, ModuleBuilder moduleBuilder) {
     myName = name;
     myDescription = description;
     myIcon = icon;
     myWeight = weight;
+    myParentGroup = parentGroup;
+    myId = id;
+    myModuleBuilder = moduleBuilder;
   }
+
+  /**
+   * Category-based group
+   * @param category
+   */
+  public TemplatesGroup(ProjectCategory category) {
+    this(category.getDisplayName(), category.getDescription(), category.getIcon(), category.getWeight(), category.getGroupName(), category.getId(), category.createModuleBuilder());
+    myProjectCategory = category;
+  }
+
+  public TemplatesGroup(ModuleBuilder builder) {
+    this(builder.getPresentableName(), builder.getDescription(), builder.getNodeIcon(), builder.getWeight(), builder.getParentGroup(), builder.getBuilderId(), builder);
+  }
+
+  @Nullable
+  public ModuleBuilder getModuleBuilder() {
+    return myModuleBuilder;
+  }
+
+  public ProjectCategory getProjectCategory() { return myProjectCategory; }
 
   public String getName() {
     return myName;
@@ -61,6 +92,10 @@ public class TemplatesGroup implements Comparable<TemplatesGroup> {
     return true;
   }
 
+  public int getWeight() {
+    return myWeight;
+  }
+
   @Override
   public int hashCode() {
     return myName.hashCode();
@@ -74,6 +109,17 @@ public class TemplatesGroup implements Comparable<TemplatesGroup> {
   @Override
   public int compareTo(@NotNull TemplatesGroup o) {
     int i = o.myWeight - myWeight;
-    return i == 0 ? o.getName().compareTo(getName()) : i;
+    if (i != 0) return i;
+    int i1 = Comparing.compare(o.getParentGroup(), getParentGroup());
+    if (i1 != 0) return i1;
+    return o.getName().compareTo(getName());
+  }
+
+  public String getParentGroup() {
+    return myParentGroup;
+  }
+
+  public String getId() {
+    return myId;
   }
 }

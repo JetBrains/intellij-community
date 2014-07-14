@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,9 +58,9 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
 
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
-                                     PsiScopeProcessor processor,
-                                     PsiElement place,
-                                     ResolveState state) {
+                                     @NotNull PsiScopeProcessor processor,
+                                     @NotNull PsiElement place,
+                                     @NotNull ResolveState state) {
     final PsiFile file = place.getContainingFile().getOriginalFile();
     CachedValue<List<PsiElement>> value = file.getUserData(INJECTION_PARSED_CONTEXT);
     if (value == null) {
@@ -146,7 +146,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
         GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.allScope(project), StdFileTypes.XML);
       final TextOccurenceProcessor occurenceProcessor = new TextOccurenceProcessor() {
         @Override
-        public boolean execute(PsiElement element, int offsetInElement) {
+        public boolean execute(@NotNull PsiElement element, int offsetInElement) {
           final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
           final String className = tag == null ? null : tag.getAttributeValue("className");
           if (className != null && tag.getLocalName().endsWith("patternClass")) {

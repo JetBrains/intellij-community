@@ -1,9 +1,9 @@
 class Test {
-  String foo() {
-    return "";
-  }
+    String foo() {
+        return "";
+    }
 
-  void bar() {
-    String s = foo(); 
-  }
+    void bar() {
+        String s = foo();
+    }
 }

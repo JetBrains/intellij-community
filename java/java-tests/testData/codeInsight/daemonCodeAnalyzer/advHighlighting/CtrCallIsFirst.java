@@ -1,5 +1,5 @@
 // call to super must be first
-public class a {
+class a {
  a() {}
  a(int i) {}
 }

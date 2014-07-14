@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -121,7 +122,7 @@ public class VcsHistoryUtil {
       diffData.setContents(createContent(project, content1, revision1, doc, charset, fileType, filePath.getPath()),
                            createContent(project, content2, revision2, doc, charset, fileType, filePath.getPath()));
     } else {
-      diffData.setContents(new FileContent(project, f1.get()), new FileContent(project, f2.get()));
+      diffData.setContents(createFileContent(project, f1.get(), revision1), createFileContent(project, f2.get(), revision2));
     }
     WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
       public void run() {
@@ -186,15 +187,24 @@ public class VcsHistoryUtil {
     return CharsetToolkit.bytesToString(bytes, e.getDefaultCharset());
   }
 
-  private static DiffContent createContent(Project project, byte[] content1, VcsFileRevision revision, Document doc, Charset charset, FileType fileType, String filePath) {
+  private static DiffContent createContent(@NotNull Project project, byte[] content1, VcsFileRevision revision, Document doc, Charset charset, FileType fileType, String filePath) {
     if (isCurrent(revision) && (doc != null)) { return new DocumentContent(project, doc); }
-    return new BinaryContent(content1, charset, fileType, filePath);
+    if (isEmpty(revision)) { return SimpleContent.createEmpty(); }
+    return new BinaryContent(project, content1, charset, fileType, filePath);
+  }
+
+  private static DiffContent createFileContent(@NotNull Project project, VirtualFile file, VcsFileRevision revision) {
+    if (isEmpty(revision)) { return SimpleContent.createEmpty(); }
+    return new FileContent(project, file);
   }
 
   private static boolean isCurrent(VcsFileRevision revision) {
     return revision instanceof CurrentRevision;
   }
 
+  private static boolean isEmpty(VcsFileRevision revision) {
+    return revision == null || VcsFileRevision.NULL.equals(revision);
+  }
 
   /**
    * Shows difference between two revisions of a file in a diff tool.
@@ -250,15 +260,15 @@ public class VcsHistoryUtil {
    * Compares the given revisions and returns a pair of them, where the first one is older, and second is newer.
    */
   @NotNull
-  public static Pair<VcsFileRevision, VcsFileRevision> sortRevisions(@NotNull VcsFileRevision revision1,
-                                                                     @NotNull VcsFileRevision revision2) {
+  public static Couple<VcsFileRevision> sortRevisions(@NotNull VcsFileRevision revision1,
+                                                      @NotNull VcsFileRevision revision2) {
     VcsFileRevision left = revision1;
     VcsFileRevision right = revision2;
     if (compare(revision1, revision2) > 0) {
       left = revision2;
       right = revision1;
     }
-    return Pair.create(left, right);
+    return Couple.of(left, right);
   }
 
 }

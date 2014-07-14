@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,6 +114,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
     super.reformat(atCaret);
   }
 
+  @Override
   protected void collectAllElements(@NotNull PsiElement atCaret, @NotNull OrderedSet<PsiElement> res, boolean recurse) {
     res.add(0, atCaret);
     if (doNotStepInto(atCaret)) {
@@ -150,6 +151,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
            element instanceof GrMethod;
   }
 
+  @Override
   @Nullable
   protected PsiElement getStatementAtCaret(Editor editor, PsiFile psiFile) {
     PsiElement atCaret = super.getStatementAtCaret(editor, psiFile);

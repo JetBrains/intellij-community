@@ -30,15 +30,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.util.GitFileUtils;
-import git4idea.history.wholeTree.GitBinaryMultipleContentsRevision;
-import git4idea.history.wholeTree.GitMultipleContentsRevision;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.List;
 
 /**
  * Git content revision
@@ -114,21 +111,6 @@ public class GitContentRevision implements ContentRevision {
 
   public int hashCode() {
     return myFile.hashCode() + myRevision.hashCode();
-  }
-
-  public static ContentRevision createMultipleParentsRevision(@NotNull Project project, @NotNull final FilePath file,
-                                                              @NotNull GitRevisionNumber currentRevision,
-                                                              @NotNull final List<GitRevisionNumber> parentRevisions) throws VcsException {
-    final GitContentRevision contentRevision = createRevisionImpl(file, currentRevision, project, null);
-    if (parentRevisions.size() == 1) {
-      return contentRevision;
-    } else {
-      if (contentRevision instanceof GitBinaryContentRevision) {
-        return new GitBinaryMultipleContentsRevision(file, parentRevisions, (GitBinaryContentRevision) contentRevision);
-      } else {
-        return new GitMultipleContentsRevision(file, parentRevisions, contentRevision);
-      }
-    }
   }
 
   /**

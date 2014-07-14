@@ -85,7 +85,7 @@ public abstract class AbstractSvnUpdatePanel {
   }
 
   public void reset(final SvnConfiguration configuration) {
-    getDepthBox().setSelectedItem(configuration.UPDATE_DEPTH);
+    getDepthBox().setSelectedItem(configuration.getUpdateDepth());
 
     for (FilePath filePath : myRootToPanel.keySet()) {
       myRootToPanel.get(filePath).reset(configuration);
@@ -94,7 +94,7 @@ public abstract class AbstractSvnUpdatePanel {
   }
 
   public void apply(final SvnConfiguration configuration) throws ConfigurationException {
-    configuration.UPDATE_DEPTH = getDepthBox().getDepth();
+    configuration.setUpdateDepth(getDepthBox().getDepth());
 
     for (FilePath filePath : myRootToPanel.keySet()) {
       final SvnPanel svnPanel = myRootToPanel.get(filePath);

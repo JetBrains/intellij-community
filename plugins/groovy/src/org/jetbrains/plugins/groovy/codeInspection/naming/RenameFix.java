@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 
-class RenameFix extends GroovyFix {
+public class RenameFix extends GroovyFix {
 
   private final String targetName;
 
@@ -43,6 +43,7 @@ class RenameFix extends GroovyFix {
     this.targetName = targetName;
   }
 
+  @Override
   @NotNull
   public String getName() {
     if (targetName == null) {
@@ -52,6 +53,7 @@ class RenameFix extends GroovyFix {
     }
   }
 
+  @Override
   public void doFix(final Project project, ProblemDescriptor descriptor) {
     final PsiElement nameIdentifier = descriptor.getPsiElement();
     final PsiElement elementToRename = nameIdentifier.getParent();
@@ -63,6 +65,7 @@ class RenameFix extends GroovyFix {
       final DataManager dataManager = DataManager.getInstance();
       final DataContext dataContext = dataManager.getDataContext();
       Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           renameHandler.invoke(project, new PsiElement[]{elementToRename},
                                dataContext);

@@ -54,6 +54,7 @@ public class TerminalOptionsProvider implements PersistentStateComponent<Termina
     myState.myTabName = state.myTabName;
     myState.myCopyOnSelection = state.myCopyOnSelection;
     myState.myPasteOnMiddleMouseButton = state.myPasteOnMiddleMouseButton;
+    myState.myOverrideIdeShortcuts = state.myOverrideIdeShortcuts;
   }
 
   public boolean closeSessionOnLogout() {
@@ -72,6 +73,14 @@ public class TerminalOptionsProvider implements PersistentStateComponent<Termina
     return myState.myTabName;
   }
 
+  public boolean overrideIdeShortcuts() {
+    return myState.myOverrideIdeShortcuts;
+  }
+
+  public void setOverrideIdeShortcuts(boolean overrideIdeShortcuts) {
+    myState.myOverrideIdeShortcuts = overrideIdeShortcuts;
+  }
+
   public static class State {
     public String myShellPath = getDefaultShellPath();
     public String myTabName = "Local";
@@ -80,6 +89,7 @@ public class TerminalOptionsProvider implements PersistentStateComponent<Termina
     public boolean mySoundBell = true;
     public boolean myCopyOnSelection = true;
     public boolean myPasteOnMiddleMouseButton = true;
+    public boolean myOverrideIdeShortcuts = true;
   }
 
   public String getShellPath() {

@@ -17,6 +17,7 @@ package org.intellij.images.editor.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.editor.actionSystem.ImageEditorActionUtil;
@@ -27,7 +28,7 @@ import org.intellij.images.editor.actionSystem.ImageEditorActionUtil;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  * @see ImageEditor#getZoomModel
  */
-public final class ZoomInAction extends AnAction {
+public final class ZoomInAction extends AnAction implements DumbAware {
     public void actionPerformed(AnActionEvent e) {
         ImageEditor editor = ImageEditorActionUtil.getValidEditor(e);
         if (editor != null) {

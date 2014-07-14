@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,13 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public interface HighlightingSession {
-  Project getProject();
-  PsiFile getPsiFile();
+  @NotNull Project getProject();
+  @NotNull PsiFile getPsiFile();
   Editor getEditor();
-  Document getDocument();
+  @NotNull Document getDocument();
   ProgressIndicator getProgressIndicator();
   EditorColorsScheme getColorsScheme();
   int getPassId();

@@ -18,6 +18,7 @@ package com.intellij.uiDesigner.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
@@ -25,16 +26,22 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
@@ -226,15 +233,17 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
         });
         final PsiClass newClass = newClassRef.get();
         final SmartPsiElementPointer ptr = SmartPointerManager.getInstance(myClass.getProject()).createSmartPsiElementPointer(newClass);
-        newClass.navigate(true);
+        final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(newClass);
+        final FileEditor[] fileEditors =
+          virtualFile != null ? FileEditorManager.getInstance(newClass.getProject()).openFile(virtualFile, true, true) : null;
         IdeFocusManager.findInstance().doWhenFocusSettlesDown(new Runnable() {
           public void run() {
             final PsiClass newClass = (PsiClass)ptr.getElement();
-            final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
+            final Editor editor = getEditor();
             if (editor != null && newClass != null) {
               CommandProcessor.getInstance().executeCommand(myClass.getProject(), new Runnable() {
                 public void run() {
-                  if (!OverrideImplementUtil.getMethodSignaturesToImplement(newClass).isEmpty()) {
+                  if (!OverrideImplementExploreUtil.getMethodSignaturesToImplement(newClass).isEmpty()) {
                     OverrideImplementUtil.chooseAndImplementMethods(newClass.getProject(), editor, newClass);
                   }
                   else {
@@ -243,6 +252,17 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
                 }
               }, "", null);
             }
+          }
+
+          private Editor getEditor() {
+            if (fileEditors != null) {
+              for (FileEditor fileEditor : fileEditors) {
+                if (fileEditor instanceof TextEditor) {
+                  return ((TextEditor)fileEditor).getEditor();
+                }
+              }
+            }
+            return null;
           }
         });
       }

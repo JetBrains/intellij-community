@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +57,7 @@ public class GradleSystemSettingsControl implements ExternalSystemSettingsContro
   private JBLabel                   myGradleVmOptionsLabel;
   private JBTextField               myGradleVmOptionsField;
   private boolean                   myServiceDirectoryPathModifiedByUser;
+  private JBCheckBox                myOfflineModeBox;
 
   public GradleSystemSettingsControl(@NotNull GradleSettings settings) {
     myInitialSettings = settings;
@@ -63,6 +65,9 @@ public class GradleSystemSettingsControl implements ExternalSystemSettingsContro
 
   @Override
   public void fillUi(@NotNull PaintAwarePanel canvas, int indentLevel) {
+    myOfflineModeBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.offline_work"));
+    canvas.add(myOfflineModeBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+
     myServiceDirectoryLabel = new JBLabel(GradleBundle.message("gradle.settings.text.service.dir.path"));
     preparePathControl();
     canvas.add(myServiceDirectoryLabel, ExternalSystemUiUtil.getLabelConstraints(indentLevel));
@@ -119,6 +124,7 @@ public class GradleSystemSettingsControl implements ExternalSystemSettingsContro
     }
     
     myGradleVmOptionsField.setText(trimIfPossible(myInitialSettings.getGradleVmOptions()));
+    myOfflineModeBox.setSelected(myInitialSettings.isOfflineWork());
   }
 
   private void deduceServiceDirectoryIfPossible() {
@@ -136,7 +142,8 @@ public class GradleSystemSettingsControl implements ExternalSystemSettingsContro
     return (myServiceDirectoryPathModifiedByUser
            && !Comparing.equal(ExternalSystemApiUtil.normalizePath(myServiceDirectoryPathField.getText()),
                                ExternalSystemApiUtil.normalizePath(myInitialSettings.getServiceDirectoryPath())))
-           || !Comparing.equal(trimIfPossible(myGradleVmOptionsField.getText()), trimIfPossible(myInitialSettings.getGradleVmOptions()));
+           || !Comparing.equal(trimIfPossible(myGradleVmOptionsField.getText()), trimIfPossible(myInitialSettings.getGradleVmOptions()))
+           || myOfflineModeBox.isSelected() != myInitialSettings.isOfflineWork();
   }
 
   @Nullable
@@ -154,6 +161,7 @@ public class GradleSystemSettingsControl implements ExternalSystemSettingsContro
       settings.setServiceDirectoryPath(ExternalSystemApiUtil.normalizePath(myServiceDirectoryPathField.getText()));
     }
     settings.setGradleVmOptions(trimIfPossible(myGradleVmOptionsField.getText()));
+    settings.setOfflineWork(myOfflineModeBox.isSelected());
   }
 
   @Override

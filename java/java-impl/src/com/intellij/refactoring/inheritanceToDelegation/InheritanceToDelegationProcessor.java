@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -851,7 +851,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     UsageViewManager manager = UsageViewManager.getInstance(myProject);
     manager.showUsages(
       new UsageTarget[]{new PsiElement2UsageTargetAdapter(myClass)},
-      UsageInfoToUsageConverter.convert(new UsageInfoToUsageConverter.TargetElementsDescriptor(myClass), usages),
+      UsageInfoToUsageConverter.convert(new PsiElement[]{myClass}, usages),
       presentation
     );
 

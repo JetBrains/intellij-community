@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.util.containers.WeakValueHashMap;
 import com.intellij.util.ui.UIUtil;
@@ -73,7 +74,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private FocusCommand myFocusCommandOnAppActivation;
   private ActionCallback myCallbackOnActivation;
   private final boolean isInternalMode = ApplicationManagerEx.getApplicationEx().isInternal();
-  private final List<FocusRequestInfo> myRequests = new ArrayList<FocusRequestInfo>();
+  private final LinkedList<FocusRequestInfo> myRequests = new LinkedList<FocusRequestInfo>();
 
   private final IdeEventQueue myQueue;
   private final KeyProcessorContext myKeyProcessorContext = new KeyProcessorContext();
@@ -202,6 +203,9 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   public ActionCallback requestFocus(@NotNull final FocusCommand command, final boolean forced) {
     assertDispatchThread();
 
+    if (!forced && !command.canFocusChangeFrom(getFocusOwner())) {
+      return ActionCallback.REJECTED;
+    }
     if (isInternalMode) {
       recordCommand(command, new Throwable(), forced);
     }
@@ -240,9 +244,16 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     return myRequests;
   }
 
+  public void recordFocusRequest(Component c, boolean forced) {
+    myRequests.add(new FocusRequestInfo(c, new Throwable(), forced));
+    if (myRequests.size() > 200) {
+      myRequests.removeFirst();
+    }
+  }
+
   private void recordCommand(@NotNull FocusCommand command, @NotNull Throwable trace, boolean forced) {
     if (FocusTracesAction.isActive()) {
-      myRequests.add(new FocusRequestInfo(command.getDominationComponent(), trace, forced));
+      recordFocusRequest(command.getDominationComponent(), forced);
     }
   }
 
@@ -290,6 +301,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
             revalidateFurtherRequestors();
           }
 
+          command.setForced(forced);
           command.run().doWhenDone(new Runnable() {
             @Override
             public void run() {
@@ -354,21 +366,23 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       return true;
     }
 
-    boolean doNotExecuteBecauseAppIsInactive =
-      !myApp.isActive() && !canExecuteOnInactiveApplication(cmd) && Registry.is("actionSystem.suspendFocusTransferIfApplicationInactive");
+    if (!Registry.is("focus.fix.lost.cursor")) {
+      boolean doNotExecuteBecauseAppIsInactive =
+        !myApp.isActive() && !canExecuteOnInactiveApplication(cmd) && Registry.is("actionSystem.suspendFocusTransferIfApplicationInactive");
 
-    if (doNotExecuteBecauseAppIsInactive) {
-      if (myCallbackOnActivation != null) {
-        myCallbackOnActivation.setRejected();
-        if (myFocusCommandOnAppActivation != null) {
-          resetCommand(myFocusCommandOnAppActivation, true);
+      if (doNotExecuteBecauseAppIsInactive) {
+        if (myCallbackOnActivation != null) {
+          myCallbackOnActivation.setRejected();
+          if (myFocusCommandOnAppActivation != null) {
+            resetCommand(myFocusCommandOnAppActivation, true);
+          }
         }
+
+        myFocusCommandOnAppActivation = cmd;
+        myCallbackOnActivation = result;
+
+        return true;
       }
-
-      myFocusCommandOnAppActivation = cmd;
-      myCallbackOnActivation = result;
-
-      return true;
     }
 
     return false;
@@ -417,8 +431,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   @Nullable
   private FocusCommand getLastEffectiveForcedRequest() {
-    if (myLastForcedRequest == null) return null;
-    final FocusCommand request = myLastForcedRequest.get();
+    final FocusCommand request = SoftReference.dereference(myLastForcedRequest);
     return request != null && !request.isExpired() ? request : null;
   }
 
@@ -1144,6 +1157,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   @Override
   public boolean isFocusTransferEnabled() {
+    if (Registry.is("focus.fix.lost.cursor")) return true;
     return myApp.isActive() || !Registry.is("actionSystem.suspendFocusTransferIfApplicationInactive");
   }
 

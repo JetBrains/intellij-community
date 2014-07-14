@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -77,6 +78,6 @@ public class ReplaceEqualityWithEqualsIntention extends Intention {
                     strippedRhs.getText() + ')';
       }
     }
-    replaceExpression(expString, exp);
+    PsiReplacementUtil.replaceExpression(exp, expString);
   }
 }

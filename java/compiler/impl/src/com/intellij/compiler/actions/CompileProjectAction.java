@@ -19,7 +19,6 @@ import com.intellij.history.LocalHistory;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
@@ -31,7 +30,9 @@ public class CompileProjectAction extends CompileActionBase {
   protected void doAction(DataContext dataContext, final Project project) {
     CompilerManager.getInstance(project).rebuild(new CompileStatusNotification() {
       public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
-        if (aborted) return;
+        if (aborted || project.isDisposed()) {
+          return;
+        }
 
         String text = getTemplatePresentation().getText();
         LocalHistory.getInstance().putSystemLabel(project, errors == 0

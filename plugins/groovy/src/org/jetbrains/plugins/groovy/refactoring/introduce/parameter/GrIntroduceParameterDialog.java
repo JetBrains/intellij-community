@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.NameSuggestionsField;
@@ -51,7 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.HelpID;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
@@ -74,8 +75,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-import static com.intellij.refactoring.IntroduceParameterRefactoring.*;
-
 public class GrIntroduceParameterDialog extends DialogWrapper {
   private GrTypeComboBox myTypeComboBox;
   private NameSuggestionsField myNameSuggestionsField;
@@ -85,14 +84,14 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
   private JBRadioButton myReplaceFieldsInaccessibleInRadioButton;
   private JBRadioButton myReplaceAllFieldsRadioButton;
   private JPanel myGetterPanel;
-  private IntroduceParameterInfo myInfo;
-  private TObjectIntHashMap<JCheckBox> toRemoveCBs;
+  private final IntroduceParameterInfo myInfo;
+  private final TObjectIntHashMap<JCheckBox> toRemoveCBs;
 
   private GrMethodSignatureComponent mySignature;
   private ParameterTablePanel myTable;
   private JPanel mySignaturePanel;
   private JCheckBox myForceReturnCheckBox;
-  private Project myProject;
+  private final Project myProject;
 
   private final boolean myCanIntroduceSimpleParameter;
 
@@ -100,7 +99,9 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
     super(info.getProject(), true);
     myInfo = info;
     myProject = info.getProject();
-    myCanIntroduceSimpleParameter = GroovyIntroduceParameterUtil.findExpr(myInfo) != null || GroovyIntroduceParameterUtil.findVar(myInfo) != null || findStringPart() != null;
+    myCanIntroduceSimpleParameter = GroovyIntroduceParameterUtil.findExpr(myInfo) != null ||
+                                    GroovyIntroduceParameterUtil.findVar(myInfo) != null ||
+                                    findStringPart() != null;
 
     TObjectIntHashMap<GrParameter> parametersToRemove = GroovyIntroduceParameterUtil.findParametersToRemove(info);
     toRemoveCBs = new TObjectIntHashMap<JCheckBox>(parametersToRemove.size());
@@ -335,7 +336,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
   @Nullable
   private PsiType inferClosureReturnType() {
     final ExtractClosureHelperImpl mockHelper =
-      new ExtractClosureHelperImpl(myInfo, "__test___n_", false, new TIntArrayList(), false, 0, false, false);
+      new ExtractClosureHelperImpl(myInfo, "__test___n_", false, new TIntArrayList(), false, 0, false, false, false);
     final PsiType returnType;
     final AccessToken token = WriteAction.start();
     try {
@@ -361,13 +362,13 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
     final PsiField[] usedFields = GroovyIntroduceParameterUtil.findUsedFieldsWithGetters(myInfo.getStatements(), getContainingClass());
     myGetterPanel.setVisible(usedFields.length > 0);
     switch (settings.INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS) {
-      case REPLACE_FIELDS_WITH_GETTERS_ALL:
+      case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL:
         myReplaceAllFieldsRadioButton.setSelected(true);
         break;
-      case REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE:
+      case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE:
         myReplaceFieldsInaccessibleInRadioButton.setSelected(true);
         break;
-      case REPLACE_FIELDS_WITH_GETTERS_NONE:
+      case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE:
         myDoNotReplaceRadioButton.setSelected(true);
         break;
     }
@@ -464,6 +465,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
                                                                            myDelegateViaOverloadingMethodCheckBox.isSelected(),
                                                                            getReplaceFieldsWithGetter(),
                                                                            myForceReturnCheckBox.isSelected(),
+                                                                           false,
                                                                            myTypeComboBox.getSelectedType() == null);
       if (toReplaceIn instanceof GrMethod) {
         invokeRefactoring(new ExtractClosureFromMethodProcessor(settings));
@@ -483,7 +485,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
                                                                                     expr,
                                                                                     var,
                                                                                     myTypeComboBox.getSelectedType(),
-                                                                                    myForceReturnCheckBox.isSelected());
+                                                                                    var != null, true, myForceReturnCheckBox.isSelected());
       if (toReplaceIn instanceof GrMethod) {
         invokeRefactoring(new GrIntroduceParameterProcessor(settings));
       }
@@ -510,6 +512,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
 
   protected void invokeRefactoring(BaseRefactoringProcessor processor) {
     final Runnable prepareSuccessfulCallback = new Runnable() {
+      @Override
       public void run() {
         close(DialogWrapper.OK_EXIT_CODE);
       }
@@ -529,9 +532,9 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
   }
 
   private int getReplaceFieldsWithGetter() {
-    if (myDoNotReplaceRadioButton.isSelected()) return REPLACE_FIELDS_WITH_GETTERS_NONE;
-    if (myReplaceFieldsInaccessibleInRadioButton.isSelected()) return REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE;
-    if (myReplaceAllFieldsRadioButton.isSelected()) return REPLACE_FIELDS_WITH_GETTERS_ALL;
+    if (myDoNotReplaceRadioButton.isSelected()) return IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE;
+    if (myReplaceFieldsInaccessibleInRadioButton.isSelected()) return IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE;
+    if (myReplaceAllFieldsRadioButton.isSelected()) return IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL;
     throw new GrRefactoringError("no check box selected");
   }
 

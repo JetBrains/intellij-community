@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,12 @@ package com.intellij.util.descriptors.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.descriptors.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -34,14 +35,13 @@ import java.util.Set;
 /**
  * @author nik
  */
-public class ConfigFileContainerImpl implements ConfigFileContainer {
+public class ConfigFileContainerImpl extends SimpleModificationTracker implements ConfigFileContainer {
   private final Project myProject;
   private final EventDispatcher<ConfigFileListener> myDispatcher = EventDispatcher.create(ConfigFileListener.class);
   private final MultiValuesMap<ConfigFileMetaData, ConfigFile> myConfigFiles = new MultiValuesMap<ConfigFileMetaData, ConfigFile>();
   private ConfigFile[] myCachedConfigFiles;
   private final ConfigFileMetaDataProvider myMetaDataProvider;
   private final ConfigFileInfoSetImpl myConfiguration;
-  private long myModificationCount;
 
   public ConfigFileContainerImpl(final Project project, final ConfigFileMetaDataProvider descriptorMetaDataProvider,
                                        final ConfigFileInfoSetImpl configuration) {
@@ -49,36 +49,30 @@ public class ConfigFileContainerImpl implements ConfigFileContainer {
     myMetaDataProvider = descriptorMetaDataProvider;
     myProject = project;
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
-      public void propertyChanged(final VirtualFilePropertyEvent event) {
+      @Override
+      public void propertyChanged(@NotNull final VirtualFilePropertyEvent event) {
         fileChanged(event.getFile());
       }
 
-      public void fileMoved(final VirtualFileMoveEvent event) {
+      @Override
+      public void fileMoved(@NotNull final VirtualFileMoveEvent event) {
         fileChanged(event.getFile());
       }
     }, this);
     myConfiguration.setContainer(this);
   }
 
-  public void incModificationCount() {
-    myModificationCount ++;
-  }
-
-  @Override
-  public long getModificationCount() {
-    return myModificationCount;
-  }
-
   private void fileChanged(final VirtualFile file) {
     for (ConfigFile descriptor : myConfigFiles.values()) {
       final VirtualFile virtualFile = descriptor.getVirtualFile();
-      if (virtualFile != null && VfsUtil.isAncestor(file, virtualFile, false)) {
+      if (virtualFile != null && VfsUtilCore.isAncestor(file, virtualFile, false)) {
         myConfiguration.updateConfigFile(descriptor);
         fireDescriptorChanged(descriptor);
       }
     }
   }
 
+  @Override
   @Nullable
   public ConfigFile getConfigFile(ConfigFileMetaData metaData) {
     final Collection<ConfigFile> descriptors = myConfigFiles.get(metaData);
@@ -88,6 +82,7 @@ public class ConfigFileContainerImpl implements ConfigFileContainer {
     return descriptors.iterator().next();
   }
 
+  @Override
   public ConfigFile[] getConfigFiles() {
     if (myCachedConfigFiles == null) {
       final Collection<ConfigFile> descriptors = myConfigFiles.values();
@@ -96,10 +91,12 @@ public class ConfigFileContainerImpl implements ConfigFileContainer {
     return myCachedConfigFiles;
   }
 
+  @Override
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   public void addListener(final ConfigFileListener listener, final Disposable parentDisposable) {
     myDispatcher.addListener(listener, parentDisposable);
   }
@@ -110,18 +107,21 @@ public class ConfigFileContainerImpl implements ConfigFileContainer {
   }
 
 
+  @Override
   public ConfigFileInfoSet getConfiguration() {
     return myConfiguration;
   }
 
+  @Override
   public void dispose() {
-    int i = 0;
   }
 
+  @Override
   public void addListener(final ConfigFileListener listener) {
     myDispatcher.addListener(listener);
   }
 
+  @Override
   public void removeListener(final ConfigFileListener listener) {
     myDispatcher.removeListener(listener);
   }

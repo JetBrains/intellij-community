@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
-import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -35,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -43,14 +43,16 @@ import java.util.ArrayList;
 public class ConvertGStringToStringIntention extends Intention {
   public static final String INTENTION_NAME = "Convert to String";
 
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new ConvertibleGStringLiteralPredicate();
   }
 
+  @Override
   public void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     final GrLiteral exp = (GrLiteral)element;
-    IntentionUtils.replaceExpression(convertGStringLiteralToStringLiteral(exp), exp);
+    PsiImplUtil.replaceExpression(convertGStringLiteralToStringLiteral(exp), exp);
   }
 
   public static String convertGStringLiteralToStringLiteral(GrLiteral literal) {
@@ -90,7 +92,7 @@ public class ConvertGStringToStringIntention extends Intention {
 
     StringBuilder builder = new StringBuilder(literal.getTextLength() * 2);
 
-    if (list.size() == 0) return "''";
+    if (list.isEmpty()) return "''";
 
     builder.append(list.get(0));
     for (int i = 1; i < list.size(); i++) {
@@ -151,7 +153,7 @@ public class ConvertGStringToStringIntention extends Intention {
     if (isBeforeInjection) {
       text = text.substring(0, text.length() - 1);
     }
-    if (text.length() == 0) return null;
+    if (text.isEmpty()) return null;
 
 
     final StringBuilder buffer = new StringBuilder();

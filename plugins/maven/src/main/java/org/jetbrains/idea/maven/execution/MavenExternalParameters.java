@@ -24,6 +24,8 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,9 +34,11 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.io.FileUtil;
@@ -117,6 +121,8 @@ public class MavenExternalParameters {
     params.setJdk(getJdk(project, runnerSettings, project != null && MavenRunner.getInstance(project).getState() == runnerSettings));
 
     final String mavenHome = resolveMavenHome(coreSettings, project, runConfiguration);
+
+    params.getProgramParametersList().add("-Didea.version=" + MavenUtil.getIdeaVersionToPassToMavenProcess());
 
     addVMParameters(params.getVMParametersList(), mavenHome, runnerSettings);
 
@@ -303,6 +309,13 @@ public class MavenExternalParameters {
         if (res != null) {
           return res;
         }
+        Module[] modules = ModuleManager.getInstance(project).getModules();
+        for (Module module : modules) {
+          Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+          if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
+            return sdk;
+          }
+        }
       }
 
       if (project == null) {
@@ -311,7 +324,7 @@ public class MavenExternalParameters {
         return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
       }
 
-      throw new ProjectJdkSettingsOpenerExecutionException("Project JDK is not specified. <a href='#'>Configure</a>", project);
+      throw new ProjectJdkSettingsOpenerExecutionException("Project JDK is not specified. <a href=''>Configure</a>", project);
     }
 
     if (name.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
@@ -503,6 +516,10 @@ public class MavenExternalParameters {
       cmdList.add("--update-snapshots");
     }
 
+    if (StringUtil.isNotEmpty(coreSettings.getThreads())) {
+      cmdList.add("-T", coreSettings.getThreads());
+    }
+
     addIfNotEmpty(cmdList, coreSettings.getFailureBehavior().getCommandLineOption());
     addIfNotEmpty(cmdList, coreSettings.getChecksumPolicy().getCommandLineOption());
 
@@ -532,7 +549,7 @@ public class MavenExternalParameters {
     return stringBuilder.toString();
   }
 
-  private static class ProjectSettingsOpenerExecutionException extends ExecutionException implements HyperlinkListener {
+  private static class ProjectSettingsOpenerExecutionException extends ExecutionExceptionWithHyperlink {
 
     private final Project myProject;
 
@@ -542,14 +559,12 @@ public class MavenExternalParameters {
     }
 
     @Override
-    public void hyperlinkUpdate(HyperlinkEvent e) {
-      if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
-
+    protected void hyperlinkClicked() {
       ShowSettingsUtil.getInstance().showSettingsDialog(myProject, MavenSettings.DISPLAY_NAME);
     }
   }
 
-  private static class ProjectJdkSettingsOpenerExecutionException extends ExecutionException implements HyperlinkListener {
+  private static class ProjectJdkSettingsOpenerExecutionException extends ExecutionExceptionWithHyperlink {
 
     private final Project myProject;
 
@@ -559,14 +574,12 @@ public class MavenExternalParameters {
     }
 
     @Override
-    public void hyperlinkUpdate(HyperlinkEvent e) {
-      if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
-
+    protected void hyperlinkClicked() {
       ProjectSettingsService.getInstance(myProject).openProjectSettings();
     }
   }
 
-  private static class RunConfigurationOpenerExecutionException extends ExecutionException implements HyperlinkListener {
+  private static class RunConfigurationOpenerExecutionException extends ExecutionExceptionWithHyperlink {
 
     private final MavenRunConfiguration myRunConfiguration;
 
@@ -576,20 +589,31 @@ public class MavenExternalParameters {
     }
 
     @Override
-    public void hyperlinkUpdate(HyperlinkEvent e) {
-      if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
-
+    protected void hyperlinkClicked() {
       Project project = myRunConfiguration.getProject();
-      //RunManagerImpl runManager = (RunManagerImpl)RunManager.getInstance(project);
-      //RunnerAndConfigurationSettings settings = runManager.getSettings(myRunConfiguration);
-      //if (settings == null) {
-      //  return;
-      //}
-      //
-      //runManager.setSelectedConfiguration(settings);
-
       EditConfigurationsDialog dialog = new EditConfigurationsDialog(project);
       dialog.show();
+    }
+  }
+
+  private static abstract class ExecutionExceptionWithHyperlink extends ExecutionException implements HyperlinkListener, NotificationListener {
+
+    public ExecutionExceptionWithHyperlink(String s) {
+      super(s);
+    }
+
+    protected abstract void hyperlinkClicked();
+
+    @Override
+    public final void hyperlinkUpdate(HyperlinkEvent e) {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+        hyperlinkClicked();
+      }
+    }
+
+    @Override
+    public final void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+      hyperlinkUpdate(event);
     }
   }
 }

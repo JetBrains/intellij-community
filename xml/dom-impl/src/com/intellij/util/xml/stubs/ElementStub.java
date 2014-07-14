@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,11 +34,19 @@ public class ElementStub extends DomStub {
   private final int myIndex;
   private final boolean myCustom;
 
-  public ElementStub(@Nullable ElementStub parent, @NotNull StringRef name, @Nullable StringRef namespace, int index, boolean custom) {
+  @Nullable
+  private final StringRef myElementClass;
+
+  public ElementStub(@Nullable ElementStub parent,
+                     @NotNull StringRef name,
+                     @Nullable StringRef namespace,
+                     int index,
+                     boolean custom,
+                     @Nullable StringRef elementClass) {
     super(parent, name, namespace);
     myIndex = index;
     myCustom = custom;
-
+    myElementClass = elementClass;
   }
 
   void addChild(DomStub child) {
@@ -61,6 +69,7 @@ public class ElementStub extends DomStub {
     return StringUtil.isEmpty(key) ? getName() : key + ":" + getName();
   }
 
+  @Override
   public boolean isCustom() {
     return myCustom;
   }
@@ -68,5 +77,10 @@ public class ElementStub extends DomStub {
   @Override
   public int getIndex() {
     return myIndex;
+  }
+
+  @Nullable
+  String getElementClass() {
+    return myElementClass == null ? null : myElementClass.getString();
   }
 }

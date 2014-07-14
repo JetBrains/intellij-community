@@ -55,6 +55,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   private MessageBusConnection myBusConnection;
 
   private volatile String myTooltip = "";
+  private Icon myCurrentIcon = AllIcons.Ide.IncomingChangesOff;
 
   public HgIncomingOutgoingWidget(@NotNull HgVcs vcs,
                                   @NotNull Project project,
@@ -136,7 +137,9 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
         }
 
         emptyTooltip();
+        myCurrentIcon = AllIcons.Ide.IncomingChangesOff;
         if (myChangesStatus.getNumChanges() > 0) {
+          myCurrentIcon = myIsIncoming ? AllIcons.Ide.IncomingChangesOn : AllIcons.Ide.OutgoingChangesOn;
           myTooltip = "\n" + myChangesStatus.getToolTip();
         }
         myStatusBar.updateWidget(ID());
@@ -193,7 +196,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   @NotNull
   @Override
   public Icon getIcon() {
-    return myIsIncoming ? AllIcons.Ide.IncomingChangesOn : AllIcons.Ide.IncomingChangesOff;
+    return myCurrentIcon;
   }
 
   public HgChangesetStatus getChangesetStatus() {

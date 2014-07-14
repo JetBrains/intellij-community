@@ -20,6 +20,7 @@ import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.*;
 import java.util.Collection;
@@ -29,22 +30,16 @@ import java.util.Collection;
  * Date: 29.01.11
  */
 public class RW {
-  private static final byte[] ourStringBuffer = IOUtil.allocReadWriteUTFBuffer();
-
   private RW() {
 
   }
 
   protected static String readUTF(DataInput in) throws IOException {
-    synchronized (ourStringBuffer) {
-      return IOUtil.readUTFFast(ourStringBuffer, in);
-    }
+    return IOUtil.readUTF(in);
   }
 
   protected static void writeUTF(DataOutput out, String value) throws IOException {
-    synchronized (ourStringBuffer) {
-      IOUtil.writeUTFFast(ourStringBuffer, out, value);
-    }
+    IOUtil.writeUTF(out, value);
   }
 
   public interface Savable {
@@ -59,7 +54,7 @@ public class RW {
       }
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -74,13 +69,13 @@ public class RW {
             return true;
           }
           catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BuildDataCorruptedException(e);
           }
         }
       });
     }
     catch (IOException c) {
-      throw new RuntimeException(c);
+      throw new BuildDataCorruptedException(c);
     }
   }
 
@@ -93,7 +88,7 @@ public class RW {
       }
     }
     catch (IOException c) {
-      throw new RuntimeException(c);
+      throw new BuildDataCorruptedException(c);
     }
   }
 
@@ -108,7 +103,7 @@ public class RW {
       }
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -121,7 +116,7 @@ public class RW {
       return result;
     }
     catch (IOException x) {
-      throw new RuntimeException(x);
+      throw new BuildDataCorruptedException(x);
     }
   }
 
@@ -136,7 +131,7 @@ public class RW {
       return acc;
     }
     catch (IOException x) {
-      throw new RuntimeException(x);
+      throw new BuildDataCorruptedException(x);
     }
   }
 
@@ -151,7 +146,7 @@ public class RW {
       return acc;
     }
     catch (IOException x) {
-      throw new RuntimeException(x);
+      throw new BuildDataCorruptedException(x);
     }
   }
 
@@ -174,7 +169,7 @@ public class RW {
       w.newLine();
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -197,7 +192,7 @@ public class RW {
       return r.readLine();
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 

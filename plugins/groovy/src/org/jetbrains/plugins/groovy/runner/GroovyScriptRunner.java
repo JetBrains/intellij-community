@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
@@ -66,7 +67,7 @@ public abstract class GroovyScriptRunner {
 
   public static String getPathInConf(String fileName) {
     try {
-      final String jarPath = PathUtil.getJarPathForClass(GroovyScriptRunner.class);
+      final String jarPath = PathUtil.getJarPathForClass(GroovyLanguage.class);
       if (new File(jarPath).isFile()) { //jar; distribution mode
         return new File(jarPath, "../" + fileName).getCanonicalPath();
       }
@@ -103,9 +104,7 @@ public abstract class GroovyScriptRunner {
   protected static VirtualFile findGroovyJar(@NotNull Module module) {
     final VirtualFile[] files = OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots();
     for (VirtualFile root : files) {
-      if (root.getName().matches(GroovyConfigUtils.GROOVY_JAR_PATTERN)
-          || GroovyConfigUtils.matchesGroovyAll(root.getName()))
-      {
+      if (GroovyConfigUtils.GROOVY_JAR_PATTERN.matcher(root.getName()).matches() || GroovyConfigUtils.matchesGroovyAll(root.getName())) {
         return root;
       }
     }

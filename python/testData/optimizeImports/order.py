@@ -6,3 +6,4 @@ import datetime
 
 sys.path
 datetime.datetime
+foo.bar()

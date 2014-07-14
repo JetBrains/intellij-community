@@ -31,4 +31,9 @@ public class PyFileTypeDetector implements FileTypeRegistry.FileTypeDetector {
   public FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
     return FileUtil.isHashBangLine(firstCharsIfText, "python") ? PythonFileType.INSTANCE : null;
   }
+
+  @Override
+  public int getVersion() {
+    return 1;
+  }
 }

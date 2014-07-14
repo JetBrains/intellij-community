@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,12 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class BasicXmlAttributeDescriptor extends XmlEnumerationDescriptor implements XmlAttributeDescriptor {
+  @Override
   public String validateValue(XmlElement context, String value) {
     return null;
   }
 
+  @Override
   public String getName(PsiElement context){
     return getName();
   }
@@ -54,12 +56,14 @@ public abstract class BasicXmlAttributeDescriptor extends XmlEnumerationDescript
     return getName();
   }
 
+  @Override
   protected PsiElement getEnumeratedValueDeclaration(XmlElement xmlElement, String value) {
     String[] values = getEnumeratedValues();
     if (values == null || values.length == 0) return getDeclaration();
     return ArrayUtilRt.find(values, value) != -1 ? getDeclaration() : null;
   }
 
+  @Override
   protected PsiElement getDefaultValueDeclaration() {
     return getDeclaration();
   }

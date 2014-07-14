@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter");
@@ -43,18 +44,18 @@ public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   @Override
-  public void setText(CharSequence text) {
+  public void setText(@NotNull CharSequence text) {
     myTextLength = text.length();
   }
 
   @Override
-  public void setEditor(HighlighterClient editor) {
+  public void setEditor(@NotNull HighlighterClient editor) {
     LOG.assertTrue(myEditor == null, "Highlighters cannot be reused with different editors");
     myEditor = editor;
   }
 
   @Override
-  public void setColorScheme(EditorColorsScheme scheme) {
+  public void setColorScheme(@NotNull EditorColorsScheme scheme) {
     setAttributes(scheme.getAttributes(HighlighterColors.TEXT));
   }
 
@@ -71,6 +72,7 @@ public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return 2;
   }
 
+  @NotNull
   @Override
   public HighlighterIterator createIterator(int startOffset) {
     return new HighlighterIterator(){

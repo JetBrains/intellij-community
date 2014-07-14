@@ -36,7 +36,7 @@ public class ComboBoxFieldPanel extends AbstractFieldPanel {
   }
 
   public ComboBoxFieldPanel(String[] items, String labelText, final String viewerDialogTitle, ActionListener browseButtonActionListener, final Runnable documentListener) {
-    super(new JComboBox(items), labelText, viewerDialogTitle, browseButtonActionListener, documentListener);
+    super(new ComboBox(items), labelText, viewerDialogTitle, browseButtonActionListener, documentListener);
 
     myComboBox = (JComboBox) getComponent();
     createComponent();

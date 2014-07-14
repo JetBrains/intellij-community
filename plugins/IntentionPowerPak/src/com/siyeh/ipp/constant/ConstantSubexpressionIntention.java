@@ -21,6 +21,7 @@ import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -144,6 +145,6 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
     if (prevOperand != null) {
       newExpressionText.append(prevOperand.getText());
     }
-    replaceExpression(newExpressionText.toString(), polyadicExpression);
+    PsiReplacementUtil.replaceExpression(polyadicExpression, newExpressionText.toString());
   }
 }

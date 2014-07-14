@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ChangeModifierFix extends InspectionGadgetsFix {
+  public static final String FAMILY_NAME = "Change modifier";
 
   @PsiModifier.ModifierConstant private final String modifierText;
 
@@ -46,7 +47,7 @@ public class ChangeModifierFix extends InspectionGadgetsFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Change modifier";
+    return FAMILY_NAME;
   }
 
   @Override

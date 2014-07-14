@@ -19,9 +19,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextField;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,13 +35,15 @@ import javax.swing.*;
  */
 public class XDebuggerMultilineEditor extends XDebuggerEditorBase {
   private final EditorTextField myEditorTextField;
+  private XExpression myExpression;
 
   public XDebuggerMultilineEditor(Project project,
                                    XDebuggerEditorsProvider debuggerEditorsProvider,
                                    @Nullable @NonNls String historyId,
-                                   @Nullable XSourcePosition sourcePosition, @NotNull String text) {
+                                   @Nullable XSourcePosition sourcePosition, @NotNull XExpression text) {
     super(project, debuggerEditorsProvider, EvaluationMode.CODE_FRAGMENT, historyId, sourcePosition);
-    myEditorTextField = new EditorTextField(createDocument(text), project, debuggerEditorsProvider.getFileType()) {
+    myExpression = XExpressionImpl.changeMode(text, getMode());
+    myEditorTextField = new EditorTextField(createDocument(myExpression), project, debuggerEditorsProvider.getFileType()) {
       @Override
       protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
@@ -52,6 +56,7 @@ public class XDebuggerMultilineEditor extends XDebuggerEditorBase {
         return false;
       }
     };
+    myEditorTextField.setFontInheritedFromLAF(false);
   }
 
   @Override
@@ -60,13 +65,13 @@ public class XDebuggerMultilineEditor extends XDebuggerEditorBase {
   }
 
   @Override
-  protected void doSetText(String text) {
-    myEditorTextField.setText(text);
+  protected void doSetText(XExpression text) {
+    myEditorTextField.setText(text.getExpression());
   }
 
   @Override
-  public String getText() {
-    return myEditorTextField.getText();
+  public XExpression getExpression() {
+    return XExpressionImpl.fromText(myEditorTextField.getText(), EvaluationMode.CODE_FRAGMENT);
   }
 
   @Override
@@ -74,6 +79,12 @@ public class XDebuggerMultilineEditor extends XDebuggerEditorBase {
   public JComponent getPreferredFocusedComponent() {
     final Editor editor = myEditorTextField.getEditor();
     return editor != null ? editor.getContentComponent() : null;
+  }
+
+  @Nullable
+  @Override
+  public Editor getEditor() {
+    return myEditorTextField.getEditor();
   }
 
   @Override

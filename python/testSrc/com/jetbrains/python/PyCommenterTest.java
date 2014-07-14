@@ -15,8 +15,6 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.codeInsight.actions.CodeInsightAction;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.jetbrains.python.fixtures.PyTestCase;
 
@@ -34,9 +32,7 @@ public class PyCommenterTest extends PyTestCase {
 
   private void doTest() {
     myFixture.configureByFile("commenter/" + getTestName(true) + ".py");
-    CodeInsightAction action = (CodeInsightAction) ActionManager.getInstance().getAction(IdeActions.ACTION_COMMENT_LINE);
-    action.actionPerformedImpl(myFixture.getFile().getProject(), myFixture.getEditor());
+    myFixture.performEditorAction(IdeActions.ACTION_COMMENT_LINE);
     myFixture.checkResultByFile("commenter/" + getTestName(true) + "_after.py", true);
-
   }
 }

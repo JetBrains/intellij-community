@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,8 +67,9 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     }
   }
 
+  @NotNull
   @Override
-  public VirtualFile copyFile(@NotNull final VirtualFile file, final String targetPath) {
+  public VirtualFile copyFile(@NotNull final VirtualFile file, @NotNull final String targetPath) {
     final String path = PathUtil.getParentPath(targetPath);
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       @Override
@@ -93,7 +94,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
 
   @Override
   @NotNull
-  public VirtualFile findOrCreateDir(final String path) {
+  public VirtualFile findOrCreateDir(@NotNull final String path) {
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       @Override
       public VirtualFile compute() {
@@ -107,13 +108,15 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     });
   }
 
+  @NotNull
   @Override
-  public VirtualFile copyAll(String dataDir, String targetDir) {
+  public VirtualFile copyAll(@NotNull String dataDir, @NotNull String targetDir) {
     return copyAll(dataDir, targetDir, VirtualFileFilter.ALL);
   }
 
+  @NotNull
   @Override
-  public VirtualFile copyAll(final String dataDir, final String targetDir, @NotNull final VirtualFileFilter filter) {
+  public VirtualFile copyAll(@NotNull final String dataDir, @NotNull final String targetDir, @NotNull final VirtualFileFilter filter) {
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       @Override
       public VirtualFile compute() {
@@ -166,13 +169,14 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     return root;
   }
 
+  @NotNull
   @Override
   public String getTempDirPath() {
     return "temp:///root";
   }
 
   @Override
-  public VirtualFile getFile(@NonNls String path) {
+  public VirtualFile getFile(@NotNull @NonNls String path) {
     final VirtualFile sourceRoot = getSourceRoot();
     final VirtualFile result = sourceRoot.findFileByRelativePath(path);
     if (result == null) {
@@ -203,7 +207,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
 
   @Override
   @NotNull
-  public VirtualFile createFile(String targetPath, final String text) throws IOException {
+  public VirtualFile createFile(@NotNull String targetPath, final String text) throws IOException {
     final VirtualFile file = createFile(targetPath);
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override

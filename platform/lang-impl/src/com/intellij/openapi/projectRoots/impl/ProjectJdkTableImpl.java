@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
     // support external changes to jdk libraries (Endorsed Standards Override)
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
       @Override
-      public void fileCreated(VirtualFileEvent event) {
+      public void fileCreated(@NotNull VirtualFileEvent event) {
         updateJdks(event.getFile());
       }
 
@@ -109,7 +109,9 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
   @Override
   @Nullable
   public Sdk findJdk(String name) {
-    for (Sdk jdk : mySdks) {
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0, len = mySdks.size(); i < len; ++i) { // avoid foreach,  it instantiates ArrayList$Itr, this traversal happens very often
+      final Sdk jdk = mySdks.get(i);
       if (Comparing.strEqual(name, jdk.getName())) {
         return jdk;
       }

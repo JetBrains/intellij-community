@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,22 +20,20 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 
 public class AntDomFileReferenceSet extends FileReferenceSet {
-
   private final GenericAttributeValue myValue;
 
   public AntDomFileReferenceSet(final GenericAttributeValue attribValue, boolean validateFileRefs) {
@@ -67,11 +65,13 @@ public class AntDomFileReferenceSet extends FileReferenceSet {
     }
     return path;
   }
-  
+
+  @Override
   protected boolean isSoft() {
     return true;
   }
 
+  @Override
   public FileReference createFileReference(final TextRange range, final int index, final String text) {
     return new AntDomFileReference(this, range, index, text);
   }
@@ -82,28 +82,34 @@ public class AntDomFileReferenceSet extends FileReferenceSet {
   }
 
   @Nullable
+  @Override
   public String getPathString() {
     return myValue.getStringValue();
   }
 
+  @Override
   public boolean isAbsolutePathReference() {
     if (super.isAbsolutePathReference()) {
       return true;
     }
-    return FileUtil.isAbsolute(getPathString());
+
+    String path = getPathString();
+    return path != null && FileUtil.isAbsolute(path);
   }
 
   @NotNull
+  @Override
   public Collection<PsiFileSystemItem> computeDefaultContexts() {
     final AntDomElement element = myValue.getParentOfType(AntDomElement.class, false);
     final AntDomProject containingProject = element != null? element.getAntProject() : null;
+
     if (containingProject != null) {
-      VirtualFile root = null;
       if (isAbsolutePathReference()) {
-        root = LocalFileSystem.getInstance().getRoot();
+        return toFileSystemItems(ManagingFS.getInstance().getLocalRoots());
       }
       else {
-        
+        VirtualFile root = null;
+
         if (element instanceof AntDomAnt) {
           final PsiFileSystemItem dirValue = ((AntDomAnt)element).getAntFileDir().getValue();
           if (dirValue instanceof PsiDirectory) {
@@ -123,18 +129,13 @@ public class AntDomFileReferenceSet extends FileReferenceSet {
             root = LocalFileSystem.getInstance().findFileByPath(basedir);
           }
         }
-      }
 
-      if (root != null) {
-        final XmlElement xmlElement = containingProject.getXmlElement();
-        if (xmlElement != null) {
-          final PsiDirectory directory = xmlElement.getManager().findDirectory(root);
-          if (directory != null) {
-            return Collections.<PsiFileSystemItem>singleton(directory);
-          }
+        if (root != null) {
+          return toFileSystemItems(root);
         }
       }
     }
+
     return super.computeDefaultContexts();
   }
 }

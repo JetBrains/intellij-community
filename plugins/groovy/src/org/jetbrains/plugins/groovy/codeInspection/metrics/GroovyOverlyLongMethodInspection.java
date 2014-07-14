@@ -15,52 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.metrics;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.codeInspection.utils.InspectionUtil;
 
-public class GroovyOverlyLongMethodInspection extends GroovyMethodMetricInspection {
+import javax.swing.*;
 
-  @NotNull
-  public String getDisplayName() {
-    return "Overly long method";
-  }
+public class GroovyOverlyLongMethodInspection extends GroovyOverlyLongMethodInspectionBase {
 
-  @NotNull
-  public String getGroupDisplayName() {
-    return METHOD_METRICS;
-  }
-
-  protected int getDefaultLimit() {
-    return 30;
-  }
-
-  protected String getConfigurationLabel() {
-    return "Maximum statements per method:";
-  }
-
-  public String buildErrorString(Object... args) {
-    return "Method '#ref' is too long ( statement count =" + args[0] + '>' + args[1] + ')';
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new Visitor();
-  }
-
-  private class Visitor extends BaseInspectionVisitor {
-    public void visitMethod(GrMethod method) {
-      super.visitMethod(method);
-      final int limit = getLimit();
-      final StatementCountVisitor visitor = new StatementCountVisitor();
-      final GrOpenBlock block = method.getBlock();
-      if (block == null) return;
-      block.accept(visitor);
-      final int statementCount = visitor.getStatementCount();
-      if (statementCount <= limit) {
-        return;
-      }
-      registerMethodError(method, statementCount, limit);
-    }
+  @Override
+  public JComponent createOptionsPanel() {
+    return InspectionUtil.createSingleIntegerFieldOptionsPanel(this, "m_limit", getConfigurationLabel());
   }
 }

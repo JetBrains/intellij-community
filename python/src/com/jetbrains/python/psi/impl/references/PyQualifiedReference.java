@@ -35,9 +35,14 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyImportedModule;
+import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
@@ -207,7 +212,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
         PyExpression callee = ((PyCallExpression)qualifier).getCallee();
         if (callee instanceof PyReferenceExpression && PyNames.SUPER.equals(callee.getName())) {
           PsiElement target = ((PyReferenceExpression)callee).getReference().resolve();
-          if (target != null && PyBuiltinCache.getInstance(qualifier).hasInBuiltins(target)) return false; // super() of unresolved type
+          if (target != null && PyBuiltinCache.getInstance(qualifier).isBuiltin(target)) return false; // super() of unresolved type
         }
       }
     }
@@ -372,15 +377,28 @@ public class PyQualifiedReference extends PyReferenceImpl {
   }
 
   private static Collection<PyExpression> collectAssignedAttributes(PyQualifiedExpression qualifier) {
-    QualifiedName qualifierPath = PyQualifiedNameFactory.fromReferenceChain(PyResolveUtil.unwindQualifiers(qualifier));
-    if (qualifierPath != null) {
-      AssignmentCollectProcessor proc = new AssignmentCollectProcessor(qualifierPath);
-      PyResolveUtil.treeCrawlUp(proc, qualifier);
-      return proc.getResult();
+    final Set<String> names = new HashSet<String>();
+    final QualifiedName qualifierQName = qualifier.asQualifiedName();
+    if (qualifierQName != null) {
+      final List<PyExpression> results = new ArrayList<PyExpression>();
+      for (ScopeOwner owner = ScopeUtil.getScopeOwner(qualifier); owner != null; owner = ScopeUtil.getScopeOwner(owner)) {
+        final Scope scope = ControlFlowCache.getScope(owner);
+        for (PyTargetExpression target : scope.getTargetExpressions()) {
+          final QualifiedName targetQName = target.asQualifiedName();
+          if (targetQName != null) {
+            if (targetQName.getComponentCount() == qualifierQName.getComponentCount() + 1 && targetQName.matchesPrefix(qualifierQName)) {
+              final String name = target.getName();
+              if (!names.contains(name)) {
+                names.add(name);
+                results.add(target);
+              }
+            }
+          }
+        }
+      }
+      return results;
     }
-    else {
-      return Collections.emptyList();
-    }
+    return Collections.emptyList();
   }
 
   @Override
@@ -468,8 +486,8 @@ public class PyQualifiedReference extends PyReferenceImpl {
       return true;
     }
     if (element instanceof PyTargetExpression) {
-      return ((PyTargetExpression)element).getQualifier() == null &&
-             PsiTreeUtil.getParentOfType(element, ScopeOwner.class) instanceof PyFunction;
+      final PyTargetExpression target = (PyTargetExpression)element;
+      return !target.isQualified() && ScopeUtil.getScopeOwner(target) instanceof PyFunction;
     }
     return false;
   }

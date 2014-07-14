@@ -41,7 +41,7 @@ public final class MethodReturnValueData extends DescriptorData<MethodReturnValu
     return myMethod;
   }
 
-  protected MethodReturnValueDescriptorImpl createDescriptorImpl(Project project) {
+  protected MethodReturnValueDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new MethodReturnValueDescriptorImpl(project, myMethod, myReturnValue);
   }
 

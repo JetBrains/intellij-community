@@ -99,7 +99,7 @@ public class JavaCharFilter extends CharFilter {
       }
     }
     if ((c == ',' || c == '=') && o instanceof PsiVariable) {
-      int lookupStart = ((LookupImpl)lookup).getLookupStart();
+      int lookupStart = lookup.getLookupStart();
       String name = ((PsiVariable)o).getName();
       if (lookupStart >= 0 && name != null && name.equals(lookup.itemPattern(item))) {
         return Result.HIDE_LOOKUP;

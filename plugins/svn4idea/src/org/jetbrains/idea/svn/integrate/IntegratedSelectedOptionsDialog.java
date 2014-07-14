@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,8 +97,8 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     }
 
     SvnConfiguration svnConfig = SvnConfiguration.getInstance(myVcs.getProject());
-    myDryRunCheckbox.setSelected(svnConfig.MERGE_DRY_RUN);
-    myIgnoreWhitespacesCheckBox.setSelected(svnConfig.IGNORE_SPACES_IN_MERGE);
+    myDryRunCheckbox.setSelected(svnConfig.isMergeDryRun());
+    myIgnoreWhitespacesCheckBox.setSelected(svnConfig.isIgnoreSpacesInMerge());
 
     mySourceInfoLabel.setText(SvnBundle.message("action.Subversion.integrate.changes.branch.info.source.label.text", currentBranch));
     myTargetInfoLabel.setText(SvnBundle.message("action.Subversion.integrate.changes.branch.info.target.label.text", selectedBranchUrl));
@@ -139,7 +139,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     final String removeText = SvnBundle.message("action.Subversion.integrate.changes.dialog.remove.wc.text");
     myGroup.add(new AnAction(removeText, removeText, PlatformIcons.DELETE_ICON) {
       {
-        registerCustomShortcutSet(CommonShortcuts.DELETE, myWorkingCopiesList);
+        registerCustomShortcutSet(CommonShortcuts.getDelete(), myWorkingCopiesList);
       }
 
       public void update(final AnActionEvent e) {
@@ -223,8 +223,8 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
 
   public void saveOptions() {
     SvnConfiguration svnConfig = SvnConfiguration.getInstance(myVcs.getProject());
-    svnConfig.MERGE_DRY_RUN = myDryRunCheckbox.isSelected();
-    svnConfig.IGNORE_SPACES_IN_MERGE = myIgnoreWhitespacesCheckBox.isSelected();
+    svnConfig.setMergeDryRun(myDryRunCheckbox.isSelected());
+    svnConfig.setIgnoreSpacesInMerge(myIgnoreWhitespacesCheckBox.isSelected());
   }
 
   protected JComponent createCenterPanel() {
@@ -290,7 +290,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
                                    SvnBundle.message("action.Subversion.integrate.changes.messages.title"));
           return null;
         }
-        return new Pair<WorkingCopyInfo, SVNURL>(info, targetUrl);
+        return Pair.create(info, targetUrl);
       }
     }
     return null;

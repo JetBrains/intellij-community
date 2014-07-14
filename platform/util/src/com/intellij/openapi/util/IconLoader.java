@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,9 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.RetinaImage;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.FilteredImageSource;
-import java.awt.image.ImageObserver;
 import java.awt.image.ImageProducer;
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
@@ -49,7 +49,7 @@ public final class IconLoader {
   private static boolean USE_DARK_ICONS = UIUtil.isUnderDarcula();
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private static final ConcurrentMap<URL, CachedImageIcon> ourIconsCache = new ConcurrentHashMap<URL, CachedImageIcon>(100, 0.9f,2);
+  private static final ConcurrentMap<URL, CachedImageIcon> ourIconsCache = ContainerUtil.newConcurrentMap(100, 0.9f, 2);
 
   /**
    * This cache contains mapping between icons and disabled icons.
@@ -98,7 +98,7 @@ public final class IconLoader {
 
   @Deprecated
   public static Icon getIcon(@NotNull final Image image) {
-    return new MyImageIcon(image);
+    return new JBImageIcon(image);
   }
 
   public static void setUseDarkIcons(boolean useDarkIcons) {
@@ -115,14 +115,8 @@ public final class IconLoader {
 
   @NotNull
   public static Icon getIcon(@NonNls @NotNull final String path) {
-    int stackFrameCount = 2;
-    Class callerClass = ReflectionUtil.findCallerClass(stackFrameCount);
-    while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class
-      callerClass = ReflectionUtil.findCallerClass(++stackFrameCount);
-    }
-    if (callerClass == null) {
-      callerClass = ReflectionUtil.findCallerClass(1);
-    }
+    Class callerClass = ReflectionUtil.getGrandCallerClass();
+
     assert callerClass != null : path;
     return getIcon(path, callerClass);
   }
@@ -147,14 +141,7 @@ public final class IconLoader {
    * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(java.lang.String)}
    */
   public static Icon findIcon(@NonNls @NotNull String path) {
-    int stackFrameCount = 2;
-    Class callerClass = ReflectionUtil.findCallerClass(stackFrameCount);
-    while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class
-      callerClass = ReflectionUtil.findCallerClass(++stackFrameCount);
-    }
-    if (callerClass == null) {
-      callerClass = ReflectionUtil.findCallerClass(1);
-    }
+    Class callerClass = ReflectionUtil.getGrandCallerClass();
     if (callerClass == null) return null;
     return findIcon(path, callerClass);
   }
@@ -211,13 +198,20 @@ public final class IconLoader {
 
   @Nullable
   public static Icon findIcon(URL url) {
+    return findIcon(url, true);
+  }
+
+  @Nullable
+  public static Icon findIcon(URL url, boolean useCache) {
     if (url == null) {
       return null;
     }
     CachedImageIcon icon = ourIconsCache.get(url);
     if (icon == null) {
       icon = new CachedImageIcon(url);
-      icon = ConcurrencyUtil.cacheOrGet(ourIconsCache, url, icon);
+      if (useCache) {
+        icon = ConcurrencyUtil.cacheOrGet(ourIconsCache, url, icon);
+      }
     }
     return icon;
   }
@@ -281,7 +275,7 @@ public final class IconLoader {
       Image img = createDisabled(image);
       if (UIUtil.isRetina()) img = RetinaImage.createFrom(img, 2, ImageLoader.ourComponent);
 
-      disabledIcon = new MyImageIcon(img);
+      disabledIcon = new JBImageIcon(img);
       ourIcon2DisabledIcon.put(icon, disabledIcon);
     }
     return disabledIcon;
@@ -333,7 +327,7 @@ public final class IconLoader {
 
     @NotNull
     private synchronized Icon getRealIcon() {
-      if (isLoaderDisabled()) return EMPTY_ICON;
+      if (isLoaderDisabled() && (myRealIcon == null || dark != USE_DARK_ICONS)) return EMPTY_ICON;
 
       if (dark != USE_DARK_ICONS) {
         myRealIcon = null;
@@ -382,19 +376,6 @@ public final class IconLoader {
     @Override
     public String toString() {
       return myUrl.toString();
-    }
-  }
-
-  private static final class MyImageIcon extends ImageIcon {
-    public MyImageIcon(final Image image) {
-      super(image);
-    }
-
-    @Override
-    public final synchronized void paintIcon(final Component c, final Graphics g, final int x, final int y) {
-      final ImageObserver observer = getImageObserver();
-
-      UIUtil.drawImage(g, getImage(), x, y, observer == null ? c : observer);
     }
   }
 

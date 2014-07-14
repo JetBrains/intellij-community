@@ -36,6 +36,10 @@ public class CommonShortcuts {
                                                                                             ? InputEvent.META_DOWN_MASK
                                                                                             : InputEvent.CTRL_DOWN_MASK));
   public static final ShortcutSet INSERT = new CustomShortcutSet(getInsertKeystroke());
+
+  /**
+   * @deprecated use getDelete() instead to support keymap-specific and user-configured shortcuts
+   */
   public static final ShortcutSet DELETE = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
   public static final ShortcutSet ESCAPE = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
 
@@ -133,7 +137,7 @@ public class CommonShortcuts {
   }
 
   public static ShortcutSet getMoveEnd() {
-    return shortcutsById(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
+    return shortcutsById(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
   }
 
   public static ShortcutSet getRecentFiles() {

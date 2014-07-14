@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,6 +57,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
     return super.hashCode() * 239 + myIndex;
   }
 
+  @Override
   protected XmlElement recomputeXmlElement(@NotNull final DomInvocationHandler parentHandler) {
     final XmlTag tag = parentHandler.getXmlTag();
     if (tag == null) return null;
@@ -52,6 +68,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
     return tags.get(myIndex);
   }
 
+  @Override
   protected XmlTag setEmptyXmlTag() {
     final DomInvocationHandler parent = getParentHandler();
     assert parent != null : "write operations should be performed on the DOM having a parent, your DOM may be not very fresh";
@@ -65,6 +82,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
 
     final XmlTag[] newTag = new XmlTag[1];
     getManager().runChange(new Runnable() {
+      @Override
       public void run() {
         try {
           final XmlTag parentTag = parent.getXmlTag();
@@ -78,6 +96,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
     return newTag[0];
   }
 
+  @Override
   public void undefineInternal() {
     final DomInvocationHandler parent = getParentHandler();
     assert parent != null : "write operations should be performed on the DOM having a parent, your DOM may be not very fresh";
@@ -119,6 +138,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
     fireUndefinedEvent();
   }
 
+  @Override
   public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     final T annotation = getChildDescription().getAnnotation(myIndex, annotationClass);
     if (annotation != null) return annotation;
@@ -126,10 +146,12 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
     return getClassAnnotation(annotationClass);
   }
 
+  @Override
   public final DomElement createPathStableCopy() {
     final DomFixedChildDescription description = getChildDescription();
     final DomElement parentCopy = getParent().createStableCopy();
     return getManager().createStableValue(new Factory<DomElement>() {
+      @Override
       public DomElement create() {
         return parentCopy.isValid() ? description.getValues(parentCopy).get(myIndex) : null;
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -385,7 +385,7 @@ public class NewMappings {
           if (vf == null) {
             vf = lfs.refreshAndFindFileByPath(dm.getDirectory());
           }
-          return vf == null ? null : new Pair<VirtualFile, VcsDirectoryMapping>(vf, dm);
+          return vf == null ? null : Pair.create(vf, dm);
         }
       }, ObjectsConvertor.NOT_NULL);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -34,9 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrRe
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 
 import java.util.Collection;
-
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeType;
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeTypeForNew;
+import java.util.Collections;
 
 /**
  * @author Maxim.Medvedev
@@ -56,7 +55,7 @@ public class ClosureGenerator {
 
   public void generate(@NotNull GrClosableBlock closure) {
     builder.append("new ");
-    writeTypeForNew(builder, closure.getType(), closure);
+    TypeWriter.writeTypeForNew(builder, closure.getType(), closure);
     builder.append('(');
 
     final CharSequence owner = getOwner(closure);
@@ -85,15 +84,15 @@ public class ClosureGenerator {
 
   private void generateClosureMainMethod(@NotNull GrClosableBlock block) {
     builder.append("public ");
-    final PsiType returnType = block.getReturnType();
-    writeType(builder, returnType, block);
+    final PsiType returnType = context.typeProvider.getReturnType(block);
+    TypeWriter.writeType(builder, returnType, block);
     builder.append(" doCall");
     final GrParameter[] parameters = block.getAllParameters();
     GenerationUtil.writeParameterList(builder, parameters, new GeneratorClassNameProvider(), context);
 
-    Collection<GrStatement> myExitPoints = ControlFlowUtils.collectReturns(block);
-    boolean shouldInsertReturnNull =
-      !(returnType instanceof PsiPrimitiveType) && MissingReturnInspection.methodMissesSomeReturns(block, MissingReturnInspection.ReturnStatus.shouldNotReturnValue);
+    Collection<GrStatement> myExitPoints = returnType != PsiType.VOID ? ControlFlowUtils.collectReturns(block) : Collections.<GrStatement>emptySet();
+    boolean shouldInsertReturnNull = !(returnType instanceof PsiPrimitiveType) &&
+                                     MissingReturnInspection.methodMissesSomeReturns(block, MissingReturnInspection.ReturnStatus.shouldNotReturnValue);
 
     new CodeBlockGenerator(builder, context.extend(), myExitPoints).generateCodeBlock(block, shouldInsertReturnNull);
     builder.append('\n');
@@ -104,7 +103,7 @@ public class ClosureGenerator {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project);
     final GrMethod method = factory.createMethodFromText("def doCall(){}", block);
 
-    method.setReturnType(block.getReturnType());
+    GrReferenceAdjuster.shortenAllReferencesIn(method.setReturnType(context.typeProvider.getReturnType(block)));
     if (block.hasParametersSection()) {
       method.getParameterList().replace(block.getParameterList());
     }

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
@@ -24,11 +25,11 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class UnnecessaryQualifierForThisInspection
-  extends BaseInspection {
+public class UnnecessaryQualifierForThisInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
@@ -76,7 +77,7 @@ public class UnnecessaryQualifierForThisInspection
       final PsiElement qualifier = descriptor.getPsiElement();
       final PsiThisExpression thisExpression =
         (PsiThisExpression)qualifier.getParent();
-      replaceExpression(thisExpression, PsiKeyword.THIS);
+      PsiReplacementUtil.replaceExpression(thisExpression, PsiKeyword.THIS);
     }
   }
 

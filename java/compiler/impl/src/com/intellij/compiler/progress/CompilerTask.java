@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,10 +71,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CompilerTask extends Task.Backgroundable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.progress.CompilerProgressIndicator");
-  private static final Key<Key<?>> CONTENT_ID_KEY = Key.create("CONTENT_ID");
+  private static final Key<Object> CONTENT_ID_KEY = Key.create("CONTENT_ID");
+  private static final Key<Object> SESSION_ID_KEY = Key.create("SESSION_ID");
   private static final String APP_ICON_ID = "compiler";
-  private Key<Key<?>> myContentIdKey = CONTENT_ID_KEY;
-  private final Key<Key<?>> myContentId = Key.create("compile_content");
+  @NotNull
+  private final Object myContentId = new IDObject("content_id");
+  
+  @NotNull
+  private Object mySessionId = myContentId; // by default sessionID should be unique, just as content ID
   private NewErrorTreeViewPanel myErrorTreeView;
   private final Object myMessageViewLock = new Object();
   private final String myContentName;
@@ -107,19 +111,27 @@ public class CompilerTask extends Task.Backgroundable {
     myCompilationStartedAutomatically = compilationStartedAutomatically;
   }
 
-  public void setContentIdKey(Key<Key<?>> contentIdKey) {
-    myContentIdKey = contentIdKey != null? contentIdKey : CONTENT_ID_KEY;
+  @NotNull
+  public Object getSessionId() {
+    return mySessionId;
   }
 
+  public void setSessionId(@NotNull Object sessionId) {
+    mySessionId = sessionId;
+  }
+
+  @Override
   public String getProcessId() {
     return "compilation";
   }
 
+  @NotNull
   @Override
   public DumbModeAction getDumbModeAction() {
     return DumbModeAction.WAIT;
   }
 
+  @Override
   public boolean shouldStartInBackground() {
     return true;
   }
@@ -128,6 +140,7 @@ public class CompilerTask extends Task.Backgroundable {
     return myIndicator;
   }
 
+  @Override
   @Nullable
   public NotificationInfo getNotificationInfo() {
     return new NotificationInfo(myErrorCount > 0? "Compiler (errors)" : "Compiler (success)", "Compilation Finished", myErrorCount + " Errors, " + myWarningCount + " Warnings", true);
@@ -135,6 +148,7 @@ public class CompilerTask extends Task.Backgroundable {
 
   private CloseListener myCloseListener;
 
+  @Override
   public void run(@NotNull final ProgressIndicator indicator) {
     myIndicator = indicator;
 
@@ -188,13 +202,17 @@ public class CompilerTask extends Task.Backgroundable {
     }
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
-        if (myProject.isDisposed()) return;
+        final Project project = myProject;
+        if (project == null || project.isDisposed()) {
+          return;
+        }
         synchronized (myMessageViewLock) {
           // clear messages from the previous compilation
           if (myErrorTreeView == null) {
             // if message view != null, the contents has already been cleared
-            removeAllContents(myProject, null);
+            removeAllContents(project, null);
           }
         }
       }
@@ -206,12 +224,14 @@ public class CompilerTask extends Task.Backgroundable {
     if (!(indicator instanceof ProgressIndicatorEx)) return;
     ((ProgressIndicatorEx)indicator).addStateDelegate(new ProgressIndicatorBase() {
 
+      @Override
       public void cancel() {
         super.cancel();
         closeUI();
         stopAppIconProgress();
       }
 
+      @Override
       public void stop() {
         super.stop();
         if (!isCanceled()) {
@@ -222,6 +242,7 @@ public class CompilerTask extends Task.Backgroundable {
 
       private void stopAppIconProgress() {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
           public void run() {
             AppIcon appIcon = AppIcon.getInstance();
             if (appIcon.hideProgress(myProject, APP_ICON_ID)) {
@@ -237,26 +258,31 @@ public class CompilerTask extends Task.Backgroundable {
         });
       }
 
+      @Override
       public void setText(final String text) {
         super.setText(text);
         updateProgressText();
       }
 
+      @Override
       public void setText2(final String text) {
         super.setText2(text);
         updateProgressText();
       }
 
+      @Override
       public void setFraction(final double fraction) {
         super.setFraction(fraction);
         updateProgressText();
         UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
           public void run() {
             AppIcon.getInstance().setProgress(myProject, APP_ICON_ID, AppIconScheme.Progress.BUILD, fraction, true);
           }
         });
       }
 
+      @Override
       protected void onProgressChange() {
         prepareMessageView();
       }
@@ -289,6 +315,7 @@ public class CompilerTask extends Task.Backgroundable {
       final Window window = getWindow();
       final ModalityState modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MODAL;
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           if (!myProject.isDisposed()) {
             openMessageView();
@@ -397,10 +424,12 @@ public class CompilerTask extends Task.Backgroundable {
       );
       
       myErrorTreeView.setProcessController(new NewErrorTreeViewPanel.ProcessController() {
+        @Override
         public void stopProcess() {
           cancel();
         }
 
+        @Override
         public boolean isProcessStopped() {
           return !myIndicator.isRunning();
         }
@@ -410,7 +439,8 @@ public class CompilerTask extends Task.Backgroundable {
     
     final MessageView messageView = MessageView.SERVICE.getInstance(myProject);
     final Content content = ContentFactory.SERVICE.getInstance().createContent(component, myContentName, true);
-    content.putUserData(myContentIdKey, myContentId);
+    CONTENT_ID_KEY.set(content, myContentId);
+    SESSION_ID_KEY.set(content, mySessionId);
     messageView.getContentManager().addContent(content);
     myCloseListener.setContent(content, messageView.getContentManager());
     removeAllContents(myProject, content);
@@ -423,7 +453,7 @@ public class CompilerTask extends Task.Backgroundable {
         final MessageView messageView = MessageView.SERVICE.getInstance(myProject);
         Content[] contents = messageView.getContentManager().getContents();
         for (Content content : contents) {
-          if (content.getUserData(myContentIdKey) != null) {
+          if (CONTENT_ID_KEY.get(content) == myContentId) {
             messageView.getContentManager().setSelectedContent(content);
             return;
           }
@@ -442,7 +472,12 @@ public class CompilerTask extends Task.Backgroundable {
       if (content == notRemove) {
         continue;
       }
-      if (content.getUserData(myContentIdKey) != null) { // the content was added by me
+      boolean toRemove = CONTENT_ID_KEY.get(content) == myContentId;
+      if (!toRemove) {
+        final Object contentSessionId = SESSION_ID_KEY.get(content);
+        toRemove = contentSessionId != null && contentSessionId != mySessionId; // the content was added by previous compilation
+      }
+      if (toRemove) { 
         messageView.getContentManager().removeContent(content, true);
       }
     }
@@ -467,6 +502,7 @@ public class CompilerTask extends Task.Backgroundable {
     ModalityState modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MODAL;
     final Application application = ApplicationManager.getApplication();
     application.invokeLater(new Runnable() {
+      @Override
       public void run() {
         synchronized (myMessageViewLock) {
           if (myErrorTreeView != null) {
@@ -490,6 +526,7 @@ public class CompilerTask extends Task.Backgroundable {
     return null;
   }
 
+  @Override
   public boolean isHeadless() {
     return myHeadlessMode && !myForceAsyncExecution;
   }
@@ -524,6 +561,7 @@ public class CompilerTask extends Task.Backgroundable {
     private boolean myIsApplicationExitingOrProjectClosing = false;
     private boolean myUserAcceptedCancel = false;
 
+    @Override
     public boolean canCloseProject(final Project project) {
       assert project != null;
       if (!project.equals(myProject)) {
@@ -543,6 +581,7 @@ public class CompilerTask extends Task.Backgroundable {
 
         final MessageBusConnection connection = project.getMessageBus().connect();
         connection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusAdapter() {
+          @Override
           public void compilationFinished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
             connection.disconnect();
             ProjectUtil.closeAndDispose(project);
@@ -560,6 +599,7 @@ public class CompilerTask extends Task.Backgroundable {
       contentManager.addContentManagerListener(this);
     }
 
+    @Override
     public void contentRemoved(ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         synchronized (myMessageViewLock) {
@@ -580,6 +620,7 @@ public class CompilerTask extends Task.Backgroundable {
       }
     }
 
+    @Override
     public void contentRemoveQuery(ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         if (!myIndicator.isCanceled() && shouldAskUser()) {
@@ -602,19 +643,35 @@ public class CompilerTask extends Task.Backgroundable {
       return !myUserAcceptedCancel && !myIsApplicationExitingOrProjectClosing && myIndicator.isRunning();
     }
 
+    @Override
     public void projectOpened(Project project) {
     }
 
+    @Override
     public void projectClosed(Project project) {
       if (project.equals(myProject) && myContent != null) {
         myContentManager.removeContent(myContent, true);
       }
     }
 
+    @Override
     public void projectClosing(Project project) {
       if (project.equals(myProject)) {
         myIsApplicationExitingOrProjectClosing = true;
       }
+    }
+  }
+
+  public static final class IDObject {
+    private final String myDisplayName;
+  
+    public IDObject(@NotNull String displayName) {
+      myDisplayName = displayName;
+    }
+  
+    @Override
+    public String toString() {
+      return myDisplayName;
     }
   }
 }

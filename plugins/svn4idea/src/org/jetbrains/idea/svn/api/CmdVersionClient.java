@@ -1,14 +1,13 @@
 package org.jetbrains.idea.svn.api;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
+import org.jetbrains.idea.svn.commandLine.Command;
+import org.jetbrains.idea.svn.commandLine.CommandExecutor;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 
 import java.util.regex.Matcher;
@@ -24,27 +23,18 @@ public class CmdVersionClient extends BaseSvnClient implements VersionClient {
   @NotNull
   @Override
   public Version getVersion() throws VcsException {
-    // TODO: Do not use common command running mechanism for now - to preserve timeout behavior.
-    ProcessOutput output;
-
-    try {
-      output = runCommand();
-    }
-    catch (ExecutionException e) {
-      throw new VcsException(e);
-    }
-
-    return parseVersion(output);
+    return parseVersion(runCommand());
   }
 
-  private static ProcessOutput runCommand() throws ExecutionException {
-    GeneralCommandLine commandLine = new GeneralCommandLine();
-    commandLine.setExePath(SvnApplicationSettings.getInstance().getCommandLinePath());
-    commandLine.addParameter(SvnCommandName.version.getName());
-    commandLine.addParameter("--quiet");
+  private static ProcessOutput runCommand() throws SvnBindException {
+    // TODO: Seems CommandRuntime should be used here when its api is more robust (to specify timeout or so).
+    Command command = new Command(SvnCommandName.version);
+    command.put("--quiet");
 
-    CapturingProcessHandler handler = new CapturingProcessHandler(commandLine.createProcess(), CharsetToolkit.getDefaultSystemCharset());
-    return handler.runProcess(30 * 1000);
+    CommandExecutor executor = new CommandExecutor(SvnApplicationSettings.getInstance().getCommandLinePath(), command);
+    executor.run(30 * 1000);
+
+    return executor.getProcessOutput();
   }
 
   @NotNull

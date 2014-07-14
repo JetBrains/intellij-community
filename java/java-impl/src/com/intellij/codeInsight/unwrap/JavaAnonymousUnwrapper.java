@@ -43,7 +43,26 @@ public class JavaAnonymousUnwrapper extends JavaUnwrapper {
   protected void doUnwrap(PsiElement element, Context context) throws IncorrectOperationException {
     PsiElement from = findElementToExtractFrom(element);
 
-    for (PsiMethod m : ((PsiAnonymousClass)element).getMethods()) {
+    final PsiMethod[] methods = ((PsiAnonymousClass)element).getMethods();
+
+    if (methods.length == 1) {
+      final PsiCodeBlock body = methods[0].getBody();
+      if (body != null) {
+        final PsiStatement[] statements = body.getStatements();
+        if (statements.length == 1 && statements[0] instanceof PsiReturnStatement) {
+          final PsiExpression returnValue = ((PsiReturnStatement)statements[0]).getReturnValue();
+          if (from instanceof PsiDeclarationStatement) {
+            final PsiElement[] declaredElements = ((PsiDeclarationStatement)from).getDeclaredElements();
+            if (declaredElements.length == 1 && declaredElements[0] instanceof PsiVariable) {
+              context.setInitializer((PsiVariable)declaredElements[0], returnValue);
+              return;
+            }
+          }
+        }
+      }
+    }
+
+    for (PsiMethod m : methods) {
       context.extractFromCodeBlock(m.getBody(), from);
     }
 
@@ -59,9 +78,11 @@ public class JavaAnonymousUnwrapper extends JavaUnwrapper {
     el = findTopmostParentOfType(el, PsiMethodCallExpression.class);
     el = findTopmostParentOfType(el, PsiAssignmentExpression.class);
     el = findTopmostParentOfType(el, PsiDeclarationStatement.class);
-
-    while (el.getParent() instanceof PsiExpressionStatement) {
-      el = el.getParent();
+    
+    PsiElement parent = el.getParent();
+    while (parent instanceof PsiExpressionStatement || parent instanceof PsiReturnStatement) {
+      el = parent;
+      parent = el.getParent();
     }
 
     return el;

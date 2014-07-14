@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.stubs.ObjectStubTree;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.xml.DomElement;
@@ -62,11 +63,11 @@ public abstract class DomStubTest extends LightCodeInsightFixtureTestCase {
     return "/xml/dom-tests/testData/stubs";
   }
 
-  protected ElementStub getRootStub(String filePath) {
+  protected ElementStub getRootStub(@TestDataFile String filePath) {
     return getRootStub(filePath, myFixture);
   }
 
-  public static ElementStub getRootStub(String filePath, JavaCodeInsightTestFixture fixture) {
+  public static ElementStub getRootStub(@TestDataFile String filePath, JavaCodeInsightTestFixture fixture) {
     PsiFile psiFile = fixture.configureByFile(filePath);
 
     StubTreeLoader loader = StubTreeLoader.getInstance();
@@ -79,12 +80,12 @@ public abstract class DomStubTest extends LightCodeInsightFixtureTestCase {
     return root;
   }
 
-  protected void doBuilderTest(String file, String stubText) {
+  protected void doBuilderTest(@TestDataFile String file, String stubText) {
     ElementStub stub = getRootStub(file);
     assertEquals(stubText, DebugUtil.stubTreeToString(stub));
   }
 
-  protected <T extends DomElement> DomFileElement<T> prepare(String path, Class<T> domClass) {
+  protected <T extends DomElement> DomFileElement<T> prepare(@TestDataFile String path, Class<T> domClass) {
     XmlFile file = prepareFile(path);
 
     DomFileElement<T> fileElement = DomManager.getDomManager(getProject()).getFileElement(file, domClass);

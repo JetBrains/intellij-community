@@ -66,7 +66,7 @@ public class FindAllRootsHelper {
     }
 
     public boolean process(VirtualFile file) {
-      if (CvsUtil.fileIsUnderCvs(file)) {
+      if (CvsUtil.fileIsUnderCvsMaybeWithVfs(file)) {
         myFound.add(file);
       }
       return true;

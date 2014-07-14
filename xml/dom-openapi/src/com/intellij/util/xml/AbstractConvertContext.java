@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,33 +34,39 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class AbstractConvertContext extends ConvertContext {
 
+  @Override
   public final XmlTag getTag() {
     return getInvocationElement().getXmlTag();
   }
 
+  @Override
   @Nullable
   public XmlElement getXmlElement() {
     return getInvocationElement().getXmlElement();
   }
 
+  @Override
   @NotNull
   public final XmlFile getFile() {
     return DomUtil.getFile(getInvocationElement());
   }
 
+  @Override
   public Module getModule() {
     final DomFileElement<DomElement> fileElement = DomUtil.getFileElement(getInvocationElement());
     if (fileElement == null) {
       final XmlElement xmlElement = getInvocationElement().getXmlElement();
       return xmlElement == null ? null : ModuleUtilCore.findModuleForPsiElement(xmlElement);
     }
-    return fileElement.getRootElement().getModule();
+    return fileElement.isValid() ? fileElement.getRootElement().getModule() : null;
   }
 
+  @Override
   public PsiManager getPsiManager() {
     return getFile().getManager();
   }
 
+  @Override
   @Nullable
   public GlobalSearchScope getSearchScope() {
     GlobalSearchScope scope = null;

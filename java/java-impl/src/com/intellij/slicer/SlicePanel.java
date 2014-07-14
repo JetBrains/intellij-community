@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.Usage;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
@@ -156,7 +157,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
       boolean vertical = myToolWindow.getAnchor() == ToolWindowAnchor.LEFT || myToolWindow.getAnchor() == ToolWindowAnchor.RIGHT;
       Splitter splitter = new Splitter(vertical, UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS);
       splitter.setFirstComponent(pane);
-      myUsagePreviewPanel = new UsagePreviewPanel(myProject);
+      myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation());
       myUsagePreviewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
 
       Disposer.register(this, myUsagePreviewPanel);

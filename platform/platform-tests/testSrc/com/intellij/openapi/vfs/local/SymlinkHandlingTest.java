@@ -236,8 +236,9 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     refresh();
     assertTrue(vLink1.isValid());
     VirtualFile vLink2 = myFileSystem.findFileByIoFile(link);
+    assertEquals(vLink1, vLink2);
     assertTrue("link=" + link + ", vLink=" + vLink2,
-               vLink2 == vLink1 && vLink2.isDirectory() && vLink2.is(VFileProperty.SYMLINK));
+               vLink2.isDirectory() && vLink2.is(VFileProperty.SYMLINK));
     assertEquals(2, vLink2.getChildren().length);
     assertPathsEqual(targetDir2.getPath(), vLink1.getCanonicalPath());
   }
@@ -261,8 +262,9 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     refresh();
     assertTrue(vLink1.isValid());
     VirtualFile vLink2 = myFileSystem.findFileByIoFile(link);
+    assertEquals(vLink1, vLink2);
     assertTrue("link=" + link + ", vLink=" + vLink2,
-               vLink2 == vLink1 && !vLink2.isDirectory() && vLink2.is(VFileProperty.SYMLINK));
+               !vLink2.isDirectory() && vLink2.is(VFileProperty.SYMLINK));
     assertEquals(FileUtil.loadFile(target2), VfsUtilCore.loadText(vLink2));
     assertPathsEqual(target2.getPath(), vLink1.getCanonicalPath());
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,9 @@ import java.util.Set;
  * @author Maxim.Medvedev
  */
 public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
-  private static Logger LOG = Logger.getInstance(ConvertToJavaProcessor.class);
+  private static final Logger LOG = Logger.getInstance(ConvertToJavaProcessor.class);
 
-  private GroovyFile[] myFiles;
+  private final GroovyFile[] myFiles;
 
   protected ConvertToJavaProcessor(Project project, GroovyFile... files) {
     super(project);

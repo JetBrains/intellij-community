@@ -1,9 +1,8 @@
-
 package com.intellij.codeInsight.daemon.quickFix;
 
 
 
-public class CastConstructorParametersTest extends LightQuickFixTestCase {
+public class CastConstructorParametersTest extends LightQuickFixParameterizedTestCase {
 
   public void test() throws Exception { doAllTests(); }
 

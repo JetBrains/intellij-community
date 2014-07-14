@@ -25,13 +25,15 @@ import org.jetbrains.annotations.Nullable;
  * @author Mikhail Golubev
  */
 
+@SuppressWarnings("UnusedDeclaration")
 @Tag("TrelloBoard")
 public class TrelloBoard extends TrelloModel {
 
-  private boolean closed, pinned;
+  public static final String REQUIRED_FIELDS = "closed,name,idOrganization";
+
+  private boolean closed;
   private String idOrganization;
   private String name;
-  private String url;
 
   /**
    * Serialization constructor
@@ -47,10 +49,6 @@ public class TrelloBoard extends TrelloModel {
 
   public boolean isClosed() {
     return closed;
-  }
-
-  public boolean isPinned() {
-    return pinned;
   }
 
   @Nullable
@@ -70,8 +68,4 @@ public class TrelloBoard extends TrelloModel {
     this.name = name;
   }
 
-  @NotNull
-  public String getUrl() {
-    return url;
-  }
 }

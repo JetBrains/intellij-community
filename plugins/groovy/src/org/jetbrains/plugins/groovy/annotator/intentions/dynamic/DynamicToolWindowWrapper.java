@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -237,6 +237,7 @@ public class DynamicToolWindowWrapper {
     final MyColoredTreeCellRenderer treeCellRenderer = new MyColoredTreeCellRenderer();
 
     myTreeTable.setDefaultRenderer(String.class, new TableCellRenderer() {
+      @Override
       public Component getTableCellRendererComponent(JTable table,
                                                      Object value,
                                                      boolean isSelected,
@@ -267,6 +268,7 @@ public class DynamicToolWindowWrapper {
     final MyPropertyTypeCellEditor typeCellEditor = new MyPropertyTypeCellEditor();
 
     typeCellEditor.addCellEditorListener(new CellEditorListener() {
+      @Override
       public void editingStopped(ChangeEvent e) {
         final TreeTableTree tree = getTree();
 
@@ -319,22 +321,26 @@ public class DynamicToolWindowWrapper {
         }
       }
 
+      @Override
       public void editingCanceled(ChangeEvent e) {
         myTreeTable.editingCanceled(e);
       }
     });
 
     RefactoringListenerManager.getInstance(myProject).addListenerProvider(new RefactoringElementListenerProvider() {
+      @Override
       @Nullable
       public RefactoringElementListener getListener(final PsiElement element) {
         if (element instanceof PsiClass) {
           final String qualifiedName = ((PsiClass)element).getQualifiedName();
 
           return new RefactoringElementListener() {
+            @Override
             public void elementMoved(@NotNull PsiElement newElement) {
               renameElement(qualifiedName, newElement);
             }
 
+            @Override
             public void elementRenamed(@NotNull PsiElement newElement) {
               renameElement(qualifiedName, newElement);
             }
@@ -360,6 +366,7 @@ public class DynamicToolWindowWrapper {
     myTreeTable.setDefaultEditor(String.class, typeCellEditor);
 
     myTreeTable.registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent event) {
         final int selectionRow = myTreeTable.getTree().getLeadSelectionRow();
         myTreeTable.editCellAt(selectionRow, CLASS_OR_ELEMENT_NAME_COLUMN, event);
@@ -367,6 +374,7 @@ public class DynamicToolWindowWrapper {
     }, KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), JComponent.WHEN_FOCUSED);
 
     myTreeTable.registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent event) {
         final int selectionRow = myTreeTable.getTree().getLeadSelectionRow();
         myTreeTable.editCellAt(selectionRow, TYPE_COLUMN, event);
@@ -497,12 +505,14 @@ public class DynamicToolWindowWrapper {
       super(name);
     }
 
+    @Override
     public boolean isCellEditable(DefaultMutableTreeNode node) {
       final Object value = node.getUserObject();
 
       return !(value instanceof DClassElement);
     }
 
+    @Override
     public String valueOf(DefaultMutableTreeNode treeNode) {
       Object userObject = treeNode.getUserObject();
 
@@ -517,16 +527,19 @@ public class DynamicToolWindowWrapper {
       super(name);
     }
 
+    @Override
     public boolean isCellEditable(DefaultMutableTreeNode treeNode) {
       final Object userObject = treeNode.getUserObject();
 
       return userObject instanceof DPropertyElement;
     }
 
+    @Override
     public Class getColumnClass() {
       return TreeTableModel.class;
     }
 
+    @Override
     public DNamedElement valueOf(DefaultMutableTreeNode treeNode) {
       Object userObject = treeNode.getUserObject();
       if (userObject instanceof DClassElement) return ((DClassElement)userObject);
@@ -544,6 +557,7 @@ public class DynamicToolWindowWrapper {
   }
 
   private static class MyColoredTreeCellRenderer extends ColoredTreeCellRenderer {
+    @Override
     public void customizeCellRenderer(JTree tree,
                                       Object value,
                                       boolean selected,
@@ -614,6 +628,7 @@ public class DynamicToolWindowWrapper {
 
     private static String[] mapToUnqualified(final String[] argumentsNames) {
       return ContainerUtil.map2Array(argumentsNames, String.class, new NullableFunction<String, String>() {
+        @Override
         @Nullable
         public String fun(final String s) {
           if (s == null) return null;
@@ -633,10 +648,12 @@ public class DynamicToolWindowWrapper {
       field = new EditorTextField(document, myProject, GroovyFileType.GROOVY_FILE_TYPE);
     }
 
+    @Override
     public String getCellEditorValue() {
       return field.getText();
     }
 
+    @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       if (value instanceof String) {
         field.setText(((String)value));
@@ -651,6 +668,7 @@ public class DynamicToolWindowWrapper {
       super(treeTableModel);
     }
 
+    @Override
     @Nullable
     public Object getData(@NonNls String dataId) {
       if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.GotItMessage;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.UIBundle;
@@ -71,8 +71,13 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
       @Override
       public boolean dispatch(AWTEvent e) {
         if (e instanceof MouseEvent) {
+          MouseEvent mouseEvent = (MouseEvent)e;
+          if (mouseEvent.getComponent() == null || !SwingUtilities.isDescendingFrom(mouseEvent.getComponent(), SwingUtilities.getWindowAncestor(ToolWindowsWidget.this))) {
+            return false;
+          }
+
           if (e.getID() == MouseEvent.MOUSE_MOVED && isShowing()) {
-            Point p = ((MouseEvent)e).getLocationOnScreen();
+            Point p = mouseEvent.getLocationOnScreen();
             Point screen = ToolWindowsWidget.this.getLocationOnScreen();
             if (new Rectangle(screen.x - 4, screen.y - 2, getWidth() + 4, getHeight() + 4).contains(p)) {
               mouseEntered();
@@ -84,7 +89,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
             }
           } else if (e.getID() == MouseEvent.MOUSE_EXITED) {
             //mouse exits WND
-            mouseExited(((MouseEvent)e).getLocationOnScreen());
+            mouseExited(mouseEvent.getLocationOnScreen());
           }
         }
         return false;
@@ -110,7 +115,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
               popup.cancel();
             }
           }
-        }, 150);
+        }, 300);
         return true;
       }
     }
@@ -140,7 +145,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
             @Override
             public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
               final ToolWindow toolWindow = (ToolWindow)value;
-              label.setText(toolWindow instanceof ToolWindowImpl ? ((ToolWindowImpl)toolWindow).getId() : toolWindow.getTitle());
+              label.setText(toolWindow.getStripeTitle());
               label.setIcon(toolWindow.getIcon());
               label.setBorder(IdeBorderFactory.createEmptyBorder(4, 10, 4, 10));
               label.setForeground(UIUtil.getListForeground(isSelected));
@@ -155,7 +160,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
           final Dimension size = list.getPreferredSize();
           final JComponent c = ToolWindowsWidget.this;
           final Insets padding = UIUtil.getListViewportPadding();
-          final RelativePoint point = new RelativePoint(c, new Point(-4, -padding.top - padding.bottom -4 - size.height));
+          final RelativePoint point = new RelativePoint(c, new Point(-4, -padding.top - padding.bottom -4 - size.height + (SystemInfo.isMac ? 2 : 0)));
 
           if (popup != null && popup.isVisible()) {
             return;
@@ -189,6 +194,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
     super.addNotify();
     final String key = "toolwindow.stripes.buttons.info.shown";
     if (UISettings.getInstance().HIDE_TOOL_STRIPES && !PropertiesComponent.getInstance().isTrueValue(key)) {
+      PropertiesComponent.getInstance().setValue(key, String.valueOf(true));
       final Alarm alarm = new Alarm();
       alarm.addRequest(new Runnable() {
         @Override
@@ -197,10 +203,9 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
             "tool.window.quick.access.message"))
             .setDisposable(ToolWindowsWidget.this)
             .show(new RelativePoint(ToolWindowsWidget.this, new Point(10, 0)), Balloon.Position.above);
-            PropertiesComponent.getInstance().setValue(key, String.valueOf(true));
           Disposer.dispose(alarm);
         }
-      }, 30000);
+      }, 20000);
     }
   }
 

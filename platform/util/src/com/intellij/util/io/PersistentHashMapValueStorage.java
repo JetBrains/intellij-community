@@ -352,23 +352,15 @@ public class PersistentHashMapValueStorage {
   }
 
   private long readPrevChunkAddress(long chunk) throws IOException {
-    final int prevOffsetDiff = DataInputOutputUtil.readINT(myBufferDataStreamWrapper);
-    if (prevOffsetDiff < 0) {
-      return chunk - (-prevOffsetDiff | ((long)DataInputOutputUtil.readINT(myBufferDataStreamWrapper) << 32));
-    }
+    final long prevOffsetDiff = DataInputOutputUtil.readLONG(myBufferDataStreamWrapper);
     assert prevOffsetDiff < chunk;
     return prevOffsetDiff != 0 ? chunk - prevOffsetDiff : 0;
   }
 
   private static void writePrevChunkAddress(long prevChunkAddress, long currentChunkAddress, DataOutputStream dataOutputStream) throws IOException {
+    assert currentChunkAddress >= prevChunkAddress;
     long diff = currentChunkAddress - prevChunkAddress;
-
-    if (diff < Integer.MAX_VALUE || prevChunkAddress == 0)
-      DataInputOutputUtil.writeINT(dataOutputStream, prevChunkAddress == 0 ? 0 : (int)diff);
-    else {
-      DataInputOutputUtil.writeINT(dataOutputStream, -(int)diff);
-      DataInputOutputUtil.writeINT(dataOutputStream, (int)(diff >>> 32));
-    }
+    DataInputOutputUtil.writeLONG(dataOutputStream, prevChunkAddress == 0 ? 0 : diff);
   }
 
   public long getSize() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
 public class JavaDocUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.javadoc.JavaDocUtil");
 
-  private static final @NonNls Pattern ourTypePattern = Pattern.compile("[ ]+[^ ^\\[^\\]]");
+  @NonNls private static final Pattern ourTypePattern = Pattern.compile("[ ]+[^ ^\\[^\\]]");
 
   private JavaDocUtil() {
   }
@@ -81,7 +81,7 @@ public class JavaDocUtil {
     }
     else {
       String classRef = refText.substring(0, poundIndex).trim();
-      if (classRef.length() > 0) {
+      if (!classRef.isEmpty()) {
         PsiClass aClass = facade.getResolveHelper().resolveReferencedClass(classRef, context);
 
         if (aClass == null) aClass = facade.findClass(classRef, context.getResolveScope());
@@ -127,7 +127,7 @@ public class JavaDocUtil {
       
       String parmsText = memberRefText.substring(parenthIndex + 1, rparenIndex).trim();
       StringTokenizer tokenizer = new StringTokenizer(parmsText.replaceAll("[*]", ""), ",");
-      PsiType[] types = new PsiType[tokenizer.countTokens()];
+      PsiType[] types = PsiType.createArray(tokenizer.countTokens());
       int i = 0;
       PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
       while (tokenizer.hasMoreTokens()) {
@@ -290,7 +290,7 @@ public class JavaDocUtil {
       String classRef = refText.substring(0, poundIndex).trim();
       String memberText = refText.substring(poundIndex + 1);
       String memberLabel = getMemberLabelText(project, manager, memberText, context);
-      if (classRef.length() > 0) {
+      if (!classRef.isEmpty()) {
         PsiElement refClass = findReferenceTarget(manager, classRef, context);
         if (refClass instanceof PsiClass) {
           PsiElement scope = context;

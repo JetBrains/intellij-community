@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,10 +83,8 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
       @Override
       public void startNotified(final ProcessEvent event) {
         try {
-          BaseDataReader.SleepingPolicy sleepingPolicy =
-            useAdaptiveSleepingPolicyWhenReadingOutput() ? new AdaptiveSleepingPolicy() : BaseDataReader.SleepingPolicy.SIMPLE;
-          final BaseDataReader stdoutReader = createOutputDataReader(sleepingPolicy);
-          final BaseDataReader stderrReader = processHasSeparateErrorStream() ? createErrorDataReader(sleepingPolicy) : null;
+          final BaseDataReader stdoutReader = createOutputDataReader(getPolicy());
+          final BaseDataReader stderrReader = processHasSeparateErrorStream() ? createErrorDataReader(getPolicy()) : null;
 
           myWaitFor.setTerminationCallback(new Consumer<Integer>() {
             @Override
@@ -118,10 +116,13 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     super.startNotify();
   }
 
+  private BaseDataReader.SleepingPolicy getPolicy() {
+    return useAdaptiveSleepingPolicyWhenReadingOutput() ? new AdaptiveSleepingPolicy() : BaseDataReader.SleepingPolicy.SIMPLE;
+  }
+
   @NotNull
   protected BaseDataReader createErrorDataReader(BaseDataReader.SleepingPolicy sleepingPolicy) {
-    return new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR,
-                             sleepingPolicy);
+    return new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR, sleepingPolicy);
   }
 
   @NotNull

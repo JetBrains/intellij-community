@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -26,11 +27,12 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class UnqualifiedStaticUsageInspection extends BaseInspection {
+public class UnqualifiedStaticUsageInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   /**
    * @noinspection PublicField
@@ -135,7 +137,7 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection {
       assert containingClass != null;
       final String className = containingClass.getName();
       final String text = expression.getText();
-      replaceExpression(expression, className + '.' + text);
+      PsiReplacementUtil.replaceExpression(expression, className + '.' + text);
     }
   }
 

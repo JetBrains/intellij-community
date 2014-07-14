@@ -148,12 +148,14 @@ public class ChangeType {
     return highlighter;
   }
 
+  @NotNull
   static ChangeType fromDiffFragment(DiffFragment fragment) {
     if (fragment.getText1() == null) return INSERT;
     if (fragment.getText2() == null) return DELETED;
     return CHANGE;
   }
 
+  @NotNull
   static ChangeType fromRanges(@NotNull TextRange left, @NotNull TextRange right) {
     if (left.getLength() == 0) return INSERT;
     if (right.getLength() == 0) return DELETED;

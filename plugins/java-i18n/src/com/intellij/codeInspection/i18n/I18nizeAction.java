@@ -18,6 +18,7 @@ package com.intellij.codeInspection.i18n;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -105,6 +106,17 @@ public class I18nizeAction extends AnAction {
     }
     catch (IncorrectOperationException ex) {
       CommonRefactoringUtil.showErrorHint(project, editor, ex.getMessage(), CodeInsightBundle.message("i18nize.error.title"), null);
+      return;
+    }
+
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      JavaI18nizeQuickFixDialog.isAvailable(psiFile);
+    }
+
+    try {
+      ResourceBundleManager.getManager(psiFile);
+    }
+    catch (ResourceBundleManager.ResourceBundleNotFoundException e) {
       return;
     }
 

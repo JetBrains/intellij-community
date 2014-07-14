@@ -32,9 +32,9 @@ Groovy script
         Literal
           PsiElement(Integer)('3')
     PsiElement())(')')
-    PsiWhiteSpace(' ')
     Throw clause
       <empty list>
+    PsiWhiteSpace(' ')
     Open block
       PsiElement({)('{')
       PsiElement(})('}')

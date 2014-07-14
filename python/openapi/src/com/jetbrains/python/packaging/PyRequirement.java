@@ -34,6 +34,7 @@ import java.util.regex.Pattern;
 
 /**
  * @author vlan
+ * @see <a href="http://legacy.python.org/dev/peps/pep-0386/">[PEP-0386]</a>
  */
 public class PyRequirement {
   private static final Pattern NAME = Pattern.compile("\\s*(\\w(\\w|[-.])*)\\s*(.*)");
@@ -175,7 +176,8 @@ public class PyRequirement {
                                         return spec.toString();
                                       }
                                     },
-                                    ",");
+                                    ","
+    );
   }
 
   @NotNull
@@ -243,6 +245,23 @@ public class PyRequirement {
       }
     }
     return null;
+  }
+
+  /**
+   * Parses requirement string as described in [pep-0386].
+   * For example: "myPackage&lt;=10.6a3"
+   *
+   * @param line requirement to parse
+   * @return requirement
+   * @throws java.lang.IllegalArgumentException if line can't be parsed
+   */
+  @NotNull
+  public static PyRequirement fromStringGuaranteed(@NotNull final String line) {
+    final PyRequirement requirement = fromString(line);
+    if (requirement == null) {
+      throw new IllegalArgumentException("Failed to parse " + line);
+    }
+    return requirement;
   }
 
   @Nullable
@@ -334,7 +353,6 @@ public class PyRequirement {
         if (file != null) {
           return parse(file, visited);
         }
-
       }
     }
     return Collections.emptyList();

@@ -25,68 +25,116 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspection;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
 
+import java.util.Arrays;
 import java.util.List;
 
-public class CreateClassFixTest {
+@RunWith(Parameterized.class)
+public class CreateClassFixTest extends UsefulTestCase{
   protected CodeInsightTestFixture myFixture;
 
-  @BeforeMethod
-  public void setUp() throws Exception {
-    final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
-    final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
-    myFixture = fixtureFactory.createCodeInsightFixture(testFixtureBuilder.getFixture());
-    myFixture.setTestDataPath(PluginPathManager.getPluginHomePath("devkit") + "/testData");
+  @org.junit.runners.Parameterized.Parameter(0) public String myTestName;
+  @org.junit.runners.Parameterized.Parameter(1) public boolean myCreateClass;
 
-    testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class)
-      .addContentRoot(myFixture.getTempDirPath()).addSourceRoot(getSourceRoot());
-    myFixture.enableInspections(new RegistrationProblemsInspection());
-    myFixture.setUp();
+  @Before
+  public void setUp() throws Exception {
+    final Ref<Exception> ex = new Ref<Exception>();
+    Runnable runnable = new Runnable() {
+      public void run() {
+        try {
+          CreateClassFixTest.super.setUp();
+          final JavaTestFixtureFactory fixtureFactory = JavaTestFixtureFactory.getFixtureFactory();
+          final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
+          myFixture = fixtureFactory.createCodeInsightFixture(testFixtureBuilder.getFixture());
+          myFixture.setTestDataPath(PluginPathManager.getPluginHomePath("devkit") + "/testData");
+
+          testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class)
+            .addContentRoot(myFixture.getTempDirPath()).addSourceRoot(getSourceRoot());
+          myFixture.enableInspections(new RegistrationProblemsInspection());
+          myFixture.setUp();
+        }
+        catch (Exception e) {
+          ex.set(e);
+        }
+      }
+    };
+    invokeTestRunnable(runnable);
+    final Exception exception = ex.get();
+    if (exception != null) {
+      throw exception;
+    }
   }
 
-  @AfterMethod
+  @After
   public void tearDown() throws Exception {
-    myFixture.tearDown();
-    myFixture = null;
+    final Ref<Exception> ex = new Ref<Exception>();
+    Runnable runnable = new Runnable() {
+      public void run() {
+        try {
+          myFixture.tearDown();
+          myFixture = null;
+          CreateClassFixTest.super.tearDown();
+        }
+        catch (Exception e) {
+          ex.set(e);
+        }
+      }
+    };
+    invokeTestRunnable(runnable);
+    final Exception exception = ex.get();
+    if (exception != null) {
+      throw exception;
+    }
   }
 
   private static String getSourceRoot() {
     return "codeInsight";
   }
 
-  @DataProvider
-  public Object[][] data() {
-    return new Object[][]{{"Action", true}, {"Impl", true}, {"Intf", true}, {"Intf", false}};
+  @Parameterized.Parameters(name = "{0} : {1}")
+  public static List<Object[]> data() {
+    return Arrays.asList(new Object[]{"Action", true}, 
+                         new Object[]{"Impl", true}, 
+                         new Object[]{"Intf", true}, 
+                         new Object[]{"Intf", false});
   }
 
 
-  @Test(dataProvider = "data", enabled = false)
-  public void test(String testName, boolean createClass) throws Throwable {
-    IntentionAction resultAction = null;
-    final String createAction = QuickFixBundle.message(createClass ? "create.class.text" : "create.interface.text", testName);
-    final List<IntentionAction> actions = myFixture.getAvailableIntentions(getSourceRoot() + "/plugin" + testName + ".xml");
-    for (IntentionAction action : actions) {
-      if (Comparing.strEqual(action.getText(), createAction)) {
-        resultAction = action;
-        break;
+  @Test
+  public void runSingle() throws Throwable {
+    Runnable runnable = new Runnable() {
+      public void run() {
+        IntentionAction resultAction = null;
+        final String createAction = QuickFixBundle.message(myCreateClass ? "create.class.text" : "create.interface.text", myTestName);
+        final List<IntentionAction> actions = myFixture.getAvailableIntentions(getSourceRoot() + "/plugin" + myTestName + ".xml");
+        for (IntentionAction action : actions) {
+          if (Comparing.strEqual(action.getText(), createAction)) {
+            resultAction = action;
+            break;
+          }
+        }
+        Assert.assertNotNull(resultAction);
+        myFixture.launchAction(resultAction);
+        final Project project = myFixture.getProject();
+        Assert.assertNotNull(JavaPsiFacade.getInstance(project).findClass(myTestName, GlobalSearchScope.allScope(project)));
       }
-    }
-    Assert.assertNotNull(resultAction);
-    myFixture.launchAction(resultAction);
-    final Project project = myFixture.getProject();
-    Assert.assertNotNull(JavaPsiFacade.getInstance(project).findClass(testName, GlobalSearchScope.allScope(project)));
+    };
+    invokeTestRunnable(runnable);
   }
 }

@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -40,7 +41,14 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
   @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     final TextRange originalRange = e.getTextRange();
-    LOG.assertTrue(originalRange.getEndOffset() <= editorText.length(), getClass() + "; " + e);
+    if (originalRange.getEndOffset() > editorText.length()) {
+      throw new AssertionError("Invalid element range in " + getClass() +
+                               "; element=" + e +
+                               "; range=" + originalRange +
+                               "; length=" + editorText +
+                               "; editor=" + editor +
+                               "; committed=" + PsiDocumentManager.getInstance(e.getProject()).isCommitted(editor.getDocument()));
+    }
 
     List<TextRange> ranges = expandToWholeLine(editorText, originalRange, true);
 

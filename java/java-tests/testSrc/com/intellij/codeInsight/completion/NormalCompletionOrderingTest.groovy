@@ -76,7 +76,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     final LookupImpl lookup = invokeCompletion(getTestName(false) + ".html");
     assertPreferredItems(0, "p", "param", "pre");
     incUseCount(lookup, 2);
-    assertPreferredItems(1, "p", "pre", "param");
+    assertPreferredItems(0, "p", "pre", "param");
   }
 
   public void testUppercaseMatters2() throws Throwable {
@@ -114,10 +114,6 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testDispreferDeclared() throws Throwable {
-    checkPreferredItems(0, "aabbb", "aaa");
-  }
-
-  public void testDispreferDeclaredOfExpectedType() throws Throwable {
     checkPreferredItems(0, "aabbb", "aaa");
   }
 
@@ -456,7 +452,7 @@ interface TxANotAnno {}
     myFixture.addClass('public class fooAClass {}')
     configureNoCompletion(getTestName(false) + ".java");
     myFixture.complete(CompletionType.BASIC, 2);
-    assertPreferredItems(0, 'fooy', 'fooAClass', 'fooBar', 'foox');
+    assertPreferredItems(0, 'fooy', 'foox', 'fooAClass', 'fooBar');
   }
 
   public void testChangePreselectionOnSecondInvocation() {
@@ -614,6 +610,48 @@ interface TxANotAnno {}
     myFixture.completeBasic()
     myFixture.type('set')
     assertPreferredItems 0, 'setText', 'setOurText'
+  }
+
+  public void testPreferString() {
+    checkPreferredItems 0, 'String', 'System', 'Set'
+  }
+
+  public void testAnnotationEnum() {
+    checkPreferredItems 0, 'MyEnum.BAR', 'MyEnum', 'MyEnum.FOO'
+  }
+
+  public void testPreferClassesOfExpectedClassType() {
+    myFixture.addClass "class XException extends Exception {}"
+    checkPreferredItems 0, 'XException', 'XClass', 'XIntf'
+  }
+
+  public void testNoNumberValueOf() {
+    checkPreferredItems 0, 'value'
+  }
+
+  public void testNoBooleansInMultiplication() {
+    checkPreferredItems 0, 'fact'
+  }
+
+  public void testPreferAnnotationsToInterfaceKeyword() {
+    checkPreferredItems 0, 'Deprecated', 'Override'
+  }
+
+  public void testPreferThrownExceptionsInCatch() {
+    checkPreferredItems 0, 'FileNotFoundException', 'File'
+  }
+
+  public void testHonorFirstLetterCase() {
+    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
+    checkPreferredItems 0, 'posIdMap', 'PImageDecoder', 'PNGImageDecoder'
+  }
+
+  public void testGlobalStaticMemberStats() {
+    configureNoCompletion(getTestName(false) + ".java")
+    myFixture.complete(CompletionType.BASIC, 2)
+    assertPreferredItems 0, 'newLinkedSet0', 'newLinkedSet1', 'newLinkedSet2'
+    incUseCount lookup, 1
+    assertPreferredItems 0, 'newLinkedSet1', 'newLinkedSet0', 'newLinkedSet2'
   }
 
 }

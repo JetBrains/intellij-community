@@ -1,22 +1,21 @@
-import sys
-
-from tcunittest import TeamcityTestRunner
+from tcunittest import TeamcityTestRunner, TeamcityTestResult
 from tcmessages import TeamcityServiceMessages
-
+import sys
 from pycharm_run_utils import adjust_django_sys_path
+
+adjust_django_sys_path()
+
 from django.conf import settings
 
 if hasattr(settings, "TEST_RUNNER") and "NoseTestSuiteRunner" in settings.TEST_RUNNER:
-    from nose_utils import TeamcityNoseRunner
-
-adjust_django_sys_path()
+  from nose_utils import TeamcityNoseRunner
 
 from django.test.testcases import TestCase
 from django import VERSION
 try:
-    from django.utils import unittest
+  from django.utils import unittest
 except ImportError:
-    import unittest
+  import unittest
 
 def get_test_suite_runner():
   if hasattr(settings, "TEST_RUNNER"):
@@ -44,7 +43,7 @@ try:
   class BaseRunner(TeamcityTestRunner, BaseSuiteRunner):
     def __init__(self, stream=sys.stdout, **options):
       TeamcityTestRunner.__init__(self, stream)
-      BaseSuiteRunner.__init__(self)
+      BaseSuiteRunner.__init__(self, **options)
 
 except ImportError:
   # for Django <= 1.1 compatibility
@@ -52,9 +51,41 @@ except ImportError:
     def __init__(self, stream=sys.stdout, **options):
       TeamcityTestRunner.__init__(self, stream)
 
+
+def strclass(cls):
+  if not cls.__name__:
+    return cls.__module__
+  return "%s.%s" % (cls.__module__, cls.__name__)
+
+class DjangoTeamcityTestResult(TeamcityTestResult):
+  def __init__(self, *args, **kwargs):
+    super(DjangoTeamcityTestResult, self).__init__(**kwargs)
+
+  def _getSuite(self, test):
+    if hasattr(test, "suite"):
+      suite = strclass(test.suite)
+      suite_location = test.suite.location
+      location = test.suite.abs_location
+      if hasattr(test, "lineno"):
+        location = location + ":" + str(test.lineno)
+      else:
+        location = location + ":" + str(test.test.lineno)
+    else:
+
+      suite = strclass(test.__class__)
+      suite_location = "django_testid://" + suite
+      location = "django_testid://" + str(test.id())
+
+    return (suite, location, suite_location)
+
+
 class DjangoTeamcityTestRunner(BaseRunner):
   def __init__(self, stream=sys.stdout, **options):
-    super(DjangoTeamcityTestRunner, self).__init__(stream)
+    super(DjangoTeamcityTestRunner, self).__init__(stream, **options)
+    self.options = options
+
+  def _makeResult(self, **kwargs):
+    return DjangoTeamcityTestResult(self.stream, **kwargs)
 
   def build_suite(self, *args, **kwargs):
     EXCLUDED_APPS = getattr(settings, 'TEST_EXCLUDE', [])
@@ -72,30 +103,29 @@ class DjangoTeamcityTestRunner(BaseRunner):
     if hasattr(settings, "TEST_RUNNER") and "NoseTestSuiteRunner" in settings.TEST_RUNNER:
       from django_nose.plugin import DjangoSetUpPlugin, ResultPlugin
       from django_nose.runner import _get_plugins_from_settings
-      from nose.plugins.manager import PluginManager
       from nose.config import Config
       import nose
 
-      config = Config(plugins=PluginManager())
-      config.plugins.loadPlugins()
       result_plugin = ResultPlugin()
-      config.plugins.addPlugin(DjangoSetUpPlugin(self))
-      config.plugins.addPlugin(result_plugin)
-      for plugin in _get_plugins_from_settings():
-        config.plugins.addPlugin(plugin)
+      plugins_to_add = [DjangoSetUpPlugin(self), result_plugin]
 
-      nose.core.TestProgram(argv=suite, exit=False,
-        testRunner=TeamcityNoseRunner(config=config))
+      config = Config(plugins=nose.core.DefaultPluginManager())
+      config.plugins.addPlugins(extraplugins=plugins_to_add)
+
+      for plugin in _get_plugins_from_settings():
+        plugins_to_add.append(plugin)
+      nose.core.TestProgram(argv=suite, exit=False, addplugins=plugins_to_add,
+                            testRunner=TeamcityNoseRunner(config=config))
       return result_plugin.result
+
     else:
-      return TeamcityTestRunner.run(self, suite, **kwargs)
+      self.options.update(kwargs)
+      return TeamcityTestRunner.run(self, suite, **self.options)
 
   def run_tests(self, test_labels, extra_tests=None, **kwargs):
     if hasattr(settings, "TEST_RUNNER") and "NoseTestSuiteRunner" in settings.TEST_RUNNER:
-      return super(DjangoTeamcityTestRunner, self).run_tests(test_labels,
-        extra_tests)
-    return super(DjangoTeamcityTestRunner, self).run_tests(test_labels,
-      extra_tests, **kwargs)
+      return super(DjangoTeamcityTestRunner, self).run_tests(test_labels, extra_tests)
+    return super(DjangoTeamcityTestRunner, self).run_tests(test_labels, extra_tests, **kwargs)
 
 
 def partition_suite(suite, classes, bins):
@@ -138,33 +168,33 @@ def reorder_suite(suite, classes):
 
 
 def run_the_old_way(extra_tests, kwargs, test_labels, verbosity):
-    from django.test.simple import build_suite, build_test, get_app, get_apps, \
-        setup_test_environment, teardown_test_environment
+  from django.test.simple import build_suite, build_test, get_app, get_apps, \
+    setup_test_environment, teardown_test_environment
 
-    setup_test_environment()
-    settings.DEBUG = False
-    suite = unittest.TestSuite()
-    if test_labels:
-        for label in test_labels:
-            if '.' in label:
-                suite.addTest(build_test(label))
-            else:
-                app = get_app(label)
-                suite.addTest(build_suite(app))
-    else:
-        for app in get_apps():
-            suite.addTest(build_suite(app))
-    for test in extra_tests:
-        suite.addTest(test)
-    suite = reorder_suite(suite, (TestCase,))
-    old_name = settings.DATABASE_NAME
-    from django.db import connection
+  setup_test_environment()
+  settings.DEBUG = False
+  suite = unittest.TestSuite()
+  if test_labels:
+    for label in test_labels:
+      if '.' in label:
+        suite.addTest(build_test(label))
+      else:
+        app = get_app(label)
+        suite.addTest(build_suite(app))
+  else:
+    for app in get_apps():
+      suite.addTest(build_suite(app))
+  for test in extra_tests:
+    suite.addTest(test)
+  suite = reorder_suite(suite, (TestCase,))
+  old_name = settings.DATABASE_NAME
+  from django.db import connection
 
-    connection.creation.create_test_db(verbosity, autoclobber=False)
-    result = DjangoTeamcityTestRunner().run(suite, **kwargs)
-    connection.creation.destroy_test_db(old_name, verbosity)
-    teardown_test_environment()
-    return len(result.failures) + len(result.errors)
+  connection.creation.create_test_db(verbosity, autoclobber=False)
+  result = DjangoTeamcityTestRunner().run(suite, **kwargs)
+  connection.creation.destroy_test_db(old_name, verbosity)
+  teardown_test_environment()
+  return len(result.failures) + len(result.errors)
 
 
 def run_tests(test_labels, verbosity=1, interactive=False, extra_tests=[],
@@ -187,9 +217,14 @@ def run_tests(test_labels, verbosity=1, interactive=False, extra_tests=[],
 
   Returns the number of tests that failed.
   """
+  options = {
+    'verbosity': verbosity,
+    'interactive': interactive
+  }
+  options.update(kwargs)
   TeamcityServiceMessages(sys.stdout).testMatrixEntered()
   if VERSION[1] > 1:
-    return DjangoTeamcityTestRunner().run_tests(test_labels,
-      extra_tests=extra_tests, **kwargs)
+    return DjangoTeamcityTestRunner(**options).run_tests(test_labels,
+                                                         extra_tests=extra_tests, **options)
 
-  return run_the_old_way(extra_tests, kwargs, test_labels, verbosity)
+  return run_the_old_way(extra_tests, options, test_labels, verbosity)

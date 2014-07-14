@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,17 +29,25 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.util.Map;
 
+/**
+ * Concurrent soft key:K -> strong value:V map
+ * Null keys are allowed
+ * Null values are NOT allowed
+ */
 public final class ConcurrentSoftHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
-  private static class SoftKey<K, V> extends SoftReference<K> implements ConcurrentRefHashMap.Key<K, V> {
+  private static class SoftKey<K, V> extends SoftReference<K> implements KeyReference<K, V> {
     private final int myHash; // Hashcode of key, stored here since the key may be tossed by the GC
+    private final TObjectHashingStrategy<K> myStrategy;
     private final V value;
 
-    private SoftKey(@NotNull K k, final int hash, V v, @NotNull ReferenceQueue<K> q) {
+    private SoftKey(@NotNull K k, final int hash, @NotNull TObjectHashingStrategy<K> strategy, V v, @NotNull ReferenceQueue<K> q) {
       super(k, q);
+      myStrategy = strategy;
       value = v;
       myHash = hash;
     }
 
+    @NotNull
     @Override
     public V getValue() {
       return value;
@@ -47,12 +55,12 @@ public final class ConcurrentSoftHashMap<K, V> extends ConcurrentRefHashMap<K, V
 
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof Key)) return false;
-      Object t = get();
-      Object u = ((Key)o).get();
+      if (!(o instanceof KeyReference)) return false;
+      K t = get();
+      K u = ((KeyReference<K,V>)o).get();
       if (t == u) return true;
       if (t == null || u == null) return false;
-      return t.equals(u);
+      return myStrategy.equals(t, u);
     }
 
     public int hashCode() {
@@ -61,8 +69,8 @@ public final class ConcurrentSoftHashMap<K, V> extends ConcurrentRefHashMap<K, V
   }
 
   @Override
-  protected ConcurrentRefHashMap.Key<K, V> createKey(@NotNull K key, V value, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
-    return new SoftKey<K, V>(key, hashingStrategy.computeHashCode(key), value, myReferenceQueue);
+  protected KeyReference<K, V> createKeyReference(@NotNull K key, @NotNull V value, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+    return new SoftKey<K, V>(key, hashingStrategy.computeHashCode(key), hashingStrategy, value, myReferenceQueue);
   }
 
   public ConcurrentSoftHashMap(int initialCapacity, float loadFactor) {

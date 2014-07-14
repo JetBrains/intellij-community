@@ -1,7 +1,7 @@
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class X  {
+class X  {
     private final static String CON = "";
     String <caret>l;
     private String d;

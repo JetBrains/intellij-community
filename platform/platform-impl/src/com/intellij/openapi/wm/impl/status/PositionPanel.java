@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,7 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.util.GotoLineNumberDialog;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
@@ -124,6 +121,16 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
     updatePosition(e.getEditor());
   }
 
+  @Override
+  public void caretAdded(CaretEvent e) {
+    updatePosition(e.getEditor());
+  }
+
+  @Override
+  public void caretRemoved(CaretEvent e) {
+    updatePosition(e.getEditor());
+  }
+
   private void updatePosition(final Editor editor) {
     if (editor == null) {
       myText = "";
@@ -157,12 +164,18 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
         );
       }
       else {
-        LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
+        int caretCount = editor.getCaretModel().getCaretCount();
+        if (caretCount > 1) {
+          message.append(caretCount).append(" carets");
+        }
+        else {
+          LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
 
-        appendLogicalPosition(caret, message);
-        if (selectionModel.hasSelection()) {
-          int len = Math.abs(selectionModel.getSelectionStart() - selectionModel.getSelectionEnd());
-          if (len != 0) message.append("/").append(len);
+          appendLogicalPosition(caret, message);
+          if (selectionModel.hasSelection()) {
+            int len = Math.abs(selectionModel.getSelectionStart() - selectionModel.getSelectionEnd());
+            if (len != 0) message.append("/").append(len);
+          }
         }
       }
 

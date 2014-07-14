@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,18 +39,22 @@ public class NewGantScriptAction extends NewGroovyActionBase {
     super("Gant Script", "Create new Gant Script", JetgroovyIcons.Groovy.Gant_16x16);
   }
 
+  @Override
   protected String getActionName(PsiDirectory directory, String newName) {
     return null;
   }
 
+  @Override
   protected String getDialogPrompt() {
     return "Enter name for new Gant Script";
   }
 
+  @Override
   protected String getDialogTitle() {
     return "New Gant Script";
   }
 
+  @Override
   protected String getCommandName() {
     return "Create Gant Script";
   }
@@ -61,6 +65,7 @@ public class NewGantScriptAction extends NewGroovyActionBase {
            GantUtils.isSDKConfiguredToRun(ObjectUtils.assertNotNull(DataKeys.MODULE.getData(dataContext)));
   }
 
+  @Override
   @NotNull
   protected PsiElement[] doCreate(String newName, PsiDirectory directory) throws Exception {
     PsiFile file = createGantScriptFromTemplate(directory, newName, GroovyTemplates.GANT_SCRIPT);

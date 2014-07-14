@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public abstract class AbstractResourceRenderer<T> implements PropertyRenderer {
   protected final ColorIcon myColorIcon = new ColorIcon(10, 9);
   protected final SimpleColoredComponent myColoredComponent = new SimpleColoredComponent() {
     @Override
-    protected void doPaintIcon(Graphics2D g, Icon icon, int offset) {
+    protected void doPaintIcon(@NotNull Graphics2D g, @NotNull Icon icon, int offset) {
       g.setColor(getBackground());
       g.fillRect(offset, 0, icon.getIconWidth() + getIpad().left + myIconTextGap, getHeight());
       paintIcon(g, icon, offset + getIpad().left);

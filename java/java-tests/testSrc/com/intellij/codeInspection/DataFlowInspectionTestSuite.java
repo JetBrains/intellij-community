@@ -28,6 +28,8 @@ public class DataFlowInspectionTestSuite {
     suite.addTestSuite(DataFlowInspectionTest.class);
     suite.addTestSuite(DataFlowInspection8Test.class);
     suite.addTestSuite(DataFlowInspectionAncientTest.class);
+    suite.addTestSuite(ContractCheckTest.class);
+    suite.addTestSuite(ContractInferenceFromSourceTest.class);
     suite.addTestSuite(SliceTreeTest.class);
     suite.addTestSuite(SliceBackwardTest.class);
     suite.addTestSuite(SmartTypeCompletionDfaTest.class);

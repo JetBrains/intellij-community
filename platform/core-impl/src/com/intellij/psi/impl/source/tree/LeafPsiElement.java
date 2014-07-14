@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,12 +41,12 @@ import org.jetbrains.annotations.NotNull;
 public class LeafPsiElement extends LeafElement implements PsiElement, NavigationItem {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LeafPsiElement");
 
-  public LeafPsiElement(IElementType type, CharSequence text) {
+  public LeafPsiElement(@NotNull IElementType type, CharSequence text) {
     super(type, text);
   }
 
   @Deprecated
-  public LeafPsiElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
+  public LeafPsiElement(@NotNull IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
     super(type, table.intern(buffer, startOffset, endOffset));
   }
 

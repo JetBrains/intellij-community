@@ -52,6 +52,9 @@ public class TestRunnerUtil {
           Vector vector;
           try {
             suiteName = reader.readLine();
+
+            reader.readLine(); //category
+
             vector = new Vector();
             String line;
             while ((line = reader.readLine()) != null) {

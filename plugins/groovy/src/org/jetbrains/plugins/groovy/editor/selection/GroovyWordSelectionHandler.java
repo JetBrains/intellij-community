@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
@@ -47,7 +47,7 @@ public class GroovyWordSelectionHandler extends ExtendWordSelectionHandlerBase {
 
   @Override
   public boolean canSelect(PsiElement e) {
-    return (e instanceof GroovyPsiElement || e.getLanguage() == GroovyFileType.GROOVY_LANGUAGE) &&
+    return (e instanceof GroovyPsiElement || e.getLanguage() == GroovyLanguage.INSTANCE) &&
            !(e.getNode().getElementType() == GroovyTokenTypes.mDOLLAR);
   }
 

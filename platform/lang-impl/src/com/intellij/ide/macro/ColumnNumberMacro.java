@@ -26,6 +26,6 @@ public final class ColumnNumberMacro extends EditorMacro {
 
   @Override
   protected String expand(Editor editor) {
-    return String.valueOf(editor.getCaretModel().getLogicalPosition().column + 1);
+    return getColumnNumber(editor, editor.getCaretModel().getLogicalPosition());
   }
 }

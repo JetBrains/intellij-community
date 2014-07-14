@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +44,12 @@ public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
       public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
         fireChanged(new ChangeEvent(myTabs));
       }
-    }).getPresentation().setPaintBorder(1, 1, 1, 1).setTabSidePaintBorder(2).setPaintFocus(false).setGhostsAlwaysVisible(true);
+    }).getPresentation()
+      .setPaintBorder(1, 1, 1, 1)
+      .setTabSidePaintBorder(2)
+      .setPaintFocus(UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())
+      .setAlwaysPaintSelectedTab(UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())
+      .setGhostsAlwaysVisible(true);
 
     setTabPlacement(tabPlacement);
   }

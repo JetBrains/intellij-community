@@ -1,6 +1,6 @@
 import org.jetbrains.annotations.Nullable;
 
-public class BrokenAlignment {
+class BrokenAlignment {
 
   String unknown(String s) { return s; }
 

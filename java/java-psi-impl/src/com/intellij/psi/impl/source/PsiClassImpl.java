@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,17 +23,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
-import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.scope.ElementClassHint;
-import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
@@ -42,7 +40,6 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,12 +53,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiClassImpl");
 
   private final ClassInnerStuffCache myInnersCache = new ClassInnerStuffCache(this);
-
-  private volatile PsiMethod myValuesMethod;
-  private volatile PsiMethod myValueOfMethod;
   private volatile String myCachedName;
-  @NonNls private static final String VALUES_METHOD = "values";
-  @NonNls private static final String VALUE_OF_METHOD = "valueOf";
 
   public PsiClassImpl(final PsiClassStub stub) {
     this(stub, JavaStubElementTypes.CLASS);
@@ -102,8 +94,6 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   private void dropCaches() {
     myInnersCache.dropCaches();
     myCachedName = null;
-    myValueOfMethod = null;
-    myValuesMethod = null;
   }
 
   @Override
@@ -494,29 +484,11 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     if (isEnum()) {
-      String name = getName();
-      if (name != null) {
-        try {
-          final NameHint nameHint = processor.getHint(NameHint.KEY);
-          final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
-          if (nameHint == null || VALUES_METHOD.equals(nameHint.getName(state))) {
-            if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)) {
-              if (!processor.execute(getValuesMethod(), ResolveState.initial())) return false;
-            }
-          }
-          if (nameHint == null || VALUE_OF_METHOD.equals(nameHint.getName(state))) {
-            if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)) {
-              if (!processor.execute(getValueOfMethod(), ResolveState.initial())) return false;
-            }
-          }
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }
+      if (!PsiClassImplUtil.processDeclarationsInEnum(processor, state, myInnersCache)) return false;
     }
 
-    return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, null, lastParent, place, PsiUtil.getLanguageLevel(place), false);
+    LanguageLevel level = PsiUtil.getLanguageLevel(place);
+    return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, null, lastParent, place, level, false);
   }
 
   @Override
@@ -680,9 +652,8 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   @Nullable
   public PsiQualifiedNamedElement getContainer() {
     final PsiFile file = getContainingFile();
-    final PsiDirectory dir;
-    return file == null ? null : (dir = file.getContainingDirectory()) == null
-                                 ? null : JavaDirectoryService.getInstance().getPackage(dir);
+    final PsiDirectory dir = file.getContainingDirectory();
+    return dir == null ? null : JavaDirectoryService.getInstance().getPackage(dir);
   }
 
   @Override
@@ -706,23 +677,6 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Nullable
   public PsiMethod getValuesMethod() {
-    PsiMethod method = myValuesMethod;
-    if (method == null && isEnum() && getName() != null) {
-      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-      final PsiMethod valuesMethod = elementFactory.createMethodFromText("public static " + getName() + "[] values() {}", this);
-      myValuesMethod = method = new LightMethod(getManager(), valuesMethod, this);
-    }
-    return method;
-  }
-
-  @Nullable
-  public PsiMethod getValueOfMethod() {
-    PsiMethod method = myValueOfMethod;
-    if (method == null && isEnum() && getName() != null) {
-      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-      final PsiMethod valuesMethod = elementFactory.createMethodFromText("public static " + getName() + " valueOf(String name) throws IllegalArgumentException {}", this);
-      myValueOfMethod = method = new LightMethod(getManager(), valuesMethod, this);
-    }
-    return method;
+    return myInnersCache.getValuesMethod();
   }
 }

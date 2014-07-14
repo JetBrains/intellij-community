@@ -60,7 +60,7 @@ public class PathMacroEditor extends DialogWrapper {
         return component.getText();
       }
 
-      public void setText(JTextField component, String text) {
+      public void setText(JTextField component, @NotNull String text) {
         final int len = text.length();
         if (len > 0 && text.charAt(len - 1) == File.separatorChar) {
           text = text.substring(0, len - 1);

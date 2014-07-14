@@ -20,27 +20,20 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import com.intellij.execution.JavaRunConfigurationExtensionManager;
-import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.junit.InheritorChooser;
-import com.intellij.execution.junit.JUnitUtil;
-import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
-import com.intellij.execution.junit2.info.LocationUtil;
 import com.intellij.execution.junit2.info.MethodLocation;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.util.TestNGUtil;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -88,7 +81,12 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
           super.runForClass(aClass, psiMethod, context, performRunnable);
         }
       };
-      if (inheritorChooser.runMethodInAbstractClass(fromContext, performRunnable, psiMethod, containingClass)) return;
+      if (inheritorChooser.runMethodInAbstractClass(fromContext, performRunnable, psiMethod, containingClass, new Condition<PsiClass>() {
+        @Override
+        public boolean value(PsiClass aClass) {
+          return TestNGUtil.hasTest(aClass);
+        }
+      })) return;
     }
     super.onFirstRun(configuration, fromContext, performRunnable);
   }
@@ -97,8 +95,7 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
   protected boolean setupConfigurationFromContext(TestNGConfiguration configuration,
                                                   ConfigurationContext context,
                                                   Ref<PsiElement> sourceElement) {
-    final PsiElement[] elements = context != null ? LangDataKeys.PSI_ELEMENT_ARRAY.getData(context.getDataContext()) : null;
-    if (elements != null && TestNGPatternConfigurationProducer.collectTestMembers(elements).size() > 1) {
+    if (TestNGPatternConfigurationProducer.isMultipleElementsSelected(context)) {
       return false;
     }
 

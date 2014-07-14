@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,84 +16,43 @@
 
 package com.intellij.execution.runners;
 
-import com.intellij.execution.*;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.Executor;
+import com.intellij.execution.RunProfileStarter;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author spleaner
- */
-public abstract class GenericProgramRunner<Settings extends RunnerSettings> implements ProgramRunner<Settings> {
-
+public abstract class GenericProgramRunner<Settings extends RunnerSettings> extends BaseProgramRunner<Settings> {
   @Deprecated
   public static final DataKey<RunContentDescriptor> CONTENT_TO_REUSE_DATA_KEY = DataKey.create("contentToReuse");
-  @Deprecated @NonNls public static final String CONTENT_TO_REUSE = CONTENT_TO_REUSE_DATA_KEY.getName();
+  @SuppressWarnings({"UnusedDeclaration", "deprecation"}) @Deprecated @NonNls
+  public static final String CONTENT_TO_REUSE = CONTENT_TO_REUSE_DATA_KEY.getName();
 
   @Override
-  @Nullable
-  public Settings createConfigurationData(final ConfigurationInfoProvider settingsProvider) {
-    return null;
-  }
-
-  @Override
-  public void checkConfiguration(final RunnerSettings settings, final ConfigurationPerRunnerSettings configurationPerRunnerSettings)
-    throws RuntimeConfigurationException {
-  }
-
-  @Override
-  public void onProcessStarted(final RunnerSettings settings, final ExecutionResult executionResult) {
-  }
-
-  @Override
-  @Nullable
-  public SettingsEditor<Settings> getSettingsEditor(final Executor executor, final RunConfiguration configuration) {
-    return null;
-  }
-
-  @Override
-  public void execute(@NotNull final ExecutionEnvironment environment) throws ExecutionException {
-    execute(environment, null);
-  }
-
-  @Override
-  public void execute(@NotNull final ExecutionEnvironment env, @Nullable final Callback callback)
-      throws ExecutionException {
-
-    final Project project = env.getProject();
-
-    final RunProfileState state = env.getState();
-    if (state == null) {
-      return;
-    }
-
-    RunManager.getInstance(project).refreshUsagesList(env.getRunProfile());
-
+  protected void execute(@NotNull ExecutionEnvironment environment, @Nullable final Callback callback, @NotNull Project project, @NotNull RunProfileState state)
+    throws ExecutionException {
     ExecutionManager.getInstance(project).startRunProfile(new RunProfileStarter() {
       @Override
       public RunContentDescriptor execute(@NotNull Project project,
                                           @NotNull Executor executor,
                                           @NotNull RunProfileState state,
                                           @Nullable RunContentDescriptor contentToReuse,
-                                          @NotNull ExecutionEnvironment env) throws ExecutionException {
-        final RunContentDescriptor descriptor = doExecute(project, state, contentToReuse, env);
-        if (descriptor != null) {
-          descriptor.setExecutionId(env.getExecutionId());
-        }
-        if (callback != null) callback.processStarted(descriptor);
-        return descriptor;
+                                          @NotNull ExecutionEnvironment environment) throws ExecutionException {
+        return postProcess(environment, doExecute(project, state, contentToReuse, environment), callback);
       }
-    }, state, env);
+    }, state, environment);
   }
 
   @Nullable
-  protected abstract RunContentDescriptor doExecute(final Project project, final RunProfileState state,
-                                                    final RunContentDescriptor contentToReuse,
-                                                    final ExecutionEnvironment env) throws ExecutionException;
+  protected abstract RunContentDescriptor doExecute(@NotNull Project project, @NotNull RunProfileState state,
+                                                    @Nullable RunContentDescriptor contentToReuse,
+                                                    @NotNull ExecutionEnvironment environment) throws ExecutionException;
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,28 +60,28 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
       }
     };
 
-  protected static CvsActionVisibility.Condition FILES_ARENT_UNDER_CVS =
+  protected final static CvsActionVisibility.Condition FILES_ARENT_UNDER_CVS =
     new CvsActionVisibility.Condition() {
       public boolean isPerformedOn(CvsContext context) {
         return CvsUtil.filesArentUnderCvs(getAllSelectedFiles(context));
       }
     };
 
-  public static CvsActionVisibility.Condition FILES_ARE_UNDER_CVS =
+  public static final CvsActionVisibility.Condition FILES_ARE_UNDER_CVS =
     new CvsActionVisibility.Condition() {
       public boolean isPerformedOn(CvsContext context) {
         return CvsUtil.filesAreUnderCvs(getAllSelectedFiles(context));
       }
     };
 
-  public static CvsActionVisibility.Condition FILES_EXIST_IN_CVS =
+  public static final CvsActionVisibility.Condition FILES_EXIST_IN_CVS =
     new CvsActionVisibility.Condition() {
       public boolean isPerformedOn(CvsContext context) {
         return CvsUtil.filesExistInCvs(getAllSelectedFiles(context));
       }
     };
 
-  public static CvsActionVisibility.Condition FILES_ARE_NOT_DELETED =
+  public static final CvsActionVisibility.Condition FILES_ARE_NOT_DELETED =
     new CvsActionVisibility.Condition() {
       public boolean isPerformedOn(CvsContext context) {
         return CvsUtil.filesAreNotDeleted(getAllSelectedFiles(context));

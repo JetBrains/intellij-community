@@ -108,7 +108,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final PsiMethod myMethod = (PsiMethod)startElement;
 
     if (!FileModificationService.getInstance().prepareFileForWrite(myMethod.getContainingFile())) return;
-    PsiType myReturnType = myReturnTypePointer.getType();
+    final PsiType myReturnType = myReturnTypePointer.getType();
     if (myReturnType == null) return;
     if (myFixWholeHierarchy) {
       final PsiMethod superMethod = myMethod.findDeepestSuperMethod();
@@ -202,12 +202,17 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
   @Nullable
-  private PsiMethod[] getChangeRoots(final PsiMethod method) {
+  private PsiMethod[] getChangeRoots(final PsiMethod method, @NotNull PsiType returnType) {
     if (!myFixWholeHierarchy) return new PsiMethod[]{method};
 
     final PsiMethod[] methods = method.findDeepestSuperMethods();
 
     if (methods.length > 0) {
+      for (PsiMethod psiMethod : methods) {
+        if (returnType.equals(psiMethod.getReturnType())) {
+          return new PsiMethod[] {method};
+        }
+      }
       return methods;
     }
     // no - only base
@@ -215,8 +220,8 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
   @NotNull
-  private List<PsiMethod> changeReturnType(final PsiMethod method, final PsiType returnType) {
-    final PsiMethod[] methods = getChangeRoots(method);
+  private List<PsiMethod> changeReturnType(final PsiMethod method, @NotNull final PsiType returnType) {
+    final PsiMethod[] methods = getChangeRoots(method, returnType);
     if (methods == null) {
       // canceled
       return Collections.emptyList();

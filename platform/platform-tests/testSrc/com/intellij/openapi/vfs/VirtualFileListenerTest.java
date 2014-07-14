@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.PlatformLangTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -33,7 +34,7 @@ public class VirtualFileListenerTest extends PlatformLangTestCase {
     final Ref<Boolean> eventFired = Ref.create(false);
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
       @Override
-      public void fileCreated(VirtualFileEvent event) {
+      public void fileCreated(@NotNull VirtualFileEvent event) {
         eventFired.set(true);
       }
     }, myTestRootDisposable);

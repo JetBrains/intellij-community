@@ -1,4 +1,4 @@
-public interface Nat {
+interface Nat {
     interface Nil extends Nat {}
 }
 

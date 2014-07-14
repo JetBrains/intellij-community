@@ -6,7 +6,7 @@ def foo():
 
 def bar():
   """a"""
-  <warning descr="Statement seems to have no effect">"a"</warning>
+  "a"
 
 [allpats.extend(patlist) for patlist in pats.values()]
 
@@ -30,11 +30,11 @@ x = 3
 """@type: int"""
 
 foo()
-<warning descr="Statement seems to have no effect">"""fake docstring"""</warning>
+"""fake docstring"""
 
 def foo():
   y = 2
-  <warning descr="Docstring seems to be misplaced">"""fake docstring"""</warning>
+  """fake docstring"""
 
 # PY-10755
 def is_good(a):

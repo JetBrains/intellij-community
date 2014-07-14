@@ -76,7 +76,10 @@ public class HtmlParsing {
         error = flushError(error);
         parseProcessingInstruction();
       }
-      else if (tt == XmlTokenType.XML_REAL_WHITE_SPACE || tt == XmlTokenType.XML_CHAR_ENTITY_REF || tt == XmlTokenType.XML_DATA_CHARACTERS) {
+      else if (tt == XmlTokenType.XML_CHAR_ENTITY_REF || tt == XmlTokenType.XML_ENTITY_REF_TOKEN) {
+        parseReference();
+      }
+      else if (tt == XmlTokenType.XML_REAL_WHITE_SPACE || tt == XmlTokenType.XML_DATA_CHARACTERS) {
         error = flushError(error);
         advance();
       } else if (tt == XmlTokenType.XML_END_TAG_START) {
@@ -248,11 +251,15 @@ public class HtmlParsing {
         if (isOptionalTagEnd) {
           boolean foundMatch = childTerminatesParentInStack(childName, true);
           if (foundMatch) {
-            myTagMarkersStack.pop();
-            myTagNamesStack.pop();
+            // allow only one promotion per tag, otherwise last row in table
+            // will make it up to the first one moving all tags in between under first node
+            if (!canTerminate(childName, tagName)) {
+              myTagMarkersStack.pop();
+              myTagNamesStack.pop();
 
-            myTagMarkersStack.push(childMarker);
-            myTagNamesStack.push(childName);
+              myTagMarkersStack.push(childMarker);
+              myTagNamesStack.push(childName);
+            }
 
             tag.doneBefore(XmlElementType.HTML_TAG, childMarker);
             return true;
@@ -378,24 +385,22 @@ public class HtmlParsing {
   }
 
   private static boolean canTerminate(final String childTagName,final String tagName) {
-    // TODO: make hash
-    return !(tagName.equalsIgnoreCase(TR_TAG) && childTagName.equalsIgnoreCase(TD_TAG)) ||
-           tagName.equalsIgnoreCase(TABLE_TAG) && childTagName.equalsIgnoreCase(TR_TAG);
+    return childTagName.equals(tagName) || HtmlUtil.canTerminate(childTagName, tagName);
   }
 
   private boolean childTerminatesParentInStack(final String childName, final boolean terminateOnNonOptionalTag) {
-    boolean isTD = TD_TAG.equals(childName);
-    boolean isTR = TR_TAG.equals(childName);
+    boolean isCell = TD_TAG.equals(childName) || "th".equals(childName);
+    boolean isRow = TR_TAG.equals(childName);
 
     for (int i = myTagNamesStack.size() - 1; i >= 0; i--) {
       String parentName = myTagNamesStack.get(i);
       if (terminateOnNonOptionalTag && !HtmlUtil.isOptionalEndForHtmlTagL(parentName)) return false;
-      if (isTD && (TR_TAG.equals(parentName) || TABLE_TAG.equals(parentName)) ||
-          isTR && TABLE_TAG.equals(parentName)) {
+      if (isCell && (TR_TAG.equals(parentName) || TABLE_TAG.equals(parentName)) ||
+          isRow && TABLE_TAG.equals(parentName)) {
         return false;
       }
 
-      if (childName.equals(parentName)) {
+      if (canTerminate(childName, parentName)) {
         return true;
       }
     }

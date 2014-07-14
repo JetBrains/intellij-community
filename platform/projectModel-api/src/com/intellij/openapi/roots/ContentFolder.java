@@ -28,9 +28,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface ContentFolder extends Synthetic {
   /**
-   * Returns the root directory for this root.
+   * Returns the root file or directory for this root.
    *
-   * @return the directory, or null if the source path is invalid.
+   * @return the file or directory, or null if the source path is invalid.
    */
   @Nullable
   VirtualFile getFile();
@@ -44,9 +44,9 @@ public interface ContentFolder extends Synthetic {
   ContentEntry getContentEntry();
 
   /**
-   * Returns the URL of the root directory for this root.
+   * Returns the URL of the root file or directory for this root.
    *
-   * @return the root directory URL.
+   * @return the root file or directory URL.
    */
   @NotNull
   String getUrl();

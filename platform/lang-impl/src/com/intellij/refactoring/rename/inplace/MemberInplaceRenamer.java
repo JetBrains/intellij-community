@@ -229,6 +229,12 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       renameProcessor = new RenameProcessor(myProject, element, newName,
                                             elementProcessor.isToSearchInComments(element),
                                             elementProcessor.isToSearchForTextOccurrences(element)){
+      @Nullable
+      @Override
+      protected String getRefactoringId() {
+        return "refactoring.inplace.rename";
+      }
+
       @Override
       public void doRun() {
         try {
@@ -275,14 +281,15 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
         if (Comparing.strEqual(myOldName, ((PsiNameIdentifierOwner)mySubstituted).getName())) return mySubstituted;
 
         final RangeMarker rangeMarker = mySubstitutedRange != null ? mySubstitutedRange : myRenameOffset;
-        if (rangeMarker != null) return PsiTreeUtil.getParentOfType(mySubstituted.getContainingFile().findElementAt(rangeMarker.getStartOffset()), PsiNameIdentifierOwner.class);
+        if (rangeMarker != null)
+          return PsiTreeUtil.findElementOfClassAtRange(mySubstituted.getContainingFile(), rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), PsiNameIdentifierOwner.class);
       }
       return mySubstituted;
     }
     if (mySubstitutedRange != null) {
       final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
       if (psiFile != null) {
-        return PsiTreeUtil.getParentOfType(psiFile.findElementAt(mySubstitutedRange.getStartOffset()), PsiNameIdentifierOwner.class);
+        return PsiTreeUtil.findElementOfClassAtRange(psiFile, mySubstitutedRange.getStartOffset(), mySubstitutedRange.getEndOffset(), PsiNameIdentifierOwner.class);
       }
     }
     return getVariable();

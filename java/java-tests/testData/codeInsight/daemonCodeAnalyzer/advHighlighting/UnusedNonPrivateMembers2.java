@@ -1,4 +1,4 @@
-public class WithMain {
+class WithMain {
 
   public static void main(String[] args){
 

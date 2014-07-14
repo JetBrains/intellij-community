@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,10 @@ public interface PsiScopeProcessor {
    * @param state    current state of resolver.
    * @return false to stop processing.
    */
-  boolean execute(@NotNull PsiElement element, ResolveState state);
+  boolean execute(@NotNull PsiElement element, @NotNull ResolveState state);
 
   @Nullable
   <T> T getHint(@NotNull Key<T> hintKey);
 
-  void handleEvent(Event event, @Nullable Object associated);
+  void handleEvent(@NotNull Event event, @Nullable Object associated);
 }

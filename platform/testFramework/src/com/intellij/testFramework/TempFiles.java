@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,13 +43,15 @@ public class TempFiles {
     return getVFileByFile(createTempFile(prefix, postfix));
   }
 
+  @NotNull
   public File createTempFile(@NotNull String prefix) {
-    return createTempFile(prefix, "_Temp_File_");
+    return createTempFile(prefix, null);
   }
 
-  public File createTempFile(@NotNull String prefix, String postfix) {
+  @NotNull
+  public File createTempFile(@NotNull String prefix, String suffix) {
     try {
-      File tempFile = FileUtil.createTempFile(prefix, postfix);
+      File tempFile = FileUtil.createTempFile(prefix, suffix);
       tempFileCreated(tempFile);
       getVFileByFile(tempFile);
       return tempFile;
@@ -69,10 +70,12 @@ public class TempFiles {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
   }
 
+  @NotNull
   public File createTempDir() {
     return createTempDir("dir");
   }
 
+  @NotNull
   private File createTempDir(@NotNull String prefix) {
     try {
       File dir = FileUtil.createTempDirectory(prefix, "test",false);
@@ -95,13 +98,6 @@ public class TempFiles {
     return getVFileByFile(createTempDir(prefix));
   }
 
-  public String createTempPath() {
-    File tempFile = createTempFile("xxx");
-    String absolutePath = tempFile.getAbsolutePath();
-    Assert.assertTrue(absolutePath, tempFile.delete());
-    return absolutePath;
-  }
-
   public void deleteAll() {
     for (File file : myFilesToDelete) {
       if (!FileUtil.delete(file)) {
@@ -110,7 +106,7 @@ public class TempFiles {
     }
   }
 
-  public VirtualFile createVFile(VirtualFile parentDir, String name, String text) {
+  public VirtualFile createVFile(@NotNull VirtualFile parentDir, @NotNull String name, @NotNull String text) {
     try {
       final VirtualFile virtualFile = parentDir.createChildData(this, name);
       VfsUtil.saveText(virtualFile, text + "\n");

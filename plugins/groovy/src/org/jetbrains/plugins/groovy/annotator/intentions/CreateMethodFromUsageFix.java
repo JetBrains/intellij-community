@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -33,8 +33,9 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.StaticChecker;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
 /**
@@ -46,18 +47,20 @@ public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implement
     super(refExpression);
   }
 
+  @Override
   @NotNull
   public String getText() {
     return GroovyBundle.message("create.method.from.usage", getMethodName());
   }
 
+  @Override
   protected void invokeImpl(Project project, @NotNull PsiClass targetClass) {
     final JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), targetClass.getProject());
     assert factory != null;
     PsiMethod method = factory.createMethod(getMethodName(), PsiType.VOID);
 
     final GrReferenceExpression ref = getRefExpr();
-    if (StaticChecker.isInStaticContext(ref, targetClass)) {
+    if (GrStaticChecker.isInStaticContext(ref, targetClass)) {
       method.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
     }
 
@@ -98,7 +101,7 @@ public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implement
   }
 
   protected boolean shouldBeAbstract(PsiClass aClass) {
-    return aClass.isInterface();
+    return aClass.isInterface() && !GrTraitUtil.isTrait(aClass);
   }
 
   @Nullable
@@ -124,7 +127,7 @@ public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implement
       final PsiParameter p = factory.createParameter("o", argType);
       parameterList.add(p);
       TypeConstraint[] constraints = {SupertypeConstraint.create(argType)};
-      boolean isGroovy = method.getLanguage() == GroovyFileType.GROOVY_LANGUAGE;
+      boolean isGroovy = method.getLanguage() == GroovyLanguage.INSTANCE;
       paramTypesExpressions[i] = new ChooseTypeExpression(constraints, method.getManager(), method.getResolveScope(), isGroovy);
     }
     return paramTypesExpressions;

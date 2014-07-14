@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -140,8 +143,13 @@ public class ModuleRootModificationUtil {
     });
   }
 
-  public static void updateModel(@NotNull Module module, @NotNull Consumer<ModifiableRootModel> task) {
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+  public static void updateModel(@NotNull final Module module, @NotNull Consumer<ModifiableRootModel> task) {
+    final ModifiableRootModel model = ApplicationManager.getApplication().runReadAction(new Computable<ModifiableRootModel>() {
+      @Override
+      public ModifiableRootModel compute() {
+        return ModuleRootManager.getInstance(module).getModifiableModel();
+      }
+    });
     try {
       task.consume(model);
       doWriteAction(new Runnable() {
@@ -159,6 +167,28 @@ public class ModuleRootModificationUtil {
       model.dispose();
       throw e;
     }
+  }
+
+  public static void updateExcludedFolders(final Module module,
+                                                        @NotNull final VirtualFile contentRoot,
+                                                        final Collection<String> urlsToUnExclude,
+                                                        final Collection<String> urlsToExclude) {
+    updateModel(module, new Consumer<ModifiableRootModel>() {
+      @Override
+      public void consume(ModifiableRootModel modifiableModel) {
+        for (final ContentEntry contentEntry : modifiableModel.getContentEntries()) {
+          if (contentRoot.equals(contentEntry.getFile())) {
+            for (String url : urlsToUnExclude) {
+              contentEntry.removeExcludeFolder(url);
+            }
+            for (String url : urlsToExclude) {
+              contentEntry.addExcludeFolder(url);
+            }
+            break;
+          }
+        }
+      }
+    });
   }
 
   private static void doWriteAction(final Runnable action) {

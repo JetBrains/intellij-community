@@ -46,7 +46,7 @@ public abstract class ExecutableValidator {
 
   private static final Logger LOG = Logger.getInstance(ExecutableValidator.class);
 
-  private final NotificationGroup myNotificationGroup = new NotificationGroup("External Executable Critical Failures",
+  private static final NotificationGroup ourNotificationGroup = new NotificationGroup("External Executable Critical Failures",
                                                                               STICKY_BALLOON, true);
   @NotNull protected final Project myProject;
   @NotNull private final NotificationsManager myNotificationManager;
@@ -90,9 +90,22 @@ public abstract class ExecutableValidator {
       commandLine.setExePath(executable);
       CapturingProcessHandler handler = new CapturingProcessHandler(commandLine.createProcess(), CharsetToolkit.getDefaultSystemCharset());
       ProcessOutput result = handler.runProcess(60 * 1000);
-      return !result.isTimeout() && (result.getExitCode() == 0) && result.getStderr().isEmpty();
+      boolean timeout = result.isTimeout();
+      int exitCode = result.getExitCode();
+      String stderr = result.getStderr();
+      if (timeout) {
+        LOG.warn("Validation of " + executable + " failed with a timeout");
+      }
+      if (exitCode != 0) {
+        LOG.warn("Validation of " + executable + " failed with non-zero exit code: " + exitCode);
+      }
+      if (!stderr.isEmpty()) {
+        LOG.warn("Validation of " + executable + " failed with a non-empty error output: " + stderr);
+      }
+      return !timeout && exitCode == 0 && stderr.isEmpty();
     }
-    catch (Throwable ignored) {
+    catch (Throwable t) {
+      LOG.warn(t);
       return false;
     }
   }
@@ -200,7 +213,7 @@ public abstract class ExecutableValidator {
 
   private class ExecutableNotValidNotification extends Notification {
     private ExecutableNotValidNotification() {
-      super(myNotificationGroup.getDisplayId(), "", prepareDescription(), NotificationType.ERROR, new NotificationListener.Adapter() {
+      super(ourNotificationGroup.getDisplayId(), "", prepareDescription(), NotificationType.ERROR, new NotificationListener.Adapter() {
         @Override
         protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
           showSettingsAndExpireIfFixed(notification);

@@ -19,16 +19,16 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
-import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiElement;
 
 /**
  * @author max
  */
 public class CheckReturnValueInstruction extends Instruction {
-  private final PsiReturnStatement myReturn;
+  private final PsiElement myReturnValue;
 
-  public CheckReturnValueInstruction(final PsiReturnStatement aReturn) {
-    myReturn = aReturn;
+  public CheckReturnValueInstruction(final PsiElement returnValue) {
+    myReturnValue = returnValue;
   }
 
   @Override
@@ -36,8 +36,8 @@ public class CheckReturnValueInstruction extends Instruction {
     return visitor.visitCheckReturnValue(this, runner, stateBefore);
   }
 
-  public PsiReturnStatement getReturn() {
-    return myReturn;
+  public PsiElement getReturn() {
+    return myReturnValue;
   }
 
   public String toString() {

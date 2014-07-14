@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
+import org.intellij.plugins.intelliLang.inject.java.InjectionCache;
 import org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.jetbrains.annotations.NotNull;
@@ -52,9 +53,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -64,10 +65,12 @@ import java.util.List;
 public class GrConcatenationAwareInjector implements ConcatenationAwareInjector {
   private final LanguageInjectionSupport mySupport;
   private final Configuration myConfiguration;
+  private final Project myProject;
 
   @SuppressWarnings("UnusedParameters")
   public GrConcatenationAwareInjector(Configuration configuration, Project project, TemporaryPlacesRegistry temporaryPlacesRegistry) {
     myConfiguration = configuration;
+    myProject = project;
     mySupport = InjectorUtils.findNotNullInjectionSupport(GroovyLanguageInjectionSupport.GROOVY_SUPPORT_ID);
   }
 
@@ -89,10 +92,23 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
         InjectorUtils.registerSupport(mySupport, settingsAvailable, registrar);
         InjectorUtils.putInjectedFileUserData(registrar, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, unparsable);
       }
+
+      @Override
+      protected boolean areThereInjectionsWithName(String methodName, boolean annoOnly) {
+        if (getAnnotatedElementsValue().contains(methodName)) {
+          return true;
+        }
+        if (!annoOnly && getXmlAnnotatedElementsValue().contains(methodName)) {
+          return true;
+        }
+        return false;
+      }
+
     }.processInjections();
   }
 
-  private static String getStringPresentation(PsiElement operand) {
+  @NotNull
+  private static String getStringPresentation(@Nullable PsiElement operand) {
     if (operand instanceof GrStringInjection) {
       return operand.getText();
     }
@@ -116,7 +132,7 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
     private boolean myShouldStop;
     private boolean myUnparsable;
 
-    public InjectionProcessor(Configuration configuration, LanguageInjectionSupport support, PsiElement... operands) {
+    public InjectionProcessor(@NotNull Configuration configuration, @NotNull LanguageInjectionSupport support, @NotNull PsiElement... operands) {
       myConfiguration = configuration;
       mySupport = support;
       myOperands = operands;
@@ -131,13 +147,14 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
       final LinkedList<PsiElement> places = new LinkedList<PsiElement>();
       places.add(firstOperand);
       final GrInjectionUtil.AnnotatedElementVisitor visitor = new GrInjectionUtil.AnnotatedElementVisitor() {
+        @Override
         public boolean visitMethodParameter(GrExpression expression, GrCall methodCall) {
           final GrArgumentList list = methodCall.getArgumentList();
           assert list != null;
 
           final String methodName;
-          if (methodCall instanceof GrMethodCallExpression) {
-            GrExpression invoked = ((GrMethodCallExpression)methodCall).getInvokedExpression();
+          if (methodCall instanceof GrMethodCall) {
+            GrExpression invoked = ((GrMethodCall)methodCall).getInvokedExpression();
             final String referenceName = invoked instanceof GrReferenceExpression? ((GrReferenceExpression)invoked).getReferenceName() : null;
             if ("super".equals(referenceName) || "this".equals(referenceName)) { // constructor call
               final PsiClass psiClass = PsiTreeUtil.getParentOfType(methodCall, PsiClass.class, true);
@@ -170,6 +187,7 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
           return false;
         }
 
+        @Override
         public boolean visitMethodReturnStatement(GrReturnStatement parent, PsiMethod method) {
           if (areThereInjectionsWithName(method.getName(), false)) {
             process(method, method, -1);
@@ -177,6 +195,7 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
           return false;
         }
 
+        @Override
         public boolean visitVariable(PsiVariable variable) {
           if (myConfiguration.getAdvancedConfiguration().getDfaOption() != Configuration.DfaOption.OFF && visitedVars.add(variable)) {
             ReferencesSearch.search(variable, searchScope).forEach(new Processor<PsiReference>() {
@@ -203,6 +222,7 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
           return false;
         }
 
+        @Override
         public boolean visitAnnotationParameter(GrAnnotationNameValuePair nameValuePair, PsiAnnotation psiAnnotation) {
           final String paramName = nameValuePair.getName();
           final String methodName = paramName != null ? paramName : PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME;
@@ -216,6 +236,7 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
           return false;
         }
 
+        @Override
         public boolean visitReference(GrReferenceExpression expression) {
           if (myConfiguration.getAdvancedConfiguration().getDfaOption() == Configuration.DfaOption.OFF) return true;
           final PsiElement e = expression.resolve();
@@ -384,4 +405,12 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
     }
   }
 
+  public Collection<String> getAnnotatedElementsValue() {
+    // note: external annotations not supported
+    return InjectionCache.getInstance(myProject).getAnnoIndex();
+  }
+
+  private Collection<String> getXmlAnnotatedElementsValue() {
+    return InjectionCache.getInstance(myProject).getXmlIndex();
+  }
 }

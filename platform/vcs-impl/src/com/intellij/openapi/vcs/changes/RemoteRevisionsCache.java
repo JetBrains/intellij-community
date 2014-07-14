@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,11 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
@@ -56,12 +55,12 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
   private final Object myLock;
   private final Map<String, RemoteDifferenceStrategy> myKinds;
   private final ControlledCycle myControlledCycle;
-  private final MessageBusConnection myConnection;
 
   public static RemoteRevisionsCache getInstance(final Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetService(project, RemoteRevisionsCache.class);
   }
 
+  @SuppressWarnings("UnusedDeclaration") // initialized as a Service
   private RemoteRevisionsCache(final Project project) {
     myProject = project;
     myLock = new Object();
@@ -72,15 +71,11 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     myChangeDecorator = new RemoteStatusChangeNodeDecorator(this);
 
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    myConnection = myProject.getMessageBus().connect();
-    myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
-    myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, this);
+    MessageBusConnection connection = myProject.getMessageBus().connect();
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, this);
     myKinds = new HashMap<String, RemoteDifferenceStrategy>();
-    Disposer.register(project, new Disposable() {
-      public void dispose() {
-        myConnection.disconnect();
-      }
-    });
+
     final VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
     myControlledCycle = new ControlledCycle(project, new Getter<Boolean>() {
       @Override
@@ -91,7 +86,14 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
           boolean somethingChanged = myRemoteRevisionsNumbersCache.updateStep();
           somethingChanged |= myRemoteRevisionsStateCache.updateStep();
           if (somethingChanged) {
-            myProject.getMessageBus().syncPublisher(REMOTE_VERSION_CHANGED).run();
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              @Override
+              public void run() {
+                if (!myProject.isDisposed()) {
+                  myProject.getMessageBus().syncPublisher(REMOTE_VERSION_CHANGED).run();
+                }
+              }
+            });
           }
         }
         return shouldBeDone;
@@ -174,8 +176,8 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     }
     final Collection<String> newForTree = new LinkedList<String>();
     final Collection<String> newForUsual = new LinkedList<String>();
-    UpdateFilesHelper.iterateAffectedFiles(updatedFiles, new Consumer<Pair<String, String>>() {
-      public void consume(final Pair<String, String> pair) {
+    UpdateFilesHelper.iterateAffectedFiles(updatedFiles, new Consumer<Couple<String>>() {
+      public void consume(final Couple<String> pair) {
         final String vcsName = pair.getSecond();
         RemoteDifferenceStrategy strategy = strategyMap.get(vcsName);
         if (strategy == null) {

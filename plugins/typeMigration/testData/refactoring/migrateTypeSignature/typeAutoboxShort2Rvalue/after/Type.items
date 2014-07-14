@@ -1,0 +1,9 @@
+Types:
+PsiField:myField : short
+PsiReferenceExpression:myField : short
+
+Conversions:
+p -> $
+
+New expression type changes:
+Fails:

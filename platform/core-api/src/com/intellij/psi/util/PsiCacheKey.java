@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public class PsiCacheKey<T,H extends PsiElement> extends Key<SoftReference<Pair<
   @Nullable
   public final T getCachedValueOrNull(@NotNull H h) {
     SoftReference<Pair<Long, T>> ref = h.getUserData(this);
-    Pair<Long, T> data = ref == null ? null : ref.get();
+    Pair<Long, T> data = SoftReference.dereference(ref);
     if (data == null || data.getFirst() != h.getManager().getModificationTracker().getJavaStructureModificationCount()) {
       return null;
     }

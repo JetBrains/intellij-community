@@ -15,21 +15,17 @@
  */
 package org.jetbrains.jps.maven.model.impl;
 
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: 10/20/12
  */
 @Tag("resource")
-public class ResourceRootConfiguration {
+public class ResourceRootConfiguration extends FilePattern {
   @Tag("directory")
   @NotNull
   public String directory;
@@ -40,15 +36,6 @@ public class ResourceRootConfiguration {
 
   @Attribute("filtered")
   public boolean isFiltered;
-
-  @Tag("includes")
-  @AbstractCollection(surroundWithTag =  false, elementTag = "pattern")
-  public Set<String> includes = new HashSet<String>();
-
-  @Tag("excludes")
-  @AbstractCollection(surroundWithTag =  false, elementTag = "pattern")
-  public Set<String> excludes = new HashSet<String>();
-
 
   public int computeConfigurationHash() {
     int result = directory.hashCode();

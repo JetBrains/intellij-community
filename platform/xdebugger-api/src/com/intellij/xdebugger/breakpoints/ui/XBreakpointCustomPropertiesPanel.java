@@ -35,4 +35,8 @@ public abstract class XBreakpointCustomPropertiesPanel<B extends XBreakpoint<?>>
 
   public void dispose() {
   }
+
+  public boolean isVisibleOnPopup(@NotNull B breakpoint) {
+    return true;
+  }
 }

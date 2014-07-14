@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,23 +20,23 @@ import com.intellij.psi.PsiReturnStatement;
 import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class WrapReturnValue extends FixableUsageInfo {
-    private final PsiReturnStatement statement;
-    private final String type;
+  private final PsiReturnStatement myStatement;
+  private final String myType;
 
-    public WrapReturnValue(PsiReturnStatement statement, String type) {
-        super(statement);
-        this.type = type;
-        this.statement = statement;
-    }
+  public WrapReturnValue(@NotNull PsiReturnStatement statement, @NotNull String type) {
+    super(statement);
+    myStatement = statement;
+    myType = type;
+  }
 
-    public void fixUsage() throws IncorrectOperationException {
-        final PsiExpression returnValue = statement.getReturnValue();
-        assert returnValue != null;
-        @NonNls final String newExpression =
-                "new " + type + '(' + returnValue.getText() + ')';
-        MutationUtils.replaceExpression(newExpression, returnValue);
-    }
+  @Override
+  public void fixUsage() throws IncorrectOperationException {
+    PsiExpression returnValue = myStatement.getReturnValue();
+    assert returnValue != null;
+    String newExpression = "new " + myType + '(' + returnValue.getText() + ')';
+    MutationUtils.replaceExpression(newExpression, returnValue);
+  }
 }

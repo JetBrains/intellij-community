@@ -9,7 +9,7 @@ class Test {
 
     <R> SuperFoo<R> foo(I<R> ax) { return null; }
 
-    SuperFoo<String> ls = foo(() -> new Foo<<error descr="Type parameter 'java.lang.String' is not within its bound; should extend 'java.lang.Number'"></error>>());
+    SuperFoo<String> ls = foo(<error descr="Incompatible return type Foo<X> in lambda expression">() -> new Foo<>()</error>);
     SuperFoo<Integer> li = foo(() -> new Foo<>());
     SuperFoo<?> lw = foo(() -> new Foo<>());
 }

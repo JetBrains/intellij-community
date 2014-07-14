@@ -18,6 +18,7 @@ package com.intellij.tasks.impl;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
 import com.intellij.tasks.timeTracking.model.WorkItem;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -27,6 +28,7 @@ import com.intellij.util.xmlb.annotations.Tag;
 import icons.TasksIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -52,6 +54,9 @@ public class LocalTaskImpl extends LocalTask {
   private TaskType myType = TaskType.OTHER;
   private String myPresentableName;
   private String myCustomIcon = null;
+
+  private String myProject = null;
+  private String myNumber = "";
 
   private boolean myIssue = false;
   private TaskRepository myRepository = null;
@@ -153,6 +158,9 @@ public class LocalTaskImpl extends LocalTask {
     myCustomIcon = issue.getCustomIcon();
     myIssueUrl = issue.getIssueUrl();
     myRepository = issue.getRepository();
+
+    myProject = issue.getProject();
+    myNumber = issue.getNumber();
   }
 
   public void setId(String id) {
@@ -363,5 +371,27 @@ public class LocalTaskImpl extends LocalTask {
       }
     }
     return timeSpent;
+  }
+
+  @NotNull
+  @Override
+  public String getNumber() {
+    // extract number from ID for compatibility
+    return StringUtil.isEmpty(myNumber) ? extractNumberFromId(myId) : myNumber;
+  }
+
+  public void setNumber(@NotNull String number) {
+    myNumber = number;
+  }
+
+  @Nullable
+  @Override
+  public String getProject() {
+    // extract project from ID for compatibility
+    return StringUtil.isEmpty(myProject) ? extractProjectFromId(myId) : myProject;
+  }
+
+  public void setProject(@Nullable String project) {
+    myProject = project;
   }
 }

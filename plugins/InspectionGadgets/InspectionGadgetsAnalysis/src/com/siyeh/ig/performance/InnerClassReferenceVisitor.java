@@ -35,10 +35,11 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementVisitor {
   }
 
   private boolean isClassStaticallyAccessible(PsiClass aClass) {
-    if (aClass.getContainingClass() != null && aClass.hasModifierProperty(PsiModifier.STATIC)) {
-      if (!PsiTreeUtil.isAncestor(aClass, innerClass, false)) {
-        return true;
-      }
+    if (PsiTreeUtil.isAncestor(innerClass, aClass, false)) {
+      return true;
+    }
+    if (aClass.getContainingClass() != null) {
+        return aClass.hasModifierProperty(PsiModifier.STATIC);
     }
     if (InheritanceUtil.isInheritorOrSelf(innerClass, aClass, true)) {
       return true;
@@ -136,18 +137,13 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementVisitor {
     else if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
       final PsiElement containingMethod = PsiTreeUtil.getParentOfType(reference, PsiMethod.class);
       final PsiElement referencedMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-      if (containingMethod != null && referencedMethod != null &&
-          !containingMethod.equals(referencedMethod)) {
+      if (containingMethod != null && referencedMethod != null && !containingMethod.equals(referencedMethod)) {
         referencesStaticallyAccessible = false;
       }
     }
-    else if ((element instanceof PsiClass)) {
+    else if (element instanceof PsiClass) {
       final PsiClass aClass = (PsiClass)element;
-      final PsiElement scope = aClass.getScope();
-      if (!(scope instanceof PsiClass)) {
-        return;
-      }
-      referencesStaticallyAccessible &= aClass.hasModifierProperty(PsiModifier.STATIC);
+      referencesStaticallyAccessible &= isClassStaticallyAccessible(aClass);
     }
   }
 }

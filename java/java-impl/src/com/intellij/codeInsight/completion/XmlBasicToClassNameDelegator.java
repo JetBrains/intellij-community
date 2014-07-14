@@ -21,6 +21,7 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -28,7 +29,7 @@ import com.intellij.util.Consumer;
 public class XmlBasicToClassNameDelegator extends CompletionContributor {
 
   @Override
-  public void fillCompletionVariants(CompletionParameters parameters, final CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
     PsiFile file = position.getContainingFile();
     if (parameters.getCompletionType() != CompletionType.BASIC ||

@@ -43,6 +43,17 @@ public class TestFrameworksImpl extends TestFrameworks {
   }
 
   @Override
+  public boolean isPotentialTestClass(PsiClass psiClass) {
+    final TestFramework[] testFrameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
+    for (TestFramework framework : testFrameworks) {
+      if (framework.isPotentialTestClass(psiClass)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
   @Nullable
   public PsiMethod findOrCreateSetUpMethod(final PsiClass psiClass) {
     final TestFramework[] testFrameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
@@ -97,6 +108,15 @@ public class TestFrameworksImpl extends TestFrameworks {
     final TestFramework[] testFrameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
     for (TestFramework framework : testFrameworks) {
       if (framework.findSetUpMethod(psiClass) != null || framework.findTearDownMethod(psiClass) != null) return true;
+    }
+    return false;
+  }
+
+  @Override
+  public boolean isTestMethod(PsiMethod method) {
+    final TestFramework[] testFrameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
+    for (TestFramework framework : testFrameworks) {
+      if (framework.isTestMethod(method)) return true;
     }
     return false;
   }

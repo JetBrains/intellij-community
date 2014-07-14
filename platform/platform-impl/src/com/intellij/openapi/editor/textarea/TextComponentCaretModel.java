@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,17 @@
  */
 package com.intellij.openapi.editor.textarea;
 
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
@@ -32,10 +33,12 @@ import javax.swing.text.JTextComponent;
 public class TextComponentCaretModel implements CaretModel {
   private final JTextComponent myTextComponent;
   private final TextComponentEditor myEditor;
+  private final Caret myCaret;
 
-  public TextComponentCaretModel(final JTextComponent textComponent, TextComponentEditor editor) {
+  public TextComponentCaretModel(@NotNull JTextComponent textComponent, @NotNull TextComponentEditor editor) {
     myTextComponent = textComponent;
     myEditor = editor;
+    myCaret = new TextComponentCaret(editor);
   }
 
   @Override
@@ -128,5 +131,80 @@ public class TextComponentCaretModel implements CaretModel {
   @Override
   public TextAttributes getTextAttributes() {
     return null;
+  }
+
+  @Override
+  public boolean supportsMultipleCarets() {
+    return false;
+  }
+
+  @NotNull
+  @Override
+  public Caret getCurrentCaret() {
+    return myCaret;
+  }
+
+  @NotNull
+  @Override
+  public Caret getPrimaryCaret() {
+    return myCaret;
+  }
+
+  @Override
+  public int getCaretCount() {
+    return 1;
+  }
+
+  @NotNull
+  @Override
+  public List<Caret> getAllCarets() {
+    return Collections.singletonList(myCaret);
+  }
+
+  @Nullable
+  @Override
+  public Caret getCaretAt(@NotNull VisualPosition pos) {
+    return myCaret.getVisualPosition().equals(pos) ? myCaret : null;
+  }
+
+  @Nullable
+  @Override
+  public Caret addCaret(@NotNull VisualPosition pos) {
+    return null;
+  }
+
+  @Override
+  public boolean removeCaret(@NotNull Caret caret) {
+    return false;
+  }
+
+  @Override
+  public void removeSecondaryCarets() {
+  }
+
+  @Override
+  public void setCaretsAndSelections(@NotNull List<CaretState> caretStates) {
+    throw new UnsupportedOperationException("Multiple carets are not supported");
+  }
+
+  @NotNull
+  @Override
+  public List<CaretState> getCaretsAndSelections() {
+    throw new UnsupportedOperationException("Multiple carets are not supported");
+  }
+
+  @Override
+  public void runForEachCaret(@NotNull CaretAction action) {
+    action.perform(myCaret);
+  }
+
+  @Override
+  public void runForEachCaret(@NotNull CaretAction action, boolean reverseOrder) {
+    action.perform(myCaret);
+  }
+
+  @Override
+  public void runBatchCaretOperation(@NotNull Runnable runnable) {
+    runnable.run();
   }
 }

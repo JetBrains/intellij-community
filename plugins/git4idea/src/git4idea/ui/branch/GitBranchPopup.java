@@ -20,7 +20,6 @@ import com.intellij.dvcs.ui.BranchActionGroupPopup;
 import com.intellij.dvcs.ui.RootAction;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -28,7 +27,10 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
@@ -158,20 +160,24 @@ class GitBranchPopup {
   }
 
   private void notifyAboutSyncedBranches() {
-    GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Synchronous branch control enabled",
-      "You have several Git roots in the project and they all are checked out at the same branch. " +
-      "We've enabled synchronous branch control for the project. <br/>" +
-      "If you wish to control branches in different roots separately, you may <a href='settings'>disable</a> the setting.",
-      NotificationType.INFORMATION, new NotificationListener() {
-      @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          ShowSettingsUtil.getInstance().showSettingsDialog(myProject, myVcs.getConfigurable().getDisplayName());
-          if (myVcsSettings.getSyncSetting() == GitBranchSyncSetting.DONT) {
-            notification.expire();
-          }
-        }
-      }
-    }).notify(myProject);
+    VcsNotifier.getInstance(myProject).notifyImportantInfo("Synchronous branch control enabled",
+                                                           "You have several Git roots in the project and they all are checked out at the same branch. " +
+                                                           "We've enabled synchronous branch control for the project. <br/>" +
+                                                           "If you wish to control branches in different roots separately, you may <a href='settings'>disable</a> the setting.",
+                                                           new NotificationListener() {
+                                                             @Override
+                                                             public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                                         @NotNull HyperlinkEvent event) {
+                                                               if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                                                                 ShowSettingsUtil.getInstance().showSettingsDialog(myProject, myVcs
+                                                                   .getConfigurable().getDisplayName());
+                                                                 if (myVcsSettings.getSyncSetting() == GitBranchSyncSetting.DONT) {
+                                                                   notification.expire();
+                                                                 }
+                                                               }
+                                                             }
+                                                           }
+    );
   }
 
   private ActionGroup createActions() {
@@ -180,7 +186,7 @@ class GitBranchPopup {
     GitRepositoryManager repositoryManager = myRepositoryManager;
     if (repositoryManager.moreThanOneRoot()) {
 
-      if (!myMultiRootBranchConfig.diverged() && userWantsSyncControl()) {
+      if (userWantsSyncControl()) {
         fillWithCommonRepositoryActions(popupGroup, repositoryManager);
       }
       else {
@@ -200,24 +206,35 @@ class GitBranchPopup {
   }
 
   private void fillWithCommonRepositoryActions(DefaultActionGroup popupGroup, GitRepositoryManager repositoryManager) {
-    List<GitRepository> repositories = repositoryManager.getRepositories();
-    String currentBranch = myMultiRootBranchConfig.getCurrentBranch();
-    assert currentBranch != null : "Current branch can't be null if branches have not diverged";
-    popupGroup.add(new GitBranchPopupActions.GitNewBranchAction(myProject, repositories));
+    List<GitRepository> allRepositories = repositoryManager.getRepositories();
+    popupGroup.add(new GitBranchPopupActions.GitNewBranchAction(myProject, allRepositories));
 
     popupGroup.addAll(createRepositoriesActions());
 
     popupGroup.addSeparator("Common Local Branches");
     for (String branch : myMultiRootBranchConfig.getLocalBranches()) {
-      if (!branch.equals(currentBranch)) {
+      List<GitRepository> repositories = filterRepositoriesNotOnThisBranch(branch, allRepositories);
+      if (!repositories.isEmpty()) {
         popupGroup.add(new GitBranchPopupActions.LocalBranchActions(myProject, repositories, branch, myCurrentRepository));
       }
     }
 
     popupGroup.addSeparator("Common Remote Branches");
     for (String branch : myMultiRootBranchConfig.getRemoteBranches()) {
-      popupGroup.add(new GitBranchPopupActions.RemoteBranchActions(myProject, repositories, branch, myCurrentRepository));
+      popupGroup.add(new GitBranchPopupActions.RemoteBranchActions(myProject, allRepositories, branch, myCurrentRepository));
     }
+  }
+
+  @NotNull
+  private static List<GitRepository> filterRepositoriesNotOnThisBranch(@NotNull final String branch,
+                                                                       @NotNull List<GitRepository> allRepositories) {
+    return ContainerUtil.filter(allRepositories, new Condition<GitRepository>() {
+      @Override
+      public boolean value(GitRepository repository) {
+        GitLocalBranch currentBranch = repository.getCurrentBranch();
+        return currentBranch == null || !branch.equals(currentBranch.getName());
+      }
+    });
   }
 
   private void warnThatBranchesDivergedIfNeeded() {

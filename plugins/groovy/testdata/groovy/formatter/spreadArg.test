@@ -1,0 +1,7 @@
+def foo(x, y) {}
+
+foo(* [1, 3])
+-----
+def foo(x, y) {}
+
+foo(*[1, 3])

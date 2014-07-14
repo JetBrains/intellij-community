@@ -63,4 +63,8 @@ public class UnnecessaryExplicitNumericCast {
     int i() {
       return 10;
     }
+
+    boolean redundantTypeCast(long l) {
+      return 0L == (long)l;
+    }
 }

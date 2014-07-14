@@ -27,6 +27,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
@@ -111,6 +112,28 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
       if (processor.shouldPreviewUsages(myChangeInfo, usages)) return true;
     }
     return super.isPreviewUsages(usages);
+  }
+
+  @Nullable
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.changeSignature";
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getBeforeData() {
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElement(getChangeInfo().getMethod());
+    return data;
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getAfterData(UsageInfo[] usages) {
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElement(getChangeInfo().getMethod());
+    return data;
   }
 
   @Override

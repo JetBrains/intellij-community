@@ -249,6 +249,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
           }
         }
       }
+      getRefManager().fireNodeMarkedReferenced(psiWhat, psiFrom, false);
     }
   }
 

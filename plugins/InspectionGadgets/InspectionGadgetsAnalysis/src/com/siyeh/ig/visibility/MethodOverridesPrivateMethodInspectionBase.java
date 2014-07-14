@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.visibility;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -70,6 +71,9 @@ public class MethodOverridesPrivateMethodInspectionBase extends BaseInspection {
       if (method.getNameIdentifier() == null) {
         return;
       }
+      if (JavaHighlightUtil.isSerializationRelatedMethod(method, aClass)) {
+        return;
+      }
       PsiClass ancestorClass = aClass.getSuperClass();
       final Set<PsiClass> visitedClasses = new HashSet<PsiClass>();
       while (ancestorClass != null) {
@@ -78,12 +82,9 @@ public class MethodOverridesPrivateMethodInspectionBase extends BaseInspection {
         }
         final PsiMethod overridingMethod =
           ancestorClass.findMethodBySignature(method, false);
-        if (overridingMethod != null) {
-          if (overridingMethod.hasModifierProperty(
-            PsiModifier.PRIVATE)) {
-            registerMethodError(method);
-            return;
-          }
+        if (overridingMethod != null && overridingMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
+          registerMethodError(method);
+          return;
         }
         ancestorClass = ancestorClass.getSuperClass();
       }

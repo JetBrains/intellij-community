@@ -7,9 +7,8 @@
       <sourceFolder url="file://$MODULE_DIR$/resources" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/testFramework" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/test-features" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/test-stepdefs" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/gitlog" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -46,17 +45,6 @@
         <JAVADOC />
         <SOURCES>
           <root url="jar://$MODULE_DIR$/lib/ini4j/ini4j-0.5.2-patched-sources.zip!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="jgit-2.1.0">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/jgit/org.eclipse.jgit-2.1.0.201209190230-r.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/jgit/org.eclipse.jgit-2.1.0.201209190230-r_source.zip!/" />
         </SOURCES>
       </library>
     </orderEntry>

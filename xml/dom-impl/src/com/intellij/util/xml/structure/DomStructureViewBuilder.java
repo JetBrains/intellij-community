@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,11 +59,11 @@ public class DomStructureViewBuilder extends TreeBasedStructureViewBuilder {
 
   @Override
   @NotNull
-  public StructureView createStructureView(final FileEditor fileEditor, final Project project) {
-    return new StructureViewComponent(fileEditor, createStructureViewModel(fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null), project) {
+  public StructureView createStructureView(final FileEditor fileEditor, @NotNull final Project project) {
+    return new StructureViewComponent(fileEditor, createStructureViewModel(fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null), project, true) {
       @Override
       public AsyncResult<AbstractTreeNode> expandPathToElement(final Object element) {
-        if (element instanceof XmlElement) {
+        if (element instanceof XmlElement && ((XmlElement)element).isValid()) {
           final XmlElement xmlElement = (XmlElement)element;
           XmlTag tag = PsiTreeUtil.getParentOfType(xmlElement, XmlTag.class, false);
           while (tag != null) {

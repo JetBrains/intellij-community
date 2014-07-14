@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.util.net;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.*;
@@ -55,10 +57,13 @@ import java.util.*;
 @State(
   name = "HttpConfigurable",
   storages = {
-    @Storage( file = StoragePathMacros.APP_CONFIG + "/other.xml")
-  }
+    @Storage( file = StoragePathMacros.APP_CONFIG + "/other.xml" ),
+    @Storage( file = StoragePathMacros.APP_CONFIG + "/proxy.settings.xml" )
+  },
+  storageChooser = HttpConfigurable.StorageChooser.class
 )
-public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, ApplicationComponent, JDOMExternalizable {
+public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, ApplicationComponent,
+                                         ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.net.HttpConfigurable");
   public boolean PROXY_TYPE_IS_SOCKS = false;
   public boolean USE_HTTP_PROXY = false;
@@ -80,6 +85,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public transient Getter<PasswordAuthentication> myTestAuthRunnable = new StaticGetter<PasswordAuthentication>(null);
   public transient Getter<PasswordAuthentication> myTestGenericAuthRunnable = new StaticGetter<PasswordAuthentication>(null);
   public String PROXY_EXCEPTIONS = "";
+  public boolean USE_PAC_URL = false;
+  public String PAC_URL = "";
 
   public static HttpConfigurable getInstance() {
     return ServiceManager.getService(HttpConfigurable.class);
@@ -91,6 +98,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   @Override
   public HttpConfigurable getState() {
+    CommonProxy.isInstalledAssertion();
     final HttpConfigurable state = new HttpConfigurable();
     XmlSerializerUtil.copyBean(this, state);
     if (!KEEP_PROXY_PASSWORD) {
@@ -299,15 +307,14 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
   }
 
-  //these methods are preserved for compatibility
-  @Override
+  //these methods are preserved for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings
+  @Deprecated
   public void readExternal(Element element) throws InvalidDataException {
     loadState(XmlSerializer.deserialize(element, HttpConfigurable.class));
   }
 
-  @Override
+  @Deprecated
   public void writeExternal(Element element) throws WriteExternalException {
-    CommonProxy.isInstalledAssertion();
     XmlSerializer.serializeInto(getState(), element);
     if (USE_PROXY_PAC && USE_HTTP_PROXY && ! ApplicationManager.getApplication().isDisposed()) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -327,7 +334,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   /**
-   * todo [all] It is NOT nessesary to call anything if you obey common IDEA proxy settings;
+   * todo [all] It is NOT necessary to call anything if you obey common IDEA proxy settings;
    * todo if you want to define your own behaviour, refer to {@link com.intellij.util.proxy.CommonProxy}
    *
    * also, this method is useful in a way that it test connection to the host [through proxy]
@@ -473,6 +480,32 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public void removeGeneric(CommonProxy.HostInfo info) {
     synchronized (myLock) {
       myGenericPasswords.remove(info);
+    }
+  }
+
+  @NotNull
+  @Override
+  public File[] getExportFiles() {
+    return new File[]{PathManager.getOptionsFile("proxy.settings")};
+  }
+
+  @NotNull
+  @Override
+  public String getPresentableName() {
+    return "Proxy Settings";
+  }
+
+  public static class StorageChooser implements StateStorageChooser<HttpConfigurable> {
+    @Override
+    public Storage[] selectStorages(Storage[] storages, HttpConfigurable component, StateStorageOperation operation) {
+      if (operation == StateStorageOperation.WRITE) {
+        for (Storage storage : storages) {
+          if (storage.file().equals(StoragePathMacros.APP_CONFIG + "/proxy.settings.xml")) {
+            return new Storage[] {storage};
+          }
+        }
+      }
+      return storages;
     }
   }
 

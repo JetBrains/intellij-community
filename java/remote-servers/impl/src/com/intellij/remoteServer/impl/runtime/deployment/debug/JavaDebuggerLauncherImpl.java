@@ -2,17 +2,20 @@ package com.intellij.remoteServer.impl.runtime.deployment.debug;
 
 import com.intellij.debugger.DebugEnvironment;
 import com.intellij.debugger.DebugUIEnvironment;
+import com.intellij.debugger.DebuggerManager;
+import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebugProcessAdapter;
 import com.intellij.debugger.engine.RemoteDebugProcessHandler;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
 import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.configurations.SearchScopeProvider;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -21,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.runtime.deployment.debug.JavaDebugConnectionData;
+import com.intellij.remoteServer.runtime.deployment.debug.JavaDebugServerModeHandler;
 import com.intellij.remoteServer.runtime.deployment.debug.JavaDebuggerLauncher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +43,9 @@ public class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
     final Project project = executionEnvironment.getProject();
     Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
     final DebuggerPanelsManager manager = DebuggerPanelsManager.getInstance(project);
-    final RemoteConnection remoteConnection = new RemoteConnection(true, info.getHost(), String.valueOf(info.getPort()), false);
+    final JavaDebugServerModeHandler serverModeHandler = info.getServerModeHandler();
+    boolean serverMode = serverModeHandler != null;
+    final RemoteConnection remoteConnection = new RemoteConnection(true, info.getHost(), String.valueOf(info.getPort()), serverMode);
     DebugEnvironment debugEnvironment = new RemoteServerDebugEnvironment(project, remoteConnection, executionEnvironment.getRunProfile());
     DebugUIEnvironment debugUIEnvironment = new RemoteServerDebugUIEnvironment(debugEnvironment, executionEnvironment);
     RunContentDescriptor debugContentDescriptor = manager.attachVirtualMachine(debugUIEnvironment);
@@ -49,6 +55,20 @@ public class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
     processHandler.startNotify();
     ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, debugContentDescriptor,
                                                                              executionEnvironment.getContentToReuse());
+    if (serverMode) {
+      serverModeHandler.attachRemote();
+      DebuggerManager.getInstance(executionEnvironment.getProject())
+        .addDebugProcessListener(processHandler, new DebugProcessAdapter() {
+          public void processDetached(DebugProcess process, boolean closedByUser) {
+            try {
+              serverModeHandler.detachRemote();
+            }
+            catch (ExecutionException e) {
+              LOG.info(e);
+            }
+          }
+        });
+    }
   }
 
   private static class RemoteServerDebugUIEnvironment implements DebugUIEnvironment {
@@ -101,7 +121,7 @@ public class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
 
     public RemoteServerDebugEnvironment(Project project, RemoteConnection remoteConnection, RunProfile runProfile) {
       myProject = project;
-      mySearchScope = RunContentBuilder.createSearchScope(project, runProfile);
+      mySearchScope = SearchScopeProvider.createSearchScope(project, runProfile);
       myRemoteConnection = remoteConnection;
       myRunProfile = runProfile;
     }

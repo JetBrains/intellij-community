@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -132,10 +129,10 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         public void run() {
           final NamedTrinity includedTrinity = new NamedTrinity();
           final Collection<FilePatchInProgress.PatchChange> includedChanges = myChangesTreeList.getIncludedChanges();
-          final Set<Pair<String, String>> set = new HashSet<Pair<String, String>>();
+          final Set<Couple<String>> set = new HashSet<Couple<String>>();
           for (FilePatchInProgress.PatchChange change : includedChanges) {
             final TextFilePatch patch = change.getPatchInProgress().getPatch();
-            final Pair<String, String> pair = new Pair<String, String>(patch.getBeforeName(), patch.getAfterName());
+            final Couple<String> pair = Couple.of(patch.getBeforeName(), patch.getAfterName());
             if (set.contains(pair)) continue;
             set.add(pair);
             acceptChange(includedTrinity, change);
@@ -197,7 +194,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     if (myCanChangePatchFile) {
       myListener = new VirtualFileAdapter() {
         @Override
-        public void contentsChanged(VirtualFileEvent event) {
+        public void contentsChanged(@NotNull VirtualFileEvent event) {
           if (myRecentPathFileChange.get() != null && myRecentPathFileChange.get().getVf() != null &&
               myRecentPathFileChange.get().getVf().equals(event.getFile())) {
             queueRequest();
@@ -811,8 +808,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         final String basePath = patchChange.getPatchInProgress().getBase().getPath();
         final String basePathCorrected = basePath.trim().replace('/', File.separatorChar);
         if (parentPath.startsWith(basePathCorrected)) {
-          return Arrays.asList(new Pair<String, Stress>(basePathCorrected, Stress.BOLD),
-                               new Pair<String, Stress>(StringUtil.tail(parentPath, basePathCorrected.length()), Stress.PLAIN));
+          return Arrays.asList(Pair.create(basePathCorrected, Stress.BOLD),
+                               Pair.create(StringUtil.tail(parentPath, basePathCorrected.length()), Stress.PLAIN));
         }
       }
       return null;

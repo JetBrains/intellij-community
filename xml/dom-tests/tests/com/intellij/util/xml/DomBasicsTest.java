@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.xml;
 
 import com.intellij.mock.MockModule;
@@ -15,6 +30,7 @@ import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.ParameterizedType;
 import java.util.*;
@@ -24,7 +40,7 @@ import java.util.*;
  */
 public class DomBasicsTest extends DomTestCase {
   @Override
-  protected void invokeTestRunnable(final Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull final Runnable runnable) throws Exception {
     new WriteCommandAction.Simple(null) {
       @Override
       protected void run() throws Throwable {
@@ -41,6 +57,18 @@ public class DomBasicsTest extends DomTestCase {
     assertCached(fileElement, file);
 
     assertEquals(fileElement.getRootElement(), fileElement.getRootElement());
+  }
+
+  public void testRootElementUndefineNotExisting() {
+    final XmlFile file = createXmlFile("<a/>");
+    final DomManagerImpl manager = getDomManager();
+    final DomFileElementImpl<DomElement> fileElement = manager.getFileElement(file, DomElement.class, "a");
+    final DomElement rootElement = fileElement.getRootElement();
+    assertNotNull(rootElement);
+    assertTrue(rootElement.exists());
+
+    rootElement.undefine();
+    assertFalse(rootElement.exists());
   }
 
   public void testElementCaching() throws Throwable {
@@ -167,12 +195,13 @@ public class DomBasicsTest extends DomTestCase {
 
     assertEquals(new HashSet(Arrays.asList(foo, child, collectionChild, genericChild,
                                            info.getAttributeChildrenDescriptions().get(0))),
-                 new HashSet(info.getChildrenDescriptions()));
+                 new HashSet(info.getChildrenDescriptions())
+    );
   }
 
   private void assertFixedChildDescription(final DomFixedChildDescription description,
                                            final DomElement child,
-                                           final String tagName) throws NoSuchMethodException {
+                                           final String tagName) {
     assertEquals(1, description.getCount());
     assertEquals(Arrays.asList(child), description.getValues(child.getParent()));
     assertEquals(tagName, description.getXmlElementName());
@@ -182,7 +211,7 @@ public class DomBasicsTest extends DomTestCase {
 
   private static void assertGenericChildDescription(final DomFixedChildDescription description,
                                              final DomElement child,
-                                             final String tagName) throws NoSuchMethodException {
+                                             final String tagName) {
     assertEquals(1, description.getCount());
     assertEquals(Arrays.asList(child), description.getValues(child.getParent()));
     assertEquals(tagName, description.getXmlElementName());
@@ -225,7 +254,8 @@ public class DomBasicsTest extends DomTestCase {
   }
 
   private void assertCollectionPresentableName(final String expected, final String tagName, final DomNameStrategy strategy) {
-    assertEquals(expected, new CollectionChildDescriptionImpl(new XmlName(tagName), DomElement.class, null).getCommonPresentableName(strategy));
+    assertEquals(expected,
+                 new CollectionChildDescriptionImpl(new XmlName(tagName), DomElement.class, null).getCommonPresentableName(strategy));
   }
 
   private void assertFixedPresentableName(final String expected, final String tagName, final DomNameStrategy strategy) {

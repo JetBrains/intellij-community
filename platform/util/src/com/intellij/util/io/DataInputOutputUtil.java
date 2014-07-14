@@ -55,6 +55,22 @@ public class DataInputOutputUtil {
     }
   }
 
+  public static long readLONG(@NotNull DataInput record) throws IOException {
+    final int val = record.readUnsignedByte();
+    if (val < 192) {
+      return val;
+    }
+
+    long res = val - 192;
+    for (int sh = 6; ; sh += 7) {
+      int next = record.readUnsignedByte();
+      res |= (long)(next & 0x7F) << sh;
+      if ((next & 0x80) == 0) {
+        return res;
+      }
+    }
+  }
+
   public static void writeINT(@NotNull DataOutput record, int val) throws IOException {
     if (0 <= val && val < 192) {
       record.writeByte(val);
@@ -67,6 +83,21 @@ public class DataInputOutputUtil {
         val >>>= 7;
       }
       record.writeByte(val);
+    }
+  }
+
+  public static void writeLONG(@NotNull DataOutput record, long val) throws IOException {
+    if (0 <= val && val < 192) {
+      record.writeByte((int)val);
+    }
+    else {
+      record.writeByte(192 + (int)(val & 0x3F));
+      val >>>= 6;
+      while (val >= 128) {
+        record.writeByte((int)(val & 0x7F) | 0x80);
+        val >>>= 7;
+      }
+      record.writeByte((int)val);
     }
   }
 

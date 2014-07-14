@@ -1,7 +1,7 @@
 import java.util.Collection;
 import java.util.Collections;
 
-public class IDEABug {
+class IDEABug {
 
   static class ClassA {
     static <T> void sayHello(Collection<? extends T> msg) {}

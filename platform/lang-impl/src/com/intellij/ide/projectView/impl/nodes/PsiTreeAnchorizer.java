@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
 public class PsiTreeAnchorizer extends TreeAnchorizer {
-
   private static final Key<SmartPointerWrapper> PSI_ANCHORIZER_POINTER = Key.create("PSI_ANCHORIZER_POINTER");
 
   @Override
@@ -47,7 +47,8 @@ public class PsiTreeAnchorizer extends TreeAnchorizer {
 
           if (pointer == null || pointer.myPointer.getElement() != psiElement) {
             Project project = psiElement.getProject();
-            pointer = new SmartPointerWrapper(SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiElement));
+            SmartPsiElementPointer<PsiElement> psiElementPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiElement);
+            pointer = new SmartPointerWrapper(psiElementPointer);
             psiElement.putUserData(PSI_ANCHORIZER_POINTER, pointer);
           }
           return pointer;
@@ -74,7 +75,7 @@ public class PsiTreeAnchorizer extends TreeAnchorizer {
   private static class SmartPointerWrapper {
     private final SmartPsiElementPointer myPointer;
 
-    private SmartPointerWrapper(SmartPsiElementPointer pointer) {
+    private SmartPointerWrapper(@NotNull SmartPsiElementPointer pointer) {
       myPointer = pointer;
     }
 

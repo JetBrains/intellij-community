@@ -22,7 +22,6 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
   @NotNull private final Map<ExternalSystemSourceType, String> myCompileOutputPaths = ContainerUtil.newHashMap();
   @NotNull private final String myId;
-  @NotNull private final String myIdeModuleFileName;
   @NotNull private final String myModuleTypeId;
   @NotNull private final String myExternalConfigPath;
   @NotNull private String myModuleFilePath;
@@ -47,9 +46,8 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
                     @NotNull String name,
                     @NotNull String moduleFileDirectoryPath,
                     @NotNull String externalConfigPath) {
-    super(owner, name);
+    super(owner, name, name.replaceAll("(/|\\\\)", "_"));
     myId = id;
-    myIdeModuleFileName = name.replaceAll("(/|\\\\)", "_");
     myModuleTypeId = typeId;
     myExternalConfigPath = externalConfigPath;
     myArtifacts = Collections.emptyList();
@@ -60,11 +58,6 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @Override
   public String getId() {
     return myId;
-  }
-
-  @NotNull
-  public String getIdeModuleFileName() {
-    return myIdeModuleFileName;
   }
 
   @NotNull
@@ -84,7 +77,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   }
 
   public void setModuleFileDirectoryPath(@NotNull String path) {
-    myModuleFilePath = ExternalSystemApiUtil.toCanonicalPath(path + "/" + myIdeModuleFileName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+    myModuleFilePath = ExternalSystemApiUtil.toCanonicalPath(path + "/" + getInternalName() + ModuleFileType.DOT_DEFAULT_EXTENSION);
   }
 
   public boolean isInheritProjectCompileOutputPath() {
@@ -170,7 +163,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   public String toString() {
     return String.format("module '%s:%s:%s'",
                          group == null ? "" : group,
-                         getName(),
+                         getExternalName(),
                          version == null ? "" : version);
   }
 }

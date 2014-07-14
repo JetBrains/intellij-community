@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
@@ -32,6 +33,7 @@ public class LibraryScope extends LibraryScopeBase {
     myLibrary = library;
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     String name = myLibrary.getName();

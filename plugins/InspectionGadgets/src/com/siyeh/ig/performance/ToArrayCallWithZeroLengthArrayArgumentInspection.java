@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -83,7 +84,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends ToArrayCal
         if (newExpressionText == null) {
           return;
         }
-        replaceExpression(methodCallExpression, newExpressionText);
+        PsiReplacementUtil.replaceExpression(methodCallExpression, newExpressionText);
         return;
       }
       // need to introduce a variable to prevent calling a method twice

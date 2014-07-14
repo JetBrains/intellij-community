@@ -460,7 +460,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     }
 
     @Override
-    protected void applyAdditionalHints(Graphics g) {
+    protected void applyAdditionalHints(@NotNull Graphics g) {
       GraphicsUtil.setupAntialiasing(g);
     }
   }

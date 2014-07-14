@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.actions.ImportModuleAction;
@@ -5,7 +20,7 @@ import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.newProjectWizard.SelectTemplateSettings;
-import com.intellij.ide.util.newProjectWizard.SelectTemplateStep;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -23,7 +38,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.ProjectTemplate;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.Consumer;
@@ -44,7 +58,6 @@ import java.util.List;
  */
 @SuppressWarnings("unchecked")
 public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> extends PlatformTestCase {
-
   protected static final String DEFAULT_SDK = "default";
   protected final List<Sdk> mySdks = new ArrayList<Sdk>();
   protected T myWizard;
@@ -83,22 +96,43 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     return new NewModuleAction().createModuleFromWizard(myProject, null, myWizard);
   }
 
-  protected void runWizard(String group, String name, Project project, @Nullable Consumer<Step> adjuster) throws IOException {
+  protected void runWizard(String group, final String name, Project project, @Nullable final Consumer<Step> adjuster) throws IOException {
 
     createWizard(project);
-    SelectTemplateStep step = (SelectTemplateStep)myWizard.getCurrentStepObject();
+    ProjectTypeStep step = (ProjectTypeStep)myWizard.getCurrentStepObject();
     boolean condition = step.setSelectedTemplate(group, name);
     if (!condition) {
       throw new IllegalArgumentException(group + "/" + name + " template not found");
     }
-    ProjectTemplate template = step.getSelectedTemplate();
-    assertNotNull(template);
 
-    if (adjuster != null) {
-      adjuster.consume(step);
+    runWizard(new Consumer<Step>() {
+      @Override
+      public void consume(Step step) {
+        if (name != null && step instanceof ChooseTemplateStep) {
+          ((ChooseTemplateStep)step).setSelectedTemplate(name);
+        }
+        if (adjuster != null) {
+          adjuster.consume(step);
+        }
+      }
+    });
+  }
+
+  protected void runWizard(Consumer<Step> adjuster) {
+    while(true) {
+      ModuleWizardStep currentStep = myWizard.getCurrentStepObject();
+      if (adjuster != null) {
+        adjuster.consume(currentStep);
+      }
+      if (myWizard.isLast()) {
+        break;
+      }
+      myWizard.doNextAction();
+      if (currentStep == myWizard.getCurrentStepObject()) {
+        throw new RuntimeException(currentStep + " is not validated");
+      }
     }
-
-    runWizard(adjuster);
+    myWizard.doFinishAction();
   }
 
   protected void createWizard(Project project) throws IOException {
@@ -109,7 +143,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   protected Project createProject(Consumer<Step> adjuster) throws IOException {
-    createWizard(getProject());
+    createWizard(null);
     runWizard(adjuster);
     myCreatedProject = NewProjectUtil.createFromWizard(myWizard, null);
     return myCreatedProject;
@@ -117,19 +151,6 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
 
   protected T createWizard(Project project, File directory) {
     return (T)new AddModuleWizard(project, DefaultModulesProvider.createForProject(project), directory.getPath());
-  }
-
-  protected void runWizard(Consumer<Step> adjuster) {
-    while(true) {
-      if (adjuster != null) {
-        adjuster.consume(myWizard.getCurrentStepObject());
-      }
-      if (myWizard.isLast()) {
-        break;
-      }
-      myWizard.doNextAction();
-    }
-    myWizard.doOk();
   }
 
   @Override
@@ -140,6 +161,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     for (final Sdk jdk : jdks) {
       if (projectSdk != jdk) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             ProjectJdkTable.getInstance().removeJdk(jdk);
           }
@@ -150,6 +172,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
 
   protected void setupJdk() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
         Sdk defaultJdk = new SimpleJavaSdkType().createJdk(DEFAULT_SDK, SystemProperties.getJavaHome());
@@ -174,6 +197,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   public void tearDown() throws Exception {
     if (myWizard != null) {
       Disposer.dispose(myWizard.getDisposable());
+      myWizard = null;
     }
     if (myCreatedProject != null) {
       myProjectManager.closeProject(myCreatedProject);
@@ -183,8 +207,10 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
           Disposer.dispose(myCreatedProject);
         }
       });
+      myCreatedProject = null;
     }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         for (Sdk sdk : mySdks) {
           ProjectJdkTable.getInstance().removeJdk(sdk);
@@ -192,6 +218,9 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
       }
     });
     SelectTemplateSettings.getInstance().setLastTemplate(null, null);
+    UIUtil.dispatchAllInvocationEvents();
+    Thread.sleep(2000); //wait for JBCardLayout release timers
+    UIUtil.dispatchAllInvocationEvents();
     super.tearDown();
   }
 
@@ -226,6 +255,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   protected Sdk createSdk(String name, SdkTypeId sdkType) {
     final Sdk sdk = ProjectJdkTable.getInstance().createSdk(name, sdkType);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ProjectJdkTable.getInstance().addJdk(sdk);
       }

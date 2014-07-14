@@ -270,6 +270,14 @@ public class JavaFxPsiUtil {
     if (!(currentTagClass instanceof PsiClass)) return false;
     final PsiField handlerField = ((PsiClass)currentTagClass).findFieldByName(attributeName, true);
     if (handlerField == null) {
+      final String suggestedSetterName = PropertyUtil.suggestSetterName(attributeName);
+      final PsiMethod[] existingSetters = ((PsiClass)currentTagClass).findMethodsByName(suggestedSetterName, true);
+      for (PsiMethod setter : existingSetters) {
+        final PsiParameter[] parameters = setter.getParameterList().getParameters();
+        if (parameters.length == 1 && InheritanceUtil.isInheritor(parameters[0].getType(), JavaFxCommonClassNames.JAVAFX_EVENT_EVENT_HANDLER)) {
+          return true;
+        }
+      }
       return false;
     }
     final PsiClass objectPropertyClass = getPropertyClass(handlerField);

@@ -84,7 +84,7 @@ public class OpenTaskDialog extends DialogWrapper {
 
     TaskRepository repository = task.getRepository();
     myMarkAsInProgressBox.setSelected(manager.getState().markAsInProgress);
-    if (repository == null || !repository.getRepositoryType().getPossibleTaskStates().contains(TaskState.IN_PROGRESS)) {
+    if (!TaskUtil.isStateSupported(repository, TaskState.IN_PROGRESS)) {
       myMarkAsInProgressBox.setVisible(false);
     }
 
@@ -99,13 +99,12 @@ public class OpenTaskDialog extends DialogWrapper {
       ActionListener listener = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          updateFields();
+          updateFields(false);
         }
       };
       myCreateChangelist.addActionListener(listener);
       myCreateBranch.addActionListener(listener);
       myCreateChangelist.setSelected(manager.getState().createChangelist);
-      myCreateBranch.setSelected(manager.getState().createBranch);
 
       if (vcs.getType() != VcsType.distributed) {
         myCreateBranch.setSelected(false);
@@ -120,7 +119,9 @@ public class OpenTaskDialog extends DialogWrapper {
           VcsTaskHandler.TaskInfo[] tasks = handler.getCurrentTasks();
           if (tasks.length > 0) {
             myVcsTaskHandler = handler;
+            //noinspection unchecked
             myBranchFrom.setModel(new DefaultComboBoxModel(tasks));
+            myBranchFrom.setEnabled(true);
             final String startFrom = PropertiesComponent.getInstance(project).getValue(START_FROM_BRANCH);
             VcsTaskHandler.TaskInfo info = null;
             if (startFrom != null) {
@@ -147,23 +148,32 @@ public class OpenTaskDialog extends DialogWrapper {
             break;
           }
         }
+        myCreateBranch.setSelected(manager.getState().createBranch && myBranchFrom.getItemCount() > 0);
         myBranchFrom.setRenderer(new ColoredListCellRenderer<VcsTaskHandler.TaskInfo>() {
           @Override
           protected void customizeCellRenderer(JList list, VcsTaskHandler.TaskInfo value, int index, boolean selected, boolean hasFocus) {
-            append(value.getName());
+            if (value != null) {
+              append(value.getName());
+            }
           }
         });
       }
 
       myBranchName.setText(taskManager.suggestBranchName(task));
       myChangelistName.setText(taskManager.getChangelistName(task));
-      updateFields();
+      updateFields(true);
     }
     init();
   }
 
-  private void updateFields() {
+  private void updateFields(boolean initial) {
+    if (!initial && myBranchFrom.getItemCount() == 0 && myCreateBranch.isSelected()) {
+      Messages.showWarningDialog(myPanel, "Can't create branch if no commit exists.\nCreate a commit first.", "Cannot Create Branch");
+      myCreateBranch.setSelected(false);
+    }
     myBranchName.setEnabled(myCreateBranch.isSelected());
+    myFromLabel.setEnabled(myCreateBranch.isSelected());
+    myBranchFrom.setEnabled(myCreateBranch.isSelected());
     myChangelistName.setEnabled(myCreateChangelist.isSelected());
   }
 
@@ -187,7 +197,7 @@ public class OpenTaskDialog extends DialogWrapper {
         repository.setTaskState(myTask, TaskState.IN_PROGRESS);
       }
       catch (Exception ex) {
-        Messages.showErrorDialog(myProject, "Could not set state for " + myTask.getId(), "Error");
+        Messages.showErrorDialog(myProject, ex.getMessage(), "Cannot Set State For Issue");
         LOG.warn(ex);
       }
     }
@@ -260,7 +270,9 @@ public class OpenTaskDialog extends DialogWrapper {
     else if (myCreateChangelist.isSelected()) {
       return myChangelistName;
     }
-    else return null;
+    else {
+      return null;
+    }
   }
 
   protected JComponent createCenterPanel() {

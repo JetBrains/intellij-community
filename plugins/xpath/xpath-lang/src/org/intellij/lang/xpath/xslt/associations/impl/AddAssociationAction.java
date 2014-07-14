@@ -46,7 +46,7 @@ class AddAssociationAction extends AnAction {
         final VirtualFile virtualFile = psiFile.getVirtualFile();
         assert virtualFile != null;
 
-        final FileChooserDescriptor descriptor = new AnyXMLDescriptor() {
+        final FileChooserDescriptor descriptor = new AnyXMLDescriptor(true) {
             public boolean isFileSelectable(VirtualFile file) {
                 return super.isFileSelectable(file) && !file.equals(virtualFile);
             }

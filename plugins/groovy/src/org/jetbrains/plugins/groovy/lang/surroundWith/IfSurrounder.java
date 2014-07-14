@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
  * Date: 23.05.2007
  */
 public class IfSurrounder extends GroovyManyStatementsSurrounder {
+  @Override
   protected GroovyPsiElement doSurroundElements(PsiElement[] elements, PsiElement context) throws IncorrectOperationException {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(elements[0].getProject());
     GrIfStatement ifStatement = (GrIfStatement)factory.createStatementFromText("if (a) {\n}", context);
@@ -36,6 +37,7 @@ public class IfSurrounder extends GroovyManyStatementsSurrounder {
     return ifStatement;
   }
 
+  @Override
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
     assert element instanceof GrIfStatement;
     GrCondition condition = ((GrIfStatement)element).getCondition();
@@ -51,6 +53,7 @@ public class IfSurrounder extends GroovyManyStatementsSurrounder {
     return new TextRange(endOffset, endOffset);
   }
 
+  @Override
   public String getTemplateDescription() {
     return "if";
   }

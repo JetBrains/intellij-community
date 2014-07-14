@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,7 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
     }
   }
 
+  @NotNull
   private String generateUniqueName(final T scheme) {
     return UniqueNameGenerator.generateUniqueName(UniqueFileNamesProvider.convertName(scheme.getName()), collectExistingNames(mySchemes));
   }
@@ -167,7 +168,7 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
 
   protected abstract void onSchemeAdded(final T scheme);
 
-  protected void renameScheme(final E scheme, String newName){
+  protected void renameScheme(final E scheme, @NotNull String newName){
     if (!Comparing.equal(newName,scheme.getName())) {
       scheme.setName(newName);
       LOG.assertTrue(Comparing.equal(newName,scheme.getName()));

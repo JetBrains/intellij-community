@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -43,7 +44,7 @@ public class CodeStyleSchemesModel {
   private final Project myProject;
   private boolean myUsePerProjectSettings;
   
-  public final static String PROJECT_SCHEME_NAME = "Project";
+  public static final String PROJECT_SCHEME_NAME = "Project";
 
   public CodeStyleSchemesModel(Project project) {
     myProject = project;
@@ -153,13 +154,12 @@ public class CodeStyleSchemesModel {
     CodeStyleSchemes schemes = CodeStyleSchemes.getInstance();
     if (getProjectSettings().USE_PER_PROJECT_SETTINGS != myUsePerProjectSettings) return true;
     if (!myUsePerProjectSettings &&
-        (getSelectedScheme() != schemes.findPreferredScheme(getProjectSettings().PREFERRED_PROJECT_CODE_STYLE))) {
+        getSelectedScheme() != schemes.findPreferredScheme(getProjectSettings().PREFERRED_PROJECT_CODE_STYLE)) {
       return true;
     }
     Set<CodeStyleScheme> configuredSchemesSet = new HashSet<CodeStyleScheme>(getSchemes());
     Set<CodeStyleScheme> savedSchemesSet = new HashSet<CodeStyleScheme>(Arrays.asList(schemes.getSchemes()));
-    if (!configuredSchemesSet.equals(savedSchemesSet)) return true;
-    return false;
+    return !configuredSchemesSet.equals(savedSchemesSet);
   }
   
   public void apply() {
@@ -220,26 +220,9 @@ public class CodeStyleSchemesModel {
   public void copyToProject(final CodeStyleScheme selectedScheme) {
     myProjectScheme.getCodeStyleSettings().copyFrom(selectedScheme.getCodeStyleSettings());
     myDispatcher.getMulticaster().schemeChanged(myProjectScheme);
-    //if (mySettingsToClone.containsKey(myProjectScheme)) {
-    //  CodeStyleSettings projectSettings = mySettingsToClone.get(myProjectScheme);
-    //  projectSettings.copyFrom(getEditedSchemeSettings(selectedScheme));
-    //}
-    //else {
-    //  mySettingsToClone.put(myProjectScheme, getEditedSchemeSettings(selectedScheme).clone());
-    //}
-    //myDispatcher.getMulticaster().schemeChanged(myProjectScheme);
   }
 
-  private CodeStyleSettings getEditedSchemeSettings(final CodeStyleScheme selectedScheme) {
-    if (mySettingsToClone.containsKey(selectedScheme)) {
-      return mySettingsToClone.get(selectedScheme);
-    }
-    else {
-      return selectedScheme.getCodeStyleSettings();
-    }
-  }
-
-  public CodeStyleScheme exportProjectScheme(final String name) {
+  public CodeStyleScheme exportProjectScheme(@NotNull String name) {
     CodeStyleScheme newScheme = createNewScheme(name, myProjectScheme);
     ((CodeStyleSchemeImpl)newScheme).setCodeStyleSettings(getCloneSettings(myProjectScheme));
     addScheme(newScheme, false);
@@ -250,11 +233,12 @@ public class CodeStyleSchemesModel {
   public CodeStyleScheme createNewScheme(final String preferredName, final CodeStyleScheme parentScheme) {
     String name;
     if (preferredName == null) {
+      if (parentScheme == null) throw new IllegalArgumentException("parentScheme must not be null");
       // Generate using parent name
       name = null;
       for (int i = 1; name == null; i++) {
         String currName = parentScheme.getName() + " (" + i + ")";
-        if (null == findSchemeByName(currName)) {
+        if (findSchemeByName(currName) == null) {
           name = currName;
         }
       }
@@ -263,7 +247,7 @@ public class CodeStyleSchemesModel {
       name = null;
       for (int i = 0; name == null; i++) {
         String currName = i == 0 ? preferredName : preferredName + " (" + i + ")";
-        if (null == findSchemeByName(currName)) {
+        if (findSchemeByName(currName) == null) {
           name = currName;
         }
       }

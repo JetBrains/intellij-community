@@ -47,11 +47,20 @@ public abstract class RefactoringSupportProvider {
   public boolean isSafeDeleteAvailable(@NotNull PsiElement element) { return false; }
 
   /**
+   * @see #getIntroduceVariableHandler(com.intellij.psi.PsiElement)
+   */
+  @Nullable
+  public RefactoringActionHandler getIntroduceVariableHandler() { return null; }
+
+  /**
    * @return handler for introducing local variables in this language
    * @see com.intellij.refactoring.RefactoringActionHandler
    */
   @Nullable
-  public RefactoringActionHandler getIntroduceVariableHandler() { return null; }
+  public RefactoringActionHandler getIntroduceVariableHandler(PsiElement element) {
+    return getIntroduceVariableHandler(); 
+  }
+
 
   /**
    * @return handler for extracting methods in this language

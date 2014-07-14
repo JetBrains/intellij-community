@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Sets;
@@ -35,7 +50,7 @@ import java.util.List;
  */
 class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider implements Disposable {
   private Set<TerminalSettingsListener> myListeners = Sets.newHashSet();
-  
+
   private final MyColorSchemeDelegate myColorScheme;
 
   JBTerminalSystemSettingsProvider() {
@@ -100,7 +115,7 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider imp
 
   @Override
   public boolean shouldCloseTabOnLogout(TtyConnector ttyConnector) {
-    return ttyConnector instanceof PtyProcessTtyConnector; //close tab only on logout of local pty, not remote
+    return TerminalOptionsProvider.getInstance().closeSessionOnLogout();
   }
 
   @Override
@@ -151,19 +166,11 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider imp
   public String getFontName() {
     List<String> fonts = myColorScheme.getConsoleFontPreferences().getEffectiveFontFamilies();
 
-    for (String font : fonts) {
-      if (isApplicable(font)) {
-        return font;
-      }
+    if (fonts.size() > 0) {
+      return fonts.get(0);
     }
-    return "Monospaced-14";
-  }
 
-  private static boolean isApplicable(String font) {
-    if ("Source Code Pro".equals(font)) {
-      return false;
-    }
-    return true;
+    return "Monospaced-14";
   }
 
   @Override
@@ -215,6 +222,11 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider imp
   }
 
   @Override
+  public boolean forceActionOnMouseReporting() {
+    return true;
+  }
+
+  @Override
   public void dispose() {
 
   }
@@ -241,6 +253,7 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider imp
       return myGlobalScheme;
     }
 
+    @NotNull
     @Override
     public String getName() {
       return getGlobal().getName();
@@ -314,7 +327,7 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider imp
 
     @Override
     public void setFontPreferences(@NotNull FontPreferences preferences) {
-      throw new IllegalStateException();      
+      throw new IllegalStateException();
     }
 
     @Override

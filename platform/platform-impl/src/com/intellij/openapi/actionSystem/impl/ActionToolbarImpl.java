@@ -189,11 +189,23 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   @Override
+  public void updateUI() {
+    super.updateUI();
+    for (Component component : getComponents()) {
+      tweakActionComponentUI(component);
+    }
+  }
+
+  @Override
   public void addNotify() {
     super.addNotify();
     ourToolbars.add(this);
     myActionManager.addTimerListener(500, myWeakTimerListener);
     myActionManager.addTransparentTimerListener(500, myWeakTimerListener);
+    
+    // should update action right on the showing, otherwise toolbar may not be displayed at all,
+    // since by default all updates are postponed until frame gets focused.  
+    updateActionsImmediately();
   }
 
   private boolean doMacEnhancementsForMainToolbar() {
@@ -205,7 +217,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   private boolean isInsideNavBar() {
-    return ActionPlaces.NAVIGATION_BAR.equals(myPlace);
+    return ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(myPlace);
   }
 
   @Override
@@ -265,9 +277,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
     for (int i = 0; i < actions.size(); i++) {
       final AnAction action = actions.get(i);
-      if (action instanceof Separator && isNavBar()) {
-        continue;
-      }
+//      if (action instanceof Separator && isNavBar()) {
+//        continue;
+//      }
 
       //if (action instanceof ComboBoxAction) {
       //  ((ComboBoxAction)action).setSmallVariant(true);
@@ -299,7 +311,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       add(mySecondaryActionsButton);
     }
 
-    if ((ActionPlaces.MAIN_TOOLBAR.equals(myPlace) || ActionPlaces.NAVIGATION_BAR.equals(myPlace))) {
+    if ((ActionPlaces.MAIN_TOOLBAR.equals(myPlace) || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(myPlace))) {
       final AnAction searchEverywhereAction = ActionManager.getInstance().getAction("SearchEverywhere");
       if (searchEverywhereAction != null) {
         try {
@@ -316,18 +328,17 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private JComponent getCustomComponent(AnAction action) {
     Presentation presentation = myPresentationFactory.getPresentation(action);
     JComponent customComponent = ((CustomComponentAction)action).createCustomComponent(presentation);
-    if (ActionPlaces.EDITOR_TOOLBAR.equals(myPlace)) {
-      // tweak font & color for editor toolbar to match editor tabs style
-      Color foreground = customComponent.getForeground();
-      customComponent.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
-      if (foreground != null) customComponent.setForeground(ColorUtil.dimmer(foreground));
-    }
+    tweakActionComponentUI(customComponent);
     presentation.putClientProperty(CustomComponentAction.CUSTOM_COMPONENT_PROPERTY, customComponent);
     return customComponent;
   }
 
-  private boolean isNavBar() {
-    return myPlace == ActionPlaces.NAVIGATION_BAR;
+  private void tweakActionComponentUI(@NotNull Component actionComponent) {
+    if (ActionPlaces.EDITOR_TOOLBAR.equals(myPlace)) {
+      // tweak font & color for editor toolbar to match editor tabs style
+      actionComponent.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+      actionComponent.setForeground(ColorUtil.dimmer(JBColor.BLACK));
+    }
   }
 
   private Dimension getMinimumButtonSize() {

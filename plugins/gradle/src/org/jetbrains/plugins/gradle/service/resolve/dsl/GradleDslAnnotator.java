@@ -27,6 +27,7 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleResolverUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -54,7 +55,9 @@ public class GradleDslAnnotator implements Annotator {
           psiManager.findClassWithCache(GroovyCommonClassNames.DEFAULT_GROOVY_METHODS, element.getResolveScope());
         if (canBeMethodOf(referenceExpression.getReferenceName(), defaultGroovyMethodsClass)) return;
 
-        PsiClass containerClass = psiManager.findClassWithCache(psiType.getCanonicalText(), element.getResolveScope());
+        final String qualifiedName = TypesUtil.getQualifiedName(psiType);
+        final PsiClass containerClass =
+          qualifiedName != null ? psiManager.findClassWithCache(qualifiedName, element.getResolveScope()) : null;
         if (canBeMethodOf(referenceExpression.getReferenceName(), containerClass)) return;
 
         PsiElement nameElement = referenceExpression.getReferenceNameElement();

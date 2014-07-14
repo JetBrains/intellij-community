@@ -18,6 +18,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.application.options.editor.CodeFoldingConfigurable;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author cdr
  */
-public class EditFoldingOptionsAction implements IntentionAction {
+public class EditFoldingOptionsAction implements IntentionAction, LowPriorityAction {
   @Override
   @NotNull
   public String getText() {

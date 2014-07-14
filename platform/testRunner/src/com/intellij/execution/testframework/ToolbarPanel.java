@@ -63,7 +63,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
                                                     ExecutionBundle.message("junit.runing.info.track.test.action.description"),
                                                     AllIcons.RunConfigurations.TrackTests,
                                                     properties, TestConsoleProperties.TRACK_RUNNING_TEST)).setAsSecondary(true);
-    actionGroup.addAction(new ToggleBooleanProperty("Hide Ignored", null, null, properties, TestConsoleProperties.HIDE_IGNORED_TEST)).setAsSecondary(true);
+    actionGroup.addAction(new ToggleBooleanProperty("Hide Ignored", null, AllIcons.RunConfigurations.HideIgnored, properties, TestConsoleProperties.HIDE_IGNORED_TEST)).setAsSecondary(true);
 
     actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.name"),
                                                     ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.description"),

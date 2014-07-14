@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  *
  * @author yole
  */
-@Retention(RetentionPolicy.SOURCE)
+@Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 public @interface TestDataPath {
   String value();

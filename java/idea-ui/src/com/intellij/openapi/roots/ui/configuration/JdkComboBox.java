@@ -57,6 +57,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
   private final Condition<SdkTypeId> myFilter;
   @Nullable
   private final Condition<SdkTypeId> myCreationFilter;
+  private JButton mySetUpButton;
 
   public JdkComboBox(@NotNull final ProjectSdksModel jdkModel) {
     this(jdkModel, null);
@@ -85,7 +86,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
           else if (value instanceof ProjectJdkComboBoxItem) {
             final Sdk jdk = jdkModel.getProjectSdk();
             if (jdk != null) {
-              setIcon(((SdkType) jdk.getSdkType()).getIcon());
+              setIcon(((SdkType)jdk.getSdkType()).getIcon());
               append(ProjectBundle.message("project.roots.project.jdk.inherited"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
               append(" (" + jdk.getName() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
             }
@@ -140,7 +141,9 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
                                 final JdkComboBoxItem firstItem,
                                 @Nullable final Condition<Sdk> additionalSetup,
                                 final String actionGroupTitle) {
-    setUpButton.addActionListener(new ActionListener() {
+
+    mySetUpButton = setUpButton;
+    mySetUpButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         DefaultActionGroup group = new DefaultActionGroup();
@@ -197,6 +200,10 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
         }
       }
     });
+  }
+
+  public JButton getSetUpButton() {
+    return mySetUpButton;
   }
 
   @Override

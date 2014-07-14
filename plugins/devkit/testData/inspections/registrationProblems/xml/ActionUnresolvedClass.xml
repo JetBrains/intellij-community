@@ -1,0 +1,6 @@
+<idea-plugin>
+  <actions>
+    <action id="invalid"
+            class="<error descr="Cannot resolve action class">INVALID_VALUE</error>"/>
+  </actions>
+</idea-plugin>

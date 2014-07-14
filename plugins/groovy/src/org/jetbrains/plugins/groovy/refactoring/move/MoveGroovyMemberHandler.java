@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ import java.util.*;
  * @author Maxim.Medvedev
  */
 public class MoveGroovyMemberHandler implements MoveMemberHandler {
+  @Override
   public boolean changeExternalUsage(@NotNull MoveMembersOptions options, @NotNull MoveMembersProcessor.MoveMembersUsageInfo usage) {
     final PsiElement element = usage.getElement();
     if (element == null || !element.isValid()) return true;
@@ -180,6 +181,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
     }
   }
 
+  @Override
   public void decodeContextInfo(@NotNull PsiElement scope) {
     GroovyChangeContextUtil.decodeContextInfo(scope, null, null);
   }
@@ -245,6 +247,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
       }
       if (!referencedFields.isEmpty()) {
         Collections.sort(referencedFields, new Comparator<PsiField>() {
+          @Override
           public int compare(final PsiField o1, final PsiField o2) {
             return -PsiUtilCore.compareElementsByPosition(o1, o2);
           }

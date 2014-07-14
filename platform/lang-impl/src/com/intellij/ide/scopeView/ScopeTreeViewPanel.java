@@ -28,14 +28,16 @@ import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.scopeView.nodes.BasePsiNode;
-import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -47,8 +49,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootAdapter;
@@ -298,7 +298,6 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
         }
       }
     });
-    CustomizationUtil.installPopupHandler(myTree, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.PROJECT_VIEW_POPUP);
   }
 
   @NotNull
@@ -307,10 +306,13 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     if (treePaths != null) {
       Set<PsiElement> result = new HashSet<PsiElement>();
       for (TreePath path : treePaths) {
-        PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
-        final PsiElement psiElement = node.getPsiElement();
-        if (psiElement != null && psiElement.isValid()) {
-          result.add(psiElement);
+        final Object component = path.getLastPathComponent();
+        if (component instanceof PackageDependenciesNode) {
+          PackageDependenciesNode node = (PackageDependenciesNode)component;
+          final PsiElement psiElement = node.getPsiElement();
+          if (psiElement != null && psiElement.isValid()) {
+            result.add(psiElement);
+          }
         }
       }
       return PsiUtilCore.toPsiElementArray(result);

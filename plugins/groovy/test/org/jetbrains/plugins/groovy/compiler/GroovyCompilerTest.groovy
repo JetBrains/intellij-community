@@ -15,27 +15,25 @@
  */
 
 package org.jetbrains.plugins.groovy.compiler
+
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
-import com.intellij.compiler.server.BuildManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.compiler.CompilerMessage
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.TestLoggerFactory
-import org.jetbrains.plugins.groovy.compiler.generator.GroovycStubGenerator
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+
 /**
  * @author peter
  */
-public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
+public class GroovyCompilerTest extends GroovyCompilerTestCase {
   @Override protected void setUp() {
     super.setUp();
     addGroovyLibrary(myModule);
@@ -208,7 +206,7 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
 
   @Override
   void runBare() {
-    new File(PathManager.systemPath, "compile-server/server.log").delete()
+    new File(TestLoggerFactory.testLogDir, "../log/build-log/build.log").delete()
     super.runBare()
   }
 
@@ -231,7 +229,7 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
       def logText = ideaLog.text
       println(logText.size() < limit ? logText : logText.substring(logText.size() - limit))
     }
-    def makeLog = new File(PathManager.systemPath, "compile-server/server.log")
+    def makeLog = new File(TestLoggerFactory.testLogDir, "../log/build-log/build.log")
     if (makeLog.exists()) {
       println "\n\nServer Log:"
       println makeLog.text
@@ -544,9 +542,6 @@ class Indirect {
     def main = myFixture.addFileToProject('Main.groovy', 'class Main extends Java {  }').virtualFile
 
     assertEmpty compileModule(myModule)
-    if (!useJps()) {
-      assertEmpty compileFiles(used.virtualFile, main)
-    }
 
     touch(used.virtualFile)
     touch(main)
@@ -725,11 +720,11 @@ public class Main {
     ApplicationManager.application.runWriteAction { msg.virtualFile.delete(this) }
 
     def messages = make()
-    assert messages 
+    assert messages
     def error = messages.find { it.message.contains('InvalidType') }
     assert error?.virtualFile
-    assert groovyFile.classes[0] == GroovycStubGenerator.findClassByStub(project, error.virtualFile)
-    
+    assert groovyFile.classes[0] == GroovyCompilerLoader.findClassByStub(project, error.virtualFile)
+
   }
 
   public void "test ignore groovy internal non-existent interface helper inner class"() {
@@ -788,30 +783,43 @@ string
     assertEmpty make()
   }
 
-  public static class IdeaModeTest extends GroovyCompilerTest {
-    @Override protected boolean useJps() { false }
+  public void "test compiling static extension"() {
+    setupTestSources()
+    myFixture.addFileToProject "src/extension/Extension.groovy", """
+package extension
+import groovy.transform.CompileStatic
+
+@CompileStatic class Extension {
+    static <T> T test2(List<T> self) {
+        self.first()
+    }
+}"""
+    myFixture.addFileToProject "src/META-INF/services/org.codehaus.groovy.runtime.ExtensionModule", """
+moduleName=extension-verify
+moduleVersion=1.0-test
+extensionClasses=extension.Extension
+staticExtensionClasses=
+"""
+    myFixture.addFileToProject "tests/AppTest.groovy", """
+class AppTest {
+    @groovy.transform.CompileStatic
+    static main(args) {
+        List<String> list = new ArrayList<>()
+        list.add("b")
+        list.add("c")
+        println list.test2()
+    }
+}
+"""
+    assertEmpty make()
+    assertOutput 'AppTest', 'b'
   }
 
-  public static class JpsModeTest extends GroovyCompilerTest {
-    @Override protected boolean useJps() { true }
+  public void "test no groovy library"() {
+    myFixture.addFileToProject("dependent/a.groovy", "");
+    addModule("dependent", true)
 
-    @Override
-    protected void tearDown() {
-      File systemRoot = BuildManager.getInstance().getBuildSystemDirectory()
-      try {
-        super.tearDown()
-      }
-      finally {
-        FileUtil.delete(systemRoot);
-      }
-    }
-
-    public void "test no groovy library"() {
-      myFixture.addFileToProject("dependent/a.groovy", "");
-      addModule("dependent", true)
-
-      def messages = make()
-      assert messages.find { it.message.contains("Cannot compile Groovy files: no Groovy library is defined for module 'dependent'") }
-    }
+    def messages = make()
+    assert messages.find { it.message.contains("Cannot compile Groovy files: no Groovy library is defined for module 'dependent'") }
   }
 }

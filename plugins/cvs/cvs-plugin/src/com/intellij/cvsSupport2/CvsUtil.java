@@ -29,6 +29,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -101,6 +102,22 @@ public class CvsUtil {
     }
   }
 
+  public static boolean fileIsUnderCvsMaybeWithVfs(VirtualFile vFile) {
+    try {
+      if (Registry.is("cvs.roots.refresh.uses.vfs")) {
+        if (vFile.isDirectory()) {
+          return directoryIsUnderCVS(vFile);
+        }
+        return fileIsUnderCvs(getEntryFor(vFile));
+      } else {
+        return fileIsUnderCvs(vFile);
+      }
+    }
+    catch (Exception e1) {
+      return false;
+    }
+  }
+
   public static boolean fileIsUnderCvs(VirtualFile vFile) {
     return fileIsUnderCvs(CvsVfsUtil.getFileFor(vFile));
   }
@@ -123,6 +140,22 @@ public class CvsUtil {
     if (!getFileInTheAdminDir(directory, CVS_ROOT_FILE).isFile()) return false;
     if (!getFileInTheAdminDir(directory, REPOSITORY).isFile()) return false;
     return true;
+  }
+
+  private static boolean directoryIsUnderCVS(VirtualFile vDir) {
+    VirtualFile dir = getAdminDir(vDir);
+    if (dir == null) return false;
+
+    if (!hasPlainFileInTheAdminDir(dir, ENTRIES)) return false;
+    if (!hasPlainFileInTheAdminDir(dir, CVS_ROOT_FILE)) return false;
+    if (!hasPlainFileInTheAdminDir(dir, REPOSITORY)) return false;
+
+    return true;
+  }
+
+  private static boolean hasPlainFileInTheAdminDir(VirtualFile dir, String filename) {
+    VirtualFile child = dir.findChild(filename);
+    return child != null && !child.isDirectory();
   }
 
   public static Entry getEntryFor(@NotNull VirtualFile file) {
@@ -299,6 +332,11 @@ public class CvsUtil {
 
   private static File getAdminDir(File file) {
     return new File(file, CVS);
+  }
+
+  private static VirtualFile getAdminDir(VirtualFile file) {
+    VirtualFile child = file.findChild(CVS);
+    return child != null && child.isDirectory() ? child:null;
   }
 
   @Nullable

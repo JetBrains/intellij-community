@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.frame.XSuspendContext;
@@ -70,6 +71,10 @@ public abstract class XDebuggerEvaluator {
    */
   public abstract void evaluate(@NotNull String expression, @NotNull XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition);
 
+  public void evaluate(@NotNull XExpression expression, @NotNull XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition) {
+    evaluate(expression.getExpression(), callback, expressionPosition);
+  }
+
   /**
      * Start evaluating expression.
      *
@@ -79,6 +84,10 @@ public abstract class XDebuggerEvaluator {
      * @param mode       code fragment or expression
      */
   public void evaluate(@NotNull String expression, @NotNull XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition, @NotNull EvaluationMode mode) {
+    evaluate(expression, callback, expressionPosition);
+  }
+
+  public void evaluate(@NotNull XExpression expression, @NotNull XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition, @NotNull EvaluationMode mode) {
     evaluate(expression, callback, expressionPosition);
   }
 
@@ -108,6 +117,8 @@ public abstract class XDebuggerEvaluator {
   }
 
   /**
+   * @deprecated Use {@link #getExpressionInfoAtOffset(com.intellij.openapi.project.Project, com.intellij.openapi.editor.Document, int, boolean)}
+   *
    * Return text range of expression which can be evaluated.
    *
    * @param project            project
@@ -115,9 +126,10 @@ public abstract class XDebuggerEvaluator {
    * @param offset             offset
    * @param sideEffectsAllowed if this parameter is false, the expression should not have any side effects when evaluated
    *                           (such expressions are evaluated in quick popups)
-   * @return pair of text range of expression (to display as link) and actual expression to evaluate (optional, could be null)
+   * @return pair of text range of expression (to highlight as link) and actual expression to evaluate (optional, could be null)
    */
   @Nullable
+  @Deprecated
   public Pair<TextRange, String> getExpressionAtOffset(@NotNull Project project, @NotNull Document document, int offset, boolean sideEffectsAllowed) {
     TextRange range = getExpressionRangeAtOffset(project, document, offset, sideEffectsAllowed);
     if (range == null) {
@@ -126,6 +138,21 @@ public abstract class XDebuggerEvaluator {
     else {
       return Pair.create(range, null);
     }
+  }
+
+  /**
+   * @param project            project
+   * @param document           document
+   * @param offset             offset
+   * @param sideEffectsAllowed if this parameter is false, the expression should not have any side effects when evaluated
+   *                           (such expressions are evaluated in quick popups)
+   * @return {@link com.intellij.xdebugger.evaluation.ExpressionInfo} of expression which can be evaluated
+   */
+  @Nullable
+  public ExpressionInfo getExpressionInfoAtOffset(@NotNull Project project, @NotNull Document document, int offset, boolean sideEffectsAllowed) {
+    @SuppressWarnings("deprecation")
+    Pair<TextRange, String> result = getExpressionAtOffset(project, document, offset, sideEffectsAllowed);
+    return result == null ? null : new ExpressionInfo(result.first, result.second);
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -34,7 +32,9 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.LightColors;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.util.DocumentUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,8 +56,6 @@ public class ByteCodeViewerComponent extends JPanel implements Disposable {
     EditorHighlighterFactory editorHighlighterFactory = EditorHighlighterFactory.getInstance();
     final SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(StdFileTypes.JAVA, project, null);
     ((EditorEx)myEditor).setHighlighter(editorHighlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme()));
-    ((EditorEx)myEditor).setBackgroundColor(EditorFragmentComponent.getBackgroundColor(myEditor));
-    myEditor.getColorsScheme().setColor(EditorColors.CARET_ROW_COLOR, LightColors.SLIGHTLY_GRAY);
     ((EditorEx)myEditor).setCaretVisible(true);
 
     final EditorSettings settings = myEditor.getSettings();
@@ -96,18 +94,15 @@ public class ByteCodeViewerComponent extends JPanel implements Disposable {
   }
 
   public void setText(final String bytecode, final int offset) {
-    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+    DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
+      @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            Document fragmentDoc = myEditor.getDocument();
-            fragmentDoc.setReadOnly(false);
-            fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), bytecode);
-            fragmentDoc.setReadOnly(true);
-            myEditor.getCaretModel().moveToOffset(offset);
-            myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-          }
-        });
+        Document fragmentDoc = myEditor.getDocument();
+        fragmentDoc.setReadOnly(false);
+        fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), bytecode);
+        fragmentDoc.setReadOnly(true);
+        myEditor.getCaretModel().moveToOffset(offset);
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
     });
   }

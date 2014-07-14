@@ -74,7 +74,7 @@ public abstract class PropertyBunch<MType> {
       PyExpression callee = call.getCallee();
       if (callee instanceof PyReferenceExpression) {
         PyReferenceExpression ref = (PyReferenceExpression)callee;
-        if (ref.getQualifier() != null) return null;
+        if (ref.isQualified()) return null;
         if (PyNames.PROPERTY.equals(callee.getName())) {
           PsiFile file = source.getContainingFile();
           if (isBuiltinFile(file) || !resolvesLocally(ref)) {

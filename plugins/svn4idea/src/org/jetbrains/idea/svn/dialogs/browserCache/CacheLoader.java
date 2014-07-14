@@ -44,7 +44,7 @@ public class CacheLoader extends Loader {
         if (cached != null) {
           refreshNode(node, cached, expander);
         }
-        final SVNErrorMessage error = myCache.getError(nodeUrl);
+        final String error = myCache.getError(nodeUrl);
         if (error != null) {
           refreshNodeError(node, error);
         }

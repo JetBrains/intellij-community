@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public enum ResourceRelevance {
 
-  NONE,
   STANDARD,
   LIBRARY,
   SOURCE,
@@ -55,12 +54,6 @@ public enum ResourceRelevance {
       return LIBRARY;
     }
     ExternalResourceManagerEx resourceManager = (ExternalResourceManagerEx)ExternalResourceManager.getInstance();
-    if (resourceManager.isUserResource(resource)) {
-      return MAPPED;
-    }
-    if (resourceManager.isStandardResource(resource)) {
-      return STANDARD;
-    }
-    return NONE;
+    return resourceManager.isUserResource(resource) ? MAPPED : STANDARD;
   }
 }

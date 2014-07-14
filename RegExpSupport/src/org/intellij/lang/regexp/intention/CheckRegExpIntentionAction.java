@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public class CheckRegExpIntentionAction extends QuickEditAction implements Icona
     final Project project = file.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document != null) {
-      return new CheckRegExpForm(new Pair<PsiFile, Ref<Balloon>>(file, ref)).getRootPanel();
+      return new CheckRegExpForm(Pair.create(file, ref)).getRootPanel();
     }
     return null;
   }

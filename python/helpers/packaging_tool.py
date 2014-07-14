@@ -8,6 +8,8 @@ ERROR_NO_PIP = 2
 ERROR_NO_SETUPTOOLS = 3
 ERROR_EXCEPTION = 4
 
+os.putenv("PIP_REQUIRE_VIRTUALENV", "false")
+
 def exit(retcode):
     major, minor, micro, release, serial = sys.version_info
     version = major * 10 + minor
@@ -19,7 +21,7 @@ def exit(retcode):
 
 
 def usage():
-    sys.stderr.write('Usage: packaging_tool.py <list|install|uninstall|pyvenv>\n')
+    sys.stderr.write('Usage: packaging_tool.py <list|search|install|uninstall|pyvenv>\n')
     sys.stderr.flush()
     exit(ERROR_WRONG_USAGE)
 
@@ -55,6 +57,13 @@ def do_install(pkgs):
     except ImportError:
         error_no_pip()
     return pip.main(['install'] + pkgs)
+
+def do_search(pkgs):
+    try:
+        import pip
+    except ImportError:
+        error_no_pip()
+    return pip.main(['search'] + pkgs)
 
 
 def do_uninstall(pkgs):
@@ -113,6 +122,11 @@ def main():
             if len(sys.argv) != 2:
                 usage()
             do_list()
+        elif cmd == 'search':
+            if len(sys.argv) < 2:
+                usage()
+            pkgs = sys.argv[2:]
+            do_search(pkgs)
         elif cmd == 'install':
             if len(sys.argv) < 2:
                 usage()

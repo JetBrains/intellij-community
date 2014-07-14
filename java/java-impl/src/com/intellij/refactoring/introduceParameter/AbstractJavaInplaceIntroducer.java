@@ -139,7 +139,9 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
     final PsiElement refVariableElementParent = refVariableElement != null ? refVariableElement.getParent() : null;
     PsiExpression expression = refVariableElement instanceof PsiKeyword && refVariableElementParent instanceof PsiNewExpression 
                                ? (PsiNewExpression)refVariableElementParent 
-                               : PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
+                               : refVariableElementParent instanceof PsiParenthesizedExpression 
+                                 ? ((PsiParenthesizedExpression)refVariableElementParent).getExpression() 
+                                 : PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
     if (expression instanceof PsiReferenceExpression && !(expression.getParent() instanceof PsiMethodCallExpression)) {
       final String referenceName = ((PsiReferenceExpression)expression).getReferenceName();
       if (((PsiReferenceExpression)expression).resolve() == psiVariable ||
@@ -151,7 +153,7 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
     if (expression == null) {
       expression = PsiTreeUtil.getParentOfType(refVariableElement, PsiExpression.class);
     }
-    while (expression instanceof PsiReferenceExpression) {
+    while (expression instanceof PsiReferenceExpression || expression instanceof PsiMethodCallExpression) {
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiMethodCallExpression) {
         if (parent.getText().equals(exprText)) return (PsiExpression)parent;
@@ -161,8 +163,10 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
         if (expression.getText().equals(exprText)) {
           return expression;
         }
-      } else {
+      } else if (expression instanceof PsiReferenceExpression) {
         return null;
+      } else {
+        break;
       }
     }
     if (expression != null && expression.isValid() && expression.getText().equals(exprText)) {

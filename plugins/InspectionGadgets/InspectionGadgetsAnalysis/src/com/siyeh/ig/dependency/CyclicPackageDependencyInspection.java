@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,13 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefPackage;
+import com.intellij.codeInspection.util.RefEntityAlphabeticalComparator;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -49,21 +51,31 @@ public class CyclicPackageDependencyInspection extends BaseGlobalInspection {
       return null;
     }
     final RefPackage refPackage = (RefPackage)refEntity;
-    final Set<RefPackage> dependencies =
-      DependencyUtils.calculateTransitiveDependenciesForPackage(refPackage);
-    final Set<RefPackage> dependents =
-      DependencyUtils.calculateTransitiveDependentsForPackage(refPackage);
-    final Set<RefPackage> mutualDependents =
-      new HashSet<RefPackage>(dependencies);
+    final Set<RefPackage> dependencies = DependencyUtils.calculateTransitiveDependenciesForPackage(refPackage);
+    final Set<RefPackage> dependents = DependencyUtils.calculateTransitiveDependentsForPackage(refPackage);
+    final Set<RefPackage> mutualDependents = new HashSet<RefPackage>(dependencies);
     mutualDependents.retainAll(dependents);
     final int numMutualDependents = mutualDependents.size();
-    if (numMutualDependents <= 1) {
+    if (numMutualDependents == 0) {
       return null;
     }
-    final String packageName = refEntity.getName();
-    final String errorString = InspectionGadgetsBundle.message(
-      "cyclic.package.dependency.problem.descriptor",
-      packageName, numMutualDependents - 1);
+    final String packageName = refPackage.getQualifiedName();
+    final String errorString;
+    if (numMutualDependents == 1) {
+      final RefPackage[] packages = mutualDependents.toArray(new RefPackage[1]);
+      errorString = InspectionGadgetsBundle.message("cyclic.package.dependency.1.problem.descriptor",
+                                                    packageName, packages[0].getQualifiedName());
+    }
+    else if (numMutualDependents == 2) {
+      final RefPackage[] packages = mutualDependents.toArray(new RefPackage[2]);
+      Arrays.sort(packages, RefEntityAlphabeticalComparator.getInstance());
+      errorString = InspectionGadgetsBundle.message("cyclic.package.dependency.2.problem.descriptor",
+                                                    packageName, packages[0].getQualifiedName(), packages[1].getQualifiedName());
+    }
+    else {
+      errorString = InspectionGadgetsBundle.message("cyclic.package.dependency.problem.descriptor",
+                                                    packageName, Integer.valueOf(numMutualDependents));
+    }
     return new CommonProblemDescriptor[]{
       inspectionManager.createProblemDescriptor(errorString)
     };

@@ -39,15 +39,14 @@ public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInapplicable() { doTest(false); }
   public void testDuplicateAttribute() { doTest(false); }
   public void testDuplicateTarget() { doTest(false); }
+  public void testPingPongAnnotationTypesDependencies() { doTest(false);}
+  public void testClashMethods() { doTest(false);}
 
   public void testInvalidPackageAnnotationTarget() { doTest(BASE_PATH + "/" + getTestName(true) + "/package-info.java", false, false); }
   public void testPackageAnnotationNotInPackageInfo() { doTest(BASE_PATH + "/" + getTestName(true) + "/notPackageInfo.java", false, false); }
 
   public void testTypeAnnotations() { doTest8(false); }
   public void testRepeatable() { doTest8(false); }
-
-  public void testPingPongAnnotationTypesDependencies() { doTest(false);}
-  public void testClashMethods() { doTest(false);}
 
   private void doTest(boolean checkWarnings) {
     setLanguageLevel(LanguageLevel.JDK_1_7);

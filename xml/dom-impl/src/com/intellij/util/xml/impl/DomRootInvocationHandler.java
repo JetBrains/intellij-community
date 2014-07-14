@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,11 +48,13 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
                                   @Nullable ElementStub stub
   ) {
     super(aClass, strategy, tagName, new AbstractDomChildDescriptionImpl(aClass) {
+      @Override
       @NotNull
       public List<? extends DomElement> getValues(@NotNull final DomElement parent) {
         throw new UnsupportedOperationException();
       }
 
+      @Override
       public int compareTo(final AbstractDomChildDescriptionImpl o) {
         throw new UnsupportedOperationException();
       }
@@ -45,6 +62,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
     myParent = fileElement;
   }
 
+  @Override
   public void undefineInternal() {
     try {
       final XmlTag tag = getXmlTag();
@@ -70,6 +88,13 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
     return myParent.hashCode();
   }
 
+  @Override
+  public boolean exists() {
+    return getStub() != null ||
+           getXmlElement() != null;
+  }
+
+  @Override
   @NotNull
   public String getXmlElementNamespace() {
     return getXmlName().getNamespace(getFile(), getFile());
@@ -90,23 +115,28 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
     return null;
   }
 
+  @Override
   @NotNull
   public DomFileElementImpl getParent() {
     return myParent;
   }
 
+  @Override
   public DomElement createPathStableCopy() {
     final DomFileElement stableCopy = myParent.createStableCopy();
     return getManager().createStableValue(new NullableFactory<DomElement>() {
+      @Override
       public DomElement create() {
         return stableCopy.isValid() ? stableCopy.getRootElement() : null;
       }
     });
   }
 
+  @Override
   protected XmlTag setEmptyXmlTag() {
     final XmlTag[] result = new XmlTag[]{null};
     getManager().runChange(new Runnable() {
+      @Override
       public void run() {
         try {
           final String namespace = getXmlElementNamespace();
@@ -123,6 +153,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
     return result[0];
   }
 
+  @Override
   @NotNull
   public final DomNameStrategy getNameStrategy() {
     final Class<?> rawType = getRawType();

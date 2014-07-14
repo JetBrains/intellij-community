@@ -43,7 +43,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                   "<version>1</version>");
   }
 
-  @Bombed(year = 2013, month = Calendar.APRIL, day = 25, user = "sergey.evdokimov")
+  @Bombed(year = 2014, month = Calendar.APRIL, day = 25, user = "sergey.evdokimov")
   public void testGroupIdCompletion() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -57,7 +57,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "test", "org.apache.maven.plugins", "org.codehaus.mojo");
+    assertCompletionVariants(myProjectPom, "org.codehaus.plexus", "intellij.test", "test", "org.apache.maven.plugins", "org.codehaus.mojo");
   }
 
   @Bombed(year = 2013, month = Calendar.APRIL, day = 25, user = "sergey.evdokimov")

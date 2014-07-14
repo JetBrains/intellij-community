@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * @author yole
  */
@@ -37,6 +39,9 @@ public interface DirectoryProjectGenerator<T> {
 
   @Nullable
   T showGenerationSettings(final VirtualFile baseDir) throws ProcessCanceledException;
+
+  @Nullable
+  Icon getLogo();
 
   void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                        @Nullable final T settings, @NotNull final Module module);

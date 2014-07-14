@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,61 +58,62 @@ public interface ModuleRootModel {
   @NotNull
   OrderEntry[] getOrderEntries();
 
- /*
-  * Returns the JDK used by the module.
-  *
-  * @return either module-specific or inherited JDK
-  * @see #isSdkInherited()
-  */
- @Nullable
- Sdk getSdk();
-
- /**
-  * Returns <code>true</code> if JDK for this module is inherited from a project.
-  *
-  * @return true if the JDK is inherited, false otherwise
-  * @see ProjectRootManager#getProjectSdk()
-  * @see ProjectRootManager#setProjectSdk(com.intellij.openapi.projectRoots.Sdk)
-  */
- boolean isSdkInherited();
-
-
- /**
+  /*
+   * Returns the SDK used by the module.
+   *
+   * @return either module-specific or inherited SDK
+   * @see #isSdkInherited()
+   */
+  @Nullable
+  Sdk getSdk();
 
   /**
-   * Returns an array of content roots from all content entries. A helper method.
+   * Returns <code>true</code> if SDK for this module is inherited from a project.
+   *
+   * @return true if the SDK is inherited, false otherwise
+   * @see ProjectRootManager#getProjectSdk()
+   * @see ProjectRootManager#setProjectSdk(com.intellij.openapi.projectRoots.Sdk)
+   */
+  boolean isSdkInherited();
+
+  /**
+   * Returns an array of content roots from all content entries.
    *
    * @return the array of content roots.
    * @see #getContentEntries()
    */
-  @NotNull VirtualFile[] getContentRoots();
+  @NotNull
+  VirtualFile[] getContentRoots();
 
   /**
-   * Returns an array of content root urls from all content entries. A helper method.
+   * Returns an array of content root urls from all content entries.
    *
    * @return the array of content root URLs.
    * @see #getContentEntries()
    */
-  @NotNull String[] getContentRootUrls();
+  @NotNull
+  String[] getContentRootUrls();
 
   /**
-   * Returns an array of exclude roots from all content entries. A helper method.
+   * Returns an array of exclude roots from all content entries.
    *
    * @return the array of excluded roots.
    * @see #getContentEntries()
    */
-  @NotNull VirtualFile[] getExcludeRoots();
+  @NotNull
+  VirtualFile[] getExcludeRoots();
 
   /**
-   * Returns an array of exclude root urls from all content entries. A helper method.
+   * Returns an array of exclude root urls from all content entries.
    *
    * @return the array of excluded root URLs.
    * @see #getContentEntries()
    */
-  @NotNull String[] getExcludeRootUrls();
+  @NotNull
+  String[] getExcludeRootUrls();
 
   /**
-   * Returns an array of source roots from all content entries. A helper method.
+   * Returns an array of source roots from all content entries.
    *
    * @return the array of source roots.
    * @see #getContentEntries()
@@ -122,7 +123,7 @@ public interface ModuleRootModel {
   VirtualFile[] getSourceRoots();
 
   /**
-   * Returns an array of source roots from all content entries. A helper method.
+   * Returns an array of source roots from all content entries.
    *
    * @param includingTests determines whether test source roots should be included in the result
    * @return the array of source roots.
@@ -133,7 +134,8 @@ public interface ModuleRootModel {
   VirtualFile[] getSourceRoots(boolean includingTests);
 
   /**
-   * Return a list of source roots of the specified type
+   * Return a list of source roots of the specified type.
+   *
    * @param rootType type of source roots
    * @return list of source roots
    */
@@ -141,7 +143,7 @@ public interface ModuleRootModel {
   List<VirtualFile> getSourceRoots(@NotNull JpsModuleSourceRootType<?> rootType);
 
   /**
-   * Return a list of source roots which types belong to the specified set
+   * Return a list of source roots which types belong to the specified set.
    *
    * @param rootTypes types of source roots
    * @return list of source roots
@@ -150,23 +152,25 @@ public interface ModuleRootModel {
   List<VirtualFile> getSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes);
 
   /**
-   * Returns an array of source root urls from all content entries. A helper method.
+   * Returns an array of source root urls from all content entries.
    *
    * @return the array of source root URLs.
    * @see #getContentEntries()
    * @see #getSourceRootUrls(boolean)
    */
-  @NotNull String[] getSourceRootUrls();
+  @NotNull
+  String[] getSourceRootUrls();
 
   /**
-   * Returns an array of source root urls from all content entries. A helper method.
+   * Returns an array of source root urls from all content entries.
    *
    * @param includingTests determines whether test source root urls should be included in the result
    * @return the array of source root URLs.
    * @see #getContentEntries()
    * @since 10.0
    */
-  @NotNull String[] getSourceRootUrls(boolean includingTests);
+  @NotNull
+  String[] getSourceRootUrls(boolean includingTests);
 
   /**
    * Passes all order entries in the module to the specified visitor.
@@ -180,7 +184,7 @@ public interface ModuleRootModel {
 
   /**
    * Returns {@link OrderEnumerator} instance which can be used to process order entries of the module (with or without dependencies) and
-   * collect classes or source roots
+   * collect classes or source roots.
    *
    * @return {@link OrderEnumerator} instance
    * @since 10.0
@@ -193,7 +197,8 @@ public interface ModuleRootModel {
    *
    * @return the list of module names this module depends on.
    */
-  @NotNull String[] getDependencyModuleNames();
+  @NotNull
+  String[] getDependencyModuleNames();
 
   <T> T getModuleExtension(Class<T> klass);
 

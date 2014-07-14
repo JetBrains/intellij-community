@@ -16,7 +16,7 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.SmartList;
@@ -164,10 +164,10 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     }
 
     @Override
-    public void appendToComponent(SimpleColoredComponent component) {
+    public void appendToComponent(@NotNull ColoredTextContainer component) {
       for (Object object : objects) {
         if (object instanceof String) {
-          component.append((String)object);
+          component.append((String)object, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
         else {
           XDebuggerTreeNodeHyperlink hyperlink = (XDebuggerTreeNodeHyperlink)object;

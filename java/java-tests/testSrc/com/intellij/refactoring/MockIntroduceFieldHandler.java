@@ -23,11 +23,16 @@ public class MockIntroduceFieldHandler extends IntroduceFieldHandler {
   @Override
   protected Settings showRefactoringDialog(Project project, Editor editor, PsiClass parentClass, PsiExpression expr, PsiType type,
                                            PsiExpression[] occurrences, PsiElement anchorElement, PsiElement anchorElementIfAll) {
-    SuggestedNameInfo name = JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.FIELD, null, expr, type);
-    return new Settings(name.names[0],  expr, occurrences, true, myDeclareStatic, true, myInitializationPlace,
+    final String fieldName = getNewName(project, expr, type);
+    return new Settings(fieldName,  expr, occurrences, true, myDeclareStatic, true, myInitializationPlace,
             PsiModifier.PUBLIC,
             null,
             getFieldType(type), true, (TargetDestination)null, false, false);
+  }
+
+  protected String getNewName(Project project, PsiExpression expr, PsiType type) {
+    SuggestedNameInfo name = JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.FIELD, null, expr, type);
+    return name.names[0];
   }
 
   protected PsiType getFieldType(PsiType type) {

@@ -25,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -129,18 +130,18 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
           if (CommonClassNames.JAVA_LANG_BOOLEAN.equals(classname)) {
             @NonNls final String name = field.getName();
             if ("TRUE".equals(name)) {
-              replaceExpression(methodCall, "true");
+              PsiReplacementUtil.replaceExpression(methodCall, "true");
               return;
             }
             else if ("FALSE".equals(name)) {
-              replaceExpression(methodCall, "false");
+              PsiReplacementUtil.replaceExpression(methodCall, "false");
               return;
             }
           }
         }
       }
       final String strippedQualifierText = strippedQualifier.getText();
-      replaceExpression(methodCall, strippedQualifierText);
+      PsiReplacementUtil.replaceExpression(methodCall, strippedQualifierText);
     }
   }
 
@@ -159,7 +160,19 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
       if (isPossibleObjectComparison(expression, containingExpression)) {
         return;
       }
-      if (containingExpression instanceof PsiConditionalExpression) {
+      if (containingExpression instanceof PsiTypeCastExpression) {
+        final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)containingExpression;
+        final PsiTypeElement typeElement = typeCastExpression.getCastType();
+        if (typeElement == null) {
+          return;
+        }
+        final PsiType castType = typeElement.getType();
+        final PsiType expressionType = expression.getType();
+        if (expressionType == null || !castType.isAssignableFrom(expressionType)) {
+          return;
+        }
+      }
+      else if (containingExpression instanceof PsiConditionalExpression) {
         final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)containingExpression;
         final PsiExpression thenExpression = conditionalExpression.getThenExpression();
         if (thenExpression == null) {
@@ -273,7 +286,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
       if (containingClass == null) {
         return false;
       }
-      final PsiType[] types = new PsiType[expressions.length];
+      final PsiType[] types = PsiType.createArray(expressions.length);
       for (int i = 0; i < expressions.length; i++) {
         final PsiExpression expression = expressions[i];
         final PsiType type = expression.getType();

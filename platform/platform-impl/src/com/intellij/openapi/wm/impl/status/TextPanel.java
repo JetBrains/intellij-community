@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -35,8 +36,12 @@ public class TextPanel extends JComponent {
   private int myRightPadding = 20;
 
   protected TextPanel() {
-    setFont(SystemInfo.isMac ? UIUtil.getLabelFont().deriveFont(11.0f) : UIUtil.getLabelFont());
     setOpaque(false);
+  }
+
+  @Override
+  public Font getFont() {
+    return SystemInfo.isMac ? UIUtil.getLabelFont().deriveFont(11.0f) : UIUtil.getLabelFont();
   }
 
   protected TextPanel(final boolean decorate) {
@@ -135,8 +140,13 @@ public class TextPanel extends JComponent {
     return result.toString();
   }
 
-  public final void setText(@Nullable final String text) {
-    myText = text == null ? "" : text;
+  public final void setText(@Nullable String text) {
+    text = StringUtil.notNullize(text);
+    if (text.equals(myText)) {
+      return;
+    }
+
+    myText = text;
     setPreferredSize(getPanelDimensionFromFontMetrics(myText));
     revalidate();
     repaint();

@@ -161,7 +161,10 @@ public final class Matcher {
 
   void testArrayAccess() { doTest() }
 
-  void testCastWithEquality() { doTest() }
+  void testCastWithEquality() {
+    addBigDecimal()
+    doTest()
+  }
 
   void testAsserts() { doTest() }
 
@@ -196,4 +199,8 @@ public final class Matcher {
   void testStringConverting() { doTest() }
 
   void testInWitchClassCheck() { doTest() }
+
+  void testSwitch() { doTest() }
+
+  void testPropSelection() { doTest() }
 }

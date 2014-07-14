@@ -131,7 +131,8 @@ public class MethodGroupingRule implements UsageGroupingRule {
 
     @Override
     public FileStatus getFileStatus() {
-      return isValid() ? NavigationItemFileStatus.get(getMethod()) : null;
+      PsiFile file = myMethodPointer.getContainingFile();
+      return file == null ? null : NavigationItemFileStatus.get(file);
     }
 
     @Override

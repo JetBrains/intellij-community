@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,13 @@ import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CharTable;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +52,13 @@ public class ChangeUtil {
   }
 
   private static void encodeInformation(TreeElement element, ASTNode original) {
-    encodeInformation(element, original, new HashMap<Object, Object>());
+    DebugUtil.startPsiModification("encodeInformation");
+    try {
+      encodeInformation(element, original, new HashMap<Object, Object>());
+    }
+    finally {
+      DebugUtil.finishPsiModification();
+    }
   }
 
   private static void encodeInformation(TreeElement element, ASTNode original, Map<Object, Object> state) {
@@ -71,7 +78,13 @@ public class ChangeUtil {
   }
 
   public static TreeElement decodeInformation(TreeElement element) {
-    return decodeInformation(element, new HashMap<Object, Object>());
+    DebugUtil.startPsiModification("decodeInformation");
+    try {
+      return decodeInformation(element, new HashMap<Object, Object>());
+    }
+    finally {
+      DebugUtil.finishPsiModification();
+    }
   }
 
   private static TreeElement decodeInformation(TreeElement element, Map<Object, Object> state) {
@@ -135,7 +148,7 @@ public class ChangeUtil {
 
   @Nullable
   public static TreeElement generateTreeElement(PsiElement original, CharTable table, final PsiManager manager) {
-    LOG.assertTrue(original.isValid());
+    PsiUtilCore.ensureValid(original);
     if (SourceTreeToPsiMap.hasTreeElement(original)) {
       return copyElement((TreeElement)SourceTreeToPsiMap.psiElementToTree(original), table);
     }
@@ -152,27 +165,22 @@ public class ChangeUtil {
     final FileElement changedFile = TreeUtil.getFileElement(changedElement);
     final PsiManager manager = changedFile.getManager();
     final PomModel model = PomManager.getModel(manager.getProject());
-    try{
-      final TreeAspect treeAspect = model.getModelAspect(TreeAspect.class);
-      model.runTransaction(new PomTransactionBase(changedElement.getPsi(), treeAspect) {
-        @Override
-        public PomModelEvent runInner() {
-          final PomModelEvent event = new PomModelEvent(model);
-          final TreeChangeEvent destinationTreeChange = new TreeChangeEventImpl(treeAspect, changedFile);
-          event.registerChangeSet(treeAspect, destinationTreeChange);
-          action.makeChange(destinationTreeChange);
+    final TreeAspect treeAspect = model.getModelAspect(TreeAspect.class);
+    model.runTransaction(new PomTransactionBase(changedElement.getPsi(), treeAspect) {
+      @Override
+      public PomModelEvent runInner() {
+        final PomModelEvent event = new PomModelEvent(model);
+        final TreeChangeEvent destinationTreeChange = new TreeChangeEventImpl(treeAspect, changedFile);
+        event.registerChangeSet(treeAspect, destinationTreeChange);
+        action.makeChange(destinationTreeChange);
 
-          TreeUtil.clearCaches(changedElement);
-          if (changedElement instanceof CompositeElement) {
-            ((CompositeElement) changedElement).subtreeChanged();
-          }
-          return event;
+        TreeUtil.clearCaches(changedElement);
+        if (changedElement instanceof CompositeElement) {
+          ((CompositeElement) changedElement).subtreeChanged();
         }
-      });
-    }
-    catch(IncorrectOperationException ioe){
-      LOG.error(ioe);
-    }
+        return event;
+      }
+    });
   }
 
   public interface ChangeAction{

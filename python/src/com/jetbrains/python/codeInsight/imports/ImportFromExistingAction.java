@@ -82,7 +82,7 @@ public class ImportFromExistingAction implements QuestionAction {
     // check if the tree is sane
     PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
     if (!myTarget.isValid()) return false;
-    if ((myTarget instanceof PyQualifiedExpression) && ((((PyQualifiedExpression)myTarget).getQualifier() != null))) return false; // we cannot be qualified
+    if ((myTarget instanceof PyQualifiedExpression) && ((((PyQualifiedExpression)myTarget).isQualified()))) return false; // we cannot be qualified
     for (ImportCandidateHolder item : mySources) {
       if (!item.getImportable().isValid()) return false;
       if (!item.getFile().isValid()) return false;

@@ -312,7 +312,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     group.add(cloneAction);
     group.add(resetAction);
     addAction.registerCustomShortcutSet(CommonShortcuts.INSERT, myCurrentTab.getComponent());
-    removeAction.registerCustomShortcutSet(CommonShortcuts.DELETE,
+    removeAction.registerCustomShortcutSet(CommonShortcuts.getDelete(),
                                            myCurrentTab.getComponent());
 
     myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
@@ -357,6 +357,8 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   }
 
   private void onTabChanged() {
+    applyEditor(myCurrentTab.getSelectedTemplate());
+    
     final int selectedIndex = myTabbedPane.getSelectedIndex();
     if (0 <= selectedIndex && selectedIndex < myTabs.length) {
       myCurrentTab = myTabs[selectedIndex];
@@ -370,17 +372,8 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     if (prevTemplate != selectedValue) {
       LOG.assertTrue(myEditor != null, "selected:" + selectedValue + "; prev:" + prevTemplate);
       //selection has changed
-      if (myEditor.isModified() && Arrays.asList(myCurrentTab.getTemplates()).contains(prevTemplate)) {
-        try {
-          myModified = true;
-          myEditor.apply();
-          fireListChanged();
-        }
-        catch (ConfigurationException e) {
-          myCurrentTab.selectTemplate(prevTemplate);
-          Messages.showErrorDialog(myMainPanel, e.getMessage(), IdeBundle.message("title.cannot.save.current.template"));
-          return;
-        }
+      if (Arrays.asList(myCurrentTab.getTemplates()).contains(prevTemplate) && !applyEditor(prevTemplate)) {
+        return;
       }
       if (selectedValue == null) {
         myEditor.setTemplate(null, FileTemplateManagerImpl.getInstanceImpl().getDefaultTemplateDescription());
@@ -390,6 +383,24 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
         selectTemplate(selectedValue);
       }
     }
+  }
+
+  private boolean applyEditor(FileTemplate prevTemplate) {
+    if (myEditor.isModified()) {
+      try {
+        myModified = true;
+        myEditor.apply();
+        fireListChanged();
+      }
+      catch (ConfigurationException e) {
+        if (Arrays.asList(myCurrentTab.getTemplates()).contains(prevTemplate)) {
+          myCurrentTab.selectTemplate(prevTemplate);
+        }
+        Messages.showErrorDialog(myMainPanel, e.getMessage(), IdeBundle.message("title.cannot.save.current.template"));
+        return false;
+      }
+    }
+    return true;
   }
 
   private void selectTemplate(FileTemplate template) {
@@ -477,7 +488,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
       }
       if (allNames.contains(currName)) {
         itemWithError = template;
-        errorString = IdeBundle.message("error.template.with.such.name.already.exists");
+        errorString = "Template with name \'" + currName + "\' already exists. Please specify a different template name";
         break;
       }
       if (currExt.length() == 0) {
@@ -559,28 +570,37 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     }
   }
 
+  public void selectTemplatesTab() {
+    selectTab(TEMPLATES_TITLE);
+  }
+  
+  private boolean selectTab(String tabName) {
+    int idx = 0;
+    for (FileTemplateTab tab : myTabs) {
+      if (Comparing.strEqual(tab.getTitle(), tabName)) {
+        myCurrentTab = tab;
+        myTabbedPane.setSelectedIndex(idx);
+        return true;
+      }
+      idx++;
+    }
+    return false;
+  }
+
   @Override
   public void reset() {
     myEditor.reset();
     initLists();
     final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
     final String tabName = propertiesComponent.getValue(CURRENT_TAB);
-    int idx = 0;
-    for (FileTemplateTab tab : myTabs) {
-      if (Comparing.strEqual(tab.getTitle(), tabName)) {
-        myCurrentTab = tab;
-        myTabbedPane.setSelectedIndex(idx);
-        final String selectedTemplateName = propertiesComponent.getValue(SELECTED_TEMPLATE);
-        final FileTemplate[] templates = myCurrentTab.getTemplates();
-        for (FileTemplate template : templates) {
-          if (Comparing.strEqual(template.getName(), selectedTemplateName)) {
-            tab.selectTemplate(template);
-            break;
-          }
+    if (selectTab(tabName)) {
+      final String selectedTemplateName = propertiesComponent.getValue(SELECTED_TEMPLATE);
+      for (FileTemplate template : myCurrentTab.getTemplates()) {
+        if (Comparing.strEqual(template.getName(), selectedTemplateName)) {
+          myCurrentTab.selectTemplate(template);
+          break;
         }
-        break;
       }
-      idx++;
     }
     myModified = false;
   }

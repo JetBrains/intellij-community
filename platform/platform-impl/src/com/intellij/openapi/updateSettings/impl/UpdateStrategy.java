@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
-
 import com.intellij.openapi.util.BuildNumber;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UpdateStrategy {
-  public static enum State {LOADED, CONNECTION_ERROR, NOTHING_LOADED}
+  public enum State {LOADED, CONNECTION_ERROR, NOTHING_LOADED}
 
   private UserUpdateSettings myUpdateSettings;
   private int myMajorVersion;
@@ -32,8 +31,9 @@ public class UpdateStrategy {
   private ChannelStatus myChannelStatus;
   private UpdatesInfo myUpdatesInfo;
 
-
-  public UpdateStrategy(int majorVersion, @NotNull BuildNumber currentBuild, @NotNull UpdatesInfo updatesInfo,
+  public UpdateStrategy(int majorVersion,
+                        @NotNull BuildNumber currentBuild,
+                        @NotNull UpdatesInfo updatesInfo,
                         @NotNull UserUpdateSettings updateSettings) {
     myMajorVersion = majorVersion;
     myUpdatesInfo = updatesInfo;
@@ -68,7 +68,6 @@ public class UpdateStrategy {
           channel.getMajorVersion() >= myMajorVersion &&
           channel.getStatus().compareTo(myChannelStatus) >= 0 &&
           hasNewVersion(channel)) {
-        result.addNewChannel(channel);
         if (channelToPropose == null || isBetter(channelToPropose, channel)) {
           channelToPropose = channel;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ package com.intellij.psi.impl.source.parsing.xml;
 
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderImpl;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -51,13 +52,14 @@ public class XmlParser implements PsiParser {
           if (children[2].getTokenType() != XmlTokenType.XML_TAG_END) return ThreeState.UNSURE;
           LighterASTTokenNode name = (LighterASTTokenNode)children[1];
           CharSequence newName = name.getText();
-          if (!oldName.equals(newName)) return ThreeState.NO;
+          if (!Comparing.equal(oldName, newName)) return ThreeState.NO;
         }
 
         return ThreeState.UNSURE;
       }
     };
 
+  @Override
   @NotNull
   public ASTNode parse(final IElementType root, final PsiBuilder builder) {
     builder.enforceCommentTokens(TokenSet.EMPTY);

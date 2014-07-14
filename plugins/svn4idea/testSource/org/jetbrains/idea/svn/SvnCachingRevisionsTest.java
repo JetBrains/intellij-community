@@ -3,12 +3,13 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.committed.ChangesBunch;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import org.jetbrains.idea.svn.history.*;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.*;
@@ -17,7 +18,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
   private SvnRepositoryLocation myLocation;
   private LoadedRevisionsCache myInternalManager;
   private final static String URL = "file:///C:/repo/trunk";
-  private final static String ROOT = "file:///C:/repo";
+  private final static SVNURL ROOT = SvnUtil.parseUrl("file:///C:/repo");
   private final static String AUTHOR = "author";
   private final static int PAGE = 5;
 
@@ -36,7 +37,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
 
   private SvnChangeList createList(final long revision) {
     return new SvnChangeList(null, myLocation,
-                             new SVNLogEntry(Collections.emptyMap(), revision, AUTHOR, new Date(System.currentTimeMillis()), ""), ROOT);
+                             new SVNLogEntry(Collections.emptyMap(), revision, AUTHOR, new Date(System.currentTimeMillis()), ""), ROOT.toDecodedString());
   }
 
   private class MockSvnLogLoader implements SvnLogLoader {
@@ -48,7 +49,8 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
 
     @Override
     public List<CommittedChangeList> loadInterval(final SVNRevision fromIncluding, final SVNRevision toIncluding, final int maxCount,
-                                                  final boolean includingYoungest, final boolean includeOldest) throws SVNException {
+                                                  final boolean includingYoungest, final boolean includeOldest)
+      throws VcsException {
       long young = fromIncluding.getNumber();
       young = (young == -1) ? myRevisions.get(myRevisions.size() - 1) : young;
       final long old = toIncluding.getNumber();
@@ -79,7 +81,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
   }
 
   private LiveProvider createLiveProvider(final List<Long> liveRevisions) {
-    return new LiveProvider(null, myLocation, liveRevisions.get(liveRevisions.size() - 1), new MockSvnLogLoader(liveRevisions));
+    return new LiveProvider(null, myLocation, liveRevisions.get(liveRevisions.size() - 1), new MockSvnLogLoader(liveRevisions), ROOT);
   }
 
   private void checkBounds(final Pair<Long, Long> bounds, final long startRevision, final int step) {

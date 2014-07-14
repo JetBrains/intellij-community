@@ -18,6 +18,7 @@ package com.intellij.execution.configurations;
 
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.HashMap;
@@ -26,7 +27,7 @@ import java.util.Map;
 public class SimpleProgramParameters {
   private final ParametersList myProgramParameters = new ParametersList();
   private String myWorkingDirectory;
-  private Map<String, String> myEnv;
+  private Map<String, String> myEnv = new THashMap<String, String>();
   private boolean myPassParentEnvs = true;
 
   public String getWorkingDirectory() {
@@ -45,15 +46,12 @@ public class SimpleProgramParameters {
     return myProgramParameters;
   }
 
+  @NotNull
   public Map<String, String> getEnv() {
     return myEnv;
   }
 
   public String addEnv(String name, String value) {
-    if (myEnv == null) {
-      myEnv = new THashMap<String, String>();
-    }
-
     return myEnv.put(name, value);
   }
 

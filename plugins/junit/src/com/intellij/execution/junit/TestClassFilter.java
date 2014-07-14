@@ -23,12 +23,15 @@ import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,10 +57,15 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        return aClass.getQualifiedName() != null &&
-               ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(aClass) &&
-               (aClass.isInheritor(myBase, true) || JUnitUtil.isTestClass(aClass))
-               && !CompilerConfiguration.getInstance(getProject()).isExcludedFromCompilation(PsiUtilCore.getVirtualFile(aClass)); 
+        if (aClass.getQualifiedName() != null && ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(aClass) &&
+            (aClass.isInheritor(myBase, true) || JUnitUtil.isTestClass(aClass))) {
+          final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(getProject());
+          final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
+          if (virtualFile == null) return false;
+          return !compilerConfiguration.isExcludedFromCompilation(virtualFile) &&
+                 !ProjectRootManager.getInstance(myProject).getFileIndex().isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.RESOURCES);
+        }
+        return false;
       }
     });
   }

@@ -67,17 +67,30 @@ public class TypeParameterHidesVisibleTypeInspectionBase extends BaseInspection 
     public void visitTypeParameter(PsiTypeParameter parameter) {
       super.visitTypeParameter(parameter);
       final String unqualifiedClassName = parameter.getName();
-      PsiElement context = parameter.getOwner();
+      PsiTypeParameterListOwner context = parameter.getOwner();
       if (context == null) {
         return;
       }
       final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(parameter.getProject()).getResolveHelper();
       while (true) {
-        context = PsiTreeUtil.getParentOfType(context, PsiMember.class);
+        if (context.hasModifierProperty(PsiModifier.STATIC)) {
+          return;
+        }
+        context = PsiTreeUtil.getParentOfType(context, PsiTypeParameterListOwner.class);
         if (context == null) {
           return;
         }
         final PsiClass aClass = resolveHelper.resolveReferencedClass(unqualifiedClassName, context);
+        if (aClass instanceof PsiTypeParameter) {
+          final PsiTypeParameter typeParameter = (PsiTypeParameter)aClass;
+          final PsiTypeParameterListOwner owner = typeParameter.getOwner();
+          if (owner == null) {
+            return;
+          }
+          if (!owner.equals(context)) {
+            continue;
+          }
+        }
         if (aClass != null) {
           registerClassError(parameter, aClass);
           return;

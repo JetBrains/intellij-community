@@ -26,13 +26,16 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SequentialModalProgressTask;
+import com.intellij.util.SequentialTask;
 import com.intellij.util.containers.HashSet;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Set;
 
 public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<PsiJavaFile>> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.OptimizeImportsRefactoringHelper");
+  private static final String REMOVING_REDUNDANT_IMPORTS_TITLE = "Removing redundant imports";
 
   @Override
   public Set<PsiJavaFile> prepareOperation(final UsageInfo[] usages) {
@@ -90,36 +93,75 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
       }
     };
 
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(findRedundantImports, "Removing redundant imports", false, project)) return;
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(findRedundantImports, REMOVING_REDUNDANT_IMPORTS_TITLE, false, project)) return;
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        try {
-          for (final SmartPsiElementPointer<PsiImportStatementBase> pointer : redundants) {
-            final PsiImportStatementBase importStatement = pointer.getElement();
-            if (importStatement != null && importStatement.isValid()) {
-              final PsiJavaCodeReferenceElement ref = importStatement.getImportReference();
-              //Do not remove non-resolving refs
-              if (ref == null) {
-                continue;
-              }
-              final PsiElement resolve = ref.resolve();
-              if (resolve == null) {
-                continue;
-              }
-
-              if (resolve instanceof PsiPackage && ((PsiPackage)resolve).getDirectories(ref.getResolveScope()).length == 0) {
-                continue;
-              }
-              importStatement.delete();
-            }
-          }
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+        final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, REMOVING_REDUNDANT_IMPORTS_TITLE, false);
+        progressTask.setMinIterationTime(200);
+        progressTask.setTask(new OptimizeImportsTask(progressTask, redundants));
+        ProgressManager.getInstance().run(progressTask);
       }
     });
+  }
+}
+
+
+class OptimizeImportsTask implements SequentialTask {
+  private static final Logger LOG = Logger.getInstance("#" + OptimizeImportsTask.class.getName());
+
+  private final Iterator<SmartPsiElementPointer<PsiImportStatementBase>> myPointers;
+  private final SequentialModalProgressTask myTask;
+  private final int myTotal;
+  private int myCount;
+
+  public OptimizeImportsTask(SequentialModalProgressTask progressTask, Set<SmartPsiElementPointer<PsiImportStatementBase>> pointers) {
+    myTask = progressTask;
+    myTotal = pointers.size();
+    myPointers = pointers.iterator();
+  }
+
+  @Override
+  public void prepare() {
+  }
+
+  @Override
+  public boolean isDone() {
+    return !myPointers.hasNext();
+  }
+
+  @Override
+  public boolean iteration() {
+    final ProgressIndicator indicator = myTask.getIndicator();
+    if (indicator != null) {
+      indicator.setFraction(((double)myCount ++) / myTotal);
+    }
+
+    final SmartPsiElementPointer<PsiImportStatementBase> pointer = myPointers.next();
+
+    final PsiImportStatementBase importStatement = pointer.getElement();
+    if (importStatement != null && importStatement.isValid()) {
+      final PsiJavaCodeReferenceElement ref = importStatement.getImportReference();
+      //Do not remove non-resolving refs
+      if (ref != null) {
+        final PsiElement resolve = ref.resolve();
+        if (resolve != null &&
+            (!(resolve instanceof PsiPackage) || ((PsiPackage)resolve).getDirectories(ref.getResolveScope()).length != 0)) {
+          try {
+            importStatement.delete();
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
+        }
+      }
+    }
+
+    return isDone();
+  }
+
+  @Override
+  public void stop() {
   }
 }

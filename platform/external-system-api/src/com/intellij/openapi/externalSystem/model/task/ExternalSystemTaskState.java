@@ -21,5 +21,9 @@ package com.intellij.openapi.externalSystem.model.task;
  */
 public enum ExternalSystemTaskState {
   
-  NOT_STARTED, IN_PROGRESS, FINISHED, FAILED, CANCELING, CANCELED
+  NOT_STARTED, IN_PROGRESS, FINISHED, FAILED, CANCELING, CANCELED, CANCELLATION_FAILED;
+
+  public boolean isStopped() {
+    return this == FINISHED || this == FAILED || this == CANCELED;
+  }
 }

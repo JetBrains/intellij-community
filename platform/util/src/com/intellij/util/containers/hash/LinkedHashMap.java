@@ -17,6 +17,7 @@ package com.intellij.util.containers.hash;
 
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -50,7 +51,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     this(capacity, loadFactor, (EqualityPolicy)EqualityPolicy.CANONICAL, accessOrder);
   }
 
-  public LinkedHashMap(EqualityPolicy hashingStrategy) {
+  public LinkedHashMap(EqualityPolicy<K> hashingStrategy) {
     this(0, HashUtil.DEFAULT_LOAD_FACTOR, hashingStrategy);
   }
 
@@ -211,10 +212,12 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     size = 0;
   }
 
+  @Nullable
   public K getLastKey() {
     return top != null ? top.key : null;
   }
 
+  @Nullable
   public V getLastValue() {
     return top != null ? top.value : null;
   }

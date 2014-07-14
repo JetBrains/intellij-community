@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 
 public class RemoveParenthesesFromMethodCallIntention extends Intention {
 
+  @Override
   @NotNull
   protected PsiElementPredicate getElementPredicate() {
     return new RemoveParenthesesFromMethodPredicate();
@@ -40,6 +41,7 @@ public class RemoveParenthesesFromMethodCallIntention extends Intention {
     return super.isStopElement(element) || element instanceof GrStatementOwner;
   }
 
+  @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     final GrMethodCallExpression expression = (GrMethodCallExpression) element;
     final StringBuilder newStatementText = new StringBuilder();

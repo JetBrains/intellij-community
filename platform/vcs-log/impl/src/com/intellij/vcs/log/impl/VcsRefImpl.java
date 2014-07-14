@@ -1,7 +1,6 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.NotNullFunction;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
@@ -16,15 +15,12 @@ public final class VcsRefImpl implements VcsRef {
   @NotNull private final String myName;
   @NotNull private final VcsRefType myType;
   @NotNull private final VirtualFile myRoot;
-  private final int myIndex;
 
-  public VcsRefImpl(NotNullFunction<Hash, Integer> indexGetter, @NotNull Hash commitHash, @NotNull String name, @NotNull VcsRefType type,
-                    @NotNull VirtualFile root) {
+  public VcsRefImpl(@NotNull Hash commitHash, @NotNull String name, @NotNull VcsRefType type, @NotNull VirtualFile root) {
     myCommitHash = commitHash;
     myName = name;
     myType = type;
     myRoot = root;
-    myIndex = indexGetter.fun(myCommitHash);
   }
 
   @Override
@@ -49,11 +45,6 @@ public final class VcsRefImpl implements VcsRef {
   @NotNull
   public VirtualFile getRoot() {
     return myRoot;
-  }
-
-  @Override
-  public int getCommitIndex() {
-    return myIndex;
   }
 
   @Override

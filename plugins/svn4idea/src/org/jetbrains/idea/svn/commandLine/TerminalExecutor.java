@@ -17,15 +17,14 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.pty4j.PtyProcess;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -33,17 +32,6 @@ import java.util.List;
  * @author Konstantin Kolosovsky.
  */
 public class TerminalExecutor extends CommandExecutor {
-
-  // max available value is 480
-  // if greater value is provided than the default value of 80 will be assumed
-  // this could provide unnecessary line breaks and thus could break parsing logic
-  private static final int TERMINAL_WINDOW_MAX_COLUMNS = 480;
-
-  static {
-    if (SystemInfo.isWindows) {
-      System.setProperty("win.pty.cols", String.valueOf(TERMINAL_WINDOW_MAX_COLUMNS));
-    }
-  }
 
   private final List<InteractiveCommandListener> myInteractiveListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -53,6 +41,11 @@ public class TerminalExecutor extends CommandExecutor {
 
   public void addInteractiveListener(@NotNull InteractiveCommandListener listener) {
     myInteractiveListeners.add(listener);
+  }
+
+  @Override
+  public Boolean wasError() {
+    return Boolean.FALSE;
   }
 
   @Override
@@ -66,19 +59,46 @@ public class TerminalExecutor extends CommandExecutor {
 
   @NotNull
   @Override
-  protected OSProcessHandler createProcessHandler() {
-    return new TerminalProcessHandler(myProcess);
+  protected SvnProcessHandler createProcessHandler() {
+    return new TerminalProcessHandler(myProcess, needsUtf8Output(), false);
+  }
+
+  /**
+   * TODO: remove this when separate streams for output and errors are implemented for Unix.
+   */
+  @NotNull
+  @Override
+  public ByteArrayOutputStream getBinaryOutput() {
+    if (this instanceof WinTerminalExecutor) {
+      return super.getBinaryOutput();
+    }
+
+    ByteArrayOutputStream result = new ByteArrayOutputStream();
+    byte[] outputBytes = CharsetToolkit.getUtf8Bytes(getOutput());
+
+    result.write(outputBytes, 0, outputBytes.length);
+
+    return result;
   }
 
   @NotNull
   @Override
   protected Process createProcess() throws ExecutionException {
-    List<String> parameters =
-      escapeArguments(CommandLineUtil.toCommandLine(myCommandLine.getExePath(), myCommandLine.getParametersList().getList()));
+    List<String> parameters = escapeArguments(buildParameters());
 
+    return createProcess(parameters);
+  }
+
+  @NotNull
+  protected List<String> buildParameters() {
+    return CommandLineUtil.toCommandLine(myCommandLine.getExePath(), myCommandLine.getParametersList().getList());
+  }
+
+  @NotNull
+  protected Process createProcess(@NotNull List<String> parameters) throws ExecutionException {
     try {
-      return PtyProcess
-        .exec(ArrayUtil.toStringArray(parameters), myCommandLine.getEnvironment(), myCommandLine.getWorkDirectory().getAbsolutePath());
+      return PtyProcess.exec(ArrayUtil.toStringArray(parameters), myCommandLine.getEnvironment(),
+                             myCommandLine.getWorkDirectory().getAbsolutePath());
     }
     catch (IOException e) {
       throw new ExecutionException(e);
@@ -89,16 +109,11 @@ public class TerminalExecutor extends CommandExecutor {
   public void logCommand() {
     super.logCommand();
 
-    LOG.info("Terminal output " + ((TerminalProcessHandler) myHandler).getTerminalOutput());
+    LOG.info("Terminal output " + ((TerminalProcessHandler)myHandler).getTerminalOutput());
   }
 
-  private static List<String> escapeArguments(List<String> collection) {
-    // TODO: Add additional checks like in java.lang.ProcessImpl constructor
-    return ContainerUtil.map(collection, new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        return s.contains(" ") ? "\"" + s + "\"" : s;
-      }
-    });
+  @NotNull
+  protected List<String> escapeArguments(@NotNull List<String> arguments) {
+    return arguments;
   }
 }

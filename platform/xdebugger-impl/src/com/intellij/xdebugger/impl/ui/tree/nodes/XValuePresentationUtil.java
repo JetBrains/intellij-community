@@ -16,13 +16,13 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +46,7 @@ public class XValuePresentationUtil {
         lastOffset = i + 1;
 
         if (escapeAttributes == null) {
-          TextAttributes fromHighlighter = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
+          TextAttributes fromHighlighter = DebuggerUIUtil.getColorScheme().getAttributes(DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
           if (fromHighlighter != null) {
             escapeAttributes = SimpleTextAttributes.fromTextAttributes(fromHighlighter);
           }
@@ -117,6 +117,11 @@ public class XValuePresentationUtil {
     @Override
     public void renderComment(@NotNull String comment) {
       myBuilder.append(comment);
+    }
+
+    @Override
+    public void renderError(@NotNull String error) {
+      myBuilder.append(error);
     }
 
     @Override

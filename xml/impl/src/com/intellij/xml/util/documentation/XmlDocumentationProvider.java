@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   @NonNls private static final String BASE_SITEPOINT_URL = "http://reference.sitepoint.com/html/";
 
 
+  @Override
   @Nullable
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof SchemaPrefix) {
@@ -64,6 +65,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
+  @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     if (element instanceof XmlTag) {
       XmlTag tag = (XmlTag)element;
@@ -84,6 +86,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
+  @Override
   public String generateDoc(PsiElement element, final PsiElement originalElement) {
     if (element instanceof XmlElementDecl) {
       PsiElement curElement = findPreviousComment(element);
@@ -176,6 +179,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     final Ref<XmlTag> enumerationTag = new Ref<XmlTag>();
 
     Processor<XmlTag> processor = new Processor<XmlTag>() {
+      @Override
       public boolean process(XmlTag xmlTag) {
         if (text.equals(xmlTag.getAttributeValue(XmlUtil.VALUE_ATTR_NAME))) {
           enumerationTag.set(xmlTag);
@@ -331,6 +335,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return builder.toString();
   }
 
+  @Override
   public PsiElement getDocumentationElementForLookupItem(final PsiManager psiManager, Object object, PsiElement element) {
 
     if (object instanceof XmlExtension.TagInfo) {
@@ -370,7 +375,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
 
       if (object == null) return null;
       try {
-        @NonNls StringBuffer tagText = new StringBuffer(object.toString());
+        @NonNls StringBuilder tagText = new StringBuilder(object.toString());
         String namespacePrefix = XmlUtil.findPrefixByQualifiedName(object.toString());
         String namespace = xmlTag.getNamespaceByPrefix(namespacePrefix);
 
@@ -450,6 +455,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
       XmlUtil.processXmlElements(
         xmlFile,
         new PsiElementProcessor() {
+          @Override
           public boolean execute(@NotNull final PsiElement element) {
             if (element instanceof XmlEntityDecl) {
               final XmlEntityDecl entityDecl = (XmlEntityDecl)element;
@@ -475,6 +481,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
+  @Override
   public PsiElement getDocumentationElementForLink(final PsiManager psiManager, String link, PsiElement context) {
     return null;
   }
@@ -487,6 +494,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     private @NonNls static final String CDATA_PREFIX = "<![CDATA[";
     private @NonNls static final String CDATA_SUFFIX = "]]>";
 
+    @Override
     public boolean execute(@NotNull PsiElement element) {
       if (element instanceof XmlTag &&
           ((XmlTag)element).getLocalName().equals(DOCUMENTATION_ELEMENT_LOCAL_NAME)

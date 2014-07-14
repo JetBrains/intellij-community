@@ -16,13 +16,14 @@
 package com.jetbrains.python.fixtures;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.module.EmptyModuleType;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,8 +40,10 @@ import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonMockSdk;
+import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
@@ -91,6 +94,8 @@ public abstract class PyTestCase extends UsefulTestCase {
     setLanguageLevel(null);
     myFixture.tearDown();
     myFixture = null;
+    final PythonLanguageLevelPusher levelPusher = Extensions.findExtension(FilePropertyPusher.EP_NAME, PythonLanguageLevelPusher.class);
+    levelPusher.flushLanguageLevelCache();
     super.tearDown();
   }
 
@@ -130,6 +135,15 @@ public abstract class PyTestCase extends UsefulTestCase {
     assertNull(PARSED_ERROR_MSG, ((PyFileImpl)file).getTreeElement());
   }
 
+  /**
+   * @param name
+   * @return class by its name from file
+   */
+  @NotNull
+  protected PyClass getClassByName(@NotNull final String name) {
+    return myFixture.findElementByText("class " + name, PyClass.class);
+  }
+
   protected static class PyLightProjectDescriptor implements LightProjectDescriptor {
     private final String myPythonVersion;
 
@@ -139,7 +153,7 @@ public abstract class PyTestCase extends UsefulTestCase {
 
     @Override
     public ModuleType getModuleType() {
-      return EmptyModuleType.getInstance();
+      return PythonModuleTypeBase.getInstance();
     }
 
     @Override

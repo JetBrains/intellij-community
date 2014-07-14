@@ -6,7 +6,7 @@ import java.util.List;
 import static pck.D.foo;
 import static pck.C.foo;
 
-public class C {
+class C {
     static <T extends Collection<S>, S> void foo(T x) { }
 }
 

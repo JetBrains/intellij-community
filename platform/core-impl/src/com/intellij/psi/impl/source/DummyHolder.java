@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,15 +150,15 @@ public class DummyHolder extends PsiFileImpl {
   @Override
   @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
   protected PsiFileImpl clone() {
-    final PsiFileImpl psiFile = cloneImpl(myFileElement);
+    final PsiFileImpl psiClone = cloneImpl(myFileElement);
     final DummyHolderViewProvider dummyHolderViewProvider = new DummyHolderViewProvider(getManager());
     myViewProvider = dummyHolderViewProvider;
-    dummyHolderViewProvider.setDummyHolder((DummyHolder)psiFile);
+    dummyHolderViewProvider.setDummyHolder((DummyHolder)psiClone);
     final FileElement treeClone = (FileElement)calcTreeElement().clone();
-    psiFile.setTreeElementPointer(treeClone); // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
-    psiFile.myOriginalFile = isPhysical() ? this : myOriginalFile;
-    treeClone.setPsi(psiFile);
-    return psiFile;
+    psiClone.setTreeElementPointer(treeClone); // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
+    psiClone.myOriginalFile = isPhysical() ? this : myOriginalFile;
+    treeClone.setPsi(psiClone);
+    return psiClone;
   }
 
   private FileViewProvider myViewProvider = null;

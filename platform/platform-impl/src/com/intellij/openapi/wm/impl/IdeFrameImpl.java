@@ -37,10 +37,12 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.StatusBar;
@@ -51,6 +53,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.*;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.*;
+import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -140,7 +143,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     });
 
     IdeMenuBar.installAppMenuIfNeeded(this);
-    UIUtil.setAutoRequestFocus(this, false);
   }
 
   private void updateBorder() {
@@ -310,9 +312,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
       final String applicationName = ((ApplicationInfoEx)ApplicationInfo.getInstance()).getFullApplicationName();
       final Builder builder = new Builder();
       if (SystemInfo.isMac) {
-        builder.append(fileTitle).append(title)
-          .append(ProjectManager.getInstance().getOpenProjects().length == 0
-                  || ((ApplicationInfoEx)ApplicationInfo.getInstance()).isEAP() && !applicationName.endsWith("SNAPSHOT") ? applicationName : null);
+        boolean addAppName = StringUtil.isEmpty(title) ||
+                             ProjectManager.getInstance().getOpenProjects().length == 0 ||
+                             ((ApplicationInfoEx)ApplicationInfo.getInstance()).isEAP() && !applicationName.endsWith("SNAPSHOT");
+        builder.append(fileTitle).append(title).append(addAppName ? applicationName : null);
       } else {
         builder.append(title).append(fileTitle).append(applicationName);
       }
@@ -455,6 +458,14 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
   }
 
   public void dispose() {
+    if (SystemInfo.isMac && isInFullScreen()) {
+      ((MacMainFrameDecorator)myFrameDecorator).exitFullScreenAndDispose();
+    } else {
+      disposeImpl();
+    }
+  }
+
+  public void disposeImpl() {
     if (isTemporaryDisposed()) {
       super.dispose();
       return;
@@ -481,7 +492,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
   }
 
   public void storeFullScreenStateIfNeeded() {
-    storeFullScreenStateIfNeeded(myFrameDecorator.isInFullScreen());
+    if (myFrameDecorator != null) {
+      storeFullScreenStateIfNeeded(myFrameDecorator.isInFullScreen());
+    }
   }
 
   public void storeFullScreenStateIfNeeded(boolean state) {
@@ -538,15 +551,17 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     return myFrameDecorator != null && myFrameDecorator.isInFullScreen();
   }
 
+  @NotNull
   @Override
-  public void toggleFullScreen(boolean state) {
+  public ActionCallback toggleFullScreen(boolean state) {
     if (myFrameDecorator != null) {
-      myFrameDecorator.toggleFullScreen(state);
+      return myFrameDecorator.toggleFullScreen(state);
     }
     IdeFrame[] frames = WindowManager.getInstance().getAllProjectFrames();
     for (IdeFrame frame : frames) {
       ((IdeFrameImpl)frame).updateBorder();
     }
+    return ActionCallback.DONE;
   }
 
   @Override

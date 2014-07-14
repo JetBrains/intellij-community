@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -104,7 +105,7 @@ public class CallToStringConcatCanBeReplacedByOperatorInspection
       @NonNls
       final String newExpression =
         qualifier.getText() + '+' + argument.getText();
-      replaceExpression(methodCallExpression, newExpression);
+      PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression);
     }
   }
 

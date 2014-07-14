@@ -49,4 +49,14 @@ public class DeprecationInspectionTest extends InspectionTestCase {
     doTest();
   }
 
+  public void testDeprecatedDefaultConstructorTypeParameter() throws Exception {
+    doTest();
+  }
+
+  public void testMethodsOfDeprecatedClass() throws Exception {
+    final DeprecationInspection tool = new DeprecationInspection();
+    tool.IGNORE_METHODS_OF_DEPRECATED = false;
+    doTest("deprecation/" + getTestName(true), tool);
+  }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
@@ -45,7 +44,7 @@ import java.util.List;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class TestWindowManager extends WindowManagerEx implements ApplicationComponent{
+public final class TestWindowManager extends WindowManagerEx {
   private static final StatusBarEx ourStatusBar = new DummyStatusBar();
 
   public final void doNotSuggestAsParent(final Window window) { }
@@ -266,9 +265,10 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
 
   @Override
   public IdeFrame findFrameFor(@Nullable Project project) {
-    throw new UnsupportedOperationException();
+    return null;
   }
 
+  @NotNull
   @Override
   public final CommandProcessor getCommandProcessor() {
     throw new UnsupportedOperationException();
@@ -336,18 +336,6 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
 
   @Override
   public void adjustContainerWindow(Component c, Dimension oldSize, Dimension newSize) { }
-
-  @Override
-  @NotNull
-  public final String getComponentName() {
-    return "TestWindowManager";
-  }
-
-  @Override
-  public final void initComponent() { }
-
-  @Override
-  public final void disposeComponent() { }
 
   @Override
   public void addListener(final WindowManagerListener listener) { }

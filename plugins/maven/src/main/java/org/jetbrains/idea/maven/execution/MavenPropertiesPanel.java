@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
 * @author Sergey Evdokimov
@@ -67,7 +69,7 @@ public class MavenPropertiesPanel extends AddEditRemovePanel<Pair<String, String
   public void setDataFromMap(Map<String, String> map) {
     List<Pair<String, String>> result = new ArrayList<Pair<String, String>>();
     for (Map.Entry<String, String> e : map.entrySet()) {
-      result.add(new Pair<String, String>(e.getKey(), e.getValue()));
+      result.add(Pair.create(e.getKey(), e.getValue()));
     }
     setData(result);
   }

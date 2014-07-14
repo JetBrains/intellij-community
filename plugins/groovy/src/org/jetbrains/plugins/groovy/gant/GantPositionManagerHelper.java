@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,28 +24,32 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.runner.GroovyScriptUtil;
 
 /**
  * @author ilyas
  */
 public class GantPositionManagerHelper extends ScriptPositionManagerHelper {
 
+  @Override
   public boolean isAppropriateRuntimeName(@NotNull final String runtimeName) {
     return true;
   }
 
+  @Override
   public boolean isAppropriateScriptFile(@NotNull final PsiFile scriptFile) {
-    return GroovyScriptTypeDetector.isSpecificScriptFile(scriptFile, GantScriptType.INSTANCE);
+    return GroovyScriptUtil.isSpecificScriptFile(scriptFile, GantScriptType.INSTANCE);
   }
 
+  @Override
   @NotNull
   public String getRuntimeScriptName(@NotNull final String originalName, GroovyFile groovyFile) {
     return originalName;
   }
 
+  @Override
   public PsiFile getExtraScriptIfNotFound(ReferenceType refType,
                                           @NotNull final String runtimeName,
                                           final Project project,
@@ -62,7 +66,7 @@ public class GantPositionManagerHelper extends ScriptPositionManagerHelper {
 
         PsiFile candidate = null;
         for (PsiFile file : files) {
-          if (GroovyScriptTypeDetector.isSpecificScriptFile(file, GantScriptType.INSTANCE)) {
+          if (GroovyScriptUtil.isSpecificScriptFile(file, GantScriptType.INSTANCE)) {
             if (candidate != null) return null;
             candidate = file;
           }

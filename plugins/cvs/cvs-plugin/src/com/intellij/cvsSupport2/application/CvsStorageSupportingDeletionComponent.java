@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -91,7 +92,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     myProject = null;
   }
 
-  public void beforeFileDeletion(VirtualFileEvent event) {}
+  public void beforeFileDeletion(@NotNull VirtualFileEvent event) {}
 
   public DeleteHandler getDeleteHandler() {
     if (myDeleteHandler == null) {
@@ -100,7 +101,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     return myDeleteHandler;
   }
 
-  public void fileDeleted(VirtualFileEvent event) {}
+  public void fileDeleted(@NotNull VirtualFileEvent event) {}
 
   private boolean shouldProcessEvent(VirtualFileEvent event, boolean parentShouldBeUnderCvs) {
     if (myAnotherProjectCommand) {
@@ -121,9 +122,9 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     return CvsUtil.fileIsUnderCvs(file.getParent());
   }
 
-  public void beforeFileMovement(VirtualFileMoveEvent event) {}
+  public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {}
 
-  public void fileMoved(VirtualFileMoveEvent event) {
+  public void fileMoved(@NotNull VirtualFileMoveEvent event) {
     fileCreated(event);
   }
 
@@ -147,20 +148,20 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     return ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file) != CvsVcs2.getInstance(myProject);
   }
 
-  public void beforePropertyChange(VirtualFilePropertyEvent event) {
+  public void beforePropertyChange(@NotNull VirtualFilePropertyEvent event) {
     if (!event.getPropertyName().equals(VirtualFile.PROP_NAME)) return;
     if (!CvsUtil.fileIsUnderCvs(event.getFile())) return;
     beforeFileDeletion(event);
   }
 
-  public void propertyChanged(VirtualFilePropertyEvent event) {
+  public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
     if (processMoveOrRename()) {
       fileDeleted(event);
       fileCreated(event);
     }
   }
 
-  public void fileCreated(final VirtualFileEvent event) {
+  public void fileCreated(@NotNull final VirtualFileEvent event) {
     if (!shouldProcessEvent(event, false)) return;
     final Project project = myProject;
     if (project == null) return;    // already disposed

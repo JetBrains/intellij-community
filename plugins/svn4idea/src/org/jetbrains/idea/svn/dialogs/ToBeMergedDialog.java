@@ -235,13 +235,15 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
 
   private void initUI() {
     final ListSelectionListener selectionListener = new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         final List objects = myRevisionsList.getSelectedObjects();
         myRepositoryChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
         myAlreadyMerged.clear();
-        if (objects != null && (!objects.isEmpty())) {
+        if ((!objects.isEmpty())) {
           final List<CommittedChangeList> lists =
             ObjectsConvertor.convert(objects, new Convertor<Object, CommittedChangeList>() {
+              @Override
               public CommittedChangeList convert(Object o) {
                 if (o instanceof CommittedChangeList) {
                   final CommittedChangeList cl = (CommittedChangeList)o;
@@ -296,33 +298,29 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
     myRevisionsList.setShowGrid(false);
     final AbstractBaseTagMouseListener mouseListener = new AbstractBaseTagMouseListener() {
       @Override
-      public Object getTagAt(MouseEvent e) {
-        Object tag = null;
+      public Object getTagAt(@NotNull MouseEvent e) {
         JTable table = (JTable)e.getSource();
         int row = table.rowAtPoint(e.getPoint());
         int column = table.columnAtPoint(e.getPoint());
         if (row == -1 || column == -1) return null;
         listCellRenderer.customizeCellRenderer(table, table.getValueAt(row, column), table.isRowSelected(row), false, row, column);
-        final ColoredTreeCellRenderer renderer = listCellRenderer.myRenderer;
-        final Rectangle rc = table.getCellRect(row, column, false);
-        int index = renderer.findFragmentAt(e.getPoint().x - rc.x);
-        if (index >= 0) {
-          tag = renderer.getFragmentTag(index);
-        }
-        return tag;
+        return listCellRenderer.myRenderer.getFragmentTagAt(e.getPoint().x - table.getCellRect(row, column, false).x);
       }
     };
     mouseListener.installOn(myRevisionsList);
 
     final PagedListWithActions.InnerComponentManager<CommittedChangeList> listsManager =
       new PagedListWithActions.InnerComponentManager<CommittedChangeList>() {
+        @Override
         public Component getComponent() {
           return myRevisionsList;
         }
+        @Override
         public void setData(List<CommittedChangeList> committedChangeLists) {
           flatModel.setItems(committedChangeLists);
           flatModel.fireTableDataChanged();
         }
+        @Override
         public void refresh() {
           myRevisionsList.revalidate();
           myRevisionsList.repaint();
@@ -353,11 +351,14 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
 
   private void setChangesDecorator() {
     myRepositoryChangesBrowser.setDecorator(new ChangeNodeDecorator() {
+      @Override
       public void decorate(Change change, SimpleColoredComponent component, boolean isShowFlatten) {
       }
+      @Override
       public List<Pair<String, Stress>> stressPartsOfFileName(Change change, String parentPath) {
         return null;
       }
+      @Override
       public void preDecorate(Change change, ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
         if (myAlreadyMerged.contains(change)) {
           renderer.append(" [already merged] ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
@@ -370,7 +371,7 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
     final int checkboxWidth = new JCheckBox().getPreferredSize().width;
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         final int idx = myRevisionsList.rowAtPoint(e.getPoint());
         if (idx >= 0) {
           final Rectangle baseRect = myRevisionsList.getCellRect(idx, 0, false);
@@ -391,7 +392,9 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
       public void keyReleased(KeyEvent e) {
         if (KeyEvent.VK_SPACE == e.getKeyCode()) {
           final List selected = myRevisionsList.getSelectedObjects();
-          if (selected == null || selected.isEmpty()) return;
+          if (selected.isEmpty()) {
+            return;
+          }
 
           for (Object o : selected) {
             if (o instanceof SvnChangeList) {
@@ -512,6 +515,7 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
       }
     }
 
+      @Override
       public final Component getTableCellRendererComponent(
         JTable table,
         Object value,
@@ -524,8 +528,6 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
         return myPanel;
       }
   }
-
-  private final static int ourPageSize = 30;
 
   private static final ColumnInfo FAKE_COLUMN = new ColumnInfo<CommittedChangeList, CommittedChangeList>("fake column"){
     @Override

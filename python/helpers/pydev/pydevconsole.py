@@ -23,10 +23,7 @@ fix_getpass.fixGetpass()
 
 import pydevd_vars
 
-try:
-    from pydevd_exec import Exec
-except:
-    from pydevd_exec2 import Exec
+from pydev_imports import Exec
 
 try:
     if USE_LIB_COPY:
@@ -75,7 +72,7 @@ except ImportError:
 
 
 class Command:
-    def __init__(self, interpreter, code_fragment, buffer):
+    def __init__(self, interpreter, code_fragment):
         """
         :type code_fragment: CodeFragment
         :type interpreter: InteractiveConsole
@@ -83,24 +80,19 @@ class Command:
         self.interpreter = interpreter
         self.code_fragment = code_fragment
         self.more = None
-        self.buffer = buffer
 
     @staticmethod
     def symbol_for_fragment(code_fragment):
-        if IS_JYTHON or code_fragment.is_single_line: 
+        if code_fragment.is_single_line:
             symbol = 'single'
         else:
             symbol = 'exec' # Jython doesn't support this
         return symbol
 
     def run(self):
-        if self.buffer is None:
-            text = self.code_fragment.text
-            symbol = self.symbol_for_fragment(self.code_fragment)
-        else:
-            text = self.buffer.text
-            symbol = self.symbol_for_fragment(self.buffer)
-            
+        text = self.code_fragment.text
+        symbol = self.symbol_for_fragment(self.code_fragment)
+
         self.more = self.interpreter.runsource(text, '<input>', symbol)
 
 try:
@@ -133,7 +125,7 @@ class InterpreterInterface(BaseInterpreterInterface):
 
 
     def doAddExec(self, codeFragment):
-        command = Command(self.interpreter, codeFragment, self.buffer)
+        command = Command(self.interpreter, codeFragment)
         command.run()
         return command.more
 
@@ -144,7 +136,7 @@ class InterpreterInterface(BaseInterpreterInterface):
 
     def getCompletions(self, text, act_tok):
         try:
-            from _completer import Completer
+            from _pydev_completer import Completer
 
             completer = Completer(self.namespace, None)
             return completer.complete(act_tok)
@@ -158,7 +150,7 @@ class InterpreterInterface(BaseInterpreterInterface):
         sys.exit(0)
 
     def get_greeting_msg(self):
-        return 'PyDev console: starting.\n'
+        return 'PyDev console: starting.'
 
 
 def process_exec_queue(interpreter):
@@ -170,9 +162,6 @@ def process_exec_queue(interpreter):
                 continue
 
             more = interpreter.addExec(codeFragment)
-            
-            if not more:     
-                interpreter.buffer = None
         except KeyboardInterrupt:
             interpreter.buffer = None
             continue
@@ -184,26 +173,29 @@ def process_exec_queue(interpreter):
             exit()
 
 
+if 'IPYTHONENABLE' in os.environ:
+    IPYTHON = os.environ['IPYTHONENABLE'] == 'True'
+else:
+    IPYTHON = True
+
 try:
     try:
         exitfunc = sys.exitfunc
     except AttributeError:
         exitfunc = None
-    from pydev_ipython_console import InterpreterInterface
 
-    IPYTHON = True
-    if exitfunc is not None:
-        sys.exitfunc = exitfunc
-
-    else:
-        try:
-            delattr(sys, 'exitfunc')
-        except:
-            pass
+    if IPYTHON:
+        from pydev_ipython_console import InterpreterInterface
+        if exitfunc is not None:
+            sys.exitfunc = exitfunc
+        else:
+            try:
+                delattr(sys, 'exitfunc')
+            except:
+                pass
 except:
     IPYTHON = False
-    #sys.stderr.write('PyDev console: started.\n')
-    pass #IPython not available, proceed as usual.
+    pass
 
 #=======================================================================================================================
 # _DoExit
@@ -246,10 +238,14 @@ def start_server(host, port, interpreter):
     if port == 0:
         host = ''
 
-    from pydev_imports import SimpleXMLRPCServer
+    try:
+        from _pydev_xmlrpc_hook import InputHookedXMLRPCServer as XMLRPCServer  #@UnusedImport
+    except:
+        #I.e.: supporting the internal Jython version in PyDev to create a Jython interactive console inside Eclipse.
+        from pydev_imports import SimpleXMLRPCServer as XMLRPCServer  #@Reimport
 
     try:
-        server = SimpleXMLRPCServer((host, port), logRequests=False, allow_none=True)
+        server = XMLRPCServer((host, port), logRequests=False, allow_none=True)
 
     except:
         sys.stderr.write('Error starting server with host: %s, port: %s, client_port: %s\n' % (host, port, client_port))
@@ -265,6 +261,7 @@ def start_server(host, port, interpreter):
     server.register_function(interpreter.close)
     server.register_function(interpreter.interrupt)
     server.register_function(handshake)
+    server.register_function(interpreter.connectToDebugger)
 
     if IPYTHON:
         try:
@@ -280,7 +277,9 @@ def start_server(host, port, interpreter):
 
 
     sys.stderr.write(interpreter.get_greeting_msg())
+    sys.stderr.flush()
 
+    interpreter.server = server
     server.serve_forever()
 
     return server
@@ -320,6 +319,8 @@ def get_completions(text, token, globals, locals):
     return interpreterInterface.getCompletions(text, token)
 
 def get_frame():
+    interpreterInterface = get_interpreter()
+
     return interpreterInterface.getFrame()
 
 def exec_code(code, globals, locals):
@@ -366,6 +367,45 @@ class ConsoleWriter(InteractiveInterpreter):
             if data == "Traceback (most recent call last):\n":
                 self.skip = 1
             sys.stderr.write(data)
+
+    def showsyntaxerror(self, filename=None):
+        """Display the syntax error that just occurred."""
+        #Override for avoid using sys.excepthook PY-12600
+        type, value, tb = sys.exc_info()
+        sys.last_type = type
+        sys.last_value = value
+        sys.last_traceback = tb
+        if filename and type is SyntaxError:
+            # Work hard to stuff the correct filename in the exception
+            try:
+                msg, (dummy_filename, lineno, offset, line) = value.args
+            except ValueError:
+                # Not the format we expect; leave it alone
+                pass
+            else:
+                # Stuff in the right filename
+                value = SyntaxError(msg, (filename, lineno, offset, line))
+                sys.last_value = value
+        list = traceback.format_exception_only(type, value)
+        sys.stderr.write(''.join(list))
+
+    def showtraceback(self):
+        """Display the exception that just occurred."""
+        #Override for avoid using sys.excepthook PY-12600
+        try:
+            type, value, tb = sys.exc_info()
+            sys.last_type = type
+            sys.last_value = value
+            sys.last_traceback = tb
+            tblist = traceback.extract_tb(tb)
+            del tblist[:1]
+            lines = traceback.format_list(tblist)
+            if lines:
+                lines.insert(0, "Traceback (most recent call last):\n")
+            lines.extend(traceback.format_exception_only(type, value))
+        finally:
+            tblist = tb = None
+        sys.stderr.write(''.join(lines))
 
 def consoleExec(thread_id, frame_id, expression):
     """returns 'False' in case expression is partialy correct

@@ -143,10 +143,10 @@ public class CamelHumpMatcher extends PrefixMatcher {
       int matchStart = ranges.get(0).getStartOffset();
       int underscoreEnd = skipUnderscores(string);
       if (matchStart > 0 && matchStart <= underscoreEnd) {
-        return myCaseInsensitiveMatcher.matchingDegree(string.substring(matchStart)) - 1;
+        return myCaseInsensitiveMatcher.matchingDegree(string.substring(matchStart), true) - 1;
       }
     }
 
-    return myMatcher.matchingDegree(string);
+    return myMatcher.matchingDegree(string, true);
   }
 }

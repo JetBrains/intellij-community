@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -100,16 +101,16 @@ public class FileStructurePopup implements Disposable {
 
   @NonNls private static final String narrowDownPropertyKey = "FileStructurePopup.narrowDown";
   private boolean myShouldNarrowDown = true;
-  private FileStructureTree myTree;
+  private final FileStructureTree myTree;
   private final FilteringTreeBuilder myAbstractTreeBuilder;
   private String myTitle;
-  private TreeSpeedSearch mySpeedSearch;
-  private SmartTreeStructure myTreeStructure;
+  private final TreeSpeedSearch mySpeedSearch;
+  private final SmartTreeStructure myTreeStructure;
   private int myPreferredWidth;
   private final FilteringTreeStructure myFilteringStructure;
-  private PsiElement myInitialPsiElement;
-  private Map<Class, JCheckBox> myCheckBoxes = new HashMap<Class, JCheckBox>();
-  private List<JCheckBox> myAutoClicked = new ArrayList<JCheckBox>();
+  private final PsiElement myInitialPsiElement;
+  private final Map<Class, JCheckBox> myCheckBoxes = new HashMap<Class, JCheckBox>();
+  private final List<JCheckBox> myAutoClicked = new ArrayList<JCheckBox>();
   private String myTestSearchFilter;
   private final ActionCallback myTreeHasBuilt = new ActionCallback();
   private boolean myInitialNodeIsLeaf;
@@ -567,7 +568,7 @@ public class FileStructurePopup implements Disposable {
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         final TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
         if (path == null) return false; // user wants to expand/collapse a node
         navigateSelectedElement();
@@ -713,8 +714,7 @@ public class FileStructurePopup implements Disposable {
 
     if (text == null) return;
 
-    Shortcut[] shortcuts = action instanceof FileStructureFilter ?
-                           ((FileStructureFilter)action).getShortcut() : ((FileStructureNodeProvider)action).getShortcut();
+    Shortcut[] shortcuts = extractShortcutFor(action);
 
 
     final JCheckBox chkFilter = new JCheckBox();
@@ -783,10 +783,20 @@ public class FileStructurePopup implements Disposable {
     myCheckBoxes.put(action.getClass(), chkFilter);
   }
 
+  @NotNull
+  static Shortcut[] extractShortcutFor(@NotNull TreeAction action) {
+    if (action instanceof ActionShortcutProvider) {
+      String actionId = ((ActionShortcutProvider)action).getActionIdForShortcut();
+      return KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
+    }
+    return action instanceof FileStructureFilter ?
+                           ((FileStructureFilter)action).getShortcut() : ((FileStructureNodeProvider)action).getShortcut();
+  }
+
   private static boolean getDefaultValue(TreeAction action) {
     if (action instanceof PropertyOwner) {
       final String propertyName = ((PropertyOwner)action).getPropertyName();
-      return PropertiesComponent.getInstance().getBoolean(getPropertyName(propertyName), false);
+      return PropertiesComponent.getInstance().getBoolean(TreeStructureUtil.getPropertyName(propertyName), false);
     }
 
     return false;
@@ -795,13 +805,8 @@ public class FileStructurePopup implements Disposable {
   private static void saveState(TreeAction action, boolean state) {
     if (action instanceof PropertyOwner) {
       final String propertyName = ((PropertyOwner)action).getPropertyName();
-      PropertiesComponent.getInstance().setValue(getPropertyName(propertyName), Boolean.toString(state));
+      PropertiesComponent.getInstance().setValue(TreeStructureUtil.getPropertyName(propertyName), Boolean.toString(state));
     }
-  }
-
-  @NonNls
-  public static String getPropertyName(String propertyName) {
-    return propertyName + ".file.structure.state";
   }
 
   public void setTitle(String title) {
@@ -877,7 +882,7 @@ public class FileStructurePopup implements Disposable {
 
   private class FileStructurePopupFilter implements ElementFilter {
     private String myLastFilter = null;
-    private HashSet<Object> myVisibleParents = new HashSet<Object>();
+    private final Set<Object> myVisibleParents = new HashSet<Object>();
     private final boolean isUnitTest = ApplicationManager.getApplication().isUnitTestMode();
 
     @Override

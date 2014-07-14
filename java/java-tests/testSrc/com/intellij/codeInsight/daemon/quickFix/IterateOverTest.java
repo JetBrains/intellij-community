@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2012 JetBrains s.r.o.
  *
@@ -17,8 +16,9 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 
+import com.intellij.pom.java.LanguageLevel;
 
-public class IterateOverTest extends LightQuickFix15TestCase {
+public class IterateOverTest extends LightQuickFixParameterizedTestCase {
 
   public void test() throws Exception { doAllTests(); }
 
@@ -27,5 +27,9 @@ public class IterateOverTest extends LightQuickFix15TestCase {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/iterateOver";
   }
 
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_5;
+  }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectImpl;
@@ -26,6 +24,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FList;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.PersistentEnumerator;
 import com.intellij.util.ui.UIUtil;
@@ -208,7 +207,7 @@ public class LeakHunter {
             while (backLink != null) {
               String valueStr;
               try {
-                valueStr = String.valueOf(backLink.value);
+                valueStr = backLink.value instanceof FList ? "FList" : String.valueOf(backLink.value);
               }
               catch (Throwable e) {
                 valueStr = "("+e.getMessage()+" while computing .toString())";

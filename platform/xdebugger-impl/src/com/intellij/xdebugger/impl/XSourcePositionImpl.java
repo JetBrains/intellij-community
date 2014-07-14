@@ -20,7 +20,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,16 +76,25 @@ public class XSourcePositionImpl implements XSourcePosition {
    */
   @Nullable
   public static XSourcePositionImpl create(@Nullable VirtualFile file, int line) {
-    if (file == null) return null;
-
-    Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document == null) {
+    if (file == null) {
       return null;
     }
-    if (line < 0){
-      line = 0;
+
+    int offset;
+    if (file instanceof LightVirtualFile || file instanceof HttpVirtualFile) {
+      offset = -1;
     }
-    int offset = line < document.getLineCount() ? document.getLineStartOffset(line) : -1;
+    else {
+      Document document = file.isValid() ? FileDocumentManager.getInstance().getDocument(file) : null;
+      if (document == null) {
+        return null;
+      }
+      if (line < 0) {
+        line = 0;
+      }
+
+      offset = line < document.getLineCount() ? document.getLineStartOffset(line) : -1;
+    }
     return new XSourcePositionImpl(file, line, offset);
   }
 
@@ -96,5 +107,10 @@ public class XSourcePositionImpl implements XSourcePosition {
   @NotNull
   public static OpenFileDescriptor createOpenFileDescriptor(@NotNull Project project, @NotNull XSourcePosition position) {
     return position.getOffset() != -1 ? new OpenFileDescriptor(project, position.getFile(), position.getOffset()) : new OpenFileDescriptor(project, position.getFile(), position.getLine(), 0);
+  }
+
+  @Override
+  public String toString() {
+    return "XSourcePositionImpl[" + myFile + ":" + myLine + "(" + myOffset + ")]";
   }
 }

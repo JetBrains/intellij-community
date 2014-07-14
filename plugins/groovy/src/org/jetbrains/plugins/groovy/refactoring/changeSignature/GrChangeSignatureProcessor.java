@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public class GrChangeSignatureProcessor extends ChangeSignatureProcessorBase {
       final MultiMap<PsiElement, String> conflicts = usageProcessor.findConflicts(myChangeInfo, refUsages);
       for (PsiElement key : conflicts.keySet()) {
         Collection<String> collection = conflictDescriptions.get(key);
-        if (collection.size() == 0) collection = new HashSet<String>();
+        if (collection.isEmpty()) collection = new HashSet<String>();
         collection.addAll(conflicts.get(key));
         conflictDescriptions.put(key, collection);
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
@@ -51,7 +51,7 @@ import java.util.Collection;
  * @author Maxim.Medvedev
  */
 public class ConvertMethodToClosureIntention extends Intention {
-  private static Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.intentions.conversions.ConvertMethodToclosureIntention");
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.intentions.conversions.ConvertMethodToclosureIntention");
 
   @NotNull
   @Override
@@ -86,7 +86,7 @@ public class ConvertMethodToClosureIntention extends Intention {
     final Collection<GrReferenceExpression> usagesToConvert = new HashSet<GrReferenceExpression>(references.size());
     for (PsiReference ref : references) {
       final PsiElement psiElement = ref.getElement();
-      if (!GroovyFileType.GROOVY_LANGUAGE.equals(psiElement.getLanguage())) {
+      if (!GroovyLanguage.INSTANCE.equals(psiElement.getLanguage())) {
         conflicts.putValue(psiElement, GroovyIntentionsBundle.message("method.is.used.outside.of.groovy"));
       }
       else if (!PsiUtil.isMethodUsage(psiElement)) {
@@ -97,7 +97,7 @@ public class ConvertMethodToClosureIntention extends Intention {
         }
       }
     }
-    if (conflicts.size() > 0) {
+    if (!conflicts.isEmpty()) {
       ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts, new Runnable() {
         @Override
         public void run() {
@@ -112,12 +112,13 @@ public class ConvertMethodToClosureIntention extends Intention {
 
   private static void execute(final GrMethod method, final Collection<GrReferenceExpression> usagesToConvert) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());
 
         StringBuilder builder = new StringBuilder(method.getTextLength());
         String modifiers = method.getModifierList().getText();
-        if (modifiers.trim().length() == 0) {
+        if (modifiers.trim().isEmpty()) {
           modifiers = GrModifier.DEF;
         }
         builder.append(modifiers).append(' ');
@@ -141,8 +142,9 @@ public class ConvertMethodToClosureIntention extends Intention {
   }
 
   private static class MyPredicate implements PsiElementPredicate {
+    @Override
     public boolean satisfiedBy(PsiElement element) {
-      if (element.getLanguage() != GroovyFileType.GROOVY_LANGUAGE) return false;
+      if (element.getLanguage() != GroovyLanguage.INSTANCE) return false;
 
       GrMethod method;
       final PsiReference ref = element.getReference();

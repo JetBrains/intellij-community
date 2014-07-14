@@ -37,7 +37,7 @@ public interface EditorSettings {
   void setAdditionalLinesCount(int additionalLinesCount);
 
   int getAdditionalColumnsCount();
-  void setAdditionalColumnsCount(int additinalColumnsCount);
+  void setAdditionalColumnsCount(int additionalColumnsCount);
 
   boolean isLineMarkerAreaShown();
   void setLineMarkerAreaShown(boolean lineMarkerAreaShown);

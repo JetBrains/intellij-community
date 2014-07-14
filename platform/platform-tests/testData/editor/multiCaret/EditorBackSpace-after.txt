@@ -1,0 +1,2 @@
+<caret>some <caret>xt<caret>ot<caret> t<caret>
+another <caret>

@@ -15,10 +15,14 @@
  */
 package hg4idea.test.version;
 
+import com.intellij.openapi.vcs.VcsTestUtil;
 import hg4idea.test.HgPlatformTest;
 import org.zmlx.hg4idea.util.HgVersion;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Nadya Zabrodina
@@ -37,12 +41,13 @@ public class HgVersionTest extends HgPlatformTest {
     new TestHgVersion("Распределенная SCM Mercurial (версия 2.6.1)", 2, 6, 1),
     new TestHgVersion("[Mercurial Distributed SCM (version 2.6.2+20130606)]", 2, 6, 2),
     new TestHgVersion("[Mercurial Distributed SCM (version 2.4.2+20130203)]\n", 2, 4, 2),
-    new TestHgVersion("Mercurial Distributed SCM (version 2.6.2)\n", 2, 6, 2)
+    new TestHgVersion("Mercurial Distributed SCM (version 2.6.2)\n", 2, 6, 2),
+    new TestHgVersion("Mercurial Distributed SCM (version 2.7+93-f959b60e3025)", 2, 7, 0)
   };
 
   public void testParseSupported() throws Exception {
     for (TestHgVersion test : commonTests) {
-      HgVersion version = HgVersion.parseVersion(test.output);
+      HgVersion version = HgVersion.parseVersionAndExtensionInfo(test.output, Collections.<String>emptyList());
       assertEqualVersions(version, test);
       assertTrue(version.isSupported());
     }
@@ -50,9 +55,24 @@ public class HgVersionTest extends HgPlatformTest {
 
   public void testParseUnsupported() throws Exception {
     TestHgVersion unsupportedVersion = new TestHgVersion("Mercurial Distributed SCM (version 1.5.1)", 1, 5, 1);
-    HgVersion parsedVersion = HgVersion.parseVersion(unsupportedVersion.output);
+    HgVersion parsedVersion =
+      HgVersion.parseVersionAndExtensionInfo(unsupportedVersion.output, Collections.<String>emptyList());
     assertEqualVersions(parsedVersion, unsupportedVersion);
     assertFalse(parsedVersion.isSupported());
+  }
+
+  public void testParseImportExtensionsError() {
+    List<String> errorLines = Arrays.asList("*** failed to import extension hgcr-gui: No module named hgcr-gui",
+                                            "*** failed to import extension hgcr-gui-qt: No module named hgcr-gui-qt");
+    VcsTestUtil.assertEqualCollections(HgVersion.parseUnsupportedExtensions(errorLines), Arrays.asList("hgcr-gui", "hgcr-gui-qt"));
+  }
+
+  public void testParseImportDeprecatedExtensionsError() {
+    List<String> errorLines = Arrays.asList("*** failed to import extension kilnpath from" +
+                                            " C:\\Users\\Developer\\AppData\\Local\\KilnExtensions\\kilnpath.py:" +
+                                            " kilnpath is deprecated, and does not work in Mercurial 2.3 or higher." +
+                                            "  Use the official schemes extension instead");
+    VcsTestUtil.assertEqualCollections(HgVersion.parseUnsupportedExtensions(errorLines), Arrays.asList("kilnpath"));
   }
 
   private static void assertEqualVersions(HgVersion actual, TestHgVersion expected) throws Exception {

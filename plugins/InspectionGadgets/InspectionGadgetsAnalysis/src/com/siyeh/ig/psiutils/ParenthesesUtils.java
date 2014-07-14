@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -505,15 +505,16 @@ public class ParenthesesUtils {
         }
       }
       final IElementType parentOperator = parentPolyadicExpression.getOperationTokenType();
+      final IElementType childOperator = childPolyadicExpression.getOperationTokenType();
       if (ignoreClarifyingParentheses) {
-        final IElementType childOperator = childPolyadicExpression.getOperationTokenType();
         if (!childOperator.equals(parentOperator)) {
           return true;
         }
       }
       final PsiExpression[] parentOperands = parentPolyadicExpression.getOperands();
       if (!PsiTreeUtil.isAncestor(parentOperands[0], expression, false)) {
-        if (!isCommutativeOperator(parentOperator)) {
+        if (!isAssociativeOperation(parentPolyadicExpression) ||
+            JavaTokenType.DIV == childOperator || JavaTokenType.PERC == childOperator) {
           return true;
         }
       }

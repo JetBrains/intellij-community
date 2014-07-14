@@ -465,7 +465,6 @@ public abstract class RadComponent extends PropertiesContainer {
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-
   public static List<ErrorInfo> getError(RadComponent component) {
     List<ErrorInfo> errorInfos = component.getClientProperty(ERROR_KEY);
     return errorInfos == null ? Collections.<ErrorInfo>emptyList() : errorInfos;
@@ -557,5 +556,18 @@ public abstract class RadComponent extends PropertiesContainer {
     }
 
     return components;
+  }
+
+  public boolean isAncestorFor(@NotNull RadComponent component, boolean strict) {
+    RadComponent parent = strict ? component.getParent() : component;
+    while (true) {
+      if (parent == null) {
+        return false;
+      }
+      if (parent == this) {
+        return true;
+      }
+      parent = parent.getParent();
+    }
   }
 }

@@ -168,10 +168,10 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
   }
 
   private boolean canRepresent(final PsiClass psiClass, final Object element) {
-    if (psiClass == null || !psiClass.isValid()) return false;
+    if (psiClass == null || !psiClass.isValid() || element == null) return false;
 
     final PsiFile parentFile = parentFileOf(psiClass);
-    if (parentFile != null && (parentFile == element || parentFile.getVirtualFile() == element)) return true;
+    if (parentFile != null && (parentFile == element || element.equals(parentFile.getVirtualFile()))) return true;
 
     if (!getSettings().isShowMembers()) {
       if (element instanceof PsiElement && ((PsiElement)element).isValid()) {

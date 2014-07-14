@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,15 @@
  */
 package com.intellij.ide.browsers;
 
-import com.intellij.ide.BrowserSettings;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ComboboxWithBrowseButton;
-import com.intellij.util.ArrayUtil;
+import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.MutableCollectionComboBoxModel;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,72 +32,105 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class BrowserSelector {
-  private ComboboxWithBrowseButton myBrowserComboWithBrowse;
+  private final ComboboxWithBrowseButton myBrowserComboWithBrowse;
+  private MutableCollectionComboBoxModel<WebBrowser> myModel;
+
+  public BrowserSelector() {
+    this(true);
+  }
 
   public BrowserSelector(final boolean allowDefaultBrowser) {
-    myBrowserComboWithBrowse = new ComboboxWithBrowseButton(new ComboBox());
+    this(new Condition<WebBrowser>() {
+      @Override
+      public boolean value(WebBrowser browser) {
+        return allowDefaultBrowser || browser != null;
+      }
+    });
+  }
+
+  public BrowserSelector(@NotNull final Condition<WebBrowser> browserCondition) {
+    myModel = createBrowsersComboModel(browserCondition);
+    myBrowserComboWithBrowse = new ComboboxWithBrowseButton(new ComboBox(myModel));
     myBrowserComboWithBrowse.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-        util.editConfigurable(myBrowserComboWithBrowse, new BrowserSettings());
+        WebBrowserManager browserManager = WebBrowserManager.getInstance();
+        long modificationCount = browserManager.getModificationCount();
+        ShowSettingsUtil.getInstance().editConfigurable(myBrowserComboWithBrowse, new BrowserSettings());
 
-        final BrowsersConfiguration.BrowserFamily selectedItem = getSelectedBrowser();
-        initBrowsersComboModel(allowDefaultBrowser);
+        WebBrowser selectedItem = getSelected();
+        if (modificationCount != browserManager.getModificationCount()) {
+          myModel = createBrowsersComboModel(browserCondition);
+          //noinspection unchecked
+          myBrowserComboWithBrowse.getComboBox().setModel(myModel);
+        }
         if (selectedItem != null) {
-          setSelectedBrowser(selectedItem);
+          setSelected(selectedItem);
         }
       }
     });
 
-    final JComboBox comboBox = myBrowserComboWithBrowse.getComboBox();
-    comboBox.setRenderer(new ListCellRendererWrapper<BrowsersConfiguration.BrowserFamily>() {
+    //noinspection unchecked
+    myBrowserComboWithBrowse.getComboBox().setRenderer(new ListCellRendererWrapper<WebBrowser>() {
       @Override
       public void customize(JList list,
-                            BrowsersConfiguration.BrowserFamily value,
+                            WebBrowser value,
                             int index,
                             boolean selected,
                             boolean hasFocus) {
-        final Icon baseIcon = value != null ? value.getIcon() : PlatformIcons.WEB_ICON;
-        final Icon icon = myBrowserComboWithBrowse.isEnabled() ? baseIcon : IconLoader.getDisabledIcon(baseIcon);
-        setIcon(icon);
+        Icon baseIcon;
+        if (value == null) {
+          WebBrowser defaultBrowser = WebBrowserManager.getInstance().getDefaultBrowser();
+          baseIcon = defaultBrowser == null ? PlatformIcons.WEB_ICON : defaultBrowser.getIcon();
+        }
+        else {
+          baseIcon = value.getIcon();
+        }
+        setIcon(myBrowserComboWithBrowse.isEnabled() ? baseIcon : IconLoader.getDisabledIcon(baseIcon));
         setText(value != null ? value.getName() : "Default");
       }
     });
-
-    initBrowsersComboModel(allowDefaultBrowser);
   }
 
   public JComponent getMainComponent() {
     return myBrowserComboWithBrowse;
   }
 
-  private void initBrowsersComboModel(boolean allowDefaultBrowser) {
-    final List<BrowsersConfiguration.BrowserFamily> activeBrowsers = new ArrayList<BrowsersConfiguration.BrowserFamily>();
-    if (allowDefaultBrowser) {
-      activeBrowsers.add(null);
+  private static MutableCollectionComboBoxModel<WebBrowser> createBrowsersComboModel(@NotNull Condition<WebBrowser> browserCondition) {
+    List<WebBrowser> list = new ArrayList<WebBrowser>();
+    if (browserCondition.value(null)) {
+      list.add(null);
     }
-    activeBrowsers.addAll(BrowsersConfiguration.getInstance().getActiveBrowsers());
-
-    myBrowserComboWithBrowse.getComboBox().setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(activeBrowsers)));
+    list.addAll(WebBrowserManager.getInstance().getBrowsers(browserCondition));
+    return new MutableCollectionComboBoxModel<WebBrowser>(list);
   }
 
   @Nullable
-  public BrowsersConfiguration.BrowserFamily getSelectedBrowser() {
-    return (BrowsersConfiguration.BrowserFamily)myBrowserComboWithBrowse.getComboBox().getSelectedItem();
+  public WebBrowser getSelected() {
+    return myModel.getSelected();
   }
 
   @Nullable
-  public String getSelectedBrowserFamilyName() {
-    final BrowsersConfiguration.BrowserFamily browser = getSelectedBrowser();
-    return browser != null ? browser.getName() : null;
+  public String getSelectedBrowserId() {
+    WebBrowser browser = getSelected();
+    return browser != null ? browser.getId().toString() : null;
   }
 
-  public void setSelectedBrowser(@Nullable BrowsersConfiguration.BrowserFamily selectedItem) {
+  public void setSelected(@Nullable WebBrowser selectedItem) {
     myBrowserComboWithBrowse.getComboBox().setSelectedItem(selectedItem);
+  }
+
+  public boolean addAndSelect(@NotNull WebBrowser browser) {
+    if (myModel.contains(browser)) {
+      return false;
+    }
+
+    myModel.addItem(browser);
+    return true;
+  }
+
+  public int getSize() {
+    return myModel.getSize();
   }
 }

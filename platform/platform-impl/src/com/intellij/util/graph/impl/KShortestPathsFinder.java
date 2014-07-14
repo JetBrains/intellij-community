@@ -102,14 +102,12 @@ public class KShortestPathsFinder<Node> {
         for (int j = 1; j < heapNodes.size(); j++) {
           HeapNode<Node> heapNode = heapNodes.get(j);
           HeapNode<Node> parent = heapNodes.get((j+1)/2 - 1);
-          heapNode.myParent = parent;
           parent.myChildren[(j+1) % 2] = heapNode;
         }
         for (int j = heapNodes.size() / 2 - 1; j >= 0; j--) {
           heapify(heapNodes.get(j));
         }
         root.myChildren[2] = heapNodes.get(0);
-        root.myChildren[2].myParent = root;
       }
     }
   }
@@ -271,38 +269,37 @@ public class KShortestPathsFinder<Node> {
     public Heap<Node> insert(HeapNode<Node> node) {
       int pos = mySize + 1;
       int pow = 1;
-      while (pos > pow << 2) {
+      while (pos >= pow << 2) {
         pow <<= 1;
       }
-      HeapNode<Node> place = myRoot;
+      HeapNode<Node> newRoot = myRoot.copy();
+      HeapNode<Node> place = newRoot;
+      List<HeapNode<Node>> parents = new ArrayList<HeapNode<Node>>();
       while (true) {
+        parents.add(place);
         final int ind = (pos & pow) != 0 ? 1 : 0;
         if (pow == 1) {
-          HeapNode<Node> placeCopy = place.copy();
-          placeCopy.myChildren[ind] = node;
-          node.myParent = placeCopy;
+          place.myChildren[ind] = node;
           break;
         }
-        place = place.myChildren[ind];
+        HeapNode<Node> copy = place.myChildren[ind].copy();
+        place.myChildren[ind] = copy;
+        place = copy;
         pow >>= 1;
       }
-      while (true) {
-        final HeapNode<Node> parent = node.myParent;
-        if (parent == null || parent.myEdge.getDelta() < node.myEdge.getDelta()) {
+
+      for (int i = parents.size() - 1; i >= 0; i--) {
+        HeapNode<Node> parent = parents.get(i);
+        if (parent.myEdge.getDelta() < node.myEdge.getDelta()) {
           break;
         }
-        final HeapNode<Node> parentCopy = parent.copy();
-        final GraphEdge<Node> t = parentCopy.myEdge;
-        parentCopy.myEdge = node.myEdge;
+        final GraphEdge<Node> t = parent.myEdge;
+        parent.myEdge = node.myEdge;
         node.myEdge = t;
-        final HeapNode<Node> t2 = parentCopy.myChildren[2];
-        parentCopy.myChildren[2] = node.myChildren[2];
+        final HeapNode<Node> t2 = parent.myChildren[2];
+        parent.myChildren[2] = node.myChildren[2];
         node.myChildren[2] = t2;
-        node = parentCopy;
-      }
-      HeapNode<Node> newRoot = node;
-      while (newRoot.myParent != null) {
-        newRoot = newRoot.myParent;
+        node = parent;
       }
       return new Heap<Node>(mySize + 1, newRoot);
     }
@@ -310,7 +307,6 @@ public class KShortestPathsFinder<Node> {
 
   private static class HeapNode<Node> {
     public HeapNode<Node>[] myChildren;
-    public HeapNode<Node> myParent;
     public GraphEdge<Node> myEdge;
 
     private HeapNode(GraphEdge<Node> edge) {
@@ -321,7 +317,6 @@ public class KShortestPathsFinder<Node> {
     public HeapNode(HeapNode<Node> node) {
       myEdge = node.myEdge;
       myChildren = node.myChildren.clone();
-      myParent = node.myParent;
     }
 
     public HeapNode<Node> copy() {

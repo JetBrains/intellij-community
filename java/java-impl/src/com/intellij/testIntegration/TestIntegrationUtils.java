@@ -70,6 +70,15 @@ public class TestIntegrationUtils {
         }
         return null;
       }
+    },
+    TEST_CLASS("testClass") {
+      @Override
+      public FileTemplateDescriptor getFileTemplateDescriptor(@NotNull TestFramework framework) {
+        if (framework instanceof JavaTestFramework) {
+          return ((JavaTestFramework)framework).getTestClassFileTemplateDescriptor();
+        }
+        return null;
+      }
     };
     private String myDefaultName;
 
@@ -137,7 +146,14 @@ public class TestIntegrationUtils {
                                            final PsiMethod method,
                                            @Nullable String name,
                                            boolean automatic, Set<String> existingNames) {
-    Template template = createTestMethodTemplate(methodKind, framework, targetClass, name, automatic, existingNames);
+    runTestMethodTemplate(editor, targetClass, method, automatic,
+                          createTestMethodTemplate(methodKind, framework, targetClass, name, automatic, existingNames));
+  }
+
+  public static void runTestMethodTemplate(final Editor editor,
+                                           final PsiClass targetClass,
+                                           final PsiMethod method,
+                                           boolean automatic, final Template template) {
 
     final TextRange range = method.getTextRange();
     editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "");
@@ -175,12 +191,12 @@ public class TestIntegrationUtils {
     TemplateManager.getInstance(project).startTemplate(editor, template, adapter);
   }
 
-  private static Template createTestMethodTemplate(MethodKind methodKind,
-                                                   TestFramework descriptor,
-                                                   PsiClass targetClass,
-                                                   @Nullable String name,
-                                                   boolean automatic, 
-                                                   Set<String> existingNames) {
+  public static Template createTestMethodTemplate(MethodKind methodKind,
+                                                  TestFramework descriptor,
+                                                  PsiClass targetClass,
+                                                  @Nullable String name,
+                                                  boolean automatic,
+                                                  Set<String> existingNames) {
     FileTemplateDescriptor templateDesc = methodKind.getFileTemplateDescriptor(descriptor);
     String templateName = templateDesc.getFileName();
     FileTemplate fileTemplate = FileTemplateManager.getInstance().getCodeTemplate(templateName);

@@ -193,8 +193,23 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
     fail("Conflicts were not found");
   }
 
+  public void testFieldHidesLocal() throws Exception {
+    try {
+      doTest("b");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      Assert.assertEquals("Renamed field will hide local variable <b><code>b</code></b>", e.getMessage());
+      return;
+    }
+    fail("Conflicts were not found");
+  }
+
   public void testRenameMethodNoCollisionWithOtherSignature() throws Exception {
     doTest("foo2");
+  }
+
+  public void testRenameNoStaticOverridingInInterfaces() throws Exception {
+    doTest("foo");
   }
 
   public void testRenameTypeParameterToExistingClassName() throws Exception {

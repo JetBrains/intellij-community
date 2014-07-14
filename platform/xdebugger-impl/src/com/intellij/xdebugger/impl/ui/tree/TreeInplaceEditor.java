@@ -25,6 +25,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -67,13 +69,12 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     if (!isShown()) {
       return;
     }
+    myInplaceEditorComponent = null;
     onHidden();
     for (Runnable action : myRemoveActions) {
       action.run();
     }
     myRemoveActions.clear();
-
-    myInplaceEditorComponent = null;
 
     final JTree tree = getTree();
     tree.repaint();
@@ -114,6 +115,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     layeredPane.add(inplaceEditorComponent, new Integer(250));
 
     myRemoveActions.add(new Runnable() {
+      @Override
       public void run() {
         layeredPane.remove(inplaceEditorComponent);
       }
@@ -124,9 +126,11 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     getPreferredFocusedComponent().requestFocus();
 
     final ComponentAdapter componentListener = new ComponentAdapter() {
+      @Override
       public void componentResized(ComponentEvent e) {
         final Project project = getProject();
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             if (!isShown() || project == null || project.isDisposed()) {
               return;
@@ -144,29 +148,49 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
         });
       }
 
+      @Override
       public void componentHidden(ComponentEvent e) {
         cancelEditing();
       }
     };
+
+    final HierarchyListener hierarchyListener = new HierarchyListener() {
+      @Override
+      public void hierarchyChanged(HierarchyEvent e) {
+        if (!tree.isShowing()) {
+          cancelEditing();
+        }
+      }
+    };
+
+    tree.addHierarchyListener(hierarchyListener);
+    tree.addComponentListener(componentListener);
     rootPane.addComponentListener(componentListener);
+
     myRemoveActions.add(new Runnable() {
+      @Override
       public void run() {
+        tree.removeHierarchyListener(hierarchyListener);
+        tree.removeComponentListener(componentListener);
         rootPane.removeComponentListener(componentListener);
       }
     });
 
     final RunContentManager contentManager = ExecutionManager.getInstance(getProject()).getContentManager();
     final RunContentListener runContentListener = new RunContentListener() {
+      @Override
       public void contentSelected(RunContentDescriptor descriptor) {
         cancelEditing();
       }
 
+      @Override
       public void contentRemoved(RunContentDescriptor descriptor) {
         cancelEditing();
       }
     };
     contentManager.addRunContentListener(runContentListener);
     myRemoveActions.add(new Runnable() {
+      @Override
       public void run() {
         contentManager.removeRunContentListener(runContentListener);
       }
@@ -175,18 +199,21 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     final JComponent editorComponent = getEditorComponent();
     editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enterStroke");
     editorComponent.getActionMap().put("enterStroke", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         doOKAction();
       }
     });
     editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "escapeStroke");
     editorComponent.getActionMap().put("escapeStroke", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         cancelEditing();
       }
     });
     final Toolkit defaultToolkit = Toolkit.getDefaultToolkit();
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (!isShown()) return;
         defaultToolkit.addAWTEventListener(TreeInplaceEditor.this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_WHEEL_EVENT_MASK);
@@ -194,6 +221,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     });
 
     myRemoveActions.add(new Runnable() {
+      @Override
       public void run() {
         defaultToolkit.removeAWTEventListener(TreeInplaceEditor.this);
       }
@@ -204,6 +232,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
   protected void onShown() {
   }
 
+  @Override
   public void eventDispatched(AWTEvent event) {
     if (!isShown()) {
       return;
@@ -214,12 +243,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     }
 
     final int id = mouseEvent.getID();
-    if (id == MouseEvent.MOUSE_WHEEL) {
-      cancelEditing();
-      return;
-    }
-
-    if (id != MouseEvent.MOUSE_PRESSED && id != MouseEvent.MOUSE_RELEASED && id != MouseEvent.MOUSE_CLICKED) {
+    if (id != MouseEvent.MOUSE_PRESSED && id != MouseEvent.MOUSE_RELEASED && id != MouseEvent.MOUSE_CLICKED && id != MouseEvent.MOUSE_WHEEL) {
       return;
     }
     
@@ -239,6 +263,14 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
       }
     }
 
+    // do not cancel editing if we click in editor popup
+    final List<JBPopup> popups = JBPopupFactory.getInstance().getChildPopups(myInplaceEditorComponent);
+    for (JBPopup popup : popups) {
+      if (SwingUtilities.isDescendingFrom(sourceComponent, popup.getContent())) {
+        return;
+      }
+    }
+
     final Point point = SwingUtilities.convertPoint(sourceComponent, originalPoint, myInplaceEditorComponent);
     if (myInplaceEditorComponent.contains(point)) {
       return;
@@ -246,7 +278,9 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     final Component componentAtPoint = SwingUtilities.getDeepestComponentAt(sourceComponent, originalPoint.x, originalPoint.y);
     for (Component comp = componentAtPoint; comp != null; comp = comp.getParent()) {
       if (comp instanceof ComboPopup) {
-        doOKAction();
+        if (id != MouseEvent.MOUSE_WHEEL) {
+          doOKAction();
+        }
         return;
       }
     }

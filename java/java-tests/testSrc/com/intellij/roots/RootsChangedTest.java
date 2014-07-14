@@ -16,14 +16,14 @@
 package com.intellij.roots;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -58,6 +58,47 @@ public class RootsChangedTest extends ModuleTestCase {
     super.tearDown();
   }
 
+  public void testEventsAfterFileModifications() throws Exception {
+    final File root = FileUtil.createTempDirectory(getTestName(true), "");
+    File dir1 = new File(root, "dir1");
+    assertTrue(dir1.mkdirs());
+    final VirtualFile vDir1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir1);
+
+    final Module moduleA = createModule("a.iml");
+    final ModifiableRootModel model = ModuleRootManager.getInstance(moduleA).getModifiableModel();
+    myModuleRootListener.reset();
+    
+    model.addContentEntry(vDir1.getUrl());
+    model.commit();
+
+    assertEventsCount(1);
+    assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir1);
+    
+    vDir1.delete(null);
+    assertEventsCount(1);
+    assertEmpty(ModuleRootManager.getInstance(moduleA).getContentRoots());
+ 
+    File dir2 = new File(root, "dir2");
+    dir2.mkdirs();
+    final VirtualFile vDir2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir2);
+
+    vDir2.rename(null, "dir1");
+    assertEventsCount(1);
+    assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir2);
+
+    // when the existing root is renamed, it remains a root
+    vDir2.rename(null, "dir2");
+    assertEventsCount(0);
+    assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir2);
+ 
+    // and event if it is moved, it's still a root
+    File subdir = new File(root, "subdir");
+    subdir.mkdirs();
+    vDir2.move(null, LocalFileSystem.getInstance().refreshAndFindFileByIoFile(subdir));
+    assertEventsCount(0);
+    assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir2);
+  }
+
   public void testProjectLibraryChangeEvent() throws Exception {
     final LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     verifyLibraryTableEditing(projectLibraryTable);
@@ -68,16 +109,33 @@ public class RootsChangedTest extends ModuleTestCase {
     verifyLibraryTableEditing(globalLibraryTable);
   }
 
-  public void testProjectLibraryEventsInUncommitedModel() throws Exception {
+  public void testProjectLibraryEventsInUncommittedModel() throws Exception {
     final LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
-    verifyLibraryTableEditingInUncommitedModel(projectLibraryTable);
+    verifyLibraryTableEditingInUncommittedModel(projectLibraryTable);
   }
 
-  public void testGlobalLibraryEventsInUncommitedModel() throws Exception {
+  public void testGlobalLibraryEventsInUncommittedModel() throws Exception {
     final LibraryTable globalLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
-    verifyLibraryTableEditingInUncommitedModel(globalLibraryTable);
+    verifyLibraryTableEditingInUncommittedModel(globalLibraryTable);
   }
 
+  public void testEditLibraryForModuleLoadFromXml() throws IOException {
+    File moduleFile = PathManagerEx.findFileUnderProjectHome("java/java-tests/testData/moduleRootManager/rootsChanged/emptyModule/a.iml", getClass());
+    Module a = loadModule(moduleFile, true);
+    assertEventsCount(1);
+
+    final Sdk jdk = IdeaTestUtil.getMockJdk17();
+    ProjectJdkTable.getInstance().addJdk(jdk);
+    assertEventsCount(0);
+
+    ModuleRootModificationUtil.setModuleSdk(a, jdk);
+    assertEventsCount(1);
+
+    final SdkModificator sdkModificator = jdk.getSdkModificator();
+    sdkModificator.addRoot(getVirtualFile(createTempDirectory()), OrderRootType.CLASSES);
+    sdkModificator.commitChanges();
+    assertEventsCount(1);
+  }
 
   public void testModuleJdkEditing() throws Exception {
     final Module moduleA = createModule("a.iml");
@@ -93,9 +151,7 @@ public class RootsChangedTest extends ModuleTestCase {
     rootModelA.setSdk(jdk);
     rootModelB.setSdk(jdk);
     ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
-    if (rootModels.length > 0) {
-      ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
-    }
+    ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
     assertEventsCount(1);
 
     final SdkModificator sdkModificator = jdk.getSdkModificator();
@@ -192,7 +248,7 @@ public class RootsChangedTest extends ModuleTestCase {
     assertEventsCount(1);
   }
 
-  private void verifyLibraryTableEditingInUncommitedModel(final LibraryTable libraryTable) {
+  private void verifyLibraryTableEditingInUncommittedModel(final LibraryTable libraryTable) {
     final Module moduleA = createModule("a.iml");
     final Module moduleB = createModule("b.iml");
     assertEventsCount(2);

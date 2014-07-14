@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.Consumer;
@@ -36,8 +37,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import static com.intellij.patterns.PsiJavaPatterns.psiElement;
-
 /**
  * @author peter
  */
@@ -45,11 +44,11 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
 
   private static boolean suggestMetaAnnotations(CompletionParameters parameters) {
     PsiElement position = parameters.getPosition();
-    return psiElement().withParents(GrCodeReferenceElement.class, GrAnnotation.class, GrModifierList.class, GrAnnotationTypeDefinition.class).accepts(position);
+    return PsiJavaPatterns.psiElement().withParents(GrCodeReferenceElement.class, GrAnnotation.class, GrModifierList.class, GrAnnotationTypeDefinition.class).accepts(position);
   }
 
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull CompletionResultSet result) {
     LinkedHashSet<CompletionResult> plainResults = result.runRemainingContributors(parameters, true);
     final boolean empty = JavaNoVariantsDelegator.containsOnlyPackages(plainResults) || suggestMetaAnnotations(parameters);
 
@@ -63,7 +62,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
       if (parameters.getCompletionType() == CompletionType.BASIC &&
           parameters.getInvocationCount() <= 1 &&
           JavaCompletionContributor.mayStartClassName(result) &&
-          GroovyCompletionContributor.isClassNamePossible(parameters.getPosition()) &&
+          GrMainCompletionProvider.isClassNamePossible(parameters.getPosition()) &&
           !MapArgumentCompletionProvider.isMapKeyCompletion(parameters) &&
           !GroovySmartCompletionContributor.AFTER_NEW.accepts(parameters.getPosition())) {
         result = result.withPrefixMatcher(new BetterPrefixMatcher(result.getPrefixMatcher(), BetterPrefixMatcher.getBestMatchingDegree(plainResults)));
@@ -76,7 +75,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
     if (parameters.getCompletionType() == CompletionType.BASIC) {
       if (parameters.getInvocationCount() <= 1 &&
           JavaCompletionContributor.mayStartClassName(result) &&
-          GroovyCompletionContributor.isClassNamePossible(parameters.getPosition()) &&
+          GrMainCompletionProvider.isClassNamePossible(parameters.getPosition()) &&
           !MapArgumentCompletionProvider.isMapKeyCompletion(parameters)) {
         suggestNonImportedClasses(parameters, result);
       }
@@ -86,7 +85,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
   }
 
   private static void suggestNonImportedClasses(CompletionParameters parameters, final CompletionResultSet result) {
-    GroovyCompletionContributor.addAllClasses(parameters, new Consumer<LookupElement>() {
+    GrMainCompletionProvider.addAllClasses(parameters, new Consumer<LookupElement>() {
       @Override
       public void consume(LookupElement element) {
         JavaPsiClassReferenceElement classElement =
@@ -125,7 +124,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
         PsiElement refName = ref.getReferenceNameElement();
         assert refName != null;
         CompletionParameters newParams = parameters.withPosition(refName, refName.getTextRange().getStartOffset());
-        GroovyCompletionContributor.completeReference(newParams, ref, inheritors, result.getPrefixMatcher(), new Consumer<LookupElement>() {
+        GrMainCompletionProvider.completeReference(newParams, ref, inheritors, result.getPrefixMatcher(), new Consumer<LookupElement>() {
           @Override
           public void consume(LookupElement element) {
             qualifiedCollector.addElement(new JavaChainLookupElement(base, element) {
@@ -165,7 +164,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
 
     final PrefixMatcher qMatcher = new CamelHumpMatcher(referenceName);
     final Set<LookupElement> variants = new LinkedHashSet<LookupElement>();
-    GroovyCompletionContributor.completeReference(parameters, qualifier, inheritors, qMatcher, new Consumer<LookupElement>() {
+    GrMainCompletionProvider.completeReference(parameters, qualifier, inheritors, qMatcher, new Consumer<LookupElement>() {
       @Override
       public void consume(LookupElement element) {
         if (qMatcher.prefixMatches(element)) {
@@ -180,7 +179,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
 
 
     if (variants.isEmpty()) {
-      GroovyCompletionContributor.addAllClasses(parameters, new Consumer<LookupElement>() {
+      GrMainCompletionProvider.addAllClasses(parameters, new Consumer<LookupElement>() {
         @Override
         public void consume(LookupElement element) {
           if (qMatcher.prefixMatches(element)) {

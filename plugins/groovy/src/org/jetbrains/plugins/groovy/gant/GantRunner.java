@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,8 +39,6 @@ import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
 import java.util.List;
-
-import static com.intellij.util.containers.ContainerUtil.ar;
 
 /**
  * @author ilyas
@@ -57,14 +56,14 @@ public class GantRunner extends GroovyScriptRunner {
 
   @Override
   public boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, Executor executor, final Project project) {
-    if (!(GantUtils.getSDKInstallPath(module, project).length() > 0)) {
+    if (GantUtils.getSDKInstallPath(module, project).isEmpty()) {
       int result = Messages
         .showOkCancelDialog("Gant is not configured. Do you want to configure it?", "Configure Gant SDK",
                             JetgroovyIcons.Groovy.Gant_16x16);
       if (result == Messages.OK) {
         ShowSettingsUtil.getInstance().editConfigurable(project, new GantConfigurable(project));
       }
-      if (!(GantUtils.getSDKInstallPath(module, project).length() > 0)) {
+      if (GantUtils.getSDKInstallPath(module, project).isEmpty()) {
         return false;
       }
     }
@@ -147,7 +146,7 @@ public class GantRunner extends GroovyScriptRunner {
 
     List<VirtualFile> classpath = params.getClassPath().getRootDirs();
 
-    String[] characteristicClasses = ar(
+    String[] characteristicClasses = ContainerUtil.ar(
       LibrariesUtil.SOME_GROOVY_CLASS, "org.apache.tools.ant.BuildException", "org.apache.tools.ant.launch.AntMain",
       "org.apache.commons.cli.ParseException");
     for (String someClass : characteristicClasses) {

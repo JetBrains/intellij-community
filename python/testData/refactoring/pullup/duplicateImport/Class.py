@@ -1,4 +1,6 @@
 from SuperClass import SuperClass
+import sys
+
 
 from sys import argv
 
@@ -7,3 +9,5 @@ class AnyClass(SuperClass):
         if not self.args:
             self.args = argv
         self.argument = some_argument
+        print(sys.api_version)
+

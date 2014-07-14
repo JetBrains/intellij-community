@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,15 +19,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class VisibleEditorsTracker extends CommandAdapter implements ApplicationComponent{
+public class VisibleEditorsTracker extends CommandAdapter {
   private final Set<Editor> myEditorsVisibleOnCommandStart = new HashSet<Editor>();
   private long myCurrentCommandStart;
   private long myLastCommandFinish;
@@ -39,20 +37,6 @@ public class VisibleEditorsTracker extends CommandAdapter implements Application
 
   public VisibleEditorsTracker(CommandProcessor commandProcessor) {
     commandProcessor.addCommandListener(this);
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "VisibleEditorsTracker";
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
   }
 
   public boolean wasEditorVisibleOnCommandStart(Editor editor){

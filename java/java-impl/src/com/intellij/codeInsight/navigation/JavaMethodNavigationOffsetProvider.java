@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.navigation;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,8 +38,9 @@ public class JavaMethodNavigationOffsetProvider implements MethodNavigationOffse
 
   private static void addNavigationElements(ArrayList<PsiElement> array, PsiElement element) {
     PsiElement[] children = element.getChildren();
+    boolean stopOnFields = Registry.is("ide.structural.navigation.visit.fields");
     for (PsiElement child : children) {
-      if (child instanceof PsiMethod || child instanceof PsiClass || child instanceof PsiField) {
+      if (child instanceof PsiMethod || child instanceof PsiClass || stopOnFields && child instanceof PsiField) {
         array.add(child);
         addNavigationElements(array, child);
       }

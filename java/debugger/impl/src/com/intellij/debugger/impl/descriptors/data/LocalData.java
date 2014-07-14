@@ -19,6 +19,7 @@ import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.ui.impl.watch.LocalVariableDescriptorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.StringBuilderSpinAllocator;
+import org.jetbrains.annotations.NotNull;
 
 public class LocalData extends DescriptorData<LocalVariableDescriptorImpl>{
   private final LocalVariableProxyImpl myLocalVariable;
@@ -28,7 +29,7 @@ public class LocalData extends DescriptorData<LocalVariableDescriptorImpl>{
     myLocalVariable = localVariable;
   }
 
-  protected LocalVariableDescriptorImpl createDescriptorImpl(Project project) {
+  protected LocalVariableDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new LocalVariableDescriptorImpl(project, myLocalVariable);
   }
 

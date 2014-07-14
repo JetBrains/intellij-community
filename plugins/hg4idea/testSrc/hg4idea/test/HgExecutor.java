@@ -25,9 +25,6 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgExecutor extends Executor {
 
   private static final String HG_EXECUTABLE_ENV = "IDEA_TEST_HG_EXECUTABLE";
@@ -38,7 +35,7 @@ public class HgExecutor extends Executor {
     final String programName = "hg";
     final String unixExec = "hg";
     final String winExec = "hg.exe";
-    String exec = findInPathEnvs(programName, Arrays.asList(HG_EXECUTABLE_ENV));
+    String exec = findEnvValue(programName, Arrays.asList(HG_EXECUTABLE_ENV));
     if (exec != null) {
       return exec;
     }
@@ -54,23 +51,31 @@ public class HgExecutor extends Executor {
     File bin = new File(pluginRoot, FileUtil.toSystemDependentName("testData/bin"));
     File exec = new File(bin, SystemInfo.isWindows ? winExec : unixExec);
     if (exec.exists() && exec.canExecute()) {
-      log("Using " + programName + " from test data");
+      debug("Using " + programName + " from test data");
       return exec.getPath();
     }
     return null;
   }
 
   public static String hg(String command) {
+    return hg(command, false);
+  }
+
+  public static String hg(String command, boolean ignoreNonZeroExitCode) {
     List<String> split = splitCommandInParameters(command);
     split.add(0, HG_EXECUTABLE);
-    log("hg " + command);
-    return run(split);
+    debug("hg " + command);
+    return run(split, ignoreNonZeroExitCode);
   }
 
   public static void updateProject() {
     hg("pull");
-    hg("update");
-    hg("merge");
+    hg("update", true);
+    hgMergeWith("");
+  }
+
+  public static void hgMergeWith(@NotNull String mergeWith) {
+    hg("merge " + mergeWith, true);
   }
 
   @NotNull

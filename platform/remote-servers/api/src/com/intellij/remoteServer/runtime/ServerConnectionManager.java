@@ -25,4 +25,9 @@ public abstract class ServerConnectionManager {
 
   @NotNull
   public abstract Collection<ServerConnection> getConnections();
+
+  @NotNull
+  public <C extends ServerConfiguration> ServerConnection createTemporaryConnection(@NotNull RemoteServer<C> server) {
+    throw new UnsupportedOperationException();
+  }
 }

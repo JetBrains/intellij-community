@@ -18,6 +18,7 @@ package com.intellij.debugger.impl.descriptors.data;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class ThreadData extends DescriptorData<ThreadDescriptorImpl> {
   private final ThreadReferenceProxyImpl myThread;
@@ -26,7 +27,7 @@ public class ThreadData extends DescriptorData<ThreadDescriptorImpl> {
     myThread = thread;
   }
 
-  protected ThreadDescriptorImpl createDescriptorImpl(Project project) {
+  protected ThreadDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new ThreadDescriptorImpl(myThread);
   }
 

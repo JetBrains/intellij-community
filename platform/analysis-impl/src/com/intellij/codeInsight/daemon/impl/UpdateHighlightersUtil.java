@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,6 +156,7 @@ public class UpdateHighlightersUtil {
   // set highlights inside startOffset,endOffset but outside priorityRange
   static void setHighlightersOutsideRange(@NotNull final Project project,
                                           @NotNull final Document document,
+                                          @NotNull final PsiFile psiFile,
                                           @NotNull final List<HighlightInfo> infos,
                                           @Nullable final EditorColorsScheme colorsScheme,
                                           // if null global scheme will be used
@@ -165,7 +166,6 @@ public class UpdateHighlightersUtil {
                                           final int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     final DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     codeAnalyzer.cleanFileLevelHighlights(project, group, psiFile);
 
@@ -176,44 +176,43 @@ public class UpdateHighlightersUtil {
     final HighlightersRecycler infosToRemove = new HighlightersRecycler();
     ContainerUtil.quickSort(infos, BY_START_OFFSET_NODUPS);
 
-    DaemonCodeAnalyzerEx.processHighlightsOverlappingOutside(document, project, null, priorityRange.getStartOffset(), priorityRange.getEndOffset(),
-                                                             new Processor<HighlightInfo>() {
-                                                               @Override
-                                                               public boolean process(HighlightInfo info) {
-                                                                 if (info.getGroup() == group) {
-                                                                   RangeHighlighter highlighter = info.highlighter;
-                                                                   int hiStart = highlighter.getStartOffset();
-                                                                   int hiEnd = highlighter.getEndOffset();
-                                                                   if (!info.isFromInjection() &&
-                                                                       hiEnd < document.getTextLength() &&
-                                                                       (hiEnd <= startOffset || hiStart >= endOffset))
-                                                                     return true; // injections are oblivious to restricting range
-                                                                   boolean toRemove = !(hiEnd == document.getTextLength() &&
-                                                                                        priorityRange.getEndOffset() == document.getTextLength()) &&
-                                                                                      !priorityRange.containsRange(hiStart, hiEnd);
-                                                                   if (toRemove) {
-                                                                     infosToRemove.recycleHighlighter(highlighter);
-                                                                     info.highlighter = null;
-                                                                   }
-                                                                 }
-                                                                 return true;
-                                                               }
-                                                             });
+    Processor<HighlightInfo> processor = new Processor<HighlightInfo>() {
+      @Override
+      public boolean process(HighlightInfo info) {
+        if (info.getGroup() == group) {
+          RangeHighlighter highlighter = info.highlighter;
+          int hiStart = highlighter.getStartOffset();
+          int hiEnd = highlighter.getEndOffset();
+          if (!info.isFromInjection() && hiEnd < document.getTextLength() && (hiEnd <= startOffset || hiStart >= endOffset)) {
+            return true; // injections are oblivious to restricting range
+          }
+          boolean toRemove = !(hiEnd == document.getTextLength() &&
+                               priorityRange.getEndOffset() == document.getTextLength()) &&
+                             !priorityRange.containsRange(hiStart, hiEnd);
+          if (toRemove) {
+            infosToRemove.recycleHighlighter(highlighter);
+            info.highlighter = null;
+          }
+        }
+        return true;
+      }
+    };
+    DaemonCodeAnalyzerEx.processHighlightsOverlappingOutside(document, project, null, priorityRange.getStartOffset(), priorityRange.getEndOffset(), processor);
 
     final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<TextRange, RangeMarker>(10);
     final boolean[] changed = {false};
     RangeMarkerTree.sweep(new RangeMarkerTree.Generator<HighlightInfo>(){
       @Override
-      public boolean generate(Processor<HighlightInfo> processor) {
+      public boolean generateInStartOffsetOrder(@NotNull Processor<HighlightInfo> processor) {
         return ContainerUtil.process(infos, processor);
       }
     }, new SweepProcessor<HighlightInfo>() {
       @Override
-      public boolean process(int offset, HighlightInfo info, boolean atStart, Collection<HighlightInfo> overlappingIntervals) {
+      public boolean process(int offset, @NotNull HighlightInfo info, boolean atStart, @NotNull Collection<HighlightInfo> overlappingIntervals) {
         if (!atStart) return true;
         if (!info.isFromInjection() && info.getEndOffset() < document.getTextLength() && (info.getEndOffset() <= startOffset || info.getStartOffset()>=endOffset)) return true; // injections are oblivious to restricting range
 
-        if (info.isFileLevelAnnotation() && psiFile != null && psiFile.getViewProvider().isPhysical()) {
+        if (info.isFileLevelAnnotation() && psiFile.getViewProvider().isPhysical()) {
           codeAnalyzer.addFileLevelHighlight(project, group, info, psiFile);
           changed[0] = true;
           return true;
@@ -277,12 +276,12 @@ public class UpdateHighlightersUtil {
     final boolean[] changed = {false};
     RangeMarkerTree.sweep(new RangeMarkerTree.Generator<HighlightInfo>(){
       @Override
-      public boolean generate(final Processor<HighlightInfo> processor) {
+      public boolean generateInStartOffsetOrder(@NotNull final Processor<HighlightInfo> processor) {
         return ContainerUtil.process(infos, processor);
       }
     }, new SweepProcessor<HighlightInfo>() {
       @Override
-      public boolean process(int offset, HighlightInfo info, boolean atStart, Collection<HighlightInfo> overlappingIntervals) {
+      public boolean process(int offset, @NotNull HighlightInfo info, boolean atStart, @NotNull Collection<HighlightInfo> overlappingIntervals) {
         if (!atStart) {
           return true;
         }
@@ -426,6 +425,9 @@ public class UpdateHighlightersUtil {
     }
     else if (severity == HighlightInfoType.INJECTED_FRAGMENT_SEVERITY) {
       layer = HighlighterLayer.CARET_ROW-1;
+    }
+    else if (severity == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY) {
+      layer = HighlighterLayer.ELEMENT_UNDER_CARET;
     }
     else {
       layer = HighlighterLayer.ADDITIONAL_SYNTAX;

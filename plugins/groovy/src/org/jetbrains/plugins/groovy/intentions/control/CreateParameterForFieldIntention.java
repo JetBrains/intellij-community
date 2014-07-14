@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ public class CreateParameterForFieldIntention extends Intention {
 
   private static void performForField(PsiElement element, final Project project, Editor editor, List<GrMethod> constructors) {
     final GrField field = PsiTreeUtil.getParentOfType(element, GrField.class);
-    if (constructors.size() == 0) return;
+    if (constructors.isEmpty()) return;
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       for (GrMethod constructor : constructors) {
@@ -106,6 +106,7 @@ public class CreateParameterForFieldIntention extends Intention {
     new PopupChooserBuilder(list).setTitle(GroovyIntentionsBundle.message("create.parameter.for.field.intention.name")).
       setMovable(true).
       setItemChoosenCallback(new Runnable() {
+        @Override
         public void run() {
           final Object[] selectedValues = list.getSelectedValues();
           Arrays.sort(selectedValues, new Comparator<Object>() {
@@ -135,7 +136,7 @@ public class CreateParameterForFieldIntention extends Intention {
 
   private static void performForConstructor(PsiElement element, final Project project, Editor editor, List<GrField> candidates) {
     final GrMethod constructor = PsiTreeUtil.getParentOfType(element, GrMethod.class);
-    if (candidates.size() == 0) return;
+    if (candidates.isEmpty()) return;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       for (GrField candidate : candidates) {
         addParameter(candidate, constructor, project);
@@ -148,6 +149,7 @@ public class CreateParameterForFieldIntention extends Intention {
     new PopupChooserBuilder(list).setTitle(GroovyIntentionsBundle.message("create.parameter.for.field.intention.name")).
       setMovable(true).
       setItemChoosenCallback(new Runnable() {
+        @Override
         public void run() {
           final Object[] selectedValues = list.getSelectedValues();
           CommandProcessor.getInstance().executeCommand(project, new Runnable() {
@@ -183,7 +185,7 @@ public class CreateParameterForFieldIntention extends Intention {
     String parameterName = ContainerUtil.find(suggestedNames, new Condition<String>() {
       @Override
       public boolean value(String name) {
-        return nameValidator.validateName(name, false).length() > 0;
+        return !nameValidator.validateName(name, false).isEmpty();
       }
     });
 
@@ -241,9 +243,9 @@ public class CreateParameterForFieldIntention extends Intention {
     @Override
     public boolean satisfiedBy(PsiElement element) {
       final List<GrField> candidates = findFieldCandidates(element);
-      if (candidates != null && candidates.size() > 0) return true;
+      if (candidates != null && !candidates.isEmpty()) return true;
       final List<GrMethod> constructors = findConstructorCandidates(element);
-      return constructors != null && constructors.size() > 0;
+      return constructors != null && !constructors.isEmpty();
     }
   }
 

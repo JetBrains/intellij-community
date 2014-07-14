@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import java.io.File;
 public final class GenerateGroovyDocAction extends AnAction implements DumbAware {
   @NonNls private static final String INDEX_HTML = "index.html";
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -60,6 +61,7 @@ public final class GenerateGroovyDocAction extends AnAction implements DumbAware
     generateGroovydoc(configuration, project);
   }
 
+  @Override
   public void update(AnActionEvent event) {
     super.update(event);
     final Presentation presentation = event.getPresentation();
@@ -77,6 +79,7 @@ public final class GenerateGroovyDocAction extends AnAction implements DumbAware
 
   private static void generateGroovydoc(final GroovyDocConfiguration configuration, final Project project) {
     Runnable groovyDocRun = new Runnable() {
+      @Override
       public void run() {
         Groovydoc groovydoc = new Groovydoc();
         groovydoc.setProject(new org.apache.tools.ant.Project());

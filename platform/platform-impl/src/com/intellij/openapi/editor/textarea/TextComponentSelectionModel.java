@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class TextComponentSelectionModel implements SelectionModel {
   private final JTextComponent myTextComponent;
   private final TextComponentEditor myEditor;
 
-  public TextComponentSelectionModel(final JTextComponent textComponent, final TextComponentEditor textComponentEditor) {
+  public TextComponentSelectionModel(@NotNull JTextComponent textComponent, @NotNull TextComponentEditor textComponentEditor) {
     myTextComponent = textComponent;
     myEditor = textComponentEditor;
   }
@@ -71,6 +71,12 @@ public class TextComponentSelectionModel implements SelectionModel {
     return myTextComponent.getSelectedText();
   }
 
+  @Nullable
+  @Override
+  public String getSelectedText(boolean allCarets) {
+    return getSelectedText();
+  }
+
   @Override
   public int getLeadSelectionOffset() {
     final int caretPosition = myTextComponent.getCaretPosition();
@@ -88,6 +94,11 @@ public class TextComponentSelectionModel implements SelectionModel {
   @Override
   public boolean hasSelection() {
     return myTextComponent.getSelectionStart() != myTextComponent.getSelectionEnd();
+  }
+
+  @Override
+  public boolean hasSelection(boolean anyCaret) {
+    return hasSelection();
   }
 
   @Override
@@ -116,6 +127,11 @@ public class TextComponentSelectionModel implements SelectionModel {
   public void removeSelection() {
     final int position = myTextComponent.getCaretPosition();
     myTextComponent.select(position, position);
+  }
+
+  @Override
+  public void removeSelection(boolean allCarets) {
+    removeSelection();
   }
 
   @Override
@@ -148,7 +164,7 @@ public class TextComponentSelectionModel implements SelectionModel {
   }
 
   @Override
-  public void setBlockSelection(final LogicalPosition blockStart, final LogicalPosition blockEnd) {
+  public void setBlockSelection(@NotNull final LogicalPosition blockStart, @NotNull final LogicalPosition blockEnd) {
     throw new UnsupportedOperationException("Not implemented");
   }
 

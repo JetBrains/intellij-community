@@ -22,9 +22,9 @@ Groovy script
             PsiElement(@)('@')
             Reference element
               PsiElement(identifier)('ann')
-            PsiWhiteSpace(' ')
             Annotation arguments
               <empty list>
+        PsiWhiteSpace(' ')
         Built in type
           PsiElement(int)('int')
         PsiWhiteSpace(' ')
@@ -34,17 +34,16 @@ Groovy script
           <empty list>
         PsiElement())(')')
         PsiWhiteSpace(' ')
-        Default annotation value
-          PsiElement(default)('default')
-          PsiWhiteSpace(' ')
-          Annotation
-            PsiElement(@)('@')
-            Reference element
-              PsiElement(identifier)('Bar')
-            PsiWhiteSpace(' ')
-            Annotation arguments
-              <empty list>
+        PsiElement(default)('default')
+        PsiWhiteSpace(' ')
+        Annotation
+          PsiElement(@)('@')
+          Reference element
+            PsiElement(identifier)('Bar')
+          Annotation arguments
+            <empty list>
         Throw clause
           <empty list>
+      PsiWhiteSpace(' ')
       PsiElement(new line)('\n')
       PsiElement(})('}')

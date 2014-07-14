@@ -18,7 +18,7 @@ package com.intellij.lang.annotation;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Unique object, which is the same for all of the problems of some group.
+ * Unique object, which has the same {@link com.intellij.lang.annotation.ProblemGroup#getProblemName()} for all of the problems of this group.
  * It is used to split some inspection to several fake inspections
  */
 public interface ProblemGroup {

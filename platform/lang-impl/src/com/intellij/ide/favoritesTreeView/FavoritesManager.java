@@ -34,12 +34,12 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.TreeItem;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -53,15 +53,9 @@ import java.util.*;
 import static com.intellij.ide.favoritesTreeView.FavoritesListProvider.EP_NAME;
 
 public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
-  private final ArrayList<String> myListOrder = new ArrayList<String>();
   // fav list name -> list of (root: root url, root class)
   private final Map<String, List<TreeItem<Pair<AbstractUrl, String>>>> myName2FavoritesRoots =
-    new TreeMap<String, List<TreeItem<Pair<AbstractUrl, String>>>>(new Comparator<String>() {
-      @Override
-      public int compare(String o1, String o2) {
-        return myListOrder.indexOf(o1) - myListOrder.indexOf(o2);
-      }
-    });
+    new TreeMap<String, List<TreeItem<Pair<AbstractUrl, String>>>>();
   private final Map<String, String> myDescriptions = new HashMap<String, String>();
   private final Project myProject;
   private final List<FavoritesListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -148,7 +142,6 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   }
 
   public synchronized void createNewList(@NotNull String listName) {
-    myListOrder.add(listName);
     myName2FavoritesRoots.put(listName, new ArrayList<TreeItem<Pair<AbstractUrl, String>>>());
     listAdded(listName);
   }
@@ -163,7 +156,6 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
 
   public synchronized boolean removeFavoritesList(@NotNull String name) {
     boolean result = myName2FavoritesRoots.remove(name) != null;
-    myListOrder.remove(name);
     myDescriptions.remove(name);
     listRemoved(name);
     return result;
@@ -196,10 +188,10 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     final Collection<TreeItem<Pair<AbstractUrl, String>>> list = getFavoritesListRootUrls(name);
 
     final HashSet<AbstractUrl> set =
-      new HashSet<AbstractUrl>(ObjectsConvertor.convert(list, new Convertor<TreeItem<Pair<AbstractUrl, String>>, AbstractUrl>() {
+      new HashSet<AbstractUrl>(ContainerUtil.map(list, new Function<TreeItem<Pair<AbstractUrl,String>>, AbstractUrl>() {
         @Override
-        public AbstractUrl convert(TreeItem<Pair<AbstractUrl, String>> o) {
-          return o.getData().getFirst();
+        public AbstractUrl fun(TreeItem<Pair<AbstractUrl, String>> item) {
+          return item.getData().getFirst();
         }
       }));
     for (AbstractTreeNode node : nodes) {
@@ -354,11 +346,6 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   private boolean renameFavoritesList(@NotNull String oldName, @NotNull String newName) {
     List<TreeItem<Pair<AbstractUrl, String>>> list = myName2FavoritesRoots.remove(oldName);
     if (list != null && newName.length() > 0) {
-      int index = myListOrder.indexOf(oldName);
-      if (index == -1) {
-        index = myListOrder.size();
-      }
-      myListOrder.set(index, newName);
       myName2FavoritesRoots.put(newName, list);
       String description = myDescriptions.remove(oldName);
       if (description != null) {
@@ -421,7 +408,6 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     for (Object list : element.getChildren(ELEMENT_FAVORITES_LIST)) {
       final String name = ((Element)list).getAttributeValue(ATTRIBUTE_NAME);
       List<TreeItem<Pair<AbstractUrl, String>>> roots = readRoots((Element)list, myProject);
-      myListOrder.add(name);
       myName2FavoritesRoots.put(name, roots);
     }
     DefaultJDOMExternalizer.readExternal(this, element);

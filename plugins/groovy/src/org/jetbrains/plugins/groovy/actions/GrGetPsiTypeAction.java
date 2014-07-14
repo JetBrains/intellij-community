@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -57,7 +56,7 @@ public class GrGetPsiTypeAction extends AnAction implements DumbAware {
     int offset = editor.getCaretModel().getOffset();
 
     List<GrExpression> expressions = GrIntroduceHandlerBase.collectExpressions(psiFile, editor, offset, true);
-    if (expressions.size() == 0) return;
+    if (expressions.isEmpty()) return;
     if (expressions.size() == 1) {
       passInner(expressions.get(0));
     }

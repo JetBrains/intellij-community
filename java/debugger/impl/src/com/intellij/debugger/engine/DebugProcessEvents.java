@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
@@ -79,7 +81,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     if(requestor instanceof Breakpoint) {
       breakpoint = (Breakpoint)requestor;
     }
-    String text = debugProcess.getEventText(new Pair<Breakpoint, Event>(breakpoint, event));
+    String text = debugProcess.getEventText(Pair.create(breakpoint, event));
     debugProcess.showStatusText(text);
   }
 
@@ -317,8 +319,13 @@ public class DebugProcessEvents extends DebugProcessImpl {
       threadDeathRequest.setSuspendPolicy(EventRequest.SUSPEND_NONE);
       threadDeathRequest.enable();
 
-      DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().setInitialBreakpointsState();
       myDebugProcessDispatcher.getMulticaster().processAttached(this);
+
+      // breakpoints should be initialized after all processAttached listeners work
+      XDebugSession session = getSession().getXDebugSession();
+      if (session != null) {
+        session.initBreakpoints();
+      }
 
       final String addressDisplayName = DebuggerBundle.getAddressDisplayName(getConnection());
       final String transportName = DebuggerBundle.getTransportName(getConnection());
@@ -394,8 +401,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
       getSuspendManager().voteSuspend(suspendContext);
       if (hint != null) {
         final MethodFilter methodFilter = hint.getMethodFilter();
-        if (methodFilter instanceof BasicStepMethodFilter && !hint.wasStepTargetMethodMatched()) {
-          final String message = "Method <b>" + ((BasicStepMethodFilter)methodFilter).getMethodName() + "()</b> has not been called";
+        if (methodFilter instanceof NamedMethodFilter && !hint.wasStepTargetMethodMatched()) {
+          final String message = "Method <b>" + ((NamedMethodFilter)methodFilter).getMethodName() + "()</b> has not been called";
           XDebugSessionImpl.NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(project);
         }
       }
@@ -452,7 +459,13 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
         if (requestHit && requestor instanceof Breakpoint) {
           // if requestor is a breakpoint and this breakpoint was hit, no matter its suspend policy
-          myBreakpointManager.processBreakpointHit((Breakpoint)requestor);
+          XDebugSession session = getSession().getXDebugSession();
+          if (session != null) {
+            XBreakpoint breakpoint = ((Breakpoint)requestor).getXBreakpoint();
+            if (breakpoint != null) {
+              ((XDebugSessionImpl)session).processDependencies(breakpoint);
+            }
+          }
         }
 
         if(!requestHit || resumePreferred) {

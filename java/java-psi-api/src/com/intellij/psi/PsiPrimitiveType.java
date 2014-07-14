@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,19 +30,12 @@ import java.util.Map;
 /**
  * Represents primitive types of Java language.
  */
-public class PsiPrimitiveType extends PsiType {
+public class PsiPrimitiveType extends PsiType.Stub {
+  private static final Map<String, PsiPrimitiveType> ourQNameToUnboxed = new THashMap<String, PsiPrimitiveType>();
+  private static final Map<PsiPrimitiveType, String> ourUnboxedToQName = new THashMap<PsiPrimitiveType, String>();
+
   private final String myName;
 
-  public PsiPrimitiveType(@NonNls @NotNull String name, PsiAnnotation[] annotations) {
-    super(annotations);
-    myName = name;
-  }
-
-  @NonNls
-  private static final Map<String, PsiPrimitiveType> ourQNameToUnboxed = new THashMap<String, PsiPrimitiveType>();
-  @NonNls
-  private static final Map<PsiPrimitiveType, String> ourUnboxedToQName = new THashMap<PsiPrimitiveType, String>();
-  //registering ctor
   PsiPrimitiveType(@NonNls @NotNull String name, @NonNls String boxedName) {
     this(name, PsiAnnotation.EMPTY_ARRAY);
     if (boxedName != null) {
@@ -51,19 +44,37 @@ public class PsiPrimitiveType extends PsiType {
     }
   }
 
+  public PsiPrimitiveType(@NonNls @NotNull String name, @NotNull PsiAnnotation[] annotations) {
+    super(annotations);
+    myName = name;
+  }
+
+  @NotNull
   @Override
   public String getPresentableText() {
-    return getAnnotationsTextPrefix(false, false, true) + myName;
+    return getText(false, true);
   }
 
+  @NotNull
   @Override
-  public String getCanonicalText() {
-    return myName;
+  public String getCanonicalText(boolean annotated) {
+    return getText(true, annotated);
   }
 
+  @NotNull
   @Override
   public String getInternalCanonicalText() {
-    return getAnnotationsTextPrefix(true, false, true) + myName;
+    return getText(true, true);
+  }
+
+  private String getText(boolean qualified, boolean annotated) {
+    PsiAnnotation[] annotations = getAnnotations();
+    if (!annotated || annotations.length == 0) return myName;
+
+    StringBuilder sb = new StringBuilder();
+    PsiNameHelper.appendAnnotations(sb, annotations, qualified);
+    sb.append(myName);
+    return sb.toString();
   }
 
   /**
@@ -75,7 +86,7 @@ public class PsiPrimitiveType extends PsiType {
   }
 
   @Override
-  public boolean equalsToText(String text) {
+  public boolean equalsToText(@NotNull String text) {
     return myName.equals(text);
   }
 
@@ -92,7 +103,7 @@ public class PsiPrimitiveType extends PsiType {
   @Override
   @NotNull
   public PsiType[] getSuperTypes() {
-    return new PsiType[0];
+    return EMPTY_ARRAY;
   }
 
   /**
@@ -104,11 +115,19 @@ public class PsiPrimitiveType extends PsiType {
   @Nullable
   public static PsiPrimitiveType getUnboxedType(PsiType type) {
     if (!(type instanceof PsiClassType)) return null;
-    assert type.isValid();
-    if (!((PsiClassType)type).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_5)) return null;
-    final PsiClass psiClass = ((PsiClassType)type).resolve();
+    LanguageLevel languageLevel = ((PsiClassType)type).getLanguageLevel();
+    if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) return null;
+
+    assert type.isValid() : type;
+    PsiClass psiClass = ((PsiClassType)type).resolve();
     if (psiClass == null) return null;
-    return ourQNameToUnboxed.get(psiClass.getQualifiedName());
+
+    PsiPrimitiveType unboxed = ourQNameToUnboxed.get(psiClass.getQualifiedName());
+    PsiAnnotation[] annotations = type.getAnnotations();
+    if (unboxed != null && annotations.length > 0) {
+      unboxed = new PsiPrimitiveType(unboxed.myName, annotations);
+    }
+    return unboxed;
   }
 
   public String getBoxedTypeName() {
@@ -126,15 +145,15 @@ public class PsiPrimitiveType extends PsiType {
   public PsiClassType getBoxedType(PsiElement context) {
     LanguageLevel languageLevel = PsiUtil.getLanguageLevel(context);
     if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) return null;
-    final String boxedQName = getBoxedTypeName();
 
+    String boxedQName = getBoxedTypeName();
     //[ven]previous call returns null for NULL, VOID
     if (boxedQName == null) return null;
-
-    PsiManager manager = context.getManager();
-    final PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(boxedQName, context.getResolveScope());
+    PsiClass aClass = JavaPsiFacade.getInstance(context.getProject()).findClass(boxedQName, context.getResolveScope());
     if (aClass == null) return null;
-    return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(aClass, PsiSubstitutor.EMPTY, languageLevel);
+
+    PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
+    return factory.createType(aClass, PsiSubstitutor.EMPTY, languageLevel, getAnnotations());
   }
 
   @Nullable

@@ -30,8 +30,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,14 +44,17 @@ import org.jetbrains.annotations.Nullable;
  * @see GeneralCommandLine
  */
 public abstract class CommandLineState implements RunProfileState {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.CommandLineState");
   private TextConsoleBuilder myConsoleBuilder;
 
   private final ExecutionEnvironment myEnvironment;
 
   protected CommandLineState(ExecutionEnvironment environment) {
     myEnvironment = environment;
-    myConsoleBuilder = myEnvironment != null ? TextConsoleBuilderFactory.getInstance().createBuilder(myEnvironment.getProject()) : null;
+    if (myEnvironment != null) {
+      final Project project = myEnvironment.getProject();
+      final GlobalSearchScope searchScope = SearchScopeProvider.createSearchScope(project, myEnvironment.getRunProfile());
+      myConsoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project, searchScope);
+    }
   }
 
   public ExecutionEnvironment getEnvironment() {
@@ -83,10 +87,8 @@ public abstract class CommandLineState implements RunProfileState {
 
   @Nullable
   protected ConsoleView createConsole(@NotNull final Executor executor) throws ExecutionException {
-    final TextConsoleBuilder builder = getConsoleBuilder();
-
-    return builder != null ? builder.getConsole()
-                           : null;
+    TextConsoleBuilder builder = getConsoleBuilder();
+    return builder != null ? builder.getConsole() : null;
   }
 
   /**

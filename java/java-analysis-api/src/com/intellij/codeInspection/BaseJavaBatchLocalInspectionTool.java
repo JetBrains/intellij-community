@@ -20,18 +20,14 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class BaseJavaBatchLocalInspectionTool extends AbstractBaseJavaLocalInspectionTool implements BatchSuppressableTool {
-  @NotNull
-  @Override
-  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
-    return BatchSuppressManager.SERVICE.getInstance().createBatchSuppressActions(HighlightDisplayKey.find(getShortName()));
-  }
-
-  @Override
-  public boolean isSuppressedFor(@NotNull PsiElement element) {
-    return isSuppressedFor(element, this);
-  }
-
+/**
+ * Base java local inspection which provides batch suppress actions, i.e. actions which don't need UI components to run (e.g. Editor).
+ * Please use this class if your inspection and its fixes
+ *  - work with PSI or document only and
+ *  - don't provide {@link com.intellij.codeInsight.intention.IntentionAction} for quick fixes/suppression, making do with {@link LocalQuickFix} only.
+ */
+public abstract class BaseJavaBatchLocalInspectionTool extends AbstractBaseJavaLocalInspectionTool {
+  @Deprecated
   public static boolean isSuppressedFor(@NotNull PsiElement element, @NotNull LocalInspectionTool tool) {
     BatchSuppressManager manager = BatchSuppressManager.SERVICE.getInstance();
     String alternativeId;

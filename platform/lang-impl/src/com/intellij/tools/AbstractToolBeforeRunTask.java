@@ -84,18 +84,17 @@ public abstract class AbstractToolBeforeRunTask<ToolBeforeRunTask extends Abstra
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         @Override
         public void run() {
-          targetDone.down();
-          boolean runToolResult = ToolAction.runTool(myToolActionId, context, null, executionId, new ProcessAdapter() {
+          ToolAction.runTool(myToolActionId, context, null, executionId, new ProcessAdapter() {
+            public void startNotified(final ProcessEvent event) {
+              targetDone.down();
+            }
+
             @Override
             public void processTerminated(ProcessEvent event) {
               result.set(event.getExitCode() == 0);
               targetDone.up();
             }
           });
-          if (!runToolResult) {
-            result.set(false);
-            targetDone.up();
-          }
         }
       }, ModalityState.NON_MODAL);
     }

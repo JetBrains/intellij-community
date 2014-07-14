@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.mvc.util;
 
 import com.intellij.codeInsight.TailType;
@@ -20,7 +35,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.mvc.MvcFramework;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 
 import java.io.File;
 import java.util.*;
@@ -115,7 +130,7 @@ public class MvcTargetDialogCompletionUtils {
     PsiPackage[] subPackages = aPackage.getSubPackages(scope);
 
     String qualifiedName = aPackage.getQualifiedName();
-    if (qualifiedName.length() > 0) {
+    if (!qualifiedName.isEmpty()) {
       if (subPackages.length == 0 || aPackage.getClasses(scope).length > 0) {
         res.add(TailTypeDecorator.withTail(LookupElementBuilder.create(qualifiedName), TailType.DOT));
       }
@@ -181,6 +196,7 @@ public class MvcTargetDialogCompletionUtils {
     CachedValue<Set<String>> cachedTargets = module.getUserData(ALL_TARGET_KEY);
     if (cachedTargets == null) {
       cachedTargets = CachedValuesManager.getManager(module.getProject()).createCachedValue(new CachedValueProvider<Set<String>>() {
+          @Override
           public Result<Set<String>> compute() {
             return Result.create(getAllTargetNamesInternal(module), PsiModificationTracker.MODIFICATION_COUNT);
           }

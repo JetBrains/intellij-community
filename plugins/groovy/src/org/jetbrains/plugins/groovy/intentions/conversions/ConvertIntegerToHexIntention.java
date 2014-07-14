@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,20 +22,22 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
-import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import java.math.BigInteger;
 
 public class ConvertIntegerToHexIntention extends Intention {
 
 
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new ConvertIntegerToHexPredicate();
   }
 
+  @Override
   public void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     final GrLiteral exp = (GrLiteral)element;
     String textString = exp.getText().replaceAll("_", "");
@@ -60,6 +62,6 @@ public class ConvertIntegerToHexIntention extends Intention {
     if (isLong) {
       hexString += 'L';
     }
-    IntentionUtils.replaceExpression(hexString, exp);
+    PsiImplUtil.replaceExpression(hexString, exp);
   }
 }

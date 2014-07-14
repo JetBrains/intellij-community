@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -68,8 +69,9 @@ public class GroovyPositionManager implements PositionManager {
     return myDebugProcess;
   }
 
+  @Override
   @NotNull
-  public List<Location> locationsOfLine(ReferenceType type, SourcePosition position) throws NoDataException {
+  public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
     try {
       int line = position.getLine() + 1;
       List<Location> locations = getDebugProcess().getVirtualMachineProxy().versionHigher("1.4")
@@ -108,8 +110,16 @@ public class GroovyPositionManager implements PositionManager {
     }
   }
 
-  public ClassPrepareRequest createPrepareRequest(final ClassPrepareRequestor requestor, final SourcePosition position)
+  private static void checkGroovyFile(@NotNull SourcePosition position) throws NoDataException {
+    if (!(position.getFile() instanceof GroovyFileBase)) {
+      throw new NoDataException();
+    }
+  }
+
+  @Override
+  public ClassPrepareRequest createPrepareRequest(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position)
     throws NoDataException {
+    checkGroovyFile(position);
     String qName = getOuterClassName(position);
     if (qName != null) {
       return myDebugProcess.getRequestsManager().createClassPrepareRequest(requestor, qName);
@@ -119,9 +129,10 @@ public class GroovyPositionManager implements PositionManager {
 
     if (qName == null) throw new NoDataException();
     ClassPrepareRequestor waitRequestor = new ClassPrepareRequestor() {
+      @Override
       public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
         final CompoundPositionManager positionManager = ((DebugProcessImpl)debuggerProcess).getPositionManager();
-        if (positionManager.locationsOfLine(referenceType, position).size() > 0) {
+        if (!positionManager.locationsOfLine(referenceType, position).isEmpty()) {
           requestor.processClassPrepare(debuggerProcess, referenceType);
         }
       }
@@ -189,6 +200,7 @@ public class GroovyPositionManager implements PositionManager {
     return null;
   }
 
+  @Override
   public SourcePosition getSourcePosition(final Location location) throws NoDataException {
     if (location == null) throw new NoDataException();
 
@@ -256,7 +268,10 @@ public class GroovyPositionManager implements PositionManager {
 
   private static GlobalSearchScope addModuleContent(GlobalSearchScope scope) {
     if (scope instanceof ModuleWithDependenciesScope) {
-      return scope.uniteWith(((ModuleWithDependenciesScope)scope).getModule().getModuleContentWithDependenciesScope());
+      Module module = ((ModuleWithDependenciesScope)scope).getModule();
+      if (!module.isDisposed()) {
+        return scope.uniteWith(module.getModuleContentWithDependenciesScope());
+      }
     }
     return scope;
   }
@@ -270,9 +285,12 @@ public class GroovyPositionManager implements PositionManager {
     return runtimeName;
   }
 
+  @Override
   @NotNull
-  public List<ReferenceType> getAllClasses(final SourcePosition position) throws NoDataException {
+  public List<ReferenceType> getAllClasses(@NotNull final SourcePosition position) throws NoDataException {
+    checkGroovyFile(position);
     List<ReferenceType> result = ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>>() {
+      @Override
       public List<ReferenceType> compute() {
         GroovyPsiElement sourceImage = findReferenceTypeSourceImage(position);
 
@@ -309,7 +327,7 @@ public class GroovyPositionManager implements PositionManager {
   private static String getScriptFQName(GroovyFile groovyFile) {
     String packageName = groovyFile.getPackageName();
     String fileName = getRuntimeScriptName(groovyFile);
-    return packageName.length() > 0 ? packageName + "." + fileName : fileName;
+    return !packageName.isEmpty() ? packageName + "." + fileName : fileName;
   }
 
   private static String getRuntimeScriptName(GroovyFile groovyFile) {
@@ -342,7 +360,7 @@ public class GroovyPositionManager implements PositionManager {
 
       try {
         final int lineNumber = classPosition.getLine() + 1;
-        if (fromClass.locationsOfLine(lineNumber).size() > 0) {
+        if (!fromClass.locationsOfLine(lineNumber).isEmpty()) {
           return fromClass;
         }
         //noinspection LoopStatementThatDoesntLoop

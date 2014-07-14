@@ -220,7 +220,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
   }
 
   @Nullable
-  private static ProcessHandler getHandler(final DataContext dataContext) {
+  static ProcessHandler getHandler(final DataContext dataContext) {
     final RunContentDescriptor contentDescriptor = RunContentManager.RUN_CONTENT_DESCRIPTOR.getData(dataContext);
     final ProcessHandler processHandler;
     if (contentDescriptor != null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,30 +44,36 @@ public class XMLColorsPage implements ColorSettingsPage {
     new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.descriptor.entity,reference"), XmlHighlighterColors.XML_ENTITY_REFERENCE),
   };
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return OptionsBundle.message("options.xml.display.name");
   }
 
+  @Override
   public Icon getIcon() {
     return StdFileTypes.XML.getIcon();
   }
 
+  @Override
   @NotNull
   public AttributesDescriptor[] getAttributeDescriptors() {
     return ATTRS;
   }
 
+  @Override
   @NotNull
   public ColorDescriptor[] getColorDescriptors() {
     return ColorDescriptor.EMPTY_ARRAY;                       
   }
 
+  @Override
   @NotNull
   public SyntaxHighlighter getHighlighter() {
     return new XmlFileHighlighter();
   }
 
+  @Override
   @NotNull
   public String getDemoText() {
     return "<?xml version='1.0' encoding='ISO-8859-1'  ?>\n" +
@@ -78,12 +84,19 @@ public class XMLColorsPage implements ColorSettingsPage {
            "   <indexitem text=\"rename\" target=\"refactoring.rename\"/>\n" +
            "   <indexitem text=\"move\" target=\"refactoring.move\"/>\n" +
            "   <indexitem text=\"migrate\" target=\"refactoring.migrate\"/>\n" +
-           "   <indexitem text=\"usage search\" target=\"find.findUsages\"/>\n&amp; &#x00B7;" +
-           "   <indexitem text=\"project\" target=\"project.management\"/>" +
+           "   <indexitem text=\"usage search\" target=\"find.findUsages\"/>\n" +
+           "   <someTextWithEntityRefs>&amp; &#x00B7;</someTextWithEntityRefs>\n" +
+           "   <withCData><![CDATA[\n" +
+           "          <object class=\"MyClass\" key=\"constant\">\n" +
+           "          </object>\n" +
+           "        ]]>\n" +
+           "   </withCData>\n" +
+           "   <indexitem text=\"project\" target=\"project.management\"/>\n" +
            "   <<bg><np>pf</np></bg>:foo <bg><np>pf</np></bg>:bar=\"bar\"/>\n" +
            "</index>";
   }
 
+  @Override
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return ContainerUtil.newHashMap(Pair.create("np", XmlHighlighterColors.XML_NS_PREFIX),
                                     Pair.create("bg", XmlHighlighterColors.XML_TAG));

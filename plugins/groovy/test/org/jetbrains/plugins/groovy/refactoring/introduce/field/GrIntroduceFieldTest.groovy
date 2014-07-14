@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -326,6 +326,23 @@ class A {
     }
 }
 ''', false, false, false, CUR_METHOD, false, null)
+  }
+
+  void testFromVar() {
+    doTest('''\
+class A {
+    def foo() {
+        def <selection>a = 5</selection>
+        print a
+    }
+}''', '''\
+class A {
+    def f = 5
+
+    def foo() {
+        print f
+    }
+}''', false, true, false, FIELD_DECLARATION, true, null)
   }
 
 

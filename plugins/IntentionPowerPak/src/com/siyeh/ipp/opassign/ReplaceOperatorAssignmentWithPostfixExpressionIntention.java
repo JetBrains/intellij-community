@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -69,6 +70,6 @@ public class ReplaceOperatorAssignmentWithPostfixExpressionIntention
     else {
       return;
     }
-    replaceExpression(newExpressionText, assignment);
+    PsiReplacementUtil.replaceExpression(assignment, newExpressionText);
   }
 }

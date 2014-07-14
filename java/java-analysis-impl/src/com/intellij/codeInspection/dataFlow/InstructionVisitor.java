@@ -54,6 +54,10 @@ public abstract class InstructionVisitor {
     return nextInstruction(instruction, runner, memState);
   }
 
+  public DfaInstructionState[] visitLambdaExpression(LambdaInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    return nextInstruction(instruction, runner, memState);
+  }
+
   public DfaInstructionState[] visitConditionalGoto(ConditionalGotoInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     DfaValue cond = memState.pop();
 
@@ -121,7 +125,7 @@ public abstract class InstructionVisitor {
     if (variable != null) {
       memState.flushVariable(variable);
     } else {
-      memState.flushFields(runner.getFields());
+      memState.flushFields();
     }
     return nextInstruction(instruction, runner, memState);
   }

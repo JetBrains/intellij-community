@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,12 @@ class MoveCaretLeftOrRightHandler extends EditorActionHandler {
   private final Direction myDirection;
 
   MoveCaretLeftOrRightHandler(Direction direction) {
+    super(true);
     myDirection = direction;
   }
 
   @Override
-  public void execute(Editor editor, DataContext dataContext) {
+  public void doExecute(Editor editor, Caret caret, DataContext dataContext) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     final CaretModel caretModel = editor.getCaretModel();
     ScrollingModel scrollingModel = editor.getScrollingModel();
@@ -48,19 +49,28 @@ class MoveCaretLeftOrRightHandler extends EditorActionHandler {
         int start = selectionModel.getSelectionStart();
         int end = selectionModel.getSelectionEnd();
         int caretOffset = caretModel.getOffset();
+        VisualPosition targetPosition = myDirection == Direction.RIGHT ? selectionModel.getSelectionEndPosition() : selectionModel.getSelectionStartPosition();
 
         //int leftGuard = start + (myDirection == Direction.LEFT ? 1 : 0);
         //int rightGuard = end - (myDirection == Direction.RIGHT ? 1 : 0);
         //if (TextRange.from(leftGuard, rightGuard - leftGuard + 1).contains(caretModel.getOffset())) { // See IDEADEV-36957
         if (start <= caretOffset && end >= caretOffset) { // See IDEADEV-36957
           selectionModel.removeSelection();
-          caretModel.moveToOffset(myDirection == Direction.RIGHT ? end : start);
-          scrollingModel.scrollToCaret(ScrollType.RELATIVE);
+          if (caretModel.supportsMultipleCarets() && editor.isColumnMode() && targetPosition != null) {
+            caretModel.moveToVisualPosition(targetPosition);
+          }
+          else {
+            caretModel.moveToOffset(myDirection == Direction.RIGHT ? end : start);
+          }
+          if (caret == editor.getCaretModel().getPrimaryCaret()) {
+            scrollingModel.scrollToCaret(ScrollType.RELATIVE);
+          }
           return;
         }
       }
     }
-    final boolean scrollToCaret = !(editor instanceof EditorImpl) || ((EditorImpl)editor).isScrollToCaret();
+    final boolean scrollToCaret = (!(editor instanceof EditorImpl) || ((EditorImpl)editor).isScrollToCaret())
+                                  && caret == editor.getCaretModel().getPrimaryCaret();
     caretModel.moveCaretRelatively(myDirection == Direction.RIGHT ? 1 : -1, 0, false, false, scrollToCaret);
   }
 }

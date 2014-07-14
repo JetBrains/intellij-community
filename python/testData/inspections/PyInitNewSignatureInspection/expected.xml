@@ -8,6 +8,11 @@
   </problem>
   <problem>
     <file>test.py</file>
+    <line>5</line>
+    <description>Signature is not compatible to __init__</description>
+  </problem>
+  <problem>
+    <file>test.py</file>
     <line>12</line>
     <problem_class severity="WARNING"/>
     <description>Signature is not compatible to __init__</description>

@@ -4,5 +4,7 @@
     <updater filetype="JSP" implementationClass="com.maddyhome.idea.copyright.psi.UpdateJspFileCopyright$UpdateJspCopyrightsProvider"/>
     <updater filetype="JAVA" implementationClass="com.maddyhome.idea.copyright.psi.UpdateJavaFileCopyright$UpdateJavaCopyrightsProvider"/>
     <updater filetype="SPI" implementationClass="com.maddyhome.idea.copyright.psi.UpdateSPIFileCopyright"/>
+
+    <variablesProvider filetype="JAVA" implementationClass="com.maddyhome.idea.copyright.pattern.JavaCopyrightVariablesProvider"/>
   </extensions>
 </idea-plugin>

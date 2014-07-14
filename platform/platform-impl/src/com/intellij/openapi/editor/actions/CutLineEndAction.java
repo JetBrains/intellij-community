@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,58 +24,10 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.NotNull;
 
 public class CutLineEndAction extends EditorAction {
   public CutLineEndAction() {
-    super(new Handler(true));
-  }
-
-  static class Handler extends EditorWriteActionHandler {
-    private final boolean myCopyToClipboard;
-
-    Handler(boolean copyToClipboard) {
-      myCopyToClipboard = copyToClipboard;
-    }
-
-    @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
-      final Document doc = editor.getDocument();
-      int caretOffset = editor.getCaretModel().getOffset();
-      if (caretOffset >= doc.getTextLength()) {
-        return;
-      }
-      final int lineNumber = doc.getLineNumber(caretOffset);
-      int lineEndOffset = doc.getLineEndOffset(lineNumber);
-
-      int start;
-      int end;
-      if (caretOffset >= lineEndOffset) {
-        start = lineEndOffset;
-        end = lineEndOffset + 1;
-      }
-      else {
-        start = caretOffset;
-        end = lineEndOffset;
-        if (lineEndOffset < doc.getTextLength() && CharArrayUtil.isEmptyOrSpaces(doc.getCharsSequence(), caretOffset, lineEndOffset)) {
-          end++;
-        }
-      }
-
-      delete(editor, start, end);
-    }
-
-    private void delete(@NotNull Editor editor, int start, int end) {
-      if (myCopyToClipboard) {
-        KillRingUtil.copyToKillRing(editor, start, end, true);
-      }
-      editor.getDocument().deleteString(start, end);
-    }
+    super(new CutLineActionHandler(false, true, true));
   }
 }

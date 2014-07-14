@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.*;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.UIUtil;
@@ -46,6 +47,13 @@ import java.util.*;
 )
 public class DependencyValidationManagerImpl extends DependencyValidationManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.DependencyValidationManagerImpl");
+  private static final NotNullLazyValue<Icon> ourSharedScopeIcon = new NotNullLazyValue<Icon>() {
+    @NotNull
+    @Override
+    protected Icon compute() {
+      return new LayeredIcon(AllIcons.Ide.LocalScope, AllIcons.Nodes.Shared);
+    }
+  };
 
   private final List<DependencyRule> myRules = new ArrayList<DependencyRule>();
   private final NamedScopeManager myNamedScopeManager;
@@ -194,7 +202,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   @Override
   public Icon getIcon() {
-    return AllIcons.Ide.SharedScope;
+    return ourSharedScopeIcon.getValue();
   }
 
   @Override
@@ -319,11 +327,11 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
           String scopeName = element.getAttributeValue("name");
           assert scopeName != null;
           final String name = generator.generateUniqueName(FileUtil.sanitizeFileName(scopeName)) + ".xml";
-          result.add(new Pair<Element, String>(element, name));
+          result.add(Pair.create(element, name));
         }
       }
        if (!e.getChildren().isEmpty()) {
-         result.add(new Pair<Element, String>(e, generator.generateUniqueName("scope_settings") + ".xml"));
+         result.add(Pair.create(e, generator.generateUniqueName("scope_settings") + ".xml"));
        }
        return result;
     }

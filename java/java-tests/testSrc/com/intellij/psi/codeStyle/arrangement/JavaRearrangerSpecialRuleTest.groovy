@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.arrangement
 
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.BY_NAME
 
@@ -110,6 +111,25 @@ class Test {
 }
 ''',
       rules: [ruleWithOrder(BY_NAME, rule(PUBLIC)), ruleWithOrder(BY_NAME, rule(PUBLIC, STATIC))]
+    )
+  }
+
+  void "test different entries type with modifier conditions"() {
+    doTest(
+      initial: '''\
+class Test {
+  public static void b() {}
+  public void a() {}
+}
+''',
+      expected: '''\
+class Test {
+  public void a() {}
+  public static void b() {}
+}
+''',
+      rules: [rule(FIELD, PUBLIC), rule(FIELD), rule(METHOD, PUBLIC), rule(METHOD), rule(METHOD, PUBLIC, ABSTRACT), rule(METHOD, ABSTRACT),
+              rule(FIELD, PUBLIC, STATIC), rule(FIELD, STATIC), rule(METHOD, PUBLIC, STATIC), rule(METHOD, STATIC)]
     )
   }
 }

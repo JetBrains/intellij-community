@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.idea;
 
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
@@ -25,6 +25,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class IdeaTestApplication extends CommandLineApplication implements Disposable {
@@ -38,6 +39,7 @@ public class IdeaTestApplication extends CommandLineApplication implements Dispo
     myDataContext = dataContext;
   }
 
+  @Override
   @Nullable
   public Object getData(String dataId) {
     return myDataContext == null ? null : myDataContext.getData(dataId);
@@ -46,10 +48,11 @@ public class IdeaTestApplication extends CommandLineApplication implements Dispo
   public static synchronized IdeaTestApplication getInstance(@Nullable final String configPath) {
     if (ourInstance == null) {
       new IdeaTestApplication();
-      PluginManager.getPlugins();
+      PluginManagerCore.getPlugins();
       final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       new WriteAction() {
-        protected void run(Result result) throws Throwable {
+        @Override
+        protected void run(@NotNull Result result) throws Throwable {
           app.load(configPath);
         }
       }.execute();

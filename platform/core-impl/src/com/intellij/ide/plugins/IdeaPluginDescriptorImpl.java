@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.intellij.ide.plugins;
 import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,6 +33,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.StringInterner;
+import com.intellij.util.containers.WeakStringInterner;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Document;
@@ -114,7 +117,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myPath;
   }
 
-  private static final StringInterner ourInterner = new StringInterner();
+  private static final StringInterner ourInterner = new WeakStringInterner();
 
   @NotNull
   public static String intern(@NotNull String s) {
@@ -128,7 +131,12 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   public void readExternal(@NotNull Document document, @NotNull URL url) throws InvalidDataException, FileNotFoundException {
-    document = JDOMXIncluder.resolve(document, url.toExternalForm());
+    Application application = ApplicationManager.getApplication();
+    readExternal(document, url, application != null && application.isUnitTestMode());
+  }
+
+  public void readExternal(@NotNull Document document, @NotNull URL url, boolean ignoreMissingInclude) throws InvalidDataException, FileNotFoundException {
+    document = JDOMXIncluder.resolve(document, url.toExternalForm(), ignoreMissingInclude);
     Element rootElement = document.getRootElement();
     internJDOMElement(rootElement);
     readExternal(document.getRootElement());
@@ -336,6 +344,18 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Override
   public String getCategory() {
     return myCategory;
+  }
+
+  @SuppressWarnings("UnusedDeclaration") // Used in Upsource
+  @Nullable
+  public MultiMap<String, Element> getExtensionsPoints() {
+    return myExtensionsPoints;
+  }
+
+  @SuppressWarnings("UnusedDeclaration") // Used in Upsource
+  @Nullable
+  public MultiMap<String, Element> getExtensions() {
+    return myExtensions;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -637,7 +657,20 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public boolean isBundled() {
-    return getPath().getAbsolutePath().startsWith(PathManager.getPreInstalledPluginsPath());
+    String path;
+    try {
+      //to avoid paths like this /home/kb/IDEA/bin/../config/plugins/APlugin
+      path = getPath().getCanonicalPath();
+    } catch (IOException e) {
+      path = getPath().getAbsolutePath();
+    }
+    if (ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isInternal()) {
+      if (path.startsWith(PathManager.getHomePath() + File.separator + "out" + File.separator + "classes")) {
+        return true;
+      }
+    }
+
+    return path.startsWith(PathManager.getPreInstalledPluginsPath());
   }
 
   @Nullable

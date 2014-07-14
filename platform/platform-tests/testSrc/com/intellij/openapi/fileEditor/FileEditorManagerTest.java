@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,29 +17,22 @@ package com.intellij.openapi.fileEditor;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.mock.Mock;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ExpandMacroToPathMap;
+import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.FileEditorManagerTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 /**
  * @author Dmitry Avdeev
@@ -109,6 +102,20 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertEquals("mockEditor", myManager.getSelectedEditor(file).getName());
   }
 
+  public void testWindowClosingRetainsOtherWindows() throws Exception {
+    VirtualFile file = getFile("/src/1.txt");
+    assertNotNull(file);
+    myManager.openFile(file, false);
+    EditorWindow primaryWindow = myManager.getCurrentWindow();
+    assertNotNull(primaryWindow);
+    myManager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
+    EditorWindow secondaryWindow = myManager.getNextWindow(primaryWindow);
+    assertNotNull(secondaryWindow);
+    myManager.createSplitter(SwingConstants.VERTICAL, secondaryWindow);
+    myManager.closeFile(file, primaryWindow);
+    assertEquals(2, myManager.getWindows().length);
+  }
+
   private static final String STRING = "<component name=\"FileEditorManager\">\n" +
       "    <leaf>\n" +
       "      <file leaf-file-name=\"1.txt\" pinned=\"false\" current=\"false\" current-in-tab=\"false\">\n" +
@@ -155,24 +162,6 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
       }
     });
     assertEquals(Arrays.asList(fileNames), names);
-  }
-
-  private void openFiles(String s) throws IOException, JDOMException, InterruptedException, ExecutionException {
-    Document document = JDOMUtil.loadDocument(s);
-    Element rootElement = document.getRootElement();
-    ExpandMacroToPathMap map = new ExpandMacroToPathMap();
-    map.addMacroExpand(PathMacroUtil.PROJECT_DIR_MACRO_NAME, getTestDataPath());
-    map.substitute(rootElement, true, true);
-
-    myManager.readExternal(rootElement);
-
-    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        myManager.getMainSplitters().openFiles();
-      }
-    });
-    future.get();
   }
 
   @Override

@@ -8,7 +8,7 @@ import java.util.Collection;
 
 /**
  * @author Denis Zhdanov
- * @since 7/18/13 3:53 PM
+ * @deprecated use {@link com.intellij.openapi.vcs.roots.VcsRootDetector} instead
  */
 public interface VcsRootFinder {
 

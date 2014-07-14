@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -227,6 +228,10 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
     public void actionPerformed(final ActionEvent e) {
       final IdeFocusManager fm = IdeFocusManager.findInstanceByContext(myContext);
       final ActionCallback typeAhead = new ActionCallback();
+      final String id = ActionManager.getInstance().getId(myAction.getAction());
+      if (id != null) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("context.menu.click.stats." + id.replace(' ', '.'));
+      }
       fm.typeAheadUntil(typeAhead);
       fm.runOnOwnContext(myContext, new Runnable() {
         @Override
@@ -292,6 +297,9 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
     else {
       if (UISettings.getInstance().SHOW_ICONS_IN_MENUS) {
         Icon icon = myPresentation.getIcon();
+        if (action instanceof ToggleAction && ((ToggleAction)action).isSelected(myEvent)) {
+          icon = new PoppedIcon(icon, 16, 16);
+        }
         setIcon(icon);
         if (myPresentation.getDisabledIcon() != null) {
           setDisabledIcon(myPresentation.getDisabledIcon());

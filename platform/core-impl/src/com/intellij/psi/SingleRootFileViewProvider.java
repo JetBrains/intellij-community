@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.file.exclude.ProjectFileExclusionManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
@@ -47,7 +46,7 @@ import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -71,26 +70,24 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   private volatile Content myContent;
   private volatile SoftReference<Document> myDocument;
   @NotNull private final Language myBaseLanguage;
-  private final ProjectFileExclusionManager myExclusionManager;
 
   public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file) {
     this(manager, file, true);
   }
 
-  public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile virtualFile, final boolean physical) {
-    this(manager, virtualFile, physical, calcBaseLanguage(virtualFile, manager.getProject()));
+  public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile virtualFile, final boolean eventSystemEnabled) {
+    this(manager, virtualFile, eventSystemEnabled, calcBaseLanguage(virtualFile, manager.getProject()));
   }
 
-  protected SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile virtualFile, final boolean physical, @NotNull Language language) {
+  protected SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile virtualFile, final boolean eventSystemEnabled, @NotNull Language language) {
     myManager = manager;
     myVirtualFile = virtualFile;
-    myEventSystemEnabled = physical;
+    myEventSystemEnabled = eventSystemEnabled;
     myBaseLanguage = language;
     setContent(new VirtualFileContent());
     myPhysical = isEventSystemEnabled() &&
                  !(virtualFile instanceof LightVirtualFile) &&
                  !(virtualFile.getFileSystem() instanceof NonPhysicalFileSystem);
-    myExclusionManager = ProjectFileExclusionManager.SERVICE.getInstance(manager.getProject());
   }
 
   @Override
@@ -108,10 +105,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     }
 
     FileType fileType = file.getFileType();
-    // Do not load content
-    if (fileType == UnknownFileType.INSTANCE) {
-      fileType = FileTypeRegistry.getInstance().detectFileTypeFromContent(file);
-    }
     if (fileType.isBinary()) return Language.ANY;
     if (isTooLargeForIntelligence(file)) return PlainTextLanguage.INSTANCE;
 
@@ -238,7 +231,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       if (isIgnored()) return null;
 
       final Project project = myManager.getProject();
-      if (isPhysical()) { // check directories consistency
+      if (isPhysical() && vFile.isInLocalFileSystem()) { // check directories consistency
         final VirtualFile parent = vFile.getParent();
         if (parent == null) return null;
         final PsiDirectory psiDir = getManager().findDirectory(parent);
@@ -265,7 +258,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   protected boolean isIgnored() {
     final VirtualFile file = getVirtualFile();
     if (file instanceof LightVirtualFile) return false;
-    if (myExclusionManager != null && myExclusionManager.isExcluded(file)) return true;
     return FileTypeRegistry.getInstance().isFileIgnored(file);
   }
 
@@ -355,14 +347,14 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   @Nullable
   private Document getCachedDocument() {
-    final Document document = myDocument != null ? myDocument.get() : null;
+    final Document document = com.intellij.reference.SoftReference.dereference(myDocument);
     if (document != null) return document;
     return FileDocumentManager.getInstance().getCachedDocument(getVirtualFile());
   }
 
   @Override
   public Document getDocument() {
-    Document document = myDocument != null ? myDocument.get() : null;
+    Document document = com.intellij.reference.SoftReference.dereference(myDocument);
     if (document == null/* TODO[ik] make this change && isEventSystemEnabled()*/) {
       document = FileDocumentManager.getInstance().getDocument(getVirtualFile());
       myDocument = new SoftReference<Document>(document);
@@ -433,12 +425,12 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   @Override
   public PsiElement findElementAt(int offset, @NotNull Class<? extends Language> lang) {
-    if (!ReflectionCache.isAssignable(lang, getBaseLanguage().getClass())) return null;
+    if (!ReflectionUtil.isAssignable(lang, getBaseLanguage().getClass())) return null;
     return findElementAt(offset);
   }
 
   @Nullable
-  protected static PsiElement findElementAt(@Nullable final PsiElement psiFile, final int offset) {
+  public static PsiElement findElementAt(@Nullable final PsiElement psiFile, final int offset) {
     if (psiFile == null) return null;
     int offsetInElement = offset;
     PsiElement child = psiFile.getFirstChild();
@@ -492,7 +484,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       final VirtualFile virtualFile = getVirtualFile();
       if (virtualFile instanceof LightVirtualFile) {
         Document doc = getCachedDocument();
-        if (doc != null) return doc.getCharsSequence();
+        if (doc != null) return getLastCommittedText(doc);
         return ((LightVirtualFile)virtualFile).getContent();
       }
 
@@ -501,7 +493,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
         return LoadTextUtil.loadText(virtualFile);
       }
       else {
-        return document.getCharsSequence();
+        return getLastCommittedText(document);
       }
     }
 
@@ -517,6 +509,10 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     }
   }
 
+  private CharSequence getLastCommittedText(Document document) {
+    return PsiDocumentManager.getInstance(myManager.getProject()).getLastCommittedText(document);
+  }
+
   private class DocumentContent implements Content {
     @NonNls
     @Override
@@ -530,12 +526,12 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     public CharSequence getText() {
       final Document document = getDocument();
       assert document != null;
-      return document.getCharsSequence();
+      return getLastCommittedText(document);
     }
 
     @Override
     public long getModificationStamp() {
-      Document document = myDocument == null ? null : myDocument.get();
+      Document document = com.intellij.reference.SoftReference.dereference(myDocument);
       if (document != null) return document.getModificationStamp();
       return myVirtualFile.getModificationStamp();
     }

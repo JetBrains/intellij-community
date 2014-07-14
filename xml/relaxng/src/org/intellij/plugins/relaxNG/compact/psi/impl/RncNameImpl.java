@@ -65,12 +65,14 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     super(node);
   }
 
+  @Override
   @Nullable
   public String getPrefix() {
     final String[] parts = EscapeUtil.unescapeText(getNode()).split(":", 2);
     return parts.length == 2 ? parts[0] : null;
   }
 
+  @Override
   @NotNull
   public String getLocalPart() {
     final String[] parts = EscapeUtil.unescapeText(getNode()).split(":", 2);
@@ -87,14 +89,17 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     return getPrefix() == null ? null : this;
   }
 
+  @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @Override
   public TextRange getRangeInElement() {
     return TextRange.from(0, getText().indexOf(':'));
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     final MyResolver resolver = new MyResolver(getPrefix(), getKind());
@@ -111,11 +116,13 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     }
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     return getRangeInElement().substring(getText());
   }
 
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final ASTNode node = getNode();
     final ASTNode child = RenameUtil.createPrefixedNode(getManager(), newElementName, getLocalPart());
@@ -123,24 +130,29 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     return child.getPsi();
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element) {
     return element instanceof RncElement && Comparing.equal(resolve(), element);
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   public boolean isSoft() {
     final String prefix = getPrefix();
     return "xsd".equals(prefix) || "xml".equals(prefix);
   }
 
+  @Override
   @NotNull
   public String getUnresolvedMessagePattern() {
     return "Unresolved namespace prefix ''{0}''";
@@ -165,7 +177,8 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
       myKind = kind;
     }
 
-    public boolean execute(@NotNull PsiElement element, ResolveState substitutor) {
+    @Override
+    public boolean execute(@NotNull PsiElement element, @NotNull ResolveState substitutor) {
       final ASTNode node = element.getNode();
       if (node == null) return true;
 
@@ -203,11 +216,13 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
       myReference = reference;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return getFamilyName() + " '" + myReference.getPrefix() + "'";
     }
 
+    @Override
     @NotNull
       public String getFamilyName() {
       return "Create " + myReference.getKind().name().toLowerCase() + " declaration";
@@ -265,14 +280,17 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
           final Template t = manager.createTemplate("", "");
           t.addTextSegment(" \"");
           final Expression expression = new Expression() {
+            @Override
             public Result calculateResult(ExpressionContext context) {
               return new TextResult("");
             }
 
+            @Override
             public Result calculateQuickResult(ExpressionContext context) {
               return calculateResult(context);
             }
 
+            @Override
             public LookupItem[] calculateLookupItems(ExpressionContext context) {
               return LookupItem.EMPTY_ARRAY;
             }

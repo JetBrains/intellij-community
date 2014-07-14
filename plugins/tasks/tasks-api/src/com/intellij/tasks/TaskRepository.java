@@ -32,9 +32,9 @@ import java.util.concurrent.Callable;
  * This class describes bug-tracking server.
  * Do not forget to mark your implementation with {@link Tag} annotation to make it persistent.
  *
+ * @author Dmitry Avdeev
  * @see TaskRepositoryType
  * @see com.intellij.tasks.impl.BaseRepository
- * @author Dmitry Avdeev
  */
 @Tag("server")
 public abstract class TaskRepository {
@@ -48,13 +48,20 @@ public abstract class TaskRepository {
    * Supporting this feature means that server implements some kind of issues filtering.
    * It may be special query language like the one used in YouTrack or mere plain
    * text search.
-   * <p>
+   * <p/>
    * If server supports this feature it MUST return tasks already filtered according
    * to {@code query} parameter from {@link #getIssues}} method, otherwise they will
-   * be filtered internally in {@link TaskManager#getIssues}
+   * be filtered internally in {@link TaskManager#getIssues}.
    */
   public static final int NATIVE_SEARCH = 0x0010;
 
+  /**
+   * URL of the server to be used in requests. For more human-readable name of repository (e.g. some imaginary URL containing name of
+   * selected project), that will be used in settings, use {@link #getPresentableName()}.
+   *
+   * @return URL of the server
+   * @see #getPresentableName()
+   */
   @Attribute("url")
   public String getUrl() {
     return trimTrailingSlashes(myUrl);
@@ -68,6 +75,11 @@ public abstract class TaskRepository {
     return StringUtil.isNotEmpty(getUrl());
   }
 
+  /**
+   * Shared repositories will be visible in visible in other projects, but only their URL will be initialized there.
+   *
+   * @return whether repository is shared
+   */
   @Attribute("shared")
   public boolean isShared() {
     return myShared;
@@ -77,6 +89,9 @@ public abstract class TaskRepository {
     myShared = shared;
   }
 
+  /**
+   * @return name of this repository, that will be shown in settings
+   */
   public String getPresentableName() {
     return StringUtil.isEmpty(getUrl()) ? "<undefined>" : getUrl();
   }
@@ -86,8 +101,8 @@ public abstract class TaskRepository {
   }
 
   /**
-   * @deprecated
    * @see #createCancellableConnection()
+   * @deprecated
    */
   public void testConnection() throws Exception {
   }
@@ -95,6 +110,7 @@ public abstract class TaskRepository {
   /**
    * Returns an object that can test connection.
    * {@link com.intellij.openapi.vcs.impl.CancellableRunnable#cancel()} should cancel the process.
+   *
    * @return null if not supported
    */
   @Nullable
@@ -111,26 +127,69 @@ public abstract class TaskRepository {
    * @param since last updated timestamp. If 0, all issues should be returned.
    * @return found issues
    * @throws Exception
+   * @deprecated To be removed in IDEA 14. Use {@link #getIssues(String, int, int, boolean)} instead.
    */
-  public abstract Task[] getIssues(@Nullable String query, int max, long since) throws Exception;
+  @Deprecated
+  public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
+    throw new UnsupportedOperationException("Deprecated: should not be called");
+  }
 
+  /**
+   * @deprecated To be removed in IDEA 14. Use {@link #getIssues(String, int, int, boolean, ProgressIndicator)} instead.
+   */
+  @Deprecated
   public Task[] getIssues(@Nullable String query, int max, long since, @NotNull ProgressIndicator cancelled) throws Exception {
     return getIssues(query, max, since);
   }
 
-  @Nullable
-  public abstract Task findTask(String id) throws Exception;
+  /**
+   * Retrieve tasks from server using its own pagination capabilities and also filtering out closed issues.
+   * <p/>
+   * Previously used approach with filtering tasks on client side leads to non-filled up popup in "Open Task" action and, as result,
+   * missing tasks and various issues with caching.
+   *
+   * @param query      arbitrary search query, possibly provided by user for search. It may utilize server specific query language.
+   * @param offset     index of the first issue to return
+   * @param limit      maximum number of issues returned by server in this request (or number of issues per page in some interpretations)
+   * @param withClosed whether to include closed (e.g. fixed/resolved) issues to response
+   * @return found tasks
+   * @throws Exception
+   */
+  public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed) throws Exception {
+    return getIssues(query, offset + limit, 0);
+  }
 
+  public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed, @NotNull ProgressIndicator cancelled)
+    throws Exception {
+    return getIssues(query, offset, limit, withClosed);
+  }
+
+  /**
+   * @param id task ID. Don't forget to define {@link #extractId(String)}, if your server uses not <tt>PROJECT-123</tt> format for task IDs.
+   * @return found task or {@code null} otherwise. Basically you should return {@code null} on e.g. 404 error and throw exception with
+   * information about failure in other cases.
+   * @throws Exception
+   */
+  @Nullable
+  public abstract Task findTask(@NotNull String id) throws Exception;
+
+  @NotNull
   public abstract TaskRepository clone();
 
   @Nullable
-  public abstract String extractId(String taskName);
+  public abstract String extractId(@NotNull String taskName);
 
   /**
+   * Update state of the task on server. Don't forget to add {@link #STATE_UPDATING} in {@link #getFeatures()} and
+   * supported states in {@link TaskRepositoryType#getPossibleTaskStates()}.
+   *
+   * @param task  issue to update
+   * @param state new state of the issue
    * @see com.intellij.tasks.TaskRepositoryType#getPossibleTaskStates()
+   * @see com.intellij.tasks.TaskRepository#getFeatures()
    */
-  public void setTaskState(Task task, TaskState state) throws Exception {
-    throw new UnsupportedOperationException();
+  public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
+    throw new UnsupportedOperationException("Setting task to state " + state + " is not supported");
   }
 
   // for serialization
@@ -163,7 +222,11 @@ public abstract class TaskRepository {
     if (!Comparing.equal(myType, that.myType)) return false;
     if (isShared() != that.isShared()) return false;
     if (getUrl() != null ? !getUrl().equals(that.getUrl()) : that.getUrl() != null) return false;
-    if (getCommitMessageFormat() != null ? !getCommitMessageFormat().equals(that.getCommitMessageFormat()) : that.getCommitMessageFormat() != null) return false;
+    if (getCommitMessageFormat() != null
+        ? !getCommitMessageFormat().equals(that.getCommitMessageFormat())
+        : that.getCommitMessageFormat() != null) {
+      return false;
+    }
     return isShouldFormatCommitMessage() == that.isShouldFormatCommitMessage();
   }
 
@@ -189,7 +252,7 @@ public abstract class TaskRepository {
     return myCommitMessageFormat;
   }
 
-  public void setCommitMessageFormat(final String commitMessageFormat) {
+  public void setCommitMessageFormat(@NotNull String commitMessageFormat) {
     myCommitMessageFormat = commitMessageFormat;
   }
 
@@ -207,7 +270,7 @@ public abstract class TaskRepository {
   }
 
   @Nullable
-  public String getTaskComment(Task task) {
+  public String getTaskComment(@NotNull Task task) {
     return isShouldFormatCommitMessage()
            ? myCommitMessageFormat.replace("{id}", task.getId()).replace("{summary}", task.getSummary())
            : null;
@@ -217,7 +280,7 @@ public abstract class TaskRepository {
     return "{id} (e.g. FOO-001), {summary}, {number} (e.g. 001), {project} (e.g. FOO)";
   }
 
-  public void updateTimeSpent(final LocalTask task, final String timeSpent, final String comment) throws Exception {
+  public void updateTimeSpent(@NotNull LocalTask task, @NotNull String timeSpent, @NotNull String comment) throws Exception {
     throw new UnsupportedOperationException();
   }
 

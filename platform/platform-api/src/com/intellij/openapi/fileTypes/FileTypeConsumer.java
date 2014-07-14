@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@ public interface FileTypeConsumer {
 
   void consume(@NotNull FileType fileType);
 
-  void consume(@NotNull FileType fileType, @NonNls final String extensions);
+  void consume(@NotNull FileType fileType, @NonNls String extensions);
 
-  void consume(@NotNull FileType fileType, final FileNameMatcher... matchers);
+  void consume(@NotNull FileType fileType, @NotNull FileNameMatcher... matchers);
 
   @Nullable
   FileType getStandardFileTypeByName(@NonNls @NotNull String name);

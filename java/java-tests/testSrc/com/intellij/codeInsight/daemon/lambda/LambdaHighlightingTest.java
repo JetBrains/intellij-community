@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.intellij.codeInsight.daemon.lambda;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -75,6 +77,8 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIntersectionTypeInCast() { doTest(); }
   public void testAmbiguitySpecificReturn() { doTest(true); }
   public void testFunctionalInterfaceAnnotation() { doTest(); }
+  public void testFunctionalInterfaceAnnotation2() { doTest(); }
+  public void testFunctionalInterfaceAnnotation3() { doTest(); }
   public void testAmbiguityReturnValueResolution() { doTest(); }
   public void testAmbiguityReturnValueResolution1() { doTest(); }
   public void testAmbiguityReturnValueResolution2() { doTest(true); }
@@ -95,6 +99,13 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testWildcardsAndFormalLambdaParams() {doTest();}
   public void testFinalInitializer() {doTest();}
   public void testBreakContinueInside() {doTest();}
+  public void testSameLambdaParamNames() {doTest();}
+  public void testIDEA123308() {doTest();}
+  public void testIntersection() {doTest();}
+  public void testNoBoxingInLambdaFormalParams() {doTest();}
+  public void testGenericNotGenericInterfaceMethod() {doTest();}
+  public void testInferredFromCast() {doTest();}
+  public void testReferencedFromSelf() {doTest();}
 
   private void doTest() {
     doTest(false);
@@ -102,5 +113,10 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   private void doTest(final boolean checkWarnings) {
     doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk18();
   }
 }

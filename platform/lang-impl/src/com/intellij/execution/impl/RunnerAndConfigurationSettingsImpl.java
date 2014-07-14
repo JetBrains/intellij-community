@@ -21,10 +21,12 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +65,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   @NonNls
   private static final String EDIT_BEFORE_RUN = "editBeforeRun";
   @NonNls
-  private static final String SINGLETON = "singleton";
+  public static final String SINGLETON = "singleton";
 
 
   /** for compatibility */
@@ -83,6 +85,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   private boolean myTemporary;
   private boolean myEditBeforeRun;
   private boolean mySingleton;
+  private boolean myWasSingletonSpecifiedExplicitly;
   private String myFolderName;
   //private String myID = null;
 
@@ -199,16 +202,25 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     myFolderName = element.getAttributeValue(FOLDER_NAME);
     //assert myID == null: "myId must be null at readExternal() stage";
     //myID = element.getAttributeValue(UNIQUE_ID, UUID.randomUUID().toString());
-    // singleton is not configurable by user for template
-    if (!myIsTemplate) {
-      mySingleton = Boolean.valueOf(element.getAttributeValue(SINGLETON)).booleanValue();
-    }
-
     final ConfigurationFactory factory = getFactory(element);
     if (factory == null) return;
 
+    myWasSingletonSpecifiedExplicitly = false;
     if (myIsTemplate) {
       mySingleton = factory.isConfigurationSingletonByDefault();
+    }
+    else {
+      String singletonStr = element.getAttributeValue(SINGLETON);
+      if (StringUtil.isEmpty(singletonStr)) {
+        mySingleton = factory.isConfigurationSingletonByDefault();
+      }
+      else {
+        myWasSingletonSpecifiedExplicitly = true;
+        mySingleton = Boolean.parseBoolean(singletonStr);
+      }
+    }
+
+    if (myIsTemplate) {
       myConfiguration = myManager.getConfigurationTemplate(factory).getConfiguration();
     } else {
       final String name = element.getAttributeValue(NAME_ATTR);
@@ -274,7 +286,9 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
       //element.setAttribute(UNIQUE_ID, getUniqueID());
 
       if (isEditBeforeRun()) element.setAttribute(EDIT_BEFORE_RUN, String.valueOf(true));
-      if (isSingleton()) element.setAttribute(SINGLETON, String.valueOf(true));
+      if (myWasSingletonSpecifiedExplicitly || mySingleton != factory.isConfigurationSingletonByDefault()) {
+        element.setAttribute(SINGLETON, String.valueOf(mySingleton));
+      }
       if (myTemporary) {
         element.setAttribute(TEMPORARY_ATTRIBUTE, Boolean.toString(myTemporary));
       }
@@ -393,7 +407,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
         return runnerSettings;
       }
       catch (AbstractMethodError e) {
-        LOG.error("Update failed for: " + myConfiguration.getType().getDisplayName() + ", runner: " + runner.getRunnerId(), e);
+        LOG.error("Update failed for: " + myConfiguration.getType().getDisplayName() + ", runner: " + runner.getRunnerId(), new ExtensionException(runner.getClass()));
       }
     }
     return myRunnerSettings.get(runner);

@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.io.PersistentEnumeratorBase;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -36,12 +37,15 @@ import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
+import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
 import org.jetbrains.jps.builders.java.JavaBuilderExtension;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
+import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -80,6 +84,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   public static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
   private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = Key.create("_java_compiler_version_");
   public static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
+  private static final Key<JavaCompilingTool> COMPILING_TOOL = Key.create("_java_compiling_tool_");
   private static final Key<AtomicReference<String>> COMPILER_VERSION_INFO = Key.create("_java_compiler_version_info_");
 
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
@@ -101,15 +106,35 @@ public class JavaBuilder extends ModuleLevelBuilder {
         return StringUtil.endsWithIgnoreCase(file.getPath(), DOT_JAVA_EXTENSION);
       }
     };
+  private static final String RT_JAR_PATH_SUFFIX = File.separator + "rt.jar";
 
   private final Executor myTaskRunner;
   private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<ClassPostProcessor>();
   private static final Set<JpsModuleType<?>> ourCompilableModuleTypes;
+  @Nullable
+  private static final File ourDefaultRtJar;
   static {
     ourCompilableModuleTypes = new HashSet<JpsModuleType<?>>();
     for (JavaBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(JavaBuilderExtension.class)) {
       ourCompilableModuleTypes.addAll(extension.getCompilableModuleTypes());
     }
+    File rtJar = null;
+    StringTokenizer tokenizer = new StringTokenizer(System.getProperty("sun.boot.class.path", ""), File.pathSeparator, false);
+    while (tokenizer.hasMoreTokens()) {
+      final String path = tokenizer.nextToken();
+      if (isRtJarPath(path)) {
+        rtJar = new File(path);
+        break;
+      }
+    }
+    ourDefaultRtJar = rtJar;
+  }
+  
+  private static boolean isRtJarPath(String path) {
+    if (StringUtil.endsWithIgnoreCase(path, RT_JAR_PATH_SUFFIX)) {
+      return true;
+    }
+    return RT_JAR_PATH_SUFFIX.charAt(0) != '/' && StringUtil.endsWithIgnoreCase(path, "/rt.jar");
   }
 
   public static void registerClassPostProcessor(ClassPostProcessor processor) {
@@ -135,16 +160,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Java compiler ID: " + compilerId);
     }
-    final boolean isJavac = JavaCompilers.JAVAC_ID.equalsIgnoreCase(compilerId) || JavaCompilers.JAVAC_API_ID.equalsIgnoreCase(compilerId);
-    final boolean isEclipse = JavaCompilers.ECLIPSE_ID.equalsIgnoreCase(compilerId) || JavaCompilers.ECLIPSE_EMBEDDED_ID.equalsIgnoreCase(compilerId);
-    IS_ENABLED.set(context, isJavac || isEclipse);
-    String messageText = null;
-    if (isJavac) {
-      messageText = "Using javac " + System.getProperty("java.version") + " to compile java sources";
-    }
-    else if (isEclipse) {
-      messageText = "Using eclipse compiler to compile java sources";
-    }
+    JavaCompilingTool compilingTool = JavaBuilderUtil.findCompilingTool(compilerId);
+    COMPILING_TOOL.set(context, compilingTool);
+    String messageText = compilingTool != null ? "Using " + compilingTool.getDescription() + " to compile java sources" : null;
     COMPILER_VERSION_INFO.set(context, new AtomicReference<String>(messageText));
   }
 
@@ -157,16 +175,17 @@ public class JavaBuilder extends ModuleLevelBuilder {
                         @NotNull ModuleChunk chunk,
                         @NotNull DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                         @NotNull OutputConsumer outputConsumer) throws ProjectBuildException, IOException {
-    if (!IS_ENABLED.get(context, Boolean.TRUE)) {
+    JavaCompilingTool compilingTool = COMPILING_TOOL.get(context);
+    if (!IS_ENABLED.get(context, Boolean.TRUE) || compilingTool == null) {
       return ExitCode.NOTHING_DONE;
     }
-    return doBuild(context, chunk, dirtyFilesHolder, outputConsumer);
+    return doBuild(context, chunk, dirtyFilesHolder, outputConsumer, compilingTool);
   }
 
   public ExitCode doBuild(@NotNull CompileContext context,
                           @NotNull ModuleChunk chunk,
                           @NotNull DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
-                          @NotNull OutputConsumer outputConsumer) throws ProjectBuildException, IOException {
+                          @NotNull OutputConsumer outputConsumer, JavaCompilingTool compilingTool) throws ProjectBuildException, IOException {
     try {
       final Set<File> filesToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
@@ -188,9 +207,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
       }
 
-      return compile(context, chunk, dirtyFilesHolder, filesToCompile, outputConsumer);
+      return compile(context, chunk, dirtyFilesHolder, filesToCompile, outputConsumer, compilingTool);
+    }
+    catch (BuildDataCorruptedException e) {
+      throw e;
     }
     catch (ProjectBuildException e) {
+      throw e;
+    }
+    catch (PersistentEnumeratorBase.CorruptedException e) {
       throw e;
     }
     catch (Exception e) {
@@ -216,7 +241,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
                            ModuleChunk chunk,
                            DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                            Collection<File> files,
-                           OutputConsumer outputConsumer)
+                           OutputConsumer outputConsumer, @NotNull JavaCompilingTool compilingTool)
     throws Exception {
     ExitCode exitCode = ExitCode.NOTHING_DONE;
 
@@ -235,7 +260,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     // begin compilation round
     final Mappings delta = pd.dataManager.getMappings().createDelta();
     final Callbacks.Backend mappingsCallback = delta.getCallback();
-    final OutputFilesSink outputSink = new OutputFilesSink(context, outputConsumer, mappingsCallback, chunk.getName());
+    final OutputFilesSink outputSink = new OutputFilesSink(context, outputConsumer, mappingsCallback, chunk.getPresentableShortName());
     try {
       if (hasSourcesToCompile) {
         final AtomicReference<String> ref = COMPILER_VERSION_INFO.get(context);
@@ -256,7 +281,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final DiagnosticSink diagnosticSink = new DiagnosticSink(context);
         
         final String chunkName = chunk.getName();
-        context.processMessage(new ProgressMessage("Parsing java... [" + chunkName + "]"));
+        context.processMessage(new ProgressMessage("Parsing java... [" + chunk.getPresentableShortName() + "]"));
 
         final int filesCount = files.size();
         boolean compiledOk = true;
@@ -276,7 +301,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
             }
           }
           try {
-            compiledOk = compileJava(context, chunk, files, classpath, platformCp, srcPath, diagnosticSink, outputSink);
+            compiledOk = compileJava(context, chunk, files, classpath, platformCp, srcPath, diagnosticSink, outputSink, compilingTool);
           }
           finally {
             // heuristic: incorrect paths data recovery, so that the next make should not contain non-existing sources in 'recompile' list
@@ -320,7 +345,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     Collection<File> platformCp,
     Collection<File> sourcePath,
     DiagnosticOutputConsumer diagnosticSink,
-    final OutputFileConsumer outputSink) throws Exception {
+    final OutputFileConsumer outputSink, JavaCompilingTool compilingTool) throws Exception {
 
     final TasksCounter counter = new TasksCounter();
     COUNTER_KEY.set(context, counter);
@@ -364,7 +389,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     final Map<File, Set<File>> outs = buildOutputDirectoriesMap(context, chunk);
-    final List<String> options = getCompilationOptions(context, chunk, profile);
+    final List<String> options = getCompilationOptions(context, chunk, profile, compilingTool);
     final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Compiling chunk [" + chunk.getName() + "] with options: \"" + StringUtil.join(options, " ") + "\"");
@@ -372,13 +397,19 @@ public class JavaBuilder extends ModuleLevelBuilder {
     try {
       final boolean rc;
       if (USE_EMBEDDED_JAVAC) {
-        final boolean useEclipse = useEclipseCompiler(context);
+        final Collection<File> _platformCp = calcEffectivePlatformCp(platformCp, options, compilingTool);
+        if (_platformCp == null) {
+          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, 
+            "Compact compilation profile was requested, but target platform for module \"" + chunk.getName() + "\" differs from javac's platform (" + System.getProperty("java.version") + ")\nCompilation profiles are not supported for such configuration"
+          ));
+          return true;
+        }
         rc = JavacMain.compile(
-          options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus(), useEclipse
+          options, files, classpath, _platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus(), compilingTool
         );
       }
       else {
-        final JavacServerClient client = ensureJavacServerLaunched(context);
+        final JavacServerClient client = ensureJavacServerLaunched(context, compilingTool);
         final RequestFuture<JavacServerResponseHandler> future = client.sendCompileRequest(
           options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer
         );
@@ -396,11 +427,38 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private static boolean useEclipseCompiler(CompileContext context) {
-    JpsProject project = context.getProjectDescriptor().getProject();
-    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
-    final String compilerId = configuration != null? configuration.getJavaCompilerId() : null;
-    return JavaCompilers.ECLIPSE_ID.equalsIgnoreCase(compilerId) || JavaCompilers.ECLIPSE_EMBEDDED_ID.equalsIgnoreCase(compilerId);
+  // If platformCp of the build process is the same as the target plafform, do not specify platformCp explicitly
+  // this will allow javac to resolve against ct.sym file, which is required for the "compilation profiles" feature
+  @Nullable
+  private static Collection<File> calcEffectivePlatformCp(Collection<File> platformCp, List<String> options, JavaCompilingTool compilingTool) {
+    if (ourDefaultRtJar == null || !(compilingTool instanceof JavacCompilerTool)) {
+      return platformCp;
+    }
+    boolean profileFeatureRequested = false;
+    for (String option : options) {
+      if ("-profile".equalsIgnoreCase(option)) {
+        profileFeatureRequested = true;
+        break;
+      }
+    }
+    if (!profileFeatureRequested) {
+      return platformCp;
+    }
+    boolean isTargetPlatformSameAsBuildRuntime = false;
+    for (File file : platformCp) {
+      if (FileUtil.filesEqual(file, ourDefaultRtJar)) {
+        isTargetPlatformSameAsBuildRuntime = true;
+        break;
+      }
+    }
+    if (!isTargetPlatformSameAsBuildRuntime) {
+      // compact profile was requested, but we have to use alternative platform classpath to meet project settings
+      // consider this a compile error and let user re-configure the project 
+      return null;
+    }
+    // returning empty list will force default behaviour for platform classpath calculation 
+    // javac will resolve against its own bootclasspath and use ct.sym file when available 
+    return Collections.emptyList();
   }
 
   private void submitAsyncTask(final CompileContext context, final Runnable taskRunnable) {
@@ -424,7 +482,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     });
   }
 
-  private static synchronized JavacServerClient ensureJavacServerLaunched(CompileContext context) throws Exception {
+  private static synchronized JavacServerClient ensureJavacServerLaunched(@NotNull CompileContext context, @NotNull JavaCompilingTool compilingTool) throws Exception {
     final ExternalJavacDescriptor descriptor = ExternalJavacDescriptor.KEY.get(context);
     if (descriptor != null) {
       return descriptor.client;
@@ -437,7 +495,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final String javaHome = SystemProperties.getJavaHome();
 
     final BaseOSProcessHandler processHandler = JavacServerBootstrap.launchJavacServer(
-      javaHome, heapSize, port, Utils.getSystemRoot(), getCompilationVMOptions(context), useEclipseCompiler(context)
+      javaHome, heapSize, port, Utils.getSystemRoot(), getCompilationVMOptions(context, compilingTool), compilingTool
     );
     final JavacServerClient client = new JavacServerClient();
     try {
@@ -521,19 +579,22 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final Key<List<String>> JAVAC_VM_OPTIONS = Key.create("_javac_vm_options_");
   private static final Key<String> USER_DEFINED_BYTECODE_TARGET = Key.create("_user_defined_bytecode_target_");
 
-  private static List<String> getCompilationVMOptions(CompileContext context) {
+  private static List<String> getCompilationVMOptions(CompileContext context, JavaCompilingTool compilingTool) {
     List<String> cached = JAVAC_VM_OPTIONS.get(context);
     if (cached == null) {
-      loadCommonJavacOptions(context);
+      loadCommonJavacOptions(context, compilingTool);
       cached = JAVAC_VM_OPTIONS.get(context);
     }
     return cached;
   }
 
-  private static List<String> getCompilationOptions(CompileContext context, ModuleChunk chunk, @Nullable ProcessorConfigProfile profile) {
+  private static List<String> getCompilationOptions(CompileContext context,
+                                                    ModuleChunk chunk,
+                                                    @Nullable ProcessorConfigProfile profile,
+                                                    @NotNull JavaCompilingTool compilingTool) {
     List<String> cached = JAVAC_OPTIONS.get(context);
     if (cached == null) {
-      loadCommonJavacOptions(context);
+      loadCommonJavacOptions(context, compilingTool);
       cached = JAVAC_OPTIONS.get(context);
       assert cached != null : context;
     }
@@ -693,7 +754,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return javaVersion;
   }
 
-  private static void loadCommonJavacOptions(CompileContext context) {
+  private static void loadCommonJavacOptions(@NotNull CompileContext context, @NotNull JavaCompilingTool compilingTool) {
     final List<String> options = new ArrayList<String>();
     final List<String> vmOptions = new ArrayList<String>();
 
@@ -747,14 +808,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
 
-    if (useEclipseCompiler(context)) {
-      for (String option : options) {
-        if (option.startsWith("-proceedOnError")) {
-          Utils.PROCEED_ON_ERROR_KEY.set(context, Boolean.TRUE);
-          break;
-        }
-      }
-    }
+    compilingTool.processCompilerOptions(context, options);
 
     JAVAC_OPTIONS.set(context, options);
     JAVAC_VM_OPTIONS.set(context, vmOptions);

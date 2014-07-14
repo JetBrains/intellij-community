@@ -43,13 +43,14 @@ public class RootAction<T extends Repository> extends ActionGroup {
    * @param branchText
    */
   public RootAction(@NotNull T repository, @Nullable T currentRepository, @NotNull ActionGroup actionsGroup, @NotNull String branchText) {
-    super(DvcsUtil.getShortRepositoryName(repository), true);
+    super("", true);
     myRepository = repository;
     myGroup = actionsGroup;
     myBranchText = branchText;
     if (repository.equals(currentRepository)) {
       getTemplatePresentation().setIcon(PlatformIcons.CHECK_ICON);
     }
+    getTemplatePresentation().setText(DvcsUtil.getShortRepositoryName(repository), false);
   }
 
   @NotNull

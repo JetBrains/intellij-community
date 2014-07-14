@@ -34,6 +34,7 @@ public class PythonEnvUtil {
   @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONPATH = "PYTHONPATH";
   @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONUNBUFFERED = "PYTHONUNBUFFERED";
   @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONIOENCODING = "PYTHONIOENCODING";
+  @SuppressWarnings("SpellCheckingInspection") public static final String IPYTHONENABLE = "IPYTHONENABLE";
 
   private PythonEnvUtil() { }
 
@@ -84,10 +85,5 @@ public class PythonEnvUtil {
 
   public static void addToPythonPath(@NotNull Map<String, String> env, String value) {
     addPathToEnv(env, PYTHONPATH, value);
-  }
-
-  public static List<String> getPathListFromEnv(@NotNull Map<String, String> env, String envKey) {
-    String pythonPath = env.get(envKey);
-    return pythonPath != null ? Lists.newArrayList(pythonPath.split(File.pathSeparator)) : null;
   }
 }

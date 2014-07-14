@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.text.StringTokenizer;
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,9 +50,9 @@ public class VfsTestUtil {
   }
 
   private static VirtualFile createFileOrDir(final VirtualFile root,
-                                            final String relativePath,
-                                            final String text,
-                                            final boolean dir) {
+                                             final String relativePath,
+                                             final String text,
+                                             final boolean dir) {
     try {
       AccessToken token = WriteAction.start();
       try {

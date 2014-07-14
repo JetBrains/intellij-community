@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class Test {
+class Test {
         static <E extends Exception, T> void foo(List<T> l, Class<E> ec) throws E {
         }
 

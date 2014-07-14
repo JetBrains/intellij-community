@@ -1,0 +1,10 @@
+Types:
+PsiField:f : java.lang.Object[]
+PsiNewExpression:new String[] {"a"} : java.lang.Object[]
+
+Conversions:
+"a" -> $
+
+New expression type changes:
+new String[] {"a"} -> java.lang.Object[]
+Fails:

@@ -24,7 +24,6 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,7 +33,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ColorIcon;
-import com.intellij.xml.util.ColorSampleLookupValue;
+import com.intellij.xml.util.ColorMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
@@ -124,7 +123,7 @@ public class JavaFxAnnotator implements Annotator {
       if (attributeValueText.startsWith("#")) {
         color = ColorUtil.fromHex(attributeValueText.substring(1));
       } else {
-        final String hexCode = ColorSampleLookupValue.getHexCodeForColorName(StringUtil.toLowerCase(attributeValueText));
+        final String hexCode = ColorMap.getHexCodeForColorName(StringUtil.toLowerCase(attributeValueText));
         if (hexCode != null) {
           color = ColorUtil.fromHex(hexCode);
         }

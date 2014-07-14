@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -44,27 +45,29 @@ public class JavaClassReferenceSet {
   private final int myStartInElement;
   private final JavaClassReferenceProvider myProvider;
 
-  public JavaClassReferenceSet(String str, PsiElement element, int startInElement, final boolean isStatic, JavaClassReferenceProvider provider) {
+  public JavaClassReferenceSet(@NotNull String str, @NotNull PsiElement element, int startInElement, final boolean isStatic, @NotNull JavaClassReferenceProvider provider) {
     this(str, element, startInElement, isStatic, provider, null);
   }
 
-  private JavaClassReferenceSet(String str, PsiElement element, int startInElement, final boolean isStatic, JavaClassReferenceProvider provider,
+  private JavaClassReferenceSet(@NotNull String str, @NotNull PsiElement element, int startInElement, final boolean isStatic, @NotNull JavaClassReferenceProvider provider,
                         JavaClassReferenceSet context) {
     myStartInElement = startInElement;
     myProvider = provider;
     reparse(str, element, isStatic, context);
   }
 
+  @NotNull
   public JavaClassReferenceProvider getProvider() {
     return myProvider;
   }
 
+  @NotNull
   public TextRange getRangeInElement() {
     PsiReference[] references = getReferences();
     return new TextRange(references[0].getRangeInElement().getStartOffset(), references[references.length - 1].getRangeInElement().getEndOffset());
   }
 
-  private void reparse(String str, PsiElement element, final boolean isStaticImport, JavaClassReferenceSet context) {
+  private void reparse(@NotNull String str, @NotNull PsiElement element, final boolean isStaticImport, JavaClassReferenceSet context) {
     myElement = element;
     myContext = context;
     final List<JavaClassReference> referencesList = new ArrayList<JavaClassReference>();
@@ -186,7 +189,8 @@ public class JavaClassReferenceSet {
     myReferences = referencesList.toArray(new JavaClassReference[referencesList.size()]);
   }
 
-  protected JavaClassReference createReference(final int referenceIndex, final String subreferenceText, final TextRange textRange,
+  @NotNull
+  protected JavaClassReference createReference(final int referenceIndex, @NotNull String subreferenceText, @NotNull TextRange textRange,
                                                final boolean staticImport) {
     return new JavaClassReference(this, textRange, referenceIndex, subreferenceText, staticImport);
   }
@@ -200,7 +204,7 @@ public class JavaClassReferenceSet {
     return isAllowDollarInNames() ? c == DOLLAR : c == DOT;
   }
 
-  public void reparse(PsiElement element, final TextRange range) {
+  public void reparse(@NotNull PsiElement element, @NotNull TextRange range) {
     final String text = range.substring(element.getText());
     reparse(text, element, false, myContext);
   }
@@ -209,6 +213,7 @@ public class JavaClassReferenceSet {
     return myReferences[index];
   }
 
+  @NotNull
   public JavaClassReference[] getAllReferences() {
     JavaClassReference[] result = myReferences;
     if (myNestedGenericParameterReferences != null) {
@@ -229,10 +234,12 @@ public class JavaClassReferenceSet {
     return myProvider.isSoft();
   }
 
+  @NotNull
   public PsiElement getElement() {
     return myElement;
   }
 
+  @NotNull
   public PsiReference[] getReferences() {
     return myReferences;
   }
@@ -243,6 +250,7 @@ public class JavaClassReferenceSet {
   }
 
   @SuppressWarnings({"UnresolvedPropertyKey"})
+  @NotNull
   public String getUnresolvedMessagePattern(int index){
     if (canReferencePackage(index)) {
       return JavaErrorMessages.message("error.cannot.resolve.class.or.package");

@@ -38,7 +38,7 @@ public class PyClassicPropertyTest extends PyTestCase {
   public void testV1() throws Exception {
     Property p;
     Maybe<Callable> accessor;
-    p = myClass.findProperty("v1");
+    p = myClass.findProperty("v1", true);
     assertNotNull(p);
     assertNull(p.getDoc());
     PyTargetExpression site = p.getDefinitionSite();
@@ -62,7 +62,7 @@ public class PyClassicPropertyTest extends PyTestCase {
   public void testV2() throws Exception {
     Property p;
     Maybe<Callable> accessor;
-    p = myClass.findProperty("v2");
+    p = myClass.findProperty("v2", true);
     assertNotNull(p);
     assertEquals("doc of v2", p.getDoc());
     PyTargetExpression site = p.getDefinitionSite();
@@ -86,7 +86,7 @@ public class PyClassicPropertyTest extends PyTestCase {
 
   public void testV3() throws Exception {
     Maybe<Callable> accessor;
-    Property p = myClass.findProperty("v3");
+    Property p = myClass.findProperty("v3", true);
     assertNotNull(p);
     assertNull(p.getDoc());
     PyTargetExpression site = p.getDefinitionSite();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,8 +61,9 @@ public class DynamicManagerImpl extends DynamicManager {
   public DynamicManagerImpl(final Project project) {
     myProject = project;
     StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+      @Override
       public void run() {
-        if (myRootElement.getContainingClasses().size() > 0) {
+        if (!myRootElement.getContainingClasses().isEmpty()) {
           DynamicToolWindowWrapper.getInstance(project).getToolWindow(); //initialize myToolWindow
         }
       }
@@ -74,9 +75,11 @@ public class DynamicManagerImpl extends DynamicManager {
   }
 
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void addProperty(DynamicElementSettings settings) {
     assert settings != null;
     assert !settings.isMethod();
@@ -126,6 +129,7 @@ public class DynamicManagerImpl extends DynamicManager {
     final ListTreeTableModelOnColumns myTreeTableModel = DynamicToolWindowWrapper.getInstance(myProject).getTreeTableModel();
 
     window.activate(new Runnable() {
+      @Override
       public void run() {
         final Object rootObject = myTreeTableModel.getRoot();
         if (!(rootObject instanceof DefaultMutableTreeNode)) return;
@@ -183,6 +187,7 @@ public class DynamicManagerImpl extends DynamicManager {
     return res;
   }
 
+  @Override
   public void addMethod(DynamicElementSettings settings) {
     if (settings == null) return;
     assert settings.isMethod();
@@ -195,6 +200,7 @@ public class DynamicManagerImpl extends DynamicManager {
     addItemInTree(classElement, methodElement, window);
   }
 
+  @Override
   public void removeClassElement(DClassElement classElement) {
 
     final DRootElement rootElement = getRootElement();
@@ -209,6 +215,7 @@ public class DynamicManagerImpl extends DynamicManager {
     classElement.removeProperty(propertyElement);
   }
 
+  @Override
   @NotNull
   public Collection<DPropertyElement> findDynamicPropertiesOfClass(String className) {
     final DClassElement classElement = findClassElement(getRootElement(), className);
@@ -219,6 +226,7 @@ public class DynamicManagerImpl extends DynamicManager {
     return new ArrayList<DPropertyElement>();
   }
 
+  @Override
   @Nullable
   public String getPropertyType(String className, String propertyName) {
     final DPropertyElement dynamicProperty = findConcreteDynamicProperty(getRootElement(), className, propertyName);
@@ -227,6 +235,7 @@ public class DynamicManagerImpl extends DynamicManager {
     return dynamicProperty.getType();
   }
 
+  @Override
   @NotNull
   public Collection<DClassElement> getAllContainingClasses() {
     //TODO: use iterator
@@ -235,10 +244,12 @@ public class DynamicManagerImpl extends DynamicManager {
     return root.getContainingClasses();
   }
 
+  @Override
   public DRootElement getRootElement() {
     return myRootElement;
   }
 
+  @Override
   @Nullable
   public String replaceDynamicPropertyName(String className, String oldPropertyName, String newPropertyName) {
     final DClassElement classElement = findClassElement(getRootElement(), className);
@@ -255,6 +266,7 @@ public class DynamicManagerImpl extends DynamicManager {
     return newPropertyName;
   }
 
+  @Override
   @Nullable
   public String replaceDynamicPropertyType(String className, String propertyName, String oldPropertyType, String newPropertyType) {
     final DPropertyElement property = findConcreteDynamicProperty(className, propertyName);
@@ -283,6 +295,7 @@ public class DynamicManagerImpl extends DynamicManager {
 
   //  @Nullable
 
+  @Override
   public DMethodElement findConcreteDynamicMethod(String containingClassName, String name, String[] parameterTypes) {
     return findConcreteDynamicMethod(getRootElement(), containingClassName, name, parameterTypes);
   }
@@ -294,6 +307,7 @@ public class DynamicManagerImpl extends DynamicManager {
     classElement.removeMethod(methodElement);
   }
 
+  @Override
   public void removeItemElement(DItemElement element) {
     DClassElement classElement = getClassElementByItem(element);
     if (classElement == null) return;
@@ -307,6 +321,7 @@ public class DynamicManagerImpl extends DynamicManager {
     removeItemFromTree(element, classElement);
   }
 
+  @Override
   public void replaceDynamicMethodType(String className, String name, List<ParamInfo> myPairList, String oldType, String newType) {
     final DMethodElement method = findConcreteDynamicMethod(className, name, QuickfixUtil.getArgumentsTypes(myPairList));
 
@@ -315,6 +330,7 @@ public class DynamicManagerImpl extends DynamicManager {
     fireChange();
   }
 
+  @Override
   @NotNull
   public DClassElement getOrCreateClassElement(Project project, String className) {
     DClassElement classElement = DynamicManager.getInstance(myProject).getRootElement().getClassElement(className);
@@ -325,6 +341,7 @@ public class DynamicManagerImpl extends DynamicManager {
     return classElement;
   }
 
+  @Override
   @Nullable
   public DClassElement getClassElementByItem(DItemElement itemElement) {
     final Collection<DClassElement> classes = getAllContainingClasses();
@@ -334,6 +351,7 @@ public class DynamicManagerImpl extends DynamicManager {
     return null;
   }
 
+  @Override
   public void replaceDynamicMethodName(String className, String oldName, String newName, String[] types) {
     final DMethodElement oldMethodElement = findConcreteDynamicMethod(className, oldName, types);
     if (oldMethodElement != null) {
@@ -343,26 +361,31 @@ public class DynamicManagerImpl extends DynamicManager {
     fireChange();
   }
 
+  @Override
   public Iterable<PsiMethod> getMethods(final String classQname) {
     DClassElement classElement = getRootElement().getClassElement(classQname);
     if (classElement == null) return Collections.emptyList();
     return ContainerUtil.map(classElement.getMethods(), new Function<DMethodElement, PsiMethod>() {
+      @Override
       public PsiMethod fun(DMethodElement methodElement) {
         return methodElement.getPsi(PsiManager.getInstance(myProject), classQname);
       }
     });
   }
 
+  @Override
   public Iterable<PsiVariable> getProperties(final String classQname) {
     DClassElement classElement = getRootElement().getClassElement(classQname);
     if (classElement == null) return Collections.emptyList();
     return ContainerUtil.map(classElement.getProperties(), new Function<DPropertyElement, PsiVariable>() {
+      @Override
       public PsiVariable fun(DPropertyElement propertyElement) {
         return propertyElement.getPsi(PsiManager.getInstance(myProject), classQname);
       }
     });
   }
 
+  @Override
   public void replaceClassName(final DClassElement oldClassElement, String newClassName) {
     if (oldClassElement == null) return;
 
@@ -375,6 +398,7 @@ public class DynamicManagerImpl extends DynamicManager {
     fireChange();
   }
 
+  @Override
   public void fireChange() {
     fireChangeCodeAnalyze();
   }
@@ -389,6 +413,7 @@ public class DynamicManagerImpl extends DynamicManager {
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
+  @Override
   @Nullable
   public DPropertyElement findConcreteDynamicProperty(final String containingClassName, final String propertyName) {
     return findConcreteDynamicProperty(getRootElement(), containingClassName, propertyName);
@@ -408,23 +433,28 @@ public class DynamicManagerImpl extends DynamicManager {
     return rootElement.getClassElement(conatainingClassName);
   }
 
+  @Override
   public void disposeComponent() {
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "DynamicManagerImpl";
   }
 
+  @Override
   public void projectOpened() {
   }
 
+  @Override
   public void projectClosed() {
   }
 
   /**
    * On exit
    */
+  @Override
   public DRootElement getState() {
 //    return XmlSerializer.serialize(myRootElement);
     return myRootElement;
@@ -433,11 +463,13 @@ public class DynamicManagerImpl extends DynamicManager {
   /*
    * On loading
    */
+  @Override
   public void loadState(DRootElement element) {
 //    myRootElement = XmlSerializer.deserialize(element, myRootElement.getClass());
     myRootElement = element;
   }
 
+  @Override
   public DItemElement createDynamicElement(DynamicElementSettings settings) {
     DItemElement itemElement;
     if (settings.isMethod()) {

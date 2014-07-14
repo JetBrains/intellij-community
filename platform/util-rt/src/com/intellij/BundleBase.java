@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,9 @@ public abstract class BundleBase {
   public static boolean assertKeyIsFound = false;
 
   public static String messageOrDefault(@Nullable final ResourceBundle bundle,
-                                        final String key,
+                                        @NotNull String key,
                                         @Nullable final String defaultValue,
-                                        final Object... params) {
+                                        @NotNull Object... params) {
     if (bundle == null) return defaultValue;
 
     String value;

@@ -15,6 +15,11 @@
  */
 package org.jetbrains.ether;
 
+import org.jetbrains.jps.model.JpsDummyElement;
+import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
+import org.jetbrains.jps.model.module.JpsModule;
+
 /**
  * @author: db
  * Date: 22.09.11
@@ -118,4 +123,31 @@ public class CommonTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testAddClassHidingImportedClass2() throws Exception {
+    doTest();
+  }
+
+  public void testMoveClassToDependentModule() throws Exception {
+    JpsModule moduleA = addModule("moduleA", "moduleA/src");
+    JpsModule moduleB = addModule("moduleB", "moduleB/src");
+    JpsModuleRootModificationUtil.addDependency(moduleB, moduleA);
+    doTestBuild(1).assertSuccessful();
+  }
+
+  public void testMoveClassToDependentModuleWithSameOutput() throws Exception {
+    final JpsSdk<JpsDummyElement> sdk = getOrCreateJdk();
+    final String commonOutput = getAbsolutePath("out");
+    JpsModule moduleA = addModule("moduleA", new String[]{getAbsolutePath("moduleA/src")}, commonOutput, commonOutput, sdk);
+    JpsModule moduleB = addModule("moduleB", new String[]{getAbsolutePath("moduleB/src")}, commonOutput, commonOutput, sdk);
+    JpsModuleRootModificationUtil.addDependency(moduleB, moduleA);
+    doTestBuild(1).assertSuccessful();
+  }
+
+  public void testMoveClassFromJavaFileToDependentModule() throws Exception {
+    JpsModule moduleA = addModule("moduleA", "moduleA/src");
+    JpsModule moduleB = addModule("moduleB", "moduleB/src");
+    JpsModuleRootModificationUtil.addDependency(moduleB, moduleA);
+    doTestBuild(1).assertSuccessful();
+  }
+  
 }

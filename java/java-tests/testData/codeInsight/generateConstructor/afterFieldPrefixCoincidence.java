@@ -1,7 +1,7 @@
 class Parent {
     Object menu;
 
-    Parent(Object menu) {
+    public Parent(Object menu) {
         this.menu = menu;
     }
 }

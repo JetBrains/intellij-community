@@ -61,8 +61,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   private XWatchesViewImpl myWatchesView;
   private final List<XDebugView> myViews = new ArrayList<XDebugView>();
 
-  public XDebugSessionTab(@NotNull final Project project, @NotNull final XDebugSessionImpl session, final @Nullable Icon icon,
-                          ExecutionEnvironment environment, ProgramRunner runner) {
+  public XDebugSessionTab(@NotNull Project project,
+                          @NotNull XDebugSessionImpl session,
+                          @Nullable Icon icon,
+                          @Nullable ExecutionEnvironment environment,
+                          @Nullable ProgramRunner runner) {
     super(project, "Debug", session.getSessionName(), GlobalSearchScope.allScope(project));
     if (environment != null) {
       setEnvironment(environment);
@@ -87,8 +90,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return result;
   }
 
-  private Content createWatchesContent(final XDebugSession session, final XDebugSessionData sessionData) {
-    myWatchesView = new XWatchesViewImpl(session, sessionData);
+  private Content createWatchesContent(final XDebugSessionImpl session, final XDebugSessionData sessionData) {
+    myWatchesView = new XWatchesViewImpl(session);
     myViews.add(myWatchesView);
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getMainPanel(),
                                          XDebuggerBundle.message("debugger.session.tab.watches.title"), AllIcons.Debugger.Watches, null);
@@ -127,7 +130,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   private void attachToSession(final @NotNull XDebugSessionImpl session, final @Nullable ProgramRunner runner,
-                               final @Nullable ExecutionEnvironment env, final @NotNull XDebugSessionData sessionData,
+                               final @Nullable ExecutionEnvironment environment, final @NotNull XDebugSessionData sessionData,
                                final @NotNull XDebugProcess debugProcess) {
     myUi.addContent(createFramesContent(session), 0, PlaceInGrid.left, false);
     myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
@@ -144,6 +147,12 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
         if (XWatchesView.DATA_KEY.is(dataId)) {
           return myWatchesView;
         }
+        if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
+          return session.getConsoleView();
+        }
+        if (XDebugSessionData.DATA_KEY.is(dataId)) {
+          return sessionData;
+        }
         return null;
       }
     });
@@ -159,18 +168,24 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
 
     DefaultActionGroup leftToolbar = new DefaultActionGroup();
-    final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
-    if (runner != null && env != null) {
-      RestartAction restartAction = new RestartAction(executor, runner, myRunContentDescriptor, env);
+    final Executor debugExecutor = DefaultDebugExecutor.getDebugExecutorInstance();
+    final Executor executor = environment != null ? environment.getExecutor() : debugExecutor;
+    if (runner != null && environment != null) {
+      RestartAction restartAction = new RestartAction(executor, runner, myRunContentDescriptor, environment);
       leftToolbar.add(restartAction);
       restartAction.registerShortcut(myUi.getComponent());
 
       List<AnAction> additionalRestartActions = session.getRestartActions();
       leftToolbar.addAll(additionalRestartActions);
       if (!additionalRestartActions.isEmpty()) leftToolbar.addSeparator();
+      leftToolbar.addAll(session.getExtraActions());
     }
 
     leftToolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_LEFT_TOOLBAR_GROUP));
+
+    for (AnAction action : session.getExtraStopActions()) {
+      leftToolbar.add(action, new Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM));
+    }
 
     //group.addSeparator();
     //addAction(group, DebuggerActions.EXPORT_THREADS);
@@ -208,7 +223,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     leftToolbar.add(PinToolwindowTabAction.getPinAction());
     leftToolbar.add(new CloseAction(executor, myRunContentDescriptor, getProject()));
-    leftToolbar.add(new ContextHelpAction(executor.getHelpId()));
+    leftToolbar.add(new ContextHelpAction(debugExecutor.getHelpId()));
 
     DefaultActionGroup topToolbar = new DefaultActionGroup();
     topToolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP));
@@ -217,11 +232,15 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myUi.getOptions().setLeftToolbar(leftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
     myUi.getOptions().setTopToolbar(topToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
 
-    if (env != null) {
-      final RunProfile runConfiguration = env.getRunProfile();
+    if (environment != null) {
+      final RunProfile runConfiguration = environment.getRunProfile();
       registerFileMatcher(runConfiguration);
       initLogConsoles(runConfiguration, myRunContentDescriptor.getProcessHandler(), myConsole);
     }
+
+    final DefaultActionGroup focus = new DefaultActionGroup();
+    focus.add(ActionManager.getInstance().getAction(XDebuggerActions.FOCUS_ON_BREAKPOINT));
+    myUi.getOptions().setAdditionalFocusActions(focus);
 
     rebuildViews();
   }

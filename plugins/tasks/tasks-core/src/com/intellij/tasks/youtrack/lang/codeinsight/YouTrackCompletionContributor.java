@@ -34,7 +34,7 @@ public class YouTrackCompletionContributor extends CompletionContributor {
   private static final InsertHandler<LookupElement> INSERT_HANDLER = new MyInsertHandler();
 
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull CompletionResultSet result) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(DebugUtil.psiToString(parameters.getOriginalFile(), true));
     }
@@ -101,7 +101,7 @@ public class YouTrackCompletionContributor extends CompletionContributor {
     }
     //int start = CharArrayUtil.shiftForward(text, lastSpace < 0 ? 0 : lastSpace + 1, "#{ ");
     int prefixStart = stopAt + 1;
-    if (prefixStart < text.length() && text.charAt(prefixStart) == '#') {
+    if (prefixStart < caretOffset && text.charAt(prefixStart) == '#') {
       prefixStart++;
     }
     return StringUtil.trimLeading(text.substring(prefixStart, caretOffset));

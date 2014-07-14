@@ -18,6 +18,7 @@ package com.siyeh.ipp.opassign;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -64,6 +65,6 @@ public class ReplaceWithOperatorAssignmentIntention extends MutablyNamedIntentio
       }
       newExpression.append(operand.getText());
     }
-    replaceExpression(newExpression.toString(), expression);
+    PsiReplacementUtil.replaceExpression(expression, newExpression.toString());
   }
 }

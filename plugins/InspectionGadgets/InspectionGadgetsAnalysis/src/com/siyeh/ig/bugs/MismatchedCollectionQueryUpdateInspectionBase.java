@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,21 @@ import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspection {
+  private static final Set<String> QUERY_EXCLUDES = Collections.singleton("java.util.Collections");
+  private static final Set<String> UPDATE_EXCLUDES = new HashSet<String>(CollectionUtils.getAllCollectionNames());
+  static {
+    UPDATE_EXCLUDES.add("java.util.Collections");
+  }
+
   @SuppressWarnings({"PublicField"})
   public final ExternalizableStringSet queryNames =
-    new ExternalizableStringSet("copyInto", "drainTo", "propertyNames", "save", "store", "write", "forEach", "replaceAll");
+    new ExternalizableStringSet("copyInto", "drainTo", "parallelStream", "propertyNames", "save", "store", "stream", "write", "forEach",
+                                "replaceAll");
   @SuppressWarnings({"PublicField"})
   public final ExternalizableStringSet updateNames =
     new ExternalizableStringSet("add", "clear", "drainTo", "insert", "load", "offer", "poll", "push", "put", "remove", "replace",
@@ -221,14 +232,12 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
       if (VariableAccessUtils.variableIsReturned(variable, context)) {
         return false;
       }
-      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, context)) {
-        return false;
-      }
       return !VariableAccessUtils.variableIsUsedInArrayInitializer(variable, context);
     }
 
     private boolean collectionContentsAreUpdated(PsiVariable variable, PsiElement context) {
-      if (collectionUpdateCalled(variable, context)) {
+      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, UPDATE_EXCLUDES, context) ||
+          collectionUpdateCalled(variable, context)) {
         return true;
       }
       final PsiExpression initializer = variable.getInitializer();
@@ -253,7 +262,8 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
     }
 
     private boolean collectionContentsAreQueried(PsiVariable variable, PsiElement context) {
-      if (collectionQueryCalled(variable, context)) {
+      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, QUERY_EXCLUDES, context) ||
+          collectionQueryCalled(variable, context)) {
         return true;
       }
       final PsiExpression initializer = variable.getInitializer();
@@ -264,15 +274,15 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
     }
 
     private boolean collectionQueryCalled(PsiVariable variable, PsiElement context) {
-      final CollectionQueryCalledVisitor visitor = new CollectionQueryCalledVisitor(variable, queryNames);
+      final CollectionQueryUpdateCalledVisitor visitor = new CollectionQueryUpdateCalledVisitor(variable, queryNames, true);
       context.accept(visitor);
-      return visitor.isQueried();
+      return visitor.isQueriedUpdated();
     }
 
     private boolean collectionUpdateCalled(@Nullable PsiVariable variable, PsiElement context) {
-      final CollectionUpdateCalledVisitor visitor = new CollectionUpdateCalledVisitor(variable, updateNames);
+      final CollectionQueryUpdateCalledVisitor visitor = new CollectionQueryUpdateCalledVisitor(variable, updateNames, false);
       context.accept(visitor);
-      return visitor.isUpdated();
+      return visitor.isQueriedUpdated();
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,30 +18,41 @@ package com.intellij.openapi.vfs.impl.http;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.FileContentUtilCore;
+import com.intellij.util.SmartList;
 import com.intellij.util.UriUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collections;
+import java.util.List;
 
 class VirtualFileImpl extends HttpVirtualFile {
   private final HttpFileSystemBase myFileSystem;
-  private final @Nullable RemoteFileInfoImpl myFileInfo;
+  @Nullable private final RemoteFileInfoImpl myFileInfo;
   private FileType myInitialFileType;
   private final String myPath;
   private final String myParentPath;
   private final String myName;
 
-  VirtualFileImpl(HttpFileSystemBase fileSystem, String path, final @Nullable RemoteFileInfoImpl fileInfo) {
+  private List<VirtualFile> myChildren;
+
+  VirtualFileImpl(@NotNull HttpFileSystemBase fileSystem, @Nullable VirtualFileImpl parent, String path, @Nullable RemoteFileInfoImpl fileInfo) {
+    if (parent != null) {
+      if (parent.myChildren == null) {
+        parent.myChildren = new SmartList<VirtualFile>();
+      }
+      parent.myChildren.add(this);
+    }
+
     myFileSystem = fileSystem;
     myPath = path;
     myFileInfo = fileInfo;
@@ -55,16 +66,14 @@ class VirtualFileImpl extends HttpVirtualFile {
               VirtualFileImpl file = VirtualFileImpl.this;
               FileDocumentManager.getInstance().reloadFiles(file);
               if (!localFile.getFileType().equals(myInitialFileType)) {
-                VFilePropertyChangeEvent event = new VFilePropertyChangeEvent(this, file, PROP_NAME, file.getName(), file.getName(), false);
-                BulkFileListener publisher = ApplicationManager.getApplication().getMessageBus().asyncPublisher(VirtualFileManager.VFS_CHANGES);
-                publisher.after(Collections.singletonList(event));
+                FileContentUtilCore.reparseFiles(file);
               }
             }
           });
         }
       });
 
-      path = UriUtil.trimLastSlash(UriUtil.trimParameters(path));
+      path = UriUtil.trimTrailingSlashes(UriUtil.trimParameters(path));
       int lastSlash = path.lastIndexOf('/');
       if (lastSlash == -1) {
         myParentPath = null;
@@ -107,6 +116,7 @@ class VirtualFileImpl extends HttpVirtualFile {
     return myFileSystem;
   }
 
+  @NotNull
   @Override
   public String getPath() {
     return myPath;
@@ -146,10 +156,20 @@ class VirtualFileImpl extends HttpVirtualFile {
 
   @Override
   public VirtualFile[] getChildren() {
-    if (myFileInfo == null) {
-      return EMPTY_ARRAY;
+    return ContainerUtil.isEmpty(myChildren) ? EMPTY_ARRAY : myChildren.toArray(new VirtualFile[myChildren.size()]);
+  }
+
+  @Nullable
+  @Override
+  public VirtualFile findChild(@NotNull @NonNls String name) {
+    if (!ContainerUtil.isEmpty(myChildren)) {
+      for (VirtualFile child : myChildren) {
+        if (StringUtil.equals(child.getNameSequence(), name)) {
+          return child;
+        }
+      }
     }
-    throw new UnsupportedOperationException();
+    return null;
   }
 
   @Override

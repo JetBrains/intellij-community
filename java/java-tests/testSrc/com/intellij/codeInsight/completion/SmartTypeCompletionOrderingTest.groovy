@@ -149,7 +149,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testBooleanValueOf() throws Throwable {
-    checkPreferredItems(0, "b", "valueOf", "valueOf", "Boolean.FALSE", "Boolean.TRUE");
+    checkPreferredItems(0, "b", "Boolean.FALSE", "Boolean.TRUE", "equals", "false", "true", "valueOf", "valueOf");
   }
   
   public void testXmlTagGetAttribute() throws Throwable {
@@ -161,7 +161,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferParametersToGetters() throws Throwable {
-    checkPreferredItems(0, "a", "I._1", "valueOf", "getLastI");
+    checkPreferredItems(0, "a", "I._1", "getLastI", "valueOf");
   }
 
   public void testExpectedInterfaceShouldGoFirst() throws Throwable {
@@ -178,7 +178,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferNonRecursiveMethodParams() throws Throwable {
-    checkPreferredItems(0, "b", "hashCode", "s", "a");
+    checkPreferredItems(0, "b", "s", "a", "hashCode");
   }
 
   public void testPreferDelegatingMethodParams() throws Throwable {
@@ -302,7 +302,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testDispreferGetterInSetterCall() {
-    checkPreferredItems 0, 'getZooColor', 'hashCode', 'color', 'getColor'
+    checkPreferredItems 0, 'color', 'getZooColor', 'getColor', 'hashCode'
   }
   public void testPreferOtherGetterInSetterCall() {
     checkPreferredItems 0, 'color', 'getColor', 'getZooColor', 'hashCode'
@@ -319,6 +319,25 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
   public void testPreferLocalWildcardClassOverObject() {
     checkPreferredItems 0, 'type', 'Object.class'
+  }
+
+  public void testPreferStringsInStringConcatenation() {
+    checkPreferredItems 0, 'toString'
+  }
+
+  public void testGlobalStaticMemberStats() {
+    configureNoCompletion(getTestName(false) + ".java")
+    myFixture.complete(CompletionType.SMART, 2)
+    assertPreferredItems 0, 'newLinkedSet0', 'newLinkedSet1', 'newLinkedSet2'
+    incUseCount lookup, 1
+    assertPreferredItems 0, 'newLinkedSet1', 'newLinkedSet0', 'newLinkedSet2'
+  }
+
+  public void testPreferExpectedTypeMembers() {
+    configureNoCompletion(getTestName(false) + ".java")
+    myFixture.complete(CompletionType.SMART, 2)
+    assertPreferredItems 0, 'MyColor.RED', 'Another.RED'
+    assert lookup.items.size() == 2
   }
 
   @Override

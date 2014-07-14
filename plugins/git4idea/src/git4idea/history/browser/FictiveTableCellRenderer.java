@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ public abstract class FictiveTableCellRenderer extends ColoredListCellRenderer {
           append(pair.getFirst(), pair.getSecond());
           final String adj = description.getMaxString(i);
           if (adj != null) {
-            final int adjWidth = helper.getWidth(new Pair<String, SimpleTextAttributes>(adj, pair.getSecond()));
+            final int adjWidth = helper.getWidth(Pair.create(adj, pair.getSecond()));
             appendFixedTextFragmentWidth(adjWidth);
             fixedWidth += adjWidth;
           } else {
@@ -104,12 +104,12 @@ public abstract class FictiveTableCellRenderer extends ColoredListCellRenderer {
       if (fixedWidth < parentWidth) {
         // todo this should be rewised
         final Trinity<String, SimpleTextAttributes, Object> tag = getMoreTag();
-        final int more = helper.getWidth(new Pair<String, SimpleTextAttributes>(tag.getFirst(), tag.getSecond()));
+        final int more = helper.getWidth(Pair.create(tag.getFirst(), tag.getSecond()));
         if (more < difference) {
           final String truncated = CommittedChangeListRenderer
             .truncateDescription(changeable.getFirst(), helper.getFontMetrics(changeable.getSecond()), difference - more);
           
-          final int truncatedWidth = helper.getWidth(new Pair<String, SimpleTextAttributes>(truncated, changeable.getSecond()));
+          final int truncatedWidth = helper.getWidth(Pair.create(truncated, changeable.getSecond()));
           append(truncated, changeable.getSecond());
           append(tag.getFirst(), tag.getSecond(), tag.getThird());
           if (truncatedWidth > 0) {

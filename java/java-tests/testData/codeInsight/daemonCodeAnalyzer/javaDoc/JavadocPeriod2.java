@@ -2,6 +2,6 @@
 * Do smth
 * @author me.
 */
-public class Test {
+class Test {
 
 }

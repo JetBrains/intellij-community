@@ -38,7 +38,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.MultiMapBasedOnSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +50,6 @@ public class DataFlowRunner {
 
   private Instruction[] myInstructions;
   private final MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<PsiElement, DfaMemoryState>();
-  private DfaVariableValue[] myFields;
   private final DfaValueFactory myValueFactory;
 
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
@@ -113,15 +111,17 @@ public class DataFlowRunner {
 
       int endOffset = flow.getInstructionCount();
       myInstructions = flow.getInstructions();
-      myFields = flow.getFields();
       myNestedClosures.clear();
       
       Set<Instruction> joinInstructions = ContainerUtil.newHashSet();
-      for (Instruction instruction : myInstructions) {
+      for (int index = 0; index < myInstructions.length; index++) {
+        Instruction instruction = myInstructions[index];
         if (instruction instanceof GotoInstruction) {
           joinInstructions.add(myInstructions[((GotoInstruction)instruction).getOffset()]);
         } else if (instruction instanceof ConditionalGotoInstruction) {
           joinInstructions.add(myInstructions[((ConditionalGotoInstruction)instruction).getOffset()]);
+        } else if (instruction instanceof MethodCallInstruction) {
+          joinInstructions.add(myInstructions[index + 1]);
         }
       }
 
@@ -144,10 +144,10 @@ public class DataFlowRunner {
         queue.offer(new DfaInstructionState(myInstructions[0], initialState));
       }
 
-      MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState> processedStates = new MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState>();
-      MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState> incomingStates = new MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState>();
+      MultiMap<BranchingInstruction, DfaMemoryState> processedStates = MultiMap.createSet();
+      MultiMap<BranchingInstruction, DfaMemoryState> incomingStates = MultiMap.createSet();
 
-      WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(shouldCheckTimeLimit() ? ourTimeLimit : ourTimeLimit * 42);
+      WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(shouldCheckTimeLimit() ? ourTimeLimit : ourTimeLimit * 5);
       int count = 0;
       while (!queue.isEmpty()) {
         for (DfaInstructionState instructionState : queue.getNextInstructionStates(joinInstructions)) {
@@ -226,14 +226,14 @@ public class DataFlowRunner {
         }
       }
     }
+    else if (instruction instanceof LambdaInstruction) {
+      PsiLambdaExpression lambdaExpression = ((LambdaInstruction)instruction).getLambdaExpression();
+      registerNestedClosures(instructionState, lambdaExpression);
+    }
     else if (instruction instanceof EmptyInstruction) {
       PsiElement anchor = ((EmptyInstruction)instruction).getAnchor();
-      if (anchor instanceof PsiDeclarationStatement) {
-        for (PsiElement element : ((PsiDeclarationStatement)anchor).getDeclaredElements()) {
-          if (element instanceof PsiClass) {
-            registerNestedClosures(instructionState, (PsiClass)element);
-          }
-        }
+      if (anchor instanceof PsiClass) {
+        registerNestedClosures(instructionState, (PsiClass)anchor);
       }
     }
 
@@ -255,6 +255,14 @@ public class DataFlowRunner {
       myNestedClosures.putValue(field, createClosureState(state));
     }
   }
+  
+  private void registerNestedClosures(DfaInstructionState instructionState, PsiLambdaExpression expr) {
+    DfaMemoryState state = instructionState.getMemoryState();
+    PsiElement body = expr.getBody();
+    if (body != null) {
+      myNestedClosures.putValue(body, createClosureState(state));
+    }
+  }
 
   protected ControlFlowAnalyzer createControlFlowAnalyzer() {
     return new ControlFlowAnalyzer(myValueFactory);
@@ -270,10 +278,6 @@ public class DataFlowRunner {
 
   public Instruction getInstruction(int index) {
     return myInstructions[index];
-  }
-
-  public DfaVariableValue[] getFields() {
-    return myFields;
   }
 
   public MultiMap<PsiElement, DfaMemoryState> getNestedClosures() {
@@ -314,9 +318,9 @@ public class DataFlowRunner {
     return Pair.create(trueSet, falseSet);
   }
 
-  private DfaMemoryStateImpl createClosureState(DfaMemoryState memState) {
+  private static DfaMemoryStateImpl createClosureState(DfaMemoryState memState) {
     DfaMemoryStateImpl copy = (DfaMemoryStateImpl)memState.createCopy();
-    copy.flushFields(getFields());
+    copy.flushFields();
     Set<DfaVariableValue> vars = new HashSet<DfaVariableValue>(copy.getVariableStates().keySet());
     for (DfaVariableValue value : vars) {
       copy.flushDependencies(value);

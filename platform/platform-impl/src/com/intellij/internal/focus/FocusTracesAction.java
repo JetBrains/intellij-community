@@ -52,7 +52,7 @@ public class FocusTracesAction extends AnAction implements DumbAware {
         @Override
         public void eventDispatched(AWTEvent event) {
           if (event instanceof FocusEvent && event.getID() == FocusEvent.FOCUS_GAINED) {
-            focusManager.getRequests().add(new FocusRequestInfo(((FocusEvent)event).getComponent(), new Throwable(), false));
+            focusManager.recordFocusRequest(((FocusEvent)event).getComponent(), false);
           }
         }
       };

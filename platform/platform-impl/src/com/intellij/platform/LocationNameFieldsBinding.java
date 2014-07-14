@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class LocationNameFieldsBinding {
                                                                            descriptor,
                                                                            TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
         @Override
-        protected void onFileChoosen(@NotNull VirtualFile chosenFile) {
+        protected void onFileChosen(@NotNull VirtualFile chosenFile) {
           myBaseDir = chosenFile.getPath();
           if (isProjectNameChanged(nameTextField.getText()) && !nameTextField.getText().equals(chosenFile.getName())) {
             myExternalModify = true;

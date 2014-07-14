@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -104,7 +105,7 @@ public class ControlFlowStatementWithoutBracesInspection
       }
       final String newStatementText =
         "{\n" + statementWithoutBraces.getText() + "\n}";
-      replaceStatement(statementWithoutBraces, newStatementText);
+      PsiReplacementUtil.replaceStatement(statementWithoutBraces, newStatementText);
     }
   }
 

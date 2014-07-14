@@ -67,7 +67,6 @@ public interface MavenDomDependency extends MavenDomElement, MavenDomArtifactCoo
    * @return the value of the classifier child.
    */
   @NotNull
-  @Required(value = false, nonEmpty = true)
   GenericDomValue<String> getClassifier();
 
   /**

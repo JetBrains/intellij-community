@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.xml.TagNameVariantCollector;
 import com.intellij.psi.impl.source.xml.XmlDocumentImpl;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -34,11 +33,13 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 class XmlMover extends LineMover {
   //private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.moveUpDown.XmlMover");
 
+  @Override
   public boolean checkAvailable(@NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final MoveInfo info, final boolean down) {
     if (!(file instanceof XmlFile)) {
       return false;
@@ -62,11 +63,7 @@ class XmlMover extends LineMover {
     if (checkInjections(movedEndElement, movedStartElement)) return false;
 
     XmlTag nearestTag = PsiTreeUtil.getParentOfType(movedStartElement, XmlTag.class);
-    if (nearestTag != null &&
-        ( "script".equals(nearestTag.getLocalName()) ||
-          (nearestTag instanceof HtmlTag && "script".equalsIgnoreCase(nearestTag.getLocalName()))
-        )
-      ) {
+    if (nearestTag != null && HtmlUtil.isScriptTag(nearestTag)) {
       return false;
     }
 

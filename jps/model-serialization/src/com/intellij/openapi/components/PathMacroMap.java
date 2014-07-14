@@ -43,9 +43,14 @@ public abstract class PathMacroMap {
       else if (child instanceof Text) {
         Text t = (Text)child;
         if (filter == null || !filter.skipPathMacros(t)) {
-          t.setText((recursively || (filter != null && filter.recursePathMacros(t)))
-                    ? substituteRecursively(t.getText(), caseSensitive)
-                    : substitute(t.getText(), caseSensitive));
+          String oldText = t.getText();
+          String newText = (recursively || (filter != null && filter.recursePathMacros(t)))
+                       ? substituteRecursively(oldText, caseSensitive)
+                       : substitute(oldText, caseSensitive);
+          if (oldText != newText) {
+            // it is faster to call 'setText' right away than perform additional 'equals' check
+            t.setText(newText);
+          }
         }
       }
       else if (!(child instanceof Comment)) {
@@ -55,9 +60,14 @@ public abstract class PathMacroMap {
 
     for (Attribute attribute : e.getAttributes()) {
       if (filter == null || !filter.skipPathMacros(attribute)) {
-        attribute.setValue((recursively || (filter != null && filter.recursePathMacros(attribute)))
-                           ? substituteRecursively(attribute.getValue(), caseSensitive)
-                           : substitute(attribute.getValue(), caseSensitive));
+        String oldValue = attribute.getValue();
+        String newValue = (recursively || (filter != null && filter.recursePathMacros(attribute)))
+                       ? substituteRecursively(oldValue, caseSensitive)
+                       : substitute(oldValue, caseSensitive);
+        if (oldValue != newValue) {
+          // it is faster to call 'setValue' right away than perform additional 'equals' check
+          attribute.setValue(newValue);
+        }
       }
     }
   }

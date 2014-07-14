@@ -27,7 +27,6 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -55,7 +54,7 @@ public class BranchInfo {
   private final MultiMap<Long, String> myPartlyMerged;
 
   public BranchInfo(final SvnVcs vcs, final String repositoryRoot, final String branchUrl, final String trunkUrl,
-                     final String trunkCorrected, final SVNWCClient client) {
+                    final String trunkCorrected) {
     myVcs = vcs;
     myRepositoryRoot = repositoryRoot;
     myBranchUrl = branchUrl;

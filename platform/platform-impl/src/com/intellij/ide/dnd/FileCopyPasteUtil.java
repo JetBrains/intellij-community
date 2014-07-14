@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,7 @@
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.UnknownFileType;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -36,9 +34,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * todo: migrate all CCP/DnD support classes to JDK6 TransferHandlers (IDEA 12?)
- */
 public class FileCopyPasteUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.dnd.FileCopyPasteUtil");
 
@@ -54,8 +49,8 @@ public class FileCopyPasteUtil {
 
   public static DataFlavor createDataFlavor(@NotNull final String mimeType, @Nullable final Class<?> klass, final boolean register) {
     try {
-      final String typeString = klass != null ? mimeType + ";class=" + klass.getName() : mimeType;
-      final DataFlavor flavor = new DataFlavor(typeString);
+      final DataFlavor flavor =
+        klass != null ? new DataFlavor(mimeType + ";class=" + klass.getName(), null, klass.getClassLoader()) : new DataFlavor(mimeType);
 
       if (register) {
         final FlavorMap map = SystemFlavorMap.getDefaultFlavorMap();
@@ -77,19 +72,19 @@ public class FileCopyPasteUtil {
     return createDataFlavor(DataFlavor.javaJVMLocalObjectMimeType, klass, false);
   }
 
-  public static boolean isFileListFlavorSupported(@NotNull final Transferable transferable) {
-    return transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor) ||
-           transferable.isDataFlavorSupported(LinuxDragAndDropSupport.uriListFlavor) ||
-           transferable.isDataFlavorSupported(LinuxDragAndDropSupport.gnomeFileListFlavor);
+  public static boolean isFileListFlavorAvailable() {
+    return CopyPasteManager.getInstance().areDataFlavorsAvailable(
+      DataFlavor.javaFileListFlavor, LinuxDragAndDropSupport.uriListFlavor, LinuxDragAndDropSupport.gnomeFileListFlavor
+    );
   }
 
-  public static boolean isFileListFlavorSupported(@NotNull final DnDEvent event) {
+  public static boolean isFileListFlavorAvailable(@NotNull DnDEvent event) {
     return event.isDataFlavorSupported(DataFlavor.javaFileListFlavor) ||
            event.isDataFlavorSupported(LinuxDragAndDropSupport.uriListFlavor) ||
            event.isDataFlavorSupported(LinuxDragAndDropSupport.gnomeFileListFlavor);
   }
 
-  public static boolean isFileListFlavorSupported(@NotNull final DataFlavor[] transferFlavors) {
+  public static boolean isFileListFlavorAvailable(@NotNull DataFlavor[] transferFlavors) {
     for (DataFlavor flavor : transferFlavors) {
       if (flavor != null && (flavor.equals(DataFlavor.javaFileListFlavor) ||
                              flavor.equals(LinuxDragAndDropSupport.uriListFlavor) ||
@@ -151,9 +146,7 @@ public class FileCopyPasteUtil {
         if (virtualFile == null) continue;
         result.add(virtualFile);
         // detect and store file type for Finder-2-IDEA drag-n-drop
-        if (!virtualFile.isDirectory() && virtualFile.getFileType() == UnknownFileType.INSTANCE) {
-          FileTypeRegistry.getInstance().detectFileTypeFromContent(virtualFile);
-        }
+        virtualFile.getFileType();
       }
     }
     return result;

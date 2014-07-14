@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,7 +120,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     String containingClassName = mySettings.getContainingClassName();
     PsiClass targetClass = JavaPsiFacade.getInstance(myProject).findClass(containingClassName, GlobalSearchScope.allScope(myProject));
     if (targetClass == null || targetClass instanceof SyntheticElement) {
-      if (containingClassName.length() > 0) {
+      if (!containingClassName.isEmpty()) {
         myClassComboBox.addItem(containingClassName);
       }
 
@@ -179,11 +179,13 @@ public abstract class DynamicDialog extends DialogWrapper {
     return item instanceof Document ? (Document)item : null;
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     return myPanel;
   }
 
+  @Override
   protected void doOKAction() {
     super.doOKAction();
 
@@ -213,8 +215,10 @@ public abstract class DynamicDialog extends DialogWrapper {
     final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myContext.getContainingFile());
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         UndoManager.getInstance(myProject).undoableActionPerformed(new GlobalUndoableAction(document) {
+          @Override
           public void undo() throws UnexpectedUndoException {
 
             final DItemElement itemElement;
@@ -243,11 +247,12 @@ public abstract class DynamicDialog extends DialogWrapper {
 
             removeElement(itemElement);
 
-            if (classElement.getMethods().size() == 0 && classElement.getProperties().size() == 0) {
+            if (classElement.getMethods().isEmpty() && classElement.getProperties().isEmpty()) {
               myDynamicManager.removeClassElement(classElement);
             }
           }
 
+          @Override
           public void redo() throws UnexpectedUndoException {
             addElement(mySettings);
           }
@@ -274,12 +279,14 @@ public abstract class DynamicDialog extends DialogWrapper {
     myDynamicManager.fireChange();
   }
 
+  @Override
   public void doCancelAction() {
     super.doCancelAction();
 
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myTypeComboBox;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,14 @@
 
 package com.intellij.codeInsight.template.macro;
 
+import com.intellij.codeInsight.completion.CompletionPhase;
+import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -78,9 +80,15 @@ public abstract class BaseCompleteMacro extends Macro {
       public void run() {
         if (project.isDisposed() || editor.isDisposed() || psiFile == null || !psiFile.isValid()) return;
 
+        // it's invokeLater, so another completion could have started
+        if (CompletionServiceImpl.getCompletionService().getCurrentCompletion() != null) return;
+
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           @Override
           public void run() {
+            // if we're in some completion's insert handler, make sure our new completion isn't treated as the second invocation
+            CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+            
             invokeCompletionHandler(project, editor);
             Lookup lookup = LookupManager.getInstance(project).getActiveLookup();
 
@@ -94,11 +102,7 @@ public abstract class BaseCompleteMacro extends Macro {
         }, "", null);
       }
     };
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      runnable.run();
-    } else {
-      ApplicationManager.getApplication().invokeLater(runnable);
-    }
+    ApplicationManager.getApplication().invokeLater(runnable);
   }
 
   private static void considerNextTab(Editor editor) {

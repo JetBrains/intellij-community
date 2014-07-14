@@ -18,6 +18,7 @@ package com.siyeh.ipp.concatenation;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +63,7 @@ public class MergeCallSequenceToChainIntention extends Intention {
       }
       methodCallExpression = (PsiMethodCallExpression)grandParent;
     }
-    replaceExpression(newMethodCallExpression.toString(), expression);
+    PsiReplacementUtil.replaceExpression(expression, newMethodCallExpression.toString());
     nextSibling.delete();
   }
 

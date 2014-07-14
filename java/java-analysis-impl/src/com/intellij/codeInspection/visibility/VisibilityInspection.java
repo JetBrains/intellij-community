@@ -42,7 +42,9 @@ import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -192,13 +194,25 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
         final PsiElement element = refElement.getElement();
         final PsiElement nameIdentifier = element != null ? IdentifierUtil.getNameIdentifier(element) : null;
         if (nameIdentifier != null) {
+          final String message;
+          String quickFixName = "Make " + ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE) + " ";
+          if (access.equals(PsiModifier.PRIVATE)) {
+            message = CAN_BE_PRIVATE;
+            quickFixName += PsiModifier.PRIVATE;
+          }
+          else {
+            if (access.equals(PsiModifier.PACKAGE_LOCAL)) {
+              message = CAN_BE_PACKAGE_LOCAL;
+              quickFixName += "package local";
+            }
+            else {
+              message = CAN_BE_PROTECTED;
+              quickFixName += PsiModifier.PROTECTED;
+            }
+          }
           return new ProblemDescriptor[]{manager.createProblemDescriptor(nameIdentifier,
-                                                                         access.equals(PsiModifier.PRIVATE)
-                                                                          ? CAN_BE_PRIVATE
-                                                                          : access.equals(PsiModifier.PACKAGE_LOCAL)
-                                                                            ? CAN_BE_PACKAGE_LOCAL
-                                                                            : CAN_BE_PROTECTED,
-                                                                         new AcceptSuggestedAccess(globalContext.getRefManager(), access),
+                                                                         message,
+                                                                         new AcceptSuggestedAccess(globalContext.getRefManager(), access, quickFixName),
                                                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)};
         }
       }
@@ -527,7 +541,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   @Override
   @Nullable
   public QuickFix getQuickFix(final String hint) {
-    return new AcceptSuggestedAccess(null, hint);
+    return new AcceptSuggestedAccess(null, hint, null);
   }
 
   @Override
@@ -539,22 +553,24 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   private static class AcceptSuggestedAccess implements LocalQuickFix{
     private final RefManager myManager;
     @PsiModifier.ModifierConstant private final String myHint;
+    private String myName;
 
-    private AcceptSuggestedAccess(final RefManager manager, @PsiModifier.ModifierConstant String hint) {
+    private AcceptSuggestedAccess(final RefManager manager, @PsiModifier.ModifierConstant String hint, String name) {
       myManager = manager;
       myHint = hint;
+      myName = name;
     }
 
     @Override
     @NotNull
     public String getName() {
-      return InspectionsBundle.message("inspection.visibility.accept.quickfix");
+      return myName != null ? myName : getFamilyName();
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionsBundle.message("inspection.visibility.accept.quickfix");
     }
 
     @Override

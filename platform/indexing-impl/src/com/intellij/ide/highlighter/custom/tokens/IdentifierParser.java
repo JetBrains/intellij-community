@@ -23,7 +23,10 @@ import com.intellij.psi.tree.IElementType;
  * @author dsl
  */
 public class IdentifierParser extends TokenParser {
-  public IdentifierParser() {
+  private final KeywordParser myKeywordParser;
+
+  public IdentifierParser(KeywordParser keywordParser) {
+    myKeywordParser = keywordParser;
   }
 
   @Override
@@ -31,15 +34,15 @@ public class IdentifierParser extends TokenParser {
     if (!Character.isJavaIdentifierStart(myBuffer.charAt(position))) return false;
     final int start = position;
     for (position++; position < myEndOffset; position++) {
-      final char c = myBuffer.charAt(position);
-      if (!isIdentifierPart(c)) break;
+      if (!isIdentifierPart(position)) break;
     }
     IElementType tokenType = CustomHighlighterTokenType.IDENTIFIER;
     myTokenInfo.updateData(start, position, tokenType);
     return true;
   }
 
-  protected boolean isIdentifierPart(final char c) {
-    return Character.isJavaIdentifierPart(c) || c == '-';
+  private boolean isIdentifierPart(int position) {
+    if (myBuffer.charAt(position) == '-') return !myKeywordParser.hasToken(position, myBuffer, null);
+    return KeywordParser.isWordPart(position, myBuffer);
   }
 }

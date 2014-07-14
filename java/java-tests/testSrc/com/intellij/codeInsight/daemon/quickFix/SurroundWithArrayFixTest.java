@@ -20,7 +20,9 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-public class SurroundWithArrayFixTest extends LightQuickFix15TestCase {
+import com.intellij.pom.java.LanguageLevel;
+
+public class SurroundWithArrayFixTest extends LightQuickFixParameterizedTestCase {
    public void test() throws Exception {
      doAllTests();
    }
@@ -28,5 +30,10 @@ public class SurroundWithArrayFixTest extends LightQuickFix15TestCase {
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/surroundWithArray";
+  }
+
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_5;
   }
 }

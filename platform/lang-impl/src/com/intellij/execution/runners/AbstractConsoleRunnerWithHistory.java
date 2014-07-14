@@ -19,16 +19,13 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
-import com.intellij.execution.console.LanguageConsoleImpl;
-import com.intellij.execution.console.LanguageConsoleView;
-import com.intellij.execution.console.LanguageConsoleViewImpl;
+import com.intellij.execution.console.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.SideBorder;
@@ -57,7 +54,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
   private final Project myProject;
 
-  private ConsoleExecuteActionHandler myConsoleExecuteActionHandler;
+  private ProcessBackedConsoleExecuteActionHandler myConsoleExecuteActionHandler;
 
   public AbstractConsoleRunnerWithHistory(@NotNull Project project, @NotNull String consoleTitle, @Nullable String workingDir) {
     myProject = project;
@@ -89,7 +86,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     }
     myProcessHandler = createProcessHandler(process);
 
-    myConsoleExecuteActionHandler = createConsoleExecuteActionHandler();
+    myConsoleExecuteActionHandler = createExecuteActionHandler();
 
     ProcessTerminatedListener.attach(myProcessHandler);
 
@@ -100,15 +97,15 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
       }
     });
 
-// Attach to process
+    // Attach to process
     myConsoleView.attachToProcess(myProcessHandler);
 
-// Runner creating
+    // Runner creating
     final Executor defaultExecutor = DefaultRunExecutor.getRunExecutorInstance();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false);
 
-// Runner creating
+    // Runner creating
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(actionToolbar.getComponent(), BorderLayout.WEST);
     panel.add(myConsoleView.getComponent(), BorderLayout.CENTER);
@@ -121,21 +118,20 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     contentDescriptor.setFocusComputable(new Computable<JComponent>() {
       @Override
       public JComponent compute() {
-        final EditorEx editor = getLanguageConsole().getConsoleEditor();
-        return editor != null ? editor.getContentComponent() : null;
+        return getLanguageConsole().getConsoleEditor().getContentComponent();
       }
     });
     contentDescriptor.setAutoFocusContent(isAutoFocusContent());
 
 
-// tool bar actions
+    // tool bar actions
     final List<AnAction> actions = fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
     registerActionShortcuts(actions, getLanguageConsole().getConsoleEditor().getComponent());
     registerActionShortcuts(actions, panel);
     panel.updateUI();
     showConsole(defaultExecutor, contentDescriptor);
 
-// Run
+    // Run
     myProcessHandler.startNotify();
   }
 
@@ -161,7 +157,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
               max = num;
             }
           }
-          catch (Exception e) {
+          catch (Exception ignored) {
             //skip
           }
         }
@@ -212,18 +208,16 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
     List<AnAction> actionList = ContainerUtil.newArrayList();
 
-//stop
-    final AnAction stopAction = createStopAction();
-    actionList.add(stopAction);
+    //stop
+    actionList.add(createStopAction());
 
-//close
-    final AnAction closeAction = createCloseAction(defaultExecutor, contentDescriptor);
-    actionList.add(closeAction);
+    //close
+    actionList.add(createCloseAction(defaultExecutor, contentDescriptor));
 
-// run action
-    actionList.add(createConsoleExecAction(getLanguageConsole(), myProcessHandler, myConsoleExecuteActionHandler));
+    // run action
+    actionList.add(createConsoleExecAction(myConsoleExecuteActionHandler));
 
-// Help
+    // Help
     actionList.add(CommonActionsManager.getInstance().createHelpAction("interactive_console"));
 
     toolbarActions.addAll(actionList);
@@ -243,16 +237,46 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     return myConsoleView.getConsole();
   }
 
-  public static AnAction createConsoleExecAction(final LanguageConsoleImpl languageConsole,
-                                                 final ProcessHandler processHandler,
-                                                 final ConsoleExecuteActionHandler consoleExecuteActionHandler) {
-    return new ConsoleExecuteAction(languageConsole, consoleExecuteActionHandler, ConsoleExecuteAction.CONSOLE_EXECUTE_ACTION_ID,
-                                    new LanguageConsoleBuilder.ProcessBackedExecutionEnabledCondition(processHandler));
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * @deprecated to remove in IDEA 14
+   */
+  public static AnAction createConsoleExecAction(@NotNull LanguageConsoleView console,
+                                                 @NotNull ProcessHandler processHandler,
+                                                 @NotNull ProcessBackedConsoleExecuteActionHandler consoleExecuteActionHandler) {
+    return new ConsoleExecuteAction(console, consoleExecuteActionHandler, consoleExecuteActionHandler.getEmptyExecuteAction(), consoleExecuteActionHandler);
+  }
+
+  protected AnAction createConsoleExecAction(@NotNull ProcessBackedConsoleExecuteActionHandler consoleExecuteActionHandler) {
+    return new ConsoleExecuteAction(myConsoleView, consoleExecuteActionHandler, consoleExecuteActionHandler.getEmptyExecuteAction(), consoleExecuteActionHandler);
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * @deprecated to remove in IDEA 14
+   */
+  public static AnAction createConsoleExecAction(LanguageConsoleImpl languageConsole,
+                                                 ProcessHandler processHandler,
+                                                 @SuppressWarnings("deprecation") ConsoleExecuteActionHandler consoleExecuteActionHandler) {
+    return ConsoleExecuteAction.createAction(languageConsole, consoleExecuteActionHandler);
   }
 
   @NotNull
-  protected abstract ConsoleExecuteActionHandler createConsoleExecuteActionHandler();
+  protected ProcessBackedConsoleExecuteActionHandler createExecuteActionHandler() {
+    //noinspection deprecation
+    return createConsoleExecuteActionHandler();
+  }
 
+  @SuppressWarnings({"UnusedDeclaration", "deprecation"})
+  @Deprecated
+  /**
+   * @deprecated to remove in IDEA 14
+   */
+  protected ConsoleExecuteActionHandler createConsoleExecuteActionHandler() {
+    throw new AbstractMethodError();
+  }
 
   public T getConsoleView() {
     return myConsoleView;
@@ -274,7 +298,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     return myProcessHandler;
   }
 
-  public ConsoleExecuteActionHandler getConsoleExecuteActionHandler() {
+  public ProcessBackedConsoleExecuteActionHandler getConsoleExecuteActionHandler() {
     return myConsoleExecuteActionHandler;
   }
 }

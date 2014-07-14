@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,19 @@
  */
 package com.intellij.openapi.options;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author yole
  */
 public abstract class BaseSchemeProcessor<T extends ExternalizableScheme> implements SchemeProcessor<T> {
-  public void initScheme(T scheme) {
+  public void initScheme(@NotNull T scheme) {
   }
 
-  public void onSchemeAdded(final T scheme) {
+  public void onSchemeAdded(@NotNull final T scheme) {
   }
 
-  public void onSchemeDeleted(final T scheme) {
+  public void onSchemeDeleted(@NotNull final T scheme) {
   }
 
   public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {

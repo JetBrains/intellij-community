@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -49,7 +50,7 @@ public interface Job<T> {
 
   boolean isDone();
 
-  void waitForCompletion(int millis) throws InterruptedException, ExecutionException, TimeoutException;
+  void waitForCompletion(int millis) throws InterruptedException, ExecutionException, TimeoutException, CancellationException;
 
   @NotNull
   Job NULL_JOB = new Job() {

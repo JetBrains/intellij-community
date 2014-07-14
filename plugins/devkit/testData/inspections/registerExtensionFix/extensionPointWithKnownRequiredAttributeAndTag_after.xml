@@ -1,0 +1,15 @@
+<idea-plugin>
+  <id>com.my.plugin</id>
+  <extensionPoints>
+    <extensionPoint name="intentionAction"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with tag="className" implements="MyLanguageExtensionPointInterface"/>
+    </extensionPoint>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.my.plugin">
+      <intentionAction language="">
+          <className>MyLanguageExtensionPoint</className>
+      </intentionAction>
+  </extensions>
+</idea-plugin>

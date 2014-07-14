@@ -48,27 +48,27 @@ class MyTest {
 
     static {
         I1 i1 = MyTest::static_1;
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest.I1'">I1 i2 = MyTest::static_2;</error>
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest.I1'">I1 i3 = MyTest::static_3;</error>
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest.I1'">I1 i4 = MyTest::static_4;</error>
+        I1 i2 = MyTest::<error descr="Cannot resolve method 'static_2'">static_2</error>;
+        I1 i3 = MyTest::<error descr="Cannot resolve method 'static_3'">static_3</error>;
+        I1 i4 = MyTest::<error descr="Cannot resolve method 'static_4'">static_4</error>;
     }
 
 
     {
         I1 i_1 = <error descr="Non-static method cannot be referenced from a static context">MyTest::_1</error>;
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest.I1'">I1 i_2 = MyTest::_2;</error>
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest.I1'">I1 i_3 = MyTest::_3;</error>
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest.I1'">I1 i_4 = MyTest::_4;</error>
+        I1 i_2 = MyTest::<error descr="Cannot resolve method '_2'">_2</error>;
+        I1 i_3 = MyTest::<error descr="Cannot resolve method '_3'">_3</error>;
+        I1 i_4 = MyTest::<error descr="Cannot resolve method '_4'">_4</error>;
 
         I1 i1 = this::_1;
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest.I1'">I1 i2 = this::_2;</error>
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest.I1'">I1 i3 = this::_3;</error>
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest.I1'">I1 i4 = this::_4;</error>
+        I1 i2 = this::<error descr="Cannot resolve method '_2'">_2</error>;
+        I1 i3 = this::<error descr="Cannot resolve method '_3'">_3</error>;
+        I1 i4 = this::<error descr="Cannot resolve method '_4'">_4</error>;
 
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest.I2'">I2 i21 = MyTest::m1;</error>
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest.I2'">I2 i22 = MyTest::m2;</error>
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest.I2'">I2 i23 = MyTest::m3;</error>
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest.I2'">I2 i24 = MyTest::m4;</error>
+        I2 i21 = MyTest::<error descr="Cannot resolve method 'm1'">m1</error>;
+        I2 i22 = MyTest::<error descr="Cannot resolve method 'm2'">m2</error>;
+        I2 i23 = MyTest::<error descr="Cannot resolve method 'm3'">m3</error>;
+        I2 i24 = MyTest::<error descr="Cannot resolve method 'm4'">m4</error>;
     }
 }
 

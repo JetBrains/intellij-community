@@ -248,27 +248,13 @@ public class X11UiUtil {
 
     try {
       if (wmName.startsWith("Mutter") || "Muffin".equals(wmName) || "GNOME Shell".equals(wmName)) {
-        try {
-          setWM("MUTTER_WM");
-        }
-        catch (NoSuchFieldException e) {
-          setWM("METACITY_WM");
-        }
+        setWM("MUTTER_WM", "METACITY_WM");
       }
       else if ("Marco".equals(wmName)) {
-        setWM("METACITY_WM");
+        setWM("MARCO_WM", "METACITY_WM");
       }
       else if ("awesome".equals(wmName)) {
-        try {
-          Class<?> xwmClass = Class.forName("sun.awt.X11.XWM");
-          xwmClass.getDeclaredField("OTHER_NONREPARENTING_WM");
-          if (System.getenv("_JAVA_AWT_WM_NONREPARENTING") == null) {
-            setWM("OTHER_NONREPARENTING_WM");  // patch present but not activated
-          }
-        }
-        catch (NoSuchFieldException e) {
-          setWM("LG3D_WM");  // patch absent - mimic LG3D
-        }
+        setWM("SAWFISH_WM");
       }
     }
     catch (Throwable e) {
@@ -276,15 +262,21 @@ public class X11UiUtil {
     }
   }
 
-  private static void setWM(String wmConstant) throws Exception {
+  private static void setWM(String... wmConstants) throws Exception {
     Class<?> xwmClass = Class.forName("sun.awt.X11.XWM");
     Object xwm = method(xwmClass, "getWM").invoke(null);
     if (xwm != null) {
-      Field wm = field(xwmClass, wmConstant);
-      Object id = wm.get(null);
-      if (id != null) {
-        field(xwmClass, "awt_wmgr").set(null, id);
-        field(xwmClass, "WMID").set(xwm, id);
+      for (String wmConstant : wmConstants) {
+        try {
+          Field wm = field(xwmClass, wmConstant);
+          Object id = wm.get(null);
+          if (id != null) {
+            field(xwmClass, "awt_wmgr").set(null, id);
+            field(xwmClass, "WMID").set(xwm, id);
+            break;
+          }
+        }
+        catch (NoSuchFieldException ignore) { }
       }
     }
   }

@@ -225,29 +225,34 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
     String gradleHomePath = FileUtil.toCanonicalPath(myGradleHomePathField.getText());
     if (StringUtil.isEmpty(gradleHomePath)) {
       settings.setGradleHome(null);
-      getInitialSettings().setGradleHome(null);
     }
     else {
       settings.setGradleHome(gradleHomePath);
-      getInitialSettings().setGradleHome(gradleHomePath);
       GradleUtil.storeLastUsedGradleHome(gradleHomePath);
     }
 
     if (myUseLocalDistributionButton.isSelected()) {
       settings.setDistributionType(DistributionType.LOCAL);
-      getInitialSettings().setDistributionType(DistributionType.LOCAL);
     } else if(myUseWrapperButton.isSelected()) {
       settings.setDistributionType(DistributionType.DEFAULT_WRAPPED);
+    } else if(myUseWrapperWithVerificationButton.isSelected() || myUseBundledDistributionButton.isSelected()) {
+      settings.setDistributionType(DistributionType.WRAPPED);
+    }
+  }
+
+  @Override
+  protected void updateInitialExtraSettings() {
+    String gradleHomePath = FileUtil.toCanonicalPath(myGradleHomePathField.getText());
+    getInitialSettings().setGradleHome(StringUtil.isEmpty(gradleHomePath) ? null : gradleHomePath);
+    if (myUseLocalDistributionButton.isSelected()) {
+      getInitialSettings().setDistributionType(DistributionType.LOCAL);
+    } else if(myUseWrapperButton.isSelected()) {
       getInitialSettings().setDistributionType(DistributionType.DEFAULT_WRAPPED);
-    } else if(myUseWrapperWithVerificationButton.isSelected()) {
-      settings.setDistributionType(DistributionType.WRAPPED);
-      getInitialSettings().setDistributionType(DistributionType.WRAPPED);
-    } else if (myUseBundledDistributionButton.isSelected()) {
-      settings.setDistributionType(DistributionType.WRAPPED);
+    } else if(myUseWrapperWithVerificationButton.isSelected() || myUseBundledDistributionButton.isSelected()) {
       getInitialSettings().setDistributionType(DistributionType.WRAPPED);
     }
   }
-  
+
   @Override
   protected boolean isExtraSettingModified() {
     DistributionType distributionType = getInitialSettings().getDistributionType();

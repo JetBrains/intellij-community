@@ -34,10 +34,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public class DfaConstValue extends DfaValue {
+  private static final Throwable ourThrowable = new Throwable();
   public static class Factory {
     private final DfaConstValue dfaNull;
     private final DfaConstValue dfaFalse;
     private final DfaConstValue dfaTrue;
+    private final DfaConstValue dfaFail;
     private final DfaValueFactory myFactory;
     private final Map<Object, DfaConstValue> myValues = ContainerUtil.newHashMap();
 
@@ -46,6 +48,7 @@ public class DfaConstValue extends DfaValue {
       dfaNull = new DfaConstValue(null, factory, null);
       dfaFalse = new DfaConstValue(Boolean.FALSE, factory, null);
       dfaTrue = new DfaConstValue(Boolean.TRUE, factory, null);
+      dfaFail = new DfaConstValue(ourThrowable, factory, null);
     }
 
     @Nullable
@@ -89,14 +92,22 @@ public class DfaConstValue extends DfaValue {
       if (TypeConversionUtil.isNumericType(type) && !TypeConversionUtil.isFloatOrDoubleType(type)) {
         value = TypeConversionUtil.computeCastTo(value, PsiType.LONG);
       }
-      Object key = constant != null ? constant : value;
-      DfaConstValue instance = myValues.get(key);
+      if (value instanceof Double || value instanceof Float) {
+        double doubleValue = ((Number)value).doubleValue();
+        if (doubleValue == -0.0) doubleValue = +0.0;
+        value = new Double(doubleValue);
+      }
+      DfaConstValue instance = myValues.get(value);
       if (instance == null) {
         instance = new DfaConstValue(value, myFactory, constant);
-        myValues.put(key, instance);
+        myValues.put(value, instance);
       }
 
       return instance;
+    }
+
+    public DfaConstValue getContractFail() {
+      return dfaFail;
     }
 
     public DfaConstValue getFalse() {

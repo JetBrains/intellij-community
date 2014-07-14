@@ -112,18 +112,6 @@ public class FileReferenceUtil {
       return result;
     }
 
-    @Override
-    protected ResolveResult[] innerResolve() {
-      final ResolveResult[] results = super.innerResolve();
-      return ContainerUtil.findAll(results, new Condition<ResolveResult>() {
-        @Override
-        public boolean value(ResolveResult resolveResult) {
-          final PsiElement e = resolveResult.getElement();
-          return match(e, myCond);
-        }
-      }).toArray(ResolveResult.EMPTY_ARRAY);
-    }
-
     @NotNull
     @Override
     public Object[] getVariants() {

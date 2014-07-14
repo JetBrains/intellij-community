@@ -30,7 +30,7 @@ public class GitCreateNewBranchAction extends GitLogSingleCommitAction {
   @Override
   protected void actionPerformed(@NotNull GitRepository repository, @NotNull VcsFullCommitDetails commit) {
     Project project = repository.getProject();
-    String reference = commit.getHash().asString();
+    String reference = commit.getId().asString();
     final String name = GitBranchUtil.getNewBranchNameFromUser(project, Collections.singleton(repository),
                                                                "Checkout New Branch From " + reference);
     if (name != null) {

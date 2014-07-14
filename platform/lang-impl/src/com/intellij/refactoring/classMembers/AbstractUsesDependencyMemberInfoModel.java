@@ -19,6 +19,7 @@ package com.intellij.refactoring.classMembers;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dennis.Ushakov
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class AbstractUsesDependencyMemberInfoModel<T extends NavigatablePsiElement, C extends PsiElement, M extends MemberInfoBase<T>> extends DependencyMemberInfoModel<T, M> {
   protected final C myClass;
 
-  public AbstractUsesDependencyMemberInfoModel(C aClass, C superClass, boolean recursive) {
+  public AbstractUsesDependencyMemberInfoModel(C aClass, @Nullable C superClass, boolean recursive) {
     super(new UsesMemberDependencyGraph<T, C, M>(aClass, superClass, recursive), ERROR);
     myClass = aClass;
     setTooltipProvider(new MemberInfoTooltipManager.TooltipProvider<T, M>() {

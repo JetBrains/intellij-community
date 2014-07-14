@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -57,6 +58,10 @@ public class FinalMethodInFinalClassInspection extends BaseInspection {
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       if (!method.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      if (!method.hasModifierProperty(PsiModifier.STATIC) &&
+          AnnotationUtil.findAnnotation(method, true, "java.lang.SafeVarargs") != null) {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();

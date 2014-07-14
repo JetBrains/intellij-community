@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2013 Bas Leijdekkers
+ * Copyright 2008-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -23,13 +24,14 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class UnnecessaryToStringCallInspection extends BaseInspection {
+public class UnnecessaryToStringCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @Nls
@@ -86,7 +88,7 @@ public class UnnecessaryToStringCallInspection extends BaseInspection {
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {
-        replaceExpression(methodCallExpression, "this");
+        PsiReplacementUtil.replaceExpression(methodCallExpression, "this");
       } else {
         methodCallExpression.replace(qualifier);
       }
@@ -114,9 +116,14 @@ public class UnnecessaryToStringCallInspection extends BaseInspection {
         return;
       }
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier != null && qualifier.getType() instanceof PsiArrayType) {
-        // do not warn on nonsensical code
-        return;
+      if (qualifier != null) {
+        if (qualifier.getType() instanceof PsiArrayType) {
+          // do not warn on nonsensical code
+          return;
+        }
+        else if (qualifier instanceof PsiSuperExpression) {
+          return;
+        }
       }
       registerMethodCallError(expression, calculateReplacementText(qualifier));
     }

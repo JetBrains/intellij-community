@@ -1,7 +1,20 @@
 <idea-plugin>
   <name>Eclipse Integration</name>
   <id>org.jetbrains.idea.eclipse</id>
-  <description>Provides possibility to import, export and synchronize Eclipse project files</description>
+  <description>
+      <![CDATA[
+        This plugin enables integration with Eclipse and provides the following features:
+        <ul>
+        <li>Open Eclipse project in IntelliJ IDEA</li>
+        <li>Import Eclipse project into IntelliJ IDEA</li>
+        <li>Export IntelliJ IDEA project into Eclipse</li>
+        <li>Convert IntelliJ IDEA module to Eclipse-compatible format</li>
+        <li>Synchronize Eclipse project files</li>
+        </ul>
+        <p/>
+      ]]>
+    </description>
+
   <version>3.0</version>
   <vendor url="http://www.jetbrains.com" logo="/general/ijLogo.png">JetBrains s.r.o.</vendor>
   <extensions defaultExtensionNs="com.intellij">

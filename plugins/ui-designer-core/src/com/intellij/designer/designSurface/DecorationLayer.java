@@ -113,4 +113,8 @@ public class DecorationLayer extends JComponent {
     }
     return parent.getLayout().getChildSelectionDecorator(component, selection);
   }
+
+  public double getZoom() {
+    return myDesigner.getZoom();
+  }
 }

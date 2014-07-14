@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -28,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author Max Medvedev
  */
-public class CreateSetterFromUsageFix extends CreateMethodFromUsageFix {
+public class CreateSetterFromUsageFix extends CreateMethodFromUsageFix implements LowPriorityAction {
   public CreateSetterFromUsageFix(@NotNull GrReferenceExpression refExpression) {
     super(refExpression);
   }
@@ -43,7 +44,7 @@ public class CreateSetterFromUsageFix extends CreateMethodFromUsageFix {
   protected PsiType[] getArgumentTypes() {
     final GrReferenceExpression ref = getRefExpr();
     assert PsiUtil.isLValue(ref);
-    PsiType initializer = TypeInferenceHelper.getInitializerFor(ref);
+    PsiType initializer = TypeInferenceHelper.getInitializerTypeFor(ref);
     if (initializer == null || initializer == PsiType.NULL) {
       initializer = TypesUtil.getJavaLangObject(ref);
     }

@@ -28,24 +28,25 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.tasks.trello.model.TrelloLabel.*;
+import static com.intellij.tasks.trello.model.TrelloLabel.LabelColor;
 
 /**
  * @author Mikhail Golubev
  */
+@SuppressWarnings("UnusedDeclaration")
 public class TrelloCard extends TrelloModel {
 
+  public static final String REQUIRED_FIELDS = "closed,desc,idMembers,idBoard,idList,labels,name,url,dateLastActivity";
+
   private String idBoard, idList;
-  private int idShort;
-  private List<String> idMembers, idMembersVoted, idChecklists;
+  private List<String> idMembers;
   private String name;
   @SerializedName("desc")
   private String description;
-  private String url, shortUrl;
+  private String url;
   @SerializedName("due")
-  private Date dueDate;
   private boolean closed;
-  private double pos;
+  private Date dateLastActivity;
   private List<TrelloLabel> labels;
   @SerializedName("actions")
   private List<TrelloCommentAction> comments = ContainerUtil.emptyList();
@@ -94,28 +95,9 @@ public class TrelloCard extends TrelloModel {
     this.name = name;
   }
 
-  public int getIdShort() {
-    return idShort;
-  }
-
-  @NotNull
-  public List<String> getIdMembersVoted() {
-    return idMembersVoted;
-  }
-
-  @NotNull
-  public List<String> getIdChecklists() {
-    return idChecklists;
-  }
-
   @NotNull
   public String getDescription() {
     return description;
-  }
-
-  @Nullable
-  public Date getDueDate() {
-    return dueDate;
   }
 
   @NotNull
@@ -123,17 +105,8 @@ public class TrelloCard extends TrelloModel {
     return url;
   }
 
-  @Nullable
-  public String getShortUrl() {
-    return shortUrl;
-  }
-
   public boolean isClosed() {
     return closed;
-  }
-
-  public double getPos() {
-    return pos;
   }
 
   @NotNull
@@ -165,5 +138,10 @@ public class TrelloCard extends TrelloModel {
 
   public void setVisible(boolean visible) {
     isVisible = visible;
+  }
+
+  @Nullable
+  public Date getDateLastActivity() {
+    return dateLastActivity;
   }
 }

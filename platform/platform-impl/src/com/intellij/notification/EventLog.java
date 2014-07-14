@@ -24,6 +24,7 @@ import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -175,7 +176,7 @@ public class EventLog {
   }
 
   private static String getStatusText(DocumentImpl logDoc, AtomicBoolean showMore, List<RangeMarker> lineSeparators, boolean hasHtml) {
-    DocumentImpl statusDoc = new DocumentImpl(logDoc.getText(),true);
+    DocumentImpl statusDoc = new DocumentImpl(logDoc.getImmutableCharSequence(),true);
     List<RangeMarker> statusSeparators = new ArrayList<RangeMarker>();
     for (RangeMarker separator : lineSeparators) {
       if (separator.isValid()) {
@@ -457,11 +458,16 @@ public class EventLog {
     }
   }
 
-  private static class ShowBalloon implements HyperlinkInfo {
+  static class ShowBalloon implements HyperlinkInfo {
     private final Notification myNotification;
+    private RangeHighlighter myRangeHighlighter;
 
     public ShowBalloon(Notification notification) {
       myNotification = notification;
+    }
+
+    public void setRangeHighlighter(RangeHighlighter rangeHighlighter) {
+      myRangeHighlighter = rangeHighlighter;
     }
 
     @Override
@@ -473,7 +479,10 @@ public class EventLog {
       }
 
       EventLogConsole console = ObjectUtils.assertNotNull(getProjectComponent(project).getConsole(myNotification));
-      RelativePoint target = console.getHyperlinkLocation(this);
+      if (myRangeHighlighter == null || !myRangeHighlighter.isValid()) {
+        return;
+      }
+      RelativePoint target = console.getRangeHighlighterLocation(myRangeHighlighter);
       if (target != null) {
         IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
         assert frame != null;

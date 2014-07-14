@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -45,7 +46,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 public class WordCompletionContributor extends CompletionContributor implements DumbAware {
 
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     if (parameters.getCompletionType() == CompletionType.BASIC && shouldPerformWordCompletion(parameters)) {
       addWordCompletionVariants(result, parameters, Collections.<String>emptySet());
     }
@@ -138,7 +139,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
 
     final PsiFile file = insertedElement.getContainingFile();
     final CompletionData data = CompletionUtil.getCompletionDataByElement(insertedElement, file);
-    if (data != null && !(data instanceof SyntaxTableCompletionData)) {
+    if (data != null) {
       Set<CompletionVariant> toAdd = new HashSet<CompletionVariant>();
       data.addKeywordVariants(toAdd, insertedElement, file);
       for (CompletionVariant completionVariant : toAdd) {

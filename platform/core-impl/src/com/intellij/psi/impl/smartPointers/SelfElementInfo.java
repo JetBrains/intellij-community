@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -48,7 +49,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
 
   protected SelfElementInfo(@NotNull Project project, @NotNull PsiElement anchor) {
     this(project, ProperTextRange.create(anchor.getTextRange()), anchor.getClass(), anchor.getContainingFile(),
-         anchor.getContainingFile().getLanguage());
+         LanguageUtil.getRootLanguage(anchor));
   }
   public SelfElementInfo(@NotNull Project project,
                          @NotNull ProperTextRange range,
@@ -62,14 +63,14 @@ public class SelfElementInfo implements SmartPointerElementInfo {
 
     myProject = project;
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-    Document document = documentManager.getDocument(containingFile);
-    if (document == null || documentManager.isUncommited(document)) {
+    Document document = documentManager.getCachedDocument(containingFile);
+    if (document != null && documentManager.isUncommited(document)) {
       mySyncMarkerIsValid = false;
-      return;
     }
-
-    mySyncMarkerIsValid = true;
-    setRange(range);
+    else {
+      mySyncMarkerIsValid = true;
+      setRange(range);
+    }
   }
 
   protected void setRange(@NotNull Segment range) {
@@ -193,8 +194,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
   }
 
   private RangeMarker getMarker() {
-    Reference<RangeMarker> ref = myMarkerRef;
-    return ref == null ? null : ref.get();
+    return com.intellij.reference.SoftReference.dereference(myMarkerRef);
   }
 
   @Override

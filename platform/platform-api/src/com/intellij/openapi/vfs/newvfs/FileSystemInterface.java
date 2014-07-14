@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,12 +52,17 @@ public interface FileSystemInterface {
   /** @deprecated use PersistentFS interface if needed (to remove in IDEA 14) */
   boolean isSpecialFile(@NotNull VirtualFile file);
 
+  @NotNull
   VirtualFile createChildDirectory(@Nullable Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException;
+
+  @NotNull
   VirtualFile createChildFile(@Nullable Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException;
 
   void deleteFile(final Object requestor, @NotNull VirtualFile file) throws IOException;
   void moveFile(final Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) throws IOException;
   void renameFile(final Object requestor, @NotNull VirtualFile file, @NotNull String newName) throws IOException;
+
+  @NotNull
   VirtualFile copyFile(final Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException;
 
   @NotNull

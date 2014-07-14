@@ -21,6 +21,8 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,8 +36,8 @@ public class PyKeywordArgumentSearchExecutor extends QueryExecutorBase<PsiRefere
     if (!(element instanceof PyNamedParameter)) {
       return;
     }
-    PyFunction owner = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-    if (owner == null) {
+    final ScopeOwner owner = ScopeUtil.getScopeOwner(element);
+    if (!(owner instanceof PyFunction)) {
       return;
     }
     ReferencesSearch.search(owner, queryParameters.getScope()).forEach(new Processor<PsiReference>() {

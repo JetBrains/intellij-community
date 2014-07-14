@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import org.jetbrains.annotations.NotNull;
 
 public class VFSForAnnotationListener extends VirtualFileAdapter {
   private final VirtualFile myFile;
@@ -31,7 +32,7 @@ public class VFSForAnnotationListener extends VirtualFileAdapter {
   }
 
   @Override
-  public void propertyChanged(VirtualFilePropertyEvent event) {
+  public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
     if (! Comparing.equal(myFile, event.getFile())) return;
     if (! event.isFromRefresh()) return;
 
@@ -43,7 +44,7 @@ public class VFSForAnnotationListener extends VirtualFileAdapter {
   }
 
   @Override
-  public void contentsChanged(VirtualFileEvent event) {
+  public void contentsChanged(@NotNull VirtualFileEvent event) {
     if (! Comparing.equal(myFile, event.getFile())) return;
     if (! event.isFromRefresh()) return;
     if (! myFile.isWritable()) {

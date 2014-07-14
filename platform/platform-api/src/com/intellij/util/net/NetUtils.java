@@ -29,9 +29,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.*;
 
-/**
- * @author yole
- */
 public class NetUtils {
   private static final Logger LOG = Logger.getInstance(NetUtils.class);
 

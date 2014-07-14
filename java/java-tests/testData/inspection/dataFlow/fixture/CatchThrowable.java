@@ -1,4 +1,4 @@
-public class BrokenAlignment {
+class BrokenAlignment {
 
   public static void main(String[] args) {
 

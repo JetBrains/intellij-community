@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,18 +79,15 @@ public class Xsd2InstanceUtils {
 
         // Process Schema files
         List sdocs = new ArrayList();
-        for (int i = 0; i < schemaFiles.length; i++)
-        {
-            try
-            {
-                sdocs.add(XmlObject.Factory.parse(schemaFiles[i],
-                        (new XmlOptions()).setLoadLineNumbers().setLoadMessageDigest()));
-            }
-            catch (Exception e)
-            {
-                throw new IllegalArgumentException("Can not load schema file: " + schemaFiles[i] + ": " + e.getLocalizedMessage());
-            }
+      for (File schemaFile : schemaFiles) {
+        try {
+          sdocs.add(XmlObject.Factory.parse(schemaFile,
+                                            (new XmlOptions()).setLoadLineNumbers().setLoadMessageDigest()));
         }
+        catch (Exception e) {
+          throw new IllegalArgumentException("Can not load schema file: " + schemaFile + ": " + e.getLocalizedMessage());
+        }
+      }
 
         XmlObject[] schemas = (XmlObject[]) sdocs.toArray(new XmlObject[sdocs.size()]);
 
@@ -121,14 +118,12 @@ public class Xsd2InstanceUtils {
         }
         SchemaType[] globalElems = sts.documentTypes();
         SchemaType elem = null;
-        for (int i = 0; i < globalElems.length; i++)
-        {
-            if (rootName.equals(globalElems[i].getDocumentElementName().getLocalPart()))
-            {
-                elem = globalElems[i];
-                break;
-            }
+      for (SchemaType globalElem : globalElems) {
+        if (rootName.equals(globalElem.getDocumentElementName().getLocalPart())) {
+          elem = globalElem;
+          break;
         }
+      }
 
         if (elem == null) {
             throw new IllegalArgumentException("Could not find a global element with name \"" + rootName + "\"");

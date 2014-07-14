@@ -149,9 +149,10 @@ public class RefactoringConflictsUtil {
       PsiReferenceExpression refExpr = (PsiReferenceExpression)scope;
       PsiElement refElement = refExpr.resolve();
       if (refElement instanceof PsiMember) {
-        if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, moving, targetClass, false)) {
-          PsiExpression qualifier = refExpr.getQualifierExpression();
-          PsiClass accessClass = (PsiClass)(qualifier != null ? PsiUtil.getAccessObjectClass(qualifier).getElement() : null);
+        PsiExpression qualifier = refExpr.getQualifierExpression();
+        PsiClass accessClass = (PsiClass)(qualifier != null ? PsiUtil.getAccessObjectClass(qualifier).getElement() : null);
+        if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, moving, targetClass, false) &&
+            (accessClass == null || !RefactoringHierarchyUtil.willBeInTargetClass(accessClass, moving, targetClass, false))) {
           checkAccessibility((PsiMember)refElement, context, accessClass, member, conflicts);
         }
       }

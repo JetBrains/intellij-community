@@ -68,7 +68,7 @@ public class IntLCSTest extends TestCase {
     Reindexer reindexer = new Reindexer();
     reindexer.idInit(first.length, second.length);
     Diff.ChangeBuilder builder = new Diff.ChangeBuilder(0);
-    reindexer.reindex(intLCS.getPaths(), builder);
+    reindexer.reindex(intLCS.getChanges(), builder);
     return builder.getFirstChange();
   }
 

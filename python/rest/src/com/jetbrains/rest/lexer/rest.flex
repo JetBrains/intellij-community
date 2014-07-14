@@ -23,7 +23,7 @@ CRLF= \n|\r|\r\n
 SPACE=[\ \t]
 
 ADORNMENT_SYMBOL="="|"-"|"`"|":"|"."|"'"|\"|"~"|"^"|"_"|"*"|"+"|"#"|">"
-ADORNMENT=("="{4, 80}|"-"{4, 80}|"`"{4, 80}|":"{4, 80}|"."{4, 80}|"'"{4, 80}|\"{4, 80}|"~"{4, 80}|"^"{4, 80}|"_"{4, 80}|"*"{4, 80}|"+"{4, 80}|"#"{4, 80}){CRLF}
+ADORNMENT=("="{4, 80}|"-"{4, 80}|"`"{4, 80}|":"{4, 80}|"."{4, 80}|"'"{4, 80}|\"{4, 80}|"~"{4, 80}|"^"{4, 80}|"_"{4, 80}|"*"{4, 80}|"+"{4, 80}|"#"{4, 80})" "*{CRLF}
 SEPARATOR=[\n .:,()\{\}\[\]\-]
 USUAL_TYPES="attention"|"caution"|"danger"|"error"|"hint"|"important"|"note"|"tip"|"warning"|"admonition"|"image"|"figure"|"topic"|"sidebar"|"parsed-literal"|"rubric"|"epigraph"|"highlights"|"pull-quote"|"compound"|"container"|"table"|"csv-table"|"list-table"|"contents"|"sectnum"|"section-autonumbering"|"header"|"footer"|"target-notes"|"footnotes"|"citations"|"meta"|"replace"|"unicode"|"date"|"include"|"raw"|"class"|"role"|"default-role"|"title"|"restructuredtext-test-directive"
 HIGHLIGHT_TYPES= "highlight" | "sourcecode" | "code-block"

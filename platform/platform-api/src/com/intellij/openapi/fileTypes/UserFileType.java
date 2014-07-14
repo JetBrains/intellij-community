@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ public abstract class UserFileType <T extends UserFileType> implements FileType,
 
   public abstract SettingsEditor<T> getEditor();
 
+  @Override
   public UserFileType clone() {
     try {
       return (UserFileType)super.clone();
@@ -38,11 +39,13 @@ public abstract class UserFileType <T extends UserFileType> implements FileType,
     }
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myName;
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return myDescription;
@@ -56,20 +59,24 @@ public abstract class UserFileType <T extends UserFileType> implements FileType,
     myDescription = description;
   }
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return "";
   }
 
+  @Override
   public Icon getIcon() {
     return myIcon;
   }
 
+  @Override
   public boolean isReadOnly() {
     return false;
   }
 
-  public String getCharset(@NotNull VirtualFile file, final byte[] content) {
+  @Override
+  public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
     return null;
   }
 

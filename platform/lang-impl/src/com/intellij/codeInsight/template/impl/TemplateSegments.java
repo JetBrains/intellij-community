@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,12 +73,19 @@ public class TemplateSegments {
   }
 
   public void replaceSegmentAt(int index, int start, int end) {
+    replaceSegmentAt(index, start, end, false);
+  }
+
+  public void replaceSegmentAt(int index, int start, int end, boolean preserveGreediness) {
     RangeMarker rangeMarker = mySegments.get(index);
+    boolean greedyToLeft = rangeMarker.isGreedyToLeft();
+    boolean greedyToRight = rangeMarker.isGreedyToRight();
     rangeMarker.dispose();
+    
     Document doc = myEditor.getDocument();
     rangeMarker = doc.createRangeMarker(start, end);
-    rangeMarker.setGreedyToLeft(true);
-    rangeMarker.setGreedyToRight(true);
+    rangeMarker.setGreedyToLeft(greedyToLeft || !preserveGreediness);
+    rangeMarker.setGreedyToRight(greedyToRight || !preserveGreediness);
     mySegments.set(index, rangeMarker);
   }
 
@@ -117,18 +124,6 @@ public class TemplateSegments {
         }
       }
     }
-  }
-
-  public int getSegmentWithTheSameStart(int segmentNumber, int start) {
-    for (int i = segmentNumber + 1; i < mySegments.size(); i++) {
-      final RangeMarker segment = mySegments.get(i);
-      final int startOffset2 = segment.getStartOffset();
-      if (start == startOffset2) {
-        return i;
-      }
-    }
-
-    return -1;
   }
 
   public int getSegmentsCount() {

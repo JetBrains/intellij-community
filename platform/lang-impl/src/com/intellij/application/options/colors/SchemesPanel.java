@@ -25,15 +25,18 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SchemesManager;
+import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.util.List;
 
 public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
   private final ColorAndFontOptions myOptions;
@@ -59,7 +62,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
 
     mySchemeComboBox.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         if (mySchemeComboBox.getSelectedIndex() != -1) {
           EditorColorsScheme selected = myOptions.selectScheme((String)mySchemeComboBox.getSelectedItem());
           if (ColorAndFontOptions.isReadOnly(selected)) {
@@ -95,50 +98,43 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
     return myListLoaded;
   }
 
-  public void clearSearch() {
-  }
-
-  @Nullable
-  @SuppressWarnings({"unchecked"})
-  public static <T> T safeCast(final Object obj, final Class<T> expectedClass) {
-    if (expectedClass.isInstance(obj)) return (T)obj;
-    return null;
-  }
-
   private JPanel createSchemePanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
+    int gridx = 0;
+
     panel.add(new JLabel(ApplicationBundle.message("combobox.scheme.name")),
-              new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0,
-                                     0));
+              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5),
+                                     0, 0));
 
     mySchemeComboBox = new JComboBox();
     panel.add(mySchemeComboBox,
-              new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10), 0,
-                                     0));
+              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10),
+                                     0, 0));
 
     JButton saveAsButton = new JButton(ApplicationBundle.message("button.save.as"));
     saveAsButton.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         showSaveAsDialog();
       }
     });
     panel.add(saveAsButton,
-              new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0,
-                                     0));
+              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5),
+                                     0, 0));
 
     myDeleteButton = new JButton(ApplicationBundle.message("button.delete"));
     myDeleteButton.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         if (mySchemeComboBox.getSelectedIndex() != -1) {
           myOptions.removeScheme((String)mySchemeComboBox.getSelectedItem());
         }
       }
     });
     panel.add(myDeleteButton,
-              new GridBagConstraints(3, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+              new GridBagConstraints(gridx++, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0,
+                                     0));
 
     SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> schemesManager =
       ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getSchemesManager();
@@ -146,7 +142,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       myExportButton = new JButton("Share...");
       myExportButton.addActionListener(new ActionListener() {
         @Override
-        public void actionPerformed(final ActionEvent e) {
+        public void actionPerformed(@NotNull final ActionEvent e) {
           EditorColorsScheme selected = myOptions.getOriginalSelectedScheme();
           ExportSchemeAction
             .doExport((EditorColorsSchemeImpl)selected, ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getSchemesManager());
@@ -154,7 +150,8 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       });
 
       panel.add(myExportButton,
-                new GridBagConstraints(4, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 5, 5), 0, 0));
+                new GridBagConstraints(gridx++, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 5, 5), 0,
+                                       0));
       myExportButton.setMnemonic('S');
 
     }
@@ -164,7 +161,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       myImportButton.setMnemonic('I');
       myImportButton.addActionListener(new ActionListener() {
         @Override
-        public void actionPerformed(final ActionEvent e) {
+        public void actionPerformed(@NotNull final ActionEvent e) {
           SchemesToImportPopup<EditorColorsScheme, EditorColorsSchemeImpl> popup =
             new SchemesToImportPopup<EditorColorsScheme, EditorColorsSchemeImpl>(SchemesPanel.this) {
               @Override
@@ -182,22 +179,35 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       });
 
       panel.add(myImportButton,
-                new GridBagConstraints(5, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 5, 5), 0, 0));
+                new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0,
+                                       0));
 
+    }
+    for (final ImportHandler importHandler : Extensions.getExtensions(ImportHandler.EP_NAME)) {
+      final JButton button = new JButton(importHandler.getTitle());
+      button.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(@NotNull ActionEvent e) {
+          importHandler.performImport(button, new Consumer<EditorColorsScheme>() {
+            @Override
+            public void consume(EditorColorsScheme scheme) {
+              if (scheme != null) myOptions.addImportedScheme(scheme);
+            }
+          });
+        }
+      });
+      panel.add(button,
+                new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0,
+                                       0));
     }
 
     return panel;
   }
 
   private void showSaveAsDialog() {
-    ArrayList<String> names = new ArrayList<String>();
-    EditorColorsScheme[] allSchemes = EditorColorsManager.getInstance().getAllSchemes();
-
-    for (EditorColorsScheme scheme : allSchemes) {
-      names.add(scheme.getName());
-    }
-
-    SaveSchemeDialog dialog = new SaveSchemeDialog(this, ApplicationBundle.message("title.save.color.scheme.as"), names);
+    List<String> names = ContainerUtil.newArrayList(myOptions.getSchemeNames());
+    String selectedName = myOptions.getSelectedScheme().getName();
+    SaveSchemeDialog dialog = new SaveSchemeDialog(this, ApplicationBundle.message("title.save.color.scheme.as"), names, selectedName);
     dialog.show();
     if (dialog.isOK()) {
       myOptions.saveSchemeAs(dialog.getSchemeName());

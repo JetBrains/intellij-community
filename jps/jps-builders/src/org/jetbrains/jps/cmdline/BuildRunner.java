@@ -185,7 +185,7 @@ public class BuildRunner {
       }
     }
     if (includeDependenciesToScope) {
-      includeDependenciesToScope(targetTypes, targets, pd);
+      includeDependenciesToScope(targetTypes, targets, targetTypesToForceBuild, pd);
     }
 
     final Timestamps timestamps = pd.timestamps.getStorage();
@@ -215,7 +215,7 @@ public class BuildRunner {
   }
 
   private static void includeDependenciesToScope(Set<BuildTargetType<?>> targetTypes, Set<BuildTarget<?>> targets,
-                                                 ProjectDescriptor descriptor) {
+                                                 Set<BuildTargetType<?>> targetTypesToForceBuild, ProjectDescriptor descriptor) {
     //todo[nik] get rid of CompileContext parameter for BuildTargetIndex.getDependencies() and use it here
     TargetOutputIndex dummyIndex = new TargetOutputIndex() {
       @Override
@@ -231,6 +231,9 @@ public class BuildRunner {
         for (BuildTarget<?> depTarget : target.computeDependencies(descriptor.getBuildTargetIndex(), dummyIndex)) {
           if (!targets.contains(depTarget) && !targetTypes.contains(depTarget.getTargetType())) {
             next.add(depTarget);
+            if (targetTypesToForceBuild.contains(target.getTargetType())) {
+              targetTypesToForceBuild.add(depTarget.getTargetType());
+            }
           }
         }
       }

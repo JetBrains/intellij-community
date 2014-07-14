@@ -84,13 +84,11 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testConvertDictComp() {
-    setLanguageLevel(LanguageLevel.PYTHON26);
-    doTest(PyBundle.message("INTN.convert.dict.comp.to"));
+    doTest(PyBundle.message("INTN.convert.dict.comp.to"), LanguageLevel.PYTHON26);
   }
 
   public void testConvertSetLiteral() {
-    setLanguageLevel(LanguageLevel.PYTHON26);
-    doTest(PyBundle.message("INTN.convert.set.literal.to"));
+    doTest(PyBundle.message("INTN.convert.set.literal.to"), LanguageLevel.PYTHON26);
   }
 
   public void testReplaceExceptPart() {
@@ -281,6 +279,10 @@ public class PyIntentionTest extends PyTestCase {
     doDocReferenceTest();
   }
 
+  public void testTypeInDocstringAtTheEndOfFunction() {
+    doDocReturnTypeTest();
+  }
+
   public void testTypeInDocstring6() {         //PY-7973
     doNegativeTest(PyBundle.message("INTN.specify.return.type"));
   }
@@ -349,6 +351,10 @@ public class PyIntentionTest extends PyTestCase {
 
   public void testTypeAssertion4() {  //PY-7971
     doTestTypeAssertion();
+  }
+
+  public void testTypeAssertionInDictComp() {  //PY-7971
+    doNegativeTest(PyBundle.message("INTN.insert.assertion"));
   }
 
   private void doTestTypeAssertion() {

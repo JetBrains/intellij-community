@@ -115,4 +115,15 @@ class C {
     System.out.println(k);
   }
 
+  void usedIn8Inner(int j) {
+    for (int i = 0; i < 7; i++) {
+      int k = i;
+      int n = j;
+      class F {
+        {
+          System.out.println(k + n);
+        }
+      }
+    }
+  } 
 }

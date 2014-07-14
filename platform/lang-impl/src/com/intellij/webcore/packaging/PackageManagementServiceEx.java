@@ -1,5 +1,6 @@
 package com.intellij.webcore.packaging;
 
+import com.intellij.util.CatchingConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,5 +12,9 @@ public abstract class PackageManagementServiceEx extends PackageManagementServic
   public abstract void updatePackage(@NotNull InstalledPackage installedPackage,
                                      @Nullable String version,
                                      @NotNull Listener listener);
+
+  public abstract boolean shouldFetchLatestVersionsForOnlyInstalledPackages();
+
+  public abstract void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull final CatchingConsumer<String, Exception> consumer);
 
 }

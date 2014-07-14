@@ -74,14 +74,10 @@ public class ZipOutputWrapper {
     }
 
     myOut.putNextEntry(entry);
-    try {
-      byteOut.writeTo(myOut);
-    }
-    finally {
-      myOut.closeEntry();
-    }
+    byteOut.writeTo(myOut);
+    myOut.closeEntry();
   }
-  
+
   public void zipFile(String entryPath, File file) throws IOException {
     if (file.isDirectory()) {
       addDirs(entryPath, true);
@@ -124,20 +120,17 @@ public class ZipOutputWrapper {
     myDirs.addAll(temp);
   }
 
-  public void close() throws IOException {
-    try {
-      for (String each : myDirs) {
-        if (!each.endsWith("/")) each += "/";
-        ZipEntry e = new ZipEntry(each);
-        e.setMethod(ZipEntry.STORED);
-        e.setSize(0);
-        e.setCrc(0);
-        myOut.putNextEntry(e);
-        myOut.closeEntry();
-      }
+  public void finish() throws IOException {
+    for (String each : myDirs) {
+      if (!each.endsWith("/")) each += "/";
+      ZipEntry e = new ZipEntry(each);
+      e.setMethod(ZipEntry.STORED);
+      e.setSize(0);
+      e.setCrc(0);
+      myOut.putNextEntry(e);
+      myOut.closeEntry();
     }
-    finally {
-      myOut.close();
-    }
+
+    myOut.close();
   }
 }

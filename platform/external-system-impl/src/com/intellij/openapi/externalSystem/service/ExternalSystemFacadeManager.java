@@ -145,6 +145,11 @@ public class ExternalSystemFacadeManager {
     }
   }
 
+  public ExternalSystemCommunicationManager getCommunicationManager(@NotNull ProjectSystemId externalSystemId) {
+    final boolean currentInProcess = ExternalSystemApiUtil.isInProcessMode(externalSystemId);
+    return currentInProcess ? myInProcessCommunicationManager : myRemoteCommunicationManager;
+  }
+
   @SuppressWarnings("ConstantConditions")
   @NotNull
   private RemoteExternalSystemFacade doGetFacade(@NotNull IntegrationKey key, @NotNull Project project) throws Exception {
@@ -181,7 +186,7 @@ public class ExternalSystemFacadeManager {
   @NotNull
   private RemoteExternalSystemFacade doCreateFacade(@NotNull IntegrationKey key, @NotNull Project project,
                                                     @NotNull ExternalSystemCommunicationManager communicationManager) throws Exception {
-    final RemoteExternalSystemFacade facade = communicationManager.acquire(project.getName(), key.getExternalSystemId());
+    final RemoteExternalSystemFacade facade = communicationManager.acquire(key.getExternalProjectConfigPath(), key.getExternalSystemId());
     if (facade == null) {
       throw new IllegalStateException("Can't obtain facade to working with external api at the remote process. Project: " + project);
     }

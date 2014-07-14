@@ -18,6 +18,10 @@ package com.intellij.openapi.compiler;
 /**
  * A tag interface denoting that compiler's output should go into 'intermediate' directory 
  * and can be used as input to another compiler 
+ *
+ * @deprecated this interface is part of the obsolete build system which runs as part of the IDE process. Since IDEA 12 plugins need to
+ * integrate into 'external build system' instead (http://confluence.jetbrains.com/display/IDEADEV/External+Builder+API+and+Plugins).
+ * Since IDEA 13 users cannot switch to the old build system via UI and it will be completely removed in IDEA 14.
  */
 public interface IntermediateOutputCompiler extends Compiler{
 }

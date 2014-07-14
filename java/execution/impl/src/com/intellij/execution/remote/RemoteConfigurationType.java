@@ -23,13 +23,11 @@ package com.intellij.execution.remote;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -72,9 +70,9 @@ public class RemoteConfigurationType implements ConfigurationType {
     return "Remote";
   }
 
-  @Nullable
+  @NotNull
   public static RemoteConfigurationType getInstance() {
-    return ContainerUtil.findInstance(Extensions.getExtensions(CONFIGURATION_TYPE_EP), RemoteConfigurationType.class);
+    return ConfigurationTypeUtil.findConfigurationType(RemoteConfigurationType.class);
   }
 
 }

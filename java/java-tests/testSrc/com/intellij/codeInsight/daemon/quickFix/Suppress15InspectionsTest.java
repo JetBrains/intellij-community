@@ -27,7 +27,7 @@ import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import org.jetbrains.annotations.NotNull;
 
 
-public class Suppress15InspectionsTest extends LightQuickFixTestCase {
+public class Suppress15InspectionsTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

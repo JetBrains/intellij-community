@@ -24,6 +24,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,13 +39,6 @@ import java.util.List;
  * User: catherine
  */
 public class AddCallSuperQuickFix implements LocalQuickFix {
-  private final PyClass mySuper;
-  private String mySuperName;
-
-  public AddCallSuperQuickFix(PyClass superClass, String superName) {
-    mySuper = superClass;
-    mySuperName = superName;
-  }
 
   @NotNull
   public String getName() {
@@ -60,12 +54,17 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     PyFunction problemFunction = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PyFunction.class);
     if (problemFunction == null) return;
-    PyFunction superInit = mySuper.findMethodByName(PyNames.INIT, true);
+    final StringBuilder superCall = new StringBuilder();
+    final PyClass klass = problemFunction.getContainingClass();
+    if (klass == null) return;
+    final PyClass[] superClasses = klass.getSuperClasses();
+    if (superClasses.length == 0) return;
+
+    final PyClass superClass = superClasses[0];
+    final PyFunction superInit = superClass.findMethodByName(PyNames.INIT, true);
     if (superInit == null) return;
-    StringBuilder superCall = new StringBuilder();
-    PyClass klass = problemFunction.getContainingClass();
     boolean addComma = true;
-    if (klass != null && klass.isNewStyleClass()) {
+    if (klass.isNewStyleClass()) {
       addComma = false;
       if (LanguageLevel.forElement(klass).isPy3K())
         superCall.append("super().__init__(");
@@ -73,7 +72,7 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
         superCall.append("super(").append(klass.getName()).append(", self).__init__(");
     }
     else {
-      superCall.append(mySuperName);
+      superCall.append(superClass.getName());
       superCall.append(".__init__(self");
     }
     StringBuilder newFunction = new StringBuilder("def __init__(self");
@@ -83,7 +82,7 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     superCall.append(")");
     final PyStatementList statementList = problemFunction.getStatementList();
     PyExpression docstring = null;
-    final PyStatement[] statements = statementList == null ? new PyStatement[0] : statementList.getStatements();
+    final PyStatement[] statements = statementList.getStatements();
     if (statements.length != 0 && statements[0] instanceof PyExpressionStatement) {
       PyExpressionStatement st = (PyExpressionStatement)statements[0];
       if (st.getExpression() instanceof PyStringLiteralExpression)
@@ -141,7 +140,7 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
   private static void addParametersFromSuper(@NotNull final PyFunction superInit, @NotNull final StringBuilder superCall,
                                              @NotNull final StringBuilder newFunction, boolean addComma,
                                              @NotNull final List<String> problemParams, @NotNull final List<String> functionParams,
-                                             String starName, String doubleStarName) {
+                                             @Nullable String starName, @Nullable String doubleStarName) {
     final PyParameterList paramList = superInit.getParameterList();
     PyParameter[] parameters = paramList.getParameters();
     boolean addDouble = false;
@@ -149,15 +148,15 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     for (int i = 1; i != parameters.length; i++) {
       PyParameter p = parameters[i];
       if (p.getDefaultValue() != null) continue;
-      String param;
-      param = p.getText();
-      if (param.startsWith("**")) {
+      final String param = p.getName();
+      String paramText = p.getText();
+      if (paramText.startsWith("**")) {
         addDouble = true;
         if (doubleStarName == null)
           doubleStarName = p.getText();
         continue;
       }
-      if (param.startsWith("*")) {
+      if (paramText.startsWith("*")) {
         addStar = true;
         if (starName == null)
           starName = p.getText();
@@ -172,16 +171,20 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     }
     for(String p : problemParams)
       newFunction.append(",").append(p);
-    if (addStar) {
+    if (starName != null) {
       newFunction.append(",").append(starName);
-      if (addComma) superCall.append(",");
-      superCall.append(starName);
-      addComma = true;
+      if (addStar) {
+        if (addComma) superCall.append(",");
+        superCall.append(starName);
+        addComma = true;
+      }
     }
-    if (addDouble) {
-      if (addComma) superCall.append(",");
-      superCall.append(doubleStarName);
+    if (doubleStarName != null) {
       newFunction.append(",").append(doubleStarName);
+      if (addDouble) {
+        if (addComma) superCall.append(",");
+        superCall.append(doubleStarName);
+      }
     }
   }
 }

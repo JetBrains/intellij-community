@@ -23,6 +23,8 @@ import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
@@ -59,6 +61,7 @@ public abstract class XDebugProcess {
   /**
    * @return breakpoint handlers which will be used to set/clear breakpoints in the underlying debugging process
    */
+  @NotNull
   public XBreakpointHandler<?>[] getBreakpointHandlers() {
     return XBreakpointHandler.EMPTY_ARRAY;
   }
@@ -91,6 +94,16 @@ public abstract class XDebugProcess {
    */
   public abstract void startStepOver();
 
+  /**
+   * Steps into suppressed call
+   *
+   * Resume execution and call {@link XDebugSession#positionReached}
+   * when next line is reached.
+   * Do not call this method directly. Use {@link XDebugSession#forceStepInto} instead
+   */
+  public void startForceStepInto(){
+    startStepInto();
+  }
   /**
    * Resume execution and call {@link XDebugSession#positionReached}
    * when next line is reached.
@@ -139,6 +152,13 @@ public abstract class XDebugProcess {
    * @return {@code true} if process can actually perform user requests at this moment
    */
   public boolean checkCanPerformCommands() {
+    return true;
+  }
+
+  /**
+   * Check is it is possible to init breakpoints. Otherwise you should call {@link XDebugSession#initBreakpoints()} at the appropriate time
+   */
+  public boolean checkCanInitBreakpoints() {
     return true;
   }
 
@@ -218,4 +238,9 @@ public abstract class XDebugProcess {
     return false;
   }
 
+  @Nullable
+  public XDebuggerEvaluator getEvaluator() {
+    XStackFrame frame = getSession().getCurrentStackFrame();
+    return frame == null ? null : frame.getEvaluator();
+  }
 }

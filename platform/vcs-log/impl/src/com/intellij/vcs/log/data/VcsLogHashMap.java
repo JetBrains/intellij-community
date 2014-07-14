@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,17 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.Page;
 import com.intellij.util.io.PersistentEnumerator;
@@ -33,34 +42,116 @@ import java.io.IOException;
 /**
  * Supports the int <-> Hash persistent mapping.
  */
-class VcsLogHashMap {
+public class VcsLogHashMap implements Disposable {
 
   private static final File LOG_CACHE_APP_DIR = new File(PathManager.getSystemPath(), "vcs-log");
+  private static final Logger LOG = Logger.getInstance(VcsLogHashMap.class);
 
   private final PersistentEnumerator<Hash> myPersistentEnumerator;
 
   VcsLogHashMap(@NotNull Project project) throws IOException {
-    File myMapFile = new File(LOG_CACHE_APP_DIR, project.getName() + "." + project.getLocationHash());
-    myPersistentEnumerator = new PersistentEnumerator<Hash>(myMapFile, new MyHashKeyDescriptor(), Page.PAGE_SIZE);
+    final File myMapFile = new File(LOG_CACHE_APP_DIR, project.getName() + "." + project.getLocationHash());
+    Disposer.register(project, this);
+    myPersistentEnumerator = IOUtil.openCleanOrResetBroken(new ThrowableComputable<PersistentEnumerator<Hash>, IOException>() {
+      @Override
+      public PersistentEnumerator<Hash> compute() throws IOException {
+        return new PersistentEnumerator<Hash>(myMapFile, new MyHashKeyDescriptor(), Page.PAGE_SIZE);
+      }
+    }, myMapFile);
   }
 
   @Nullable
-  Hash getHash(int index) throws IOException {
+  private Hash doGetHash(int index) throws IOException {
     return myPersistentEnumerator.valueOf(index);
   }
 
-  int getOrPut(@NotNull Hash hash) throws IOException {
+  private int getOrPut(@NotNull Hash hash) throws IOException {
     return myPersistentEnumerator.enumerate(hash);
+  }
+
+  public int getCommitIndex(@NotNull Hash hash) {
+    try {
+      return getOrPut(hash);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e); // TODO the map is corrupted => need to rebuild
+    }
+  }
+
+  @NotNull
+  public Hash getHash(int commitIndex) {
+    try {
+      Hash hash = doGetHash(commitIndex);
+      if (hash == null) {
+        throw new RuntimeException("Unknown commit index: " + commitIndex); // TODO this shouldn't happen => need to recreate the map
+      }
+      return hash;
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e); // TODO map is corrupted => need to recreate it
+    }
+  }
+
+  @NotNull
+  public NotNullFunction<Hash, Integer> asIndexGetter() {
+    return new NotNullFunction<Hash, Integer>() {
+      @NotNull
+      @Override
+      public Integer fun(Hash hash) {
+        return getCommitIndex(hash);
+      }
+    };
+  }
+
+  @NotNull
+  public NotNullFunction<Integer, Hash> asHashGetter() {
+    return new NotNullFunction<Integer, Hash>() {
+      @NotNull
+      @Override
+      public Hash fun(Integer commitIndex) {
+        return getHash(commitIndex);
+      }
+    };
+  }
+
+  public void flush() {
+    myPersistentEnumerator.force();
+  }
+
+  @Override
+  public void dispose() {
+    try {
+      myPersistentEnumerator.close();
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
+  }
+
+  @Nullable
+  Hash findHash(@NotNull final Condition<Hash> condition) throws IOException {
+    final Ref<Hash> hashRef = Ref.create();
+    myPersistentEnumerator.iterateData(new CommonProcessors.FindProcessor<Hash>() {
+      @Override
+      protected boolean accept(Hash hash) {
+        boolean matches = condition.value(hash);
+        if (matches) {
+          hashRef.set(hash);
+        }
+        return matches;
+      }
+    });
+    return hashRef.get();
   }
 
   private static class MyHashKeyDescriptor implements KeyDescriptor<Hash> {
     @Override
-    public void save(DataOutput out, Hash value) throws IOException {
+    public void save(@NotNull DataOutput out, Hash value) throws IOException {
       out.writeUTF(value.asString());
     }
 
     @Override
-    public Hash read(DataInput in) throws IOException {
+    public Hash read(@NotNull DataInput in) throws IOException {
       return HashImpl.build(in.readUTF());
     }
 

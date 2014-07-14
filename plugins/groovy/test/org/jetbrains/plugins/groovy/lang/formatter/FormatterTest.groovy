@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.formatter
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.jetbrains.plugins.groovy.GroovyFileType
+import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
@@ -36,6 +37,7 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testArg2() throws Throwable { doTest(); }
   public void testBin1() throws Throwable { doTest(); }
   public void testBin2() throws Throwable { doTest(); }
+  public void testBin3() throws Throwable { doTest(); }
   public void testBlockExpr1() throws Throwable {
     //groovySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = false
     groovySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false
@@ -712,6 +714,15 @@ print abc ?:
 '''
   }
 
+  void testConditional2() {
+    groovySettings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    checkFormatting('''\
+print abc ? cde
+:xyz''', '''\
+print abc ? cde
+          : xyz''')
+  }
+
   void testLabelsInBasicMode() {
     groovySettings.indentOptions.INDENT_SIZE = 4
     groovySettings.indentOptions.LABEL_INDENT_SIZE = -2
@@ -733,6 +744,7 @@ def bar() {
   }
 
   void testLabels() {
+    groovyCustomSettings.INDENT_LABEL_BLOCKS = false
     checkFormatting('''\
 def foo() {
 abc:foo()
@@ -767,9 +779,13 @@ def foo() {
 
   void testRegexExpressions() { doTest() }
 
+  void testSpreadArg() { doTest() }
+
+  void testExtraLines() { doTest() }
+
   void testLabelWithDescription() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class)
-    CommonCodeStyleSettings commonSettings = myTempSettings.getCommonSettings(GroovyFileType.GROOVY_LANGUAGE)
+    CommonCodeStyleSettings commonSettings = myTempSettings.getCommonSettings(GroovyLanguage.INSTANCE)
 
     boolean indentLabelBlocks = customSettings.INDENT_LABEL_BLOCKS
     int labelIndentSize = commonSettings.indentOptions.LABEL_INDENT_SIZE
@@ -783,6 +799,8 @@ def foo() {
       commonSettings.indentOptions.LABEL_INDENT_SIZE = labelIndentSize
     }
   }
+
+  void testNoLineFeedsInGString() { doTest() }
 
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class)

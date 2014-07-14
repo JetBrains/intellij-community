@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,29 +58,35 @@ public class GrIntroduceContextImpl implements GrIntroduceContext {
     myPlace = GrIntroduceHandlerBase.getCurrentPlace(expression, var, stringPart);
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   public Editor getEditor() {
     return myEditor;
   }
 
+  @Override
   @Nullable
   public GrExpression getExpression() {
     return myExpression;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getOccurrences() {
     return myOccurrences;
   }
 
+  @Override
   public PsiElement getScope() {
     return myScope;
   }
 
+  @Override
   @Nullable
   public GrVariable getVar() {
     return myVar;
@@ -92,6 +98,7 @@ public class GrIntroduceContextImpl implements GrIntroduceContext {
     return myStringPart;
   }
 
+  @Override
   @NotNull
   public PsiElement getPlace() {
     return myPlace;

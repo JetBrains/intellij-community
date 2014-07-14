@@ -219,7 +219,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (!optionsTree.isEnabled()) return false;
         TreePath treePath = optionsTree.getPathForLocation(e.getX(), e.getY());
         selectCheckbox(treePath);

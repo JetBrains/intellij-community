@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,14 @@ import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiVariable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ControlFlowPolicy {
   @Nullable
-  PsiVariable getUsedVariable(PsiReferenceExpression refExpr);
+  PsiVariable getUsedVariable(@NotNull PsiReferenceExpression refExpr);
 
-  boolean isParameterAccepted(PsiParameter psiParameter);
+  boolean isParameterAccepted(@NotNull PsiParameter psiParameter);
 
-  boolean isLocalVariableAccepted(PsiLocalVariable psiVariable);
+  boolean isLocalVariableAccepted(@NotNull PsiLocalVariable psiVariable);
 }

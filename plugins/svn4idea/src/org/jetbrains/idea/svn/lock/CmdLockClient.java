@@ -32,7 +32,7 @@ public class CmdLockClient extends BaseSvnClient implements LockClient {
     parameters.add("--message");
     parameters.add(message);
 
-    CommandExecutor command = CommandUtil.execute(myVcs, SvnTarget.fromFile(file), SvnCommandName.lock, parameters, null);
+    CommandExecutor command = execute(myVcs, SvnTarget.fromFile(file), SvnCommandName.lock, parameters, null);
     handleCommandCompletion(command, file, SVNEventAction.LOCKED, SVNEventAction.LOCK_FAILED, handler);
   }
 
@@ -40,7 +40,7 @@ public class CmdLockClient extends BaseSvnClient implements LockClient {
   public void unlock(@NotNull File file, boolean force, @Nullable ISVNEventHandler handler) throws VcsException {
     List<String> parameters = prepareParameters(file, force);
 
-    CommandExecutor command = CommandUtil.execute(myVcs, SvnTarget.fromFile(file), SvnCommandName.unlock, parameters, null);
+    CommandExecutor command = execute(myVcs, SvnTarget.fromFile(file), SvnCommandName.unlock, parameters, null);
     handleCommandCompletion(command, file, SVNEventAction.UNLOCKED, SVNEventAction.UNLOCK_FAILED, handler);
   }
 

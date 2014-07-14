@@ -88,11 +88,11 @@ class StaticInner2 {
 
 
   static {
-     <error descr="Incompatible types. Found: '<method reference>', required: 'StaticInner2.I1'">I1 i1 = StaticInner2.Inner :: new;</error>
+     I1 i1 = StaticInner2.Inner :: <error descr="Cannot resolve constructor 'Inner'">new</error>;
   }
 
   {
-     <error descr="Incompatible types. Found: '<method reference>', required: 'StaticInner2.I1'">I1 i1 = StaticInner2.Inner :: new;</error>
+     I1 i1 = StaticInner2.Inner :: <error descr="Cannot resolve constructor 'Inner'">new</error>;
   }
 }
 
@@ -109,11 +109,11 @@ class NonStaticInner2 {
 
 
   static {
-     <error descr="Incompatible types. Found: '<method reference>', required: 'NonStaticInner2.I1'">I1 i1 = NonStaticInner2.Inner :: new;</error>
+     I1 i1 = NonStaticInner2.Inner :: <error descr="Cannot resolve constructor 'Inner'">new</error>;
   }
 
   {
-     <error descr="Incompatible types. Found: '<method reference>', required: 'NonStaticInner2.I1'">I1 i1 = NonStaticInner2.Inner :: new;</error>
+     I1 i1 = NonStaticInner2.Inner :: <error descr="Cannot resolve constructor 'Inner'">new</error>;
   }
 }
 
@@ -145,7 +145,7 @@ class NonStaticInner3 {
     }
 
     {
-        <error descr="Incompatible types. Found: '<method reference>', required: 'NonStaticInner3.I3<NonStaticInner3.Foo>'">I3<Foo> b1 = Foo::new;</error>
-        <error descr="Incompatible types. Found: '<method reference>', required: 'NonStaticInner3.I4<NonStaticInner3.Foo>'">I4<Foo> b2 = Foo::new;</error>
+        I3<Foo> b1 = Foo::<error descr="Cannot resolve constructor 'Foo'">new</error>;
+        I4<Foo> b2 = Foo::<error descr="Cannot resolve constructor 'Foo'">new</error>;
     }
 }

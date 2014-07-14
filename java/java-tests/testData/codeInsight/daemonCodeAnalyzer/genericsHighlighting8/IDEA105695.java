@@ -1,6 +1,6 @@
 import java.util.Map;
 
-public class Test {
+class Test {
     void bar(Prop p) {
          Map<? extends String, ? extends String> map = <error descr="Inconvertible types; cannot cast 'Prop' to 'java.util.Map<? extends java.lang.String,? extends java.lang.String>'">(Map<? extends String, ?  extends String>)p</error>;
     }

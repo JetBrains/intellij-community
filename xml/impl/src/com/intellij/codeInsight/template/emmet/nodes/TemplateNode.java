@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.codeInsight.template.emmet.ZenCodingUtil;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,29 +60,40 @@ public class TemplateNode extends ZenCodingNode {
     String templateKey = templateToken.getKey();
     if (myGenerator != null && StringUtil.containsChar(templateKey, '$') && callback.findApplicableTemplate(templateKey) == null) {
       String newTemplateKey = ZenCodingUtil.replaceMarkers(templateKey, numberInIteration, totalIterations, surroundedText);
-      TemplateToken newTemplateToken = new TemplateToken(newTemplateKey,
-                                        templateToken.getAttribute2Value());
-
+      TemplateToken newTemplateToken = new TemplateToken(newTemplateKey, templateToken.getAttribute2Value());
       TemplateImpl template = myGenerator.createTemplateByKey(newTemplateKey);
       if (template != null) {
         template.setDeactivated(true);
         newTemplateToken.setTemplate(template, callback);
         templateToken = newTemplateToken;
       }
-  }
+    }
 
-  GenerationNode node = new GenerationNode(templateToken, numberInIteration, totalIterations,
-                                           surroundedText, insertSurroundedTextAtTheEnd, parent);
-  return Arrays.asList(node);
-}
+    GenerationNode node = new GenerationNode(templateToken, numberInIteration, totalIterations,
+                                             surroundedText, insertSurroundedTextAtTheEnd, parent);
+    return Arrays.asList(node);
+  }
 
   @Override
   public String toString() {
     String result = myTemplateToken.getKey();
-    List<Pair<String, String>> attributes = myTemplateToken.getAttribute2Value();
+    List<Couple<String>> attributes = myTemplateToken.getAttribute2Value();
     if (!attributes.isEmpty()) {
       result += "[" + JOINER.join(myTemplateToken.getAttribute2Value()) + "]";
     }
     return "Template(" + result + ")";
+  }
+
+  @Override
+  public int getApproximateOutputLength(@Nullable CustomTemplateCallback callback) {
+    TemplateImpl template = myTemplateToken.getTemplate();
+    if (template != null) {
+      int result = template.getTemplateText().length();
+      for (Couple<String> attribute : myTemplateToken.getAttribute2Value()) {
+        result += attribute.first.length() + attribute.second.length() + 4; //plus space, eq, quotes
+      }
+      return result;
+    }
+    return 0;
   }
 }

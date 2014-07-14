@@ -44,8 +44,7 @@ public class BTreeEnumeratorTest extends TestCase {
   @Override
   protected void tearDown() throws Exception {
     myEnumerator.close();
-    FileUtil.delete(myFile);
-    FileUtil.delete(new File(myFile.getParentFile(), myFile.getName() + ".len"));
+    IOUtil.deleteAllFilesStartingWith(myFile);
     assertTrue(!myFile.exists());
     super.tearDown();
   }

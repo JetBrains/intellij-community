@@ -61,6 +61,9 @@ public abstract class GitTextHandler extends GitHandler {
   }
 
   protected void startHandlingStreams() {
+    if (myHandler == null) {
+      return;
+    }
     myHandler.addProcessListener(new ProcessListener() {
       public void startNotified(final ProcessEvent event) {
         // do nothing

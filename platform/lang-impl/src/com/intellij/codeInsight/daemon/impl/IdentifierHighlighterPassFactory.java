@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,8 @@ public class IdentifierHighlighterPassFactory extends AbstractProjectComponent i
     if (editor.isOneLineMode()) return null;
 
     if (CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET &&
-        (!ApplicationManager.getApplication().isHeadlessEnvironment() || ourTestingIdentifierHighlighting)) {
+        (!ApplicationManager.getApplication().isHeadlessEnvironment() || ourTestingIdentifierHighlighting)
+        && file.isPhysical()) {
       return new IdentifierHighlighterPass(file.getProject(), file, editor);
     }
     return null;

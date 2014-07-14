@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
@@ -94,6 +95,9 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
 
   @Override
   public VirtualFileDiffElement[] getChildren() {
+    if (myFile.is(VFileProperty.SYMLINK)) {
+      return new VirtualFileDiffElement[0];
+    }
     final VirtualFile[] files = myFile.getChildren();
     final ArrayList<VirtualFileDiffElement> elements = new ArrayList<VirtualFileDiffElement>();
     for (VirtualFile file : files) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -259,9 +260,13 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         new InlineToAnonymousConstructorProcessor(myClass, psiNewExpression, superType).run();
       }
       else {
-        PsiJavaCodeReferenceElement element =
-          JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory().createClassReferenceElement(superType.resolve());
-        psiNewExpression.getClassReference().replace(element);        
+        PsiClass target = superType.resolve();
+        assert target != null : superType;
+        PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
+        PsiJavaCodeReferenceElement element = factory.createClassReferenceElement(target);
+        PsiJavaCodeReferenceElement reference = psiNewExpression.getClassReference();
+        assert reference != null : psiNewExpression;
+        reference.replace(element);
       }
     }
     catch (IncorrectOperationException e) {
@@ -276,7 +281,8 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     PsiType substType = classResolveResult.getSubstitutor().substitute(superType);
     assert classResolveResult.getElement() == myClass;
     try {
-      typeElement.replace(factory.createTypeElement(substType));
+      PsiElement replaced = typeElement.replace(factory.createTypeElement(substType));
+      JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(replaced);
     }
     catch(IncorrectOperationException e) {
       LOG.error(e);

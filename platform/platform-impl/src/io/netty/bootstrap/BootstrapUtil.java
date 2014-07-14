@@ -2,7 +2,6 @@ package io.netty.bootstrap;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelPromise;
 
 public final class BootstrapUtil {
   public static ChannelFuture initAndRegister(Channel channel, Bootstrap bootstrap) throws Throwable {
@@ -14,10 +13,9 @@ public final class BootstrapUtil {
       throw e;
     }
 
-    ChannelPromise regPromise = channel.newPromise();
-    channel.unsafe().register(regPromise);
+    ChannelFuture regFuture = bootstrap.group().register(channel);
     //noinspection ThrowableResultOfMethodCallIgnored
-    if (regPromise.cause() != null) {
+    if (regFuture.cause() != null) {
       if (channel.isRegistered()) {
         channel.close();
       }
@@ -25,6 +23,6 @@ public final class BootstrapUtil {
         channel.unsafe().closeForcibly();
       }
     }
-    return regPromise;
+    return regFuture;
   }
 }

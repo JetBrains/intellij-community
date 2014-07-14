@@ -45,8 +45,6 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-
 public class TemplateEditorUtil {
   private TemplateEditorUtil() {}
 
@@ -54,16 +52,16 @@ public class TemplateEditorUtil {
     return createEditor(isReadOnly, text, null);
   }
 
-  public static Editor createEditor(boolean isReadOnly, CharSequence text, @Nullable Map<TemplateContextType, Boolean> context) {
+  public static Editor createEditor(boolean isReadOnly, CharSequence text, @Nullable TemplateContext context) {
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     return createEditor(isReadOnly, createDocument(text, context, project), project);
   }
 
-  private static Document createDocument(CharSequence text, @Nullable Map<TemplateContextType, Boolean> context, Project project) {
+  private static Document createDocument(CharSequence text, @Nullable TemplateContext context, Project project) {
     if (context != null) {
-      for (Map.Entry<TemplateContextType, Boolean> entry : context.entrySet()) {
-        if (entry.getValue()) {
-          return entry.getKey().createDocument(text, project);
+      for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
+        if (context.isExplicitlyEnabled(type)) {
+          return type.createDocument(text, project);
         }
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.persistent.SmallMapSerializer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.branchConfig.InfoStorage;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
@@ -99,7 +100,7 @@ public class SvnLoadedBrachesStorage {
   private DataExternalizer<Map<String, Collection<SvnBranchItem>>> createExternalizer() {
     return new DataExternalizer<Map<String, Collection<SvnBranchItem>>>() {
       @Override
-      public void save(DataOutput out, Map<String, Collection<SvnBranchItem>> value) throws IOException {
+      public void save(@NotNull DataOutput out, Map<String, Collection<SvnBranchItem>> value) throws IOException {
         out.writeInt(value.size());
         ArrayList<String> keys = new ArrayList<String>(value.keySet());
         Collections.sort(keys);
@@ -117,7 +118,7 @@ public class SvnLoadedBrachesStorage {
       }
 
       @Override
-      public Map<String, Collection<SvnBranchItem>> read(DataInput in) throws IOException {
+      public Map<String, Collection<SvnBranchItem>> read(@NotNull DataInput in) throws IOException {
         final HashMap<String, Collection<SvnBranchItem>> map = new HashMap<String, Collection<SvnBranchItem>>();
         int mapSize = in.readInt();
         for (int i = 0; i < mapSize; i++) {

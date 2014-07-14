@@ -24,10 +24,7 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.Assert;
-import org.jetbrains.idea.svn.auth.ProviderType;
-import org.jetbrains.idea.svn.auth.SvnAuthenticationInteraction;
-import org.jetbrains.idea.svn.auth.SvnAuthenticationListener;
-import org.jetbrains.idea.svn.dialogs.SvnAuthenticationProvider;
+import org.jetbrains.idea.svn.auth.*;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -80,7 +77,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     myAuthenticationManager = new SvnAuthenticationManager(myProject, configFile);
 
     myInteractiveProvider = new SvnTestInteractiveAuthentication(myAuthenticationManager);
-    myAuthenticationManager.setAuthenticationProvider(new SvnAuthenticationProvider(vcs, myInteractiveProvider, SvnConfiguration.RUNTIME_AUTH_CACHE));
+    myAuthenticationManager.setAuthenticationProvider(new SvnAuthenticationProvider(vcs, myInteractiveProvider, myAuthenticationManager));
     myAuthenticationManager.setRuntimeStorage(SvnConfiguration.RUNTIME_AUTH_CACHE);
 
     myTestInteraction = new TestInteraction();
@@ -730,7 +727,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
             @Override
             public void run() {
               try {
-                myConfiguration.clearAuthenticationDirectory(getProject());
+                clearAuthCache();
               }
               catch (Exception e) {
                 throw new RuntimeException(e);
@@ -778,6 +775,10 @@ public class SvnAuthenticationTest extends PlatformTestCase {
       throw exception[0];
     }
     SVNJNAUtil.setJNAEnabled(true);
+  }
+
+  private void clearAuthCache() {
+    SvnAuthenticationNotifier.clearAuthenticationDirectory(myConfiguration);
   }
 
   public void testPlaintextPromptAndSecondPrompt() throws Exception {
@@ -875,7 +876,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
             @Override
             public void run() {
               try {
-                myConfiguration.clearAuthenticationDirectory(getProject());
+                clearAuthCache();
               }
               catch (Exception e) {
                 throw new RuntimeException(e);

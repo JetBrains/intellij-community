@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,6 +140,29 @@ public class AnActionEvent implements PlaceProvider<String> {
     return key.getData(getDataContext());
   }
 
+  /**
+   * Returns not null data by a data key. This method assumes that data has been checked for null in AnAction#update method.
+   *<br/><br/>
+   * Example of proper usage:
+   *
+   * <pre>
+   *
+   * public class MyAction extends AnAction {
+   *   public void update(AnActionEvent e) {
+   *     //perform action if and only if EDITOR != null
+   *     boolean enabled = e.getData(CommonDataKeys.EDITOR) != null;
+   *     e.getPresentation.setEnabled(enabled);
+   *   }
+   *
+   *   public void actionPerformed(AnActionEvent e) {
+   *     //if we're here then EDITOR != null
+   *     Document doc = e.getRequiredData(CommonDataKeys.EDITOR).getDocument();
+   *     doSomething(doc);
+   *   }
+   * }
+   *
+   * </pre>
+   */
   @NotNull
   public <T> T getRequiredData(@NotNull DataKey<T> key) {
     T data = getData(key);

@@ -1,0 +1,2 @@
+<caret>some text
+<caret>other line

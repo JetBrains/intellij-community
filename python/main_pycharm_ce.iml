@@ -17,6 +17,8 @@
     <orderEntry type="module" module-name="terminal" />
     <orderEntry type="module" module-name="python-ide-community" />
     <orderEntry type="module" module-name="platform-main" />
+    <orderEntry type="module" module-name="jira" />
+    <orderEntry type="module" module-name="ShortcutPromoter" />
   </component>
 </module>
 

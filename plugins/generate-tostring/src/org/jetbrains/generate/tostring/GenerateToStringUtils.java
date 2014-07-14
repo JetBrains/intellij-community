@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013 the original author or authors.
+ * Copyright 2001-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.config.FilterPattern;
 import org.jetbrains.generate.tostring.exception.GenerateCodeException;
 import org.jetbrains.generate.tostring.exception.PluginException;
 import org.jetbrains.generate.tostring.psi.PsiAdapter;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -180,7 +182,10 @@ public class GenerateToStringUtils {
      * @param classMemberList  list of {@link PsiElementClassMember}
      * @return a list of {PsiMember} objects. 
      */
-    public static List<PsiMember> convertClassMembersToPsiMembers(List<PsiElementClassMember> classMemberList) {
+    public static List<PsiMember> convertClassMembersToPsiMembers(@Nullable List<PsiElementClassMember> classMemberList) {
+        if (classMemberList == null || classMemberList.isEmpty()) {
+          return Collections.emptyList();
+        }
         List<PsiMember> psiMemberList = new ArrayList<PsiMember>();
 
         for (PsiElementClassMember classMember : classMemberList) {

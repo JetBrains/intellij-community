@@ -57,6 +57,4 @@ public interface PyTargetExpression extends PyQualifiedExpression, PsiNamedEleme
   
   @Nullable
   PyClass getContainingClass();
-
-  boolean isQualified();
 }

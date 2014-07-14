@@ -1,10 +1,10 @@
 <html>
 <body>
-Reports any concrete or abstract classes
-which may be simplified to be interfaces. This occurs if the class has no superclass (other
+Reports <b>abstract</b> classes which can be converted to interfaces.
+A class may be converted to an interface if it has no superclass (other
 than Object), has no fields declared that are not <b>static</b>, <b>final</b>, and <b>public</b>, and has no
-methods declared that are not <b>public</b> and <b>abstract</b>, and no inner classes
-that cannot themselves be interfaces.
+methods declared that are not <b>public</b> and <b>abstract</b> and no inner classes that are not <b>public</b>.
+When using a language level of 8.0 or higher classes containing static and non-static methods will also be reported.
 <!-- tooltip end -->
 <p>
 

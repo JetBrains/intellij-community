@@ -1,5 +1,5 @@
 // abstract methods
-public class a {
+class a {
   <error descr="Missing method body, or declare abstract">void f();</error>
 
 }
@@ -57,7 +57,7 @@ abstract class c8 {
 
 
 //------- if only Bottom were in other package, it should have been abstract --------------------------
-public abstract class AbstractTest {
+abstract class AbstractTest {
  
     abstract String getName();
  

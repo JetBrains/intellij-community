@@ -107,6 +107,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals(anotherChangeList.getName(), LocalChangeList.DEFAULT_NAME);
 
     myTaskManager.activateTask(defaultTask, false);
+    myChangeListManager.waitUntilRefreshed();
 
     assertEquals(1, localTask.getChangeLists().size());
     assertEquals(1, defaultTask.getChangeLists().size());

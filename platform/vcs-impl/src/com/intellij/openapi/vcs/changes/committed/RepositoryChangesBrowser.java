@@ -44,15 +44,17 @@ import java.util.List;
  * @author yole
  */
 public class RepositoryChangesBrowser extends ChangesBrowser implements DataProvider {
+
   private CommittedChangesBrowserUseCase myUseCase;
+  private EditSourceAction myEditSourceAction;
 
   public RepositoryChangesBrowser(final Project project, final List<CommittedChangeList> changeLists) {
-    super(project, changeLists, Collections.<Change>emptyList(), null, false, false, null, MyUseCase.COMMITTED_CHANGES, null);
+    this(project, changeLists, Collections.<Change>emptyList(), null);
   }
 
   public RepositoryChangesBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,
                                   final ChangeList initialListSelection) {
-    super(project, changeLists, changes, initialListSelection, false, false, null, MyUseCase.COMMITTED_CHANGES, null);
+    this(project, changeLists, changes, initialListSelection, null);
   }
 
   public RepositoryChangesBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,
@@ -64,9 +66,9 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
     super.buildToolBar(toolBarGroup);
 
     toolBarGroup.add(new ShowDiffWithLocalAction());
-    final MyEditSourceAction editSourceAction = new MyEditSourceAction();
-    editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
-    toolBarGroup.add(editSourceAction);
+    myEditSourceAction = new MyEditSourceAction();
+    myEditSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
+    toolBarGroup.add(myEditSourceAction);
     OpenRepositoryVersionAction action = new OpenRepositoryVersionAction();
     toolBarGroup.add(action);
     final RevertSelectedChangesAction revertSelectedChangesAction = new RevertSelectedChangesAction();
@@ -98,6 +100,10 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
       final TypeSafeDataProviderAdapter adapter = new TypeSafeDataProviderAdapter(this);
       return adapter.getData(dataId);
     }
+  }
+
+  public EditSourceAction getEditSourceAction() {
+    return myEditSourceAction;
   }
 
   private class MyEditSourceAction extends EditSourceAction {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -34,43 +35,35 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.IconUtil;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.SvnApplicationSettings;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.BrowseRepositoryAction;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.browser.*;
 import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
 import org.jetbrains.idea.svn.dialogs.browserCache.KeepingExpandedExpander;
 import org.jetbrains.idea.svn.dialogs.browserCache.SyntheticWorker;
-import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
-import org.jetbrains.idea.svn.status.SvnDiffEditor;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
-import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.ISVNReporter;
-import org.tmatesoft.svn.core.io.ISVNReporterBaton;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.SVNCommitClient;
-import org.tmatesoft.svn.core.wc.SVNCopyClient;
-import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
@@ -81,16 +74,15 @@ import java.awt.event.KeyEvent;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
+import java.util.List;
 
 public class RepositoryBrowserDialog extends DialogWrapper {
+
+  private static final Logger LOG = Logger.getInstance(RepositoryBrowserDialog.class);
 
   private final Project myProject;
   protected final SvnVcs myVCS;
   private RepositoryBrowserComponent myRepositoryBrowser;
-
-  @NonNls public static final String COPY_OF_PREFIX = "CopyOf";
-  @NonNls public static final String NEW_FOLDER_POSTFIX = "NewFolder";
 
   private final DeleteAction myDeleteAction;
   private AnAction copyUrlAction;
@@ -355,9 +347,10 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
       boolean isDirectory = node.getUserObject() instanceof SVNURL ||
                             (node.getSVNDirEntry() != null && node.getSVNDirEntry().getKind() == SVNNodeKind.DIR);
-      AbstractVcsHelper.getInstance(myProject).showFileHistory(new SvnHistoryProvider(myVCS),
-              VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(node.getURL().toString(), isDirectory),
-              myVCS, node.getURL().toString());
+      String url = node.getURL().toDecodedString();
+
+      AbstractVcsHelper.getInstance(myProject)
+        .showFileHistory(myVCS.getVcsHistoryProvider(), VcsUtil.getFilePathOnNonLocal(url, isDirectory), myVCS, url);
       node.reload(false);
     }
   }
@@ -600,15 +593,17 @@ public class RepositoryBrowserDialog extends DialogWrapper {
               try {
                 doGraphicalDiff(sURL, tURL);
               }
-              catch(SVNCancelException ex) {
-                // ignore
-              }
-              catch (final SVNException e1) {
-                WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-                  public void run() {
-                    Messages.showErrorDialog(myProject, e1.getErrorMessage().getFullMessage(), "Error");
-                  }
-                }, null, myProject);
+              catch (final VcsException ex) {
+                //noinspection InstanceofCatchParameter
+                boolean isCancelled = ex instanceof SvnBindException && ((SvnBindException)ex).contains(SVNErrorCode.CANCELLED);
+
+                if (!isCancelled) {
+                  WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+                    public void run() {
+                      Messages.showErrorDialog(myProject, ex.getMessage(), "Error");
+                    }
+                  }, null, myProject);
+                }
               }
             }
           };
@@ -780,7 +775,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     public DeleteAction(final RepositoryBrowserComponent browserComponent) {
       super("_Delete...");
       myBrowserComponent = browserComponent;
-      registerCustomShortcutSet(CommonShortcuts.DELETE, myBrowserComponent);
+      registerCustomShortcutSet(CommonShortcuts.getDelete(), myBrowserComponent);
     }
 
     public void update(AnActionEvent e) {
@@ -807,7 +802,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
     }
     private boolean doDelete(final SVNURL url, final String comment) {
-      final SVNException[] exception = new SVNException[1];
+      final Ref<Exception> exception = new Ref<Exception>();
       final Project project = myBrowserComponent.getProject();
       Runnable command = new Runnable() {
         public void run() {
@@ -817,19 +812,18 @@ public class RepositoryBrowserDialog extends DialogWrapper {
           }
           SvnVcs vcs = SvnVcs.getInstance(project);
           try {
-            SVNCommitClient committer = vcs.createCommitClient();
-            committer.doDelete(new SVNURL[]{url}, comment);
+            vcs.getFactoryFromSettings().createDeleteClient().delete(url, comment);
           }
-          catch (SVNException e) {
-            exception[0] = e;
+          catch (VcsException e) {
+            exception.set(e);
           }
         }
       };
       ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.browser.delete"), false, project);
-      if (exception[0] != null) {
-        Messages.showErrorDialog(exception[0].getMessage(), SvnBundle.message("message.text.error"));
+      if (!exception.isNull()) {
+        Messages.showErrorDialog(exception.get().getMessage(), SvnBundle.message("message.text.error"));
       }
-      return exception[0] == null;
+      return exception.isNull();
     }
   }
 
@@ -932,7 +926,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         return;
       }
       SVNURL url = node.getURL();
-      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myVCS.getCommittedChangesProvider(), 
+      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myVCS.getCommittedChangesProvider(),
                                                                   new SvnRepositoryLocation(url.toString()),
                                                                   "Changes in " + url.toString(), null);
     }
@@ -1001,7 +995,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   }
 
   protected static void doMkdir(final SVNURL url, final String comment, final Project project) {
-    final SVNException[] exception = new SVNException[1];
+    final Ref<Exception> exception = new Ref<Exception>();
     Runnable command = new Runnable() {
       public void run() {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
@@ -1009,23 +1003,23 @@ public class RepositoryBrowserDialog extends DialogWrapper {
           progress.setText(SvnBundle.message("progress.text.browser.creating", url.toString()));
         }
         SvnVcs vcs = SvnVcs.getInstance(project);
+        SvnTarget target = SvnTarget.fromURL(url);
         try {
-          SVNCommitClient committer = vcs.createCommitClient();
-          committer.doMkDir(new SVNURL[] {url}, comment);
+          vcs.getFactoryFromSettings().createBrowseClient().createDirectory(target, comment, false);
         }
-        catch (SVNException e) {
-          exception[0] = e;
+        catch (VcsException e) {
+          exception.set(e);
         }
       }
     };
     ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.text.create.remote.folder"), false, project);
-    if (exception[0] != null) {
-      Messages.showErrorDialog(exception[0].getMessage(), SvnBundle.message("message.text.error"));
+    if (!exception.isNull()) {
+      Messages.showErrorDialog(exception.get().getMessage(), SvnBundle.message("message.text.error"));
     }
   }
 
   private void doCopy(final SVNURL src, final SVNURL dst, final boolean move, final String comment) {
-    final SVNException[] exception = new SVNException[1];
+    final Ref<Exception> exception = new Ref<Exception>();
     Runnable command = new Runnable() {
       public void run() {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
@@ -1035,19 +1029,18 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         }
         SvnVcs vcs = SvnVcs.getInstance(myProject);
         try {
-          SVNCopyClient committer = vcs.createCopyClient();
-          final SVNCopySource[] copySource = new SVNCopySource[] {new SVNCopySource(SVNRevision.HEAD, SVNRevision.HEAD, src)};
-          committer.doCopy(copySource, dst, move, true, true, comment, null);
+          vcs.getFactoryFromSettings().createCopyMoveClient().copy(SvnTarget.fromURL(src), SvnTarget.fromURL(dst), SVNRevision.HEAD, true,
+                                                                   move, comment, null);
         }
-        catch (SVNException e) {
-          exception[0] = e;
+        catch (VcsException e) {
+          exception.set(e);
         }
       }
     };
     String progressTitle = move ? SvnBundle.message("progress.title.browser.move") : SvnBundle.message("progress.title.browser.copy");
     ProgressManager.getInstance().runProcessWithProgressSynchronously(command, progressTitle, false, myProject);
-    if (exception[0] != null) {
-      Messages.showErrorDialog(exception[0].getMessage(), SvnBundle.message("message.text.error"));
+    if (!exception.isNull()) {
+      Messages.showErrorDialog(exception.get().getMessage(), SvnBundle.message("message.text.error"));
     }
   }
 
@@ -1062,7 +1055,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     if (dirEntry != null) {
       if (dirEntry.getRepositoryRoot() != null) {
         if (! dirEntry.getRepositoryRoot().equals(url)) {
-          relativePath = SVNPathUtil.getRelativePath(dirEntry.getRepositoryRoot().toString(), url.toString());
+          relativePath = SVNPathUtil.getRelativePath(dirEntry.getRepositoryRoot().toString(), url.toDecodedString());
         }
       } else {
         relativePath = dirEntry.getRelativePath();
@@ -1125,92 +1118,39 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     OutputStream os = null;
     try {
       os = new BufferedOutputStream(new FileOutputStream(targetFile));
-      myVCS.createDiffClient().doDiff(sourceURL, SVNRevision.HEAD, targetURL, SVNRevision.HEAD, true, false, os);
-    } catch (IOException e1) {
-      //
-    } catch (SVNException e1) {
-      //
-    } finally {
+      myVCS.getFactoryFromSettings().createDiffClient().unifiedDiff(SvnTarget.fromURL(sourceURL, SVNRevision.HEAD),
+                                                                    SvnTarget.fromURL(targetURL, SVNRevision.HEAD), os);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+    catch (VcsException e) {
+      LOG.info(e);
+    }
+    finally {
       if (os != null) {
         try {
           os.close();
-        } catch (IOException e1) {
-          //
+        } catch (IOException e) {
+          LOG.info(e);
         }
       }
     }
   }
 
-  private void doGraphicalDiff(SVNURL sourceURL, SVNURL targetURL) throws SVNException {
-    SVNRepository sourceRepository = myVCS.createRepository(sourceURL.toString());
-    sourceRepository.setCanceller(new SvnProgressCanceller());
-    SvnDiffEditor diffEditor;
-    final long rev;
-    SVNRepository targetRepository = null;
-    try {
-      rev = sourceRepository.getLatestRevision();
-      // generate Map of path->Change
-      targetRepository = myVCS.createRepository(targetURL.toString());
-      diffEditor = new SvnDiffEditor(sourceRepository, targetRepository, -1, false);
-      final ISVNEditor cancellableEditor = SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null);
-      sourceRepository.diff(targetURL, rev, rev, null, true, true, false, new ISVNReporterBaton() {
-        public void report(ISVNReporter reporter) throws SVNException {
-          reporter.setPath("", null, rev, false);
-          reporter.finishReport();
-        }
-      }, cancellableEditor);
-    }
-    finally {
-      sourceRepository.closeSession();
-      if (targetRepository != null) {
-        targetRepository.closeSession();
-      }
-    }
-    final String sourceTitle = SVNPathUtil.tail(sourceURL.toString());
-    final String targetTitle = SVNPathUtil.tail(targetURL.toString());
-    showDiffEditorResults(diffEditor.getChangesMap(), sourceTitle, targetTitle, sourceURL, targetURL, rev);
+  private void doGraphicalDiff(SVNURL sourceURL, SVNURL targetURL) throws VcsException {
+    List<Change> changes =
+      myVCS.getFactoryFromSettings().createDiffClient().compare(SvnTarget.fromURL(sourceURL), SvnTarget.fromURL(targetURL));
+
+    showDiffEditorResults(changes, SVNPathUtil.tail(sourceURL.toString()), SVNPathUtil.tail(targetURL.toString()));
   }
 
-  private void showDiffEditorResults(final Map<String, Change> changes, String sourceTitle, String targetTitle,
-                                     final SVNURL sourceUrl, final SVNURL targetUrl, final long revision) {
-    if (changes.isEmpty()) {
-      // display no changes dialog.
-      final String text = SvnBundle.message("repository.browser.compare.no.difference.message", sourceTitle, targetTitle);
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          Messages.showInfoMessage(myProject, text, SvnBundle.message("repository.browser.compare.no.difference.title"));
-        }
-      });
-      return;
-    }
-    final Collection<Change> changesList = changes.values();
-    /*final Collection<Change> changesListConverted = new ArrayList<Change>(changesList.size());
-    for (Change change : changesList) {
-      final FilePath path = ChangesUtil.getFilePath(change);
-      final Change newChange = new Change(
-          new UrlContentRevision(change.getBeforeRevision(),
-                                 FilePathImpl.createNonLocal(SVNPathUtil.append(sourceUrl.toString(), path.getName()), path.isDirectory()), revision),
-          new UrlContentRevision(change.getAfterRevision(),
-                                 FilePathImpl.createNonLocal(SVNPathUtil.append(targetUrl.toString(), path.getName()), path.isDirectory()), revision));
-      changesListConverted.add(newChange);
-    }*/
-
+  private void showDiffEditorResults(final Collection<Change> changes, String sourceTitle, String targetTitle) {
     final String title = SvnBundle.message("repository.browser.compare.title", sourceTitle, targetTitle);
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myRepositoryBrowser, myProject, changesList, true);
+        final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myRepositoryBrowser, myProject, changes, true);
         dlg.setTitle(title);
-        dlg.setConvertor(new NotNullFunction<Change, Change>() {
-          @NotNull
-          public Change fun(final Change change) {
-            final FilePath path = ChangesUtil.getFilePath(change);
-
-            return new Change(new UrlContentRevision(change.getBeforeRevision(),
-                                 FilePathImpl.createNonLocal(SVNPathUtil.append(sourceUrl.toString(), path.getPath()), path.isDirectory()), revision),
-                              new UrlContentRevision(change.getAfterRevision(),
-                                 FilePathImpl.createNonLocal(SVNPathUtil.append(targetUrl.toString(), path.getPath()), path.isDirectory()), revision));
-          }
-        });
         dlg.show();
       }
     });
@@ -1228,36 +1168,6 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       e.getPresentation().setText("Close");
       e.getPresentation().setDescription("Close this tool window");
       e.getPresentation().setIcon(AllIcons.Actions.Cancel);
-    }
-  }
-
-  public void setDefaultExpander(final NotNullFunction<RepositoryBrowserComponent, Expander> expanderFactory) {
-    myRepositoryBrowser.setLazyLoadingExpander(expanderFactory);
-  }
-
-  private static class UrlContentRevision implements ContentRevision {
-    private final ContentRevision myContentRevision;
-    private final FilePath myPath;
-    private final SvnRevisionNumber myNumber;
-
-    private UrlContentRevision(final ContentRevision contentRevision, final FilePath path, final long revision) {
-      myContentRevision = contentRevision;
-      myPath = path;
-      myNumber = new SvnRevisionNumber(SVNRevision.create(revision));
-    }
-
-    public String getContent() throws VcsException {
-      return (myContentRevision == null) ? "" : myContentRevision.getContent();
-    }
-
-    @NotNull
-    public FilePath getFile() {
-      return myPath;
-    }
-
-    @NotNull
-    public VcsRevisionNumber getRevisionNumber() {
-      return myNumber;
     }
   }
 }

@@ -1,4 +1,4 @@
-public class Test {
+class Test {
   {
     final <error descr="Incompatible types. Found: 'java.lang.Object', required: 'MyResult'">MyResult hello = parseXML(new Parser());</error>
   }

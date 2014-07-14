@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,22 +25,22 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class MappedFileInputStream extends InputStream {
-  private ResizeableMappedFile raf;
+  private final ResizeableMappedFile raf;
   private int cur;
   private long limit;
 
-  public MappedFileInputStream(final ResizeableMappedFile raf, final long pos, final long limit) {
+  public MappedFileInputStream(@NotNull ResizeableMappedFile raf, final long pos, final long limit) {
     this.raf = raf;
     setup(pos, limit);
+  }
+
+  public MappedFileInputStream(@NotNull ResizeableMappedFile raf, final long pos) throws IOException {
+    this(raf, pos, raf.length());
   }
 
   public void setup(final long pos, final long limit) {
     this.cur = (int)pos;
     this.limit = limit;
-  }
-
-  public MappedFileInputStream(final ResizeableMappedFile raf, final long pos) throws IOException {
-    this(raf, pos, raf.length());
   }
 
   @Override
@@ -67,7 +67,7 @@ public class MappedFileInputStream extends InputStream {
   }
 
   @Override
-  public int read( @NotNull byte[] b, int offset, int length ) throws IOException
+  public int read(@NotNull byte[] b, int offset, int length ) throws IOException
   {
       //only allow a read of the amount available.
       if( length > available() )

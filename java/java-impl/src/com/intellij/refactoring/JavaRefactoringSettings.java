@@ -83,6 +83,7 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
   public boolean INLINE_METHOD_THIS;
   public boolean INLINE_SUPER_CLASS_THIS;
   public boolean INLINE_FIELD_THIS;
+  public boolean INLINE_LOCAL_THIS;
   //public boolean INHERITANCE_TO_DELEGATION_PREVIEW_USAGES;
   public boolean INHERITANCE_TO_DELEGATION_DELEGATE_OTHER;
   //public boolean REPLACE_CONSTRUCTOR_WITH_FACTORY_PREVIEW_USAGES;

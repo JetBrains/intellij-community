@@ -19,6 +19,7 @@ package com.intellij.packageDependencies.ui;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.ModuleGroup;
+import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.scopeView.nodes.BasePsiNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -86,7 +87,7 @@ public class FileTreeModelBuilder {
     myContentRoots = ProjectRootManager.getInstance(myProject).getContentRoots();
     final boolean multiModuleProject = ModuleManager.getInstance(myProject).getModules().length > 1;
     myShowModules = settings.UI_SHOW_MODULES && multiModuleProject;
-    myFlattenPackages = settings.UI_FLATTEN_PACKAGES;
+    myFlattenPackages = ProjectViewDirectoryHelper.getInstance(myProject).supportsFlattenPackages() && settings.UI_FLATTEN_PACKAGES;
     myCompactEmptyMiddlePackages = settings.UI_COMPACT_EMPTY_MIDDLE_PACKAGES;
     myShowFiles = settings.UI_SHOW_FILES;
     myShowModuleGroups = settings.UI_SHOW_MODULE_GROUPS && multiModuleProject;

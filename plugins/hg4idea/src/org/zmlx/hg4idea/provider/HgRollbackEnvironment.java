@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -20,12 +21,16 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgResolveCommand;
 import org.zmlx.hg4idea.command.HgRevertCommand;
+import org.zmlx.hg4idea.command.HgUpdateCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
@@ -104,14 +109,32 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
   public void rollbackIfUnchanged(VirtualFile file) {
   }
 
-  private void revert(List<FilePath> filePaths) {
-    for (Map.Entry<VirtualFile,Collection<FilePath>> entry : HgUtil.groupFilePathsByHgRoots(project, filePaths).entrySet()) {
+  private void revert(@NotNull List<FilePath> filePaths) {
+    for (Map.Entry<VirtualFile, Collection<FilePath>> entry : HgUtil.groupFilePathsByHgRoots(project, filePaths).entrySet()) {
       final VirtualFile repo = entry.getKey();
       final Collection<FilePath> files = entry.getValue();
 
       HgRevisionNumber revisionNumber = new HgWorkingCopyRevisionsCommand(project).firstParent(repo);
-      new HgRevertCommand(project).execute(repo, files, revisionNumber, false);
-      new HgResolveCommand(project).markResolved(repo, files);
+      for (List<String> chunk : VcsFileUtil.chunkPaths(repo, files)) {
+        HgCommandResult revertResult = new HgRevertCommand(project).execute(repo, chunk, revisionNumber, false);
+        if (HgErrorUtil.hasUncommittedChangesConflict(revertResult)) {
+
+          String message = String.format("<html>Revert failed due to uncommitted merge.<br>" +
+                                         "Would you like to discard all changes for repository <it><b>%s</b></it>?</html>",
+                                         repo.getPresentableName());
+
+          int exitCode = HgUpdateCommand.showDiscardChangesConfirmation(project, message);
+          if (exitCode == Messages.OK) {
+            //discard all changes for this repository//
+            HgUpdateCommand updateCommand = new HgUpdateCommand(project, repo);
+            updateCommand.setClean(true);
+            updateCommand.setRevision(".");
+            updateCommand.execute();
+          }
+          break;
+        }
+        new HgResolveCommand(project).markResolved(repo, files);
+      }
     }
   }
 

@@ -118,6 +118,23 @@ public class LightModifierList extends LightElement implements PsiModifierList {
     return "PsiModifierList";
   }
 
+  @Override
+  public String getText() {
+    StringBuilder buffer = new StringBuilder();
+
+    for (String modifier : PsiModifier.MODIFIERS) {
+      if (hasExplicitModifier(modifier)) {
+        buffer.append(modifier);
+        buffer.append(' ');
+      }
+    }
+
+    if (buffer.length() > 0) {
+      buffer.delete(buffer.length() - 1, buffer.length());
+    }
+    return buffer.toString();
+  }
+
   public String[] getModifiers() {
     return ArrayUtil.toStringArray(myModifiers);
   }

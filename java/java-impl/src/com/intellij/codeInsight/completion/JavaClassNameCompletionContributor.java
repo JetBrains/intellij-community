@@ -52,7 +52,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
           psiElement(PsiReferenceList.class).withParent(PsiTypeParameter.class));
 
   @Override
-  public void fillCompletionVariants(CompletionParameters parameters, final CompletionResultSet _result) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet _result) {
     if (parameters.getCompletionType() == CompletionType.CLASS_NAME ||
       parameters.isExtendedCompletion() && mayContainClassName(parameters)) {
       addAllClasses(parameters, _result);
@@ -151,9 +151,11 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
     if (withInners && name != null) {
       for (PsiClass inner : psiClass.getInnerClasses()) {
         if (inner.hasModifierProperty(PsiModifier.STATIC)) {
-          for (JavaPsiClassReferenceElement lookupInner : createClassLookupItems(inner, withInners, insertHandler, condition)) {
+          for (JavaPsiClassReferenceElement lookupInner : createClassLookupItems(inner, true, insertHandler, condition)) {
             String forced = lookupInner.getForcedPresentableName();
-            lookupInner.setForcedPresentableName(name + "." + (forced != null ? forced : inner.getName()));
+            String qualifiedName = name + "." + (forced != null ? forced : inner.getName());
+            lookupInner.setForcedPresentableName(qualifiedName);
+            lookupInner.setLookupString(qualifiedName);
             result.add(lookupInner);
           }
         }

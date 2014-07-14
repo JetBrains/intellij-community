@@ -21,6 +21,7 @@ import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -75,5 +76,13 @@ public class XValueMarkers<V extends XValue, M> {
       myProvider.unmarkValue(v, m);
       myMarkers.remove(m);
     }
+  }
+
+  public Map<M, ValueMarkup> getAllMarkers() {
+    return Collections.unmodifiableMap(myMarkers);
+  }
+
+  public void clear() {
+    myMarkers.clear();
   }
 }

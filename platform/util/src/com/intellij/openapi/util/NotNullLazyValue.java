@@ -37,4 +37,14 @@ public abstract class NotNullLazyValue<T> {
     }
     return myValue;
   }
+
+  public static <T> NotNullLazyValue<T> createConstantValue(@NotNull final T value) {
+    return new NotNullLazyValue<T>() {
+      @NotNull
+      @Override
+      protected T compute() {
+        return value;
+      }
+    };
+  }
 }

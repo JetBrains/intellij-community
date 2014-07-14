@@ -30,15 +30,18 @@ import org.intellij.plugins.testUtil.CopyFile;
  */
 public class RngXmlHighlightingTest extends HighlightingTestBase {
 
+  @Override
   public String getTestDataPath() {
     return "highlighting";
   }
 
+  @Override
   protected void init() {
     super.init();
     FileTypeManager.getInstance().registerFileType(StdFileTypes.XML, "fo");
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final ExternalResourceManagerEx m = ExternalResourceManagerEx.getInstanceEx();
         ExternalResourceManagerExImpl

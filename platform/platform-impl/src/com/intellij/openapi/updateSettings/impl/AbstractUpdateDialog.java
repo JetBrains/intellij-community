@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 04-Dec-2007
- */
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.CommonBundle;
@@ -28,114 +23,118 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.TableUtil;
+import com.intellij.ui.LicensingFacade;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.util.List;
 
+/**
+ * @author anna
+ */
 public abstract class AbstractUpdateDialog extends DialogWrapper {
   private final boolean myEnableLink;
-  protected final List<PluginDownloader> myUploadedPlugins;
-  protected boolean myShowConfirmation = true;
+  protected String myLicenseInfo = null;
+  protected boolean myPaidUpgrade;
+  protected boolean mySubscribtionLicense = false;
 
-  protected AbstractUpdateDialog(boolean canBeParent, boolean enableLink, final List<PluginDownloader> updatePlugins) {
-    super(canBeParent);
+  public AbstractUpdateDialog(boolean enableLink) {
+    super(true);
     myEnableLink = enableLink;
-    myUploadedPlugins = updatePlugins;
+    setTitle(IdeBundle.message("updates.info.dialog.title"));
+  }
+
+  protected AbstractUpdateDialog(Component parent, boolean enableLink) {
+    super(parent, true);
+    myEnableLink = enableLink;
+    setTitle(IdeBundle.message("updates.info.dialog.title"));
   }
 
   @Override
   protected void init() {
-    setButtonsText();
-    super.init();
-  }
-
-  protected void initPluginsPanel(final JPanel panel, JPanel pluginsPanel, JEditorPane updateLinkPane) {
-    pluginsPanel.setVisible(myUploadedPlugins != null);
-    if (myUploadedPlugins != null) {
-      final DetectedPluginsPanel foundPluginsPanel = new DetectedPluginsPanel();
-
-      foundPluginsPanel.addStateListener(new DetectedPluginsPanel.Listener() {
-        public void stateChanged() {
-          setButtonsText();
-        }
-      });
-      for (PluginDownloader uploadedPlugin : myUploadedPlugins) {
-        foundPluginsPanel.add(uploadedPlugin);
-      }
-      TableUtil.ensureSelectionExists(foundPluginsPanel.getEntryTable());
-      pluginsPanel.add(foundPluginsPanel, BorderLayout.CENTER);
-    }
-    updateLinkPane.setBackground(UIUtil.getPanelBackground());
-    String css = UIUtil.getCssFontDeclaration(UIUtil.getLabelFont());
-    if (UIUtil.isUnderDarcula()) {
-      css += "<style>body {background: #" + ColorUtil.toHex(UIUtil.getPanelBackground()) + ";}</style>";
-    }
-    updateLinkPane.setBorder(IdeBorderFactory.createEmptyBorder());
-    updateLinkPane.setText(IdeBundle.message("updates.configure.label", css, ShowSettingsUtil.getSettingsMenuName()));
-    updateLinkPane.setEditable(false);
-    LabelTextReplacingUtil.replaceText(panel);
-
-    if (myEnableLink) {
-      updateLinkPane.addHyperlinkListener(new HyperlinkListener() {
-        public void hyperlinkUpdate(final HyperlinkEvent e) {
-          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-            final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-            UpdateSettingsConfigurable updatesSettings = new UpdateSettingsConfigurable();
-            updatesSettings.setCheckNowEnabled(false);
-            util.editConfigurable(panel, updatesSettings);
-          }
-        }
-      });
-    }
-  }
-
-  private void setButtonsText() {
     setOKButtonText(getOkButtonText());
     setCancelButtonText(getCancelButtonText());
-  }
-
-  protected String getCancelButtonText() {
-    return CommonBundle.getCancelButtonText();
+    super.init();
   }
 
   protected String getOkButtonText() {
     return CommonBundle.getOkButtonText();
   }
 
-  protected void doOKAction() {
-    if (doDownloadAndPrepare() && isShowConfirmation()) {
-      final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-      // do not stack several modal dialogs (native & swing)
-      app.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          app.restart(true);
-        }
-      });
-    }
-    super.doOKAction();
+  protected String getCancelButtonText() {
+    return CommonBundle.getCancelButtonText();
   }
 
-  protected boolean doDownloadAndPrepare() {
-    if (myUploadedPlugins != null) {
-      UpdateChecker.saveDisabledToUpdatePlugins();
-      if (UpdateChecker.install(myUploadedPlugins)) {
-        return true;
+  protected void restart() {
+    final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    // do not stack several modal dialogs (native & swing)
+    app.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        app.restart(true);
+      }
+    });
+  }
+
+  protected void initLicensingInfo(@NotNull UpdateChannel channel, @NotNull BuildInfo build) {
+    LicensingFacade facade = LicensingFacade.getInstance();
+    if (facade != null) {
+      mySubscribtionLicense = facade.isSubscriptionLicense();
+      if (!channel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {
+        Boolean paidUpgrade = facade.isPaidUpgrade(channel.getMajorVersion(), build.getReleaseDate());
+        if (paidUpgrade == Boolean.TRUE) {
+          myPaidUpgrade = true;
+          myLicenseInfo = IdeBundle.message("updates.channel.key.needed", channel.getEvalDays());
+        }
+        else if (paidUpgrade == Boolean.FALSE) {
+          myLicenseInfo = IdeBundle.message("updates.channel.existing.key");
+        }
+      }
+      else {
+        myLicenseInfo = IdeBundle.message("updates.channel.bundled.key");
       }
     }
-    return false;
   }
 
-  public void setShowConfirmation(boolean showConfirmation) {
-    myShowConfirmation = showConfirmation;
+
+  protected void configureMessageArea(@NotNull JEditorPane area) {
+    configureMessageArea(area, IdeBundle.message("updates.configure.label", ShowSettingsUtil.getSettingsMenuName()), null, null);
   }
 
-  public boolean isShowConfirmation() {
-    return myShowConfirmation;
+  protected void configureMessageArea(final @NotNull JEditorPane area,
+                                      @NotNull String messageBody,
+                                      @Nullable Color fontColor,
+                                      @Nullable HyperlinkListener listener) {
+    String text = "<html><head>" +
+                 UIUtil.getCssFontDeclaration(UIUtil.getLabelFont(), fontColor, null, null) +
+                 "<style>body {background: #" + ColorUtil.toHex(UIUtil.getPanelBackground()) + ";}</style>" +
+                 "</head><body>" +
+                 messageBody +
+                 "</body></html>";
+
+    area.setBackground(UIUtil.getPanelBackground());
+    area.setBorder(IdeBorderFactory.createEmptyBorder());
+    area.setText(text);
+    area.setEditable(false);
+
+    if (listener == null && myEnableLink) {
+      listener = new HyperlinkListener() {
+        @Override
+        public void hyperlinkUpdate(final HyperlinkEvent e) {
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            UpdateSettingsConfigurable settings = new UpdateSettingsConfigurable();
+            settings.setCheckNowEnabled(false);
+            ShowSettingsUtil.getInstance().editConfigurable(area, settings);
+          }
+        }
+      };
+    }
+    if (listener != null) {
+      area.addHyperlinkListener(listener);
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 Bas Leijdekkers
+ * Copyright 2009-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,14 @@
  */
 package com.siyeh.ipp.forloop;
 
+import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.VariableAccessUtils;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class ReverseForLoopDirectionPredicate implements PsiElementPredicate {
 
@@ -57,11 +61,109 @@ class ReverseForLoopDirectionPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiExpression condition = forStatement.getCondition();
-    if (!VariableAccessUtils.isVariableCompared(variable, condition)) {
+    if (!isVariableCompared(variable, condition)) {
       return false;
     }
     final PsiStatement update = forStatement.getUpdate();
-    return VariableAccessUtils.isVariableIncrementOrDecremented(variable,
-                                                                update);
+    return isVariableIncrementOrDecremented(variable, update);
+  }
+
+  public static boolean isVariableCompared(
+    @NotNull PsiVariable variable, @Nullable PsiExpression expression) {
+    if (!(expression instanceof PsiBinaryExpression)) {
+      return false;
+    }
+    final PsiBinaryExpression binaryExpression =
+      (PsiBinaryExpression)expression;
+    final IElementType tokenType = binaryExpression.getOperationTokenType();
+    if (!ComparisonUtils.isComparisonOperation(tokenType)) {
+      return false;
+    }
+    final PsiExpression lhs = binaryExpression.getLOperand();
+    final PsiExpression rhs = binaryExpression.getROperand();
+    if (rhs == null) {
+      return false;
+    }
+    if (VariableAccessUtils.evaluatesToVariable(lhs, variable)) {
+      return true;
+    }
+    else if (VariableAccessUtils.evaluatesToVariable(rhs, variable)) {
+      return true;
+    }
+    return false;
+  }
+
+  public static boolean isVariableIncrementOrDecremented(
+    @NotNull PsiVariable variable, @Nullable PsiStatement statement) {
+    if (!(statement instanceof PsiExpressionStatement)) {
+      return false;
+    }
+    final PsiExpressionStatement expressionStatement =
+      (PsiExpressionStatement)statement;
+    PsiExpression expression = expressionStatement.getExpression();
+    expression = ParenthesesUtils.stripParentheses(expression);
+    if (expression instanceof PsiPrefixExpression) {
+      final PsiPrefixExpression prefixExpression =
+        (PsiPrefixExpression)expression;
+      final IElementType tokenType = prefixExpression.getOperationTokenType();
+      if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
+          !tokenType.equals(JavaTokenType.MINUSMINUS)) {
+        return false;
+      }
+      final PsiExpression operand = prefixExpression.getOperand();
+      return VariableAccessUtils.evaluatesToVariable(operand, variable);
+    }
+    else if (expression instanceof PsiPostfixExpression) {
+      final PsiPostfixExpression postfixExpression =
+        (PsiPostfixExpression)expression;
+      final IElementType tokenType = postfixExpression.getOperationTokenType();
+      if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
+          !tokenType.equals(JavaTokenType.MINUSMINUS)) {
+        return false;
+      }
+      final PsiExpression operand = postfixExpression.getOperand();
+      return VariableAccessUtils.evaluatesToVariable(operand, variable);
+    }
+    else if (expression instanceof PsiAssignmentExpression) {
+      final PsiAssignmentExpression assignmentExpression =
+        (PsiAssignmentExpression)expression;
+      final IElementType tokenType =
+        assignmentExpression.getOperationTokenType();
+      PsiExpression lhs = assignmentExpression.getLExpression();
+      lhs = ParenthesesUtils.stripParentheses(lhs);
+      if (!VariableAccessUtils.evaluatesToVariable(lhs, variable)) {
+        return false;
+      }
+      PsiExpression rhs = assignmentExpression.getRExpression();
+      rhs = ParenthesesUtils.stripParentheses(rhs);
+      if (tokenType == JavaTokenType.EQ) {
+        if (!(rhs instanceof PsiBinaryExpression)) {
+          return false;
+        }
+        final PsiBinaryExpression binaryExpression =
+          (PsiBinaryExpression)rhs;
+        final IElementType token =
+          binaryExpression.getOperationTokenType();
+        if (!token.equals(JavaTokenType.PLUS) &&
+            !token.equals(JavaTokenType.MINUS)) {
+          return false;
+        }
+        PsiExpression lOperand = binaryExpression.getLOperand();
+        lOperand = ParenthesesUtils.stripParentheses(lOperand);
+        PsiExpression rOperand = binaryExpression.getROperand();
+        rOperand = ParenthesesUtils.stripParentheses(rOperand);
+        if (VariableAccessUtils.evaluatesToVariable(rOperand, variable)) {
+          return true;
+        }
+        else if (VariableAccessUtils.evaluatesToVariable(lOperand, variable)) {
+          return true;
+        }
+      }
+      else if (tokenType == JavaTokenType.PLUSEQ ||
+               tokenType == JavaTokenType.MINUSEQ) {
+        return true;
+      }
+    }
+    return false;
   }
 }

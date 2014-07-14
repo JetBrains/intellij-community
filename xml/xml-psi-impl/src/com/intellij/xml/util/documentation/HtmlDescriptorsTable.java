@@ -192,7 +192,7 @@ public class HtmlDescriptorsTable {
     return ourTagTable.get(tagName);
   }
 
-  static HtmlAttributeDescriptor getAttributeDescriptor(String attributeName) {
+  public static HtmlAttributeDescriptor getAttributeDescriptor(String attributeName) {
     return ourAttributeTable.get(attributeName);
   }
 

@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -107,7 +108,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
         whileStatement = "while(" + condition.getText() + ')' +
                          bodyText;
       }
-      replaceStatement(forStatement, whileStatement);
+      PsiReplacementUtil.replaceStatement(forStatement, whileStatement);
     }
   }
 

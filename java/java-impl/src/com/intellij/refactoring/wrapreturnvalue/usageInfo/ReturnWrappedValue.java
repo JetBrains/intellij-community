@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,24 +21,21 @@ import com.intellij.psi.PsiReturnStatement;
 import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 
 public class ReturnWrappedValue extends FixableUsageInfo {
-    private final PsiReturnStatement statement;
+  private final PsiReturnStatement myStatement;
 
-    public ReturnWrappedValue(PsiReturnStatement statement) {
-        super(statement);
-        this.statement = statement;
-    }
+  public ReturnWrappedValue(PsiReturnStatement statement) {
+    super(statement);
+    myStatement = statement;
+  }
 
-    public void fixUsage() throws IncorrectOperationException{
-        final PsiMethodCallExpression returnValue =
-                (PsiMethodCallExpression) statement.getReturnValue();
-        assert returnValue != null;
-        final PsiExpression qualifier =
-                returnValue.getMethodExpression().getQualifierExpression();
-        assert qualifier != null;
-        @NonNls final String newExpression = qualifier.getText();
-        MutationUtils.replaceExpression(newExpression, returnValue);
-    }
+  @Override
+  public void fixUsage() throws IncorrectOperationException {
+    PsiMethodCallExpression returnValue = (PsiMethodCallExpression)myStatement.getReturnValue();
+    assert returnValue != null;
+    PsiExpression qualifier = returnValue.getMethodExpression().getQualifierExpression();
+    assert qualifier != null;
+    MutationUtils.replaceExpression(qualifier.getText(), returnValue);
+  }
 }

@@ -18,7 +18,6 @@ package com.intellij.ui;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ElementProducer;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,36 +61,40 @@ class TableToolbarDecorator extends ToolbarDecorator {
     return myTable;
   }
 
+  @Override
   protected void updateButtons() {
     final CommonActionsPanel p = getActionsPanel();
     if (p != null) {
+      boolean someElementSelected;
       if (myTable.isEnabled()) {
         final int index = myTable.getSelectedRow();
         final int size = myTable.getModel().getRowCount();
-        if (0 <= index && index < size) {
+        someElementSelected = 0 <= index && index < size;
+        if (someElementSelected) {
           final boolean downEnable = myTable.getSelectionModel().getMaxSelectionIndex() < size - 1;
           final boolean upEnable = myTable.getSelectionModel().getMinSelectionIndex() > 0;
           final boolean editEnabled = myTable.getSelectedRowCount() == 1;
           p.setEnabled(CommonActionsPanel.Buttons.EDIT, editEnabled);
-          p.setEnabled(CommonActionsPanel.Buttons.REMOVE, true);
           p.setEnabled(CommonActionsPanel.Buttons.UP, upEnable);
           p.setEnabled(CommonActionsPanel.Buttons.DOWN, downEnable);
         }
         else {
           p.setEnabled(CommonActionsPanel.Buttons.EDIT, false);
-          p.setEnabled(CommonActionsPanel.Buttons.REMOVE, false);
           p.setEnabled(CommonActionsPanel.Buttons.UP, false);
           p.setEnabled(CommonActionsPanel.Buttons.DOWN, false);
         }
         p.setEnabled(CommonActionsPanel.Buttons.ADD, myProducer == null || myProducer.canCreateElement());
       }
       else {
+        someElementSelected = false;
         p.setEnabled(CommonActionsPanel.Buttons.ADD, false);
         p.setEnabled(CommonActionsPanel.Buttons.EDIT, false);
-        p.setEnabled(CommonActionsPanel.Buttons.REMOVE, false);
         p.setEnabled(CommonActionsPanel.Buttons.UP, false);
         p.setEnabled(CommonActionsPanel.Buttons.DOWN, false);
       }
+
+      p.setEnabled(CommonActionsPanel.Buttons.REMOVE, someElementSelected);
+      updateExtraElementActions(someElementSelected);
     }
   }
 
@@ -117,7 +120,8 @@ class TableToolbarDecorator extends ToolbarDecorator {
         table.setColumnSelectionInterval(0, 0);
         table.editCellAt(index, 0);
 
-        updateScroller(table, table.getCellEditor() instanceof Animated);
+        boolean temporaryHideVerticalScrollBar = table.getCellEditor() instanceof Animated;
+        TableUtil.updateScroller(table, temporaryHideVerticalScrollBar);
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           @Override
@@ -138,24 +142,11 @@ class TableToolbarDecorator extends ToolbarDecorator {
     myRemoveAction = new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
-        TableUtil.stopEditing(table);
-        int index = table.getSelectedRow();
-        if (0 <= index && index < table.getModel().getRowCount()) {
-          tableModel.removeRow(index);
-          if (index < table.getModel().getRowCount()) {
-            table.setRowSelectionInterval(index, index);
-          }
-          else {
-            if (index > 0) {
-              table.setRowSelectionInterval(index - 1, index - 1);
-            }
-          }
+        if (TableUtil.doRemoveSelectedItems(table, tableModel, null)) {
           updateButtons();
+          table.requestFocus();
+          TableUtil.updateScroller(table, false);
         }
-
-        table.requestFocus();
-
-        updateScroller(table, false);
       }
     };
 
@@ -201,25 +192,12 @@ class TableToolbarDecorator extends ToolbarDecorator {
     };
   }
 
-  private static void updateScroller(JTable table, boolean temporaryHideVerticalScrollBar) {
-    JScrollPane scrollPane = UIUtil.getParentOfType(JScrollPane.class, table);
-    if (scrollPane != null) {
-      if (temporaryHideVerticalScrollBar) {
-        final JScrollBar bar = scrollPane.getVerticalScrollBar();
-        if (bar == null || !bar.isVisible()) {
-          scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        }
-      }
-      scrollPane.revalidate();
-      scrollPane.repaint();
-    }
-  }
-
   @Override
   protected void installDnDSupport() {
     RowsDnDSupport.install(myTable, (EditableModel)myTable.getModel());
   }
 
+  @Override
   protected boolean isModelEditable() {
     return myTable.getModel() instanceof EditableModel;
   }

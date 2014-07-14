@@ -5,7 +5,7 @@ import java.lang.*;
 import java.lang.AssertionError;
 import java.lang.IllegalArgumentException;
 
-public class AssertIsNotNull {
+class AssertIsNotNull {
   void bar(String s, String s1) {
     if (<warning descr="Condition 's == null && trimIfNotNull(s) != null' is always 'false'">s == null && <warning descr="Condition 'trimIfNotNull(s) != null' is always 'false' when reached">trimIfNotNull(s) != null</warning></warning>) {
       throw new AssertionError();
@@ -41,12 +41,4 @@ public class AssertIsNotNull {
   
   Object call() {return new Object();}
   
-  @Contract(<warning descr="A contract clause must be in form arg1, ..., argN -> return-value">"a"</warning>)
-  void malformedContract() {}
-
-  @Contract(<warning descr="Method takes 2 parameters, while contract clause number 1 expects 1">"null -> _"</warning>)
-  void wrongParameterCount(Object a, boolean b) {}
-  
-  @Contract(pure=<warning descr="Pure methods must return something, void is not allowed as a return type">true</warning>)
-  void voidPureMethod() {}
 }

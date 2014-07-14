@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.options.Scheme;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author MYakovlev
@@ -23,6 +24,7 @@ import com.intellij.openapi.options.Scheme;
  */
 public interface CodeStyleScheme extends Scheme {
   @Override
+  @NotNull
   String getName();
   boolean isDefault();
   CodeStyleSettings getCodeStyleSettings();

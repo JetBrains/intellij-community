@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,6 +69,7 @@ public class XmlName implements Comparable<XmlName> {
   }
 
 
+  @Override
   public int compareTo(XmlName o) {
     final int i = myLocalName.compareTo(o.myLocalName);
     if (i != 0) {

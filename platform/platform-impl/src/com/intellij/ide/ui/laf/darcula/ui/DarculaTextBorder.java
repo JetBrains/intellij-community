@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -61,10 +62,18 @@ public class DarculaTextBorder implements Border, UIResource {
       DarculaUIUtil.paintFocusRing(g, 2, 2, width-4, height-4);
     } else {
       boolean editable = !(c instanceof JTextComponent) || (((JTextComponent)c).isEditable());
-      g.setColor(c.isEnabled() && editable ? Gray._100 : new Color(0x535353));
+      g.setColor(getBorderColor(c.isEnabled() && editable));
       g.drawRect(1, 1, width - 2, height - 2);
     }
     g.translate(-x, -y);
     config.restore();
+  }
+
+  private static Color getBorderColor(boolean enabled) {
+    // in sync with ComboBox's border color
+    if (UIUtil.isUnderDarcula()) {
+      return enabled ? Gray._100 : Gray._83;
+    }
+    return Gray._150;
   }
 }

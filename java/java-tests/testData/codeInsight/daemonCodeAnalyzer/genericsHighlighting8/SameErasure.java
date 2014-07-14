@@ -14,7 +14,7 @@ class SameSignatureTest {
     void f(Object o) {}
 }
 
-public class Test1 {
+class Test1 {
     <error descr="'bug(String)' clashes with 'bug(String)'; both methods have same erasure">public void bug(String s)</error> {
     }
 

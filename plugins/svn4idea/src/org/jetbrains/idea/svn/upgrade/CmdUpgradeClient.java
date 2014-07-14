@@ -51,7 +51,7 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
     FileStatusResultParser parser = new FileStatusResultParser(CHANGED_PATH, handler, new UpgradeStatusConvertor());
     UpgradeLineCommandListener listener = new UpgradeLineCommandListener(parser);
 
-    CommandUtil.execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.upgrade, parameters, listener);
+    execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.upgrade, parameters, listener);
     listener.throwIfException();
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ public class HtmlAttributeValueGetter extends XmlAttributeValueGetter {
     myCaseSensitive = _caseSensitive;
   }
 
+  @Override
   @Nullable
   @NonNls
   protected String[] addSpecificCompletions(final XmlAttribute attribute) {
@@ -64,10 +65,10 @@ public class HtmlAttributeValueGetter extends XmlAttributeValueGetter {
       }
       else if ("rel".equals(name) || "rev".equals(name)) {
         return new String[]{"alternate", "stylesheet", "start", "next", "prev", "contents", "index", "glossary", "copyright", "chapter",
-            "section", "subsection", "appendix", "help", "bookmark", "script"};
+            "section", "subsection", "appendix", "help", "bookmark", "script", "import"};
       }
       else if ("media".equals(name)) {
-        return new String[]{"screen", "tty", "tv", "projection", "handheld", "print", "all", "aural", "braille"};
+        return new String[]{ "all", "braille", "embossed", "handheld", "print", "projection", "screen", "speech", "tty", "tv" };
       }
       else if ("language".equals(name)) {
         return new String[]{"JavaScript", "VBScript", "JScript", "JavaScript1.2", "JavaScript1.3", "JavaScript1.4", "JavaScript1.5"};
@@ -76,14 +77,12 @@ public class HtmlAttributeValueGetter extends XmlAttributeValueGetter {
         return new String[]{"text/css", "text/html", "text/plain", "text/xml"};
       }
       else if ("http-equiv".equals(name) && "meta".equals(tagName)) {
-        return new String[]{"Accept", "Accept-Charset", "Accept-Encoding", "Accept-Language", "Accept-Ranges", "Age", "Allow",
-            "Authorization", "Cache-Control", "Connection", "Content-Encoding", "Content-Language", "Content-Length", "Content-Location",
-            "Content-MD5", "Content-Range", "Content-Type", "Date", "ETag", "Expect", "Expires", "From", "Host", "If-Match",
-            "If-Modified-Since", "If-None-Match", "If-Range", "If-Unmodified-Since", "Last-Modified", "Location", "Max-Forwards", "Pragma",
-            "Proxy-Authenticate", "Proxy-Authorization", "Range", "Referer", "Refresh", "Retry-After", "Server", "TE", "Trailer", "Transfer-Encoding",
-            "Upgrade", "User-Agent", "Vary", "Via", "Warning", "WWW-Authenticate"};
+        return HtmlUtil.RFC2616_HEADERS;
       }
       else if("content".equals(name) && "meta".equals(tagName) && getAttribute(tag, "name") == null) {
+        return HtmlUtil.CONTENT_TYPES;
+      }
+      else if ("accept".equals(name) && "input".equals(tagName)) {
         return HtmlUtil.CONTENT_TYPES;
       }
       else if("accept-charset".equals(name) || "charset".equals(name)) {

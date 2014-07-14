@@ -204,7 +204,7 @@ static wchar_t* ToWinPath(JNIEnv* env, jstring path, bool dirSuffix) {
     const jchar* jstr = env->GetStringChars(path, NULL);
     while (len > 0 && jstr[len - 1] == L'\\') --len;  // trim trailing separators
     if (len == 0) return NULL;
-    if (len >= MAX_PATH) prefix = 4;  // prefix long paths by UNC marker
+    if (len >= (MAX_PATH - 12)) prefix = 4;  // prefix long paths by UNC marker
     if (dirSuffix) suffix = 2;
 
     wchar_t* pathBuf = (wchar_t*)malloc((prefix + len + suffix + 1) * sizeof(wchar_t));

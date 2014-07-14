@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,11 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 
 public interface PsiDocumentTransactionListener {
   Topic<PsiDocumentTransactionListener> TOPIC = new Topic<PsiDocumentTransactionListener>("psi.DocumentTransactionListener", PsiDocumentTransactionListener.class, Topic.BroadcastDirection.TO_PARENT);
 
-  void transactionStarted(Document doc, PsiFile file);
-  void transactionCompleted(Document doc, PsiFile file);
+  void transactionStarted(@NotNull Document document, @NotNull PsiFile file);
+  void transactionCompleted(@NotNull Document document, @NotNull PsiFile file);
 }

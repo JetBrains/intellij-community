@@ -8,7 +8,6 @@ class BaseLineService {
 
 String abc = 5
 -----
-as
 assert
 boolean
 byte

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,9 @@ import com.intellij.lang.Commenter;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.ExternalizableFileType;
+import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.util.*;
 import com.intellij.util.text.StringTokenizer;
 import org.jdom.Element;
@@ -317,7 +317,8 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   @NonNls private static final String ELEMENT_REMOVED_MAPPING = "removed_mapping";
   @NonNls private static final String ATTRIBUTE_TYPE = "type";
 
-  public static List<Pair<FileNameMatcher, String>> readAssociations(final Element e) {
+  @NotNull
+  public static List<Pair<FileNameMatcher, String>> readAssociations(@NotNull Element e) {
     ArrayList<Pair<FileNameMatcher, String>> result = new ArrayList<Pair<FileNameMatcher, String>>();
     List mappings = e.getChildren(ELEMENT_MAPPING);
 
@@ -327,13 +328,14 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
       String pattern = mapping.getAttributeValue(ATTRIBUTE_PATTERN);
 
       FileNameMatcher matcher = ext != null ? new ExtensionFileNameMatcher(ext) : FileTypeManager.parseFromString(pattern);
-      result.add(new Pair<FileNameMatcher, String>(matcher, mapping.getAttributeValue(ATTRIBUTE_TYPE)));
+      result.add(Pair.create(matcher, mapping.getAttributeValue(ATTRIBUTE_TYPE)));
     }
 
     return result;
   }
 
-  public static List<Trinity<FileNameMatcher, String, Boolean>> readRemovedAssociations(final Element e) {
+  @NotNull
+  public static List<Trinity<FileNameMatcher, String, Boolean>> readRemovedAssociations(@NotNull Element e) {
     ArrayList<Trinity<FileNameMatcher, String, Boolean>> result = new ArrayList<Trinity<FileNameMatcher, String, Boolean>>();
     List removedMappings = e.getChildren(ELEMENT_REMOVED_MAPPING);
     for (Object removedMapping : removedMappings) {
@@ -349,7 +351,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     return result;
   }
 
-  public static Element writeMapping(final FileType type, final FileNameMatcher matcher, boolean specifyTypeName) {
+  public static Element writeMapping(@NotNull FileType type, final FileNameMatcher matcher, boolean specifyTypeName) {
     Element mapping = new Element(ELEMENT_MAPPING);
     if (matcher instanceof ExtensionFileNameMatcher) {
       mapping.setAttribute(ATTRIBUTE_EXT, ((ExtensionFileNameMatcher)matcher).getExtension());

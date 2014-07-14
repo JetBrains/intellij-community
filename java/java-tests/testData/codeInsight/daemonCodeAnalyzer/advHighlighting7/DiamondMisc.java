@@ -97,14 +97,14 @@ interface I<T> {
 class FI1 {
   I<? extends String> i1 = new I<<error descr="Cannot use ''<>'' with anonymous inner classes"></error>>() {
     @Override
-    public <error descr="'m()' in 'Anonymous class derived from I' clashes with 'm()' in 'I'; attempting to use incompatible return type">String</error> m() {
+    public String m() {
       return null;
     }
   };
 
   I<?> i2 = new I<<error descr="Cannot use ''<>'' with anonymous inner classes"></error>>() {
     @Override
-    public <error descr="'m()' in 'Anonymous class derived from I' clashes with 'm()' in 'I'; attempting to use incompatible return type">Object</error> m() {
+    public Object m() {
       return null;
     }
   };
@@ -157,14 +157,14 @@ class ParenthTest<T extends TZ> {
 class TestWildcardInference {
   interface A<T> {
   }
-  
+
   class B<V> implements A<V> {
     B(C<V> v) {
     }
   }
-  
+
   class C<E> {}
-  
+
   class U {
     void foo() {
       C<? extends Number> x = null;
@@ -202,13 +202,13 @@ class Another {
 
         System.out.println(i);
 
-        <error descr="Incompatible types. Found: 'Outer2.Inner2<java.lang.String>', required: 'Outer2.Inner2<java.lang.String>'">Outer2<Integer>.Inner2<String> i5 = new Outer2<>().new Inner2<>();</error>
+        <error descr="Incompatible types. Found: 'Outer2.Inner2<java.lang.String>', required: 'Outer2<java.lang.Integer>.Inner2<java.lang.String>'">Outer2<Integer>.Inner2<String> i5 = new Outer2<>().new Inner2<>();</error>
     }
 
   static Outer m() {return null;}
   static <T extends Outer> T m1() {return null;}
   static <T> T m2() {return null;}
-  
+
 }
 
 class TypeParamsExtendsList {

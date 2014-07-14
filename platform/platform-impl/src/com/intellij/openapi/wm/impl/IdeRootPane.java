@@ -23,7 +23,6 @@ import com.intellij.ide.actions.ViewToolbarAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
@@ -69,7 +68,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
    * Current <code>ToolWindowsPane</code>. If there is no such pane then this field is null.
    */
   private ToolWindowsPane myToolWindowsPane;
-  private final MyUISettingsListenerImpl myUISettingsListener;
   private JBPanel myContentPane;
   private final ActionManager myActionManager;
   private final UISettings myUISettings;
@@ -80,7 +78,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private final Application myApplication;
   private MemoryUsagePanel myMemoryWidget;
   private final StatusBarCustomComponentFactory[] myStatusBarCustomComponentFactories;
-  private final Disposable myDisposable = Disposer.newDisposable();
 
   private boolean myFullScreen;
 
@@ -99,8 +96,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     updateToolbar();
 
     myContentPane.add(myStatusBar, BorderLayout.SOUTH);
-
-    myUISettingsListener = new MyUISettingsListenerImpl();
 
     if (WindowManagerImpl.isFloatingMenuBarSupported()) {
       menuBar = new IdeMenuBar(actionManager, dataManager);
@@ -122,7 +117,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myGlassPaneInitialized = true;
 
     myGlassPane.setVisible(false);
-    Disposer.register(application, myDisposable);
   }
 
   @Override
@@ -136,18 +130,20 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     super.setGlassPane(glass);
   }
 
+
   /**
    * Invoked when enclosed frame is being shown.
    */
   public final void addNotify(){
     super.addNotify();
-    myUISettings.addUISettingsListener(myUISettingsListener, myDisposable);
+    myUISettings.addUISettingsListener(this);
   }
 
   /**
    * Invoked when enclosed frame is being disposed.
    */
   public final void removeNotify(){
+    myUISettings.removeUISettingsListener(this);
     super.removeNotify();
   }
 
@@ -316,15 +312,10 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   public void uiSettingsChanged(UISettings source) {
     setMemoryIndicatorVisible(source.SHOW_MEMORY_INDICATOR);
-  }
-
-  private final class MyUISettingsListenerImpl implements UISettingsListener{
-    public final void uiSettingsChanged(final UISettings source){
-      updateToolbarVisibility();
-      updateStatusBarVisibility();
-      for (IdeRootPaneNorthExtension component : myNorthComponents) {
-        component.uiSettingsChanged(source);
-      }
+    updateToolbarVisibility();
+    updateStatusBarVisibility();
+    for (IdeRootPaneNorthExtension component : myNorthComponents) {
+      component.uiSettingsChanged(source);
     }
   }
 

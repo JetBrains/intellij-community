@@ -19,8 +19,10 @@ import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitBranch;
@@ -37,7 +39,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -76,9 +77,15 @@ class GitRepositoryReader {
     myPackedRefsFile = new File(myGitDir, "packed-refs");
   }
 
-  @NotNull
+  @Nullable
   private static Hash createHash(@Nullable String hash) {
-    return hash == null ? GitBranch.DUMMY_HASH : HashImpl.build(hash);
+    try {
+      return hash == null ? GitBranch.DUMMY_HASH : HashImpl.build(hash);
+    }
+    catch (Throwable t) {
+      LOG.info(t);
+      return null;
+    }
   }
 
   @NotNull
@@ -133,7 +140,11 @@ class GitRepositoryReader {
     if (head.isBranch) {
       String branchName = head.ref;
       String hash = readCurrentRevision();  // TODO we know the branch name, so no need to read head twice
-      return new GitLocalBranch(branchName, createHash(hash));
+      Hash h = createHash(hash);
+      if (h == null) {
+        return null;
+      }
+      return new GitLocalBranch(branchName, h);
     }
     if (isRebaseInProgress()) {
       GitLocalBranch branch = readRebaseBranch("rebase-apply");
@@ -164,7 +175,10 @@ class GitRepositoryReader {
     if (!branchFile.exists()) { // can happen when rebasing from detached HEAD: IDEA-93806
       return null;
     }
-    Hash hash = HashImpl.build(readBranchFile(branchFile));
+    Hash hash = createHash(readBranchFile(branchFile));
+    if (hash == null) {
+      return null;
+    }
     if (branchName.startsWith(REFS_HEADS_PREFIX)) {
       branchName = branchName.substring(REFS_HEADS_PREFIX.length());
     }
@@ -201,38 +215,41 @@ class GitRepositoryReader {
       return null;
     }
 
-    final AtomicReference<String> hashRef = new AtomicReference<String>();
-    readPackedRefsFile(new PackedRefsLineResultHandler() {
+    List<HashAndName> hashAndNames = readPackedRefsFile(new Condition<HashAndName>() {
       @Override
-      public void handleResult(String hash, String branchName) {
-        if (hash == null || branchName == null) {
-          return;
-        }
-        if (branchName.endsWith(ref)) {
-          hashRef.set(shortBuffer(hash));
-          stop();
-        }
+      public boolean value(HashAndName hashAndName) {
+        return hashAndName.name.endsWith(ref);
       }
     });
-    if (hashRef.get() != null) {
-      return hashRef.get();
-    }
-
-    return null;
+    HashAndName item = ContainerUtil.getFirstItem(hashAndNames);
+    return item == null ? null : item.hash;
   }
 
-  private void readPackedRefsFile(@NotNull final PackedRefsLineResultHandler handler) {
-    RepositoryUtil.tryOrThrow(new Callable<String>() {
+  /**
+   * @param firstMatchCondition If specified, we read the packed-refs file until the first entry which matches the given condition,
+   *                            and return a singleton list of this entry.
+   *                            If null, the whole file is read, and all valid entries are returned.
+   */
+  private List<HashAndName> readPackedRefsFile(@Nullable final Condition<HashAndName> firstMatchCondition) {
+    return RepositoryUtil.tryOrThrow(new Callable<List<HashAndName>>() {
       @Override
-      public String call() throws Exception {
+      public List<HashAndName> call() throws Exception {
+        List<HashAndName> hashAndNames = ContainerUtil.newArrayList();
         BufferedReader reader = null;
         try {
           reader = new BufferedReader(new FileReader(myPackedRefsFile));
-          String line;
-          while ((line = reader.readLine()) != null) {
-            parsePackedRefsLine(line, handler);
-            if (handler.stopped()) {
-              return null;
+          for (String line = reader.readLine(); line != null ; line = reader.readLine()) {
+            HashAndName hashAndName = parsePackedRefsLine(line);
+            if (hashAndName == null) {
+              continue;
+            }
+            if (firstMatchCondition != null) {
+              if (firstMatchCondition.value(hashAndName)) {
+                return Collections.singletonList(hashAndName);
+              }
+            }
+            else {
+              hashAndNames.add(hashAndName);
             }
           }
         }
@@ -241,7 +258,7 @@ class GitRepositoryReader {
             reader.close();
           }
         }
-        return null;
+        return hashAndNames;
       }
     }, myPackedRefsFile);
   }
@@ -293,7 +310,10 @@ class GitRepositoryReader {
       String branchName = entry.getKey();
       File branchFile = entry.getValue();
       String hash = loadHashFromBranchFile(branchFile);
-      branches.add(new GitLocalBranch(branchName, createHash(hash)));
+      Hash h = createHash(hash);
+      if (h != null) {
+        branches.add(new GitLocalBranch(branchName, h));
+      }
     }
     return branches;
   }
@@ -327,9 +347,12 @@ class GitRepositoryReader {
           if (relativePath != null) {
             String branchName = FileUtil.toSystemIndependentName(relativePath);
             String hash = loadHashFromBranchFile(file);
-            GitRemoteBranch remoteBranch = GitBranchUtil.parseRemoteBranch(branchName, createHash(hash), remotes);
-            if (remoteBranch != null) {
-              branches.add(remoteBranch);
+            Hash h = createHash(hash);
+            if (h != null) {
+              GitRemoteBranch remoteBranch = GitBranchUtil.parseRemoteBranch(branchName, h, remotes);
+              if (remoteBranch != null) {
+                branches.add(remoteBranch);
+              }
             }
           }
         }
@@ -351,23 +374,24 @@ class GitRepositoryReader {
       return GitBranchesCollection.EMPTY;
     }
 
-    readPackedRefsFile(new PackedRefsLineResultHandler() {
-      @Override public void handleResult(@Nullable String hash, @Nullable String branchName) {
-        if (hash == null || branchName == null) {
-          return;
-        }
-        hash = shortBuffer(hash);
-        if (branchName.startsWith(REFS_HEADS_PREFIX)) {
-          localBranches.add(new GitLocalBranch(branchName, HashImpl.build(hash)));
-        }
-        else if (branchName.startsWith(REFS_REMOTES_PREFIX)) {
-          GitRemoteBranch remoteBranch = GitBranchUtil.parseRemoteBranch(branchName, HashImpl.build(hash), remotes);
-          if (remoteBranch != null) {
-            remoteBranches.add(remoteBranch);
-          }
+    List<HashAndName> hashAndNames = readPackedRefsFile(null);
+    for (HashAndName hashAndName : hashAndNames) {
+      Hash hash = createHash(hashAndName.hash);
+      if (hash == null) {
+        continue;
+      }
+      String branchName = hashAndName.name;
+
+      if (branchName.startsWith(REFS_HEADS_PREFIX)) {
+        localBranches.add(new GitLocalBranch(branchName, hash));
+      }
+      else if (branchName.startsWith(REFS_REMOTES_PREFIX)) {
+        GitRemoteBranch remoteBranch = GitBranchUtil.parseRemoteBranch(branchName, hash, remotes);
+        if (remoteBranch != null) {
+          remoteBranches.add(remoteBranch);
         }
       }
-    });
+    }
     return new GitBranchesCollection(localBranches, remoteBranches);
   }
 
@@ -396,53 +420,56 @@ class GitRepositoryReader {
   }
 
   /**
-   * Parses a line from the .git/packed-refs file.
-   * Passes the parsed hash-branch pair to the resultHandler.
-   * Comments, tags and incorrectly formatted lines are ignored, and (null, null) is passed to the handler then.
-   * Using a special handler may seem to be an overhead, but it is to avoid code duplication in two methods that parse packed-refs.
+   * Parses a line from the .git/packed-refs file returning a pair of hash and ref name.
+   * Comments and tags are ignored, and null is returned.
+   * Incorrectly formatted lines are ignored, a warning is printed to the log, null is returned.
+   * A line indicating a hash which an annotated tag (specified in the previous line) points to, is ignored: null is returned.
    */
-  private static void parsePackedRefsLine(@NotNull String line, @NotNull PackedRefsLineResultHandler resultHandler) {
-    try {
-      line = line.trim();
-      char firstChar = line.isEmpty() ? 0 : line.charAt(0);
-      if (firstChar == '#') { // ignoring comments
-        return;
+  @Nullable
+  private static HashAndName parsePackedRefsLine(@NotNull String line) {
+    line = line.trim();
+    if (line.isEmpty()) {
+      return null;
+    }
+    char firstChar = line.charAt(0);
+    if (firstChar == '#') { // ignoring comments
+      return null;
+    }
+    if (firstChar == '^') {
+      // ignoring the hash which an annotated tag above points to
+      return null;
+    }
+    String hash = null;
+    int i;
+    for (i = 0; i < line.length(); i++) {
+      char c = line.charAt(i);
+      if (!Character.isLetterOrDigit(c)) {
+        hash = line.substring(0, i);
+        break;
       }
-      if (firstChar == '^') {
-        // ignoring the hash which an annotated tag above points to
-        return;
-      }
-      String hash = null;
-      int i;
-      for (i = 0; i < line.length(); i++) {
+    }
+    if (hash == null) {
+      LOG.warn("Ignoring invalid packed-refs line: [" + line + "]");
+      return null;
+    }
+
+    String branch = null;
+    int start = i;
+    if (start < line.length() && line.charAt(start++) == ' ') {
+      for (i = start; i < line.length(); i++) {
         char c = line.charAt(i);
-        if (!Character.isLetterOrDigit(c)) {
-          hash = line.substring(0, i);
+        if (Character.isWhitespace(c)) {
           break;
         }
       }
-      String branch = null;
-      int start = i;
-      if (hash != null && start < line.length() && line.charAt(start++) == ' ') {
-        for (i = start; i < line.length(); i++) {
-          char c = line.charAt(i);
-          if (Character.isWhitespace(c)) {
-            break;
-          }
-        }
-        branch = line.substring(start, i);
-      }
+      branch = line.substring(start, i);
+    }
 
-      if (hash != null && branch != null) {
-        resultHandler.handleResult(hash.trim(), branch);
-      }
-      else {
-        LOG.info("Ignoring invalid packed-refs line: [" + line + "]");
-      }
+    if (branch == null) {
+      LOG.warn("Ignoring invalid packed-refs line: [" + line + "]");
+      return null;
     }
-    finally {
-      resultHandler.handleResult(null, null);
-    }
+    return new HashAndName(shortBuffer(hash.trim()), shortBuffer(branch));
   }
 
   @NotNull
@@ -450,20 +477,13 @@ class GitRepositoryReader {
     return new String(raw);
   }
 
-  private abstract static class PackedRefsLineResultHandler {
-    private boolean myStopped;
+  private static class HashAndName {
+    private final String hash;
+    private final String name;
 
-    abstract void handleResult(@Nullable String hash, @Nullable String branchName);
-
-    /**
-     * Call this to stop further lines reading.
-     */
-    final void stop() {
-      myStopped = true;
-    }
-
-    final boolean stopped() {
-      return myStopped;
+    public HashAndName(String hash, String name) {
+      this.hash = hash;
+      this.name = name;
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.ModifierListGenerator.JAVA_MODIFIERS_WITHOUT_ABSTRACT;
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeType;
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeTypeForNew;
-
 /**
  * @author Maxim.Medvedev
  */
@@ -57,7 +53,7 @@ public class AnonymousFromMapGenerator {
       substitutor = PsiSubstitutor.EMPTY;
     }
     builder.append("new ");
-    writeTypeForNew(builder, type, operand);
+    TypeWriter.writeTypeForNew(builder, type, operand);
     builder.append("() {\n");
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(operand.getProject());
@@ -68,9 +64,10 @@ public class AnonymousFromMapGenerator {
       final GrExpression expression = arg.getExpression();
       if (name == null || expression == null || !(expression instanceof GrClosableBlock)) continue;
 
-      final GrParameter[] allParameters = ((GrClosableBlock)expression).getAllParameters();
+      final GrClosableBlock closure = (GrClosableBlock)expression;
+      final GrParameter[] allParameters = closure.getAllParameters();
       List<GrParameter> actual = new ArrayList<GrParameter>(Arrays.asList(allParameters));
-      final PsiType clReturnType = ((GrClosableBlock)expression).getReturnType();
+      final PsiType clReturnType = context.typeProvider.getReturnType(closure);
 
       GrExpression[] args = new GrExpression[allParameters.length];
       for (int i = 0; i < allParameters.length; i++) {
@@ -98,7 +95,7 @@ public class AnonymousFromMapGenerator {
         }
 
         if (found != null) {
-          ModifierListGenerator.writeModifiers(builder, found.getModifierList(), JAVA_MODIFIERS_WITHOUT_ABSTRACT);
+          ModifierListGenerator.writeModifiers(builder, found.getModifierList(), ModifierListGenerator.JAVA_MODIFIERS_WITHOUT_ABSTRACT);
         }
         else {
           builder.append("public ");
@@ -112,7 +109,7 @@ public class AnonymousFromMapGenerator {
           returnType = signature.getReturnType();
         }
 
-        writeType(builder, returnType, operand);
+        TypeWriter.writeType(builder, returnType, operand);
 
         builder.append(' ').append(name);
         GenerationUtil.writeParameterList(builder, parameters, new GeneratorClassNameProvider(), context);

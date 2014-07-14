@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,10 @@ import com.intellij.ide.DataManager;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
@@ -56,12 +54,10 @@ import java.util.List;
  * @author Vladimir Kondratyev
  */
 public final class KeyChooserDialog extends DialogWrapper{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.editors.string.KeyChooserDialog");
-
   private final PropertiesFile myBundle;
   private final String myBundleName;
   /** List of bundle's pairs*/
-  private ArrayList<Pair<String, String>> myPairs;
+  private ArrayList<Couple<String>> myPairs;
   private final JComponent myCenterPanel;
   /** Table with key/value pairs */
   private final JTable myTable;
@@ -121,7 +117,7 @@ public final class KeyChooserDialog extends DialogWrapper{
     }
     int width = minWidth;
     for(int i = myPairs.size() - 1; i >= 0; i--){
-      final Pair<String, String> pair = myPairs.get(i);
+      final Couple<String> pair = myPairs.get(i);
       width = Math.max(width, metrics.stringWidth(pair.getFirst()));
     }
     width += 20;
@@ -150,14 +146,14 @@ public final class KeyChooserDialog extends DialogWrapper{
   }
 
   private void fillPropertyList() {
-    myPairs = new ArrayList<Pair<String, String>>();
+    myPairs = new ArrayList<Couple<String>>();
 
     final List<IProperty> properties = myBundle.getProperties();
     for (IProperty property : properties) {
       final String key = property.getUnescapedKey();
       final String value = property.getValue();
       if (key != null) {
-        myPairs.add(new Pair<String, String>(key, value != null? value : NULL));
+        myPairs.add(Couple.of(key, value != null ? value : NULL));
       }
     }
     Collections.sort(myPairs, new MyPairComparator());
@@ -167,7 +163,7 @@ public final class KeyChooserDialog extends DialogWrapper{
     // Preselect proper row
     int indexToPreselect = -1;
     for(int i = myPairs.size() - 1; i >= 0; i--){
-      final Pair<String, String> pair = myPairs.get(i);
+      final Couple<String> pair = myPairs.get(i);
       if(pair.getFirst().equals(keyToPreselect)){
         indexToPreselect = i;
         break;
@@ -207,7 +203,7 @@ public final class KeyChooserDialog extends DialogWrapper{
       return null;
     }
     else{
-      final Pair<String, String> pair = myPairs.get(selectedRow);
+      final Couple<String> pair = myPairs.get(selectedRow);
       final StringDescriptor descriptor = new StringDescriptor(myBundleName, pair.getFirst());
       descriptor.setResolvedValue(pair.getSecond());
       return descriptor;
@@ -218,8 +214,8 @@ public final class KeyChooserDialog extends DialogWrapper{
     return myCenterPanel;
   }
 
-  private static final class MyPairComparator implements Comparator<Pair<String, String>>{
-    public int compare(final Pair<String, String> p1, final Pair<String, String> p2) {
+  private static final class MyPairComparator implements Comparator<Couple<String>>{
+    public int compare(final Couple<String> p1, final Couple<String> p2) {
       return p1.getFirst().compareToIgnoreCase(p2.getFirst());
     }
   }
@@ -305,7 +301,7 @@ public final class KeyChooserDialog extends DialogWrapper{
 
     public String getElementText(final Object element) {
       //noinspection unchecked
-      return ((Pair<String, String>)element).getFirst();
+      return ((Couple<String>)element).getFirst();
     }
 
     public void selectElement(final Object element, final String selectedText) {

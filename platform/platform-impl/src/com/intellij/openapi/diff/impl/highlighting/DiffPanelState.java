@@ -20,14 +20,21 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.impl.ContentChangeListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class DiffPanelState extends SimpleDiffPanelState {
-  public DiffPanelState(ContentChangeListener changeListener, Project project, @NotNull Disposable parentDisposable) {
-    super(project,changeListener, parentDisposable);
+  protected final int myDiffDividerPolygonsOffset;
+
+  public DiffPanelState(ContentChangeListener changeListener,
+                        Project project,
+                        int diffDividerPolygonsOffset,
+                        @NotNull Disposable parentDisposable) {
+    super(project, changeListener, parentDisposable);
+    myDiffDividerPolygonsOffset = diffDividerPolygonsOffset;
   }
 
   public void setContents(final DiffContent content1, final DiffContent content2) {
@@ -37,6 +44,10 @@ public class DiffPanelState extends SimpleDiffPanelState {
         myAppender2.setContent(content2);
       }
     });
+  }
+
+  public DiffContent getContent1() {
+    return myAppender1.getContent();
   }
 
   public DiffContent getContent2() {
@@ -49,6 +60,10 @@ public class DiffPanelState extends SimpleDiffPanelState {
   }
 
   public void drawOnDivider(final Graphics g, final JComponent component) {
+  }
+
+  public boolean isContentsEqual() {
+    return Comparing.equal(myAppender1.getText(), myAppender2.getText());
   }
 }
 

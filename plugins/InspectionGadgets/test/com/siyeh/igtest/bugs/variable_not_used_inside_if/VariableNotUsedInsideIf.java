@@ -61,4 +61,9 @@ public class VariableNotUsedInsideIf {
   private int someValue() {
     return 0;
   }
+
+  void perenthesis(String[] args)
+  {
+    String message = (args == null) ? "not null" : "null";
+  }
 }

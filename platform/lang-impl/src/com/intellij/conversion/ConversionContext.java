@@ -30,10 +30,18 @@ public interface ConversionContext {
   @NotNull
   File getProjectBaseDir();
 
+  /**
+   * @return path to parent directory of .idea directory for directory-based storage scheme or path to ipr-file for file-based scheme
+   */
+  @NotNull
   File getProjectFile();
 
+  @NotNull
   StorageScheme getStorageScheme();
 
+  /**
+   * @return .idea directory for directory based storage scheme or {@code null} for file-based scheme
+   */
   File getSettingsBaseDir();
 
   ProjectSettings getProjectSettings() throws CannotConvertException;
@@ -46,6 +54,15 @@ public interface ConversionContext {
 
   @Nullable
   ModuleSettings getModuleSettings(@NotNull String moduleName);
+
+  /**
+   * @param fileName name of the file under .idea directory which contains the settings. For ipr-based storage format the settings will
+   *                 be loaded from ipr-file
+   * @return {@link ComponentManagerSettings} instance which can be used to read and modify the settings or {@code null} if the configuration
+   * file cannot be loaded
+   */
+  @Nullable
+  ComponentManagerSettings createProjectSettings(@NotNull String fileName);
 
   @NotNull
   String collapsePath(@NotNull String path);

@@ -42,7 +42,7 @@ import java.util.Arrays;
 public class ProjectLibrariesTest extends IdeaTestCase {
   public void test() {
     final LibraryTable libraryTable = ProjectLibraryTable.getInstance(myProject);
-    Library lib = WriteCommandAction.runWriteCommandAction(new Computable<Library>() {
+    Library lib = WriteCommandAction.runWriteCommandAction(null, new Computable<Library>() {
       @Override
       public Library compute() {
         return libraryTable.createLibrary("LIB");
@@ -52,7 +52,7 @@ public class ProjectLibrariesTest extends IdeaTestCase {
     final JavaPsiFacade manager = getJavaFacade();
     assertNull(manager.findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));
     final File file = new File(PathManagerEx.getTestDataPath() + "/psi/repositoryUse/cls");
-    final VirtualFile root = WriteCommandAction.runWriteCommandAction(new Computable<VirtualFile>() {
+    final VirtualFile root = WriteCommandAction.runWriteCommandAction(null, new Computable<VirtualFile>() {
       @Override
       public VirtualFile compute() {
         return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
@@ -73,7 +73,7 @@ public class ProjectLibrariesTest extends IdeaTestCase {
 
   public void test1() {
     final LibraryTable libraryTable = ProjectLibraryTable.getInstance(myProject);
-    Library lib = WriteCommandAction.runWriteCommandAction(new Computable<Library>() {
+    Library lib = WriteCommandAction.runWriteCommandAction(null, new Computable<Library>() {
       @Override
       public Library compute() {
         return libraryTable.createLibrary("LIB");
@@ -86,7 +86,7 @@ public class ProjectLibrariesTest extends IdeaTestCase {
     final ModifiableRootModel rootModel2 = ModuleRootManager.getInstance(myModule).getModifiableModel();
     assertNotNull(rootModel2.findLibraryOrderEntry(lib));
     final File file = new File(PathManagerEx.getTestDataPath() + "/psi/repositoryUse/cls");
-    final VirtualFile root = WriteCommandAction.runWriteCommandAction(new Computable<VirtualFile>() {
+    final VirtualFile root = WriteCommandAction.runWriteCommandAction(null, new Computable<VirtualFile>() {
       @Override
       public VirtualFile compute() {
         return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);

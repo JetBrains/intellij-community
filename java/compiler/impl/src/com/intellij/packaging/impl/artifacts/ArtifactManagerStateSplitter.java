@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class ArtifactManagerStateSplitter implements StateSplitter {
 
     for (Element element : JDOMUtil.getElements(e)) {
       final String name = generator.generateUniqueName(FileUtil.sanitizeFileName(element.getAttributeValue(ArtifactState.NAME_ATTRIBUTE))) + ".xml";
-      result.add(new Pair<Element, String>(element, name));
+      result.add(Pair.create(element, name));
     }
 
     return result;

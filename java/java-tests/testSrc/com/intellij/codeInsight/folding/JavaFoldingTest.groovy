@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.intellij.codeInsight.folding;
 import com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl
 import com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl
 import com.intellij.find.FindManager
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.FoldingModelEx
@@ -26,8 +27,10 @@ import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiLiteralExpression
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
@@ -35,10 +38,15 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
  * @since 1/17/11 1:00 PM
  */
 public class JavaFoldingTest extends LightCodeInsightFixtureTestCase {
-  
+
   def JavaCodeFoldingSettingsImpl myFoldingSettings
   def JavaCodeFoldingSettingsImpl myFoldingStateToRestore
-  
+
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_1_7
+  }
+
   @Override
   public void setUp() {
     super.setUp()
@@ -65,7 +73,7 @@ import java.util.Map;
 
 class Foo { List a; Map b; }
 """
-    
+
     assert myFixture.editor.foldingModel.getCollapsedRegionAtOffset(10)
 
     myFixture.type 'import '
@@ -118,25 +126,25 @@ class Test {
     }
 }
 """
-    
+
     configure text
     def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
     def closureStartFold = foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable"))
     assertNotNull closureStartFold
     assertFalse closureStartFold.expanded
-    
+
     assertNotNull closureStartFold.group
     def closureFolds = foldingModel.getGroupedRegions(closureStartFold.group)
     assertNotNull closureFolds
     assertEquals(2, closureFolds.size())
-    
+
     def closureEndFold = closureFolds.get(1)
     assertFalse closureEndFold.expanded
-    
+
     myFixture.editor.caretModel.moveToOffset(closureEndFold.startOffset + 1)
     assertTrue closureStartFold.expanded
     assertTrue closureEndFold.expanded
-    
+
     changeFoldRegions { closureStartFold.expanded = false }
     assertTrue closureStartFold.expanded
     assertTrue closureEndFold.expanded
@@ -172,7 +180,7 @@ class Test {
     assertNotNull closureFolds
     assertEquals(2, closureFolds.size())
   }
-  
+
   public void "test builder style setter"() {
     myFoldingSettings.COLLAPSE_ACCESSORS = true
     def text = """\
@@ -279,6 +287,28 @@ class Test {
     assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("MyAction2(")).placeholderText == '(MyAction2) () -> { '
   }
 
+  public void "test closure folding after paste"() {
+    def text = """\
+class Test {
+<caret>// comment
+  void test() {
+    Runnable r = new Runnable() {
+      public void run() {
+        System.out.println();
+      }
+    };
+  }
+}
+"""
+    configure text
+    myFixture.performEditorAction("EditorCut")
+    myFixture.performEditorAction("EditorPaste")
+
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable(")).placeholderText == '() -> { '
+  }
+
   public void "test closure folding when overriding one method of many"() {
     myFixture.addClass('abstract class Runnable { void run() {}; void run2() {} }')
     myFixture.addClass('abstract class Runnable2 { void run() {}; void run2() {} }')
@@ -357,22 +387,81 @@ class Test {
     FindManager.getInstance(project).findNextUsageInEditor(TextEditorProvider.getInstance().getTextEditor(myFixture.editor))
     assertEquals('test1', myFixture.editor.selectionModel.selectedText)
   }
-  
+
   public void testCustomFolding() {
     myFixture.testFolding("$PathManagerEx.testDataPath/codeInsight/folding/${getTestName(false)}.java");
   }
   
+  public void "test custom folding IDEA-122715 and IDEA-87312"() {
+    def text = """\
+public class Test {
+
+    //region Foo
+    interface Foo {void bar();}
+    //endregion
+
+    //region Bar
+    void test() {
+
+    }
+    //endregion
+    enum Bar {
+        BAR1,
+        BAR2
+    }
+}
+"""
+    configure text
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+    int count = 0;
+    for (FoldRegion region : foldingModel.allFoldRegions) {
+      if (region.startOffset == text.indexOf("//region Foo")) {
+        assert region.placeholderText == "Foo";
+        count ++;
+      }
+      else if (region.startOffset == text.indexOf("//region Bar")) {
+        assert region.placeholderText == "Bar"
+        count ++;
+      }
+    }  
+    assert count == 2 : "Not all custom regions are found";
+  }
+  
+  public void "test custom folding collapsed by default"() {
+    def text = """\
+class Test {
+  void test() {
+    //<editor-fold desc="Custom region">
+    System.out.println(1);
+    System.out.println(2);
+    //</editor-fold>
+    System.out.println(3);
+  };
+}
+"""
+    boolean oldValue = CodeFoldingSettings.instance.COLLAPSE_CUSTOM_FOLDING_REGIONS;
+    try {
+      CodeFoldingSettings.instance.COLLAPSE_CUSTOM_FOLDING_REGIONS = true;
+      configure text
+      def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+      assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("//<editor-fold"))
+    }
+    finally {
+      CodeFoldingSettings.instance.COLLAPSE_CUSTOM_FOLDING_REGIONS = oldValue;
+    }
+  }
+
   public void "test move methods"() {
     def initialText = '''\
 class Test {
     void test1() {
     }
-    
+
     void test2() {
     }
 }
 '''
-    
+
     Closure<FoldRegion> fold = { String methodName ->
       def text = myFixture.editor.document.text
       def nameIndex = text.indexOf(methodName)
@@ -422,7 +511,7 @@ class Test {
     assertEquals(2, folds[0].startOffset)
     assertEquals(6, folds[0].endOffset)
   }
-  
+
   private def configure(String text) {
     myFixture.configureByText("a.java", text)
     CodeFoldingManagerImpl.getInstance(getProject()).buildInitialFoldings(myFixture.editor);
@@ -435,41 +524,309 @@ class Test {
     configure """class Foo {
  int field;
  int field2;
- 
+ int field3;
+
  int getField()
  {
    return field;
  }
- 
+
  void setField(int f) {
    field = f;
  }
- 
- void setField2(int f){field2=f;}
+
+ void setField2(int f){field2=f;} // normal method folding here
+
+  // normal method folding here
+ void setField3(int f){
+
+   field2=f;
+ }
 
 }"""
     PsiClass fooClass = JavaPsiFacade.getInstance(project).findClass('Foo', GlobalSearchScope.allScope(project))
     def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
-    assert regions.size() == 5
-    
-    Closure checkAccessorFolding = { FoldRegion region1, FoldRegion region2, PsiMethod method ->
-      assert region1.startOffset == method.parameterList.textRange.endOffset
-      assert region1.endOffset == method.body.statements[0].textRange.startOffset
-      assert region1.placeholderText == ' { '
+    assert regions.size() == 6
 
-      assert region2.startOffset == method.body.statements[0].textRange.endOffset
-      assert region2.endOffset == method.textRange.endOffset
-      assert region2.placeholderText == ' }'
-      assert region1.group == region2.group
-    }
-    
     checkAccessorFolding(regions[0], regions[1], fooClass.methods[0])
     checkAccessorFolding(regions[2], regions[3], fooClass.methods[1])
-    
+
     assert regions[4].placeholderText == '{...}'
+    assert regions[5].placeholderText == '{...}'
   }
+
+  static checkAccessorFolding(FoldRegion region1, FoldRegion region2, PsiMethod method) {
+    assert region1.startOffset == method.parameterList.textRange.endOffset
+    assert region1.endOffset == method.body.statements[0].textRange.startOffset
+    assert region1.placeholderText == ' { '
+
+    assert region2.startOffset == method.body.statements[0].textRange.endOffset
+    assert region2.endOffset == method.textRange.endOffset
+    assert region2.placeholderText == ' }'
+    assert region1.group == region2.group
+  }
+
+  public void "test fold one-line methods"() {
+    configure """class Foo {
+ int someMethod() {
+   return 0;
+ }
+
+}"""
+    PsiClass fooClass = JavaPsiFacade.getInstance(project).findClass('Foo', GlobalSearchScope.allScope(project))
+    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    assert regions.size() == 2
+    checkAccessorFolding(regions[0], regions[1], fooClass.methods[0])
+  }
+
+  public void "test don't inline very long one-line methods"() {
+    configure """class Foo {
+ int someVeryVeryLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongVariable;
+
+ // don't create folding that would exceed the right margin
+ int getSomeVeryVeryLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongVariable() {
+   return someVeryVeryLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongVariable;
+ }
+}"""
+    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    assert regions.size() == 1
+    assert regions[0].placeholderText == '{...}'
+  }
+
+  public void "test insert boolean literal argument name"() {
+    def text = """class Groo {
+
+ public void test() {
+  boolean testNow = System.currentTimeMillis() > 34000;
+  int times = 1;
+  float pi = 4;
+  String title = "Testing..."
+  char ch = 'q'
+  File file;
+
+  configure(true, false, 555, 3.141f, "Huge Title", 'c', null);
+  configure(testNow, shouldIgnoreRoots(), fourteen, pi, title, c, file);
+ }
+
+ pubic void configure(boolean testNow, boolean shouldIgnoreRoots, int times, float pi, String title, char terminate, File file) {
+  System.out.println();
+  System.out.println();
+ }
+
+}"""
+    configure text
+    PsiClass fooClass = JavaPsiFacade.getInstance(project).findClass('Groo', GlobalSearchScope.allScope(project))
+
+    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    assert regions.size() == 9
+
+    def literals = fooClass.methods[0].body.statements[6].children[0].children[1].children.findAll { it instanceof PsiLiteralExpression }
+    def parameters = fooClass.methods[1].parameterList.parameters
+
+    for (int i = 0; i < literals.size(); i++) {
+      def currentElement = literals[i]
+      def correspondingFolding = regions[i + 1]
+      assert correspondingFolding.startOffset == currentElement.textRange.startOffset && correspondingFolding.endOffset == currentElement.textRange.endOffset
+      assert correspondingFolding.placeholderText == parameters[i].name + ": " + currentElement.text
+    }
+  }
+
+  public void "test do not inline name if setter"() {
+    def text = """class Groo {
+
+ public void test() {
+  setTestNow(false);
+  System.out.println("");
+ }
+
+ pubic void setTestNow(boolean testNow) {
+  System.out.println("");
+  System.out.println("");
+ }
+
+}"""
+    configure text
+    def regions = myFixture.editor.foldingModel.allFoldRegions
+    assert regions.size() == 2
+  }
+
+  public void "test do not collapse varargs"() {
+    def text = """
+public class VarArgTest {
+
+  public void main() {
+    System.out.println("AAA");
+    testBooleanVarargs(13, false);
+  }
+
+  public boolean testBooleanVarargs(int test, boolean... booleans) {
+    int temp = test;
+    return false;
+  }
+}
+"""
+    configure text
+    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    assert regions.size() == 3
+    checkRangeOffsetByPositionInText(regions[1], text, "13")
+    assert regions[1].placeholderText == "test: 13"
+  }
+
+  public void "test inline if argument length is one (EA-57555)"() {
+    def text = """
+public class CharSymbol {
+
+  public void main() {
+    System.out.println("AAA");
+    count(1, false);
+  }
+
+  public void count(int test, boolean fast) {
+    int temp = test;
+    boolean isFast = fast;
+  }
+}
+"""
+    configure text
+    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    assert regions.size() == 4
+
+    checkRangeOffsetByPositionInText(regions[1], text, "1")
+    assert regions[1].placeholderText == "test: 1"
+
+    checkRangeOffsetByPositionInText(regions[2], text, "false")
+    assert regions[2].placeholderText == "fast: false"
+  }
+
+  public void "test inline names if literal expression can be assigned to method parameter"() {
+    def text = """
+public class CharSymbol {
+
+  public void main() {
+    Object obj = new Object();
+    count(100, false, "Hi!");
+  }
+
+  public void count(Integer test, Boolean boo, CharSequence seq) {
+    int a = test;
+    Object obj = new Object();
+  }
+}
+"""
+    configure text
+    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    assert regions.size() == 5
+
+    checkRangeOffsetByPositionInText(regions[1], text, "100")
+    assert regions[1].placeholderText == "test: 100"
+
+    checkRangeOffsetByPositionInText(regions[2], text, "false")
+    assert regions[2].placeholderText == "boo: false"
+
+    checkRangeOffsetByPositionInText(regions[3], text, '"Hi!"')
+    assert regions[3].placeholderText == 'seq: "Hi!"'
+  }
+
+  public void "test inline negative numbers (IDEA-126753)"() {
+    def text = """
+public class CharSymbol {
+
+  public void main() {
+    Object obj = new Object();
+    count(-1, obj);
+  }
+
+  public void count(int test, Object obj) {
+    Object tmp = obj;
+    boolean isFast = false;
+  }
+}
+"""
+    configure text
+    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    assert regions.size() == 3
+
+    checkRangeOffsetByPositionInText(regions[1], text, "-1")
+    assert regions[1].placeholderText == "test: -1"
+  }
+
+  public void "test inline constructor literal arguments names"() {
+    def text = """
+public class Test {
+
+  public void main() {
+    System.out.println("AAA");
+    Checker r = new Checker(true, false) {
+        @Override
+        void test() {
+        }
+    };
+  }
+
+  abstract class Checker {
+    Checker(boolean applyToFirst, boolean applyToSecond) {}
+    abstract void test();
+  }
+}
+"""
+    configure text
+    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    assert regions.length == 6
+
+    assert regions[1].placeholderText == "applyToFirst: true"
+    assert regions[2].placeholderText == "applyToSecond: false"
+
+    checkRangeOffsetByPositionInText(regions[1], text, "true")
+    checkRangeOffsetByPositionInText(regions[2], text, "false")
+  }
+
+  public void "test inline anonymous class constructor literal arguments names"() {
+    def text = """
+public class Test {
+
+  Test(int counter, boolean shouldTest) {
+    System.out.println();
+    System.out.println();
+  }
+
+  public static void main() {
+    System.out.println();
+    Test t = new Test(10, false);
+  }
+
+}
+"""
+    configure text
+    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    assert regions.length == 4
+
+    assert regions[2].placeholderText == "counter: 10"
+    assert regions[3].placeholderText == "shouldTest: false"
+
+    checkRangeOffsetByPositionInText(regions[2], text, "10")
+    checkRangeOffsetByPositionInText(regions[3], text, "false")
+  }
+
+  private static def checkRangeOffsetByPositionInText(FoldRegion region, String text, String foldElement) {
+    assert region.startOffset == text.indexOf(foldElement) && region.endOffset == text.indexOf(foldElement) + foldElement.length()
+  }
+
 
   private def changeFoldRegions(Closure op) {
     myFixture.editor.foldingModel.runBatchFoldingOperationDoNotCollapseCaret(op)
+  }
+
+  public void "test unselect word should go inside folding group"() {
+    configure """class Foo {
+ int field;
+
+ <selection>int getField() {
+   <caret>return field;
+ }</selection>
+
+}"""
+    assertSize 2, myFixture.editor.foldingModel.allFoldRegions
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_UNSELECT_WORD_AT_CARET)
+    assert 'return field;' == myFixture.editor.selectionModel.selectedText
   }
 }

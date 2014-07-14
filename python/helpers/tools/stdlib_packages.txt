@@ -6,6 +6,7 @@ argparse
 array
 ast
 asynchat
+asyncio
 asyncore
 atexit
 audiodev
@@ -68,6 +69,8 @@ dummy_thread
 dummy_threading
 email
 encodings
+ensurepip
+enum
 errno
 exceptions
 fcntl
@@ -150,6 +153,7 @@ os
 os2emxpath
 ossaudiodev
 parser
+pathlib
 pdb
 pickle
 pickletools
@@ -194,6 +198,7 @@ robotparser
 runpy
 sched
 select
+selectors
 sets
 sgmllib
 sha
@@ -219,6 +224,7 @@ sre_parse
 ssl
 stat
 statcache
+statistics
 statvfs
 string
 StringIO
@@ -254,6 +260,7 @@ token
 tokenize
 trace
 traceback
+tracemalloc
 tty
 turtle
 turtledemo

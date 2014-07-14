@@ -67,7 +67,7 @@ public class SvnUpdateContext implements SequentialUpdatesContext {
           result = false;
         }
         else if (NestedCopyType.external.equals(info.getType())) {
-          result = !myVcs.getSvnConfiguration().IGNORE_EXTERNALS;
+          result = !myVcs.getSvnConfiguration().isIgnoreExternals();
         }
       }
     }

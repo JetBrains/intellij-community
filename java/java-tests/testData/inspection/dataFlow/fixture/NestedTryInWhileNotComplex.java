@@ -1,6 +1,6 @@
 import java.io.FileInputStream;
 
-public class Bar {
+class Bar {
   boolean myShouldAccept = true;
 
   public void run() {

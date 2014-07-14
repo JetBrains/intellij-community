@@ -35,6 +35,7 @@ import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -71,13 +72,17 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
 
   @Override
   public void complete() throws Exception {
+    complete(true);
+  }
+
+  public void complete(boolean allowReplacement) throws Exception {
     if (file == null) {
       logger.info("No file for root: " + getRoot());
       return;
     }
 
     if (accept()) {
-      processActions();
+      processActions(allowReplacement);
     }
   }
 
@@ -314,30 +319,33 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
     return element == null ? null : element.getNextSibling();
   }
 
-  protected void processActions() throws IncorrectOperationException {
-    new WriteCommandAction.Simple(file.getProject(), "") {
+  protected void processActions(final boolean allowReplacement) throws IncorrectOperationException {
+    new WriteCommandAction.Simple(file.getProject(), "Update copyright") {
       @Override
       protected void run() throws Throwable {
         Document doc = FileDocumentManager.getInstance().getDocument(getRoot());
-        PsiDocumentManager.getInstance(file.getProject()).doPostponedOperationsAndUnblockDocument(doc);
-        for (CommentAction action : actions) {
-          int start = action.getStart();
-          int end = action.getEnd();
-
-          switch (action.getType()) {
-            case CommentAction.ACTION_INSERT:
-              String comment = getCommentText(action.getPrefix(), action.getSuffix());
-              if (!comment.isEmpty()) {
-                doc.insertString(start, comment);
-              }
-              break;
-            case CommentAction.ACTION_REPLACE:
-              doc.replaceString(start, end, getCommentText("", ""));
-              break;
-            case CommentAction.ACTION_DELETE:
-              doc.deleteString(start, end);
-              break;
+        if (doc != null) {
+          PsiDocumentManager.getInstance(file.getProject()).doPostponedOperationsAndUnblockDocument(doc);
+          for (CommentAction action : actions) {
+            int start = action.getStart();
+            int end = action.getEnd();
+  
+            switch (action.getType()) {
+              case CommentAction.ACTION_INSERT:
+                String comment = getCommentText(action.getPrefix(), action.getSuffix());
+                if (!comment.isEmpty()) {
+                  doc.insertString(start, comment);
+                }
+                break;
+              case CommentAction.ACTION_REPLACE:
+                if (allowReplacement) doc.replaceString(start, end, getCommentText("", ""));
+                break;
+              case CommentAction.ACTION_DELETE:
+                if (allowReplacement) doc.deleteString(start, end);
+                break;
+            }
           }
+          PsiDocumentManager.getInstance(getProject()).commitDocument(doc);
         }
       }
     }.execute();
@@ -421,7 +429,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
     }
 
     @Override
-    public int compareTo(CommentAction object) {
+    public int compareTo(@NotNull CommentAction object) {
       int s = object.getStart();
       int diff = s - start;
       if (diff == 0) {

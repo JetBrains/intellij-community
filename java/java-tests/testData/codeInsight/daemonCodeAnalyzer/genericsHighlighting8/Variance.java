@@ -9,7 +9,7 @@ import java.util.Comparator;
  * Time: 8:08:44 PM
  * To change this template use File | Settings | File Templates.
  */
-public class VarianceTesting {
+class VarianceTesting {
     void method(List<? extends VarianceTesting> l) {
 //        l.add(new VarianceTesting());
         l.add(null);
@@ -152,7 +152,7 @@ class S2 {
     }
 
     void bar(List<? extends S2> k) {
-        f<error descr="'f(java.util.List<T>, java.util.List<T>)' in 'S2' cannot be applied to '(java.util.List<capture<? extends S2>>, java.util.List<capture<? extends S2>>)'">(k, k)</error>;
+        f<error descr="'f(java.util.List<capture<? extends S2>>, java.util.List<capture<? extends S2>>)' in 'S2' cannot be applied to '(java.util.List<capture<? extends S2>>, java.util.List<capture<? extends S2>>)'">(k, k)</error>;
     }
 }
 
@@ -162,7 +162,7 @@ class S3 {
     }
 
     void bar(Map<? extends S3, ? extends S3> k) {
-        f<error descr="'f(java.util.Map<T,T>)' in 'S3' cannot be applied to '(java.util.Map<capture<? extends S3>,capture<? extends S3>>)'">(k)</error>;
+        f<error descr="'f(java.util.Map<capture<? extends S3>,capture<? extends S3>>)' in 'S3' cannot be applied to '(java.util.Map<capture<? extends S3>,capture<? extends S3>>)'">(k)</error>;
     }
 }
 

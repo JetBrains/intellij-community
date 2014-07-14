@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,24 +19,27 @@ import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.MockDocumentEvent;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.LineTokenizer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.Producer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.io.IOException;
 import java.util.List;
 
 public class EditorModificationUtil {
-  private EditorModificationUtil() {}
+  private EditorModificationUtil() { }
 
   public static void deleteSelectedText(Editor editor) {
+    deleteSelectedTextNoScrolling(editor);
+    if (editor.getCaretModel().getCurrentCaret() == editor.getCaretModel().getPrimaryCaret()) {
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    }
+  }
+
+  private static void deleteSelectedTextNoScrolling(Editor editor) {
     SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasBlockSelection()) deleteBlockSelection(editor);
     if(!selectionModel.hasSelection()) return;
@@ -44,9 +47,24 @@ public class EditorModificationUtil {
     int selectionStart = selectionModel.getSelectionStart();
     int selectionEnd = selectionModel.getSelectionEnd();
 
-    editor.getCaretModel().moveToOffset(selectionStart);
+    VisualPosition selectionStartPosition = selectionModel.getSelectionStartPosition();
+    if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets() && selectionStartPosition != null) {
+      editor.getCaretModel().moveToVisualPosition(selectionStartPosition);
+    }
+    else {
+      editor.getCaretModel().moveToOffset(selectionStart);
+    }
     selectionModel.removeSelection();
     editor.getDocument().deleteString(selectionStart, selectionEnd);
+  }
+
+  public static void deleteSelectedTextForAllCarets(@NotNull final Editor editor) {
+    editor.getCaretModel().runForEachCaret(new CaretAction() {
+      @Override
+      public void perform(Caret caret) {
+        deleteSelectedTextNoScrolling(editor);
+      }
+    });
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
@@ -75,19 +93,45 @@ public class EditorModificationUtil {
     zeroWidthBlockSelectionAtCaretColumn(editor, startLine, endLine);
   }
 
-  private static void zeroWidthBlockSelectionAtCaretColumn(final Editor editor, final int startLine, final int endLine) {
+  public static void zeroWidthBlockSelectionAtCaretColumn(final Editor editor, final int startLine, final int endLine) {
     int caretColumn = editor.getCaretModel().getLogicalPosition().column;
     editor.getSelectionModel().setBlockSelection(new LogicalPosition(startLine, caretColumn), new LogicalPosition(endLine, caretColumn));
   }
 
-  public static void insertStringAtCaret(Editor editor, String s) {
+  public static void insertStringAtCaret(Editor editor, @NotNull String s) {
     insertStringAtCaret(editor, s, false, true);
   }
 
-  public static int insertStringAtCaret(Editor editor, String s, boolean toProcessOverwriteMode, boolean toMoveCaret) {
+  public static int insertStringAtCaret(Editor editor, @NotNull String s, boolean toProcessOverwriteMode) {
+    return insertStringAtCaret(editor, s, toProcessOverwriteMode, s.length());
+  }
+
+  public static int insertStringAtCaret(Editor editor, @NotNull String s, boolean toProcessOverwriteMode, boolean toMoveCaret) {
+    return insertStringAtCaret(editor, s, toProcessOverwriteMode, toMoveCaret, s.length());
+  }
+
+  public static int insertStringAtCaret(Editor editor, @NotNull String s, boolean toProcessOverwriteMode, int caretShift) {
+    return insertStringAtCaret(editor, s, toProcessOverwriteMode, true, caretShift);
+  }
+
+  public static int insertStringAtCaret(Editor editor, @NotNull String s, boolean toProcessOverwriteMode, boolean toMoveCaret, int caretShift) {
+    int result = insertStringAtCaretNoScrolling(editor, s, toProcessOverwriteMode, toMoveCaret, caretShift);
+    if (toMoveCaret && editor.getCaretModel().getCurrentCaret() == editor.getCaretModel().getPrimaryCaret()) {
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    }
+    return result;
+  }
+
+  private static int insertStringAtCaretNoScrolling(Editor editor, @NotNull String s, boolean toProcessOverwriteMode, boolean toMoveCaret, int caretShift) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
-      editor.getCaretModel().moveToOffset(selectionModel.getSelectionStart(), true);
+      VisualPosition startPosition = selectionModel.getSelectionStartPosition();
+      if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets() && startPosition != null) {
+        editor.getCaretModel().moveToVisualPosition(startPosition);
+      }
+      else {
+        editor.getCaretModel().moveToOffset(selectionModel.getSelectionStart(), true);
+      }
     }
 
     // There is a possible case that particular soft wraps become hard wraps if the caret is located at soft wrap-introduced virtual
@@ -112,115 +156,40 @@ public class EditorModificationUtil {
       deleteSelectedText(editor);
       int lineNumber = editor.getCaretModel().getLogicalPosition().line;
       if (lineNumber >= document.getLineCount()){
-        return insertStringAtCaret(editor, s, false, toMoveCaret);
+        return insertStringAtCaretNoScrolling(editor, s, false, toMoveCaret, s.length());
       }
 
       int endOffset = document.getLineEndOffset(lineNumber);
       document.replaceString(oldOffset, Math.min(endOffset, oldOffset + s.length()), s);
     }
 
-    int offset = oldOffset + s.length();
+    int offset = oldOffset + filler.length() + caretShift;
     if (toMoveCaret){
       editor.getCaretModel().moveToOffset(offset, true);
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       selectionModel.removeSelection();
+    }
+    else if (editor.getCaretModel().getOffset() != oldOffset) { // handling the case when caret model tracks document changes
+      editor.getCaretModel().moveToOffset(oldOffset);
     }
 
     return offset;
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.openapi.editor.CopyPasteSupport#pasteTransferable(Editor, com.intellij.util.Producer)} instead.
+   * (to remove in IDEA 15)
+   */
   @Nullable
-  public static TextRange pasteFromClipboard(Editor editor) {
-    return pasteFromTransferrable(CopyPasteManager.getInstance().getContents(), editor);
+  public static TextRange pasteTransferable(final Editor editor, @Nullable Producer<Transferable> producer) {
+    return CopyPasteSupport.pasteTransferable(editor, producer);
   }
 
-  @Nullable
-  public static TextRange pasteFromTransferrable(Transferable content, Editor editor) {
-    if (content != null) {
-      try {
-        String s = getStringContent(content);
-
-        int caretOffset = editor.getCaretModel().getOffset();
-        insertStringAtCaret(editor, s, false, true);
-        return new TextRange(caretOffset, caretOffset + s.length());
-      } catch (Exception exception) {
-        editor.getComponent().getToolkit().beep();
-      }
-    }
-
-    return null;
-  }
-
-  private static String getStringContent(final Transferable content) throws UnsupportedFlavorException, IOException {
-    RawText raw = RawText.fromTransferable(content);
-    String s;
-    if (raw != null) {
-      s = raw.rawText;
-    }
-    else {
-      s = (String)content.getTransferData(DataFlavor.stringFlavor);
-    }
-
-    s = StringUtil.convertLineSeparators(s);
-    return s;
-  }
-
-  public static void pasteFromClipboardAsBlock(Editor editor) {
-    pasteTransferableAsBlock(editor, null);
-  }
-
-  public static void pasteTransferableAsBlock(Editor editor, @Nullable Transferable content) {
-    if (content == null) {
-      content = CopyPasteManager.getInstance().getContents();
-    }
-
-    if (content != null) {
-      try {
-        int caretLine = editor.getCaretModel().getLogicalPosition().line;
-        int originalCaretLine = caretLine;
-
-        int selectedLinesCount = 0;
-        final SelectionModel selectionModel = editor.getSelectionModel();
-        if (selectionModel.hasBlockSelection()) {
-          final LogicalPosition start = selectionModel.getBlockStart();
-          final LogicalPosition end = selectionModel.getBlockEnd();
-          assert start != null;
-          assert end != null;
-          LogicalPosition caret = new LogicalPosition(Math.min(start.line, end.line), Math.min(start.column, end.column));
-          selectedLinesCount = Math.abs(end.line - start.line);
-          caretLine = caret.line;
-
-          deleteSelectedText(editor);
-          editor.getCaretModel().moveToLogicalPosition(caret);
-        }
-
-        LogicalPosition caretToRestore = editor.getCaretModel().getLogicalPosition();
-        String s = getStringContent(content);
-
-        String[] lines = LineTokenizer.tokenize(s.toCharArray(), false);
-        if (lines.length > 1 || selectedLinesCount == 0) {
-          int longestLineLength = 0;
-          for (int i = 0; i < lines.length; i++) {
-            String line = lines[i];
-            longestLineLength = Math.max(longestLineLength, line.length());
-            editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(caretLine + i, caretToRestore.column));
-            insertStringAtCaret(editor, line, false, true);
-          }
-          caretToRestore = new LogicalPosition(originalCaretLine, caretToRestore.column + longestLineLength);
-        }
-        else {
-          for (int i = 0; i <= selectedLinesCount; i++) {
-            editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(caretLine + i, caretToRestore.column));
-            insertStringAtCaret(editor, s, false, true);
-          }
-          caretToRestore = new LogicalPosition(originalCaretLine, caretToRestore.column + s.length());
-        }
-        editor.getCaretModel().moveToLogicalPosition(caretToRestore);
-        zeroWidthBlockSelectionAtCaretColumn(editor, caretLine, caretLine + selectedLinesCount);
-      } catch (Exception exception) {
-        editor.getComponent().getToolkit().beep();
-      }
-    }
+  /**
+   * @deprecated Use {@link com.intellij.openapi.editor.CopyPasteSupport#pasteTransferableAsBlock(Editor, com.intellij.util.Producer)} instead.
+   * (to remove in IDEA 15)
+   */
+  public static void pasteTransferableAsBlock(Editor editor, @Nullable Producer<Transferable> producer) {
+    CopyPasteSupport.pasteTransferableAsBlock(editor, producer);
   }
 
   /**
@@ -357,5 +326,75 @@ public class EditorModificationUtil {
     else {
       insertStringAtCaret(editor, str, toProcessOverwriteMode, true);
     }
+  }
+
+  public static void typeInStringAtCaretHonorMultipleCarets(final Editor editor, @NotNull final String str) {
+    typeInStringAtCaretHonorMultipleCarets(editor, str, true, str.length());
+  }
+
+  public static void typeInStringAtCaretHonorMultipleCarets(final Editor editor, @NotNull final String str, final int caretShift) {
+    typeInStringAtCaretHonorMultipleCarets(editor, str, true, caretShift);
+  }
+
+  public static void typeInStringAtCaretHonorMultipleCarets(final Editor editor, @NotNull final String str, final boolean toProcessOverwriteMode) {
+    typeInStringAtCaretHonorMultipleCarets(editor, str, toProcessOverwriteMode, str.length());
+  }
+
+  /**
+   * Inserts given string at each caret's position. Effective caret shift will be equal to <code>caretShift</code> for each caret.
+   */
+  public static void typeInStringAtCaretHonorMultipleCarets(final Editor editor, @NotNull final String str, final boolean toProcessOverwriteMode, final int caretShift)
+    throws ReadOnlyFragmentModificationException
+  {
+    Document doc = editor.getDocument();
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    if (selectionModel.hasBlockSelection()) {
+      RangeMarker guard = selectionModel.getBlockSelectionGuard();
+      if (guard != null) {
+        DocumentEvent evt = new MockDocumentEvent(doc, editor.getCaretModel().getOffset());
+        ReadOnlyFragmentModificationException e = new ReadOnlyFragmentModificationException(evt, guard);
+        EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
+      }
+      else {
+        final LogicalPosition start = selectionModel.getBlockStart();
+        final LogicalPosition end = selectionModel.getBlockEnd();
+        assert start != null;
+        assert end != null;
+
+        int column = Math.min(start.column, end.column);
+        int startLine = Math.min(start.line, end.line);
+        int endLine = Math.max(start.line, end.line);
+        deleteBlockSelection(editor);
+        for (int i = startLine; i <= endLine; i++) {
+          editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(i, column));
+          insertStringAtCaret(editor, str, toProcessOverwriteMode, true, caretShift);
+        }
+        selectionModel.setBlockSelection(new LogicalPosition(startLine, column + str.length()),
+                                         new LogicalPosition(endLine, column + str.length()));
+      }
+    }
+    else {
+      editor.getCaretModel().runForEachCaret(new CaretAction() {
+        @Override
+        public void perform(Caret caret) {
+          insertStringAtCaretNoScrolling(editor, str, toProcessOverwriteMode, true, caretShift);
+        }
+      });
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    }
+  }
+
+  public static void moveAllCaretsRelatively(@NotNull Editor editor, final int caretShift) {
+    editor.getCaretModel().runForEachCaret(new CaretAction() {
+      @Override
+      public void perform(Caret caret) {
+        caret.moveToOffset(caret.getOffset() + caretShift);
+      }
+    });
+  }
+
+  public static void moveCaretRelatively(@NotNull Editor editor, final int caretShift) {
+    CaretModel caretModel = editor.getCaretModel();
+    caretModel.moveToOffset(caretModel.getOffset() + caretShift);
   }
 }

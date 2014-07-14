@@ -16,7 +16,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -24,6 +23,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
@@ -48,10 +49,11 @@ abstract class HgAbstractGlobalAction extends AnAction {
       return;
     }
     VirtualFile file = event.getData(CommonDataKeys.VIRTUAL_FILE);
-    VirtualFile repo = file != null ? HgUtil.getHgRootOrNull(project, file) : null;
-    List<VirtualFile> repos = HgUtil.getHgRepositories(project);
-    if (!repos.isEmpty()) {
-      execute(project, repos, repo);
+    HgRepositoryManager repositoryManager = HgUtil.getRepositoryManager(project);
+    HgRepository repo = file != null ? repositoryManager.getRepositoryForFile(file): HgUtil.getCurrentRepository(project);
+    List<HgRepository> repositories = repositoryManager.getRepositories();
+    if (!repositories.isEmpty()) {
+      execute(project, repositories, repo);
     }
   }
 
@@ -63,8 +65,8 @@ abstract class HgAbstractGlobalAction extends AnAction {
   }
 
   protected abstract void execute(@NotNull Project project,
-                                  @NotNull Collection<VirtualFile> repositories,
-                                  @Nullable VirtualFile selectedRepo);
+                                  @NotNull Collection<HgRepository> repositories,
+                                  @Nullable HgRepository selectedRepo);
 
   public static void handleException(@Nullable Project project, @NotNull Exception e) {
     handleException(project, "Error", e);
@@ -75,7 +77,7 @@ abstract class HgAbstractGlobalAction extends AnAction {
     new HgCommandResultNotifier(project).notifyError(null, title, e.getMessage());
   }
 
-  protected void markDirtyAndHandleErrors(Project project, VirtualFile repository) {
+  static void markDirtyAndHandleErrors(Project project, VirtualFile repository) {
     try {
       HgUtil.markDirectoryDirty(project, repository);
     }
@@ -87,7 +89,7 @@ abstract class HgAbstractGlobalAction extends AnAction {
     }
   }
 
-  public static boolean isEnabled(AnActionEvent e) {
+  public boolean isEnabled(AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return false;
@@ -99,4 +101,17 @@ abstract class HgAbstractGlobalAction extends AnAction {
     }
     return true;
   }
+
+  @Nullable
+  public static HgRepository getSelectedRepositoryFromEvent(AnActionEvent e) {
+    final DataContext dataContext = e.getDataContext();
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (project == null) {
+      return null;
+    }
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    HgRepositoryManager repositoryManager = HgUtil.getRepositoryManager(project);
+    return file != null ? repositoryManager.getRepositoryForFile(file) : HgUtil.getCurrentRepository(project);
+  }
+
 }

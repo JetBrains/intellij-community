@@ -17,10 +17,12 @@ package com.intellij.psi.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -371,7 +373,7 @@ public class RedundantCastUtil {
         PsiType castType = typeElement.getType();
         final PsiExpression innerOperand = ((PsiTypeCastExpression)expr).getOperand();
         final PsiType operandType = innerOperand != null ? innerOperand.getType() : null;
-        if (!(castType instanceof PsiPrimitiveType)) {
+        if (!(castType instanceof PsiPrimitiveType) && !(topCastType instanceof PsiPrimitiveType)) {
           if (operandType != null && topCastType != null && TypeConversionUtil.areTypesConvertible(operandType, topCastType)) {
             addToResults((PsiTypeCastExpression)expr);
           }
@@ -465,9 +467,11 @@ public class RedundantCastUtil {
       final PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(typeCast);
       if (expectedTypeByParent != null) {
         try {
+          final Project project = operand.getProject();
+          final String uniqueVariableName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("l", parent, false);
           final PsiDeclarationStatement declarationStatement =
-            (PsiDeclarationStatement)JavaPsiFacade.getElementFactory(operand.getProject()).createStatementFromText(
-              expectedTypeByParent.getCanonicalText() + " l = " + operand.getText() + ";", parent);
+            (PsiDeclarationStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText(
+              expectedTypeByParent.getCanonicalText() + " " + uniqueVariableName + " = " + operand.getText() + ";", parent);
           final PsiExpression initializer = ((PsiLocalVariable)declarationStatement.getDeclaredElements()[0]).getInitializer();
           LOG.assertTrue(initializer != null, operand.getText());
           opType = initializer.getType();
@@ -500,8 +504,22 @@ public class RedundantCastUtil {
           return;
         }
         if (parent instanceof PsiForeachStatement) {
-          if (InheritanceUtil.isInheritor(PsiUtil.resolveClassInType(opType), false, CommonClassNames.JAVA_LANG_ITERABLE)) {
-            addToResults(typeCast);
+          final PsiClassType.ClassResolveResult castResolveResult = PsiUtil.resolveGenericsClassInType(opType);
+          final PsiClass psiClass = castResolveResult.getElement();
+          if (psiClass != null) {
+            final PsiClass iterableClass = JavaPsiFacade.getInstance(parent.getProject()).findClass(CommonClassNames.JAVA_LANG_ITERABLE, psiClass.getResolveScope());
+            if (iterableClass != null && InheritanceUtil.isInheritorOrSelf(psiClass, iterableClass, true)) {
+              final PsiTypeParameter[] iterableTypeParameters = iterableClass.getTypeParameters();
+              if (iterableTypeParameters.length == 1) {
+                final PsiType resultedParamType = TypeConversionUtil.getSuperClassSubstitutor(iterableClass, psiClass, castResolveResult.getSubstitutor()).substitute(iterableTypeParameters[0]);
+                if (resultedParamType != null && 
+                    TypeConversionUtil.isAssignable(((PsiForeachStatement)parent).getIterationParameter().getType(), resultedParamType)) {
+                  addToResults(typeCast);
+                  return;
+                }
+              }
+            } 
+          } else {
             return;
           }
         }

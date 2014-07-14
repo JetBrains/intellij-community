@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,6 +118,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     return c != null ? c : Color.black;
   }
 
+  @NotNull
   @Override
   public String getName() {
     return mySchemeName;
@@ -151,14 +152,15 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   @Override
   public void setEditorFontName(String fontName) {
+    int editorFontSize = getEditorFontSize();
     myFontPreferences.clear();
-    myFontPreferences.register(fontName, getEditorFontSize());
+    myFontPreferences.register(fontName, editorFontSize);
     initFonts();
   }
 
   @Override
   public void setEditorFontSize(int fontSize) {
-    myFontPreferences.setSize(getEditorFontName(), fontSize);
+    myFontPreferences.register(getEditorFontName(), fontSize);
     initFonts();
   }
   
@@ -182,7 +184,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   @Override
-  public void setName(String name) {
+  public void setName(@NotNull String name) {
     mySchemeName = name;
   }
 
@@ -331,9 +333,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       Element e = (Element)o;
       String key = e.getAttributeValue(NAME_ATTR);
       TextAttributesKey name = TextAttributesKey.find(key);
-      TextAttributes attr = new TextAttributes();
       Element value = e.getChild(VALUE_ELEMENT);
-      attr.readExternal(value);
+      TextAttributes attr = new TextAttributes(value);
       myAttributesMap.put(name, attr);
       migrateErrorStripeColorFrom45(name, attr);
     }
@@ -618,8 +619,9 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   @Override
   public void setConsoleFontName(String fontName) {
+    int consoleFontSize = getConsoleFontSize();
     myConsoleFontPreferences.clear();
-    myConsoleFontPreferences.register(fontName, getConsoleFontSize());
+    myConsoleFontPreferences.register(fontName, consoleFontSize);
   }
 
   @Override
@@ -634,7 +636,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   @Override
   public void setConsoleFontSize(int fontSize) {
-    myConsoleFontPreferences.setSize(getConsoleFontName(), fontSize);
+    myConsoleFontPreferences.register(getConsoleFontName(), fontSize);
     initFonts();
   }
 

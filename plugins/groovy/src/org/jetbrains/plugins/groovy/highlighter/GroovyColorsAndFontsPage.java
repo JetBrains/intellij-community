@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,16 +33,19 @@ import java.util.Map;
  * @author ven
  */
 public class GroovyColorsAndFontsPage implements ColorSettingsPage {
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Groovy";
   }
 
+  @Override
   @Nullable
   public Icon getIcon() {
     return JetgroovyIcons.Groovy.Groovy_16x16;
   }
 
+  @Override
   @NotNull
   public AttributesDescriptor[] getAttributeDescriptors() {
     return ATTRS;
@@ -88,16 +91,19 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
       new AttributesDescriptor("Label", DefaultHighlighter.LABEL),
     };
 
+  @Override
   @NotNull
   public ColorDescriptor[] getColorDescriptors() {
     return new ColorDescriptor[0];
   }
 
+  @Override
   @NotNull
   public SyntaxHighlighter getHighlighter() {
     return new GroovySyntaxHighlighter();
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getDemoText() {
@@ -138,6 +144,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
       ;
   }
 
+  @Override
   @Nullable
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     Map<String, TextAttributesKey> map = new HashMap<String, TextAttributesKey>();

@@ -16,7 +16,12 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -57,10 +62,12 @@ public class TextTransferable implements Transferable {
     myPlainContent = plainContent;
   }
 
+  @Override
   public DataFlavor[] getTransferDataFlavors() {
     return getFlavours().clone();
   }
 
+  @Override
   public boolean isDataFlavorSupported(DataFlavor flavor) {
     for (DataFlavor f : getFlavours()) {
       if (flavor.equals(f)) {
@@ -70,6 +77,7 @@ public class TextTransferable implements Transferable {
     return false;
   }
 
+  @Override
   public Object getTransferData(final DataFlavor flavor) throws UnsupportedFlavorException, IOException {
     if (flavor.equals(html)) {
       return myHtmlContent;
@@ -81,5 +89,38 @@ public class TextTransferable implements Transferable {
       return myPlainContent;
     }
     throw new UnsupportedFlavorException(flavor);
+  }
+
+  public static class ColoredStringBuilder implements ColoredTextContainer {
+    private final StringBuilder builder = new StringBuilder();
+
+    public void appendTo(@NotNull StringBuilder... subBuilders) {
+      for (StringBuilder subBuilder : subBuilders) {
+        subBuilder.append(builder);
+      }
+      builder.setLength(0);
+    }
+
+    @Override
+    public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes) {
+      builder.append(fragment);
+    }
+
+    @Override
+    public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, Object tag) {
+      builder.append(fragment);
+    }
+
+    @Override
+    public void setIcon(@Nullable Icon icon) {
+    }
+
+    @Override
+    public void setToolTipText(@Nullable String text) {
+    }
+
+    public StringBuilder getBuilder() {
+      return builder;
+    }
   }
 }

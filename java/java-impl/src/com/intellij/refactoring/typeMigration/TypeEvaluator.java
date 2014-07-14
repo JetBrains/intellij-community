@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -379,7 +379,7 @@ public class TypeEvaluator {
       final LinkedList<PsiType> types = myTypeMap.get(usageInfo);
       final PsiElement element = usageInfo.getElement();
       if (element instanceof PsiVariable || element instanceof PsiMethod) {
-        list.addLast(new Pair<TypeMigrationUsageInfo, PsiType>(usageInfo, types.getFirst()));
+        list.addLast(Pair.create(usageInfo, types.getFirst()));
       }
     }
 

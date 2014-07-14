@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,19 +30,16 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
   private boolean needToInsertQuotes = false;
 
   @Override
-  public Result beforeCharTyped(char c,
-                                Project project,
-                                Editor editor,
-                                PsiFile file,
-                                FileType fileType) {
+  public Result beforeCharTyped(char c, Project project, Editor editor, PsiFile file, FileType fileType) {
 
     if (WebEditorOptions.getInstance().isInsertQuotesForAttributeValue()) {
       boolean inXml = file.getLanguage() instanceof XMLLanguage || file.getViewProvider().getBaseLanguage() instanceof XMLLanguage;
       if (c == '=' && inXml) {
-        int offset = editor.getCaretModel().getOffset();
-        PsiElement at = file.findElementAt(offset - 1);
+        PsiElement at = file.findElementAt(editor.getCaretModel().getOffset() - 1);
         PsiElement atParent = at != null ? at.getParent() : null;
-        needToInsertQuotes = atParent instanceof XmlAttribute && ((XmlAttribute)atParent).getValueElement() == null;
+        if(atParent instanceof XmlAttribute && ((XmlAttribute)atParent).getValueElement() == null) {
+          needToInsertQuotes = atParent instanceof XmlAttribute && ((XmlAttribute)atParent).getValueElement() == null;
+        }
       }
     }
 

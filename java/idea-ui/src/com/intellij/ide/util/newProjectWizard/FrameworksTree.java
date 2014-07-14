@@ -17,15 +17,15 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.framework.FrameworkOrGroup;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
-import com.intellij.ui.CheckboxTree;
-import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -41,6 +41,7 @@ public class FrameworksTree extends CheckboxTree {
     super(new FrameworksTreeRenderer(model), new CheckedTreeNode(), new CheckPolicy(false, true, true, false));
     setRootVisible(false);
     setShowsRootHandles(false);
+    setRowHeight(0);
     putClientProperty("JTree.lineStyle", "None");
   }
 
@@ -103,6 +104,8 @@ public class FrameworksTree extends CheckboxTree {
     private FrameworksTreeRenderer(FrameworkSupportModelBase model) {
       super(true, false);
       myModel = model;
+      Border border = IdeBorderFactory.createEmptyBorder(2, 2, 2, 2);
+      setBorder(border);
     }
 
     @Override
@@ -122,5 +125,20 @@ public class FrameworksTree extends CheckboxTree {
         getCheckbox().setVisible(value instanceof FrameworkSupportNode);
       }
     }
+  }
+
+  @TestOnly
+  public boolean selectFramework(final String id, final boolean checked) {
+    TreeNode root = (TreeNode)getModel().getRoot();
+    return !TreeUtil.traverse(root, new TreeUtil.Traverse() {
+      @Override
+      public boolean accept(Object node) {
+        if (node instanceof FrameworkSupportNode && id.equals(((FrameworkSupportNode)node).getId())) {
+          ((FrameworkSupportNode)node).setChecked(checked);
+          return false;
+        }
+        return true;
+      }
+    });
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -34,7 +35,7 @@ public final class WatchItemData extends DescriptorData<WatchItemDescriptor>{
     myValue = value;
   }
 
-  protected WatchItemDescriptor createDescriptorImpl(final Project project) {
+  protected WatchItemDescriptor createDescriptorImpl(@NotNull final Project project) {
     return new WatchItemDescriptor(project, myText, myValue);
   }
 

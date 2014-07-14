@@ -6,7 +6,7 @@ interface Func<TIn, TOut>{
 class Main {
 
     public static void main(final String[] args) {
-        Func<Integer, String> func =  Integer::toString;
+        <error descr="Incompatible types. Found: '<method reference>', required: 'Func<java.lang.Integer,java.lang.String>'">Func<Integer, String> func =  Integer::toString;</error>
         System.out.println(func.run(6));
     }
 }

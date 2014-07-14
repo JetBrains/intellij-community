@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,29 +28,29 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
-import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.PathUtil;
-import com.intellij.util.PathsList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,6 +121,15 @@ public class ExternalSystemApiUtil {
     }
   };
 
+  @NotNull private static final TransferToEDTQueue<Runnable> TRANSFER_TO_EDT_QUEUE =
+    new TransferToEDTQueue<Runnable>("External System queue", new Processor<Runnable>() {
+      @Override
+      public boolean process(Runnable runnable) {
+        runnable.run();
+        return true;
+      }
+    }, Condition.FALSE, 300);
+
   private ExternalSystemApiUtil() {
   }
 
@@ -167,18 +177,8 @@ public class ExternalSystemApiUtil {
     return "unknown-lib";
   }
 
-  @NotNull
-  public static String getLibraryName(@NotNull LibraryData libraryData) {
-    return String.format("%s: %s", libraryData.getOwner().getReadableName(), libraryData.getName());
-  }
-
-  @NotNull
-  public static String getLibraryName(@NotNull LibraryDependencyData libraryDependencyData) {
-    return String.format("%s: %s", libraryDependencyData.getOwner().getReadableName(), libraryDependencyData.getName());
-  }
-
   public static boolean isRelated(@NotNull Library library, @NotNull LibraryData libraryData) {
-    return getLibraryName(library).equals(getLibraryName(libraryData));
+    return getLibraryName(library).equals(libraryData.getInternalName());
   }
 
   public static boolean isExternalSystemLibrary(@NotNull Library library, @NotNull ProjectSystemId externalSystemId) {
@@ -328,6 +328,24 @@ public class ExternalSystemApiUtil {
   }
 
   @SuppressWarnings("unchecked")
+  @Nullable
+  public static <T> DataNode<T> findParent(@NotNull DataNode<?> node, @NotNull Key<T> key) {
+    return findParent(node, key, null);
+  }
+
+
+  @SuppressWarnings("unchecked")
+  @Nullable
+  public static <T> DataNode<T> findParent(@NotNull DataNode<?> node,
+                                           @NotNull Key<T> key,
+                                           @Nullable BooleanFunction<DataNode<T>> predicate) {
+    DataNode<?> parent = node.getParent();
+    if (parent == null) return null;
+    return key.equals(parent.getKey()) && (predicate == null || predicate.fun((DataNode<T>)parent))
+           ? (DataNode<T>)parent : findParent(parent, key, predicate);
+  }
+
+  @SuppressWarnings("unchecked")
   @NotNull
   public static <T> Collection<DataNode<T>> findAll(@NotNull DataNode<?> parent, @NotNull Key<T> key) {
     Collection<DataNode<T>> result = null;
@@ -371,6 +389,26 @@ public class ExternalSystemApiUtil {
     }
     else {
       UIUtil.invokeLaterIfNeeded(task);
+    }
+  }
+
+  /**
+  * Adds runnable to Event Dispatch Queue
+  * if we aren't in UnitTest of Headless environment mode
+  *
+  * @param runnable Runnable
+  */
+  public static void addToInvokeLater(final Runnable runnable) {
+    final Application application = ApplicationManager.getApplication();
+    final boolean unitTestMode = application.isUnitTestMode();
+    if (unitTestMode) {
+      UIUtil.invokeLaterIfNeeded(runnable);
+    }
+    else if (application.isHeadlessEnvironment() || application.isDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      TRANSFER_TO_EDT_QUEUE.offer(runnable);
     }
   }
 
@@ -627,5 +665,20 @@ public class ExternalSystemApiUtil {
     };
     //noinspection unchecked
     return (T)loader.loadClass(clazz.getName()).newInstance();
+  }
+
+  @Contract("_, null -> false")
+  public static boolean isExternalSystemAwareModule(@NotNull ProjectSystemId systemId, @Nullable Module module) {
+    return module != null && systemId.getId().equals(module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY));
+  }
+
+  @Contract("_, null -> false")
+  public static boolean isExternalSystemAwareModule(@NotNull String systemId, @Nullable Module module) {
+    return module != null && systemId.equals(module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY));
+  }
+
+  @Nullable
+  public static String getExternalProjectPath(@Nullable Module module) {
+    return module != null ? module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY) : null;
   }
 }

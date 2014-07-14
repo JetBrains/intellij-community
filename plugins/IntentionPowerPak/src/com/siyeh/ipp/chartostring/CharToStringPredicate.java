@@ -21,6 +21,8 @@ import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+
 class CharToStringPredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(PsiElement element) {
@@ -55,7 +57,7 @@ class CharToStringPredicate implements PsiElementPredicate {
         return false;
       }
       final String parentTypeText = parentType.getCanonicalText();
-      return "java.lang.String".equals(parentTypeText);
+      return JAVA_LANG_STRING.equals(parentTypeText);
     }
     else if (parent instanceof PsiAssignmentExpression) {
       final PsiAssignmentExpression parentExpression =
@@ -69,7 +71,7 @@ class CharToStringPredicate implements PsiElementPredicate {
         return false;
       }
       final String parentTypeText = parentType.getCanonicalText();
-      return "java.lang.String".equals(parentTypeText);
+      return JAVA_LANG_STRING.equals(parentTypeText);
     }
     else if (parent instanceof PsiExpressionList) {
       final PsiElement grandParent = parent.getParent();
@@ -106,7 +108,7 @@ class CharToStringPredicate implements PsiElementPredicate {
         final PsiElement method = methodExpression.resolve();
         return method != null;
       }
-      else if ("java.lang.String".equals(className)) {
+      else if (JAVA_LANG_STRING.equals(className)) {
         @NonNls final String methodName =
           methodExpression.getReferenceName();
         if (!"indexOf".equals(methodName) &&

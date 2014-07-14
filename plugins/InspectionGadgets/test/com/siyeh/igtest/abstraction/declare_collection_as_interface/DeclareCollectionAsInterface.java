@@ -5,7 +5,7 @@ import java.util.*;
 public class DeclareCollectionAsInterface
 {
     private HashMap<String, String> m_mapThree = new HashMap<String, String>(2);
-    private HashMap m_setOne = new HashMap(2);
+    private <warning descr="Declaration of 'HashMap' should probably be weakened to 'java.util.Map'">HashMap</warning> m_setOne = new HashMap(2);
     private Map m_setTwo = new HashMap(2);
 
     public DeclareCollectionAsInterface()
@@ -16,13 +16,13 @@ public class DeclareCollectionAsInterface
 
     public void fooBar()
     {
-        final HashMap map1 = new HashMap(2);
+        final <warning descr="Declaration of 'HashMap' should probably be weakened to 'java.util.Map'">HashMap</warning> map1 = new HashMap(2);
         final Map map2 = new HashMap(2);
         map1.put("foo", "foo");
         map2.put("bar", "bar");
     }
 
-    public void fooBaz(HashMap set1, Map set2)
+    public void fooBaz(<warning descr="Declaration of 'HashMap' should probably be weakened to 'java.util.Map'">HashMap</warning> set1, Map set2)
     {
         set1.put("foo", "foo");
         set2.put("bar", "bar");
@@ -34,7 +34,7 @@ public class DeclareCollectionAsInterface
     }
 
     void writeContent() {
-        final HashMap<String, Object> templateMap = new HashMap();
+        final <warning descr="Declaration of 'HashMap' should probably be weakened to 'java.util.Map'">HashMap</warning><String, Object> templateMap = new HashMap();
         processTemplate(templateMap);
     }
 
@@ -44,15 +44,20 @@ public class DeclareCollectionAsInterface
         Object o = theRoad();
     }
 
-    HashMap theRoad() {
+    <warning descr="Declaration of 'HashMap' should probably be weakened to 'java.util.Map'">HashMap</warning> theRoad() {
         return null;
     }
 
     void makeItRight() {
-      ArrayList list22 = new ArrayList();
+      <warning descr="Declaration of 'ArrayList' should probably be weakened to 'java.util.List'">ArrayList</warning> list22 = new ArrayList();
       System.out.println(list22.get(0));
 
-      ArrayList<String> list33 = new ArrayList();
+      <warning descr="Declaration of 'ArrayList' should probably be weakened to 'java.util.List'">ArrayList</warning><String> list33 = new ArrayList();
       System.out.println(list33.get(0));
     }
+
+  void inOrderOfAbstraction() {
+    <warning descr="Declaration of 'HashSet' should probably be weakened to 'java.util.Set'">HashSet</warning><String> set = new HashSet<>();
+    set.add("foo");
+  }
 }

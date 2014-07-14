@@ -1,0 +1,4 @@
+{ <selection><caret>a</selection> }
+{ b <caret>}
+{ c }<caret>
+text

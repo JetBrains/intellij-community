@@ -29,6 +29,7 @@ import com.intellij.psi.xml.XmlTag;
  */
 public class RngHighlightingTest extends HighlightingTestBase {
 
+  @Override
   public String getTestDataPath() {
     return "highlighting/rng";
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -105,7 +106,7 @@ public class MapExternalResourceDialog extends DialogWrapper {
 
     ColoredTreeCellRenderer renderer = new ColoredTreeCellRenderer() {
       @Override
-      public void customizeCellRenderer(JTree tree,
+      public void customizeCellRenderer(@NotNull JTree tree,
                                         Object value,
                                         boolean selected,
                                         boolean expanded,
@@ -142,6 +143,7 @@ public class MapExternalResourceDialog extends DialogWrapper {
     });
 
     myExplorer = new FileSystemTreeImpl(project, new FileChooserDescriptor(true, false, false, false, true, false));
+    Disposer.register(getDisposable(), myExplorer);
 
     myExplorer.addListener(new FileSystemTree.Listener() {
       @Override
@@ -163,7 +165,7 @@ public class MapExternalResourceDialog extends DialogWrapper {
       schema = XmlUtil.findNamespaceByLocation(file, uri);
     }
     else if (location != null) {
-      VirtualFile virtualFile = VfsUtil.findRelativeFile(location, null);
+      VirtualFile virtualFile = VfsUtilCore.findRelativeFile(location, null);
       if (virtualFile != null) {
         schema = PsiManager.getInstance(project).findFile(virtualFile);
       }

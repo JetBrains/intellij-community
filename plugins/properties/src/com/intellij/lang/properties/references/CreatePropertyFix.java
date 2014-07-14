@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -88,11 +88,11 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
   }
 
   @Nullable
-  private Pair<String, String> invokeAction(@NotNull final Project project,
-                                            @NotNull PsiFile file,
-                                            @NotNull PsiElement psiElement,
-                                            @Nullable final String suggestedKey,
-                                            @Nullable final List<PropertiesFile> propertiesFiles) {
+  private Couple<String> invokeAction(@NotNull final Project project,
+                                      @NotNull PsiFile file,
+                                      @NotNull PsiElement psiElement,
+                                      @Nullable final String suggestedKey,
+                                      @Nullable final List<PropertiesFile> propertiesFiles) {
     final I18nizeQuickFixModel model;
     final I18nizeQuickFixDialog.DialogCustomization dialogCustomization = createDefaultCustomization(suggestedKey, propertiesFiles);
 
@@ -128,7 +128,7 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
     return new I18nizeQuickFixDialog.DialogCustomization(NAME, false, true, propertiesFiles, suggestedKey == null ? "" : suggestedKey);
   }
 
-  protected Pair<String, String> doAction(Project project, PsiElement psiElement, I18nizeQuickFixModel model) {
+  protected Couple<String> doAction(Project project, PsiElement psiElement, I18nizeQuickFixModel model) {
     if (!model.hasValidData()) {
       return null;
     }
@@ -138,7 +138,7 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
     final Collection<PropertiesFile> selectedPropertiesFiles = model.getAllPropertiesFiles();
     createProperty(project, psiElement, selectedPropertiesFiles, key, value);
 
-    return new Pair<String, String>(key, value);
+    return Couple.of(key, value);
   }
 
   public static void createProperty(@NotNull final Project project,

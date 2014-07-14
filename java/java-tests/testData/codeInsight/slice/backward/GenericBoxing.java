@@ -1,4 +1,4 @@
-public class Boxi {
+class Boxi {
     private interface Foo<T> {
             T t();
         }

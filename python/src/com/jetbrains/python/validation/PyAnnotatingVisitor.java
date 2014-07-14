@@ -31,10 +31,7 @@ import java.util.List;
  */
 public class PyAnnotatingVisitor implements Annotator {
   private static final Logger LOGGER = Logger.getInstance(PyAnnotatingVisitor.class.getName());
-
-  private final List<PyAnnotator> myAnnotators = new ArrayList<PyAnnotator>();
-
-  private final Class[] ANNOTATOR_CLASSES = new Class[] {
+  private static final Class[] ANNOTATOR_CLASSES = new Class[] {
     AssignTargetAnnotator.class,
     ParameterListAnnotator.class,
     HighlightingAnnotator.class,
@@ -44,10 +41,13 @@ public class PyAnnotatingVisitor implements Annotator {
     GlobalAnnotator.class,
     ImportAnnotator.class,
     PyBuiltinAnnotator.class,
-   UnsupportedFeatures.class
+    UnsupportedFeatures.class
   };
 
+  private final PyAnnotator[] myAnnotators;
+
   public PyAnnotatingVisitor() {
+    final List<PyAnnotator> annotators = new ArrayList<PyAnnotator>();
     for (Class cls : ANNOTATOR_CLASSES) {
       PyAnnotator annotator;
       try {
@@ -61,13 +61,14 @@ public class PyAnnotatingVisitor implements Annotator {
         LOGGER.error(e);
         continue;
       }
-      myAnnotators.add(annotator);
+      annotators.add(annotator);
     }
+    myAnnotators = annotators.toArray(new PyAnnotator[annotators.size()]);
   }
 
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     final PsiFile file = psiElement.getContainingFile();
-    for(PyAnnotator annotator: myAnnotators) {
+    for (PyAnnotator annotator : myAnnotators) {
       if (file instanceof PyFileImpl && !((PyFileImpl)file).isAcceptedFor(annotator.getClass())) continue;
       annotator.annotateElement(psiElement, holder);
     }

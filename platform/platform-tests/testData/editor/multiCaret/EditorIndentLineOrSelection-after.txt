@@ -1,0 +1,4 @@
+<selection><caret>     some text
+       another line</selection>
+       <selection>some other text<caret></selection>
+    yet ano<caret>ther line

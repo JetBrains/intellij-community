@@ -16,14 +16,12 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.jsp.JavaJspRecursiveElementVisitor;
 import com.intellij.psi.jsp.JspFile;
@@ -99,17 +97,14 @@ public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
   
   private void processStatement(PsiStatement statement, PsiStatement blockCandidate, int options) {
     if (blockCandidate instanceof PsiBlockStatement || blockCandidate == null) return;
-    boolean forceNewLine = !FormatterUtil.isFormatterCalledExplicitly() && !ApplicationManager.getApplication().isUnitTestMode()
-                           && !myPostProcessor.getSettings().KEEP_CONTROL_STATEMENT_IN_ONE_LINE;
-    if (forceNewLine
-        || options == CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
+    if (options == CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
         || (options == CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE && PostFormatProcessorHelper.isMultiline(statement)))
     {
-      replaceWithBlock(statement, blockCandidate, forceNewLine);
+      replaceWithBlock(statement, blockCandidate);
     }
   }
 
-  private void replaceWithBlock(@NotNull PsiStatement statement, PsiStatement blockCandidate, boolean forceNewLine) {
+  private void replaceWithBlock(@NotNull PsiStatement statement, PsiStatement blockCandidate) {
     if (!statement.isValid()) {
       LOG.assertTrue(false);
     }
@@ -130,7 +125,7 @@ public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
     int lastLineCommentIndex = oldText.indexOf("//", lastLineFeedIndex);
     StringBuilder buf = new StringBuilder(oldText.length() + 5);
     buf.append("{ ").append(oldText);
-    if (forceNewLine || lastLineCommentIndex >= 0) {
+    if (lastLineCommentIndex >= 0) {
       buf.append("\n");
     }
     buf.append(" }");

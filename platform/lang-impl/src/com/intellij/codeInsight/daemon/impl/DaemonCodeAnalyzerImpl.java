@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,13 @@ import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
-import com.intellij.concurrency.Job;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -48,12 +48,15 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
@@ -65,6 +68,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -79,7 +83,7 @@ import java.util.*;
 /**
  * This class also controls the auto-reparse and auto-hints.
  */
-public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOMExternalizable, NamedComponent {
+public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOMExternalizable, NamedComponent, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl");
 
   private static final Key<List<LineMarkerInfo>> MARKERS_IN_EDITOR_DOCUMENT_KEY = Key.create("MARKERS_IN_EDITOR_DOCUMENT");
@@ -113,41 +117,27 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
   public DaemonCodeAnalyzerImpl(@NotNull Project project,
                                 @NotNull DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings,
                                 @NotNull EditorTracker editorTracker,
-                                @NotNull final NamedScopeManager namedScopeManager,
-                                @NotNull final DependencyValidationManager dependencyValidationManager) {
+                                @SuppressWarnings("UnusedParameters") @NotNull final NamedScopeManager namedScopeManager,
+                                @SuppressWarnings("UnusedParameters") @NotNull final DependencyValidationManager dependencyValidationManager) {
     myProject = project;
 
     mySettings = daemonCodeAnalyzerSettings;
     myEditorTracker = editorTracker;
     myLastSettings = ((DaemonCodeAnalyzerSettingsImpl)daemonCodeAnalyzerSettings).clone();
 
-    myFileStatusMap = new FileStatusMap(myProject);
-    myPassExecutorService = new PassExecutorService(myProject) {
-      @Override
-      protected void afterApplyInformationToEditor(final TextEditorHighlightingPass pass,
-                                                   @NotNull final FileEditor fileEditor,
-                                                   final ProgressIndicator updateProgress) {
-        if (fileEditor instanceof TextEditor) {
-          log(updateProgress, pass, "Apply ");
-        }
-      }
-
-      @Override
-      protected boolean isDisposed() {
-        return myDisposed || super.isDisposed();
-      }
-    };
-    Disposer.register(project, myPassExecutorService);
-    Disposer.register(project, myFileStatusMap);
+    myFileStatusMap = new FileStatusMap(project);
+    myPassExecutorService = new PassExecutorService(project);
+    Disposer.register(this, myPassExecutorService);
+    Disposer.register(this, myFileStatusMap);
     DaemonProgressIndicator.setDebug(LOG.isDebugEnabled());
 
     assert !myInitialized : "Double Initializing";
-    Disposer.register(myProject, new StatusBarUpdater(myProject));
+    Disposer.register(this, new StatusBarUpdater(project));
 
     myInitialized = true;
     myDisposed = false;
     myFileStatusMap.markAllFilesDirty();
-    Disposer.register(project, new Disposable() {
+    Disposer.register(this, new Disposable() {
       @Override
       public void dispose() {
         assert myInitialized : "Disposing not initialized component";
@@ -159,6 +149,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
         myLastSettings = null;
       }
     });
+  }
+
+  @Override
+  public void dispose() {
+
   }
 
   @NotNull
@@ -268,33 +263,55 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
                                        @NotNull int[] toIgnore,
                                        boolean canChangeDocument,
                                        @Nullable Runnable callbackWhileWaiting) throws ProcessCanceledException {
+    return runPasses(file, document, Collections.singletonList(textEditor), toIgnore, canChangeDocument, callbackWhileWaiting);
+  }
+
+  @NotNull
+  @TestOnly
+  public List<HighlightInfo> runPasses(@NotNull PsiFile file,
+                                       @NotNull Document document,
+                                       @NotNull List<TextEditor> textEditors,
+                                       @NotNull int[] toIgnore,
+                                       boolean canChangeDocument,
+                                       @Nullable Runnable callbackWhileWaiting) throws ProcessCanceledException {
     assert myInitialized;
     assert !myDisposed;
-    Application application = ApplicationManager.getApplication();
+    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     application.assertIsDispatchThread();
     if (application.isWriteAccessAllowed()) {
       throw new AssertionError("Must not start highlighting from within write action, or deadlock is imminent");
     }
 
+    ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
     // pump first so that queued event do not interfere
     UIUtil.dispatchAllInvocationEvents();
+
+    // refresh will fire write actions interfering with highlighting
+    while (RefreshQueueImpl.isRefreshInProgress() || HeavyProcessLatch.INSTANCE.isRunning()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+
     UIUtil.dispatchAllInvocationEvents();
 
     Project project = file.getProject();
     setUpdateByTimerEnabled(false);
     FileStatusMap fileStatusMap = getFileStatusMap();
+    fileStatusMap.allowDirt(canChangeDocument);
+
+    Map<FileEditor, HighlightingPass[]> map = new HashMap<FileEditor, HighlightingPass[]>();
+    for (TextEditor textEditor : textEditors) {
+      TextEditorBackgroundHighlighter highlighter = (TextEditorBackgroundHighlighter)textEditor.getBackgroundHighlighter();
+      final List<TextEditorHighlightingPass> passes = highlighter.getPasses(toIgnore);
+      HighlightingPass[] array = passes.toArray(new HighlightingPass[passes.size()]);
+      assert array.length != 0 : "Highlighting is disabled for the file " + file;
+      map.put(textEditor, array);
+    }
     for (int ignoreId : toIgnore) {
       fileStatusMap.markFileUpToDate(document, ignoreId);
     }
-    fileStatusMap.allowDirt(canChangeDocument);
-
-    TextEditorBackgroundHighlighter highlighter = (TextEditorBackgroundHighlighter)textEditor.getBackgroundHighlighter();
-    final List<TextEditorHighlightingPass> passes = highlighter.getPasses(toIgnore);
-    HighlightingPass[] array = passes.toArray(new HighlightingPass[passes.size()]);
-    assert array.length != 0 : "Highlighting is disabled for the file " + file;
 
     final DaemonProgressIndicator progress = createUpdateProgress();
-    myPassExecutorService.submitPasses(Collections.singletonMap((FileEditor)textEditor, array), progress, Job.DEFAULT_PRIORITY);
+    myPassExecutorService.submitPasses(map, progress);
     try {
       while (progress.isRunning()) {
         try {
@@ -320,8 +337,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
       UIUtil.dispatchAllInvocationEvents();
       UIUtil.dispatchAllInvocationEvents();
 
-      List<HighlightInfo> highlights = getHighlights(document, null, project);
-      return highlights;
+      return getHighlights(document, null, project);
     }
     finally {
       fileStatusMap.allowDirt(true);
@@ -562,6 +578,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
                                 new Processor<HighlightInfo>() {
                                   @Override
                                   public boolean process(@NotNull HighlightInfo info) {
+                                    if (info.getSeverity() == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY) {
+                                      return true;
+                                    }
                                     if (!foundInfoList.isEmpty()) {
                                       HighlightInfo foundInfo = foundInfoList.get(0);
                                       int compare = foundInfo.getSeverity().compareTo(info.getSeverity());
@@ -732,7 +751,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
             cancelUpdateProgress(true, "Cancel by alarm");
             myAlarm.cancelAllRequests();
             DaemonProgressIndicator progress = createUpdateProgress();
-            myPassExecutorService.submitPasses(passes, progress, Job.DEFAULT_PRIORITY);
+            myPassExecutorService.submitPasses(passes, progress);
           }
         };
 

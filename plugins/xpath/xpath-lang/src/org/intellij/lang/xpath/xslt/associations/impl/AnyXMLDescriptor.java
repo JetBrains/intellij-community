@@ -23,12 +23,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class AnyXMLDescriptor extends FileChooserDescriptor {
-    public static final AnyXMLDescriptor INSTANCE = new AnyXMLDescriptor();
-
     final FileTypeManager myFileTypeManager;
 
-    public AnyXMLDescriptor() {
-        super(true, false, false, false, false, true);
+    public AnyXMLDescriptor(boolean chooseMultiple) {
+        super(true, false, false, false, false, chooseMultiple);
         myFileTypeManager = FileTypeManager.getInstance();
     }
 

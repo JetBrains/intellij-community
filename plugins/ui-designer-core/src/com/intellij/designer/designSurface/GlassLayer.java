@@ -29,7 +29,7 @@ import java.awt.event.MouseEvent;
 /**
  * @author Alexander Lobas
  */
-public final class GlassLayer extends JComponent implements DataProvider {
+public class GlassLayer extends JComponent implements DataProvider {
   private static final long EVENT_FLAGS = AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK;
 
   private final ToolProvider myToolProvider;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import javax.swing.*;
 public class EnforcedPlainTextFileTypeFactory extends FileTypeFactory {
 
   public static final LayeredIcon ENFORCED_PLAIN_TEXT_ICON = new LayeredIcon(2);
+  public static final String ENFORCED_PLAIN_TEXT = "Enforced Plain Text";
 
   static {
     ENFORCED_PLAIN_TEXT_ICON.setIcon(AllIcons.FileTypes.Text, 0);
@@ -59,13 +60,13 @@ public class EnforcedPlainTextFileTypeFactory extends FileTypeFactory {
       @NotNull
       @Override
       public String getName() {
-        return "Enforced Plain Text";
+        return ENFORCED_PLAIN_TEXT;
       }
 
       @NotNull
       @Override
       public String getDescription() {
-        return "Enforced Plain Text";
+        return ENFORCED_PLAIN_TEXT;
       }
 
       @NotNull
@@ -90,7 +91,7 @@ public class EnforcedPlainTextFileTypeFactory extends FileTypeFactory {
       }
 
       @Override
-      public String getCharset(@NotNull VirtualFile file, byte[] content) {
+      public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
         return null;
       }
     };

@@ -30,6 +30,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SplitterProportionsData;
@@ -47,7 +48,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
@@ -81,18 +81,13 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
 
   private final JPanel myRoot;
   private final InjectionsTable myInjectionsTable;
-  private final Map<String, LanguageInjectionSupport> mySupports = new THashMap<String, LanguageInjectionSupport>();
-  private final Map<String, AnAction> myEditActions = new THashMap<String, AnAction>();
-  private final List<AnAction> myAddActions = new ArrayList<AnAction>();
-  private final ActionToolbar myToolbar;
+  private final Map<String, LanguageInjectionSupport> mySupports = ContainerUtil.newLinkedHashMap();
+  private final Map<String, AnAction> myEditActions = ContainerUtil.newLinkedHashMap();
+  private final List<AnAction> myAddActions = ContainerUtil.newArrayList();
   private final JLabel myCountLabel;
 
   private Configurable[] myConfigurables;
   private Configuration myConfiguration;
-
-  public InjectionsSettingsUI(final Project project) {
-    this(project, Configuration.getProjectInstance(project));
-  }
 
   public InjectionsSettingsUI(final Project project, final Configuration configuration) {
     myProject = project;
@@ -107,16 +102,12 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
 
     myInjectionsTable = new InjectionsTable(getInjInfoList(myInfos));
     myInjectionsTable.getEmptyText().setText("No injections configured");
-    final JPanel tablePanel = new JPanel(new BorderLayout());
 
-    tablePanel.add(ScrollPaneFactory.createScrollPane(myInjectionsTable), BorderLayout.CENTER);
+    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myInjectionsTable);
+    createActions(decorator);
 
-    final DefaultActionGroup group = createActions();
-
-    myToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
-    myToolbar.setTargetComponent(myInjectionsTable);
-    myRoot.add(myToolbar.getComponent(), BorderLayout.NORTH);
-    myRoot.add(tablePanel, BorderLayout.CENTER);
+    //myRoot.add(new TitledSeparator("Languages injection places"), BorderLayout.NORTH);
+    myRoot.add(decorator.createPanel(), BorderLayout.CENTER);
     myCountLabel = new JLabel();
     myCountLabel.setHorizontalAlignment(SwingConstants.RIGHT);
     myCountLabel.setForeground(SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES.getFgColor());
@@ -124,7 +115,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
     updateCountLabel();
   }
 
-  private DefaultActionGroup createActions() {
+  private void createActions(ToolbarDecorator decorator) {
     final Consumer<BaseInjection> consumer = new Consumer<BaseInjection>() {
       public void consume(final BaseInjection injection) {
         addInjection(injection);
@@ -148,22 +139,22 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
         return Comparing.compare(o1.getTemplatePresentation().getText(), o2.getTemplatePresentation().getText());
       }
     });
-
-    final DefaultActionGroup group = new DefaultActionGroup();
-    final AnAction addAction = new AnAction("Add", "Add", IconUtil.getAddIcon()) {
+    decorator.disableUpDownActions();
+    decorator.setAddActionUpdater(new AnActionButtonUpdater() {
       @Override
-      public void update(final AnActionEvent e) {
-        e.getPresentation().setEnabled(!myAddActions.isEmpty());
+      public boolean isEnabled(AnActionEvent e) {
+        return !myAddActions.isEmpty();
       }
-
+    });
+    decorator.setAddAction(new AnActionButtonRunnable() {
       @Override
-      public void actionPerformed(final AnActionEvent e) {
-        performAdd(e);
+      public void run(AnActionButton button) {
+        performAdd(button);
       }
-    };
-    final AnAction removeAction = new AnAction("Remove", "Remove", PlatformIcons.DELETE_ICON) {
+    });
+    decorator.setRemoveActionUpdater(new AnActionButtonUpdater() {
       @Override
-      public void update(final AnActionEvent e) {
+      public boolean isEnabled(AnActionEvent e) {
         boolean enabled = false;
         for (InjInfo info : getSelectedInjections()) {
           if (!info.bundled) {
@@ -171,69 +162,63 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
             break;
           }
         }
-        e.getPresentation().setEnabled(enabled);
+        return enabled;
       }
-
+    });
+    decorator.setRemoveAction(new AnActionButtonRunnable() {
       @Override
-      public void actionPerformed(final AnActionEvent e) {
+      public void run(AnActionButton button) {
         performRemove();
       }
-    };
+    });
 
-    final AnAction editAction = new AnAction("Edit", "Edit", PlatformIcons.PROPERTIES_ICON) {
+    decorator.setEditActionUpdater(new AnActionButtonUpdater() {
       @Override
-      public void update(final AnActionEvent e) {
-        final AnAction action = getEditAction();
-        e.getPresentation().setEnabled(action != null);
-        if (action != null) action.update(e);
+      public boolean isEnabled(AnActionEvent e) {
+        AnAction edit = getEditAction();
+        if (edit != null) edit.update(e);
+        return edit != null && edit.getTemplatePresentation().isEnabled();
+      }
+    });
+    decorator.setEditAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        performEditAction();
+      }
+    });
+    decorator.addExtraAction(new DumbAwareActionButton("Duplicate", "Duplicate", PlatformIcons.COPY_ICON) {
+
+      @Override
+      public boolean isEnabled() {
+        return getEditAction() != null;
       }
 
       @Override
-      public void actionPerformed(final AnActionEvent e) {
-        performEditAction(e);
-      }
-    };
-    final AnAction copyAction = new AnAction("Duplicate", "Duplicate", PlatformIcons.COPY_ICON) {
-      @Override
-      public void update(final AnActionEvent e) {
-        final AnAction action = getEditAction();
-        e.getPresentation().setEnabled(action != null);
-        if (action != null) action.update(e);
-      }
-
-      @Override
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(AnActionEvent e) {
         final InjInfo injection = getSelectedInjection();
         if (injection != null) {
           addInjection(injection.injection.copy());
           //performEditAction(e);
         }
       }
-    };
-    group.add(addAction);
-    group.add(removeAction);
-    group.add(copyAction);
-    group.add(editAction);
+    });
 
-    addAction.registerCustomShortcutSet(CommonShortcuts.INSERT, myInjectionsTable);
-    removeAction.registerCustomShortcutSet(CommonShortcuts.DELETE, myInjectionsTable);
-    editAction.registerCustomShortcutSet(CommonShortcuts.ENTER, myInjectionsTable);
+    decorator.addExtraAction(new DumbAwareActionButton("Enable Selected Injections", "Enable Selected Injections", PlatformIcons.SELECT_ALL_ICON) {
 
-    group.addSeparator();
-    group.add(new AnAction("Enable Selected Injections", "Enable Selected Injections", PlatformIcons.SELECT_ALL_ICON) {
       @Override
       public void actionPerformed(final AnActionEvent e) {
         performSelectedInjectionsEnabled(true);
       }
     });
-    group.add(new AnAction("Disable Selected Injections", "Disable Selected Injections", PlatformIcons.UNSELECT_ALL_ICON) {
-      @Override
-      public void actionPerformed(final AnActionEvent e) {
-        performSelectedInjectionsEnabled(false);
-      }
-    });
+    decorator.addExtraAction(new DumbAwareActionButton("Disable Selected Injections", "Disable Selected Injections", PlatformIcons.UNSELECT_ALL_ICON) {
 
-    new AnAction("Toggle") {
+        @Override
+        public void actionPerformed(final AnActionEvent e) {
+          performSelectedInjectionsEnabled(false);
+        }
+      });
+
+    new DumbAwareAction("Toggle") {
       @Override
       public void update(AnActionEvent e) {
         SpeedSearchSupply supply = SpeedSearchSupply.getSupply(myInjectionsTable);
@@ -247,8 +232,18 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myInjectionsTable);
 
     if (myInfos.length > 1) {
-      group.addSeparator();
-      final AnAction shareAction = new AnAction("Make Global", null, PlatformIcons.IMPORT_ICON) {
+      AnActionButton shareAction = new DumbAwareActionButton("Make Global", null, PlatformIcons.IMPORT_ICON) {
+        {
+          addCustomUpdater(new AnActionButtonUpdater() {
+            @Override
+            public boolean isEnabled(AnActionEvent e) {
+              CfgInfo cfg = getTargetCfgInfo(getSelectedInjections());
+              e.getPresentation().setText(cfg == getDefaultCfgInfo() ? "Make Global" : "Move to Project");
+              return cfg != null;
+            }
+          });
+        }
+
         @Override
         public void actionPerformed(final AnActionEvent e) {
           final List<InjInfo> injections = getSelectedInjections();
@@ -265,14 +260,6 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
           TableUtil.selectRows(myInjectionsTable, selectedRows);
         }
 
-        @Override
-        public void update(final AnActionEvent e) {
-          final CfgInfo cfg = getTargetCfgInfo(getSelectedInjections());
-          e.getPresentation().setEnabled(cfg != null);
-          e.getPresentation().setText(cfg == getDefaultCfgInfo() ? "Make Global" : "Move to Project");
-          super.update(e);
-        }
-
         @Nullable
         private CfgInfo getTargetCfgInfo(final List<InjInfo> injections) {
           CfgInfo cfg = null;
@@ -283,25 +270,26 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
             if (cfg == null) cfg = info.cfgInfo;
             else if (cfg != info.cfgInfo) return info.cfgInfo;
           }
-          if (cfg == null) return cfg;
+          if (cfg == null) return null;
           for (CfgInfo info : myInfos) {
             if (info != cfg) return info;
           }
           throw new AssertionError();
         }
       };
-      shareAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.SHIFT_DOWN_MASK)), myInjectionsTable);
-      group.add(shareAction);
+      shareAction.setShortcut(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.SHIFT_DOWN_MASK)));
+      decorator.addExtraAction(shareAction);
     }
-    group.addSeparator();
-    group.add(new AnAction("Import", "Import", AllIcons.Actions.Install) {
+    decorator.addExtraAction(new DumbAwareActionButton("Import", "Import", AllIcons.Actions.Install) {
+
       @Override
       public void actionPerformed(final AnActionEvent e) {
         doImportAction(e.getDataContext());
         updateCountLabel();
       }
     });
-    group.add(new AnAction("Export", "Export", AllIcons.Actions.Export) {
+    decorator.addExtraAction(new DumbAwareActionButton("Export", "Export", AllIcons.Actions.Export) {
+
       @Override
       public void actionPerformed(final AnActionEvent e) {
         final List<BaseInjection> injections = getInjectionList(getSelectedInjections());
@@ -321,20 +309,19 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
       }
 
       @Override
-      public void update(final AnActionEvent e) {
-        e.getPresentation().setEnabled(!getSelectedInjections().isEmpty());
+      public boolean isEnabled() {
+        return !getSelectedInjections().isEmpty();
       }
     });
-
-    return group;
   }
 
 
-  private void performEditAction(AnActionEvent e) {
+  private void performEditAction() {
     final AnAction action = getEditAction();
     if (action != null) {
       final int row = myInjectionsTable.getSelectedRow();
-      action.actionPerformed(e);
+      action.actionPerformed(new AnActionEvent(null, DataManager.getInstance().getDataContext(myInjectionsTable),
+                                               ActionPlaces.UNKNOWN, new Presentation(""), ActionManager.getInstance(), 0));
       myInjectionsTable.getListTableModel().fireTableDataChanged();
       myInjectionsTable.getSelectionModel().setSelectionInterval(row, row);
       updateCountLabel();
@@ -352,10 +339,8 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
           if (place.isEnabled()) enablePlacesCount++;
         }
       }
-      final StringBuilder sb = new StringBuilder();
-      sb.append(items.size()).append(" injection").append(items.size() > 1 ? "s" : "").append(" (").append(enablePlacesCount)
-        .append(" of ").append(placesCount).append(" place").append(placesCount > 1 ? "s" : "").append(" enabled) ");
-      myCountLabel.setText(sb.toString());
+      myCountLabel.setText(items.size() + " injection" + (items.size() > 1 ? "s" : "") + " (" + enablePlacesCount + " of " +
+                           placesCount + " place" + (placesCount > 1 ? "s" : "") + " enabled) ");
     }
     else {
       myCountLabel.setText("no injections configured ");
@@ -511,17 +496,14 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
     return row < 0? null : myInjectionsTable.getItems().get(myInjectionsTable.convertRowIndexToModel(row));
   }
 
-  private void performAdd(final AnActionEvent e) {
-    final DefaultActionGroup group = new DefaultActionGroup();
-    for (AnAction action : myAddActions) {
-      group.add(action);
-    }
+  private void performAdd(AnActionButton e) {
+    DefaultActionGroup group = new DefaultActionGroup(myAddActions);
 
     JBPopupFactory.getInstance().createActionGroupPopup(null, group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, true, new Runnable() {
       public void run() {
         updateCountLabel();
       }
-    }, -1).showUnderneathOf(myToolbar.getComponent());
+    }, -1).show(e.getPreferredPopupPoint());
   }
 
   @Nls
@@ -543,7 +525,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
       setShowGrid(false);
       setShowVerticalLines(false);
       setGridColor(getForeground());
-      getColumnModel().getColumn(0).setMaxWidth(new JCheckBox().getPreferredSize().width);
+      TableUtil.setupCheckboxColumn(getColumnModel().getColumn(0));
 
       new DoubleClickListener() {
         @Override
@@ -552,8 +534,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
           if (row < 0) return false;
           if (columnAtPoint(e.getPoint()) <= 0) return false;
           myInjectionsTable.getSelectionModel().setSelectionInterval(row, row);
-          performEditAction(new AnActionEvent(e, DataManager.getInstance().getDataContext(InjectionsTable.this),
-                                              ActionPlaces.UNKNOWN, new Presentation(""), ActionManager.getInstance(), 0));
+          performEditAction();
           return true;
         }
       }.installOn(this);
@@ -632,7 +613,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
       public TableCellRenderer getRenderer(final InjInfo injection) {
         return booleanCellRenderer;
       }
-    }, new ColumnInfo<InjInfo, InjInfo>("Display Name") {
+    }, new ColumnInfo<InjInfo, InjInfo>("Name") {
       @Override
       public InjInfo valueOf(final InjInfo info) {
         return info;

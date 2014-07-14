@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 public abstract class ModuleTestCase extends IdeaTestCase {
   protected final Collection<Module> myModulesToDispose = new ArrayList<Module>();
@@ -95,16 +96,29 @@ public abstract class ModuleTestCase extends IdeaTestCase {
   }
 
   protected Module loadModule(final File moduleFile) {
+    return loadModule(moduleFile, false);
+  }
+
+  protected Module loadModule(final File moduleFile, final boolean loadComponentStates) {
     Module module = ApplicationManager.getApplication().runWriteAction(
       new Computable<Module>() {
         @Override
         public Module compute() {
+          ProjectImpl project = (ProjectImpl)myProject;
+          boolean oldOptimiseTestLoadSpeed = project.isOptimiseTestLoadSpeed();
+          if (loadComponentStates) {
+            project.setOptimiseTestLoadSpeed(false);
+          }
           try {
+            LocalFileSystem.getInstance().refreshIoFiles(Collections.singletonList(moduleFile));
             return ModuleManager.getInstance(myProject).loadModule(moduleFile.getAbsolutePath());
           }
           catch (Exception e) {
             LOG.error(e);
             return null;
+          }
+          finally {
+            project.setOptimiseTestLoadSpeed(oldOptimiseTestLoadSpeed);
           }
         }
       }
@@ -162,6 +176,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     FileUtil.copyDir(dirInTestDataFile, moduleDir);
     final Module module = createModule(moduleDir + "/" + newModuleFileName, moduleType);
     final VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleDir);
+    assertNotNull(root);
     new WriteCommandAction.Simple(module.getProject()) {
       @Override
       protected void run() throws Throwable {

@@ -94,14 +94,14 @@ public class XmlSchemaIndexTest extends CodeInsightFixtureTestCase {
     assertEquals(2, files.size());
 
     IndexedRelevantResource<String, XsdNamespaceBuilder>
-      resource = XmlNamespaceIndex.guessSchema(NS, "web-app", "3.0", myModule);
+      resource = XmlNamespaceIndex.guessSchema(NS, "web-app", "3.0", myModule, getProject());
     assertNotNull(resource);
     XsdNamespaceBuilder builder = resource.getValue();
     assertEquals(NS, builder.getNamespace());
     assertEquals("3.0", builder.getVersion());
     assertEquals(Arrays.asList("web-app"), builder.getTags());
 
-    resource = XmlNamespaceIndex.guessSchema(NS, "web-app", "2.5", myModule);
+    resource = XmlNamespaceIndex.guessSchema(NS, "web-app", "2.5", myModule, getProject());
     assertNotNull(resource);
     builder = resource.getValue();
     assertEquals(NS, builder.getNamespace());

@@ -3,6 +3,7 @@
   <title></title>
 </head>
 <body>
-<command radiogroup=""
+<menu>
+<menuitem radiogroup=""
 </body>
 </html>

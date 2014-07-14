@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyRunnerPsiUtil;
 
 import java.util.List;
 
@@ -47,10 +47,12 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
     super(GroovyScriptRunConfigurationType.getInstance());
   }
 
+  @Override
   public PsiElement getSourceElement() {
     return mySourceElement;
   }
 
+  @Override
   protected RunnerAndConfigurationSettings createConfigurationByElement(final Location location, final ConfigurationContext context) {
     final PsiElement element = location.getPsiElement();
     final PsiFile file = element.getContainingFile();
@@ -59,13 +61,13 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
     }
 
     GroovyFile groovyFile = (GroovyFile)file;
-    final PsiClass aClass = GroovyRunnerUtil.getRunningClass(location.getPsiElement());
-    if (aClass instanceof GroovyScriptClass || GroovyRunnerUtil.isRunnable(aClass)) {
+    final PsiClass aClass = GroovyRunnerPsiUtil.getRunningClass(location.getPsiElement());
+    if (aClass instanceof GroovyScriptClass || GroovyRunnerPsiUtil.isRunnable(aClass)) {
       final RunnerAndConfigurationSettings settings = createConfiguration(aClass);
       if (settings != null) {
         mySourceElement = element;
         final GroovyScriptRunConfiguration configuration = (GroovyScriptRunConfiguration)settings.getConfiguration();
-        GroovyScriptTypeDetector.getScriptType(groovyFile).tuneConfiguration(groovyFile, configuration, location);
+        GroovyScriptUtil.getScriptType(groovyFile).tuneConfiguration(groovyFile, configuration, location);
         return settings;
       }
     }
@@ -100,7 +102,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
           final VirtualFile vfile = file.getVirtualFile();
           if (vfile != null && FileUtil.toSystemIndependentName(path).equals(vfile.getPath())) {
             if (!((GroovyFile)file).isScript() ||
-                GroovyScriptTypeDetector.getScriptType((GroovyFile)file).isConfigurationByLocation(existing, location)) {
+                GroovyScriptUtil.getScriptType((GroovyFile)file).isConfigurationByLocation(existing, location)) {
               return existingConfiguration;
             }
           }
@@ -111,6 +113,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
   }
 
 
+  @Override
   public int compareTo(final Object o) {
     return PREFERED;
   }

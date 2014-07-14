@@ -17,6 +17,9 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiGraphInferenceHelper;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +37,7 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST;
+    return JAVA_8;
   }
 
 
@@ -70,13 +73,72 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
-  private void doTest() {
+  public void testInLambdaPositionSingleParam() throws Exception {
+    doTest();
+  }
+
+  public void testInLambdaPositionNameSubstitution() throws Exception {
+    doTest();
+  }
+
+  public void testFilteredMethodReference() throws Exception {
+    doTest(false);
+  }
+
+  public void testFilteredStaticMethods() throws Exception {
+    doTest(false);
+  }
+
+  public void testFilterWrongParamsMethods() throws Exception {
+    doTest(false);
+  }
+
+  public void testNoQualifier() throws Exception {
+    doTest();
+  }
+
+  public void testFilterAmbiguity() throws Exception {
     configureByFile("/" + getTestName(false) + ".java");
     assertNotNull(myItems);
-    assertTrue(myItems.length > 0);
-    final Lookup lookup = getLookup();
-    if (lookup != null) {
-      selectItem(lookup.getCurrentItem(), Lookup.NORMAL_SELECT_CHAR);
+    assertTrue(myItems.length == 0);
+  }
+
+  public void testNotAvailableInLambdaPositionAfterQualifier() throws Exception {
+    configureByFile("/" + getTestName(false) + ".java");
+    assertNotNull(myItems);
+    assertTrue(myItems.length == 0);
+  }
+
+  public void testInferFromRawType() throws Exception {
+    final PsiResolveHelperImpl helper = (PsiResolveHelperImpl)JavaPsiFacade.getInstance(getProject()).getResolveHelper();
+    helper.setTestHelper(new PsiGraphInferenceHelper(getPsiManager()));
+    try {
+      configureByFile("/" + getTestName(false) + ".java");
+      assertNotNull(myItems);
+      assertTrue(myItems.length == 0);
+    }
+    finally {
+      helper.setTestHelper(null);
+    }
+  }
+
+  public void testDiamondsInsideMethodCall() throws Exception {
+    doTest(false);
+  }
+
+  private void doTest() {
+    doTest(true);
+  }
+
+  private void doTest(boolean checkItems) {
+    configureByFile("/" + getTestName(false) + ".java");
+    if (checkItems) {
+      assertNotNull(myItems);
+      assertTrue(myItems.length > 0);
+      final Lookup lookup = getLookup();
+      if (lookup != null) {
+        selectItem(lookup.getCurrentItem(), Lookup.NORMAL_SELECT_CHAR);
+      }
     }
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }

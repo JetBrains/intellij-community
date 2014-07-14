@@ -23,17 +23,7 @@ package com.intellij.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
-import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.InspectionTestCase;
 
@@ -70,9 +60,10 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
     });
   }
 
-  @SuppressWarnings("UnusedDeclaration")
-  public void _testCollectSinceApiUsages() {
-    final String version = "1.7";
+  //generate apiXXX.txt
+  /*
+  public void testCollectSinceApiUsages() {
+    final String version = "1.8";
     final ContentIterator contentIterator = new ContentIterator() {
       @Override
       public boolean processFile(VirtualFile fileOrDir) {
@@ -102,15 +93,15 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
         return true;
       }
     };
-    final VirtualFile srcFile = JarFileSystem.getInstance().findFileByPath("c:/program files/java/jdk1.6.0_12/src.zip!/");
+    final VirtualFile srcFile = JarFileSystem.getInstance().findFileByPath("c:/tools/jdk8/src.zip!/");
     assert srcFile != null;
     VfsUtilCore.iterateChildrenRecursively(srcFile, VirtualFileFilter.ALL, contentIterator);
   }
-/*
+
   @Override
   protected void setUpJdk() {
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    final Sdk sdk = JavaSdk.getInstance().createJdk("1.7", "c:/program files (x86)/java/jdk1.7.0_09/", false);
+    final Sdk sdk = JavaSdk.getInstance().createJdk("1.8", "c:/tools/jdk8/", false);
     for (Module module : modules) {
       ModuleRootModificationUtil.setModuleSdk(module, sdk);
     }

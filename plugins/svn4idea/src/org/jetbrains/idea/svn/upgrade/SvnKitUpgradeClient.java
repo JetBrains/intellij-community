@@ -24,7 +24,7 @@ public class SvnKitUpgradeClient extends BaseSvnClient implements UpgradeClient 
   public void upgrade(@NotNull File path, @NotNull WorkingCopyFormat format, @Nullable ISVNEventHandler handler) throws VcsException {
     validateFormat(format, getSupportedFormats());
 
-    SVNWCClient client = myVcs.createWCClient();
+    SVNWCClient client = myVcs.getSvnKitManager().createWCClient();
 
     client.setEventHandler(handler);
     try {

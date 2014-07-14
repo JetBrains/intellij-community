@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,14 @@
 
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy;
 
+import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -48,9 +50,6 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static com.intellij.codeInsight.ChangeContextUtil.*;
-import static com.intellij.refactoring.IntroduceParameterRefactoring.*;
 
 /**
  * @author Maxim.Medvedev
@@ -206,9 +205,9 @@ public class OldReferencesResolver {
 
         if (subj instanceof PsiField) {
           // probably replacing field with a getter
-          if (myReplaceFieldsWithGetters != REPLACE_FIELDS_WITH_GETTERS_NONE) {
-            if (myReplaceFieldsWithGetters == REPLACE_FIELDS_WITH_GETTERS_ALL ||
-                myReplaceFieldsWithGetters == REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE &&
+          if (myReplaceFieldsWithGetters != IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE) {
+            if (myReplaceFieldsWithGetters == IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL ||
+                myReplaceFieldsWithGetters == IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE &&
                 !JavaPsiFacade.getInstance(myProject).getResolveHelper().isAccessible((PsiMember)subj, newExpr, null)) {
               newExpr = replaceFieldWithGetter(newExpr, (PsiField)subj);
             }
@@ -217,7 +216,7 @@ public class OldReferencesResolver {
       }
     }
     else {
-      PsiClass refClass = oldExpr.getCopyableUserData(REF_CLASS_KEY);
+      PsiClass refClass = oldExpr.getCopyableUserData(ChangeContextUtil.REF_CLASS_KEY);
       if (refClass != null && refClass.isValid()) {
         PsiReference ref = newExpr.getReference();
         if (ref != null) {
@@ -344,7 +343,7 @@ public class OldReferencesResolver {
       return GroovyRefactoringUtil.generateArgFromMultiArg(mySignature.getSubstitutor(), args, myParameters[index].getType(),
                                                            myContext.getProject());
     }
-    else if (args.size() == 0) {
+    else if (args.isEmpty()) {
       final PsiParameter parameter = myParameters[index];
       LOG.assertTrue(parameter instanceof GrParameter);
       final GrExpression initializer = ((GrParameter)parameter).getInitializerGroovy();
@@ -443,8 +442,8 @@ public class OldReferencesResolver {
 
     GrExpression qualifier = refExpr.getQualifier();
     if (qualifier == null) {
-      PsiMember refMember = refExpr.getCopyableUserData(REF_MEMBER_KEY);
-      refExpr.putCopyableUserData(REF_MEMBER_KEY, null);
+      PsiMember refMember = refExpr.getCopyableUserData(ChangeContextUtil.REF_MEMBER_KEY);
+      refExpr.putCopyableUserData(ChangeContextUtil.REF_MEMBER_KEY, null);
 
       if (refMember != null && refMember.isValid()) {
         PsiClass containingClass = refMember.getContainingClass();
@@ -456,16 +455,16 @@ public class OldReferencesResolver {
         }
       }
       else {
-        PsiClass refClass = refExpr.getCopyableUserData(REF_CLASS_KEY);
-        refExpr.putCopyableUserData(REF_CLASS_KEY, null);
+        PsiClass refClass = refExpr.getCopyableUserData(ChangeContextUtil.REF_CLASS_KEY);
+        refExpr.putCopyableUserData(ChangeContextUtil.REF_CLASS_KEY, null);
         if (refClass != null && refClass.isValid()) {
           newExpr = (GrReferenceExpression)newExpr.bindToElement(refClass);
         }
       }
     }
     else {
-      Boolean couldRemove = refExpr.getCopyableUserData(CAN_REMOVE_QUALIFIER_KEY);
-      refExpr.putCopyableUserData(CAN_REMOVE_QUALIFIER_KEY, null);
+      Boolean couldRemove = refExpr.getCopyableUserData(ChangeContextUtil.CAN_REMOVE_QUALIFIER_KEY);
+      refExpr.putCopyableUserData(ChangeContextUtil.CAN_REMOVE_QUALIFIER_KEY, null);
 
       if (couldRemove == Boolean.FALSE && canRemoveQualifier(refExpr)) {
         GrReferenceExpression newRefExpr = (GrReferenceExpression)factory.createExpressionFromText(refExpr.getReferenceName());

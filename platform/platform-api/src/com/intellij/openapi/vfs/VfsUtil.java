@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.io.fs.FileSystem;
-import com.intellij.util.io.fs.IFile;
 import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -177,35 +178,6 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   /**
-   * Gets the common ancestor for passed files, or null if the files do not have common ancestors.
-   *
-   * @param file1 fist file
-   * @param file2 second file
-   * @return common ancestor for the passed files. Returns <code>null</code> if
-   *         the files do not have common ancestor
-   */
-  @Nullable
-  public static VirtualFile getCommonAncestor(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-    if (!file1.getFileSystem().equals(file2.getFileSystem())) {
-      return null;
-    }
-
-    VirtualFile[] path1 = getPathComponents(file1);
-    VirtualFile[] path2 = getPathComponents(file2);
-
-    int lastEqualIdx = -1;
-    for (int i = 0; i < path1.length && i < path2.length; i++) {
-      if (path1[i].equals(path2[i])) {
-        lastEqualIdx = i;
-      }
-      else {
-        break;
-      }
-    }
-    return lastEqualIdx == -1 ? null : path1[lastEqualIdx];
-  }
-
-  /**
    * Gets the common ancestor for passed files, or {@code null} if the files do not have common ancestors.
    */
   @Nullable
@@ -221,27 +193,6 @@ public class VfsUtil extends VfsUtilCore {
       }
     }
     return ancestor;
-  }
-
-  /**
-   * Gets an array of files representing paths from root to the passed file.
-   *
-   * @param file the file
-   * @return virtual files which represents paths from root to the passed file
-   */
-  @NotNull
-  private static VirtualFile[] getPathComponents(@NotNull VirtualFile file) {
-    ArrayList<VirtualFile> componentsList = new ArrayList<VirtualFile>();
-    while (file != null) {
-      componentsList.add(file);
-      file = file.getParent();
-    }
-    int size = componentsList.size();
-    VirtualFile[] components = new VirtualFile[size];
-    for (int i = 0; i < size; i++) {
-      components[i] = componentsList.get(size - i - 1);
-    }
-    return components;
   }
 
   @Nullable
@@ -336,11 +287,6 @@ public class VfsUtil extends VfsUtilCore {
       LOG.debug("MalformedURLException occurred:" + e.getMessage());
       return null;
     }
-  }
-
-  @NotNull
-  public static IFile virtualToIFile(@NotNull VirtualFile file) {
-    return FileSystem.FILE_SYSTEM.createFile(PathUtil.toPresentableUrl(file.getUrl()));
   }
 
   public static VirtualFile copyFileRelative(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String relativePath) throws IOException {
@@ -542,10 +488,7 @@ public class VfsUtil extends VfsUtilCore {
 
   @Nullable
   public static VirtualFile createDirectoryIfMissing(@NotNull String directoryPath) throws IOException {
-    return doCreateDirectoriesIfMissing(FileUtil.toSystemIndependentName(directoryPath));
-  }
-
-  private static VirtualFile doCreateDirectoriesIfMissing(String path) throws IOException {
+    String path = FileUtil.toSystemIndependentName(directoryPath);
     final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     if (file == null) {
       int pos = path.lastIndexOf('/');
@@ -557,6 +500,25 @@ public class VfsUtil extends VfsUtilCore {
     }
     return file;
   }
+
+  /**
+   * Returns all files in some virtual files recursively
+   * @param root virtual file to get descendants
+   * @return descendants
+   */
+  @NotNull
+  public static List<VirtualFile> collectChildrenRecursively(@NotNull final VirtualFile root) {
+    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    processFilesRecursively(root, new Processor<VirtualFile>() {
+      @Override
+      public boolean process(final VirtualFile t) {
+        result.add(t);
+        return true;
+      }
+    });
+    return result;
+  }
+
 
   public static void processFileRecursivelyWithoutIgnored(@NotNull final VirtualFile root, @NotNull final Processor<VirtualFile> processor) {
     final FileTypeManager ftm = FileTypeManager.getInstance();

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.dataflow.DFALimitExceededException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.psi.PyImportedNameDefiner;
+import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,4 +50,7 @@ public interface Scope {
 
   @NotNull
   Collection<PsiNamedElement> getNamedElements();
+
+  @NotNull
+  Collection<PyTargetExpression> getTargetExpressions();
 }

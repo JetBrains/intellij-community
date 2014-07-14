@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInsight.generation;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.MethodImplementor;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -246,7 +243,10 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
   public static void annotateOnOverrideImplement(PsiMethod method, PsiClass targetClass, PsiMethod overridden, boolean insertOverride) {
     if (insertOverride && canInsertOverride(overridden, targetClass)) {
-      AddAnnotationPsiFix.addPhysicalAnnotation(Override.class.getName(), PsiNameValuePair.EMPTY_ARRAY, method.getModifierList());
+      final String overrideAnnotationName = Override.class.getName();
+      if (!AnnotationUtil.isAnnotated(method, overrideAnnotationName, false, true)) {
+        AddAnnotationPsiFix.addPhysicalAnnotation(overrideAnnotationName, PsiNameValuePair.EMPTY_ARRAY, method.getModifierList());
+      }
     }
     final Module module = ModuleUtilCore.findModuleForPsiElement(targetClass);
     final GlobalSearchScope moduleScope = module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) : null;
@@ -256,6 +256,11 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
       for (String annotation : each.getAnnotations(project)) {
         if (moduleScope != null && facade.findClass(annotation, moduleScope) == null) continue;
         if (AnnotationUtil.isAnnotated(overridden, annotation, false, false) && !AnnotationUtil.isAnnotated(method, annotation, false, false)) {
+          PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotation(overridden, annotation);
+          if (psiAnnotation != null && InferredAnnotationsManager.getInstance(project).isInferredAnnotation(psiAnnotation)) {
+            continue;
+          }
+
           AddAnnotationPsiFix.removePhysicalAnnotations(method, each.annotationsToRemove(project, annotation));
           AddAnnotationPsiFix.addPhysicalAnnotation(annotation, PsiNameValuePair.EMPTY_ARRAY, method.getModifierList());
         }
@@ -379,8 +384,9 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     try {
       methodText = "void foo () {\n" + template.getText(properties) + "\n}";
       methodText = FileTemplateUtil.indent(methodText, result.getProject(), fileType);
-    } catch (Exception e) {
-      throw new IncorrectOperationException("Failed to parse file template",e);
+    }
+    catch (Exception e) {
+      throw new IncorrectOperationException("Failed to parse file template", (Throwable)e);
     }
     if (methodText != null) {
       PsiMethod m;
@@ -565,7 +571,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
       if (name != null) {
         MethodSignature signature = MethodSignatureUtil.createMethodSignature(name, prevBaseMethod.getParameterList(), prevBaseMethod.getTypeParameterList(), substitutor, prevBaseMethod.isConstructor());
         PsiMethod prevMethod = MethodSignatureUtil.findMethodBySignature(aClass, signature, false);
-        if (prevMethod != null){
+        if (prevMethod != null && prevMethod.isPhysical()){
           return prevMethod.getNextSibling();
         }
       }

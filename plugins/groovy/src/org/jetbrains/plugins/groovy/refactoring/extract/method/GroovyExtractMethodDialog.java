@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.utils.DuplicatesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -103,6 +103,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     mySplitter.setSecondComponent(mySignature);
   }
 
+  @Override
   protected void doOKAction() {
     myHelper.setForceReturn(myForceReturnCheckBox.isSelected());
     String name = getEnteredName();
@@ -131,6 +132,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     }
 
     myCbSpecifyType.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         myHelper.setSpecifyType(myCbSpecifyType.isSelected());
         updateSignature();
@@ -154,9 +156,11 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   private void setUpNameField() {
     myNameLabel.setLabelFor(myNameField);
     myNameField.addDocumentListener(new DocumentListener() {
+      @Override
       public void beforeDocumentChange(DocumentEvent event) {
       }
 
+      @Override
       public void documentChanged(DocumentEvent event) {
         fireNameDataChanged();
       }
@@ -165,11 +169,13 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     myListenerList.add(DataChangedListener.class, new DataChangedListener());
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     return contentPane;
   }
 
+  @Override
   public JComponent getContentPane() {
     return contentPane;
   }
@@ -193,7 +199,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   @Nullable
   protected String getEnteredName() {
     String text = myNameField.getText();
-    if (text != null && text.trim().length() > 0) {
+    if (text != null && !text.trim().isEmpty()) {
       return text.trim();
     }
     else {
@@ -201,14 +207,17 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     }
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField;
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.EXTRACT_METHOD);
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
@@ -239,14 +248,17 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     });
 
     myParameterTablePanel = new ParameterTablePanel() {
+      @Override
       protected void updateSignature(){
         GroovyExtractMethodDialog.this.updateSignature();
       }
 
+      @Override
       protected void doEnterAction(){
         GroovyExtractMethodDialog.this.clickDefaultButton();
       }
 
+      @Override
       protected void doCancelAction(){
         GroovyExtractMethodDialog.this.doCancelAction();
       }
@@ -258,10 +270,12 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     PsiClass owner = helper.getOwner();
     PsiMethod[] methods = ArrayUtil.mergeArrays(owner.getAllMethods(), new PsiMethod[]{method}, PsiMethod.ARRAY_FACTORY);
     final Map<PsiMethod, List<PsiMethod>> map = DuplicatesUtil.factorDuplicates(methods, new TObjectHashingStrategy<PsiMethod>() {
+      @Override
       public int computeHashCode(PsiMethod method) {
         return method.getSignature(PsiSubstitutor.EMPTY).hashCode();
       }
 
+      @Override
       public boolean equals(PsiMethod method1, PsiMethod method2) {
         return method1.getSignature(PsiSubstitutor.EMPTY).equals(method2.getSignature(PsiSubstitutor.EMPTY));
       }
@@ -346,11 +360,13 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
       myEnteredName = dialog.getEnteredName();
     }
 
+    @Override
     @NotNull
     public ExtractMethodInfoHelper getHelper() {
       return myHelper;
     }
 
+    @Override
     public String getEnteredName() {
       return myEnteredName;
     }

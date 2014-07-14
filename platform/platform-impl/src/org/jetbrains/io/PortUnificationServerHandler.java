@@ -34,6 +34,8 @@ import java.security.KeyStore;
 import java.security.Security;
 import java.util.UUID;
 
+import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
+
 @ChannelHandler.Sharable
 class PortUnificationServerHandler extends Decoder {
   private static final AtomicNotNullLazyValue<SSLContext> SSL_SERVER_CONTEXT = new AtomicNotNullLazyValue<SSLContext>() {
@@ -104,7 +106,7 @@ class PortUnificationServerHandler extends Decoder {
                          new PortUnificationServerHandler(delegatingHttpRequestHandler, detectSsl, false));
       }
       else if (isHttp(magic1, magic2)) {
-        NettyUtil.initHttpHandlers(pipeline);
+        NettyUtil.addHttpServerCodec(pipeline);
         pipeline.addLast(delegatingHttpRequestHandler);
         if (BuiltInServer.LOG.isDebugEnabled()) {
           pipeline.addLast(new ChannelOutboundHandlerAdapter() {
@@ -113,7 +115,7 @@ class PortUnificationServerHandler extends Decoder {
               if (message instanceof HttpResponse) {
 //                BuiltInServer.LOG.debug("OUT HTTP:\n" + message);
                 HttpResponse response = (HttpResponse)message;
-                BuiltInServer.LOG.debug("OUT HTTP: " + response.getStatus().code() + " " + response.headers().get("Content-type"));
+                BuiltInServer.LOG.debug("OUT HTTP: " + response.status().code() + " " + response.headers().get(CONTENT_TYPE));
               }
               super.write(context, message, promise);
             }
@@ -136,7 +138,7 @@ class PortUnificationServerHandler extends Decoder {
   }
 
   private static void ensureThatExceptionHandlerIsLast(ChannelPipeline pipeline) {
-    ChannelInboundHandler exceptionHandler = ChannelExceptionHandler.getInstance();
+    ChannelHandler exceptionHandler = ChannelExceptionHandler.getInstance();
     if (pipeline.last() != exceptionHandler || pipeline.context(exceptionHandler) == null) {
       return;
     }

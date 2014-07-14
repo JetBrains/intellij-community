@@ -18,6 +18,7 @@ package com.jetbrains.python.run;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunContentExecutor;
+import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.process.ProcessHandler;
@@ -31,6 +32,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullFunction;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -42,11 +44,16 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * TODO: Use {@link com.jetbrains.python.run.PythonRunner} instead of this class? At already supports rerun and other things
  * Base class for tasks which are run from PyCharm with results displayed in a toolwindow (manage.py, setup.py, Sphinx etc).
  *
  * @author yole
  */
 public class PythonTask {
+  /**
+   * Mils we wait to process to be stopped when "rerun" called
+   */
+  private static final long TIME_TO_WAIT_PROCESS_STOP = 2000L;
   protected final Module myModule;
   private final Sdk mySdk;
   private String myWorkingDirectory;
@@ -93,8 +100,14 @@ public class PythonTask {
     myAfterCompletion = afterCompletion;
   }
 
-  public ProcessHandler createProcess() throws ExecutionException {
-    GeneralCommandLine commandLine = createCommandLine();
+  /**
+   * @param env environment variables to be passed to process or null if nothing should be passed
+   */
+  public ProcessHandler createProcess(@Nullable final Map<String, String> env) throws ExecutionException {
+    final GeneralCommandLine commandLine = createCommandLine();
+    if (env != null) {
+       commandLine.getEnvironment().putAll(env);
+    }
 
     ProcessHandler handler;
     if (PySdkUtil.isRemote(mySdk)) {
@@ -102,6 +115,7 @@ public class PythonTask {
       handler = new PyRemoteProcessStarter().startRemoteProcess(mySdk, commandLine, myModule.getProject(), null);
     }
     else {
+      EncodingEnvironmentUtil.fixDefaultEncodingIfMac(commandLine, myModule.getProject());
       handler = PythonProcessRunner.createProcessHandlingCtrlC(commandLine);
 
       ProcessTerminatedListener.attach(handler);
@@ -152,7 +166,6 @@ public class PythonTask {
     List<String> pythonPath = setupPythonPath();
     PythonCommandLineState.initPythonPath(cmd, true, pythonPath, homePath);
 
-    PythonSdkType.patchCommandLineForVirtualenv(cmd, homePath, true);
     BuildoutFacet facet = BuildoutFacet.getInstance(myModule);
     if (facet != null) {
       facet.patchCommandLineForBuildout(cmd);
@@ -171,8 +184,11 @@ public class PythonTask {
     return pythonPath;
   }
 
-  public void run() throws ExecutionException {
-    final ProcessHandler process = createProcess();
+  /**
+   * @param env environment variables to be passed to process or null if nothing should be passed
+   */
+  public void run(@Nullable final Map<String, String> env) throws ExecutionException {
+    final ProcessHandler process = createProcess(env);
     final Project project = myModule.getProject();
     new RunContentExecutor(project, process)
       .withFilter(new PythonTracebackFilter(project))
@@ -181,7 +197,12 @@ public class PythonTask {
         @Override
         public void run() {
           try {
-            PythonTask.this.run();
+            process.destroyProcess(); // Stop process before rerunning it
+            if (process.waitFor(TIME_TO_WAIT_PROCESS_STOP)) {
+              PythonTask.this.run(env);
+            }else {
+              Messages.showErrorDialog(PyBundle.message("unable.to.stop"), myRunTabTitle);
+            }
           }
           catch (ExecutionException e) {
             Messages.showErrorDialog(e.getMessage(), myRunTabTitle);

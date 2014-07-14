@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,13 @@ import org.jetbrains.annotations.NotNull;
 public class ForeignLeafPsiElement extends LeafPsiElement {
   private final ForeignLeafType myForeignType;
 
-  public ForeignLeafPsiElement(ForeignLeafType type, CharSequence text) {
+  public ForeignLeafPsiElement(@NotNull ForeignLeafType type, CharSequence text) {
     super(dereferenceElementType(type.getDelegate()), text);
     myForeignType = type;
   }
 
-  private static IElementType dereferenceElementType(IElementType type) {
+  @NotNull
+  private static IElementType dereferenceElementType(@NotNull IElementType type) {
     while ( type instanceof TokenWrapper)
       type = (( TokenWrapper ) type ).getDelegate();
 

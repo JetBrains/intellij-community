@@ -18,7 +18,6 @@ package git4idea.history.wholeTree;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -63,7 +62,7 @@ import java.util.List;
  * @author irengrig
  */
 public class SelectRepositoryAndShowLogAction extends AnAction {
-  public static final String ourTitle = "Show Git repository log";
+  public static final String ourTitle = "Show Git Repository Log";
   public static final int MAX_REPOS = 10;
 
   public SelectRepositoryAndShowLogAction() {

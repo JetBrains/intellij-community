@@ -22,7 +22,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.PasswordAuthentication;
 
 /**
@@ -46,9 +45,9 @@ public interface AuthenticationCallback {
   /**
    * Authenticate for realm and base file belonging to corresponding working copy
    *
-   * @param realm - realm that should be used for credential retrieval/storage.
+   * @param realm           - realm that should be used for credential retrieval/storage.
    * @param repositoryUrl
-   * @param previousFailed - whether previous credentials were correct
+   * @param previousFailed  - whether previous credentials were correct
    * @param passwordRequest - if true, password should be asked. Otherwise that may be a certificate (determined by the protocol)
    * @return false if authentication canceled or was unsuccessful
    */
@@ -59,7 +58,7 @@ public interface AuthenticationCallback {
    * For instance, username/password for http/svn protocols. SSL client certificate for two way SSL protocol.
    *
    * @param repositoryUrl
-   * @param type authentication protocol type with svn specific values, like "svn.simple" for http.
+   * @param type          authentication protocol type with svn specific values, like "svn.simple" for http.
    * @return
    */
   @Nullable
@@ -80,7 +79,7 @@ public interface AuthenticationCallback {
    * Ask user or read from memory storage whether server certificate should be accepted
    *
    * @param repositoryUrl
-   * @param realm - realm that should be used for credential retrieval/storage.
+   * @param realm         - realm that should be used for credential retrieval/storage.
    * @return true is certificate was accepted
    */
   boolean acceptSSLServerCertificate(SVNURL repositoryUrl, final String realm);
@@ -88,9 +87,9 @@ public interface AuthenticationCallback {
   /**
    * Clear credentials stored anywhere - in case they were not full, wrong or anything else
    *
-   * @param realm - required that credential
+   * @param realm         - required that credential
    * @param repositoryUrl
-   * @param password - whether password credential should be deleted or certificate, if protocol might demand certificate
+   * @param password      - whether password credential should be deleted or certificate, if protocol might demand certificate
    */
   void clearPassiveCredentials(String realm, SVNURL repositoryUrl, boolean password);
 
@@ -101,27 +100,8 @@ public interface AuthenticationCallback {
    */
   boolean haveDataForTmpConfig();
 
-  /**
-   * writes IDEA config settings (that should be written) into tmp config directory
-   * (now it's IDEA proxy settings)
-   *
-   * @param repositoryUrl
-   * @return true if have written data, false if wasn't able to determine parameters etc
-   * @throws IOException
-   */
-  boolean persistDataToTmpConfig(SVNURL repositoryUrl) throws IOException;
-
   @Nullable
   PasswordAuthentication getProxyAuthentication(@NotNull SVNURL repositoryUrl);
-
-  /**
-   * Ask for IDEA-defined proxy credentials, using standard authenticator
-   * Store data into tmp config
-   *
-   * @param repositoryUrl
-   * @return false if authentication was canceled or related calculations were unsuccessful
-   */
-  boolean askProxyCredentials(SVNURL repositoryUrl);
 
   void reset();
 }

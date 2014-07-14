@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -69,13 +70,10 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
     return getReference(PyResolveContext.noImplicits());
   }
 
+  @NotNull
   @Override
   public PsiPolyVariantReference getReference(PyResolveContext context) {
-    final PyElementType t = getOperator();
-    if (t.getSpecialMethodName() != null) {
-      return new PyOperatorReference(this, context);
-    }
-    return null;
+    return new PyOperatorReference(this, context);
   }
 
   @Override
@@ -84,11 +82,10 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
       return PyBuiltinCache.getInstance(this).getBoolType();
     }
     final PsiReference ref = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
-    if (ref != null) {
-      final PsiElement resolved = ref.resolve();
-      if (resolved instanceof Callable) {
-        return ((Callable)resolved).getReturnType(context, this);
-      }
+    final PsiElement resolved = ref.resolve();
+    if (resolved instanceof Callable) {
+      // TODO: Make PyPrefixExpression a PyCallSiteExpression, use getCallType() here and analyze it in PyTypeChecker.analyzeCallSite()
+      return ((Callable)resolved).getReturnType(context, key);
     }
     return null;
   }
@@ -96,6 +93,17 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
   @Override
   public PyExpression getQualifier() {
     return getOperand();
+  }
+
+  @Nullable
+  @Override
+  public QualifiedName asQualifiedName() {
+    return PyPsiUtils.asQualifiedName(this);
+  }
+
+  @Override
+  public boolean isQualified() {
+    return getQualifier() != null;
   }
 
   @Override

@@ -23,11 +23,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author spleaner
  */
-public class NotificationSettings {
+public final class NotificationSettings {
   private final String myGroupId;
-  private NotificationDisplayType myDisplayType;
-  private boolean myShouldLog;
-  private boolean myShouldReadAloud;
+  private final NotificationDisplayType myDisplayType;
+  private final boolean myShouldLog;
+  private final boolean myShouldReadAloud;
 
   public NotificationSettings(String groupId, NotificationDisplayType displayType, boolean shouldLog, boolean shouldReadAloud) {
     myGroupId = groupId;
@@ -50,18 +50,21 @@ public class NotificationSettings {
     return myShouldLog;
   }
 
-  public void setShouldLog(boolean shouldLog) {
-    myShouldLog = shouldLog;
+  public NotificationSettings withShouldLog(boolean shouldLog) {
+    return new NotificationSettings(myGroupId, myDisplayType, shouldLog, myShouldReadAloud);
   }
 
   public boolean isShouldReadAloud() {
     return myShouldReadAloud;
   }
 
-  public void setShouldReadAloud(boolean shouldReadAloud) {
-    myShouldReadAloud = shouldReadAloud;
+  public NotificationSettings withShouldReadAloud(boolean shouldReadAloud) {
+    return new NotificationSettings(myGroupId, myDisplayType, myShouldLog, shouldReadAloud);
   }
 
+  public NotificationSettings withDisplayType(NotificationDisplayType displayType) {
+    return new NotificationSettings(myGroupId, displayType, myShouldLog, myShouldReadAloud);
+  }
 
   @Nullable
   public static NotificationSettings load(@NotNull final Element element) {
@@ -104,7 +107,27 @@ public class NotificationSettings {
     return result;
   }
 
-  public void setDisplayType(final NotificationDisplayType displayType) {
-    myDisplayType = displayType;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof NotificationSettings)) return false;
+
+    NotificationSettings settings = (NotificationSettings)o;
+
+    if (myShouldLog != settings.myShouldLog) return false;
+    if (myShouldReadAloud != settings.myShouldReadAloud) return false;
+    if (myDisplayType != settings.myDisplayType) return false;
+    if (!myGroupId.equals(settings.myGroupId)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myGroupId.hashCode();
+    result = 31 * result + myDisplayType.hashCode();
+    result = 31 * result + (myShouldLog ? 1 : 0);
+    result = 31 * result + (myShouldReadAloud ? 1 : 0);
+    return result;
   }
 }

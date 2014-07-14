@@ -1,0 +1,364 @@
+datatypes w = "http://whattf.org/datatype-draft"
+
+# #####################################################################
+##  RELAX NG Schema for HTML 5: Global Structure & Metadata          #
+# #####################################################################
+
+## Root Element: <html>
+
+	html.elem =
+		element html { html.inner & html.attrs }
+	html.attrs =
+		(	common.attrs
+		&	(	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
+		)
+	html.inner =
+		(	head.elem
+		,	body.elem
+		)
+
+## Metadata Container: <head>
+
+	head.elem =
+		element head { head.inner & head.attrs }
+	head.attrs =
+		(	common.attrs
+#		&	head.attrs.profile?
+		&	(	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
+		)
+#		head.attrs.profile =
+#			attribute profile {
+#				common.data.uris #REVISIT should these be absolute (zero or more)
+#			}
+	head.inner =
+		(	title.elem
+		&	base.elem? # REVISIT need a non-schema checker or Schematron
+		&	common.inner.metadata # Limit encoding decl position in Schematron
+		)
+#	head.inner =
+#		(	meta.elem.encoding?
+#		,	(	title.elem
+#			&	base.elem? # REVISIT need a non-schema checker or Schematron
+#			&	common.inner.metadata
+#			)
+#		)
+		
+## Content Container: <body>
+
+	body.elem =
+		element body { body.inner & body.attrs }
+	body.attrs =
+		(	common.attrs
+		&	(	common.attrs.aria.landmark.application
+			|	common.attrs.aria.landmark.document
+			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.implicit.document
+			)?
+		&	body.attrs.onafterprint?
+		&	body.attrs.onbeforeprint?
+		&	body.attrs.onbeforeunload?
+		&	body.attrs.onhashchange?
+		&	body.attrs.onmessage?
+		&	body.attrs.onoffline?
+		&	body.attrs.ononline?
+		&	body.attrs.onpagehide?
+		&	body.attrs.onpageshow?
+		&	body.attrs.onpopstate?
+		&	body.attrs.onresize?
+		&	body.attrs.onstorage?
+		&	body.attrs.onunload?
+		)
+	body.inner =
+		( common.inner.flow )
+
+	body.attrs.onafterprint =
+		attribute onafterprint { common.data.functionbody }
+	body.attrs.onbeforeprint =
+		attribute onbeforeprint { common.data.functionbody }
+	body.attrs.onbeforeunload =
+		attribute onbeforeunload { common.data.functionbody }
+	body.attrs.onhashchange =
+		attribute onhashchange { common.data.functionbody }
+	body.attrs.onmessage =
+		attribute onmessage { common.data.functionbody }
+	body.attrs.onoffline =
+		attribute onoffline { common.data.functionbody }
+	body.attrs.ononline =
+		attribute ononline { common.data.functionbody }
+	body.attrs.onpopstate =
+		attribute onpopstate { common.data.functionbody }
+	body.attrs.onpagehide =
+		attribute onpagehide { common.data.functionbody }
+	body.attrs.onpageshow =
+		attribute onpageshow { common.data.functionbody }
+	body.attrs.onredo =
+		attribute onredo { common.data.functionbody }
+	body.attrs.onresize =
+		attribute onresize { common.data.functionbody }
+	body.attrs.onstorage =
+		attribute onstorage { common.data.functionbody }
+	body.attrs.onundo =
+		attribute onundo { common.data.functionbody }
+	body.attrs.onunload =
+		attribute onunload { common.data.functionbody }
+
+## Document Title: <title>
+
+	title.elem =
+		element title { title.inner & title.attrs }
+	title.attrs =
+		(	common.attrs
+		&	(	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
+		)
+	title.inner =
+		( text )
+
+## Base URI: <base>
+
+	base.elem =
+		element base { base.inner & base.attrs }
+	base.attrs =
+		(	common.attrs.basic
+		&	common.attrs.i18n
+		&	common.attrs.present
+		&	common.attrs.other
+		&	(	(	base.attrs.href
+				&	base.attrs.target?
+				)
+			|	base.attrs.target
+			)
+		&	(	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
+		)
+	base.attrs.href =
+		attribute href {
+			common.data.uri
+		}
+	base.attrs.target =
+		attribute target {
+			common.data.browsing-context-or-keyword
+		}
+	base.inner =
+		( empty )
+
+## Global Relationships: <link>
+
+	link.elem =
+		element link { link.inner & link.attrs }
+	link.attrs =
+		(	common.attrs.basic
+		&	common.attrs.i18n
+		&	common.attrs.present
+		&	common.attrs.other
+		&	link.attrs.href
+		&	link.attrs.rel
+		&	shared-hyperlink.attrs.hreflang?
+		&	shared-hyperlink.attrs.media?
+		&	shared-hyperlink.attrs.type?
+		&	link.attrs.sizes?
+		#	link.attrs.title included in common.attrs
+		&	(	common.attrs.aria.role.link
+			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
+		)
+		link.attrs.href =
+			attribute href {
+				common.data.uri.non-empty
+			}
+		link.attrs.rel =
+			attribute rel {
+				w:link-rel
+			}
+		link.attrs.sizes =
+			attribute sizes {
+				w:string "any" | common.data.sizes
+			}
+	link.inner =
+		( empty )
+		
+	common.elem.metadata |= link.elem
+
+## Global Style: <style>
+
+	style.elem =
+		element style { style.inner & style.attrs }
+	style.attrs =
+		(	common.attrs
+		&	style.attrs.type?
+		&	style.attrs.media?
+		#	style.attrs.title included in common.attrs
+		&	(	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
+		)
+		style.attrs.type =
+			attribute type {
+				common.data.mimetype
+			}
+		style.attrs.media =
+			attribute media {
+				common.data.mediaquery
+			}
+	style.inner =
+		( common.inner.anything )
+		
+	common.elem.metadata |= style.elem
+
+## Scoped Style: <style scoped>
+
+	style.elem.scoped =
+		element style { style.inner & style.scoped.attrs }
+	style.scoped.attrs =
+		(	common.attrs
+		&	style.attrs.type?
+		&	style.attrs.media?
+		&	style.attrs.scoped
+		#	style.attrs.title included in common.attrs
+		&	(	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
+		)
+		style.attrs.scoped =
+			attribute scoped {
+				w:string "scoped" | w:string ""
+			}
+
+## Name-Value Metadata: <meta name>
+
+	meta.name.elem =
+		element meta { meta.inner & meta.name.attrs }
+	meta.name.attrs =
+		(	common.attrs.basic
+		&	common.attrs.i18n
+		&	common.attrs.present
+		&	common.attrs.other
+		&	meta.name.attrs.name
+		&	meta.name.attrs.content
+		&	(	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
+		)
+		meta.name.attrs.name =
+			attribute name {
+				w:meta-name
+			}
+		meta.name.attrs.content =
+			attribute content {
+				string
+			}
+	meta.inner =
+		( empty )
+		
+	common.elem.metadata |= meta.name.elem
+
+## "refresh" pragma directive: <meta http-equiv='refresh'>
+
+	meta.http-equiv.refresh.elem =
+		element meta { meta.inner & meta.http-equiv.refresh.attrs }
+	meta.http-equiv.refresh.attrs =
+		(	common.attrs.basic
+		&	common.attrs.i18n
+		&	common.attrs.present
+		&	common.attrs.other
+		&	meta.http-equiv.attrs.http-equiv.refresh
+		&	meta.http-equiv.attrs.content.refresh
+		&	(	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
+		)
+		meta.http-equiv.attrs.http-equiv.refresh =
+			attribute http-equiv {
+				w:string "refresh"
+			}
+		meta.http-equiv.attrs.content.refresh =
+			attribute content { 
+				common.data.refresh
+			}
+	common.elem.metadata |= meta.http-equiv.refresh.elem # not quite right per spec
+                                                       # if the definition is 
+                                                       # reused in another language
+
+## "default-style" pragma directive: <meta http-equiv='default-style'>
+
+	meta.http-equiv.default-style.elem =
+		element meta { meta.inner & meta.http-equiv.default-style.attrs }
+	meta.http-equiv.default-style.attrs =
+		(	common.attrs.basic
+		&	common.attrs.i18n
+		&	common.attrs.present
+		&	common.attrs.other
+		&	meta.http-equiv.attrs.http-equiv.default-style
+		&	meta.http-equiv.attrs.content.default-style
+		&	(	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
+		)
+		meta.http-equiv.attrs.http-equiv.default-style =
+			attribute http-equiv {
+				w:string "default-style"
+			}
+		meta.http-equiv.attrs.content.default-style =
+			attribute content {
+				common.data.default-style
+			}
+		
+	common.elem.metadata |= meta.http-equiv.default-style.elem # not quite right per spec
+                                                               # if the definition is 
+                                                               # reused in another language
+
+## Inline Character Encoding Statement for HTML: <meta charset>
+
+	meta.charset.elem =
+		element meta { meta.inner & meta.charset.attrs }
+	meta.charset.attrs =
+		(	common.attrs.basic
+		&	common.attrs.i18n
+		&	common.attrs.present
+		&	common.attrs.other
+		&	meta.charset.attrs.charset
+		&	(	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
+		)
+		meta.charset.attrs.charset =
+			attribute charset {
+				(common.data.charset & HTMLonly)
+				| (xsd:string {
+					pattern = "[uU][tT][fF]-8"
+				} & XMLonly )
+			} 
+
+## Inline Character Encoding Statement for HTML: <meta http-equiv='content-type'>
+
+	meta.http-equiv.content-type.elem =
+		element meta { meta.inner & meta.http-equiv.content-type.attrs }
+		& HTMLonly
+	meta.http-equiv.content-type.attrs =
+		(	common.attrs.basic
+		&	common.attrs.i18n
+		&	common.attrs.present
+		&	common.attrs.other
+		&	meta.http-equiv.attrs.http-equiv.content-type
+		&	meta.http-equiv.attrs.content.content-type
+		&	(	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
+		)
+		meta.http-equiv.attrs.http-equiv.content-type =
+			attribute http-equiv {
+				w:string "content-type"
+			}
+		meta.http-equiv.attrs.content.content-type =
+			attribute content {
+				common.data.meta-charset
+			}
+
+	common.elem.metadata |= ( meta.charset.elem | meta.http-equiv.content-type.elem )

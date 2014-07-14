@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
@@ -34,10 +34,9 @@ import org.jetbrains.annotations.NotNull;
 public abstract class CodeInsightAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    Project project = e.getProject();
     if (project != null) {
-      Editor editor = getEditor(dataContext, project);
+      Editor editor = getEditor(e.getDataContext(), project);
       actionPerformedImpl(project, editor);
     }
   }
@@ -74,17 +73,16 @@ public abstract class CodeInsightAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent event) {
-    Presentation presentation = event.getPresentation();
-    DataContext dataContext = event.getDataContext();
+  public void update(AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
 
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    Project project = e.getProject();
     if (project == null) {
       presentation.setEnabled(false);
       return;
     }
 
-    Editor editor = getEditor(dataContext, project);
+    Editor editor = getEditor(e.getDataContext(), project);
     if (editor == null) {
       presentation.setEnabled(false);
       return;

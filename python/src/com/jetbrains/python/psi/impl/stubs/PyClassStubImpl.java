@@ -21,6 +21,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyClass;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.stubs.PyClassStub;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -30,14 +31,16 @@ import java.util.List;
 public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
   private final String myName;
   private final QualifiedName[] mySuperClasses;
+  @Nullable private final QualifiedName myMetaClass;
   private final List<String> mySlots;
   private final String myDocString;
 
-  public PyClassStubImpl(final String name, StubElement parentStub, final QualifiedName[] superClasses, final List<String> slots,
-                         String docString, IStubElementType stubElementType) {
+  public PyClassStubImpl(final String name, StubElement parentStub, final QualifiedName[] superClasses, @Nullable QualifiedName metaClass,
+                         final List<String> slots, String docString, IStubElementType stubElementType) {
     super(parentStub, stubElementType);
     myName = name;
     mySuperClasses = superClasses;
+    myMetaClass = metaClass;
     mySlots = slots;
     myDocString = docString;
   }
@@ -48,6 +51,12 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
 
   public QualifiedName[] getSuperClasses() {
     return mySuperClasses;
+  }
+
+  @Nullable
+  @Override
+  public QualifiedName getMetaClass() {
+    return myMetaClass;
   }
 
   @Override

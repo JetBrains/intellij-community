@@ -35,6 +35,8 @@ import java.util.*;
  * @author nik
  */
 public class AnalyzeDependenciesOnSpecifiedTargetHandler extends DependenciesHandlerBase {
+  private static final NotificationGroup NOTIFICATION_GROUP =
+    NotificationGroup.toolWindowGroup("Dependencies", ToolWindowId.DEPENDENCIES, true);
   private final GlobalSearchScope myTargetScope;
 
   public AnalyzeDependenciesOnSpecifiedTargetHandler(@NotNull Project project, @NotNull AnalysisScope scope, @NotNull GlobalSearchScope targetScope) {
@@ -64,7 +66,7 @@ public class AnalyzeDependenciesOnSpecifiedTargetHandler extends DependenciesHan
     final String source = StringUtil.decapitalize(builders.get(0).getScope().getDisplayName());
     final String target = StringUtil.decapitalize(myTargetScope.getDisplayName());
     final String message = AnalysisScopeBundle.message("no.dependencies.found.message", source, target);
-    NotificationGroup.toolWindowGroup("Dependencies", ToolWindowId.DEPENDENCIES, true).createNotification(message, MessageType.INFO).notify(myProject);
+    NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(myProject);
     return false;
   }
 
@@ -75,8 +77,9 @@ public class AnalyzeDependenciesOnSpecifiedTargetHandler extends DependenciesHan
       public void analyze() {
         super.analyze();
         final Map<PsiFile,Set<PsiFile>> dependencies = getDependencies();
-        for (PsiFile file : dependencies.keySet()) {
-          final Set<PsiFile> files = dependencies.get(file);
+        for (Iterator<PsiFile> leftTreeIterator = dependencies.keySet().iterator(); leftTreeIterator.hasNext(); ) {
+          final PsiFile leftTreeFile = leftTreeIterator.next();
+          final Set<PsiFile> files = dependencies.get(leftTreeFile);
           final Iterator<PsiFile> iterator = files.iterator();
           while (iterator.hasNext()) {
             PsiFile next = iterator.next();
@@ -84,6 +87,9 @@ public class AnalyzeDependenciesOnSpecifiedTargetHandler extends DependenciesHan
             if (virtualFile == null || !myTargetScope.contains(virtualFile)) {
               iterator.remove();
             }
+          }
+          if (files.isEmpty()) {
+            leftTreeIterator.remove();
           }
         }
       }

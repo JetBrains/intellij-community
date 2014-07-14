@@ -64,11 +64,11 @@ public class ExternalSystemProjectResolverWrapper<S extends ExternalSystemExecut
   }
 
   @Override
-  public void cancelTask(@NotNull ExternalSystemTaskId id)
+  public boolean cancelTask(@NotNull ExternalSystemTaskId id)
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException, RemoteException {
     myProgressManager.onQueued(id);
     try {
-      getDelegate().cancelTask(id);
+      return getDelegate().cancelTask(id);
     }
     finally {
       myProgressManager.onEnd(id);

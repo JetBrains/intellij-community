@@ -24,7 +24,7 @@ import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PagePool;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 
@@ -39,7 +39,7 @@ import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 public class RefCountingStorage extends AbstractStorage {
-  private final Map<Integer, Future<?>> myPendingWriteRequests = new ConcurrentHashMap<Integer, Future<?>>();
+  private final Map<Integer, Future<?>> myPendingWriteRequests = ContainerUtil.newConcurrentMap();
   private int myPendingWriteRequestsSize;
   private final ThreadPoolExecutor myPendingWriteRequestsExecutor = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<Runnable>(), ConcurrencyUtil.newNamedThreadFactory("RefCountingStorage write content helper"));
 
@@ -69,19 +69,20 @@ public class RefCountingStorage extends AbstractStorage {
 
   private BufferExposingByteArrayOutputStream internalReadStream(int record) throws IOException {
     waitForPendingWriteForRecord(record);
+    byte[] result;
 
     synchronized (myLock) {
+      result = super.readBytes(record);
+    }
 
-      byte[] result = super.readBytes(record);
-      InflaterInputStream in = new CustomInflaterInputStream(result);
-      try {
-        final BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
-        StreamUtil.copyStreamContent(in, outputStream);
-        return outputStream;
-      }
-      finally {
-        in.close();
-      }
+    InflaterInputStream in = new CustomInflaterInputStream(result);
+    try {
+      final BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
+      StreamUtil.copyStreamContent(in, outputStream);
+      return outputStream;
+    }
+    finally {
+      in.close();
     }
   }
 

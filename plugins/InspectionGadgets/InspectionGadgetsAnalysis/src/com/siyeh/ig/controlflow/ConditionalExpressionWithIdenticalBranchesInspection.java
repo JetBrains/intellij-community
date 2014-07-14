@@ -19,11 +19,11 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiExpression;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,7 +66,7 @@ public class ConditionalExpressionWithIdenticalBranchesInspection extends BaseIn
       final PsiExpression thenExpression = expression.getThenExpression();
       assert thenExpression != null;
       final String bodyText = thenExpression.getText();
-      replaceExpression(expression, bodyText);
+      PsiReplacementUtil.replaceExpression(expression, bodyText);
     }
   }
 

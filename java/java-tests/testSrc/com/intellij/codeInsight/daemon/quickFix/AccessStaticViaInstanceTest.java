@@ -15,13 +15,21 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
+import org.jetbrains.annotations.NotNull;
 
-public class AccessStaticViaInstanceTest extends LightQuickFixTestCase {
+public class AccessStaticViaInstanceTest extends LightQuickFixParameterizedTestCase {
+  @NotNull
+  @Override
+  protected LocalInspectionTool[] configureLocalInspectionTools() {
+    return new LocalInspectionTool[] {new AccessStaticViaInstance()};
+  }
+
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/accessStaticViaInstance";
   }
 
-  public void test() throws Exception { enableInspectionTool(new AccessStaticViaInstance()); doAllTests(); }
+  public void test() throws Exception {  doAllTests(); }
 }

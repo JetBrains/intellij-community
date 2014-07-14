@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.ChangedMethodCallInfo;
-import com.intellij.refactoring.introduceParameter.ExpressionConverter;
+import com.intellij.psi.impl.ExpressionConverter;
 import com.intellij.refactoring.introduceParameter.ExternalUsageInfo;
 import com.intellij.refactoring.introduceParameter.InternalUsageInfo;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
@@ -47,9 +47,8 @@ import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
@@ -71,7 +70,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureU
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy.FieldConflictsResolver;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy.OldReferencesResolver;
@@ -88,13 +86,13 @@ import java.util.List;
 public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(GrIntroduceClosureParameterProcessor.class);
 
-  private GrIntroduceParameterSettings mySettings;
-  private GrClosableBlock toReplaceIn;
-  private PsiElement toSearchFor;
-  private GrExpressionWrapper myParameterInitializer;
-  private GroovyPsiElementFactory myFactory = GroovyPsiElementFactory.getInstance(myProject);
+  private final GrIntroduceParameterSettings mySettings;
+  private final GrClosableBlock toReplaceIn;
+  private final PsiElement toSearchFor;
+  private final GrExpressionWrapper myParameterInitializer;
+  private final GroovyPsiElementFactory myFactory = GroovyPsiElementFactory.getInstance(myProject);
 
-  public GrIntroduceClosureParameterProcessor(GrIntroduceParameterSettings settings) {
+  public GrIntroduceClosureParameterProcessor(@NotNull GrIntroduceParameterSettings settings) {
     super(settings.getProject(), null);
     mySettings = settings;
 
@@ -103,11 +101,12 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
     final StringPartInfo info = settings.getStringPartInfo();
     final GrExpression expression = info != null ?
-                                    GrIntroduceHandlerBase.generateExpressionFromStringPart(info, settings.getProject()) :
+                                    info.createLiteralFromSelected() :
                                     mySettings.getExpression();
     myParameterInitializer = new GrExpressionWrapper(expression);
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo[] usages) {
     return new UsageViewDescriptorAdapter() {
@@ -178,7 +177,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     if (!mySettings.generateDelegate() && toSearchFor != null) {
       Collection<PsiReference> refs;
       if (toSearchFor instanceof GrField) {
-        refs = ReferencesSearch.search(toSearchFor, toSearchFor.getResolveScope()).findAll();
+        refs = ReferencesSearch.search(toSearchFor).findAll();
         final GrAccessorMethod[] getters = ((GrField)toSearchFor).getGetters();
         for (GrAccessorMethod getter : getters) {
           refs.addAll(MethodReferencesSearch.search(getter, getter.getResolveScope(), true).findAll());
@@ -188,7 +187,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
         refs = findUsagesForLocal(toReplaceIn, ((GrVariable)toSearchFor));
       }
       else {
-        refs = ReferencesSearch.search(toSearchFor, toSearchFor.getResolveScope()).findAll();
+        refs = ReferencesSearch.search(toSearchFor).findAll();
       }
 
       for (PsiReference ref1 : refs) {
@@ -316,7 +315,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
     final StringPartInfo info = settings.getStringPartInfo();
     if (info != null) {
-      final GrExpression expr = GrIntroduceHandlerBase.processLiteral(settings.getName(), info, settings.getProject());
+      final GrExpression expr = info.replaceLiteralWithConcatenation(settings.getName());
       final Editor editor = PsiUtilBase.findEditor(expr);
       if (editor != null) {
         editor.getSelectionModel().removeSelection();
@@ -339,6 +338,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
     final GrParameter[] parameters = block.getParameters();
     settings.parametersToRemove().forEachDescending(new TIntProcedure() {
+      @Override
       public boolean execute(final int paramNum) {
         try {
           PsiParameter param = parameters[paramNum];
@@ -364,7 +364,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     if (block.getArrow() == null) {
       final PsiElement arrow = block.addAfter(factory.createClosureFromText("{->}").getArrow().copy(), parameterList);
       final PsiElement child = block.getFirstChild().getNextSibling();
-      if (TokenSets.WHITE_SPACES_SET.contains(child.getNode().getElementType())) {
+      if (PsiImplUtil.isWhiteSpaceOrNls(child)) {
         final String text = child.getText();
         child.delete();
         block.addAfter(factory.createLineTerminator(text), arrow);
@@ -426,7 +426,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
       argList.addAfter(factory.createExpressionFromText(settings.getName()), anchor);
     }
     else {
-      PsiElement initializer = ExpressionConverter.getExpression(expression, GroovyFileType.GROOVY_LANGUAGE, settings.getProject());
+      PsiElement initializer = ExpressionConverter.getExpression(expression, GroovyLanguage.INSTANCE, settings.getProject());
       LOG.assertTrue(initializer instanceof GrExpression);
 
       GrExpression newArg = GroovyIntroduceParameterUtil.addClosureToCall(initializer, argList);

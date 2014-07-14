@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.execution.Executor;
@@ -18,17 +33,18 @@ import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerSettings;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.jar.Attributes;
 import java.util.regex.Pattern;
 
@@ -40,31 +56,17 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.debugger.GroovyHotSwapper");
   private static final String GROOVY_HOTSWAP_AGENT_PATH = "groovy.hotswap.agent.path";
 
-  private static final Pattern SPRING_LOADED_PATTERN = Pattern.compile("-javaagent:.+springloaded-core-[^/\\\\]+\\.jar");
+  private static final Pattern SPRING_LOADED_PATTERN = Pattern.compile("-javaagent:.+springloaded-[^/\\\\]+\\.jar");
   
-  private static boolean endsWithAny(String s, List<String> endings) {
-    for (String extension : endings) {
-      if (s.endsWith(extension)) {
-        return true;
+  private static boolean containsGroovyClasses(final Project project) {
+    return CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Boolean>() {
+      @Nullable
+      @Override
+      public Result<Boolean> compute() {
+        return Result.create(FileTypeIndex.containsFileOfType(GroovyFileType.GROOVY_FILE_TYPE, GlobalSearchScope.projectScope(project)), 
+                             PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       }
-    }
-    return false;
-  }
-
-  private static boolean containsGroovyClasses(Project project) {
-    final List<String> extensions = new ArrayList<String>();
-    for (String extension : GroovyFileTypeLoader.getAllGroovyExtensions()) {
-      extensions.add("." + extension);
-    }
-    final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
-    for (String fileName : FilenameIndex.getAllFilenames(project)) {
-      if (endsWithAny(fileName, extensions)) {
-        if (!FilenameIndex.getVirtualFilesByName(project, fileName, scope).isEmpty()) {
-          return true;
-        }
-      }
-    }
-    return false;
+    });
   }
 
   private static boolean hasSpringLoadedReloader(JavaParameters javaParameters) {
@@ -77,6 +79,7 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
     return false;
   }
   
+  @Override
   public void patchJavaParameters(Executor executor, RunProfile configuration, JavaParameters javaParameters) {
     if (!executor.getId().equals(DefaultDebugExecutor.EXECUTOR_ID)) {
       return;

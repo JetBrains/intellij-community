@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     myAnActionListener = new MyAnActionListener();
     actionManagerEx.addAnActionListener(myAnActionListener);
 
-    myCaretMoveListener = new CaretListener() {
+    myCaretMoveListener = new CaretAdapter() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         hideHints(HIDE_BY_ANY_KEY, false, false);
@@ -131,6 +131,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     myEditorFocusListener = new FocusAdapter() {
       @Override
       public void focusLost(final FocusEvent e) {
+        //if (UIUtil.isFocusProxy(e.getOppositeComponent())) return;
         myHideAlarm.addRequest(new Runnable() {
           @Override
           public void run() {
@@ -332,10 +333,9 @@ public class HintManagerImpl extends HintManager implements Disposable {
       });
     }
 
-    final HintInfo info = new HintInfo(hint, flags, reviveOnEditorChange);
-    myHintsStack.add(info);
+    myHintsStack.add(new HintInfo(hint, flags, reviveOnEditorChange));
     if (timeout > 0) {
-      Timer timer = UIUtil.createNamedTimer("Hint timeout",timeout, new ActionListener() {
+      Timer timer = UIUtil.createNamedTimer("Hint timeout", timeout, new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent event) {
           hint.hide();
@@ -588,6 +588,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
                                        @NotNull LogicalPosition pos2,
                                        @PositionFlags short constraint,
                                        boolean showByBalloon) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return new Point();
     Point p = _getHintPosition(hint, editor, pos1, pos2, constraint, showByBalloon);
     JLayeredPane layeredPane = editor.getComponent().getRootPane().getLayeredPane();
     Dimension hintSize = hint.getComponent().getPreferredSize();

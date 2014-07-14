@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,12 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,7 +42,7 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
-  public void runWhenSmart(Runnable runnable) {
+  public void runWhenSmart(@NotNull Runnable runnable) {
     runnable.run();
   }
 
@@ -47,17 +51,34 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
+  public void queueTask(@NotNull DumbModeTask task) {
+    task.performInDumbMode(new EmptyProgressIndicator());
+    Disposer.dispose(task);
+  }
+
+  @Override
+  public void cancelTask(@NotNull DumbModeTask task) { }
+
+  @Override
   public JComponent wrapGently(@NotNull JComponent dumbUnawareContent, @NotNull Disposable parentDisposable) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void showDumbModeNotification(String message) {
+  public void showDumbModeNotification(@NotNull String message) {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public Project getProject() {
     return myProject;
+  }
+
+  public void smartInvokeLater(@NotNull final Runnable runnable) {
+    runnable.run();
+  }
+
+  public void smartInvokeLater(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
+    runnable.run();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,64 +15,17 @@
  */
 package com.intellij.execution.runners;
 
-import com.intellij.execution.process.BaseOSProcessHandler;
+import com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler;
 import com.intellij.execution.process.ProcessHandler;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.Charset;
-
+@SuppressWarnings({"ClassNameSameAsAncestorName", "UnusedDeclaration"})
+@Deprecated
 /**
- * @author traff
+ * @deprecated Use {@link ProcessBackedConsoleExecuteActionHandler}
+ * to remove in IDEA 15
  */
-public class ConsoleExecuteActionHandler extends BaseConsoleExecuteActionHandler {
-  private ProcessHandler myProcessHandler;
-
+public class ConsoleExecuteActionHandler extends ProcessBackedConsoleExecuteActionHandler {
   public ConsoleExecuteActionHandler(ProcessHandler processHandler, boolean preserveMarkup) {
-    super(preserveMarkup);
-
-    myProcessHandler = processHandler;
-  }
-
-  @Nullable
-  private synchronized ProcessHandler getProcessHandler() {
-    return myProcessHandler;
-  }
-
-  public synchronized void setProcessHandler(@NotNull final ProcessHandler processHandler) {
-    myProcessHandler = processHandler;
-  }
-
-  @Override
-  protected void execute(@NotNull String text) {
-    processLine(text);
-  }
-
-  public void processLine(String line) {
-    sendText(line + "\n");
-  }
-
-  public void sendText(String line) {
-    final Charset charset = myProcessHandler instanceof BaseOSProcessHandler ?
-                            ((BaseOSProcessHandler)myProcessHandler).getCharset() : null;
-    final ProcessHandler handler = getProcessHandler();
-    assert handler != null : "process handler is null";
-    final OutputStream outputStream = handler.getProcessInput();
-    assert outputStream != null : "output stream is null";
-    try {
-      byte[] bytes = charset != null ? (line + "\n").getBytes(charset) : line.getBytes();
-      outputStream.write(bytes);
-      outputStream.flush();
-    }
-    catch (IOException e) {
-      // ignore
-    }
-  }
-
-  public final boolean isProcessTerminated() {
-    final ProcessHandler handler = getProcessHandler();
-    return handler == null || handler.isProcessTerminated();
+    super(processHandler, preserveMarkup);
   }
 }

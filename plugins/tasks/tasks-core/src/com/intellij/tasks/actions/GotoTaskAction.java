@@ -2,19 +2,16 @@ package com.intellij.tasks.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.ide.actions.GotoActionBase;
-import com.intellij.ide.util.gotoByName.ChooseByNameBase;
-import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
-import com.intellij.ide.util.gotoByName.SimpleChooseByNameModel;
+import com.intellij.ide.util.gotoByName.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiManager;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
@@ -23,13 +20,11 @@ import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
-import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.util.List;
 
 /**
  * @author Evgeny Zakrevsky
@@ -37,6 +32,8 @@ import java.util.List;
 public class GotoTaskAction extends GotoActionBase implements DumbAware {
   public static final CreateNewTaskAction CREATE_NEW_TASK_ACTION = new CreateNewTaskAction();
   public static final String ID = "tasks.goto";
+  private static final Logger LOG = Logger.getInstance(GotoTaskAction.class);
+  public static final int PAGE_SIZE = 20;
 
   public GotoTaskAction() {
     getTemplatePresentation().setText("Open Task...");
@@ -53,38 +50,12 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
   void perform(final Project project) {
     final Ref<Boolean> shiftPressed = Ref.create(false);
 
-    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoTaskPopupModel(project), new ChooseByNameItemProvider() {
-      @NotNull
-      @Override
-      public List<String> filterNames(@NotNull ChooseByNameBase base, @NotNull String[] names, @NotNull String pattern) {
-        return ContainerUtil.emptyList();
-      }
-
-      @Override
-      public boolean filterElements(@NotNull ChooseByNameBase base,
-                                    @NotNull String pattern,
-                                    boolean everywhere,
-                                    @NotNull ProgressIndicator cancelled,
-                                    @NotNull Processor<Object> consumer) {
-
-        CREATE_NEW_TASK_ACTION.setTaskName(pattern);
-        if (!consumer.process(CREATE_NEW_TASK_ACTION)) return false;
-
-        List<Task> cachedAndLocalTasks = TaskSearchSupport.getLocalAndCachedTasks(TaskManager.getManager(project), pattern, everywhere);
-        boolean cachedTasksFound = !cachedAndLocalTasks.isEmpty();
-        if (!processTasks(cachedAndLocalTasks, consumer, cachedTasksFound, cancelled, PsiManager.getInstance(project))) return false;
-
-        List<Task> tasks = TaskSearchSupport
-          .getRepositoriesTasks(TaskManager.getManager(project), pattern, base.getMaximumListSizeLimit(), 0, true, everywhere, cancelled);
-        tasks.removeAll(cachedAndLocalTasks);
-
-        return processTasks(tasks, consumer, cachedTasksFound, cancelled, PsiManager.getInstance(project));
-      }
-    }, null, false, 0);
+    final ChooseByNamePopup popup = createPopup(project, new GotoTaskPopupModel(project), new TaskItemProvider(project));
 
     popup.setShowListForEmptyPattern(true);
     popup.setSearchInAnyPlace(true);
     popup.setFixLostTyping(false);
+    popup.setAlwaysHasMore(true);
     popup.setAdText("<html>Press SHIFT to merge with current context<br/>" +
                     "Pressing " +
                     KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC)) +
@@ -112,8 +83,8 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
     actionToolbar.getComponent().setFocusable(false);
     actionToolbar.getComponent().setBorder(null);
     popup.setToolArea(actionToolbar.getComponent());
-    popup.setMaximumListSizeLimit(10);
-    popup.setListSizeIncreasing(10);
+    popup.setMaximumListSizeLimit(PAGE_SIZE);
+    popup.setListSizeIncreasing(PAGE_SIZE);
 
     showNavigationPopup(new GotoActionCallback<Object>() {
       @Override
@@ -135,20 +106,6 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
         }
       }
     }, null, popup);
-  }
-
-  private static boolean processTasks(List<Task> tasks,
-                                      Processor<Object> consumer,
-                                      boolean cachedTasksFound,
-                                      ProgressIndicator cancelled,
-                                      PsiManager psiManager) {
-    if (!cachedTasksFound && !tasks.isEmpty() && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
-
-    for (Task task : tasks) {
-      cancelled.checkCanceled();
-      if (!consumer.process(new TaskPsiElement(psiManager, task))) return false;
-    }
-    return true;
   }
 
   private static void showOpenTaskDialog(final Project project, final Task task) {
@@ -211,6 +168,43 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
     public boolean loadInitialCheckBoxState() {
       return ((TaskManagerImpl)TaskManager.getManager(getProject())).getState().searchClosedTasks;
     }
+  }
+
+  /**
+   * {@link ChooseByNameBase} and {@link ChooseByNamePopup} are not disposable (why?). So to correctly dispose alarm used in
+   * {@link TaskItemProvider} and don't touch existing UI classes We have to extend popup and override {@link ChooseByNamePopup#close(boolean)}.
+   */
+  private static class MyChooseByNamePopup extends ChooseByNamePopup {
+    private MyChooseByNamePopup(@Nullable Project project,
+                                @NotNull ChooseByNameModel model,
+                                @NotNull ChooseByNameItemProvider provider,
+                                @Nullable ChooseByNamePopup oldPopup,
+                                @Nullable String predefinedText,
+                                boolean mayRequestOpenInCurrentWindow, int initialIndex) {
+      super(project, model, provider, oldPopup, predefinedText, mayRequestOpenInCurrentWindow, initialIndex);
+    }
+
+    @Override
+    public void close(boolean isOk) {
+      super.close(isOk);
+      Disposer.dispose((TaskItemProvider)myProvider);
+    }
+  }
+
+  /**
+   * Mostly copied from {@link ChooseByNamePopup#createPopup(Project, ChooseByNameModel, ChooseByNameItemProvider, String, boolean, int)}.
+   */
+  private static MyChooseByNamePopup createPopup(Project project, ChooseByNameModel model, ChooseByNameItemProvider provider) {
+    final ChooseByNamePopup oldPopup = project == null ? null : project.getUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY);
+    if (oldPopup != null) {
+      oldPopup.close(false);
+    }
+    MyChooseByNamePopup newPopup = new MyChooseByNamePopup(project, model, provider, oldPopup, null, false, 0);
+
+    if (project != null) {
+      project.putUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, newPopup);
+    }
+    return newPopup;
   }
 
   public static class CreateNewTaskAction {

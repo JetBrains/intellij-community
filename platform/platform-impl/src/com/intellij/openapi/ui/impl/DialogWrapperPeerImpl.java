@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.mac.foundation.Foundation;
@@ -77,7 +78,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
   private final ActionCallback myTypeAheadDone = new ActionCallback("DialogTypeAheadDone");
   private ActionCallback myTypeAheadCallback;
 
-  protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent, DialogWrapper.IdeModalityType ideModalityType) {
+  protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent, @NotNull DialogWrapper.IdeModalityType ideModalityType) {
     myWrapper = wrapper;
     myTypeAheadCallback = myWrapper.isTypeAheadEnabled() ? new ActionCallback() : null;
     myWindowManager = null;
@@ -236,7 +237,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     myDialog.addKeyListener(listener);
   }
 
-  private void createDialog(@Nullable Window owner, boolean canBeParent, DialogWrapper.IdeModalityType ideModalityType) {
+  private void createDialog(@Nullable Window owner, boolean canBeParent, @NotNull DialogWrapper.IdeModalityType ideModalityType) {
     if (isHeadless()) {
       myDialog = new HeadlessDialog();
       return;
@@ -406,13 +407,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     myDialog.setResizable(resizable);
   }
 
+  @NotNull
   @Override
   public Point getLocation() {
     return myDialog.getLocation();
   }
 
   @Override
-  public void setLocation(Point p) {
+  public void setLocation(@NotNull Point p) {
     myDialog.setLocation(p);
   }
 
@@ -743,6 +745,16 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
         @Override
         public void windowOpened(WindowEvent e) {
+          if (!isModal()) {
+            DialogWrapper wrapper = getDialogWrapper();
+            if (wrapper != null) {
+              JComponent component = wrapper.getPreferredFocusedComponent();
+              if (component != null) {
+                // request focus for non-modal dialog (i.e. TipDialog)
+                IdeFocusManager.findInstance().requestFocus(component, true);
+              }
+            }
+          }
           if (!SystemInfo.isMacOSLion) return;
           Window window = e.getWindow();
           if (window instanceof Dialog) {
@@ -788,7 +800,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
     @Nullable
     private Project getProject() {
-      return myProject != null ? myProject.get() : null;
+      return SoftReference.dereference(myProject);
     }
 
     @Override

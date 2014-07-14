@@ -37,11 +37,12 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   @NotNull private final List<ClassHolder<? extends GradleProjectResolverExtension>> myResolverExtensions = ContainerUtilRt.newArrayList();
   @Nullable private final String myGradleHome;
+
   @Nullable private final String myServiceDirectory;
-
   @Nullable private final String myDaemonVmOptions;
+  private final boolean myIsOfflineWork;
 
-  @NotNull final DistributionType myDistributionType;
+  @NotNull private final DistributionType myDistributionType;
   @Nullable private String wrapperPropertyFile;
 
   @Nullable private String myJavaHome;
@@ -49,12 +50,14 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   public GradleExecutionSettings(@Nullable String gradleHome,
                                  @Nullable String serviceDirectory,
                                  @NotNull DistributionType distributionType,
-                                 @Nullable String daemonVmOptions)
+                                 @Nullable String daemonVmOptions,
+                                 boolean isOfflineWork)
   {
     myGradleHome = gradleHome;
     myServiceDirectory = serviceDirectory;
     myDistributionType = distributionType;
     myDaemonVmOptions = daemonVmOptions;
+    myIsOfflineWork = isOfflineWork;
     setVerboseProcessing(USE_VERBOSE_GRADLE_API_BY_DEFAULT);
   }
 
@@ -75,6 +78,10 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   public void setJavaHome(@Nullable String javaHome) {
     myJavaHome = javaHome;
+  }
+
+  public boolean isOfflineWork() {
+    return myIsOfflineWork;
   }
 
   @NotNull

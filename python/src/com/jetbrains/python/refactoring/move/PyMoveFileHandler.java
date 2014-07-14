@@ -109,7 +109,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
           }
           else if (element instanceof PyReferenceExpression) {
             updatedFiles.add(file);
-            if (((PyReferenceExpression)element).getQualifier() != null) {
+            if (((PyReferenceExpression)element).isQualified()) {
               final QualifiedName newQualifiedName = QualifiedNameFinder.findCanonicalImportPath(newElement, element);
               replaceWithQualifiedExpression(element, newQualifiedName);
             } else {

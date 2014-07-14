@@ -275,16 +275,26 @@ public class ManagePackagesDialog extends DialogWrapper {
   }
 
   private void updateInstalledPackages() {
-    try {
-      Collection<InstalledPackage> installedPackages = myController.getInstalledPackages();
-      myInstalledPackages.clear();
-      for (InstalledPackage pkg : installedPackages) {
-        myInstalledPackages.add(pkg.getName());
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          final Collection<InstalledPackage> installedPackages = myController.getInstalledPackages();
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              myInstalledPackages.clear();
+              for (InstalledPackage pkg : installedPackages) {
+                myInstalledPackages.add(pkg.getName());
+              }
+            }
+          });
+        }
+        catch(IOException e) {
+          LOG.info("Error updating list of installed packages:" + e);
+        }
       }
-    }
-    catch(IOException e) {
-      LOG.info("Error updating list of installed packages:" + e);
-    }
+    });
   }
 
   public void initModel() {
@@ -346,6 +356,10 @@ public class ManagePackagesDialog extends DialogWrapper {
     myFilter = new MyPackageFilter();
   }
 
+  public void setOptionsText(@NotNull String optionsText) {
+    myOptionsField.setText(optionsText);
+  }
+
   public class MyPackageFilter extends FilterComponent {
 
     public MyPackageFilter() {
@@ -379,23 +393,28 @@ public class ManagePackagesDialog extends DialogWrapper {
 
       final ArrayList<RepoPackage> filtered = new ArrayList<RepoPackage>();
 
+      RepoPackage toSelect = null;
       for (RepoPackage repoPackage : toProcess) {
-        if (StringUtil.containsIgnoreCase(repoPackage.getName(), filter)) {
+        final String packageName = repoPackage.getName();
+        if (StringUtil.containsIgnoreCase(packageName, filter)) {
           filtered.add(repoPackage);
         }
         else {
           myFilteredOut.add(repoPackage);
         }
+        if (StringUtil.equals(packageName, filter)) toSelect = repoPackage;
       }
-      filter(filtered);
+      filter(filtered, toSelect);
     }
 
-    public void filter(List<RepoPackage> filtered){
+    public void filter(List<RepoPackage> filtered, @Nullable final RepoPackage toSelect){
       myView.clear();
       myPackages.clearSelection();
       for (RepoPackage repoPackage : filtered) {
         myView.add(repoPackage);
       }
+      if (toSelect != null)
+        myPackages.setSelectedValue(toSelect, true);
       Collections.sort(myView);
       fireContentsChanged(this, 0, myView.size());
     }
@@ -448,7 +467,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       myVersionCheckBox.setSelected(false);
       myVersionComboBox.setEnabled(false);
       myOptionsField.setEnabled(false);
-      myDescriptionTextArea.setText("");
+      myDescriptionTextArea.setText("<html><body style='text-align: center;padding-top:20px;'>Loading...</body></html>");
 
       setDownloadStatus(true);
       final Object pyPackage = myPackages.getSelectedValue();
@@ -483,14 +502,17 @@ public class ManagePackagesDialog extends DialogWrapper {
         myController.fetchPackageDetails(packageName, new CatchingConsumer<String, Exception>() {
           @Override
           public void consume(final String details) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
+            UIUtil.invokeLaterIfNeeded(new Runnable() {
               @Override
               public void run() {
                 if (myPackages.getSelectedValue() == pyPackage) {
                   myDescriptionTextArea.setText(details);
-                }
+                  myDescriptionTextArea.setCaretPosition(0);
+                }/* else {
+                   do nothing, because other package gets selected
+                }*/
               }
-            }, ModalityState.any());
+            });
           }
 
           @Override
@@ -501,6 +523,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       }
       else {
         myInstallButton.setEnabled(false);
+        myDescriptionTextArea.setText("");
       }
       setDownloadStatus(false);
     }

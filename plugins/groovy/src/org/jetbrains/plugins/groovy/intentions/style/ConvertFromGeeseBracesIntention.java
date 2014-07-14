@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,18 +26,18 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author Max Medvedev
@@ -48,14 +48,13 @@ public class ConvertFromGeeseBracesIntention extends Intention {
   private static final PsiElementPredicate MY_PREDICATE = new PsiElementPredicate() {
     @Override
     public boolean satisfiedBy(PsiElement element) {
-      if (element.getLanguage() != GroovyFileType.GROOVY_LANGUAGE) return false;
+      if (element.getLanguage() != GroovyLanguage.INSTANCE) return false;
       if (!CodeStyleSettingsManager.getInstance(element.getProject()).getCurrentSettings()
         .getCustomSettings(GroovyCodeStyleSettings.class).USE_FLYING_GEESE_BRACES) {
         return false;
       }
 
-      IElementType elementType = element.getNode().getElementType();
-      if (TokenSets.WHITE_SPACES_SET.contains(elementType)) {
+      if (PsiImplUtil.isWhiteSpaceOrNls(element)) {
         element = PsiTreeUtil.prevLeaf(element);
       }
 
@@ -81,9 +80,9 @@ public class ConvertFromGeeseBracesIntention extends Intention {
 
   @Nullable
   private static PsiElement getPrev(PsiElement element) {
-    PsiElement prev = GeeseUtil.getPreviousNonWhitespaceToken(element);
+    PsiElement prev = PsiUtil.getPreviousNonWhitespaceToken(element);
     if (prev != null && prev.getNode().getElementType() == GroovyTokenTypes.mNLS) {
-      prev = GeeseUtil.getPreviousNonWhitespaceToken(prev);
+      prev = PsiUtil.getPreviousNonWhitespaceToken(prev);
     }
     return prev;
   }
@@ -97,8 +96,7 @@ public class ConvertFromGeeseBracesIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
-    IElementType elementType = element.getNode().getElementType();
-    if (TokenSets.WHITE_SPACES_SET.contains(elementType)) {
+    if (PsiImplUtil.isWhiteSpaceOrNls(element)) {
       element = PsiTreeUtil.prevLeaf(element);
     }
     LOG.assertTrue(GeeseUtil.isClosureRBrace(element));

@@ -58,10 +58,16 @@ public class MavenModuleResourceConfiguration {
   public Set<String> filteringExclusions = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
 
   @OptionTag
-  public String escapeString = MavenProjectConfiguration.DEFAULT_ESCAPE_STRING;
+  public String escapeString = null;
 
   @OptionTag
   public boolean escapeWindowsPaths = true;
+
+  @OptionTag
+  public boolean overwrite;
+
+  @OptionTag
+  public String outputDirectory = null;
 
   @Tag("resources")
   @AbstractCollection(surroundWithTag = false, elementTag = "resource")
@@ -82,15 +88,7 @@ public class MavenModuleResourceConfiguration {
   }
 
   public int computeConfigurationHash(boolean forTestResources) {
-    int result = id.hashCode();
-    result = 31 * result + (parentId != null ? parentId.hashCode() : 0);
-    result = 31 * result + directory.hashCode();
-    result = 31 * result + delimitersPattern.hashCode();
-    result = 31 * result + modelMap.hashCode();
-    result = 31 * result + properties.hashCode();
-    result = 31 * result + filteringExclusions.hashCode();
-    result = 31 * result + (escapeString != null ? escapeString.hashCode() : 0);
-    result = 31 * result + (escapeWindowsPaths ? 1 : 0);
+    int result = computeModuleConfigurationHash();
 
     final List<ResourceRootConfiguration> _resources = forTestResources? testResources : resources;
     result = 31 * result;
@@ -100,6 +98,20 @@ public class MavenModuleResourceConfiguration {
     return result;
   }
 
+  public int computeModuleConfigurationHash() {
+    int result = id.hashCode();
+    result = 31 * result + (parentId != null ? parentId.hashCode() : 0);
+    result = 31 * result + directory.hashCode();
+    result = 31 * result + delimitersPattern.hashCode();
+    result = 31 * result + modelMap.hashCode();
+    result = 31 * result + properties.hashCode();
+    result = 31 * result + filteringExclusions.hashCode();
+    result = 31 * result + (escapeString != null ? escapeString.hashCode() : 0);
+    result = 31 * result + (outputDirectory != null ? outputDirectory.hashCode() : 0);
+    result = 31 * result + (escapeWindowsPaths ? 1 : 0);
+    result = 31 * result + (overwrite ? 1 : 0);
+    return result;
+  }
 }
 
 

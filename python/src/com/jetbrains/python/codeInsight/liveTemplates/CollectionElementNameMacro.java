@@ -19,6 +19,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -60,16 +61,15 @@ public class CollectionElementNameMacro extends Macro {
         param = param.substring(0, lastParen);
       }
     }
-    final String result = smartUnpluralize(param);
-    return new TextResult(result);
+    final String result = smartUnPluralize(param);
+    return result != null && PyUtil.isPythonIdentifier(result) ? new TextResult(result) : null;
   }
 
-  private static String smartUnpluralize(String param) {
+  private static String smartUnPluralize(String param) {
     if (param.endsWith("_list")) {
       return param.substring(0, param.length()-5);
     }
-    final String result = StringUtil.unpluralize(param);
-    return result == null ? param : result;
+    return StringUtil.unpluralize(param);
   }
 
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {

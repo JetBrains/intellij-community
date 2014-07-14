@@ -201,4 +201,8 @@ public class QualifiedName {
   public int hashCode() {
     return myComponents.hashCode();
   }
+
+  public QualifiedName subQualifiedName(int fromIndex, int toIndex) {
+    return fromComponents(myComponents.subList(fromIndex, toIndex));
+  }
 }

@@ -39,6 +39,7 @@ import com.intellij.ui.PrevNextActionsDescriptor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.tabs.UiDecorator;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +48,9 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -303,6 +306,28 @@ public abstract class EditorComposite implements Disposable {
     return myEditors;
   }
 
+  @NotNull
+  public List<JComponent> getTopComponents(@NotNull FileEditor editor) {
+    return getTopBottomComponents(editor, true);
+  }
+
+  @NotNull
+  public List<JComponent> getBottomComponents(@NotNull FileEditor editor) {
+    return getTopBottomComponents(editor, false);
+  }
+
+  @NotNull
+  private List<JComponent> getTopBottomComponents(@NotNull FileEditor editor, boolean top) {
+    SmartList<JComponent> result = new SmartList<JComponent>();
+    JComponent container = top ? myTopComponents.get(editor) : myBottomComponents.get(editor);
+    for (Component each : container.getComponents()) {
+      if (each instanceof TopBottomComponentWrapper) {
+        result.add(((TopBottomComponentWrapper)each).getWrappee());
+      }
+    }
+    return Collections.unmodifiableList(result);
+  }
+
   public void addTopComponent(FileEditor editor, JComponent component) {
     manageTopOrBottomComponent(editor, component, true, false);
   }
@@ -447,8 +472,11 @@ public abstract class EditorComposite implements Disposable {
   }
 
   private static class TopBottomComponentWrapper extends JPanel {
+    private final JComponent myWrappee;
+
     public TopBottomComponentWrapper(JComponent component, boolean top) {
       super(new BorderLayout());
+      myWrappee = component;
       setOpaque(false);
 
       setBorder(new SideBorder(null, top ? SideBorder.BOTTOM : SideBorder.TOP, true) {
@@ -460,6 +488,11 @@ public abstract class EditorComposite implements Disposable {
       });
 
       add(component);
+    }
+
+    @NotNull
+    public JComponent getWrappee() {
+      return myWrappee;
     }
   }
 }

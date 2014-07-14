@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import git4idea.GitUtil;
@@ -196,7 +197,8 @@ public class GitTagDialog extends DialogWrapper {
       }
       try {
         GitHandlerUtil.doSynchronously(h, GitBundle.getString("tagging.title"), h.printableCommandLine());
-        GitUIUtil.notifySuccess(myProject, myTagNameTextField.getText(), "Created tag "  + myTagNameTextField.getText() + " successfully.");
+        VcsNotifier.getInstance(myProject).notifySuccess(myTagNameTextField.getText(),
+                                                         "Created tag " + myTagNameTextField.getText() + " successfully.");
       }
       finally {
         exceptions.addAll(h.errors());

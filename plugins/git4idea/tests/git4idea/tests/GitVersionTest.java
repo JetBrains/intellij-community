@@ -17,7 +17,7 @@ package git4idea.tests;
 
 import com.intellij.openapi.util.SystemInfo;
 import git4idea.config.GitVersion;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.lang.reflect.Field;
 
@@ -34,7 +34,8 @@ public class GitVersionTest {
     new TestGitVersion("git version 1.7.3.3", 1, 7, 3, 3),
     new TestGitVersion("git version 1.7.3.5.gb27be", 1, 7, 3, 5),
     new TestGitVersion("git version 1.7.4-rc1", 1, 7, 4, 0),
-    new TestGitVersion("git version 1.7.7.5 (Apple Git-24)", 1, 7, 7, 5)
+    new TestGitVersion("git version 1.7.7.5 (Apple Git-24)", 1, 7, 7, 5),
+    new TestGitVersion("git version 1.9.rc0.143.g6fd479e", 1, 9, 0, 0)
   };
 
   private static final TestGitVersion[] msysTests = {

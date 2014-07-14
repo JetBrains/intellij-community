@@ -18,6 +18,7 @@ package com.siyeh.ipp.equality;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -75,6 +76,6 @@ public class ReplaceEqualityWithSafeEqualsIntention extends Intention {
     buffer.append(".equals(");
     buffer.append(rhsText);
     buffer.append(')');
-    replaceExpression(buffer.toString(), exp);
+    PsiReplacementUtil.replaceExpression(exp, buffer.toString());
   }
 }

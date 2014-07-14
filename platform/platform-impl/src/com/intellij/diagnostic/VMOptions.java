@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -48,24 +49,8 @@ public class VMOptions {
   @NonNls private static final Pattern PERM_GEN_PATTERN = Pattern.compile(PERM_GEN_OPTION + MEM_SIZE_EXPR);
   @NonNls private static final Pattern CODE_CACHE_PATTERN = Pattern.compile(CODE_CACHE_OPTION + MEM_SIZE_EXPR);
 
-  private static String ourTestPath;
-
-  @TestOnly
-  static void setTestFile(String path) {
-    ourTestPath = path;
-  }
-
-  @TestOnly
-  static void clearTestFile() {
-    ourTestPath = null;
-  }
-
   public static int readXmx() {
     return readOption(XMX_PATTERN);
-  }
-
-  public static void writeXmx(int value) {
-    writeOption(XMX_OPTION, value, XMX_PATTERN);
   }
 
   public static int readMaxPermGen() {
@@ -74,6 +59,10 @@ public class VMOptions {
 
   public static int readCodeCache() {
     return readOption(CODE_CACHE_PATTERN);
+  }
+
+  public static void writeXmx(int value) {
+    writeOption(XMX_OPTION, value, XMX_PATTERN);
   }
 
   public static void writeMaxPermGen(int value) {
@@ -141,7 +130,8 @@ public class VMOptions {
         FileUtil.setReadOnlyAttribute(file.getPath(), false);
       }
 
-      FileUtil.writeToFile(file, content.getBytes());
+      @SuppressWarnings("SSBasedInspection") byte[] bytes = content.getBytes();
+      FileUtil.writeToFile(file, bytes);
     }
     catch (IOException e) {
       LOG.info(e);
@@ -237,9 +227,21 @@ public class VMOptions {
       }
     }
 
-    final String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase();
+    final String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
     final String platformSuffix = SystemInfo.is64Bit ? "64" : "";
     final String osSuffix = SystemInfo.isWindows ? ".exe" : "";
     return PathManager.getBinPath() + File.separatorChar + productName + platformSuffix + osSuffix + ".vmoptions";
+  }
+
+  private static String ourTestPath;
+
+  @TestOnly
+  static void setTestFile(String path) {
+    ourTestPath = path;
+  }
+
+  @TestOnly
+  static void clearTestFile() {
+    ourTestPath = null;
   }
 }

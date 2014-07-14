@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,11 +45,13 @@ public class XmlTagValueImpl implements XmlTagValue{
     myElements = bodyElements;
   }
 
+  @Override
   @NotNull
   public XmlTagChild[] getChildren() {
     return myElements;
   }
 
+  @Override
   @NotNull
   public XmlText[] getTextElements() {
     XmlText[] textElements = myTextElements;
@@ -61,6 +63,7 @@ public class XmlTagValueImpl implements XmlTagValue{
     return myTextElements = textElementsList.isEmpty() ? XmlText.EMPTY_ARRAY : ContainerUtil.toArray(textElementsList, new XmlText[textElementsList.size()]);
   }
 
+  @Override
   @NotNull
   public String getText() {
     String text = myText;
@@ -72,6 +75,7 @@ public class XmlTagValueImpl implements XmlTagValue{
     return myText = consolidatedText.toString();
   }
 
+  @Override
   @NotNull
   public TextRange getTextRange() {
     if(myElements.length == 0){
@@ -83,6 +87,7 @@ public class XmlTagValueImpl implements XmlTagValue{
     return new TextRange(myElements[0].getTextRange().getStartOffset(), myElements[myElements.length - 1].getTextRange().getEndOffset());
   }
 
+  @Override
   @NotNull
   public String getTrimmedText() {
     String trimmedText = myTrimmedText;
@@ -159,6 +164,7 @@ public class XmlTagValueImpl implements XmlTagValue{
 
     tag.processElements(new PsiElementProcessor() {
       boolean insideBody = false;
+      @Override
       public boolean execute(@NotNull PsiElement element) {
         final ASTNode treeElement = element.getNode();
         if (insideBody) {

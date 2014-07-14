@@ -17,22 +17,21 @@ package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandler;
-import io.netty.channel.ChannelInboundHandlerAdapter;
 
 import java.net.ConnectException;
 
 @ChannelHandler.Sharable
-public final class ChannelExceptionHandler extends ChannelInboundHandlerAdapter {
+public final class ChannelExceptionHandler extends ChannelHandlerAdapter {
   private static final Logger LOG = Logger.getInstance(ChannelExceptionHandler.class);
 
-  private static final ChannelInboundHandler INSTANCE = new ChannelExceptionHandler();
+  private static final ChannelHandler INSTANCE = new ChannelExceptionHandler();
 
   private ChannelExceptionHandler() {
   }
 
-  public static ChannelInboundHandler getInstance() {
+  public static ChannelHandler getInstance() {
     return INSTANCE;
   }
 

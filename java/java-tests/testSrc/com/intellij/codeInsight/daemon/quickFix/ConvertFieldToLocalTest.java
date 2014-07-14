@@ -20,7 +20,7 @@ import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspecti
 import org.jetbrains.annotations.NotNull;
 
 
-public class ConvertFieldToLocalTest extends LightQuickFixTestCase {
+public class ConvertFieldToLocalTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {

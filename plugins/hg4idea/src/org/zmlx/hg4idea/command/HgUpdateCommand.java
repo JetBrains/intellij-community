@@ -13,18 +13,22 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.execution.HgDeleteModifyPromptHandler;
+import org.zmlx.hg4idea.execution.HgPromptCommandExecutor;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.zmlx.hg4idea.util.HgErrorUtil.hasUncommittedChangesConflict;
 
 public class HgUpdateCommand {
 
@@ -35,7 +39,7 @@ public class HgUpdateCommand {
   private String revision;
   private boolean clean;
 
-  public HgUpdateCommand(Project project, @NotNull VirtualFile repo) {
+  public HgUpdateCommand(@NotNull Project project, @NotNull VirtualFile repo) {
     this.project = project;
     this.repo = repo;
   }
@@ -67,13 +71,33 @@ public class HgUpdateCommand {
       arguments.add(branch);
     }
 
-    final HgCommandExecutor executor = new HgCommandExecutor(project);
+    final HgPromptCommandExecutor executor = new HgPromptCommandExecutor(project);
     executor.setShowOutput(true);
-    final HgCommandResult result =
-      executor.executeInCurrentThread(repo, "update", arguments, new HgDeleteModifyPromptHandler());
+    HgCommandResult result =
+      executor.executeInCurrentThread(repo, "update", arguments);
+    if (!clean && hasUncommittedChangesConflict(result)) {
+      final String message = "<html>Your uncommitted changes couldn't be merged into the requested changeset.<br>" +
+                             "Would you like to perform force update and discard them?";
+      if (showDiscardChangesConfirmation(project, message) == Messages.OK) {
+        arguments.add("-C");
+        result = executor.executeInCurrentThread(repo, "update", arguments);
+      }
+    }
+
     project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
     VfsUtil.markDirtyAndRefresh(true, true, false, repo);
     return result;
   }
 
+  public static int showDiscardChangesConfirmation(@NotNull final Project project, @NotNull final String confirmationMessage) {
+    final AtomicInteger exitCode = new AtomicInteger();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        exitCode.set(Messages.showOkCancelDialog(project, confirmationMessage, "Uncommitted Changes Problem",
+                                                 "&Discard Changes", "&Cancel", Messages.getWarningIcon()));
+      }
+    });
+    return exitCode.get();
+  }
 }

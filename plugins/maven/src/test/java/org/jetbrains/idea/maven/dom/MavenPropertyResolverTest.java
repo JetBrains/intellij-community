@@ -259,7 +259,7 @@ public class MavenPropertyResolverTest extends MavenImportingTestCase {
                   "<version>1</version>");
 
     final Document doc = FileDocumentManager.getInstance().getDocument(myProjectPom);
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       public void run() {
         doc.setText(createPomXml("<groupId>test</groupId>" +
                                  "<artifactId>project</artifactId>" +

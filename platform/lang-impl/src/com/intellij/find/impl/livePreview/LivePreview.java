@@ -75,10 +75,6 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     updateInSelectionHighlighters();
   }
 
-  public void supressUpdate() {
-    mySuppressedUpdate = true;
-  }
-
   public void inSmartUpdate() {
     myInSmartUpdate = true;
   }
@@ -266,6 +262,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
             @Override
             public void run() {
               for (FoldRegion region : allRegions) {
+                if (!region.isValid()) continue;
                 if (cursor.intersects(TextRange.create(region))) {
                   region.setExpanded(true);
                 }
@@ -547,16 +544,14 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
       int startOffset = cur.getStartOffset();
       int endOffset = cur.getEndOffset();
 
-      Point startPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(startOffset));
-      Point endPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(endOffset));
-      Point point = new Point((startPoint.x + endPoint.x)/2, startPoint.y);
+      if (startOffset >= myEditor.getDocument().getTextLength()) {
+        if (!object.isDisposed()) {
+          requestBalloonHiding(object);
+        }
+        return null;
+      }
       if (!SearchResults.insideVisibleArea(myEditor, cur)) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            object.hide();
-          }
-        });
+        requestBalloonHiding(object);
 
         VisibleAreaListener visibleAreaListener = new VisibleAreaListener() {
           @Override
@@ -575,7 +570,21 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
         myVisibleAreaListenersToRemove.add(visibleAreaListener);
 
       }
+
+      Point startPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(startOffset));
+      Point endPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(endOffset));
+      Point point = new Point((startPoint.x + endPoint.x)/2, startPoint.y);
+
       return new RelativePoint(myEditor.getContentComponent(), point);
     }
+  }
+
+  private void requestBalloonHiding(final Balloon object) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        object.hide();
+      }
+    });
   }
 }

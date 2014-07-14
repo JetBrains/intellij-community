@@ -31,7 +31,7 @@ public class FunctionalInterfaceTest extends LightDaemonAnalyzerTestCase {
     final PsiClass psiClass = getJavaFacade().findClass("Foo", GlobalSearchScope.projectScope(getProject()));
     assertNotNull("Class Foo not found", psiClass);
 
-    final String errorMessage = LambdaHighlightingUtil.checkInterfaceFunctional(psiClass);
+    final String errorMessage = LambdaHighlightingUtil.checkInterfaceFunctional(getJavaFacade().getElementFactory().createType(psiClass));
     assertEquals(expectedErrorMessage, errorMessage);
   }
 

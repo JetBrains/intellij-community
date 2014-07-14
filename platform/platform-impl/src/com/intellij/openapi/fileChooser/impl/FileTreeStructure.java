@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.fileChooser.impl;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,7 +53,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
     final String name = rootFiles.length == 1 && rootFiles[0] != null ? rootFiles[0].getPresentableUrl() : chooserDescriptor.getTitle();
     myRootElement = new RootFileElement(rootFiles, name, chooserDescriptor.isShowFileSystemRoots());
     myChooserDescriptor = chooserDescriptor;
-    myShowHidden = PropertiesComponent.getInstance().getBoolean("FileChooser.showHiddens", false);
+    myShowHidden = myChooserDescriptor.isShowHiddenFiles();
   }
 
   public boolean isToBuildChildrenInBackground(final Object element) {
@@ -148,7 +147,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
       }
 
       if (parent != null && parent.isValid() && parent.equals(myRootElement.getFile())) {
-        return myRootElement;                       
+        return myRootElement;
       }
 
       if (parent == null) {
@@ -170,10 +169,6 @@ public class FileTreeStructure extends AbstractTreeStructure {
 
   public final boolean hasSomethingToCommit() {
     return false;
-  }
-
-  public final void dispose() {
-    PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", Boolean.toString(myShowHidden));
   }
 
   @NotNull

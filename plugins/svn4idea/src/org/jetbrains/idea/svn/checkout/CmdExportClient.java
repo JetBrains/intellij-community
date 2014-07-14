@@ -46,7 +46,7 @@ public class CmdExportClient extends BaseSvnClient implements ExportClient {
 
     BaseUpdateCommandListener listener = new BaseUpdateCommandListener(to, handler);
 
-    CommandUtil.execute(myVcs, from, to, SvnCommandName.export, parameters, listener);
+    execute(myVcs, from, to, SvnCommandName.export, parameters, listener);
 
     listener.throwWrappedIfException();
   }

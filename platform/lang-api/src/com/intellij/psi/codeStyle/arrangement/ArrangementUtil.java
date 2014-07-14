@@ -17,6 +17,7 @@ package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
@@ -27,6 +28,7 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCon
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
 import com.intellij.psi.codeStyle.arrangement.std.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.CharArrayUtil;
 import org.jdom.Element;
@@ -40,7 +42,8 @@ import java.util.*;
  * @since 7/17/12 11:24 AM
  */
 public class ArrangementUtil {
-  
+  private static final Logger LOG = Logger.getInstance(ArrangementUtil.class);
+
   private ArrangementUtil() {
   }
 
@@ -49,20 +52,28 @@ public class ArrangementUtil {
   @Nullable
   public static ArrangementSettings readExternal(@NotNull Element element, @NotNull Language language) {
     ArrangementSettingsSerializer serializer = getSerializer(language);
+    if (serializer == null) {
+      LOG.error("Can't find serializer for language: " + language.getDisplayName() + "(" + language.getID() + ")");
+      return null;
+    }
+
     return serializer.deserialize(element);
   }
 
   public static void writeExternal(@NotNull Element element, @NotNull ArrangementSettings settings, @NotNull Language language) {
     ArrangementSettingsSerializer serializer = getSerializer(language);
+    if (serializer == null) {
+      LOG.error("Can't find serializer for language: " + language.getDisplayName() + "(" + language.getID() + ")");
+      return;
+    }
+
     serializer.serialize(settings, element);
   }
 
+  @Nullable
   private static ArrangementSettingsSerializer getSerializer(@NotNull Language language) {
     Rearranger<?> rearranger = Rearranger.EXTENSION.forLanguage(language);
-    if (rearranger instanceof ArrangementSettingsSerializer) {
-      return (ArrangementSettingsSerializer)rearranger;
-    }
-    return DefaultArrangementSettingsSerializer.INSTANCE;
+    return rearranger == null ? null : rearranger.getSerializer();
   }
   
   //endregion
@@ -293,10 +304,14 @@ public class ArrangementUtil {
     return result;
   }
 
+  //region Arrangement Sections
   @NotNull
-  public static List<? extends ArrangementMatchRule> getRulesSortedByPriority(@NotNull ArrangementSettings arrangementSettings) {
-    return arrangementSettings instanceof RulePriorityAwareSettings ?
-           ((RulePriorityAwareSettings)arrangementSettings).getRulesSortedByPriority() :
-           arrangementSettings.getRules();
+  public static List<StdArrangementMatchRule> collectMatchRules(@NotNull List<ArrangementSectionRule> sections) {
+    final List<StdArrangementMatchRule> matchRules = ContainerUtil.newArrayList();
+    for (ArrangementSectionRule section : sections) {
+      matchRules.addAll(section.getMatchRules());
+    }
+    return matchRules;
   }
+  //endregion
 }

@@ -2,7 +2,17 @@
   <name>GitHub</name>
   <id>org.jetbrains.plugins.github</id>
   <vendor>JetBrains</vendor>
-  <description>GitHub integration</description>
+  <description>
+      <![CDATA[
+      Allows working with <a href="http://github.com/">GitHub</a>.
+      The following features are available:
+        <ul>
+        <li>Dedicated page under the Version Control node in the Settings/Preferences dialog.</li>
+        <li>Ability to browse, check out sources from and import into the available Git repositories, when GitHub is not enabled.</li>
+        <li>When GitHub is enabled, the GitHub node appears on the VCS menu, and on the context menu of the editor.
+        </ul>
+      ]]>
+   </description>
 
   <depends>com.intellij.modules.lang</depends>
   <depends>Git4Idea</depends>

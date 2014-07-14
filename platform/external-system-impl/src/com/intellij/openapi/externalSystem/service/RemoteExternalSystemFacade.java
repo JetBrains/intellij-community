@@ -57,7 +57,8 @@ public interface RemoteExternalSystemFacade<S extends ExternalSystemExecutionSet
     }
 
     @Override
-    public void cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException {
+    public boolean cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException {
+      return false;
     }
 
     @NotNull

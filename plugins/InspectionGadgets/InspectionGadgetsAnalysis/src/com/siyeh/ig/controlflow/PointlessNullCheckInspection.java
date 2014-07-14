@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -99,10 +100,10 @@ public class PointlessNullCheckInspection extends BaseInspection {
         return;
       }
       if (PsiTreeUtil.isAncestor(rhs, element, false)) {
-        replaceExpression(binaryExpression, lhs.getText());
+        PsiReplacementUtil.replaceExpression(binaryExpression, lhs.getText());
       }
       else if (PsiTreeUtil.isAncestor(lhs, element, false)) {
-        replaceExpression(binaryExpression, rhs.getText());
+        PsiReplacementUtil.replaceExpression(binaryExpression, rhs.getText());
       }
     }
   }

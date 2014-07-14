@@ -17,6 +17,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiDiamondTypeElementImpl;
+import com.intellij.psi.util.PsiTreeUtil;
 
 import java.util.Comparator;
 
@@ -25,8 +26,15 @@ public class JavaPsiEquivalenceUtil {
     return PsiEquivalenceUtil.areElementsEquivalent(expr1, expr2, new Comparator<PsiElement>() {
       @Override
       public int compare(PsiElement o1, PsiElement o2) {
-        if (o1 instanceof PsiParameter && o2 instanceof PsiParameter && ((PsiParameter)o1).getDeclarationScope() instanceof PsiMethod) {
-          return ((PsiParameter)o1).getName().compareTo(((PsiParameter)o2).getName());
+        if (o1 instanceof PsiParameter && o2 instanceof PsiParameter) {
+          final PsiElement scope1 = ((PsiParameter)o1).getDeclarationScope();
+          final PsiElement scope2 = ((PsiParameter)o2).getDeclarationScope();
+          if (scope1 instanceof PsiMethod && scope2 instanceof PsiMethod ||
+              scope1 instanceof PsiLambdaExpression && scope2 instanceof PsiLambdaExpression) {
+            if (!scope1.getTextRange().intersects(scope2.getTextRange())) {
+              return ((PsiParameter)o1).getName().compareTo(((PsiParameter)o2).getName());
+            }
+          }
         }
         return 1;
       }

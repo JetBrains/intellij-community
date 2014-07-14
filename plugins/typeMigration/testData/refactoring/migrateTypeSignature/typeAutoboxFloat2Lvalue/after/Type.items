@@ -1,0 +1,15 @@
+Types:
+PsiParameter:p : java.lang.Float
+PsiReferenceExpression:p : java.lang.Float
+PsiReferenceExpression:p : java.lang.Float
+PsiReferenceExpression:p : java.lang.Float
+PsiReferenceExpression:p : java.lang.Float
+
+Conversions:
+myField -> $
+myFieldSuper1 -> $
+myFieldSuper2 -> $
+myFieldSuper3 -> $
+
+New expression type changes:
+Fails:

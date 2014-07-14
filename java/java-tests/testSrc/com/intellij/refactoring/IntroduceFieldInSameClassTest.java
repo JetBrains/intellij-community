@@ -1,7 +1,9 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
@@ -25,6 +27,33 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
     configureByFile("/refactoring/introduceField/before1.java");
     performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, true);
     checkResultByFile("/refactoring/introduceField/after1.java");
+  }
+
+  public void testConflictingFieldInContainingClass () throws Exception {
+    configureByFile("/refactoring/introduceField/beforeConflictingFieldInContainingClass.java");
+    new MockIntroduceFieldHandler(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false){
+      @Override
+      protected String getNewName(Project project, PsiExpression expr, PsiType type) {
+        return "aField";
+      }
+    }.invoke(getProject(), myEditor, myFile, null);
+    checkResultByFile("/refactoring/introduceField/afterConflictingFieldInContainingClass.java");
+  }
+
+  public void testConflictingFieldInContainingClassLocal () throws Exception {
+    configureByFile("/refactoring/introduceField/beforeConflictingFieldInContainingClassLocal.java");
+    new MockIntroduceFieldHandler(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false){
+      @Override
+      protected String getNewName(Project project, PsiExpression expr, PsiType type) {
+        return "aField";
+      }
+
+      @Override
+      protected int getChosenClassIndex(List<PsiClass> classes) {
+        return 0;
+      }
+    }.invoke(getProject(), myEditor, myFile, null);
+    checkResultByFile("/refactoring/introduceField/afterConflictingFieldInContainingClassLocal.java");
   }
 
   public void testInElseClause() throws Exception {

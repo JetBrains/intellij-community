@@ -34,8 +34,6 @@ import java.util.List;
 
 /**
  * Listens to .hg service files changes and updates {@link HgRepository} when needed.
- *
- * @author Nadya Zabrodina
  */
 final class HgRepositoryUpdater implements Disposable, BulkFileListener {
   @NotNull private final HgRepositoryFiles myRepositoryFiles;
@@ -90,7 +88,9 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     // which files in .hg were changed
     boolean branchHeadsChanged = false;
     boolean branchFileChanged = false;
+    boolean dirstateFileChanged = false;
     boolean mergeFileChanged = false;
+    boolean rebaseFileChanged = false;
     boolean bookmarksFileChanged = false;
     boolean tagsFileChanged = false;
     boolean localTagsFileChanged = false;
@@ -108,8 +108,14 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
         branchFileChanged = true;
         RepositoryUtil.visitAllChildrenRecursively(myBranchHeadsDir);
       }
+      else if (myRepositoryFiles.isDirstateFile(filePath)) {
+        dirstateFileChanged = true;
+      }
       else if (myRepositoryFiles.isMergeFile(filePath)) {
         mergeFileChanged = true;
+      }
+      else if (myRepositoryFiles.isRebaseFile(filePath)) {
+        rebaseFileChanged = true;
       }
       else if (myRepositoryFiles.isBookmarksFile(filePath)) {
         bookmarksFileChanged = true;
@@ -131,7 +137,9 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
 
     if (branchHeadsChanged ||
         branchFileChanged ||
+        dirstateFileChanged ||
         mergeFileChanged ||
+        rebaseFileChanged ||
         bookmarksFileChanged ||
         currentBookmarkFileChanged ||
         tagsFileChanged ||

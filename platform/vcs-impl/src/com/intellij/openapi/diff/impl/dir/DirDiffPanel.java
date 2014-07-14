@@ -43,6 +43,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -141,7 +142,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
       }.registerCustomShortcutSet(CustomShortcutSet.fromString("SPACE"), myTable);
       new ClickListener() {
         @Override
-        public boolean onClick(MouseEvent e, int clickCount) {
+        public boolean onClick(@NotNull MouseEvent e, int clickCount) {
           if (e.getButton() == MouseEvent.BUTTON3) return false;
           if (myTable.getRowCount() > 0) {
             final int row = myTable.rowAtPoint(e.getPoint());

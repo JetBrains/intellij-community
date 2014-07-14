@@ -132,11 +132,11 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
 
   @Override
   @NotNull
-  public <F extends Facet, C extends FacetConfiguration> F createFacet(@NotNull final FacetType<F, C> type, @NotNull final String name, @NotNull final C cofiguration,
+  public <F extends Facet, C extends FacetConfiguration> F createFacet(@NotNull final FacetType<F, C> type, @NotNull final String name, @NotNull final C configuration,
                                                                           @Nullable final Facet underlying) {
-    final F facet = type.createFacet(myModule, name, cofiguration, underlying);
+    final F facet = type.createFacet(myModule, name, configuration, underlying);
     assertTrue(facet.getModule() == myModule, facet, "module");
-    assertTrue(facet.getConfiguration() == cofiguration, facet, "configuration");
+    assertTrue(facet.getConfiguration() == configuration, facet, "configuration");
     assertTrue(Comparing.equal(facet.getName(), name), facet, "name");
     assertTrue(facet.getUnderlyingFacet() == underlying, facet, "underlyingFacet");
     return facet;
@@ -212,7 +212,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       }
       catch (InvalidDataException e) {
         LOG.info(e);
-        addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.cannot.load.facet.condiguration.0", e.getMessage()));
+        addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.cannot.load.facet.configuration.0", e.getMessage()));
       }
     }
   }
@@ -237,7 +237,9 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     if (!invalidFacetManager.isIgnored(facet)) {
       FacetLoadingErrorDescription description = new FacetLoadingErrorDescription(facet);
       ProjectLoadingErrorsNotifier.getInstance(myModule.getProject()).registerError(description);
-      UnknownFeaturesCollector.getInstance(myModule.getProject()).registerUnknownFeature("com.intellij.facetType", typeId);
+      if (typeId != null) {
+        UnknownFeaturesCollector.getInstance(myModule.getProject()).registerUnknownFeature("com.intellij.facetType", typeId);
+      }
     }
   }
 
@@ -411,7 +413,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
         }
         else {
           final Facet underlyingFacet = facet.getUnderlyingFacet();
-          LOG.assertTrue(underlyingFacet != null, "Underlying facet is not specifed for '" + facet.getName() + "'");
+          LOG.assertTrue(underlyingFacet != null, "Underlying facet is not specified for '" + facet.getName() + "'");
           final Collection<?> facets = getFacetsByType(underlyingFacet, type.getId());
           if (facets.size() > 1) {
             LOG.error("Only one '" + type.getPresentableName() + "' facet per parent facet allowed, but " + facets.size() + " sub-facets found in facet " + underlyingFacet.getName());

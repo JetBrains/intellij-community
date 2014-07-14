@@ -148,7 +148,7 @@ public class CommonCodeStyleSettings {
       targetIndentOptions.copyFrom(myIndentOptions);
     }
     if (myArrangementSettings != null) {
-      rootSettings.setArrangementSettings(myArrangementSettings);
+      commonSettings.setArrangementSettings(myArrangementSettings.clone());
     }
     return commonSettings;
   }
@@ -956,7 +956,7 @@ public class CommonCodeStyleSettings {
     public void serialize(Element indentOptionsElement, final IndentOptions defaultOptions) {
       XmlSerializer.serializeInto(this, indentOptionsElement, new SkipDefaultValuesSerializationFilters() {
         @Override
-        protected void configure(Object o) {
+        protected void configure(@NotNull Object o) {
           if (o instanceof IndentOptions && defaultOptions != null) {
             ((IndentOptions)o).copyFrom(defaultOptions);
           }

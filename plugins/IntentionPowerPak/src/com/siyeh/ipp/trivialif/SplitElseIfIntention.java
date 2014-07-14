@@ -20,6 +20,7 @@ import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiStatement;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +45,6 @@ public class SplitElseIfIntention extends Intention {
       return;
     }
     final String newStatement = '{' + elseBranch.getText() + '}';
-    replaceStatement(newStatement, elseBranch);
+    PsiReplacementUtil.replaceStatement(elseBranch, newStatement);
   }
 }

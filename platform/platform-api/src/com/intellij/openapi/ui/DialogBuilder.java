@@ -42,6 +42,7 @@ public class DialogBuilder implements Disposable {
   @NonNls public static final String REQUEST_FOCUS_ENABLED = "requestFocusEnabled";
 
   private JComponent myCenterPanel;
+  private JComponent myNorthPanel;
   private String myTitle;
   private JComponent myPreferedFocusComponent;
   private String myDimensionServiceKey;
@@ -89,8 +90,19 @@ public class DialogBuilder implements Disposable {
     myCenterPanel = centerPanel;
   }
 
+  @NotNull
+  public DialogBuilder setNorthPanel(@NotNull JComponent northPanel) {
+    myNorthPanel = northPanel;
+    return this;
+  }
+
   public void setTitle(String title) {
     myTitle = title;
+  }
+
+  public DialogBuilder title(@NotNull String title) {
+    myTitle = title;
+    return this;
   }
 
   public void setPreferredFocusComponent(JComponent component) {
@@ -99,6 +111,11 @@ public class DialogBuilder implements Disposable {
 
   public void setDimensionServiceKey(@NonNls String dimensionServiceKey) {
     myDimensionServiceKey = dimensionServiceKey;
+  }
+
+  public DialogBuilder dimensionKey(@NotNull String dimensionServiceKey) {
+    myDimensionServiceKey = dimensionServiceKey;
+    return this;
   }
 
   public void addAction(Action action) {
@@ -212,6 +229,7 @@ public class DialogBuilder implements Disposable {
       myMnemonicChar = mnemonicChar == -1 ? null : Integer.valueOf(mnemonicChar);
     }
 
+    @Override
     public Action getAction(DialogWrapper dialogWrapper) {
       Action action = createAction(dialogWrapper);
       action.putValue(Action.NAME, myName);
@@ -245,8 +263,10 @@ public class DialogBuilder implements Disposable {
       return closeDialogAction;
     }
 
+    @Override
     protected Action createAction(final DialogWrapper dialogWrapper) {
       return new AbstractAction(){
+        @Override
         public void actionPerformed(ActionEvent e) {
           dialogWrapper.close(myExitCode);
         }
@@ -265,6 +285,7 @@ public class DialogBuilder implements Disposable {
       myAction = action;
     }
 
+    @Override
     public Action getAction(DialogWrapper dialogWrapper) {
       return myAction;
     }
@@ -273,10 +294,12 @@ public class DialogBuilder implements Disposable {
   private abstract static class BuiltinAction implements ActionDescriptor, CustomizableAction {
     protected String myText = null;
 
+    @Override
     public void setText(String text) {
       myText = text;
     }
 
+    @Override
     public Action getAction(DialogWrapper dialogWrapper) {
       Action builtinAction = getBuiltinAction((MyDialogWrapper)dialogWrapper);
       if (myText != null) builtinAction.putValue(Action.NAME, myText);
@@ -287,12 +310,14 @@ public class DialogBuilder implements Disposable {
   }
 
   public static class OkActionDescriptor extends BuiltinAction {
+    @Override
     protected Action getBuiltinAction(MyDialogWrapper dialogWrapper) {
       return dialogWrapper.getOKAction();
     }
   }
 
   public static class CancelActionDescriptor extends BuiltinAction {
+    @Override
     protected Action getBuiltinAction(MyDialogWrapper dialogWrapper) {
       return dialogWrapper.getCancelAction();
     }
@@ -318,19 +343,28 @@ public class DialogBuilder implements Disposable {
       return myHelpId;
     }
 
+    @Override
     public void init() { super.init(); }
+    @Override
     @NotNull
     public Action getOKAction() { return super.getOKAction(); } // Make it public
+    @Override
     @NotNull
     public Action getCancelAction() { return super.getCancelAction(); } // Make it public
 
+    @Override
     protected JComponent createCenterPanel() { return myCenterPanel; }
 
+    @Override
+    protected JComponent createNorthPanel() { return myNorthPanel; }
+
+    @Override
     public void dispose() {
       myPreferedFocusComponent = null;
       super.dispose();
     }
 
+    @Override
     public JComponent getPreferredFocusedComponent() {
       if (myPreferedFocusComponent != null) return myPreferedFocusComponent;
       FocusTraversalPolicy focusTraversalPolicy = null;
@@ -346,10 +380,12 @@ public class DialogBuilder implements Disposable {
       return (JComponent)component;
     }
 
+    @Override
     protected String getDimensionServiceKey() {
       return myDimensionServiceKey;
     }
 
+    @Override
     protected JButton createJButtonForAction(Action action) {
       JButton button = super.createJButtonForAction(action);
       Object value = action.getValue(REQUEST_FOCUS_ENABLED);
@@ -357,6 +393,7 @@ public class DialogBuilder implements Disposable {
       return button;
     }
 
+    @Override
     public void doCancelAction() {
       if (!getCancelAction().isEnabled()) return;
       if (myCancelOperation != null) {
@@ -367,6 +404,7 @@ public class DialogBuilder implements Disposable {
       }
     }
 
+    @Override
     protected void doOKAction() {
       if (myOkOperation != null) {
         myOkOperation.run();
@@ -376,6 +414,7 @@ public class DialogBuilder implements Disposable {
       }
     }
 
+    @Override
     protected void doHelpAction() {
       if (myHelpId == null) {
         super.doHelpAction();
@@ -385,6 +424,7 @@ public class DialogBuilder implements Disposable {
       HelpManager.getInstance().invokeHelp(myHelpId);
     }
 
+    @Override
     @NotNull
     protected Action[] createActions() {
       if (myActions == null) return super.createActions();

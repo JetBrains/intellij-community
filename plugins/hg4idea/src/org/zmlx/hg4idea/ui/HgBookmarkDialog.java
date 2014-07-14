@@ -1,9 +1,7 @@
 package org.zmlx.hg4idea.ui;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
@@ -11,8 +9,11 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.util.HgReferenceValidator;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
@@ -22,11 +23,13 @@ import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
  * @author Nadya Zabrodina
  */
 public class HgBookmarkDialog extends DialogWrapper {
+  @NotNull private HgRepository myRepository;
   @NotNull private JBTextField myBookmarkName;
   @NotNull private JBCheckBox myActiveCheckbox;
 
-  public HgBookmarkDialog(@Nullable Project project) {
-    super(project, false);
+  public HgBookmarkDialog(@NotNull HgRepository repository) {
+    super(repository.getProject(), false);
+    myRepository = repository;
     setTitle("Create Bookmark");
     setResizable(false);
     init();
@@ -62,6 +65,12 @@ public class HgBookmarkDialog extends DialogWrapper {
 
     JLabel icon = new JLabel(UIUtil.getQuestionIcon(), SwingConstants.LEFT);
     myBookmarkName = new JBTextField(13);
+    myBookmarkName.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void textChanged(DocumentEvent e) {
+        validateFields();
+      }
+    });
 
     JBLabel bookmarkLabel = new JBLabel("Bookmark name:");
     bookmarkLabel.setLabelFor(myBookmarkName);
@@ -75,6 +84,19 @@ public class HgBookmarkDialog extends DialogWrapper {
     return contentPanel;
   }
 
+  private void validateFields() {
+    HgReferenceValidator validator = HgReferenceValidator.newInstance(myRepository);
+    String name = getName();
+    if (!validator.checkInput(name)) {
+      String message = validator.getErrorText(name);
+      setErrorText(message == null ? "You have to specify bookmark name." : message);
+      setOKActionEnabled(false);
+      return;
+    }
+    setErrorText(null);
+    setOKActionEnabled(true);
+  }
+
   public boolean isActive() {
     return !myActiveCheckbox.isSelected();
   }
@@ -82,15 +104,5 @@ public class HgBookmarkDialog extends DialogWrapper {
   @Nullable
   public String getName() {
     return myBookmarkName.getText();
-  }
-
-  @Override
-  @Nullable
-  protected ValidationInfo doValidate() {
-    String message = "You have to specify bookmark name.";
-    if (StringUtil.isEmptyOrSpaces(getName())) {
-      return new ValidationInfo(message, myBookmarkName);
-    }
-    return null;
   }
 }

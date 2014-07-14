@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
@@ -55,7 +54,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
     return PlatformPatterns.psiElement(PsiLiteralExpression.class).and(new FilterPattern(new TestAnnotationFilter(annotation)));
   }
 
-  public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+  public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(getElementPattern("dependsOnMethods"), new PsiReferenceProvider() {
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
@@ -98,7 +97,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
         for (PsiMethod method : methods) {
           PsiAnnotation dataProviderAnnotation = AnnotationUtil.findAnnotation(method, DataProvider.class.getName());
           if (dataProviderAnnotation != null) {
-            final PsiAnnotationMemberValue dataProviderMethodName = dataProviderAnnotation.findAttributeValue("name");
+            final PsiAnnotationMemberValue dataProviderMethodName = dataProviderAnnotation.findDeclaredAttributeValue("name");
             if (dataProviderMethodName != null && val.equals(StringUtil.unquoteString(dataProviderMethodName.getText()))) {
               return method;
             }
@@ -129,10 +128,10 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
           }
           final PsiAnnotation dataProviderAnnotation = AnnotationUtil.findAnnotation(method, DataProvider.class.getName());
           if (dataProviderAnnotation != null) {
-            boolean nameFoundInAttributes = false;
-            final PsiAnnotationMemberValue memberValue = dataProviderAnnotation.findAttributeValue("name");
+            final PsiAnnotationMemberValue memberValue = dataProviderAnnotation.findDeclaredAttributeValue("name");
             if (memberValue != null) {
               list.add(LookupValueFactory.createLookupValue(StringUtil.unquoteString(memberValue.getText()), null));
+            } else {
               list.add(LookupValueFactory.createLookupValue(method.getName(), null));
             }
           }
@@ -144,7 +143,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
     private PsiClass getProviderClass(final PsiClass topLevelClass) {
       final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(getElement(), PsiAnnotation.class);
       if (annotation != null) {
-        final PsiAnnotationMemberValue value = annotation.findAttributeValue("dataProviderClass");
+        final PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue("dataProviderClass");
         if (value instanceof PsiClassObjectAccessExpression) {
           final PsiTypeElement operand = ((PsiClassObjectAccessExpression)value).getOperand();
           final PsiClass psiClass = PsiUtil.resolveClassInType(operand.getType());

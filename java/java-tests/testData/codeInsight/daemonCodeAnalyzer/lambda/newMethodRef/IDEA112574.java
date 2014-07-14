@@ -1,4 +1,4 @@
-public abstract class Tmp<T> {
+abstract class Tmp<T> {
     private String concat(Tmp<String> tmp) {
         return tmp.collect(StringBuilder::new, StringBuilder::append, StringBuilder::append).toString();
     }

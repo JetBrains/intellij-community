@@ -83,7 +83,7 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   public static Collection<String> findInDirectory(VirtualFile rootDir) {
     List<String> candidates = new ArrayList<String>();
     if (rootDir != null) {
-      rootDir.refresh(false, false);
+      rootDir.refresh(true, false);
       VirtualFile[] suspects = rootDir.getChildren();
       for (VirtualFile child : suspects) {
         if (child.isDirectory()) {
@@ -111,7 +111,7 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
         for (String name : NAMES) {
           if (SystemInfo.isWindows) {
             if (childName.equals(name)) {
-              return child.getPath();
+              return FileUtil.toSystemDependentName(child.getPath());
             }
           }
           else {

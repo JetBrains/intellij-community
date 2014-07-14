@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.PatchedWeakReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,19 +65,11 @@ public abstract class AbstractDocumentationTooltipAction extends AnAction {
   
   @Nullable
   private Pair<PsiElement/* doc anchor */, PsiElement /* original element */> getDocInfo() {
-    WeakReference<PsiElement> docAnchorRef = myDocAnchor;
-    if (docAnchorRef == null) {
-      return null;
-    }
-    PsiElement docAnchor = docAnchorRef.get();
+    PsiElement docAnchor = SoftReference.dereference(myDocAnchor);
     if (docAnchor == null) {
       return null;
     }
-    WeakReference<PsiElement> originalElementRef = myOriginalElement;
-    if (originalElementRef == null) {
-      return null;
-    }
-    PsiElement originalElement = originalElementRef.get();
+    PsiElement originalElement = SoftReference.dereference(myOriginalElement);
     if (originalElement == null) {
       return null;
     }

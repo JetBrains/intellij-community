@@ -17,6 +17,7 @@ package com.siyeh.ipp.exceptions;
 
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -86,6 +87,6 @@ public class DetailExceptionsIntention extends Intention {
       newTryStatement.append("finally").append(finallyBlock.getText());
     }
     final String newStatement = newTryStatement.toString();
-    replaceStatementAndShorten(newStatement, tryStatement);
+    PsiReplacementUtil.replaceStatementAndShortenClassNames(tryStatement, newStatement);
   }
 }

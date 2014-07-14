@@ -52,22 +52,14 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
   private final List<BreakpointPanelProvider> myBreakpointPanelProviders;
   private final BreakpointItemsTreeController myTreeController;
   private final List<XBreakpointGroupingRule> myRulesAvailable = new ArrayList<XBreakpointGroupingRule>();
-  private final BreakpointsSimpleTree myTree;
 
-  private Set<XBreakpointGroupingRule> myRulesEnabled = new TreeSet<XBreakpointGroupingRule>(new Comparator<XBreakpointGroupingRule>() {
-    @Override
-    public int compare(XBreakpointGroupingRule o1, XBreakpointGroupingRule o2) {
-      final int res = o2.getPriority() - o1.getPriority();
-      return res != 0 ? res : (o1.getId().compareTo(o2.getId()));
-    }
-  });
+  private Set<XBreakpointGroupingRule> myRulesEnabled = new TreeSet<XBreakpointGroupingRule>(XBreakpointGroupingRule.PRIORITY_COMPARATOR);
 
   public BreakpointsFavoriteListProvider(Project project) {
     super(project, "Breakpoints");
     myBreakpointPanelProviders = XBreakpointUtil.collectPanelProviders();
     myTreeController = new BreakpointItemsTreeController(myRulesAvailable);
-    myTree = new BreakpointsSimpleTree(myProject, myTreeController);
-    myTreeController.setTreeView(myTree);
+    myTreeController.setTreeView(new BreakpointsSimpleTree(myProject, myTreeController));
     updateChildren();
     for (final BreakpointPanelProvider provider : myBreakpointPanelProviders) {
       provider.addListener(this, myProject, myProject);

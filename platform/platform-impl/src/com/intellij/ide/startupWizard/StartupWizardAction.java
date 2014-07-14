@@ -15,14 +15,14 @@
  */
 package com.intellij.ide.startupWizard;
 
+import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 
@@ -31,6 +31,10 @@ import com.intellij.openapi.ui.Messages;
  */
 public class StartupWizardAction extends AnAction implements DumbAware {
   public void actionPerformed(final AnActionEvent e) {
+    if (Boolean.getBoolean("idea.is.internal")) {
+      new CustomizeIDEWizardDialog().show();
+      return;
+    }
     Project project = e.getData(CommonDataKeys.PROJECT);
     final StartupWizard startupWizard = new StartupWizard(project, ApplicationInfoImpl.getShadowInstance().getPluginChooserPages());
     final String title = ApplicationNamesInfo.getInstance().getFullProductName() + " Plugin Configuration Wizard";

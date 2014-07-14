@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,13 @@
 package com.intellij.openapi.vcs.changes.issueLinks;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ui.ClickListener;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
 
-public abstract class AbstractBaseTagMouseListener extends ClickListener implements MouseMotionListener {
+public abstract class AbstractBaseTagMouseListener extends LinkMouseListenerBase {
   @Override
-  public boolean onClick(MouseEvent e, int clickCount) {
+  public boolean onClick(@NotNull MouseEvent e, int clickCount) {
     if (e.getButton() == 1 && !e.isPopupTrigger()) {
       Object tag = getTagAt(e);
       if (tag instanceof Runnable) {
@@ -33,34 +30,11 @@ public abstract class AbstractBaseTagMouseListener extends ClickListener impleme
         return true;
       }
 
-      if ((tag != null) && (! Object.class.getName().equals(tag.getClass().getName()))) {
-        BrowserUtil.launchBrowser(tag.toString());
+      if (tag != null && !Object.class.getName().equals(tag.getClass().getName())) {
+        BrowserUtil.browse(tag.toString());
         return true;
       }
     }
     return false;
-  }
-
-  @Nullable
-  public abstract Object getTagAt(final MouseEvent e);
-
-  public void mouseDragged(MouseEvent e) {
-  }
-
-  public void mouseMoved(MouseEvent e) {
-    Component table = (Component) e.getSource();
-    Object tag = getTagAt(e);
-    if (tag != null) {
-      table.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    }
-    else {
-      table.setCursor(Cursor.getDefaultCursor());
-    }
-  }
-
-  @Override
-  public void installOn(Component c) {
-    super.installOn(c);
-    c.addMouseMotionListener(this);
   }
 }

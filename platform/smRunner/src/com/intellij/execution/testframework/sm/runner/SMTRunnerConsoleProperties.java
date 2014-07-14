@@ -45,25 +45,42 @@ import org.jetbrains.annotations.Nullable;
 public class SMTRunnerConsoleProperties extends TestConsoleProperties implements SMStacktraceParser {
   private final RunConfiguration myConfiguration;
   protected final CompositeFilter myCustomFilter;
+  private final boolean myPrintTestingStartedTime;
 
   /**
    * @param config
    * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit"
    * @param executor
    */
-  public SMTRunnerConsoleProperties(@NotNull final RunConfiguration config,
-                                    @NotNull final String testFrameworkName,
-                                    @NotNull final Executor executor)
-  {
+  public SMTRunnerConsoleProperties(@NotNull RunConfiguration config,
+                                    @NotNull String testFrameworkName,
+                                    @NotNull Executor executor) {
+    this(config, testFrameworkName, executor, true);
+  }
+
+  /**
+   * @param config
+   * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit"
+   * @param executor
+   */
+  public SMTRunnerConsoleProperties(@NotNull RunConfiguration config,
+                                    @NotNull String testFrameworkName,
+                                    @NotNull Executor executor,
+                                    boolean printTestingStartedTime) {
     super(new Storage.PropertiesComponentStorage(testFrameworkName + "Support.", PropertiesComponent.getInstance()),
           config.getProject(),
           executor);
     myConfiguration = config;
     myCustomFilter = new CompositeFilter(config.getProject());
+    myPrintTestingStartedTime = printTestingStartedTime;
   }
 
   public RunConfiguration getConfiguration() {
     return myConfiguration;
+  }
+
+  public boolean isPrintTestingStartedTime() {
+    return myPrintTestingStartedTime;
   }
 
   @Override
@@ -77,15 +94,15 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     final int stacktraceLength = stacktrace.length();
     final String[] lines = StringUtil.splitByLines(stacktrace);
     for (String line : lines) {
-      final Filter.Result result;
+      Filter.Result result;
       try {
         result = myCustomFilter.applyFilter(line, stacktraceLength);
       }
       catch (Throwable t) {
-        throw new RuntimeException("Error while applying " + myCustomFilter + " to '"+line+"'", t);
+        throw new RuntimeException("Error while applying " + myCustomFilter + " to '" + line + "'", t);
       }
-      if (result != null) {
-        final HyperlinkInfo info = result.hyperlinkInfo;
+      final HyperlinkInfo info = result != null ? result.getFirstHyperlinkInfo() : null;
+      if (info != null) {
 
         // covers 99% use existing cases
         if (info instanceof FileHyperlinkInfo) {
@@ -96,7 +113,7 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
         return new Navigatable() {
           @Override
           public void navigate(boolean requestFocus) {
-            result.hyperlinkInfo.navigate(project);
+            info.navigate(project);
           }
 
           @Override

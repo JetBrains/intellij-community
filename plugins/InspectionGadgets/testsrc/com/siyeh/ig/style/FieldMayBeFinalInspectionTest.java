@@ -1,11 +1,21 @@
 package com.siyeh.ig.style;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
 
-public class FieldMayBeFinalInspectionTest extends IGInspectionTestCase {
+public class FieldMayBeFinalInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/style/field_final",
-           new FieldMayBeFinalInspection());
+  public void testFieldMayBeFinal() throws Exception {
+    doTest();
+  }
+
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new FieldMayBeFinalInspection();
+  }
+
+  @Override
+  protected String getBasePath() {
+    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/style/field_final";
   }
 }

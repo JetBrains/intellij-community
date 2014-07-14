@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,13 @@ import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.application.options.ModulesComboBox;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.mvc.util.ModuleCellRenderer;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -35,8 +35,7 @@ import java.io.File;
 import java.util.HashMap;
 
 public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends SettingsEditor<T> implements PanelWithAnchor {
-  private DefaultComboBoxModel myModulesModel;
-  protected JComboBox myModulesBox;
+  protected ModulesComboBox myModulesBox;
   private JPanel myMainPanel;
   private RawCommandLineEditor myVMParameters;
   private JTextField myCommandLine;
@@ -58,6 +57,7 @@ public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends Se
     setAnchor(myEnvVariablesComponent.getLabel());
   }
 
+  @Override
   protected void resetEditorFrom(T configuration) {
     myFramework = configuration.getFramework();
     myVMParameters.setDialogCaption("VM Options");
@@ -66,11 +66,8 @@ public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends Se
 
     myCommandLine.setText(configuration.cmdLine);
 
-    myModulesModel.removeAllElements();
-    for (Module module : configuration.getValidModules()) {
-      myModulesModel.addElement(module);
-    }
-    myModulesModel.setSelectedItem(configuration.getModule());
+    myModulesBox.setModules(configuration.getValidModules());
+    myModulesBox.setSelectedModule(configuration.getModule());
 
     commandLineChanged(getCommandLine());
 
@@ -122,6 +119,7 @@ public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends Se
     }
   }
 
+  @Override
   protected void applyEditorTo(T configuration) throws ConfigurationException {
     configuration.setModule(getSelectedModule());
     configuration.vmParams = myVMParameters.getText().trim();
@@ -140,19 +138,16 @@ public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends Se
   }
 
   protected Module getSelectedModule() {
-    return (Module)myModulesBox.getSelectedItem();
+    return myModulesBox.getSelectedModule();
   }
 
   public void addExtension(JComponent component) {
     myExtensionPanel.add(component, BorderLayout.PAGE_START);
   }
 
+  @Override
   @NotNull
   protected JComponent createEditor() {
-    myModulesModel = new DefaultComboBoxModel();
-    myModulesBox.setModel(myModulesModel);
-    myModulesBox.setRenderer(new ModuleCellRenderer(myModulesBox.getRenderer()));
-
     return myMainPanel;
   }
 }

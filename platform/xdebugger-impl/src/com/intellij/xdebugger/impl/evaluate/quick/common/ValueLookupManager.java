@@ -24,18 +24,26 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.Alarm;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
 public class ValueLookupManager implements EditorMouseMotionListener {
+  /**
+   * @see com.intellij.xdebugger.XDebuggerUtil#disableValueLookup(com.intellij.openapi.editor.Editor)
+   */
+  public static final Key<Boolean> DISABLE_VALUE_LOOKUP = Key.create("DISABLE_VALUE_LOOKUP");
+
   private final Project myProject;
   private final Alarm myAlarm;
   private AbstractValueHint myRequest = null;
-  private DebuggerSupport[] mySupports;
+  private final DebuggerSupport[] mySupports;
   private boolean myListening;
 
   public ValueLookupManager(Project project) {
@@ -47,18 +55,28 @@ public class ValueLookupManager implements EditorMouseMotionListener {
   public void startListening() {
     if (!myListening) {
       myListening = true;
-      EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(this,myProject);
+      EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(this, myProject);
     }
   }
 
+  @Override
   public void mouseDragged(EditorMouseEvent e) {
   }
 
+  @Override
   public void mouseMoved(EditorMouseEvent e) {
-    if (e.isConsumed()) return;
+    if (e.isConsumed()) {
+      return;
+    }
 
     Editor editor = e.getEditor();
-    if (editor.getProject() != null && editor.getProject() != myProject) return;
+    if (editor.getProject() != null && editor.getProject() != myProject) {
+      return;
+    }
+
+    if (e.getArea() != EditorMouseEventArea.EDITING_AREA || DISABLE_VALUE_LOOKUP.get(editor) == Boolean.TRUE) {
+      return;
+    }
 
     Point point = e.getMouseEvent().getPoint();
     if (myRequest != null && !myRequest.isKeepHint(editor, point)) {
@@ -76,27 +94,31 @@ public class ValueLookupManager implements EditorMouseMotionListener {
 
   private void requestHint(final QuickEvaluateHandler handler, final Editor editor, final Point point, final ValueHintType type) {
     myAlarm.cancelAllRequests();
-    if(type == ValueHintType.MOUSE_OVER_HINT) {
+    if (type == ValueHintType.MOUSE_OVER_HINT) {
       myAlarm.addRequest(new Runnable() {
+        @Override
         public void run() {
           showHint(handler, editor, point, type);
         }
       }, handler.getValueLookupDelay(myProject));
-    } else {
+    }
+    else {
       showHint(handler, editor, point, type);
     }
   }
 
   public void hideHint() {
-    if(myRequest != null) {
+    if (myRequest != null) {
       myRequest.hideHint();
       myRequest = null;
     }
   }
 
-  public void showHint(final QuickEvaluateHandler handler, Editor editor, Point point, ValueHintType type) {
+  public void showHint(@NotNull QuickEvaluateHandler handler, @NotNull Editor editor, @NotNull Point point, @NotNull ValueHintType type) {
     myAlarm.cancelAllRequests();
-    if (editor.isDisposed() || !handler.canShowHint(myProject)) return;
+    if (editor.isDisposed() || !handler.canShowHint(myProject)) {
+      return;
+    }
 
     final AbstractValueHint request = handler.createValueHint(myProject, editor, point, type);
     if (request != null) {
@@ -104,8 +126,12 @@ public class ValueLookupManager implements EditorMouseMotionListener {
         return;
       }
 
-      if (!request.canShowHint()) return;
-      if (myRequest != null && myRequest.isInsideHint(editor, point)) return;
+      if (!request.canShowHint()) {
+        return;
+      }
+      if (myRequest != null && myRequest.isInsideHint(editor, point)) {
+        return;
+      }
 
       hideHint();
 

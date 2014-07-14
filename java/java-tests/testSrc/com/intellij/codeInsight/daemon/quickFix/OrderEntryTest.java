@@ -93,7 +93,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
       if (!actionShouldBeAvailable) {
         fail("Action '" + text + "' is available in test " + testFullPath);
       }
-      WriteCommandAction.runWriteCommandAction(new Runnable() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable() {
         @Override
         public void run() {
           action.invoke(getProject(), getEditor(), getFile());

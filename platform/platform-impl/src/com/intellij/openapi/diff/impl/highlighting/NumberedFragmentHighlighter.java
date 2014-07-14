@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.diff.impl.highlighting;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -9,7 +24,10 @@ import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.MultiMap;
@@ -169,11 +187,11 @@ public class NumberedFragmentHighlighter extends FragmentHighlighterImpl {
         Pair<Integer, TextDiffTypeEnum> pair1 = value.iterator().next();
         Pair<Integer, TextDiffTypeEnum> pair2 = value.get(value.size() - 1);
         TextDiffTypeEnum type = mergeDiffType(value);
-        whereTo.put(entry.getKey(), new Pair<String, TextDiffTypeEnum>(String.valueOf(pair1.getFirst()) + "-" +
-                                                                       String.valueOf(pair2.getFirst()), type));
+        whereTo.put(entry.getKey(), Pair.create(String.valueOf(pair1.getFirst()) + "-" +
+                                                String.valueOf(pair2.getFirst()), type));
       } else {
         Pair<Integer, TextDiffTypeEnum> pair = value.iterator().next();
-        whereTo.put(entry.getKey(), new Pair<String, TextDiffTypeEnum>(String.valueOf(pair.getFirst()), pair.getSecond()));
+        whereTo.put(entry.getKey(), Pair.create(String.valueOf(pair.getFirst()), pair.getSecond()));
       }
     }
   }

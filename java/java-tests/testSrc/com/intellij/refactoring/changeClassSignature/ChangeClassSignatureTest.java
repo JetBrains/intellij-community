@@ -85,6 +85,18 @@ public class ChangeClassSignatureTest extends LightRefactoringTestCase {
     });
   }
 
+  public void testAddParamDiamond() throws Exception {
+    doTest(new GenParams() {
+      @Override
+      public TypeParameterInfo[] gen(PsiClass aClass) throws IncorrectOperationException {
+        return new TypeParameterInfo[] {
+          new TypeParameterInfo(0),
+          new TypeParameterInfo(aClass, "I", "Integer")
+        };
+      }
+    });
+  }
+
   public void testAddOneFirst() throws Exception {
     doTest(new GenParams() {
       @Override

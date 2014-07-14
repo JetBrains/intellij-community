@@ -331,7 +331,7 @@ public class CopiesPanel {
 
     try {
       result.addAll(factory.createUpgradeClient().getSupportedFormats());
-      result.addAll(otherFactory.createUpgradeClient().getSupportedFormats());
+      result.addAll(SvnFormatWorker.getOtherFactoryFormats(otherFactory));
     }
     catch (VcsException e) {
       LOG.info(e);
@@ -357,7 +357,7 @@ public class CopiesPanel {
     SelectBranchPopup.showForBranchRoot(myProject, root, new SelectBranchPopup.BranchSelectedCallback() {
       @Override
       public void branchSelected(Project project, SvnBranchConfigurationNew configuration, String url, long revision) {
-        new QuickMerge(project, url, wcInfo, SVNPathUtil.tail(url), root).execute(new QuickMergeInteractionImpl(myProject));
+        new QuickMerge(new MergeContext(myVcs, url, wcInfo, SVNPathUtil.tail(url), root)).execute(new QuickMergeInteractionImpl(myProject));
       }
     }, "Select branch", mergeLabel);
   }

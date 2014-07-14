@@ -56,9 +56,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -230,36 +228,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
 
       parameters.addParametersString(OTHER_OPTIONS);
 
-      final Set<Module> modules = new HashSet<Module>();
-      myGenerationOptions.accept(new PsiRecursiveElementWalkingVisitor() {
-        @Override
-        public void visitFile(PsiFile file) {
-          final Module module = ModuleUtilCore.findModuleForPsiElement(file);
-          if (module != null) {
-            modules.add(module);
-          }
-        }
-      });
-      final PathsList classPath;
-      final OrderEnumerator orderEnumerator = ProjectRootManager.getInstance(myProject).orderEntries(modules);
-      if (jdk.getSdkType() instanceof JavaSdk) {
-        classPath = orderEnumerator.withoutSdk().withoutModuleSourceEntries().getPathsList();
-      }
-      else {
-        //libraries are included into jdk
-        classPath = orderEnumerator.withoutModuleSourceEntries().getPathsList();
-      }
-      final String classPathString = classPath.getPathsString();
-      if (classPathString.length() > 0) {
-        parameters.add("-classpath");
-        parameters.add(classPathString);
-      }
-
-      if (OUTPUT_DIRECTORY != null) {
-        parameters.add("-d");
-        parameters.add(OUTPUT_DIRECTORY.replace('/', File.separatorChar));
-      }
-
+      final Set<Module> modules = new LinkedHashSet<Module>();
       try {
         final File sourcePathTempFile = FileUtil.createTempFile("javadoc", "args.txt", true);
         parameters.add("@" + sourcePathTempFile.getCanonicalPath());
@@ -274,10 +243,10 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
                                                  scopeType == AnalysisScope.MODULES ||
                                                  scopeType == AnalysisScope.PROJECT ||
                                                  scopeType == AnalysisScope.DIRECTORY;
-              myGenerationOptions.accept(new MyContentIterator(myProject, packages, sources, usePackageNotation));
+              myGenerationOptions.accept(new MyContentIterator(myProject, packages, sources, modules, usePackageNotation));
             }
           };
-          if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(findRunnable, "Search for sources to generate javadoc in...", false, myProject)) {
+          if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(findRunnable, "Search for sources to generate javadoc in...", true, myProject)) {
             return;
           }
           if (packages.size() + sources.size() == 0) {
@@ -319,6 +288,27 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
       catch (IOException e) {
         LOGGER.error(e);
       }
+
+      final PathsList classPath;
+      final OrderEnumerator orderEnumerator = ProjectRootManager.getInstance(myProject).orderEntries(modules);
+      if (jdk.getSdkType() instanceof JavaSdk) {
+        classPath = orderEnumerator.withoutSdk().withoutModuleSourceEntries().getPathsList();
+      }
+      else {
+        //libraries are included into jdk
+        classPath = orderEnumerator.withoutModuleSourceEntries().getPathsList();
+      }
+      final String classPathString = classPath.getPathsString();
+      if (classPathString.length() > 0) {
+        parameters.add("-classpath");
+        parameters.add(classPathString);
+      }
+
+      if (OUTPUT_DIRECTORY != null) {
+        parameters.add("-d");
+        parameters.add(OUTPUT_DIRECTORY.replace('/', File.separatorChar));
+      }
+
     }
 
     @NotNull
@@ -343,9 +333,15 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
     private final PsiManager myPsiManager;
     private final Collection<String> myPackages;
     private final Collection<String> mySourceFiles;
+    private final Set<Module> myModules;
     private final boolean myUsePackageNotation;
 
-    public MyContentIterator(Project project, Collection<String> packages, Collection<String> sources, boolean canUsePackageNotation) {
+    public MyContentIterator(Project project,
+                             Collection<String> packages,
+                             Collection<String> sources,
+                             Set<Module> modules,
+                             boolean canUsePackageNotation) {
+      myModules = modules;
       myUsePackageNotation = canUsePackageNotation;
       myPsiManager = PsiManager.getInstance(project);
       myPackages = packages;
@@ -357,7 +353,10 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
       final VirtualFile fileOrDir = file.getVirtualFile();
       if (fileOrDir == null) return;
       if (!fileOrDir.isInLocalFileSystem()) return;
-      final Module module = ModuleUtil.findModuleForFile(fileOrDir, myPsiManager.getProject());
+      final Module module = ModuleUtilCore.findModuleForFile(fileOrDir, myPsiManager.getProject());
+      if (module != null) {
+        myModules.add(module);
+      }
       if (file instanceof PsiJavaFile) {
         final PsiJavaFile javaFile = (PsiJavaFile)file;
         final String packageName = javaFile.getPackageName();

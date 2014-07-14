@@ -40,6 +40,7 @@ public class QuickEvaluateAction extends XDebuggerActionBase {
     super(true);
   }
 
+  @Override
   @NotNull
   protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {
     return new QuickEvaluateHandlerWrapper(debuggerSupport.getQuickEvaluateHandler());
@@ -52,6 +53,7 @@ public class QuickEvaluateAction extends XDebuggerActionBase {
       myHandler = handler;
     }
 
+    @Override
     public void perform(@NotNull final Project project, final AnActionEvent event) {
       Editor editor = event.getData(CommonDataKeys.EDITOR);
       if (editor != null) {
@@ -61,11 +63,16 @@ public class QuickEvaluateAction extends XDebuggerActionBase {
       }
     }
 
+    @Override
     public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
-      if (!myHandler.isEnabled(project)) return false;
+      if (!myHandler.isEnabled(project)) {
+        return false;
+      }
 
       Editor editor = event.getData(CommonDataKeys.EDITOR);
-      if (editor == null) return false;
+      if (editor == null) {
+        return false;
+      }
 
       InputEvent inputEvent = event.getInputEvent();
       if (inputEvent instanceof MouseEvent && inputEvent.isAltDown()) {

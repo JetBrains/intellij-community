@@ -1,129 +1,63 @@
 package com.intellij.tasks.integration;
 
-import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskTestUtil;
-import com.intellij.tasks.generic.GenericRepository;
-import com.intellij.tasks.generic.GenericRepositoryType;
-import org.jetbrains.annotations.NotNull;
+import com.google.gson.Gson;
+import com.intellij.tasks.TaskManagerTestCase;
+import com.intellij.tasks.gitlab.GitlabRepository;
+import com.intellij.tasks.gitlab.GitlabTask;
+import com.intellij.tasks.gitlab.model.GitlabIssue;
+import com.intellij.tasks.gitlab.model.GitlabProject;
+import com.intellij.tasks.impl.LocalTaskImpl;
+import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.tasks.impl.gson.GsonUtil;
+
+import java.util.Collections;
 
 /**
+ * TODO: install Gitlab on server and add more functional tests
  * @author Mikhail Golubev
  */
-public class GitlabIntegrationTest extends GenericSubtypeTestCase {
-  private static final String TASK_LIST_RESPONSE = "[\n" +
-                                                  "  {\n" +
-                                                  "    \"id\": 2,\n" +
-                                                  "    \"iid\": 2,\n" +
-                                                  "    \"project_id\": 1,\n" +
-                                                  "    \"title\": \"Drink more tea\",\n" +
-                                                  "    \"description\": \"It\\u0027s healthy.\",\n" +
-                                                  "    \"labels\": [],\n" +
-                                                  "    \"assignee\": {\n" +
-                                                  "      \"id\": 4,\n" +
-                                                  "      \"username\": \"deva\",\n" +
-                                                  "      \"email\": \"deva@somemail.com\",\n" +
-                                                  "      \"name\": \"John Smith\",\n" +
-                                                  "      \"state\": \"active\",\n" +
-                                                  "      \"created_at\": \"2013-11-14T12:34:37Z\"\n" +
-                                                  "    },\n" +
-                                                  "    \"author\": {\n" +
-                                                  "      \"id\": 1,\n" +
-                                                  "      \"username\": \"root\",\n" +
-                                                  "      \"email\": \"admin@local.host\",\n" +
-                                                  "      \"name\": \"Administrator\",\n" +
-                                                  "      \"state\": \"active\",\n" +
-                                                  "      \"created_at\": \"2013-11-14T12:19:43Z\"\n" +
-                                                  "    },\n" +
-                                                  "    \"state\": \"opened\",\n" +
-                                                  "    \"updated_at\": \"2013-11-14T12:38:51Z\",\n" +
-                                                  "    \"created_at\": \"2013-11-14T12:33:07Z\"\n" +
-                                                  "  },\n" +
-                                                  "  {\n" +
-                                                  "    \"id\": 1,\n" +
-                                                  "    \"iid\": 1,\n" +
-                                                  "    \"project_id\": 1,\n" +
-                                                  "    \"title\": \"Eat more bananas\",\n" +
-                                                  "    \"description\": \"They're tasty.\",\n" +
-                                                  "    \"labels\": [\n" +
-                                                  "      \"spam\"\n" +
-                                                  "    ],\n" +
-                                                  "    \"assignee\": {\n" +
-                                                  "      \"id\": 1,\n" +
-                                                  "      \"username\": \"root\",\n" +
-                                                  "      \"email\": \"admin@local.host\",\n" +
-                                                  "      \"name\": \"Administrator\",\n" +
-                                                  "      \"state\": \"active\",\n" +
-                                                  "      \"created_at\": \"2013-11-14T12:19:43Z\"\n" +
-                                                  "    },\n" +
-                                                  "    \"author\": {\n" +
-                                                  "      \"id\": 1,\n" +
-                                                  "      \"username\": \"root\",\n" +
-                                                  "      \"email\": \"admin@local.host\",\n" +
-                                                  "      \"name\": \"Administrator\",\n" +
-                                                  "      \"state\": \"active\",\n" +
-                                                  "      \"created_at\": \"2013-11-14T12:19:43Z\"\n" +
-                                                  "    },\n" +
-                                                  "    \"state\": \"opened\",\n" +
-                                                  "    \"updated_at\": \"2013-11-14T12:30:39Z\",\n" +
-                                                  "    \"created_at\": \"2013-11-14T12:30:39Z\"\n" +
-                                                  "  }\n" +
-                                                  "] ";
+public class GitlabIntegrationTest extends TaskManagerTestCase {
+  private static final Gson GSON = GsonUtil.createDefaultBuilder().create();
+  private GitlabRepository myRepository;
 
-  private static final String SINGLE_TASK_RESPONSE = "{\n" +
-                                                     "  \"id\": 2,\n" +
-                                                     "  \"iid\": 2,\n" +
-                                                     "  \"project_id\": 1,\n" +
-                                                     "  \"title\": \"Drink more tea\",\n" +
-                                                     "  \"description\": \"It\\u0027s healthy.\",\n" +
-                                                     "  \"labels\": [],\n" +
-                                                     "  \"assignee\": {\n" +
-                                                     "    \"id\": 4,\n" +
-                                                     "    \"username\": \"deva\",\n" +
-                                                     "    \"email\": \"deva@somemail.com\",\n" +
-                                                     "    \"name\": \"John Smith\",\n" +
-                                                     "    \"state\": \"active\",\n" +
-                                                     "    \"created_at\": \"2013-11-14T12:34:37Z\"\n" +
-                                                     "  },\n" +
-                                                     "  \"author\": {\n" +
-                                                     "    \"id\": 1,\n" +
-                                                     "    \"username\": \"root\",\n" +
-                                                     "    \"email\": \"admin@local.host\",\n" +
-                                                     "    \"name\": \"Administrator\",\n" +
-                                                     "    \"state\": \"active\",\n" +
-                                                     "    \"created_at\": \"2013-11-14T12:19:43Z\"\n" +
-                                                     "  },\n" +
-                                                     "  \"state\": \"opened\",\n" +
-                                                     "  \"updated_at\": \"2013-11-14T12:38:51Z\",\n" +
-                                                     "  \"created_at\": \"2013-11-14T12:33:07Z\"\n" +
-                                                     "}";
+  public void testCommitMessageFormat() throws Exception {
+    String issueJson = "{\n" +
+                       "    \"id\": 1,\n" +
+                       "    \"iid\": 2,\n" +
+                       "    \"project_id\": 3,\n" +
+                       "    \"title\": \"Sample title\",\n" +
+                       "    \"state\": \"opened\",\n" +
+                       "    \"updated_at\": \"2013-11-14T12:30:39Z\",\n" +
+                       "    \"created_at\": \"2013-11-14T12:30:39Z\"\n" +
+                       "}";
 
-  private Task getTask1() {
-    return new TaskTestUtil.TaskBuilder("1", "Eat more bananas", myRepository)
-      .withDescription("They're tasty.")
-      .withUpdated("2013-11-14T12:30:39Z")
-      .withCreated("2013-11-14T12:30:39Z");
+    String projectJson = "{\n" +
+                         "   \"id\": 3,\n" +
+                         "   \"name\": \"project-1\"\n" +
+                         "}";
+
+    GitlabIssue issue = GSON.fromJson(issueJson, GitlabIssue.class);
+    GitlabProject project = GSON.fromJson(projectJson, GitlabProject.class);
+
+    myRepository.setProjects(Collections.singletonList(project));
+    myRepository.setShouldFormatCommitMessage(true);
+    myRepository.setCommitMessageFormat("{project} {number} {id} {summary}");
+
+    LocalTaskImpl localTask = new LocalTaskImpl(new GitlabTask(myRepository, issue));
+    String changeListComment = TaskUtil.getChangeListComment(localTask);
+    assertEquals("project-1 2 1 Sample title", changeListComment);
+
+    myRepository.setProjects(Collections.<GitlabProject>emptyList());
+    localTask = new LocalTaskImpl(new GitlabTask(myRepository, issue));
+    changeListComment = TaskUtil.getChangeListComment(localTask);
+    // Project is unknown, so "" is substituted instead
+    assertEquals(" 2 1 Sample title", changeListComment);
+
   }
 
-  private Task getTask2() {
-    return new TaskTestUtil.TaskBuilder("2", "Drink more tea", myRepository)
-      .withDescription("It's healthy.")
-      .withUpdated("2013-11-14T12:38:51Z")
-      .withCreated("2013-11-14T12:33:07Z");
-  }
-
-  @NotNull
   @Override
-  protected GenericRepository createRepository(GenericRepositoryType genericType) {
-    return (GenericRepository)genericType.new GitlabRepository().createRepository();
-  }
-
-  public void testParsingTaskList() throws Exception {
-    Task[] tasks = myRepository.getActiveResponseHandler().parseIssues(TASK_LIST_RESPONSE, 50);
-    TaskTestUtil.assertTasksEqual(new Task[]{getTask2(), getTask1()}, tasks);
-  }
-
-  public void testParsingSingleTask() throws Exception {
-    Task task = myRepository.getActiveResponseHandler().parseIssue(SINGLE_TASK_RESPONSE);
-    TaskTestUtil.assertTasksEqual(getTask2(), task);
+  public void setUp() throws Exception {
+    super.setUp();
+    myRepository = new GitlabRepository();
   }
 }

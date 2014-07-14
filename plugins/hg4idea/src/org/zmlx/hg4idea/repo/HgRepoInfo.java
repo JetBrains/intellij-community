@@ -17,40 +17,38 @@ package org.zmlx.hg4idea.repo;
 
 import com.google.common.base.Objects;
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgRepoInfo {
   @NotNull private String myCurrentBranch = HgRepository.DEFAULT_BRANCH;
+  @Nullable private final String myTipRevision;
   @Nullable private final String myCurrentRevision;
   @NotNull private final Repository.State myState;
   @Nullable private String myCurrentBookmark = null;
-  @NotNull private Set<HgNameWithHashInfo> myBranches = Collections.emptySet();
+  @NotNull private Map<String, Set<Hash>> myBranches = Collections.emptyMap();
   @NotNull private Set<HgNameWithHashInfo> myBookmarks = Collections.emptySet();
   @NotNull private Set<HgNameWithHashInfo> myTags = Collections.emptySet();
   @NotNull private Set<HgNameWithHashInfo> myLocalTags = Collections.emptySet();
 
   public HgRepoInfo(@NotNull String currentBranch,
                     @Nullable String currentRevision,
+                    @Nullable String currentTipRevision,
                     @NotNull Repository.State state,
-                    @NotNull Collection<HgNameWithHashInfo> branches,
+                    @NotNull Map<String, Set<Hash>> branches,
                     @NotNull Collection<HgNameWithHashInfo> bookmarks,
                     @Nullable String currentBookmark,
                     @NotNull Collection<HgNameWithHashInfo> tags,
                     @NotNull Collection<HgNameWithHashInfo> localTags) {
     myCurrentBranch = currentBranch;
     myCurrentRevision = currentRevision;
+    myTipRevision = currentTipRevision;
     myState = state;
-    myBranches = new LinkedHashSet<HgNameWithHashInfo>(branches);
+    myBranches = branches;
     myBookmarks = new LinkedHashSet<HgNameWithHashInfo>(bookmarks);
     myCurrentBookmark = currentBookmark;
     myTags = new LinkedHashSet<HgNameWithHashInfo>(tags);
@@ -63,7 +61,7 @@ public class HgRepoInfo {
   }
 
   @NotNull
-  public Collection<HgNameWithHashInfo> getBranches() {
+  public Map<String, Set<Hash>> getBranches() {
     return myBranches;
   }
 
@@ -80,6 +78,11 @@ public class HgRepoInfo {
   @NotNull
   public Collection<HgNameWithHashInfo> getLocalTags() {
     return myLocalTags;
+  }
+
+  @Nullable
+  public String getTipRevision() {
+    return myTipRevision;
   }
 
   @Nullable
@@ -105,6 +108,7 @@ public class HgRepoInfo {
     HgRepoInfo info = (HgRepoInfo)o;
 
     if (myState != info.myState) return false;
+    if (myTipRevision != null ? !myTipRevision.equals(info.myTipRevision) : info.myTipRevision != null) return false;
     if (myCurrentRevision != null ? !myCurrentRevision.equals(info.myCurrentRevision) : info.myCurrentRevision != null) return false;
     if (!myCurrentBranch.equals(info.myCurrentBranch)) return false;
     if (myCurrentBookmark != null ? !myCurrentBookmark.equals(info.myCurrentBookmark) : info.myCurrentBookmark != null) return false;
@@ -118,7 +122,8 @@ public class HgRepoInfo {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(myCurrentBranch, myCurrentRevision, myCurrentBookmark, myState, myBranches, myBookmarks, myTags, myLocalTags);
+    return Objects.hashCode(myCurrentBranch, myCurrentRevision, myTipRevision, myCurrentBookmark, myState, myBranches, myBookmarks, myTags,
+                            myLocalTags);
   }
 
   @Override

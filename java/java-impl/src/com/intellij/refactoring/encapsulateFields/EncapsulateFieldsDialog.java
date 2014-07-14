@@ -368,7 +368,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     columnModel.getColumn(FIELD_COLUMN).setCellRenderer(renderer);
     columnModel.getColumn(GETTER_COLUMN).setCellRenderer(renderer);
     columnModel.getColumn(SETTER_COLUMN).setCellRenderer(renderer);
-    columnModel.getColumn(CHECKED_COLUMN).setMaxWidth(new JCheckBox().getPreferredSize().width);
+    TableUtil.setupCheckboxColumn(columnModel.getColumn(CHECKED_COLUMN));
 
     myTable.setPreferredScrollableViewportSize(new Dimension(550, myTable.getRowHeight() * 12));
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);

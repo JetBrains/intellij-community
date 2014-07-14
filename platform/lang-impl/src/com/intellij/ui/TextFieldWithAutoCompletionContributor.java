@@ -23,10 +23,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -37,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Roman.Chernyatchik
  */
-public class TextFieldWithAutoCompletionContributor<T> extends CompletionContributor {
+public class TextFieldWithAutoCompletionContributor<T> extends CompletionContributor implements DumbAware {
   private static final Key<TextFieldWithAutoCompletionListProvider> KEY = Key.create("text field simple completion available");
   private static final Key<Boolean> AUTO_POPUP_KEY = Key.create("text Field simple completion auto-popup");
 
@@ -55,11 +58,11 @@ public class TextFieldWithAutoCompletionContributor<T> extends CompletionContrib
 
 
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull CompletionResultSet result) {
     PsiFile file = parameters.getOriginalFile();
     final TextFieldWithAutoCompletionListProvider<T> provider = file.getUserData(KEY);
 
-    if (provider == null) {
+    if (provider == null || (DumbService.isDumb(file.getProject()) && !DumbService.isDumbAware(provider))) {
       return;
     }
     String adv = provider.getAdvertisement();

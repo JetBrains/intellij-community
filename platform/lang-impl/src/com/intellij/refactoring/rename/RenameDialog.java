@@ -17,6 +17,7 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -95,6 +96,18 @@ public class RenameDialog extends RefactoringDialog {
     myHelpID = RenamePsiElementProcessor.forElement(psiElement).getHelpID(psiElement);
   }
 
+  public static void showRenameDialog(DataContext dataContext, RenameDialog dialog) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      final String name = PsiElementRenameHandler.DEFAULT_NAME.getData(dataContext);
+      //noinspection TestOnlyProblems
+      dialog.performRename(name);
+      dialog.close(OK_EXIT_CODE);
+    }
+    else {
+      dialog.show();
+    }
+  }
+
   @NotNull
   protected String getLabelText() {
     return RefactoringBundle.message("rename.0.and.its.usages.to", getFullName());
@@ -123,12 +136,12 @@ public class RenameDialog extends RefactoringDialog {
     return RenamePsiElementProcessor.forElement(myPsiElement).isToSearchInComments(myPsiElement);
   }
 
-  private String getFullName() {
+  protected String getFullName() {
     final String name = DescriptiveNameUtil.getDescriptiveName(myPsiElement);
     return (UsageViewUtil.getType(myPsiElement) + " " + name).trim();
   }
 
-  private void createNewNameComponent() {
+  protected void createNewNameComponent() {
     String[] suggestedNames = getSuggestedNames();
     myOldName = suggestedNames.length > 0 ? suggestedNames[0] : null;
     myNameSuggestionsField = new NameSuggestionsField(suggestedNames, myProject, FileTypes.PLAIN_TEXT, myEditor) {
@@ -326,5 +339,13 @@ public class RenameDialog extends RefactoringDialog {
   protected boolean areButtonsValid() {
     final String newName = getNewName();
     return RenameUtil.isValidName(myProject, myPsiElement, newName);
+  }
+
+  protected NameSuggestionsField getNameSuggestionsField() {
+    return myNameSuggestionsField;
+  }
+
+  public JCheckBox getCbSearchInComments() {
+    return myCbSearchInComments;
   }
 }

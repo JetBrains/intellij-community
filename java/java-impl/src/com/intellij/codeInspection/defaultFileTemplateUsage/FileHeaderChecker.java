@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,13 +49,11 @@ import java.util.regex.Pattern;
 public class FileHeaderChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defaultFileTemplateUsage.FileHeaderChecker");
 
-  static ProblemDescriptor checkFileHeader(@NotNull final PsiFile file, final InspectionManager manager, boolean onTheFly) {
+  static ProblemDescriptor checkFileHeader(@NotNull final PsiFile file, @NotNull InspectionManager manager, boolean onTheFly) {
     TIntObjectHashMap<String> offsetToProperty = new TIntObjectHashMap<String>();
-    Pattern pattern = getTemplatePattern(FileTemplateManager.getInstance()
-      .getDefaultTemplate(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME),
-                                         file.getProject(), offsetToProperty
-    );
-    Matcher matcher = pattern.matcher(file.getText());
+    FileTemplate defaultTemplate = FileTemplateManager.getInstance().getDefaultTemplate(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
+    Pattern pattern = getTemplatePattern(defaultTemplate, file.getProject(), offsetToProperty);
+    Matcher matcher = pattern.matcher(file.getViewProvider().getContents());
     if (matcher.matches()) {
       final int startOffset = matcher.start(1);
       final int endOffset = matcher.end(1);
@@ -80,7 +78,7 @@ public class FileHeaderChecker {
     return null;
   }
 
-  public static Pattern getTemplatePattern(FileTemplate template, Project project, TIntObjectHashMap<String> offsetToProperty) {
+  public static Pattern getTemplatePattern(@NotNull FileTemplate template, @NotNull Project project, @NotNull TIntObjectHashMap<String> offsetToProperty) {
     String templateText = template.getText().trim();
     String regex = templateToRegex(templateText, offsetToProperty, project);
     regex = StringUtil.replace(regex, "with", "(?:with|by)");
@@ -150,7 +148,7 @@ public class FileHeaderChecker {
     return new LocalQuickFix[]{replaceTemplateFix,editFileTemplateFix};
   }
 
-  private static String templateToRegex(final String text, TIntObjectHashMap<String> offsetToProperty, Project project) {
+  private static String templateToRegex(@NotNull String text, @NotNull TIntObjectHashMap<String> offsetToProperty, @NotNull Project project) {
     String regex = text;
     @NonNls Collection<String> properties = new ArrayList<String>((Collection)FileTemplateManager.getInstance().getDefaultProperties(project).keySet());
     properties.add("PACKAGE_NAME");
@@ -162,7 +160,7 @@ public class FileHeaderChecker {
       String escaped = escapeRegexChars("${"+name+"}");
       boolean first = true;
       for (int i = regex.indexOf(escaped); i!=-1 && i<regex.length(); i = regex.indexOf(escaped,i+1)) {
-        String replacement = first ? "(.*)" : "\\" + groupNumber;
+        String replacement = first ? "([^\\n]*)" : "\\" + groupNumber;
         final int delta = escaped.length() - replacement.length();
         int[] offs = offsetToProperty.keys();
         for (int off : offs) {

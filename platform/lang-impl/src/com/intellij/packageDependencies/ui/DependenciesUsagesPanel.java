@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.UsageInfoToUsageConverter;
 import com.intellij.util.Consumer;
 
 import javax.swing.*;
@@ -110,7 +109,7 @@ public class DependenciesUsagesPanel extends UsagesPanel {
                       ApplicationManager.getApplication().invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                          showUsages(new UsageInfoToUsageConverter.TargetElementsDescriptor(_elementsToSearch), finalUsages);
+                          showUsages(_elementsToSearch, finalUsages);
                         }
                       }, ModalityState.stateForComponent(DependenciesUsagesPanel.this));
                     }

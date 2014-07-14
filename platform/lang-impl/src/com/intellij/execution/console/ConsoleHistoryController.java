@@ -77,8 +77,7 @@ public class ConsoleHistoryController {
 
   public ConsoleHistoryController(@NotNull String type, @Nullable String persistenceId,
                                   @NotNull LanguageConsoleImpl console, @NotNull ConsoleHistoryModel model) {
-    String id = persistenceId == null || StringUtil.isEmpty(persistenceId) ? console.getProject().getPresentableUrl() : persistenceId;
-    myHelper = new ModelHelper(type, id, model);
+    myHelper = new ModelHelper(type, StringUtil.isEmpty(persistenceId) ? console.getProject().getPresentableUrl() : persistenceId, model);
     myConsole = console;
   }
 
@@ -419,7 +418,7 @@ public class ConsoleHistoryController {
         try {
           serializer.setProperty("http://xmlpull.org/v1/doc/properties.html#serializer-indentation", "  ");
         }
-        catch (Exception e) {
+        catch (Exception ignored) {
           // not recognized
         }
         serializer.setOutput(os = new SafeFileOutputStream(file), CharsetToolkit.UTF8);
@@ -432,7 +431,7 @@ public class ConsoleHistoryController {
         try {
           os.close();
         }
-        catch (Exception e) {
+        catch (Exception ignored) {
           // nothing
         }
       }

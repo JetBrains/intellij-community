@@ -17,7 +17,7 @@ class D {
     static <T extends List<?>, S> String foo1(List<T> x) { return null; }
 }
 
-public class Main {
+class Main {
     public static void main(String[] args){
         List<List<String>> x = null;
         foo(x).toCharArray();

@@ -72,6 +72,14 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
           catch (NumberFormatException e) {
             // do nothing
           }
+        } else {
+          char nextChar = s.charAt(1);
+          if (Character.isDigit(nextChar) && nextChar != '0') {
+            Character character = parseNumber(0, s, 10, s.length() - 1, true);
+            if (character != null) {
+              return character;
+            }
+          }
         }
       }
       return unescapeChar(s);

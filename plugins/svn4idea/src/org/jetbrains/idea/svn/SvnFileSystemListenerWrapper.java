@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,7 +144,7 @@ public class SvnFileSystemListenerWrapper {
       final Project project = getProject(args);
       if (project != null) {
         myMarker.start(project);
-        myStarted.put(project, new Pair<String, Object[]>(method.getName(), newArr));
+        myStarted.put(project, Pair.create(method.getName(), newArr));
         Disposer.register(project, new Disposable() {
           public void dispose() {
             myStarted.remove(project);

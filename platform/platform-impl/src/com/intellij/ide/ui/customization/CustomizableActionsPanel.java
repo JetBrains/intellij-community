@@ -47,6 +47,7 @@ import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -332,6 +333,7 @@ public class CustomizableActionsPanel {
       if (exitCode == Messages.OK) {
         mySelectedSchema.addIconCustomization(actionId, null);
         anAction.getTemplatePresentation().setIcon(AllIcons.Toolbar.Unknown);
+        anAction.getTemplatePresentation().setDisabledIcon(IconLoader.getDisabledIcon(AllIcons.Toolbar.Unknown));
         anAction.setDefaultIcon(false);
         node.setUserObject(Pair.create(actionId, AllIcons.Toolbar.Unknown));
         myActionsTree.repaint();
@@ -458,10 +460,7 @@ public class CustomizableActionsPanel {
           Group group = (Group)userObject;
           String name = group.getName();
           setText(name != null ? name : group.getId());
-          icon = group.getIcon();
-          if (icon == null) {
-            icon = getClosedIcon();
-          }
+          icon = ObjectUtils.notNull(group.getIcon(), AllIcons.Nodes.Folder);
         }
         else if (userObject instanceof String) {
           String actionId = (String)userObject;

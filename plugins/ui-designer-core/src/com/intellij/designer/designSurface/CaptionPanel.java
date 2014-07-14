@@ -149,7 +149,7 @@ public class CaptionPanel extends JBLayeredPane implements DataProvider, DeleteP
     myDecorationLayer = new DecorationLayer(designer, myArea);
     add(myDecorationLayer, DesignerEditorPanel.LAYER_DECORATION);
 
-    myFeedbackLayer = new FeedbackLayer();
+    myFeedbackLayer = new FeedbackLayer(designer);
     add(myFeedbackLayer, DesignerEditorPanel.LAYER_FEEDBACK);
 
     myActionsProvider = new CommonEditActionsProvider(designer) {

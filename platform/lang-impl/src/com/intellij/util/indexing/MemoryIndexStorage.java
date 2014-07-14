@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This storage is needed for indexing yet unsaved data without saving those changes to 'main' backend storage
@@ -34,9 +33,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
   private final Map<Key, ChangeTrackingValueContainer<Value>> myMap = new HashMap<Key, ChangeTrackingValueContainer<Value>>();
+  @NotNull
   private final IndexStorage<Key, Value> myBackendStorage;
   private final List<BufferingStateListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final AtomicBoolean myBufferingEnabled = new AtomicBoolean(false);
+  private boolean myBufferingEnabled;
 
   public interface BufferingStateListener {
     void bufferingStateChanged(boolean newState);
@@ -44,33 +44,35 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     void memoryStorageCleared();
   }
 
-  public MemoryIndexStorage(IndexStorage<Key, Value> backend) {
+  public MemoryIndexStorage(@NotNull IndexStorage<Key, Value> backend) {
     myBackendStorage = backend;
   }
 
+  @NotNull
   public IndexStorage<Key, Value> getBackendStorage() {
     return myBackendStorage;
   }
 
-  public void addBufferingStateListsner(BufferingStateListener listener) {
+  public void addBufferingStateListener(@NotNull BufferingStateListener listener) {
     myListeners.add(listener);
   }
 
-  public void removeBufferingStateListsner(BufferingStateListener listener) {
+  public void removeBufferingStateListener(@NotNull BufferingStateListener listener) {
     myListeners.remove(listener);
   }
 
   public void setBufferingEnabled(boolean enabled) {
-    final boolean wasEnabled = myBufferingEnabled.getAndSet(enabled);
-    if (wasEnabled != enabled) {
-      for (BufferingStateListener listener : myListeners) {
-        listener.bufferingStateChanged(enabled);
-      }
+    final boolean wasEnabled = myBufferingEnabled;
+    assert wasEnabled != enabled;
+
+    myBufferingEnabled = enabled;
+    for (BufferingStateListener listener : myListeners) {
+      listener.bufferingStateChanged(enabled);
     }
   }
 
   public boolean isBufferingEnabled() {
-    return myBufferingEnabled.get();
+    return myBufferingEnabled;
   }
 
   public void clearMemoryMap() {
@@ -99,6 +101,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     myBackendStorage.flush();
   }
 
+  @NotNull
   @Override
   public Collection<Key> getKeys() throws StorageException {
     final Set<Key> keys = new HashSet<Key>();
@@ -107,7 +110,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   }
 
   @Override
-  public boolean processKeys(final Processor<Key> processor, GlobalSearchScope scope, IdFilter idFilter) throws StorageException {
+  public boolean processKeys(@NotNull final Processor<Key> processor, GlobalSearchScope scope, IdFilter idFilter) throws StorageException {
     final Set<Key> stopList = new HashSet<Key>();
 
     Processor<Key> decoratingProcessor = new Processor<Key>() {
@@ -129,12 +132,12 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
       }
       stopList.add(key);
     }
-    return myBackendStorage.processKeys(stopList.size() == 0 && myMap.size() == 0 ? processor : decoratingProcessor, scope, idFilter);
+    return myBackendStorage.processKeys(stopList.isEmpty() && myMap.isEmpty() ? processor : decoratingProcessor, scope, idFilter);
   }
 
   @Override
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
-    if (myBufferingEnabled.get()) {
+    if (myBufferingEnabled) {
       getMemValueContainer(key).addValue(inputId, value);
       return;
     }
@@ -147,8 +150,8 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   }
 
   @Override
-  public void removeAllValues(Key key, int inputId) throws StorageException {
-    if (myBufferingEnabled.get()) {
+  public void removeAllValues(@NotNull Key key, int inputId) throws StorageException {
+    if (myBufferingEnabled) {
       getMemValueContainer(key).removeAssociatedValue(inputId);
       return;
     }
@@ -187,9 +190,11 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   @Override
   @NotNull
   public ValueContainer<Value> read(final Key key) throws StorageException {
-    final ValueContainer<Value> valueContainer = myMap.get(key);
-    if (valueContainer != null) {
-      return valueContainer;
+    if (myBufferingEnabled) {
+      final ValueContainer<Value> valueContainer = myMap.get(key);
+      if (valueContainer != null) {
+        return valueContainer;
+      }
     }
 
     return myBackendStorage.read(key);

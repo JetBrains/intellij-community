@@ -16,20 +16,19 @@
 package org.jetbrains.io;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.QueryStringDecoder;
 
-abstract class DelegatingHttpRequestHandlerBase extends SimpleChannelInboundHandler<FullHttpRequest> {
+abstract class DelegatingHttpRequestHandlerBase extends SimpleChannelInboundHandlerAdapter<FullHttpRequest> {
   @Override
   protected void messageReceived(ChannelHandlerContext context, FullHttpRequest message) throws Exception {
     if (BuiltInServer.LOG.isDebugEnabled()) {
 //      BuiltInServer.LOG.debug("IN HTTP:\n" + message);
-      BuiltInServer.LOG.debug("IN HTTP: " + message.getUri());
+      BuiltInServer.LOG.debug("IN HTTP: " + message.uri());
     }
 
-    if (!process(context, message, new QueryStringDecoder(message.getUri()))) {
+    if (!process(context, message, new QueryStringDecoder(message.uri()))) {
       Responses.sendStatus(HttpResponseStatus.NOT_FOUND, context.channel(), message);
     }
   }

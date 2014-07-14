@@ -24,6 +24,7 @@ import com.intellij.openapi.options.OptionalConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.PlatformContentEntriesConfigurable;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -52,6 +53,8 @@ public class PythonContentEntriesConfigurable extends ModuleAwareProjectConfigur
   @NotNull
   @Override
   protected Configurable createModuleConfigurable(Module module) {
-    return new PlatformContentEntriesConfigurable(module, JavaSourceRootType.SOURCE);
+    if (PlatformUtils.isPyCharmCommunity())
+      return new PlatformContentEntriesConfigurable(module, JavaSourceRootType.SOURCE);
+    return new PyContentEntriesModuleConfigurable(module);
   }
 }

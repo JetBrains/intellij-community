@@ -4,7 +4,6 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.commandLine.CommitEventHandler;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -28,7 +27,7 @@ public class SvnKitImportClient extends BaseSvnClient implements ImportClient {
                        boolean noIgnore,
                        @Nullable CommitEventHandler handler,
                        @Nullable ISVNCommitHandler commitHandler) throws VcsException {
-    SVNCommitClient client = myVcs.createCommitClient();
+    SVNCommitClient client = myVcs.getSvnKitManager().createCommitClient();
 
     client.setEventHandler(handler);
     client.setCommitHandler(commitHandler);

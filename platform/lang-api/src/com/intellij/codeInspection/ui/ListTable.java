@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.ui.table.JBTable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
@@ -53,7 +54,7 @@ public class ListTable extends JBTable {
     }
 
     @Override
-    public void setModel(TableModel dataModel) {
+    public void setModel(@NotNull TableModel dataModel) {
         if (!(dataModel instanceof ListWrappingTableModel)) {
             throw new IllegalArgumentException(
                     "dataModel should be of type ListWrappingTableModel");

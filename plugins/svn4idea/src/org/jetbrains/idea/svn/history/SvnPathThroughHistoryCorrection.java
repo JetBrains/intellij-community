@@ -64,6 +64,8 @@ public class SvnPathThroughHistoryCorrection implements ISVNLogEntryHandler {
     }
     for (SVNLogEntryPath path : paths.values()) {
       // "the origin path *from where* the item, ..."
+      // TODO: this could incorrectly handle case when parent folder was replaced - see IDEA-103042
+      // TODO: or several parent folder renames occur IDEA-96825
       final String copyPath = path.getCopyPath();
       if (copyPath != null) {
         final String thisEntryPath = path.getPath();

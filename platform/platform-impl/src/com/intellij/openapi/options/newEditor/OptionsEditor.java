@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.intellij.ide.ui.search.ConfigurableHit;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.internal.statistic.UsageTrigger;
+import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -775,6 +777,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     for (Configurable each : modified) {
       try {
         each.apply();
+        UsageTrigger.trigger("ide.settings." + ConvertUsagesUtil.escapeDescriptorName(each.getDisplayName()));
         if (!each.isModified()) {
           getContext().fireModifiedRemoved(each, null);
         }
@@ -801,8 +804,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     return History.KEY.is(dataId) ? myHistory : null;
   }
 
-  public JTree getPreferredFocusedComponent() {
-    return myTree.getTree();
+  public JComponent getPreferredFocusedComponent() {
+    return mySearch;//myTree.getTree();
   }
 
   @Override

@@ -23,6 +23,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @see com.intellij.psi.stubs.BinaryFileStubBuilders#EXTENSION_POINT_NAME
+ */
 public interface BinaryFileStubBuilder {
   boolean acceptsFile(VirtualFile file);
 

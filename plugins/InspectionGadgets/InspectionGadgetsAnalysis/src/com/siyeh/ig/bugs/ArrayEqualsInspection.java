@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -115,7 +116,7 @@ public class ArrayEqualsInspection extends BaseInspection {
       newExpressionText.append(", ");
       newExpressionText.append(argumentText);
       newExpressionText.append(')');
-      replaceExpressionAndShorten(call, newExpressionText.toString());
+      PsiReplacementUtil.replaceExpressionAndShorten(call, newExpressionText.toString());
     }
   }
 

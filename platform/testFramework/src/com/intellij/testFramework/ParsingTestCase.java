@@ -34,10 +34,8 @@ import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
@@ -46,7 +44,6 @@ import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBus;
@@ -57,7 +54,6 @@ import org.picocontainer.*;
 import org.picocontainer.defaults.AbstractComponentAdapter;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Set;
 
@@ -71,11 +67,17 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   private PsiFileFactoryImpl myFileFactory;
   protected Language myLanguage;
   @NotNull private final ParserDefinition[] myDefinitions;
+  private final boolean myLowercaseFirstLetter;
 
   public ParsingTestCase(@NonNls @NotNull String dataPath, @NotNull String fileExt, @NotNull ParserDefinition... definitions) {
+    this(dataPath, fileExt, false, definitions);
+  }
+
+  public ParsingTestCase(@NonNls @NotNull String dataPath, @NotNull String fileExt, final boolean lowercaseFirstLetter, @NotNull ParserDefinition... definitions) {
     myDefinitions = definitions;
     myFullDataPath = getTestDataPath() + "/" + dataPath;
     myFileExt = fileExt;
+    myLowercaseFirstLetter = lowercaseFirstLetter;
   }
 
   @Override
@@ -109,7 +111,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
       public Document fun(CharSequence charSequence) {
         return editorFactory.createDocument(charSequence);
       }
-    }, FileDocumentManagerImpl.DOCUMENT_KEY));
+    }, FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY));
     registerComponentInstance(appContainer, PsiDocumentManager.class, new MockPsiDocumentManager());
     myLanguage = myLanguage == null && myDefinitions.length > 0? myDefinitions[0].getFileNodeType().getLanguage() : myLanguage;
     registerComponentInstance(appContainer, FileTypeManager.class, new MockFileTypeManager(new MockLanguageFileType(myLanguage, myFileExt)));
@@ -190,7 +192,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   }
 
   protected void doTest(boolean checkResult) {
-    String name = getTestName(false);
+    String name = getTestName(myLowercaseFirstLetter);
     try {
       String text = loadFile(name + "." + myFileExt);
       myFile = createPsiFile(name, text);
@@ -212,7 +214,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   }
 
   protected void doTest(String suffix) throws IOException {
-    String name = getTestName(false);
+    String name = getTestName(myLowercaseFirstLetter);
     String text = loadFile(name + "." + myFileExt);
     myFile = createPsiFile(name, text);
     ensureParsed(myFile);
@@ -221,7 +223,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   }
 
   protected void doCodeTest(String code) throws IOException {
-    String name = getTestName(false);
+    String name = getTestName(myLowercaseFirstLetter);
     myFile = createPsiFile("a", code);
     ensureParsed(myFile);
     assertEquals(code, myFile.getText());
@@ -272,22 +274,8 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   }
 
   public static void doCheckResult(String fullPath, String targetDataName, String text) throws IOException {
-    text = text.trim();
     String expectedFileName = fullPath + File.separatorChar + targetDataName;
-    if (OVERWRITE_TESTDATA) {
-      VfsTestUtil.overwriteTestData(expectedFileName, text);
-      System.out.println("File " + expectedFileName + " created.");
-    }
-    try {
-      String expectedText = doLoadFile(fullPath, targetDataName);
-      if (!Comparing.equal(expectedText, text)) {
-        throw new FileComparisonFailure(targetDataName, expectedText, text, expectedFileName);
-      }
-    }
-    catch(FileNotFoundException e){
-      VfsTestUtil.overwriteTestData(expectedFileName, text);
-      fail("No output text found. File " + expectedFileName + " created.");
-    }
+    UsefulTestCase.assertSameLinesWithFile(expectedFileName, text);
   }
 
   protected static String toParseTreeText(final PsiElement file,  boolean skipSpaces, boolean printRanges) {
@@ -299,9 +287,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   }
 
   private static String doLoadFile(String myFullDataPath, String name) throws IOException {
-    String text = FileUtil.loadFile(new File(myFullDataPath, name), CharsetToolkit.UTF8).trim();
-    text = StringUtil.convertLineSeparators(text);
-    return text;
+    return FileUtil.loadFile(new File(myFullDataPath, name), CharsetToolkit.UTF8, true).trim();
   }
 
   public static void ensureParsed(PsiFile file) {

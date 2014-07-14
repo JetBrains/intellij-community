@@ -15,8 +15,8 @@
  */
 package org.jetbrains.idea.svn.history;
 
+import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
 
 public interface BunchProvider {
   long getEarliestRevision();
@@ -29,6 +29,6 @@ public interface BunchProvider {
    */
   @Nullable
   Fragment getEarliestBunchInInterval(final long earliestRevision, final long oldestRevision, final int desirableSize,
-                                      final boolean includeYoungest, final boolean includeOldest) throws SVNException;
+                                      final boolean includeYoungest, final boolean includeOldest) throws VcsException;
   boolean isEmpty();
 }

@@ -62,8 +62,8 @@ public class LoadingDecorator {
     Disposer.register(parent, myFadeOutAnimator);
 
 
-    myPane.add(content, 0, JLayeredPane.DEFAULT_LAYER);
-    myPane.add(myLoadingLayer, 1, JLayeredPane.DRAG_LAYER);
+    myPane.add(content, JLayeredPane.DEFAULT_LAYER, 0);
+    myPane.add(myLoadingLayer, JLayeredPane.DRAG_LAYER, 1);
 
     Disposer.register(parent, myLoadingLayer.myProgress);
   }

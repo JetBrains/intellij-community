@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeEvent;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiTreeChangeEventImpl extends PsiTreeChangeEvent{
   private boolean isGenericChange;
@@ -49,7 +50,7 @@ public class PsiTreeChangeEventImpl extends PsiTreeChangeEvent{
     return myCode;
   }
 
-  public void setCode(PsiEventType code) {
+  public void setCode(@NotNull PsiEventType code) {
     myCode = code;
   }
 
@@ -81,7 +82,7 @@ public class PsiTreeChangeEventImpl extends PsiTreeChangeEvent{
     myElement = element;
   }
 
-  public void setPropertyName(String propertyName) {
+  public void setPropertyName(@NotNull String propertyName) {
     myPropertyName = propertyName;
   }
 
@@ -121,5 +122,10 @@ public class PsiTreeChangeEventImpl extends PsiTreeChangeEvent{
 
   public void setGenericChange(boolean genericChange) {
     isGenericChange = genericChange;
+  }
+
+  @Override
+  public String toString() {
+    return "PsiTreeChangeEventImpl{myCode=" + myCode + (isGenericChange ? " (generic)" : "") + '}';
   }
 }

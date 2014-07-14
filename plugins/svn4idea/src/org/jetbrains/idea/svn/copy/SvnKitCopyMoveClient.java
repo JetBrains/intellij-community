@@ -4,7 +4,7 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.commandLine.CommitEventHandler;
+import org.jetbrains.idea.svn.checkin.CommitEventHandler;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
@@ -28,7 +28,7 @@ public class SvnKitCopyMoveClient extends BaseSvnClient implements CopyMoveClien
     final SVNCopySource copySource = new SVNCopySource(isMove ? SVNRevision.UNDEFINED : SVNRevision.WORKING, SVNRevision.WORKING, src);
 
     try {
-      myVcs.createCopyClient().doCopy(new SVNCopySource[]{copySource}, dst, isMove, makeParents, true);
+      myVcs.getSvnKitManager().createCopyClient().doCopy(new SVNCopySource[]{copySource}, dst, isMove, makeParents, true);
     }
     catch (SVNException e) {
       throw new VcsException(e);
@@ -40,6 +40,7 @@ public class SvnKitCopyMoveClient extends BaseSvnClient implements CopyMoveClien
                    @NotNull SvnTarget destination,
                    @Nullable SVNRevision revision,
                    boolean makeParents,
+                   boolean isMove,
                    @NotNull String message,
                    @Nullable CommitEventHandler handler) throws VcsException {
 
@@ -48,12 +49,13 @@ public class SvnKitCopyMoveClient extends BaseSvnClient implements CopyMoveClien
     }
 
     final SVNCopySource copySource = createCopySource(source, revision);
-    SVNCopyClient client = myVcs.createCopyClient();
+    SVNCopyClient client = myVcs.getSvnKitManager().createCopyClient();
     client.setEventHandler(handler);
 
     SVNCommitInfo info;
     try {
-      info = client.doCopy(new SVNCopySource[]{copySource}, destination.getURL(), false, makeParents, true, message, null);
+      info = client
+        .doCopy(new SVNCopySource[]{copySource}, destination.getURL(), isMove, makeParents, true, message, null);
     }
     catch (SVNException e) {
       throw new VcsException(e);
@@ -68,7 +70,7 @@ public class SvnKitCopyMoveClient extends BaseSvnClient implements CopyMoveClien
                    @Nullable SVNRevision revision,
                    boolean makeParents,
                    @Nullable ISVNEventHandler handler) throws VcsException {
-    SVNCopyClient client = myVcs.createCopyClient();
+    SVNCopyClient client = myVcs.getSvnKitManager().createCopyClient();
     client.setEventHandler(handler);
 
     try {

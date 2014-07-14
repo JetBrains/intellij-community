@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -102,6 +103,10 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   public boolean isApplicable(@NotNull Language language) {
     String langId = getLanguage();
     return langId == null || language.getID().equals(langId) || applyToDialects() && language.isKindOf(langId);
+  }
+
+  public boolean isCleanupTool() {
+    return myEP != null ? myEP.cleanupTool : getTool() instanceof CleanupLocalInspectionTool;
   }
 
   @NotNull

@@ -17,14 +17,25 @@ package com.jetbrains.python.testing;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -148,7 +159,9 @@ public class PythonUnitTestUtil {
           return true;
         }
         String clsName = cls.getQualifiedName();
-        String[] names = clsName.split("\\.");
+        String[] names = new String[0];
+        if (clsName != null)
+          names = clsName.split("\\.");
         clsName = names[names.length - 1];
         if (TEST_MATCH_PATTERN.matcher(clsName).find()) {
           return true;
@@ -156,5 +169,63 @@ public class PythonUnitTestUtil {
       }
     }
     return false;
+  }
+
+  public static List<Location> findLocations(@NotNull final Project project,
+                                             @NotNull String fileName,
+                                             @Nullable String className,
+                                             @Nullable String methodName) {
+    if (fileName.contains("%")) {
+      fileName = fileName.substring(0, fileName.lastIndexOf("%"));
+    }
+    final List<Location> locations = new ArrayList<Location>();
+    if (methodName == null && className == null) {
+      final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(fileName);
+      if (virtualFile == null) return locations;
+      final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+      if (psiFile != null)
+        locations.add(new PsiLocation<PsiFile>(project, psiFile));
+    }
+
+    if (className != null) {
+      for (PyClass cls : PyClassNameIndex.find(className, project, false)) {
+        ProgressManager.checkCanceled();
+
+        final PsiFile containingFile = cls.getContainingFile();
+        final VirtualFile virtualFile = containingFile.getVirtualFile();
+        final String clsFileName = virtualFile == null? containingFile.getName() : virtualFile.getPath();
+        final String clsFileNameWithoutExt = FileUtil.getNameWithoutExtension(clsFileName);
+        if (!clsFileNameWithoutExt.endsWith(fileName)) {
+          continue;
+        }
+        if (methodName == null) {
+          locations.add(new PsiLocation<PyClass>(project, cls));
+        }
+        else {
+          final PyFunction method = cls.findMethodByName(methodName, true);
+          if (method == null) {
+            continue;
+          }
+
+          locations.add(new PsiLocation<PyFunction>(project, method));
+        }
+      }
+    }
+    else if (methodName != null) {
+      for (PyFunction function : PyFunctionNameIndex.find(methodName, project)) {
+        ProgressManager.checkCanceled();
+        if (function.getContainingClass() == null) {
+          final PsiFile containingFile = function.getContainingFile();
+          final VirtualFile virtualFile = containingFile.getVirtualFile();
+          final String clsFileName = virtualFile == null? containingFile.getName() : virtualFile.getPath();
+          final String clsFileNameWithoutExt = FileUtil.getNameWithoutExtension(clsFileName);
+          if (!clsFileNameWithoutExt.endsWith(fileName)) {
+            continue;
+          }
+          locations.add(new PsiLocation<PyFunction>(project, function));
+        }
+      }
+    }
+    return locations;
   }
 }

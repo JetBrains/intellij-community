@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,10 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
+import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SchemesManager;
@@ -418,14 +420,17 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         alarm.addRequest(new Runnable() {
           public void run() {
             if (!myFilterComponent.isShowing()) return;
-            if (!myTreeExpansionMonitor.isFreeze()) myTreeExpansionMonitor.freeze();
+            myTreeExpansionMonitor.freeze();
             final String filter = getFilter();
             myActionsTree.filter(filter, getCurrentQuickListIds());
             final JTree tree = myActionsTree.getTree();
             TreeUtil.expandAll(tree);
-            if (filter == null || filter.length() == 0){
+            if (filter == null || filter.length() == 0) {
               TreeUtil.collapseAll(tree, 0);
               myTreeExpansionMonitor.restore();
+            }
+            else {
+              myTreeExpansionMonitor.unfreeze();
             }
           }
         }, 300);
@@ -454,6 +459,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     group.add(new DumbAwareAction(KeyMapBundle.message("filter.clear.action.text"),
                            KeyMapBundle.message("filter.clear.action.text"), AllIcons.Actions.GC) {
       public void actionPerformed(AnActionEvent e) {
+        myTreeExpansionMonitor.freeze();
         myActionsTree.filter(null, getCurrentQuickListIds()); //clear filtering
         TreeUtil.collapseAll(myActionsTree.getTree(), 0);
         myTreeExpansionMonitor.restore();
@@ -527,11 +533,12 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
                                     final ShortcutTextField secondShortcut) {
     final KeyStroke keyStroke = firstShortcut.getKeyStroke();
     if (keyStroke != null){
-      if (!myTreeExpansionMonitor.isFreeze()) myTreeExpansionMonitor.freeze();
+      myTreeExpansionMonitor.freeze();
       myActionsTree.filterTree(new KeyboardShortcut(keyStroke, enable2Shortcut.isSelected() ? secondShortcut.getKeyStroke() : null),
                                getCurrentQuickListIds());
       final JTree tree = myActionsTree.getTree();
       TreeUtil.expandAll(tree);
+      myTreeExpansionMonitor.restore();
     }
   }
 
@@ -610,7 +617,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     return myQuickLists;
   }
 
-  private void addMouseShortcut(Shortcut shortcut){
+  private void addMouseShortcut(Shortcut shortcut, ShortcutRestrictions restrictions){
     String actionId = myActionsTree.getSelectedActionId();
     if (actionId == null) {
       return;
@@ -625,7 +632,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       mouseShortcut,
       mySelectedKeymap,
       actionId,
-      myActionsTree.getMainGroup()
+      myActionsTree.getMainGroup(),
+      restrictions
     );
     dialog.show();
     if (!dialog.isOK()){
@@ -956,36 +964,42 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     final Shortcut[] shortcuts = mySelectedKeymap.getShortcuts(actionId);
     final Set<String> abbreviations = AbbreviationManager.getInstance().getAbbreviations(actionId);
 
-    group.add(new DumbAwareAction("Add Keyboard Shortcut") {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        Shortcut firstKeyboard = null;
-        for (Shortcut shortcut : shortcuts) {
-          if (shortcut instanceof KeyboardShortcut) {
-            firstKeyboard = shortcut;
-            break;
+    final ShortcutRestrictions restrictions = ActionShortcutRestrictions.getForActionId(actionId);
+
+    if (restrictions.allowKeyboardShortcut) {
+      group.add(new DumbAwareAction("Add Keyboard Shortcut") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          Shortcut firstKeyboard = null;
+          for (Shortcut shortcut : shortcuts) {
+            if (shortcut instanceof KeyboardShortcut) {
+              firstKeyboard = shortcut;
+              break;
+            }
           }
+
+          addKeyboardShortcut(firstKeyboard);
         }
+      });
+    }
 
-        addKeyboardShortcut(firstKeyboard);
-      }
-    });
-
-    group.add(new DumbAwareAction("Add Mouse Shortcut") {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        Shortcut firstMouse = null;
-        for (Shortcut shortcut : shortcuts) {
-          if (shortcut instanceof MouseShortcut) {
-            firstMouse = shortcut;
-            break;
+    if (restrictions.allowMouseShortcut) {
+      group.add(new DumbAwareAction("Add Mouse Shortcut") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          Shortcut firstMouse = null;
+          for (Shortcut shortcut : shortcuts) {
+            if (shortcut instanceof MouseShortcut) {
+              firstMouse = shortcut;
+              break;
+            }
           }
+          addMouseShortcut(firstMouse, restrictions);
         }
-        addMouseShortcut(firstMouse);
-      }
-    });
+      });
+    }
 
-    if (Registry.is("actionSystem.enableAbbreviations")) {
+    if (Registry.is("actionSystem.enableAbbreviations") && restrictions.allowAbbreviation) {
       group.add(new DumbAwareAction("Add Abbreviation") {
         @Override
         public void actionPerformed(AnActionEvent e) {
@@ -1032,6 +1046,21 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         });
       }
     }
+    group.add(new Separator());
+    group.add(new DumbAwareAction("Reset Shortcuts") {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        mySelectedKeymap.clearOwnActionsId(actionId);
+        processCurrentKeymapChanged(getCurrentQuickListIds());
+        repaintLists();
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setVisible(mySelectedKeymap.canModify() && mySelectedKeymap.hasOwnActionId(actionId));
+        super.update(e);
+      }
+    });
 
     if (e instanceof MouseEvent && ((MouseEvent)e).isPopupTrigger()) {
       final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);

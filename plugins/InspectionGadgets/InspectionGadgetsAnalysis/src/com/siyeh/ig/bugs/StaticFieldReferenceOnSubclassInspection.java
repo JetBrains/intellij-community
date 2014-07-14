@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class StaticFieldReferenceOnSubclassInspection
@@ -82,7 +82,7 @@ public class StaticFieldReferenceOnSubclassInspection
       assert expression != null;
       final PsiField field = (PsiField)expression.resolve();
       assert field != null;
-      replaceExpressionWithReferenceTo(expression, field);
+      PsiReplacementUtil.replaceExpressionWithReferenceTo(expression, field);
     }
   }
 
@@ -123,13 +123,14 @@ public class StaticFieldReferenceOnSubclassInspection
       if (declaringClass.equals(referencedClass)) {
         return;
       }
-      final PsiClass containingClass =
-        ClassUtils.getContainingClass(expression);
-      if (!ClassUtils.isClassVisibleFromClass(containingClass,
-                                              declaringClass)) {
+      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(expression.getProject()).getResolveHelper();
+      if (!resolveHelper.isAccessible(declaringClass, expression, null)) {
         return;
       }
       final PsiElement identifier = expression.getReferenceNameElement();
+      if (identifier == null) {
+        return;
+      }
       registerError(identifier, declaringClass, referencedClass);
     }
   }

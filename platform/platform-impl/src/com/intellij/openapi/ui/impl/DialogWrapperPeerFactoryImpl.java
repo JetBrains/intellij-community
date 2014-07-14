@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,15 +25,19 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public class DialogWrapperPeerFactoryImpl extends DialogWrapperPeerFactory {
+  @NotNull
   @Override
   public DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent) {
     return new DialogWrapperPeerImpl(wrapper, project, canBeParent);
   }
 
-  public DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent, DialogWrapper.IdeModalityType ideModalityType) {
+  @NotNull
+  @Override
+  public DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent, @NotNull DialogWrapper.IdeModalityType ideModalityType) {
     return new DialogWrapperPeerImpl(wrapper, project, canBeParent, ideModalityType);
   }
 
+  @NotNull
   @Override
   public DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, boolean canBeParent) {
     return new DialogWrapperPeerImpl(wrapper, canBeParent);
@@ -42,27 +46,32 @@ public class DialogWrapperPeerFactoryImpl extends DialogWrapperPeerFactory {
   /**
    * {@inheritDoc}
    */
+  @NotNull
   @Deprecated
   @Override
   public DialogWrapperPeer createPeer(@NotNull final DialogWrapper wrapper, final boolean canBeParent, final boolean applicationModalIfPossible) {
     return new DialogWrapperPeerImpl(wrapper, null, canBeParent, applicationModalIfPossible);
   }
 
+  @NotNull
   @Override
   public DialogWrapperPeer createPeer(@NotNull final DialogWrapper wrapper, final Window owner, final boolean canBeParent, final boolean applicationModalIfPossible) {
     return new DialogWrapperPeerImpl(wrapper, owner, canBeParent, applicationModalIfPossible);
   }
 
+  @NotNull
   @Override
   public DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent) {
     return new DialogWrapperPeerImpl(wrapper, parent, canBeParent);
   }
 
+  @NotNull
   @Override
   public DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, boolean canBeParent, DialogWrapper.IdeModalityType ideModalityType) {
     return new DialogWrapperPeerImpl(wrapper, (Window)null, canBeParent, ideModalityType);
   }
 
+  @NotNull
   @Override
   public DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper,
                                       Window owner,

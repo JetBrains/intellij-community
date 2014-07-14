@@ -17,6 +17,7 @@ package com.intellij.lang;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiBuilderUtil {
   private PsiBuilderUtil() { }
@@ -72,6 +73,17 @@ public class PsiBuilderUtil {
   public static void drop(final PsiBuilder.Marker... markers) {
     for (PsiBuilder.Marker marker : markers) {
       if (marker != null) marker.drop();
+    }
+  }
+
+  /**
+   * Rolls the lexer back to position before given marker - if not null.
+   *
+   * @param marker marker to roll back to.
+   */
+  public static void rollbackTo(@Nullable PsiBuilder.Marker marker) {
+    if (marker != null) {
+      marker.rollbackTo();
     }
   }
 }

@@ -164,7 +164,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     JavaParameters parameters = checkCanRun(configuration);
     List<String> lines = extractAllInPackageTests(parameters, psiPackage);
     CHECK.compareUnordered(
-      new Object[]{psiClass.getQualifiedName(), psiClass2.getQualifiedName(), derivedTest.getQualifiedName(), RT_INNER_TEST_NAME,
+      new Object[]{"", psiClass.getQualifiedName(), psiClass2.getQualifiedName(), derivedTest.getQualifiedName(), RT_INNER_TEST_NAME,
         testB.getQualifiedName()},
       lines);
   }

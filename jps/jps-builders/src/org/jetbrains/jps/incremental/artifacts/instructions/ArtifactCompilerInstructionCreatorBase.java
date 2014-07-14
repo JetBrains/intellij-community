@@ -15,14 +15,16 @@
  */
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
+import org.jetbrains.jps.incremental.artifacts.JarPathUtil;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
-import org.jetbrains.jps.incremental.artifacts.JarPathUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,15 +58,22 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
 
   @Override
   public void addExtractDirectoryInstruction(@NotNull File jarFile, @NotNull String pathInJar) {
+    addExtractDirectoryInstruction(jarFile, pathInJar, Conditions.<String>alwaysTrue());
+  }
+
+  @Override
+  public void addExtractDirectoryInstruction(@NotNull File jarFile,
+                                             @NotNull String pathInJar,
+                                             @NotNull Condition<String> pathInJarFilter) {
     //an entry of a jar file is excluded if and only if the jar file itself is excluded. In that case we should unpack entries to the artifact
-    // because the jar itself is explicitly added to the artifact layout.
+    //because the jar itself is explicitly added to the artifact layout.
     boolean includeExcluded = true;
 
     final SourceFileFilterImpl filter = new SourceFileFilterImpl(null, myInstructionsBuilder.getRootsIndex(),
                                                                  myInstructionsBuilder.getIgnoredFileIndex(), includeExcluded);
     DestinationInfo destination = createDirectoryDestination();
     if (destination != null) {
-      ArtifactRootDescriptor descriptor = myInstructionsBuilder.createJarBasedRoot(jarFile, pathInJar, filter, destination);
+      ArtifactRootDescriptor descriptor = myInstructionsBuilder.createJarBasedRoot(jarFile, pathInJar, filter, destination, pathInJarFilter);
       if (myInstructionsBuilder.addDestination(descriptor)) {
         onAdded(descriptor);
       }
