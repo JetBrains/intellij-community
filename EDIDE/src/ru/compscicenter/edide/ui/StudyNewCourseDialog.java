@@ -23,7 +23,7 @@ public class StudyNewCourseDialog extends DialogWrapper {
   private JLabel myErrorLabel;
   private JLabel myErrorIconLabel;
   private final StudyDirectoryProjectGenerator myGenerator;
-  private static final String CONNECTION_ERROR = "Check your internet connection";
+  private static final String CONNECTION_ERROR = "Failed to download courses.\nCheck your Internet connection.";
   private static final String INVALID_COURSE_ERROR = "The course you chosen is invalid";
 
 
@@ -35,29 +35,19 @@ public class StudyNewCourseDialog extends DialogWrapper {
     myErrorLabel.setVisible(false);
     myErrorIconLabel.setVisible(false);
     myOKAction.setEnabled(false);
-    Map<String, File> downloadedDefaultCourses = myGenerator.getDefaultCourses();
-    myGenerator.setMyDefaultCourseFiles(downloadedDefaultCourses);
-    Set<String> availableDefaultCourses = downloadedDefaultCourses.keySet();
-    if (availableDefaultCourses.size() == 0) {
+    Map<String, File> courses = myGenerator.getCourses();
+    if (courses.size() == 0) {
       myErrorLabel.setText(CONNECTION_ERROR);
       myErrorLabel.setVisible(true);
       myErrorIconLabel.setVisible(true);
-      if (myGenerator.downloadCoursesFromGithub()) {
-        downloadedDefaultCourses = myGenerator.getDefaultCourses();
-        myGenerator.setMyDefaultCourseFiles(downloadedDefaultCourses);
-        availableDefaultCourses = myGenerator.getDefaultCourses().keySet();
-        if (availableDefaultCourses.size() != 0) {
-          myErrorIconLabel.setVisible(false);
-          myErrorLabel.setVisible(false);
-          myOKAction.setEnabled(true);
-        }
-      }
-    }
-    else {
+      myOKAction.setEnabled(false);
+
+    } else {
+      Set<String> availableDefaultCourses = courses.keySet();
       myOKAction.setEnabled(true);
-    }
-    for (String courseName : availableDefaultCourses) {
-      myDefaultCoursesComboBox.addItem(courseName);
+      for (String courseName : availableDefaultCourses) {
+        myDefaultCoursesComboBox.addItem(courseName);
+      }
     }
 
     //TODO:try make filters
@@ -67,17 +57,10 @@ public class StudyNewCourseDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         String fileName = myCourseLocationField.getText();
-        if (!fileName.contains("course.json")) {
-          myErrorLabel.setText(INVALID_COURSE_ERROR);
-          myErrorLabel.setVisible(true);
-          myErrorIconLabel.setVisible(true);
-        }
-        else {
-          myGenerator.setMyLocalCourseBaseFileName(fileName);
-          myErrorLabel.setVisible(false);
-          myErrorIconLabel.setVisible(false);
-          myOKAction.setEnabled(true);
-        }
+        myGenerator.setMyLocalCourseBaseFileName(fileName);
+        myErrorLabel.setVisible(false);
+        myErrorIconLabel.setVisible(false);
+        myOKAction.setEnabled(true);
       }
     });
 
@@ -93,7 +76,7 @@ public class StudyNewCourseDialog extends DialogWrapper {
     myRefreshButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        myGenerator.downloadCoursesFromGithub();
+        myGenerator.downloadAndUnzip();
         Map<String, File> newCourses = myGenerator.getDefaultCourses();
         if (newCourses.size() != myGenerator.getMyDefaultCourseFiles().size() && newCourses.size() != 0) {
           myGenerator.setMyDefaultCourseFiles(newCourses);

@@ -26,17 +26,21 @@ import java.io.File;
 import java.io.IOException;
 import java.io.*;
 import java.util.*;
+import java.util.zip.ZipFile;
 
 /**
  * User: lia
  */
 public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
   private static final Logger LOG = Logger.getInstance(StudyDirectoryProjectGenerator.class.getName());
-  public static final String REPO_URL = "https://github.com/medvector/initial-python-course/archive/master.zip";
+  //public static final String REPO_URL = "https://github.com/medvector/initial-python-course/archive/master.zip";
   public static final String USER_NAME = "medvector";
-  public static final String REPOSITORY_NAME = "initial-python-course";
+  public static final String REPO_URL = "https://github.com/medvector/courses-zip/archive/master.zip";
+  public static final String REPOSITORY_NAME = "courses-zip";
+  //public static final String REPOSITORY_NAME = "initial-python-course";
   private File myDefaultCoursesBaseDir;
-  private Map<String, File> myDefaultCourseFiles =  new HashMap<String, File>();
+  private static final String CASH_NAME = "courseNames.txt";
+  private Map<String, File> myDefaultCourseFiles = new HashMap<String, File>();
   private String myLocalCourseBaseFileName;
   private String myDefaultSelectedCourseName;
 
@@ -67,18 +71,33 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
   public File getBaseCourseFile() {
     if (myLocalCourseBaseFileName != null) {
       File file = new File(myLocalCourseBaseFileName);
-      if (file.exists()) {
-        return file;
-      } else {
-        LOG.error("such course file doesn't exist");
+      try {
+        String unzipedName = file.getName().substring(0, file.getName().indexOf("."));
+        File courseDir = new File(myDefaultCoursesBaseDir, unzipedName);
+        ZipUtil.unzip(null, courseDir, file,null, null, true);
+        File[] filesInCourse = courseDir.listFiles();
+        if (filesInCourse != null) {
+          for (File courseFile : filesInCourse) {
+            if (courseFile.getName().equals("course.json")) {
+              return courseFile;
+            }
+          }
+        }
+        System.out.println();
+
       }
-    } else {
+      catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+    else {
       if (myDefaultSelectedCourseName != null) {
         File file = myDefaultCourseFiles.get(myDefaultSelectedCourseName);
-        if (file!=null && file.exists()) {
+        if (file != null && file.exists()) {
           return file;
         }
-      } else {
+      }
+      else {
         if (myDefaultCourseFiles.size() > 0) {
           return myDefaultCourseFiles.entrySet().iterator().next().getValue();
         }
@@ -86,7 +105,6 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
     }
     return null;
   }
-
 
 
   @Nullable
@@ -103,13 +121,15 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
     myDefaultSelectedCourseName = null;
     StudyNewCourseDialog dlg = new StudyNewCourseDialog(project, this);
     dlg.show();
+    Reader reader = null;
     try {
       File baseCourseFile = getBaseCourseFile();
       if (baseCourseFile == null) {
         LOG.error("user didn't choose any course files");
         return;
       }
-      Reader reader = new InputStreamReader(new FileInputStream(baseCourseFile));
+
+      reader = new InputStreamReader(new FileInputStream(baseCourseFile));
       Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
       Course course = gson.fromJson(reader, Course.class);
       course.setParents();
@@ -118,30 +138,49 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
       VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
       StudyTaskManager tm = StudyTaskManager.getInstance(project);
       tm.setCourse(course);
-      System.out.println("test");
     }
     catch (FileNotFoundException e) {
       e.printStackTrace();
     }
+    finally {
+     if (reader != null) {
+       try {
+         reader.close();
+       }
+       catch (IOException e) {
+         e.printStackTrace();
+       }
+     }
+    }
   }
 
-  public boolean downloadCoursesFromGithub() {
-    File outputFile = new File(PathManager.getLibPath() + "/courses.zip");
-      try {
-        GithubDownloadUtil.downloadAtomically(null, REPO_URL,
-                                              outputFile, USER_NAME, REPOSITORY_NAME);
-        if (outputFile.exists()) {
-          ZipUtil.unzip(null, myDefaultCoursesBaseDir, outputFile, null, null, true);
-          if (myDefaultCoursesBaseDir.exists()) {
-            return true;
+  public boolean downloadAndUnzip() {
+    File outputFile = new File(PathManager.getLibPath(), "courses.zip");
+    try {
+      GithubDownloadUtil.downloadAtomically(null, REPO_URL,
+                                            outputFile, USER_NAME, REPOSITORY_NAME);
+      if (outputFile.exists()) {
+        ZipUtil.unzip(null, myDefaultCoursesBaseDir, outputFile, null, null, true);
+        File[] files = myDefaultCoursesBaseDir.listFiles();
+        if (files != null) {
+          for (File file : files) {
+            String fileName = file.getName();
+            if (fileName.contains("zip")) {
+              ZipUtil.unzip(null, new File(myDefaultCoursesBaseDir, fileName.substring(0, fileName.indexOf("."))), file, null, null, true);
+              if (!file.delete()) {
+                LOG.error("Failed to delete", fileName);
+              }
+            }
           }
         }
-        return false;
       }
-      catch (IOException e) {
-        e.printStackTrace();
-        return false;
-      }
+      return true;
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
+    return false;
+
   }
 
   public Map<String, File> getMyDefaultCourseFiles() {
@@ -155,20 +194,22 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
       return defaultCourseFiles;
     }
     try {
+      File cashFile = new File(myDefaultCoursesBaseDir, CASH_NAME);
+      PrintWriter writer =  new PrintWriter(cashFile);
       File[] files = myDefaultCoursesBaseDir.listFiles();
       if (files != null) {
-        for (File f:files) {
+        for (File f : files) {
           if (f.isDirectory()) {
             File[] filesInCourse = f.listFiles();
             if (filesInCourse != null) {
-              for (File courseFile:filesInCourse) {
+              for (File courseFile : filesInCourse) {
                 if (courseFile.getName().equals("course.json")) {
                   String name = getCourseName(courseFile);
                   int i = 2;
-                  if (name!= null) {
+                  if (name != null) {
                     File item = defaultCourseFiles.get(name);
-                    while(item!= null && !FileUtil.filesEqual(item, courseFile)) {
-                      if (i>2)  {
+                    while (item != null && !FileUtil.filesEqual(item, courseFile)) {
+                      if (i > 2) {
                         name = name.substring(0, name.length() - 2);
                       }
                       name = name + Integer.toString(i);
@@ -176,18 +217,23 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
                       item = defaultCourseFiles.get(name);
                     }
                     defaultCourseFiles.put(name, courseFile);
+                    writer.println(name + " " + courseFile.getAbsolutePath());
                   }
                 }
               }
             }
           }
         }
+        //TODO:close in finally block
+        writer.close();
         return defaultCourseFiles;
       }
-
     }
     catch (NullPointerException e) {
       LOG.error("default course folder doesn't exist");
+    }
+    catch (FileNotFoundException e) {
+      e.printStackTrace();
     }
     return myDefaultCourseFiles;
   }
@@ -201,7 +247,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
       com.google.gson.stream.JsonReader r = new com.google.gson.stream.JsonReader(reader);
       JsonParser parser = new JsonParser();
       com.google.gson.JsonElement el = parser.parse(r);
-      name  = el.getAsJsonObject().get("name").getAsString();
+      name = el.getAsJsonObject().get("name").getAsString();
       metaIS.close();
     }
     catch (FileNotFoundException e) {
@@ -219,4 +265,51 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
     return ValidationResult.OK;
   }
 
+  public Map<String, File> getCourses() {
+   if (myDefaultCourseFiles.size() > 0) {
+     return myDefaultCourseFiles;
+   }
+   if (myDefaultCoursesBaseDir.exists()) {
+     File cashFile = new File(myDefaultCoursesBaseDir, CASH_NAME);
+     if (cashFile.exists()) {
+       myDefaultCourseFiles = getCoursesFromCash(cashFile);
+       if (myDefaultCourseFiles.size() > 0) {
+         return myDefaultCourseFiles;
+       }
+     }
+     myDefaultCourseFiles = getDefaultCourses();
+     if (myDefaultCourseFiles.size() > 0) {
+       return myDefaultCourseFiles;
+     }
+   }
+   downloadAndUnzip();
+   myDefaultCourseFiles = getDefaultCourses();
+   return myDefaultCourseFiles;
+
+  }
+
+  private Map<String, File> getCoursesFromCash(File cashFile) {
+    Map<String, File> coursesFromCash = new HashMap<String, File>();
+    try {
+      BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(cashFile)));
+      String line;
+      while ((line = reader.readLine())!=null) {
+        String[] lines = line.split(" ");
+        if (lines.length == 2) {
+          String courseName = lines[0];
+          File file = new File(lines[1]);
+          if (file.exists()) {
+            coursesFromCash.put(courseName, file);
+          }
+        }
+      }
+    }
+    catch (FileNotFoundException e) {
+      e.printStackTrace();
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
+    return coursesFromCash;
+  }
 }

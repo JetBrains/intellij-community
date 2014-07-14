@@ -124,4 +124,8 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     return task.getFile(file.getName());
   }
 
+  public String getDocFileForTask(String file) {
+
+    return "test documentation";
+  }
 }
