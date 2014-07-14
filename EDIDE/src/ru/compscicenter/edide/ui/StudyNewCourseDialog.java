@@ -22,14 +22,14 @@ public class StudyNewCourseDialog extends DialogWrapper {
   private JLabel myLocationLabel;
   private JLabel myErrorLabel;
   private JLabel myErrorIconLabel;
-  private StudyDirectoryProjectGenerator myGenerator;
-  private final String CONNECTION_ERROR = "Check your internet connection";
-  private final String INVALID_COURSE_ERROR = "The course you chosen is invalid";
+  private final StudyDirectoryProjectGenerator myGenerator;
+  private static final String CONNECTION_ERROR = "Check your internet connection";
+  private static final String INVALID_COURSE_ERROR = "The course you chosen is invalid";
 
 
   public StudyNewCourseDialog(final Project project, StudyDirectoryProjectGenerator generator) {
     super(project, true);
-    setTitle("Select the Course");
+    setTitle("Select The Course");
     init();
     myGenerator = generator;
     myErrorLabel.setVisible(false);

@@ -60,7 +60,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
   }
 
   public StudyDirectoryProjectGenerator() {
-    myDefaultCoursesBaseDir = new File(PathManager.getLibPath() + "/courses");
+    myDefaultCoursesBaseDir = new File(PathManager.getLibPath(), "courses");
   }
 
 

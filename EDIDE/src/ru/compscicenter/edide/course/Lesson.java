@@ -57,6 +57,15 @@ public class Lesson {
     }
     return true;
   }
+
+  public boolean isSolved() {
+    for (Task task:taskList) {
+      if (!task.isSolved()) {
+        return false;
+      }
+    }
+    return true;
+  }
   public String getName() {
     return name;
   }

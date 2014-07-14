@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.SaveAndSyncHandlerImpl;
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
@@ -15,6 +16,8 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.ui.JBColor;
 import ru.compscicenter.edide.StudyEditor;
 import ru.compscicenter.edide.StudyTaskManager;
@@ -73,12 +76,15 @@ public class CheckAction extends AnAction {
       while ((line = bf.readLine()) != null) {
         if (line.equals("OK")) {
           testResult = "test passed";
+          ProjectView.getInstance(project).refresh();
+          selectedTaskFile.getTask().setSolved(true);
         }
         System.out.println(line);
       }
       while ((line = bf_err.readLine()) != null) {
         if (line.equals("OK")) {
           testResult = "test passed";
+          ProjectView.getInstance(project).refresh();
           selectedTaskFile.getTask().setSolved(true);
         }
         System.out.println(line);

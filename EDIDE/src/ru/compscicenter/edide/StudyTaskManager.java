@@ -67,8 +67,6 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     return saveState(myProject.getName());
   }
 
-
-
   @Override
   public void loadState(Element el) {
     Element courseElement = el.getChild("courseElement");
@@ -80,7 +78,6 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     myCourse = course;
     myCourse.setParents();
   }
-
 
   @Override
   public void projectOpened() {

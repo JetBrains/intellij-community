@@ -1,22 +1,26 @@
 package ru.compscicenter.edide;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import icons.StudyIcons;
-
-import javax.swing.*;
+import ru.compscicenter.edide.course.Course;
+import ru.compscicenter.edide.course.Lesson;
+import ru.compscicenter.edide.course.Task;
+import ru.compscicenter.edide.course.TaskFile;
 
 /**
  * author: liana
  * data: 6/25/14.
  */
+
 public class StudyDirectoryNode extends PsiDirectoryNode {
-  PsiDirectory myValue;
-  Project myProject;
+  private PsiDirectory myValue;
+  private Project myProject;
   public StudyDirectoryNode(Project project,
                             PsiDirectory value,
                             ViewSettings viewSettings) {
@@ -30,16 +34,31 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
   @Override
   protected void updateImpl(PresentationData data) {
     data.setIcon(StudyIcons.UncheckedTask);
-    if (myValue.getName().contains("task")) {
-      String dirName = myValue.getName();
-      if (dirName.contains("task1") && myValue.getChildren().length != 0) {
-        if (StudyTaskManager.getInstance(myProject).getCourse().getLessons().get(0).getTaskList().get(0).isResolved()) {
+    String valueName = myValue.getName();
+    if (valueName.contains(Task.TASK_DIR)) {
+      TaskFile file = null;
+      for (PsiElement child : myValue.getChildren()) {
+        VirtualFile virtualFile = child.getContainingFile().getVirtualFile();
+        file = StudyTaskManager.getInstance(myProject).getTaskFile(virtualFile);
+        if (file != null) {
+          break;
+        }
+      }
+      if (file != null) {
+        if (file.getTask().isSolved()) {
           data.setIcon(StudyIcons.CheckedTask);
         }
       }
     }
 
-    if (myValue.getName().contains("zPlayground")) {
+    if (valueName.contains(Lesson.LESSON_DIR)) {
+      int lessonIndex = Integer.parseInt(valueName.substring(Lesson.LESSON_DIR.length())) - 1;
+      if (StudyTaskManager.getInstance(myProject).getCourse().getLessons().get(lessonIndex).isSolved()) {
+        data.setIcon(StudyIcons.CheckedTask);
+      }
+    }
+
+    if (valueName.contains("zPlayground")) {
       if (myValue.getParent()!=null) {
         if (!myValue.getParent().getName().contains("zPlayground")) {
           data.setPresentableText("Playground");
@@ -50,12 +69,13 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     }
     PsiDirectory parent = myValue.getParent();
     if (parent != null) {
-      if (myProject.getName().equals(parent.getName()) && myValue.getName().contains("course")) {
+      if (myProject.getName().equals(parent.getName()) && valueName.contains(Course.COURSE_DIR)) {
         data.setPresentableText(StudyTaskManager.getInstance(myProject).getCourse().getName());
-      }
-      else {
-        data.setPresentableText(myValue.getName());
+        return;
       }
     }
+    data.setPresentableText(valueName);
+
+
   }
 }
