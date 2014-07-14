@@ -233,7 +233,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
           final Shortcut shortcut = preferKeyboardShortcut(KeymapManager.getInstance().getActiveKeymap().getShortcuts(getActionId(anAction)));
           if (shortcut != null) {
-            nameComponent.append(" (" + KeymapUtil.getShortcutText(shortcut) + ")", REGULAR_ITALIC_ATTRIBUTES);
+            nameComponent.append(" (" + KeymapUtil.getShortcutText(shortcut) + ")", new SimpleTextAttributes(STYLE_ITALIC, fg));
           }
 
           String groupName = actionWithParentGroup.getAction() instanceof ApplyIntentionAction ? null : actionWithParentGroup.getGroupName();
