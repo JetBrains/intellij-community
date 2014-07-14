@@ -58,7 +58,6 @@ import java.util.*;
 import java.util.List;
 
 import static com.intellij.ui.SimpleTextAttributes.*;
-import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 
 public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, Comparator<Object>, EdtSortingModel {
   @NonNls public static final String SETTINGS_KEY = "$$$SETTINGS$$$";
@@ -247,7 +246,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
         }
         else if (value instanceof OptionDescription) {
           if (!isSelected) {
-            panel.setBackground(UIUtil.isUnderDarcula() ? ColorUtil.brighter(UIUtil.getListBackground(), 1) : LightColors.SLIGHTLY_GRAY);
+            Color descriptorBg = UIUtil.isUnderDarcula() ? ColorUtil.brighter(UIUtil.getListBackground(), 1) : LightColors.SLIGHTLY_GRAY;
+            panel.setBackground(descriptorBg);
+            nameComponent.setBackground(descriptorBg);
           }
           String hit = ((OptionDescription)value).getHit();
           if (hit == null) {
