@@ -236,7 +236,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
             nameComponent.append(" (" + KeymapUtil.getShortcutText(shortcut) + ")", REGULAR_ITALIC_ATTRIBUTES);
           }
 
-          final String groupName = actionWithParentGroup.getGroupName();
+          String groupName = actionWithParentGroup.getAction() instanceof ApplyIntentionAction ? null : actionWithParentGroup.getGroupName();
           if (groupName != null) {
             final JLabel groupLabel = new JLabel(groupName);
             groupLabel.setBackground(bg);
