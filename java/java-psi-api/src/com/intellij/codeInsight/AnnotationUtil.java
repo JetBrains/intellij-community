@@ -461,6 +461,10 @@ public class AnnotationUtil {
     return PsiTreeUtil.getParentOfType(element, PsiNameValuePair.class, PsiArrayInitializerMemberValue.class) != null;
   }
 
+  public static boolean isInferredAnnotation(@NotNull PsiAnnotation annotation) {
+    return InferredAnnotationsManager.getInstance(annotation.getProject()).isInferredAnnotation(annotation);
+  }
+
   @Nullable
   public static String getStringAttributeValue(@NotNull PsiAnnotation anno, @Nullable final String attributeName) {
     PsiAnnotationMemberValue attrValue = anno.findAttributeValue(attributeName);

@@ -720,7 +720,7 @@ public class JavaDocInfoGenerator {
       final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
       if (nameReferenceElement == null) continue;
       final PsiElement resolved = nameReferenceElement.resolve();
-      boolean inferred = InferredAnnotationsManager.getInstance(annotation.getProject()).isInferredAnnotation(annotation);
+      boolean inferred = AnnotationUtil.isInferredAnnotation(annotation);
       if (resolved instanceof PsiClass) {
         final PsiClass annotationType = (PsiClass)resolved;
         if (AnnotationUtil.isAnnotated(annotationType, "java.lang.annotation.Documented", false)) {

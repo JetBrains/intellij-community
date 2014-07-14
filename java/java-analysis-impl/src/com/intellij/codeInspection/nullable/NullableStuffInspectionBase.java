@@ -422,7 +422,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     if (!manager.isNotNull(owner, checkBases)) return false;
 
     PsiAnnotation anno = manager.getNotNullAnnotation(owner, checkBases);
-    return !(anno != null && InferredAnnotationsManager.getInstance(project).isInferredAnnotation(anno));
+    return !(anno != null && AnnotationUtil.isInferredAnnotation(anno));
   }
 
   private static boolean isNullableNotInferred(@NotNull PsiModifierListOwner owner, boolean checkBases) {
@@ -431,7 +431,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     if (!manager.isNullable(owner, checkBases)) return false;
 
     PsiAnnotation anno = manager.getNullableAnnotation(owner, checkBases);
-    return !(anno != null && InferredAnnotationsManager.getInstance(project).isInferredAnnotation(anno));
+    return !(anno != null && AnnotationUtil.isInferredAnnotation(anno));
   }
 
   @NotNull
