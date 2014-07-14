@@ -1,6 +1,5 @@
 package com.intellij.refactoring;
 
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -15,6 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +30,7 @@ import java.io.PrintWriter;
 public abstract class TypeMigrationTestBase extends MultiFileTestCase {
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("typeMigration") + "/testData";
+    return PlatformTestUtil.getCommunityPath() + "/java/typeMigration/testData";
   }
 
   protected void doTestFieldType(@NonNls String fieldName, PsiType fromType, PsiType toType) {

@@ -1,13 +1,13 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author anna
  */
-public class ConvertToThreadLocalIntentionTest extends LightQuickFixParameterizedTestCase {
+public class ConvertToAtomicIntentionTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected boolean shouldBeAvailableAfterExecution() {
     return true;
@@ -15,13 +15,13 @@ public class ConvertToThreadLocalIntentionTest extends LightQuickFixParameterize
 
   @Override
   protected String getBasePath() {
-    return "/intentions/threadLocal";
+    return "/intentions/atomic";
   }
 
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("typeMigration") + "/testData";
+    return PlatformTestUtil.getCommunityPath() + "/java/typeMigration/testData";
   }
 
   public void test() throws Exception {

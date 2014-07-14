@@ -4,7 +4,6 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -13,13 +12,14 @@ import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ChangeTypeSignatureTest extends LightCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("typeMigration") + "/testData";
+    return PlatformTestUtil.getCommunityPath() + "/java/typeMigration/testData";
   }
 
   private void doTest(boolean success, String migrationTypeText) throws Exception {
