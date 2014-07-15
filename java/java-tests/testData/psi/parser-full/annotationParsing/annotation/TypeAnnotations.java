@@ -47,6 +47,10 @@ class SpecSamples {
     try (@A Reader r = new @B FileReader("/dev/zero"); @A Writer w = new @B FileWriter("/dev/null")) { }
   }
 
+  interface TestClass {
+    <T> @Nullable List<T> test();
+  }
+
   //
   // 2. An annotation on a wildcard type argument appears before the wildcard ...
   //
