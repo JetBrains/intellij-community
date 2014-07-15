@@ -84,7 +84,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
         final GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector =
           new GitUntrackedFilesOverwrittenByOperationDetector(selectedRoot);
 
-        GitUtil.workingTreeChangeBegan(project);
+        GitUtil.workingTreeChangeStarted(project);
         try {
           GitCommandResult result = git.runCommand(new Computable<GitLineHandler>() {
             @Override

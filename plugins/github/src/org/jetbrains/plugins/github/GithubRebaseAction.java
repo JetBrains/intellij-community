@@ -226,7 +226,7 @@ public class GithubRebaseAction extends DumbAwareAction {
                                           @NotNull final ProgressIndicator indicator) {
     final Git git = ServiceManager.getService(project, Git.class);
     final GitPlatformFacade facade = ServiceManager.getService(project, GitPlatformFacade.class);
-    GitUtil.workingTreeChangeBegan(project);
+    GitUtil.workingTreeChangeStarted(project);
     GitPreservingProcess process =
       new GitPreservingProcess(project, facade, git, Collections.singletonList(gitRepository), "Rebasing", "upstream/master", indicator,
                                new Runnable() {

@@ -413,7 +413,7 @@ public class GitUnstashDialog extends DialogWrapper {
     GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector = new GitUntrackedFilesOverwrittenByOperationDetector(root);
     h.addLineListener(untrackedFilesDetector);
 
-    GitUtil.workingTreeChangeBegan(myProject);
+    GitUtil.workingTreeChangeStarted(myProject);
     try {
       final Ref<GitCommandResult> result = Ref.create();
       ProgressManager.getInstance().run(new Task.Modal(h.project(), GitBundle.getString("unstash.unstashing"), false) {

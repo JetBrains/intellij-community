@@ -64,7 +64,7 @@ class GitCheckoutOperation extends GitBranchOperation {
   protected void execute() {
     saveAllDocuments();
     boolean fatalErrorHappened = false;
-    GitUtil.workingTreeChangeBegan(myProject);
+    GitUtil.workingTreeChangeStarted(myProject);
     try {
       while (hasMoreRepositories() && !fatalErrorHappened) {
         final GitRepository repository = next();

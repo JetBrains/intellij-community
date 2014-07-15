@@ -1013,7 +1013,7 @@ public class GitUtil {
     builder.show();
   }
 
-  public static void workingTreeChangeBegan(@NotNull Project project) {
+  public static void workingTreeChangeStarted(@NotNull Project project) {
     HeavyProcessLatch.INSTANCE.processStarted();
     project.getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeStarted();
   }
