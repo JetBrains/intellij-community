@@ -2,7 +2,6 @@ package com.intellij.json;
 
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.jetbrains.json.JsonParserDefinition;
 
 /**
  * @author Mikhail Golubev

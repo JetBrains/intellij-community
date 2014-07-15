@@ -5,7 +5,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterTestCase;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.jetbrains.json.JsonLanguage;
 
 /**
  * @author Mikhail Golubev

@@ -23,22 +23,22 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileTypeFactory implementation="com.jetbrains.json.JsonFileTypeFactory"/>
-    <lang.parserDefinition language="JSON" implementationClass="com.jetbrains.json.JsonParserDefinition"/>
-    <lang.syntaxHighlighterFactory key="JSON" implementationClass="com.jetbrains.json.JsonSyntaxHighlighterFactory"/>
+    <fileTypeFactory implementation="com.intellij.json.JsonFileTypeFactory"/>
+    <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
+    <lang.syntaxHighlighterFactory key="JSON" implementationClass="com.intellij.json.JsonSyntaxHighlighterFactory"/>
 
     <!-- Code style and formatting -->
-    <codeStyleSettingsProvider implementation="com.jetbrains.json.formatter.JsonCodeStyleSettingsProvider"/>
-    <langCodeStyleSettingsProvider implementation="com.jetbrains.json.formatter.JsonLanguageCodeStyleSettingsProvider"/>
-    <lang.formatter language="JSON" implementationClass="com.jetbrains.json.formatter.JsonFormattingBuilderModel"/>
-    <lang.braceMatcher language="JSON" implementationClass="com.jetbrains.json.JsonBraceMatcher"/>
-    <quoteHandler fileType="JSON" className="com.jetbrains.json.JsonQuoteHandler"/>
-    <enterHandlerDelegate implementation="com.jetbrains.json.formatter.JsonEnterBetweenBracesHandler"/>
+    <codeStyleSettingsProvider implementation="com.intellij.json.formatter.JsonCodeStyleSettingsProvider"/>
+    <langCodeStyleSettingsProvider implementation="com.intellij.json.formatter.JsonLanguageCodeStyleSettingsProvider"/>
+    <lang.formatter language="JSON" implementationClass="com.intellij.json.formatter.JsonFormattingBuilderModel"/>
+    <lang.braceMatcher language="JSON" implementationClass="com.intellij.json.JsonBraceMatcher"/>
+    <quoteHandler fileType="JSON" className="com.intellij.json.JsonQuoteHandler"/>
+    <enterHandlerDelegate implementation="com.intellij.json.formatter.JsonEnterBetweenBracesHandler"/>
 
     <!-- Codeinsight -->
-    <breadcrumbsInfoProvider implementation="com.jetbrains.json.breadcrumbs.JsonBreadcrumbsProvider"/>
-    <completion.contributor language="JSON" implementationClass="com.jetbrains.json.codeinsight.JsonCompletionContributor"/>
-    <annotator language="JSON" implementationClass="com.jetbrains.json.codeinsight.JsonStringLiteralAnnotator"/>
+    <breadcrumbsInfoProvider implementation="com.intellij.json.breadcrumbs.JsonBreadcrumbsProvider"/>
+    <completion.contributor language="JSON" implementationClass="com.intellij.json.codeinsight.JsonCompletionContributor"/>
+    <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonStringLiteralAnnotator"/>
 
   </extensions>
 </idea-plugin>
