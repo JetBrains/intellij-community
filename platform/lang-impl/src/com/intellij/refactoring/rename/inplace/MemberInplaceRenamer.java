@@ -177,6 +177,11 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     return false;
   }
 
+  @Override
+  protected String getRefactoringId() {
+    return null;
+  }
+
   private void appendAdditionalElement(Collection<Pair<PsiElement, TextRange>> stringUsages,
                                        PsiNamedElement variable,
                                        PsiElement element) {
