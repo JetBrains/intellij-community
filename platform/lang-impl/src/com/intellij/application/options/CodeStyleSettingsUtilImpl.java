@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
 public class CodeStyleSettingsUtilImpl extends CodeStyleSettingsUtil {
   /**
-   * Shows code style settings sutable for the project passed. I.e. it shows project code style page if one
+   * Shows code style settings suitable for the project passed. I.e. it shows project code style page if one
    * is configured to use own code style scheme or global one in other case.
    * @param project
    * @return Returns true if settings were modified during editing session.

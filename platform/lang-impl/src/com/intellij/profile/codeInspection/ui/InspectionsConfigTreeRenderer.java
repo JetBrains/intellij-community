@@ -73,22 +73,11 @@ abstract class InspectionsConfigTreeRenderer extends CheckboxTree.CheckboxTreeCe
       style = SimpleTextAttributes.STYLE_BOLD;
     }
     else {
-      final Descriptor descriptor = node.getDescriptor();
-      final String scopeName = node.getScopeName();
-      if (scopeName != null) {
-        if (node.isByDefault()) {
-          text = "Everywhere else";
-        }
-        else {
-          text = "In scope \'" + scopeName + "\'";
-          if (node.getScope(myProject) == null) {
-            foreground = JBColor.RED;
-          }
-        }
-      } else {
-        text = descriptor.getText();
-      }
-      hint = getHint(descriptor);
+      final ToolDescriptors descriptors = node.getDescriptors();
+      assert descriptors != null;
+      final Descriptor defaultDescriptor = descriptors.getDefaultDescriptor();
+      text = defaultDescriptor.getText();
+      hint = getHint(defaultDescriptor);
     }
 
     if (text != null) {

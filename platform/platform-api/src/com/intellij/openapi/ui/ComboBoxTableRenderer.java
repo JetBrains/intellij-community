@@ -76,6 +76,10 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     return value.toString();
   }
 
+  protected Icon getIconFor(@NotNull T value) {
+    return null;
+  }
+
   protected Runnable onChosen(@NotNull final T value) {
     stopCellEditing(value);
 
@@ -137,6 +141,11 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
         return ComboBoxTableRenderer.this.getTextFor(value);
       }
 
+      @Override
+      public Icon getIconFor(T value) {
+        return ComboBoxTableRenderer.this.getIconFor(value);
+      }
+
       public PopupStep onChosen(T selectedValue, boolean finalChoice) {
         myFinalRunnable = ComboBoxTableRenderer.this.onChosen(selectedValue);
         return FINAL_CHOICE;
@@ -169,6 +178,9 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   protected void customizeComponent(final T value, final JTable table, final boolean isSelected) {
     setOpaque(true);
     setText(value == null ? "" : getTextFor(value));
+    if (value != null) {
+      setIcon(getIconFor(value));
+    }
     setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
     setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
   }
