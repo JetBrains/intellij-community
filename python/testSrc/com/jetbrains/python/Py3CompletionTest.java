@@ -87,7 +87,7 @@ public class Py3CompletionTest extends PyTestCase {
       assertNotNull(suggested);
       assertContainsElements(suggested, "__defaults__", "__globals__", "__closure__",
                              "__code__", "__name__", "__doc__", "__dict__", "__module__");
-      assertContainsElements(suggested, "__annotation__", "__kwdefaults__");
+      assertContainsElements(suggested, "__annotations__", "__kwdefaults__");
     }
     finally {
       setLanguageLevel(null);
