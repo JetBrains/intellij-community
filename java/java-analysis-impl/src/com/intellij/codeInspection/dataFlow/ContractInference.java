@@ -134,7 +134,7 @@ class ContractInferenceInterpreter {
                 }
               }
             }
-            return new MethodContract(answer, negated ? negateConstraint(delegateContract.returnValue) : delegateContract.returnValue);
+            return answer == null ? null : new MethodContract(answer, negated ? negateConstraint(delegateContract.returnValue) : delegateContract.returnValue);
           }
         });
       }
@@ -182,10 +182,12 @@ class ContractInferenceInterpreter {
     if (expr instanceof PsiInstanceOfExpression) {
       final int parameter = resolveParameter(((PsiInstanceOfExpression)expr).getOperand());
       if (parameter >= 0) {
-        return ContainerUtil.map(states, new Function<ValueConstraint[], MethodContract>() {
+        return ContainerUtil.mapNotNull(states, new Function<ValueConstraint[], MethodContract>() {
           @Override
           public MethodContract fun(ValueConstraint[] state) {
-            return new MethodContract(withConstraint(state, parameter, NULL_VALUE), FALSE_VALUE);
+            ValueConstraint paramConstraint = NULL_VALUE;
+            ValueConstraint returnValue = FALSE_VALUE;
+            return contractWithConstraint(state, parameter, paramConstraint, returnValue);
           }
         });
       }
@@ -205,14 +207,22 @@ class ContractInferenceInterpreter {
           result.add(new MethodContract(state, state[paramIndex]));
         } else if (textMatches(myMethod.getParameterList().getParameters()[paramIndex].getTypeElement(), PsiKeyword.BOOLEAN)) {
           // if (boolValue) ...
-          result.add(new MethodContract(withConstraint(state, paramIndex, TRUE_VALUE), TRUE_VALUE));
-          result.add(new MethodContract(withConstraint(state, paramIndex, FALSE_VALUE), FALSE_VALUE));
+          ContainerUtil.addIfNotNull(result, contractWithConstraint(state, paramIndex, TRUE_VALUE, TRUE_VALUE));
+          ContainerUtil.addIfNotNull(result, contractWithConstraint(state, paramIndex, FALSE_VALUE, FALSE_VALUE));
         }
       }
       return result;
     }
 
     return Collections.emptyList();
+  }
+
+  @Nullable
+  private static MethodContract contractWithConstraint(ValueConstraint[] state,
+                                                       int parameter, ValueConstraint paramConstraint,
+                                                       ValueConstraint returnValue) {
+    ValueConstraint[] newState = withConstraint(state, parameter, paramConstraint);
+    return newState == null ? null : new MethodContract(newState, returnValue);
   }
 
   private static boolean textMatches(@Nullable PsiTypeElement typeElement, @NotNull String text) {
@@ -232,8 +242,9 @@ class ContractInferenceInterpreter {
     if (parameter >= 0 && constraint != null) {
       List<MethodContract> result = ContainerUtil.newArrayList();
       for (ValueConstraint[] state : states) {
-        result.add(new MethodContract(withConstraint(state, parameter, constraint), equality ? TRUE_VALUE : FALSE_VALUE));
-        result.add(new MethodContract(withConstraint(state, parameter, negateConstraint(constraint)), equality ? FALSE_VALUE : TRUE_VALUE));
+        ContainerUtil.addIfNotNull(result, contractWithConstraint(state, parameter, constraint, equality ? TRUE_VALUE : FALSE_VALUE));
+        ContainerUtil.addIfNotNull(result, contractWithConstraint(state, parameter, negateConstraint(constraint),
+                                                                  equality ? FALSE_VALUE : TRUE_VALUE));
       }
       return result;
     }
@@ -378,7 +389,13 @@ class ContractInferenceInterpreter {
     return -1;
   }
 
+  @Nullable
   private static ValueConstraint[] withConstraint(ValueConstraint[] constraints, int index, ValueConstraint constraint) {
+    ValueConstraint negated = negateConstraint(constraint);
+    if (negated != constraint && constraints[index] == negated) {
+      return null;
+    }
+
     ValueConstraint[] copy = constraints.clone();
     copy[index] = constraint;
     return copy;
