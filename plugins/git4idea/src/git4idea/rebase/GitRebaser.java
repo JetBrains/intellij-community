@@ -86,7 +86,7 @@ public class GitRebaser {
     final AtomicReference<GitUpdateResult> updateResult = new AtomicReference<GitUpdateResult>();
     final AtomicBoolean failure = new AtomicBoolean();
     try {
-      GitUtil.workingTreeChangeBegan(myProject);
+      GitUtil.workingTreeChangeStarted(myProject);
       rebaseTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
         @Override
         protected void onSuccess() {
@@ -140,7 +140,7 @@ public class GitRebaser {
    * @return true if rebase successfully finished.
    */
   public boolean continueRebase(@NotNull Collection<VirtualFile> rebasingRoots) {
-    GitUtil.workingTreeChangeBegan(myProject);
+    GitUtil.workingTreeChangeStarted(myProject);
     try {
       boolean success = true;
       for (VirtualFile root : rebasingRoots) {

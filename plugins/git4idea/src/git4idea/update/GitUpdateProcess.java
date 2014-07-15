@@ -132,7 +132,7 @@ public class GitUpdateProcess {
 
     GitComplexProcess.Operation updateOperation = new GitComplexProcess.Operation() {
       @Override public void run(ContinuationContext continuationContext) {
-        GitUtil.workingTreeChangeBegan(myProject);
+        GitUtil.workingTreeChangeStarted(myProject);
         try {
           myResult = updateImpl(updateMethod, continuationContext);
         }

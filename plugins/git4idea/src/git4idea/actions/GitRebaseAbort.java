@@ -75,7 +75,7 @@ public class GitRebaseAbort extends GitRepositoryAction {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.REBASE);
     h.setStdoutSuppressed(false);
     h.addParameters("--abort");
-    GitUtil.workingTreeChangeBegan(project);
+    GitUtil.workingTreeChangeStarted(project);
     try {
       GitHandlerUtil.doSynchronously(h, getActionName(), h.printableCommandLine());
     }

@@ -64,7 +64,7 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
     task.executeInBackground(false, new GitTaskResultHandlerAdapter() {
       @Override
       protected void run(GitTaskResult taskResult) {
-        GitUtil.workingTreeChangeBegan(project);
+        GitUtil.workingTreeChangeStarted(project);
         try {
           editor.close();
           GitRepositoryManager manager = GitUtil.getRepositoryManager(project);

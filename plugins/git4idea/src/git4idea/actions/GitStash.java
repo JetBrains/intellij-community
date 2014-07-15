@@ -54,7 +54,7 @@ public class GitStash extends GitRepositoryAction {
     VirtualFile root = d.getGitRoot();
     affectedRoots.add(root);
     final GitLineHandler h = d.handler();
-    GitUtil.workingTreeChangeBegan(project);
+    GitUtil.workingTreeChangeStarted(project);
     try {
       GitHandlerUtil.doSynchronously(h, GitBundle.getString("stashing.title"), h.printableCommandLine());
     }

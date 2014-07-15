@@ -56,7 +56,7 @@ public class GitResetHead extends GitRepositoryAction {
     }
     GitLineHandler h = d.handler();
     affectedRoots.add(d.getGitRoot());
-    GitUtil.workingTreeChangeBegan(project);
+    GitUtil.workingTreeChangeStarted(project);
     try {
       GitHandlerUtil.doSynchronously(h, GitBundle.getString("resetting.title"), h.printableCommandLine());
     }
