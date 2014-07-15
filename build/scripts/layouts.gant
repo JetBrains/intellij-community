@@ -80,11 +80,12 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "manifest",
     "platform-main",
     "remote-servers-java-impl",
+    "structuralsearch",
+    "structuralsearch-java",
     "testFramework",
     "tests_bootstrap",
     "typeMigration",
-    "ui-designer-core",
-    "structuralsearch-java"
+    "ui-designer-core"
   ].flatten()
   implementationModules.removeAll(jpsCommonModules) //todo[nik] remove jps modules from platformImplementationModules instead and update layouts of minor IDEs accordingly
 
