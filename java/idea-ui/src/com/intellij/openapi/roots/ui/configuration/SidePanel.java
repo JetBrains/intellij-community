@@ -99,12 +99,17 @@ public class SidePanel extends JPanel {
       }
 
       @Override
+      protected Color getForeground() {
+        return Registry.is("ide.new.project.settings") ? new JBColor(Gray._60, Gray._140) : super.getForeground();
+      }
+
+      @Override
       protected SeparatorWithText createSeparator() {
         return new SeparatorWithText() {
           @Override
           protected void paintComponent(Graphics g) {
             if (Registry.is("ide.new.project.settings")) {
-              g.setColor(POPUP_SEPARATOR_FOREGROUND);
+              g.setColor(new JBColor(POPUP_SEPARATOR_FOREGROUND, Gray._80));
               if ("--".equals(getCaption())) {
                 g.drawLine(0, getHeight()/ 2, getWidth(), getHeight() /2);
                 return;
