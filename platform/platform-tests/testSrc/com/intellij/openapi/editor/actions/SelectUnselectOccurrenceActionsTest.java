@@ -194,6 +194,13 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
                 "another line");
   }
 
+  public void testSelectingAdjacentFragments() throws Exception {
+    init("fragment<selection>fragment<caret></selection>");
+    executeAction();
+    executeAction();
+    checkResult("<selection>fragment<caret></selection><selection>fragment<caret></selection>");
+  }
+
   private void init(String text) {
     myFixture.configureByText(FileTypes.PLAIN_TEXT, text);
   }
