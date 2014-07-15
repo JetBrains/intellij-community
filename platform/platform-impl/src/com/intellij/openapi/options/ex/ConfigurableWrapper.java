@@ -141,9 +141,12 @@ public class ConfigurableWrapper implements SearchableConfigurable {
   @NotNull
   @Override
   public String getId() {
-    return myEp.id == null ? myEp.instanceClass : myEp.id;
+    return myEp.id == null ? myEp.instanceClass == null ? myEp.providerClass : myEp.instanceClass : myEp.id;
   }
 
+  public String getGroupId() {
+    return myEp.groupId;
+  }
 
   public String getParentId() {
     return myEp.parentId;

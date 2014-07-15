@@ -22,6 +22,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.options.ex.IdeConfigurablesGroup;
+import com.intellij.openapi.options.ex.MixedConfigurableGroup;
 import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
@@ -64,13 +65,17 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   @NotNull
   public static ConfigurableGroup[] getConfigurableGroups(@Nullable Project project, boolean withIdeSettings) {
-    return !withIdeSettings
+    ConfigurableGroup[] groups = !withIdeSettings
            ? new ConfigurableGroup[]{new ProjectConfigurablesGroup(getProject(project))}
            : (project == null)
              ? new ConfigurableGroup[]{new IdeConfigurablesGroup()}
              : new ConfigurableGroup[]{
                new ProjectConfigurablesGroup(project),
                new IdeConfigurablesGroup()};
+
+    return Registry.is("ide.file.settings.order.new")
+           ? MixedConfigurableGroup.getGroups(getConfigurables(groups, true))
+           : groups;
   }
 
   @NotNull
