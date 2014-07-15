@@ -242,7 +242,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     }
   }
 
-  private PsiElement handleSymbolReplacemenent(PsiElement replacement, final PsiElement el) throws IncorrectOperationException {
+  private PsiElement handleSymbolReplacement(PsiElement replacement, final PsiElement el) throws IncorrectOperationException {
     PsiNamedElement nameElement = getSymbolReplacementTarget(el);
     if (nameElement != null) {
       PsiElement oldReplacement = replacement;
@@ -278,7 +278,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         PsiElement replacement = getMatchExpr(statements[0], elementToReplace);
 
         handleModifierList(el, replacement);
-        replacement = handleSymbolReplacemenent(replacement, el);
+        replacement = handleSymbolReplacement(replacement, el);
 
         if (replacement instanceof PsiTryStatement) {
           final List<PsiCatchSection> unmatchedCatchSections = el.getUserData(JavaMatchingVisitor.UNMATCHED_CATCH_SECTION_CONTENT_VAR_KEY);
@@ -386,7 +386,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
           }
         }
 
-        replacement = handleSymbolReplacemenent(replacement, el);
+        replacement = handleSymbolReplacement(replacement, el);
 
         el.replace(replacement);
       }
