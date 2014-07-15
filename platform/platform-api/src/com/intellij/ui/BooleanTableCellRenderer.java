@@ -30,8 +30,12 @@ public class BooleanTableCellRenderer extends JCheckBox implements TableCellRend
   private final JPanel myPanel = new JPanel();
 
   public BooleanTableCellRenderer() {
+    this(CENTER);
+  }
+
+  public BooleanTableCellRenderer(final int horizontalAlignment) {
     super();
-    setHorizontalAlignment(CENTER);
+    setHorizontalAlignment(horizontalAlignment);
     setVerticalAlignment(CENTER);
     setBorder(null);
     setOpaque(true);

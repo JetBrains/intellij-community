@@ -106,7 +106,7 @@ public class VisibleTreeState{
   }
 
   private static State getState(InspectionConfigTreeNode node) {
-    Descriptor descriptor = node.getDescriptor();
+    Descriptor descriptor = node.getDefaultDescriptor();
     final State expandedNode;
     if (descriptor != null) {
       expandedNode = new State(descriptor);

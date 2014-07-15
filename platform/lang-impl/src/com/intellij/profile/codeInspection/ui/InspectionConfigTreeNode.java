@@ -16,7 +16,6 @@
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.Descriptor;
-import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -29,15 +28,15 @@ import org.jetbrains.annotations.Nullable;
  * @since 14-May-2009
  */
 public class InspectionConfigTreeNode extends CheckedTreeNode {
-  private final ScopeToolState myState;
-  private boolean myByDefault;
-  private boolean myInspectionNode;
   private final ClearableLazyValue<Boolean> myProperSetting = new ClearableLazyValue<Boolean>() {
     @NotNull
     @Override
     protected Boolean compute() {
-      Descriptor descriptor = getDescriptor();
-      if (descriptor != null) return descriptor.getInspectionProfile().isProperSetting(descriptor.getToolWrapper().getShortName());
+      ToolDescriptors descriptors = getDescriptors();
+      if (descriptors != null) {
+        final Descriptor defaultDescriptor = descriptors.getDefaultDescriptor();
+        return defaultDescriptor.getInspectionProfile().isProperSetting(defaultDescriptor.getToolWrapper().getShortName());
+      }
       for (int i = 0; i < getChildCount(); i++) {
         InspectionConfigTreeNode node = (InspectionConfigTreeNode)getChildAt(i);
         if (node.isProperSetting()) {
@@ -48,35 +47,31 @@ public class InspectionConfigTreeNode extends CheckedTreeNode {
     }
   };
 
-  public InspectionConfigTreeNode(@NotNull Object userObject, ScopeToolState state, boolean byDefault, boolean inspectionNode) {
+  public InspectionConfigTreeNode(@NotNull Object userObject) {
     super(userObject);
-    myState = state;
-    myByDefault = byDefault;
-    myInspectionNode = inspectionNode;
-    if (state != null) {
-      setChecked(state.isEnabled());
-    }
   }
 
-  public InspectionConfigTreeNode(@NotNull Descriptor descriptor, ScopeToolState state, boolean byDefault, boolean isEnabled,
-                                  boolean inspectionNode) {
-    this(descriptor, state, byDefault, inspectionNode);
+  public InspectionConfigTreeNode(@NotNull ToolDescriptors descriptors, boolean isEnabled) {
+    this(descriptors);
     setChecked(isEnabled);
   }
 
   @Nullable
-  public Descriptor getDescriptor() {
+  public Descriptor getDefaultDescriptor() {
+    final ToolDescriptors descriptors = getDescriptors();
+    return descriptors == null ? null : descriptors.getDefaultDescriptor();
+  }
+
+  @Nullable
+  public ToolDescriptors getDescriptors() {
     if (userObject instanceof String) return null;
-    return (Descriptor)userObject;
+    return (ToolDescriptors)userObject;
   }
 
   @Nullable
   public NamedScope getScope(Project project) {
-    return myState == null ? null : myState.getScope(project);
-  }
-
-  public boolean isByDefault() {
-    return myByDefault;
+    final ToolDescriptors descriptors = getDescriptors();
+    return descriptors == null ? null : descriptors.getScopeToolState().getScope(project);
   }
 
   @Nullable
@@ -84,21 +79,10 @@ public class InspectionConfigTreeNode extends CheckedTreeNode {
     return userObject instanceof String ? (String)userObject : null;
   }
 
-  public boolean isInspectionNode() {
-    return myInspectionNode;
-  }
-
-  public void setInspectionNode(boolean inspectionNode) {
-    myInspectionNode = inspectionNode;
-  }
-
-  public void setByDefault(boolean byDefault) {
-    myByDefault = byDefault;
-  }
-
   @Nullable
   public String getScopeName() {
-    return myState != null ? myState.getScopeName() : null;
+    final ToolDescriptors descriptors = getDescriptors();
+    return descriptors != null ? descriptors.getScopeToolState().getScopeName() : null;
   }
 
   public boolean isProperSetting() {

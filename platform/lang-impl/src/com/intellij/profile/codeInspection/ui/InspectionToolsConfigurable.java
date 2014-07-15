@@ -151,7 +151,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
               final Set<String> levels = new HashSet<String>();
               for (Object o : rootElement.getChildren("inspection_tool")) {
                 final Element inspectElement = (Element)o;
-                levels.add(inspectElement.getAttributeValue("level"));
+                levels.add(inspectElement.getAttributeValue("l"));
                 for (Object s : inspectElement.getChildren("scope")) {
                   levels.add(((Element)s).getAttributeValue("level"));
                 }

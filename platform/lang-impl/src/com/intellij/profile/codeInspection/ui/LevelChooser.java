@@ -56,7 +56,8 @@ public class LevelChooser extends ComboboxWithBrowseButton {
     addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final SeverityEditorDialog dlg = new SeverityEditorDialog(LevelChooser.this, (HighlightSeverity)getComboBox().getSelectedItem(), severityRegistrar);
+        final SeverityEditorDialog dlg =
+          new SeverityEditorDialog(LevelChooser.this, (HighlightSeverity)getComboBox().getSelectedItem(), severityRegistrar);
         dlg.show();
         if (dlg.isOK()) {
           final Object item = getComboBox().getSelectedItem();
@@ -64,7 +65,8 @@ public class LevelChooser extends ComboboxWithBrowseButton {
           final HighlightInfoType type = dlg.getSelectedType();
           if (type != null) {
             getComboBox().setSelectedItem(type.getSeverity(null));
-          } else {
+          }
+          else {
             getComboBox().setSelectedItem(item);
           }
         }

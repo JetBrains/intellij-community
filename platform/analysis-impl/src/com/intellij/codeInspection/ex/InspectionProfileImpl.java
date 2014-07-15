@@ -587,7 +587,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
         final ScopeToolState defaultState = toolList.getDefaultState();
         tools.setDefaultState(copyToolSettings(defaultState.getTool()), defaultState.isEnabled(), defaultState.getLevel());
         tools.removeAllScopes();
-        tools.setEnabled(toolList.isEnabled());
         final List<ScopeToolState> nonDefaultToolStates = toolList.getNonDefaultTools();
         if (nonDefaultToolStates != null) {
           for (ScopeToolState state : nonDefaultToolStates) {
@@ -601,6 +600,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
             }
           }
         }
+        tools.setEnabled(toolList.isEnabled());
       }
     }
     catch (WriteExternalException e) {
@@ -833,8 +833,13 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return getTools(key.toString(), project).isEnabled(namedScope,project);
   }
 
+  @Deprecated
   public void removeScope(@NotNull String toolId, int scopeIdx, Project project) {
     getTools(toolId, project).removeScope(scopeIdx);
+  }
+
+  public void removeScope(@NotNull String toolId, @NotNull ScopeToolState scope, Project project) {
+    getTools(toolId, project).removeScope(scope);
   }
 
   public void removeAllScopes(@NotNull String toolId, Project project) {
@@ -884,7 +889,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     getTools(key.toString(), project).setLevel(level, scopeIdx, project);
   }
 
-  private ToolsImpl getTools(@NotNull String toolId, Project project) {
+  public ToolsImpl getTools(@NotNull String toolId, Project project) {
     initInspectionTools(project);
     return myTools.get(toolId);
   }
