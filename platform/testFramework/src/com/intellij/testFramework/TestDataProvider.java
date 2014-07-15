@@ -17,11 +17,13 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +52,10 @@ public class TestDataProvider implements DataProvider {
     }
     else if (CommonDataKeys.EDITOR.is(dataId) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
       return FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+    }
+    else if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+      Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+      return editor == null ? null : TextEditorProvider.getInstance().getTextEditor(editor);
     }
     else {
       Editor editor = (Editor)getData(CommonDataKeys.EDITOR.getName());

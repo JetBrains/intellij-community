@@ -28,12 +28,23 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.Set;
 
 abstract public class SelectOccurrencesActionHandler extends EditorActionHandler {
 
   private static final Key<Boolean> NOT_FOUND = Key.create("select.next.occurence.not.found");
   private static final Key<Boolean> WHOLE_WORDS = Key.create("select.next.occurence.whole.words");
+
+  private static final Set<String> SELECT_ACTIONS = new HashSet<String>(Arrays.asList(
+    IdeActions.ACTION_SELECT_NEXT_OCCURENCE,
+    IdeActions.ACTION_UNSELECT_PREVIOUS_OCCURENCE,
+    IdeActions.ACTION_FIND_NEXT,
+    IdeActions.ACTION_FIND_PREVIOUS
+  ));
 
   protected static void setSelection(Editor editor, Caret caret, TextRange selectionRange) {
     EditorActionUtil.makePositionVisible(editor, selectionRange.getStartOffset());
@@ -83,6 +94,6 @@ abstract public class SelectOccurrencesActionHandler extends EditorActionHandler
 
   protected static boolean isRepeatedActionInvocation() {
     String lastActionId = EditorLastActionTracker.getInstance().getLastActionId();
-    return IdeActions.ACTION_SELECT_NEXT_OCCURENCE.equals(lastActionId) || IdeActions.ACTION_UNSELECT_PREVIOUS_OCCURENCE.equals(lastActionId);
+    return SELECT_ACTIONS.contains(lastActionId);
   }
 }

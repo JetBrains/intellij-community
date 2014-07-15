@@ -385,7 +385,7 @@ public class FindUtil {
     }
     else {
       editor.putUserData(KEY, null);
-      offset = editor.getCaretModel().getOffset();
+      offset = model.isGlobal() && model.isForward() ? editor.getSelectionModel().getSelectionEnd() : editor.getCaretModel().getOffset();
       if (!model.isForward() && offset > 0) {
         offset--;
       }
@@ -714,7 +714,18 @@ public class FindUtil {
       final ScrollType scrollType = forward ? ScrollType.CENTER_DOWN : ScrollType.CENTER_UP;
 
       if (model.isGlobal()) {
-        caretModel.moveToOffset(result.getEndOffset());
+        int targetCaretPosition = result.getEndOffset();
+        if (selection.getSelectionEnd() - selection.getSelectionStart() == result.getLength()) {
+          // keeping caret's position relative to selection
+          // use case: FindNext is used after SelectNextOccurrence action
+          targetCaretPosition = caretModel.getOffset() - selection.getSelectionStart() + result.getStartOffset();
+        }
+        if (caretModel.getCaretAt(editor.offsetToVisualPosition(targetCaretPosition)) != null) {
+          // if there's a different caret at target position, don't move current caret/selection
+          // use case: FindNext is used after SelectNextOccurrence action
+          return result;
+        }
+        caretModel.moveToOffset(targetCaretPosition);
         selection.removeSelection();
         scrollingModel.scrollToCaret(scrollType);
         scrollingModel.runActionOnScrollingFinished(
@@ -829,17 +840,12 @@ public class FindUtil {
       editor.getCaretModel().addCaretListener(listener);
     }
     JComponent component = HintUtil.createInformationLabel(JDOMUtil.escapeText(message, false, false));
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      LivePreview.processNotFound();
-    } else {
-      final LightweightHint hint = new LightweightHint(component);
-      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, position,
-                                                       HintManager.HIDE_BY_ANY_KEY |
-                                                       HintManager.HIDE_BY_TEXT_CHANGE |
-                                                       HintManager.HIDE_BY_SCROLLING,
-                                                       0, false);
-    }
+    final LightweightHint hint = new LightweightHint(component);
+    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, position,
+                                                     HintManager.HIDE_BY_ANY_KEY |
+                                                     HintManager.HIDE_BY_TEXT_CHANGE |
+                                                     HintManager.HIDE_BY_SCROLLING,
+                                                     0, false);
   }
 
   public static TextRange doReplace(final Project project,

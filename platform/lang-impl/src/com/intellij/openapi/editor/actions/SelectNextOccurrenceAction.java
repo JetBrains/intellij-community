@@ -57,6 +57,9 @@ public class SelectNextOccurrenceAction extends EditorAction {
         model.setCaseSensitive(true);
         model.setWholeWordsOnly(wholeWordSearch);
 
+        findManager.setFindWasPerformed();
+        findManager.setFindNextModel(model);
+
         int searchStartOffset = notFoundPreviously ? 0 : caret.getSelectionEnd();
         FindResult findResult = findManager.findString(editor.getDocument().getCharsSequence(), searchStartOffset, model);
         if (findResult.isStringFound()) {
