@@ -41,6 +41,10 @@ public class ContractInference {
 
   @NotNull
   public static List<MethodContract> inferContracts(@NotNull final PsiMethod method) {
+    if (method instanceof PsiCompiledElement) {
+      return Collections.emptyList();
+    }
+
     return CachedValuesManager.getCachedValue(method, new CachedValueProvider<List<MethodContract>>() {
       @Nullable
       @Override
