@@ -137,9 +137,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   MySearchTextField myPopupField;
   private volatile GotoClassModel2 myClassModel;
   private volatile GotoFileModel myFileModel;
-  private volatile GotoActionModel myActionModel;
+  private volatile GotoActionItemProvider myActionProvider;
   private volatile GotoSymbolModel2 mySymbolsModel;
-  private volatile String[] myActions;
   private Component myFocusComponent;
   private JBPopup myPopup;
   private Map<String, String> myConfigurables = new HashMap<String, String>();
@@ -1356,21 +1355,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private SearchResult getActionsOrSettings(final String pattern, final int max, final boolean actions) {
       final SearchResult result = new SearchResult();
       final MinusculeMatcher matcher = new MinusculeMatcher("*" +pattern, NameUtil.MatchingCaseSensitivity.NONE);
-      if (myActions == null) {
-        if (myActionModel == null) {
-          myActionModel = createActionModel();
-        }
-        myActions = myActionModel.getNames(true);
+      if (myActionProvider == null) {
+        myActionProvider = createActionProvider();
       }
 
-      List<MatchResult> matches = collectResults(pattern, myActions, myActionModel);
-
-      for (MatchResult o : matches) {
-        check();
-        Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
-        for (Object object : objects) {
+      myActionProvider.filterElements(pattern, true, new Processor<GotoActionModel.MatchedValue>() {
+        @Override
+        public boolean process(GotoActionModel.MatchedValue matched) {
           check();
-          if (myListModel.contains(object)) continue;
+          Object object = matched.value;
+          if (myListModel.contains(object)) return true;
 
           if (!actions && isSetting(object)) {
             if (matcher.matches(getSettingText((OptionDescription)object))) {
@@ -1379,9 +1373,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           } else if (actions && !isToolWindowAction(object) && isActionValue(object)) {
             result.add(object);
           }
-          if (result.size() == max) return result;
+          return result.size() <= max;
         }
-      }
+      });
+
       return result;
     }
 
@@ -1789,7 +1784,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myClassChooseByName = ChooseByNamePopup.createPopup(project, myClassModel, (PsiElement)null);
         mySymbolsChooseByName = ChooseByNamePopup.createPopup(project, mySymbolsModel, (PsiElement)null);
         project.putUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
-        myActionModel = createActionModel();
+        myActionProvider = createActionProvider();
         myConfigurables.clear();
         fillConfigurablesIds(null, ShowSettingsUtilImpl.getConfigurables(project, true));
       }
@@ -1799,14 +1794,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       buildRecentFiles("");
     }
 
-    private GotoActionModel createActionModel() {
-      return new GotoActionModel(project, myFocusComponent, myEditor, myFile) {
+    private GotoActionItemProvider createActionProvider() {
+      GotoActionModel model = new GotoActionModel(project, myFocusComponent, myEditor, myFile) {
         @Override
         protected MatchMode actionMatches(String pattern, @NotNull AnAction anAction) {
           return NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE)
-            .matches(anAction.getTemplatePresentation().getText()) ? MatchMode.NAME : MatchMode.NONE;
+                   .matches(anAction.getTemplatePresentation().getText()) ? MatchMode.NAME : MatchMode.NONE;
         }
       };
+      return new GotoActionItemProvider(model);
     }
 
     @SuppressWarnings("SSBasedInspection")
@@ -1886,7 +1882,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       if (names == null) return Collections.emptyList();
       pattern = ChooseByNamePopup.getTransformedPattern(pattern, model);
       pattern = DefaultChooseByNameItemProvider.getNamePattern(model, pattern);
-      if (model != myFileModel && model != myActionModel && !pattern.startsWith("*") && pattern.length() > 1) {
+      if (model != myFileModel && model != myActionProvider && !pattern.startsWith("*") && pattern.length() > 1) {
         pattern = "*" + pattern;
       }
       final ArrayList<MatchResult> results = new ArrayList<MatchResult>();
@@ -1908,7 +1904,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         if (model instanceof CustomMatcherModel) {
           try {
             result = ((CustomMatcherModel)model).matches(name, pattern) ? new MatchResult(name, 0, true) : null;
-            if (result != null && model == myActionModel) {
+            if (result != null && model == myActionProvider) {
               ((CustomMatcherModel)model).matches(name, pattern);
             }
           }
@@ -2032,8 +2028,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         if (lock != null) {
           synchronized (lock) {
             myClassModel = null;
-            myActionModel = null;
-            myActions = null;
+            myActionProvider = null;
             mySymbolsModel = null;
             myConfigurables.clear();
             myFocusComponent = null;

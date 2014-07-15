@@ -16,17 +16,13 @@
 
 package com.intellij.ide.util.gotoByName;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ApplyIntentionAction;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
-import com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
-import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -43,7 +39,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -60,8 +55,6 @@ import java.util.List;
 import static com.intellij.ui.SimpleTextAttributes.*;
 
 public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, Comparator<Object>, EdtSortingModel {
-  @NonNls public static final String SETTINGS_KEY = "$$$SETTINGS$$$";
-  @NonNls public static final String INTENTIONS_KEY = "$$$INTENTIONS_KEY$$$";
   @Nullable private final Project myProject;
   private final Component myContextComponent;
 
@@ -168,6 +161,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     private int getMatchingDegree() {
       String text = getValueText();
       if (text != null) {
+        if (StringUtil.equalsIgnoreCase(StringUtil.trimEnd(text, "..."), pattern)) return 3;
         if (StringUtil.startsWithIgnoreCase(text, pattern)) return 2;
         if (StringUtil.containsIgnoreCase(text, pattern)) return 1;
       }
@@ -356,112 +350,17 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   @Override
   @NotNull
   public String[] getNames(boolean checkBoxState) {
-    final LinkedHashSet<String> result = new LinkedHashSet<String>();
-    result.add(INTENTIONS_KEY);
-    for (AnAction action : myActionsMap.keySet()) {
-      result.add(getActionId(action));
-    }
-    if (checkBoxState) {
-      final Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
-      for (String id : ids) {
-        result.add(id);
-      }
-    }
-    result.add(SETTINGS_KEY);
-    return ArrayUtil.toStringArray(result);
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   @Override
   @NotNull
   public Object[] getElementsByName(final String id, final boolean checkBoxState, final String pattern) {
-    List<Comparable> objects = ContainerUtil.newArrayList();
-    final AnAction act = myActionManager.getAction(id);
-    DataContext dataContext = DataManager.getInstance().getDataContext(myContextComponent);
-    if (act != null) {
-      final HashMap<AnAction, String> map = new HashMap<AnAction, String>();
-      final MatchMode matchMode = actionMatches(pattern, act);
-      final String groupName = myActionsMap.get(act);
-      if (map.put(act, groupName) == null) {
-        objects.add(new ActionWrapper(act, groupName, matchMode, dataContext));
-      }
-      if (checkBoxState) {
-        final Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
-        for (AnAction action : map.keySet()) { //do not add already included actions
-          ids.remove(getActionId(action));
-        }
-        if (ids.contains(id)) {
-          final AnAction anAction = myActionManager.getAction(id);
-          map.put(anAction, null);
-          if (anAction != null) {
-            objects.add(new ActionWrapper(anAction, null, MatchMode.NON_MENU, dataContext));
-          }
-        }
-      }
-    } else if (Comparing.strEqual(id, INTENTIONS_KEY)) {
-      for (String intentionText : myIntentions.keySet()) {
-        final ApplyIntentionAction intentionAction = myIntentions.get(intentionText);
-        if (actionMatches(pattern, intentionAction) != MatchMode.NONE) {
-          objects.add(new ActionWrapper(intentionAction, intentionText, MatchMode.INTENTION, dataContext));
-        }
-      }
-    }
-    if (Comparing.strEqual(id, SETTINGS_KEY)) {
-      final Set<String> words = myIndex.getProcessedWords(pattern);
-      Set<OptionDescription> optionDescriptions = null;
-      final String actionManagerName = myActionManager.getComponentName();
-      for (String word : words) {
-        final Set<OptionDescription> descriptions = ((SearchableOptionsRegistrarImpl)myIndex).getAcceptableDescriptions(word);
-        if (descriptions != null) {
-          for (Iterator<OptionDescription> iterator = descriptions.iterator(); iterator.hasNext(); ) {
-            OptionDescription description = iterator.next();
-            if (actionManagerName.equals(description.getPath())) {
-              iterator.remove();
-            }
-          }
-          if (!descriptions.isEmpty()) {
-            if (optionDescriptions == null) {
-              optionDescriptions = descriptions;
-            }
-            else {
-              optionDescriptions.retainAll(descriptions);
-            }
-          }
-        } else {
-          optionDescriptions = null;
-          break;
-        }
-      }
-      if (optionDescriptions != null && !optionDescriptions.isEmpty()) {
-        Set<String> currentHits = new HashSet<String>();
-        for (Iterator<OptionDescription> iterator = optionDescriptions.iterator(); iterator.hasNext(); ) {
-          OptionDescription description = iterator.next();
-          final String hit = description.getHit();
-          if (hit == null || !currentHits.add(hit.trim())) {
-            iterator.remove();
-          }
-        }
-        for (OptionDescription description : optionDescriptions) {
-          for (ActionFromOptionDescriptorProvider converter : ActionFromOptionDescriptorProvider.EP.getExtensions()) {
-            AnAction action = converter.provide(description);
-            if (action != null) {
-              String title = getGroupName(description);
-              objects.add(new ActionWrapper(action, title, MatchMode.NAME, dataContext));
-            }
-            objects.add(description);
-          }
-        }
-      }
-    }
-    return ContainerUtil.map2Array(objects, MatchedValue.class, new Function<Comparable, MatchedValue>() {
-      @Override
-      public MatchedValue fun(Comparable o) {
-        return new MatchedValue(o, pattern);
-      }
-    });
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @NotNull
-  private String getGroupName(@NotNull OptionDescription description) {
+  String getGroupName(@NotNull OptionDescription description) {
     String id = description.getConfigurableId();
     String name = myConfigurablesNames.get(id);
     String settings = SystemInfo.isMac ? "Preferences" : "Settings";
@@ -551,7 +450,10 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       return MatchMode.DESCRIPTION;
     }
     final String groupName = myActionsMap.get(anAction);
-    return groupName != null && text != null && matcher.matches(groupName + " " + text, compiledPattern) ? MatchMode.GROUP : MatchMode.NONE;
+    if (groupName == null) {
+      return matcher.matches(text, compiledPattern) ? MatchMode.NON_MENU : MatchMode.NONE;
+    }
+    return text != null && matcher.matches(groupName + " " + text, compiledPattern) ? MatchMode.GROUP : MatchMode.NONE;
   }
 
   @Nullable
@@ -564,7 +466,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   }
 
   @NotNull
-  private Pattern getPattern(@NotNull String pattern) {
+  Pattern getPattern(@NotNull String pattern) {
     String converted = convertPattern(pattern.trim());
     Pattern compiledPattern = myCompiledPattern;
     if (compiledPattern != null && !Comparing.strEqual(converted, compiledPattern.getPattern())) {
@@ -594,7 +496,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     NONE, INTENTION, NAME, DESCRIPTION, GROUP, NON_MENU
   }
 
-  private static String convertPattern(String pattern) {
+  static String convertPattern(String pattern) {
     final int eol = pattern.indexOf('\n');
     if (eol != -1) {
       pattern = pattern.substring(0, eol);
@@ -698,7 +600,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       return new Perl5Matcher();
     }
   };
-  private PatternMatcher getMatcher() {
+  PatternMatcher getMatcher() {
     return myMatcher.get();
   }
   
