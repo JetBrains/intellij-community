@@ -74,7 +74,12 @@ class ContractInferenceInterpreter {
       }
       else if (statements[0] instanceof PsiExpressionStatement && ((PsiExpressionStatement)statements[0]).getExpression() instanceof PsiMethodCallExpression) {
         List<MethodContract> result = handleDelegation(((PsiExpressionStatement)statements[0]).getExpression(), false);
-        if (result != null) return result;
+        if (result != null) return ContainerUtil.findAll(result, new Condition<MethodContract>() {
+          @Override
+          public boolean value(MethodContract contract) {
+            return contract.returnValue == THROW_EXCEPTION || !textMatches(myMethod.getReturnTypeElement(), PsiKeyword.VOID);
+          }
+        });
       }
     }
 
@@ -198,19 +203,20 @@ class ContractInferenceInterpreter {
         if (state[paramIndex] != ANY_VALUE) {
           // the second 'o' reference in cases like: if (o != null) return o;
           result.add(new MethodContract(state, state[paramIndex]));
-        } else {
-          PsiTypeElement typeElement = myMethod.getParameterList().getParameters()[paramIndex].getTypeElement();
-          if (typeElement != null && typeElement.textMatches(PsiKeyword.BOOLEAN)) {
-            // if (boolValue) ...
-            result.add(new MethodContract(withConstraint(state, paramIndex, TRUE_VALUE), TRUE_VALUE));
-            result.add(new MethodContract(withConstraint(state, paramIndex, FALSE_VALUE), FALSE_VALUE));
-          }
+        } else if (textMatches(myMethod.getParameterList().getParameters()[paramIndex].getTypeElement(), PsiKeyword.BOOLEAN)) {
+          // if (boolValue) ...
+          result.add(new MethodContract(withConstraint(state, paramIndex, TRUE_VALUE), TRUE_VALUE));
+          result.add(new MethodContract(withConstraint(state, paramIndex, FALSE_VALUE), FALSE_VALUE));
         }
       }
       return result;
     }
 
     return Collections.emptyList();
+  }
+
+  private static boolean textMatches(@Nullable PsiTypeElement typeElement, @NotNull String text) {
+    return typeElement != null && typeElement.textMatches(text);
   }
 
   private List<MethodContract> visitEqualityComparison(List<ValueConstraint[]> states,
@@ -302,7 +308,15 @@ class ContractInferenceInterpreter {
         result.addAll(toContracts(states, THROW_EXCEPTION));
       }
       else if (statement instanceof PsiReturnStatement) {
-        result.addAll(visitExpression(states, ((PsiReturnStatement)statement).getReturnValue()));
+        List<MethodContract> contracts = visitExpression(states, ((PsiReturnStatement)statement).getReturnValue());
+        for (MethodContract contract : contracts) {
+          if ((contract.returnValue == TRUE_VALUE || contract.returnValue == FALSE_VALUE) &&
+              !textMatches(myMethod.getReturnTypeElement(), PsiKeyword.BOOLEAN)) {
+            continue;
+          }
+
+          result.add(contract);
+        }
       }
       else if (statement instanceof PsiAssertStatement) {
         List<MethodContract> conditionResults = visitExpression(states, ((PsiAssertStatement)statement).getAssertCondition());

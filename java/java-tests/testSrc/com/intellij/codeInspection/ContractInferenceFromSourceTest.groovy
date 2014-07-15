@@ -220,6 +220,30 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['_ -> true']
   }
 
+  public void "test boolean autoboxing"() {
+    def c = inferContracts("""
+    static Object test1(Object o1) {
+        return o1 == null;
+    }""")
+    assert c == []
+  }
+
+  public void "test non-returning delegation"() {
+    def c = inferContracts("""
+    static void test2(Object o) {
+        assertNotNull(o);
+    }
+
+    static boolean assertNotNull(Object o) {
+        if (o == null) {
+            throw new NullPointerException();
+        }
+        return true;
+    }
+    """)
+    assert c == ['null -> fail']
+  }
+
   private String inferContract(String method) {
     return assertOneElement(inferContracts(method))
   }
