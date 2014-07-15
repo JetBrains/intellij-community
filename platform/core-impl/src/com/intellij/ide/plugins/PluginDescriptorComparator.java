@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.plugins;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.TObjectIntHashMap;
@@ -32,7 +31,7 @@ public class PluginDescriptorComparator implements Comparator<IdeaPluginDescript
   private final TObjectIntHashMap<PluginId> myIdToNumberMap = new TObjectIntHashMap<PluginId>();
   private int myAvailableNumber = 1;
 
-  public PluginDescriptorComparator(IdeaPluginDescriptor[] descriptors) throws Exception{
+  public PluginDescriptorComparator(IdeaPluginDescriptor[] descriptors){
     final Map<PluginId, IdeaPluginDescriptor> idToDescriptorMap = new HashMap<PluginId, IdeaPluginDescriptor>();
     for (final IdeaPluginDescriptor descriptor : descriptors) {
       idToDescriptorMap.put(descriptor.getPluginId(), descriptor);
@@ -46,18 +45,20 @@ public class PluginDescriptorComparator implements Comparator<IdeaPluginDescript
     }
   }
 
-  private void assignNumbers(PluginId id, Map<PluginId, IdeaPluginDescriptor> idToDescriptorMap, Stack<PluginId> visited) throws Exception {
+  private void assignNumbers(PluginId id, Map<PluginId, IdeaPluginDescriptor> idToDescriptorMap, Stack<PluginId> visited){
     visited.push(id);
     try {
       final IdeaPluginDescriptor ideaPluginDescriptor = idToDescriptorMap.get(id);
-      if (ideaPluginDescriptor == null) {
-        // missing optional dependency
+      if (ideaPluginDescriptor == null || !ideaPluginDescriptor.isEnabled()) {
+        // missing optional dependency or already disabled due to cycles
         return;
       }
       final PluginId[] parentIds = ideaPluginDescriptor.getDependentPluginIds();
       for (final PluginId parentId : parentIds) {
         if (visited.contains(parentId)) {
-          throw new Exception(IdeBundle.message("error.plugins.should.not.have.cyclic.dependencies") + id + "->" + parentId + "->...->" + id);
+          //disable plugins in the cycle 
+          ideaPluginDescriptor.setEnabled(false);
+          break;
         }
       }
       for (PluginId parentId1 : parentIds) {

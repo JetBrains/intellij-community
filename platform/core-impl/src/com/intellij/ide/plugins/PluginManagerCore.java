@@ -25,10 +25,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
-import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.io.ZipFileCache;
@@ -499,6 +496,7 @@ public class PluginManagerCore {
     }
   }
 
+  @Deprecated
   static Comparator<IdeaPluginDescriptor> getPluginDescriptorComparator(Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap) {
     final Graph<PluginId> graph = createPluginIdGraph(idToDescriptorMap);
     final DFSTBuilder<PluginId> builder = new DFSTBuilder<PluginId>(graph);
@@ -549,6 +547,7 @@ public class PluginManagerCore {
     }));
   }
 
+  @Deprecated
   static IdeaPluginDescriptorImpl[] findCorePlugin(IdeaPluginDescriptorImpl[] pluginDescriptors) {
     for (IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
       if (CORE_PLUGIN_ID.equals(descriptor.getPluginId().getIdString())) {
@@ -900,14 +899,7 @@ public class PluginManagerCore {
     loadDescriptorsFromClassPath(result, fromSources ? progress : null);
 
     IdeaPluginDescriptorImpl[] pluginDescriptors = result.toArray(new IdeaPluginDescriptorImpl[result.size()]);
-    try {
-      Arrays.sort(pluginDescriptors, new PluginDescriptorComparator(pluginDescriptors));
-    }
-    catch (Exception e) {
-      prepareLoadingPluginsErrorMessage(IdeBundle.message("error.plugins.were.not.loaded", e.getMessage()));
-      getLogger().info(e);
-      return findCorePlugin(pluginDescriptors);
-    }
+    Arrays.sort(pluginDescriptors, new PluginDescriptorComparator(pluginDescriptors));
     return pluginDescriptors;
   }
 
@@ -1090,11 +1082,9 @@ public class PluginManagerCore {
     String errorMessage = filterBadPlugins(result, disabledPluginNames);
 
     if (!brokenPluginsList.isEmpty()) {
-      errorMessage = "Following plugins are incompatible with current IDE build: " + StringUtil.join(brokenPluginsList, ", ")
-                     + "<br>\n" + StringUtil.notNullize(errorMessage);
+      errorMessage += "Following plugins are incompatible with current IDE build: " + StringUtil.join(brokenPluginsList, ", ")
+                      + "<br>\n" + StringUtil.notNullize(errorMessage);
     }
-
-    prepareLoadingPluginsErrorMessage(errorMessage);
 
     final Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap = new HashMap<PluginId, IdeaPluginDescriptorImpl>();
     for (final IdeaPluginDescriptorImpl descriptor : result) {
@@ -1112,8 +1102,25 @@ public class PluginManagerCore {
     mergeOptionalConfigs(idToDescriptorMap);
     addModulesAsDependents(idToDescriptorMap);
 
+    final Graph<PluginId> graph = createPluginIdGraph(idToDescriptorMap);
+    final DFSTBuilder<PluginId> builder = new DFSTBuilder<PluginId>(graph);
+    if (!builder.isAcyclic()) {
+      final Couple<PluginId> circularDependency = builder.getCircularDependency();
+      final PluginId id = circularDependency.getFirst();
+      final PluginId parentId = circularDependency.getSecond();
+      errorMessage += IdeBundle.message("error.plugins.should.not.have.cyclic.dependencies") + id + "->" + parentId + "->...->" + id;
+    }
+
+    prepareLoadingPluginsErrorMessage(errorMessage);
+
+    final Comparator<PluginId> idComparator = builder.comparator();
     // sort descriptors according to plugin dependencies
-    Collections.sort(result, getPluginDescriptorComparator(idToDescriptorMap));
+    Collections.sort(result, new Comparator<IdeaPluginDescriptor>() {
+      @Override
+      public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
+        return idComparator.compare(o1.getPluginId(), o2.getPluginId());
+      }
+    });
 
     for (int i = 0; i < result.size(); i++) {
       ourId2Index.put(result.get(i).getPluginId(), i);
