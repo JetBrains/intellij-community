@@ -6,105 +6,132 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import org.jetbrains.annotations.Nullable;
 import ru.compscicenter.edide.StudyDirectoryProjectGenerator;
+import ru.compscicenter.edide.StudyUtils;
 
 import javax.swing.*;
 import java.awt.event.*;
 import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 public class StudyNewCourseDialog extends DialogWrapper {
-  private JPanel nyContentPane;
+  public static final String DIALOG_TITLE = "Select The Course";
+  private JPanel myContentPane;
   private JButton myRefreshButton;
   private JComboBox myDefaultCoursesComboBox;
   private TextFieldWithBrowseButton myCourseLocationField;
-  private JLabel myDefaultLabel;
-  private JLabel myLocationLabel;
   private JLabel myErrorLabel;
   private JLabel myErrorIconLabel;
   private final StudyDirectoryProjectGenerator myGenerator;
-  private static final String CONNECTION_ERROR = "Failed to download courses.\nCheck your Internet connection.";
-  private static final String INVALID_COURSE_ERROR = "The course you chosen is invalid";
-
+  private static final String CONNECTION_ERROR = "<html>Failed to download courses.<br>Check your Internet connection.</html>";
+  private static final String INVALID_COURSE = "The course you chosen is invalid";
 
   public StudyNewCourseDialog(final Project project, StudyDirectoryProjectGenerator generator) {
     super(project, true);
-    setTitle("Select The Course");
+    setTitle(DIALOG_TITLE);
     init();
     myGenerator = generator;
-    myErrorLabel.setVisible(false);
-    myErrorIconLabel.setVisible(false);
-    myOKAction.setEnabled(false);
     Map<String, File> courses = myGenerator.getCourses();
-    if (courses.size() == 0) {
-      myErrorLabel.setText(CONNECTION_ERROR);
-      myErrorLabel.setVisible(true);
-      myErrorIconLabel.setVisible(true);
-      myOKAction.setEnabled(false);
-
-    } else {
-      Set<String> availableDefaultCourses = courses.keySet();
-      myOKAction.setEnabled(true);
-      for (String courseName : availableDefaultCourses) {
+    if (courses.isEmpty()) {
+      setError(CONNECTION_ERROR);
+    }
+    else {
+      Set<String> availableCourses = courses.keySet();
+      for (String courseName : availableCourses) {
         myDefaultCoursesComboBox.addItem(courseName);
       }
+      //setting the first course in list as selected
+      myGenerator.setSelectedCourse(availableCourses.iterator().next());
+      setOK();
     }
+    initListeners(project);
+    myRefreshButton.setVisible(true);
+  }
 
-    //TODO:try make filters
+  private void initListeners(Project project) {
     final FileChooserDescriptor fileChooser = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
     myCourseLocationField.addBrowseFolderListener("Select course archive", null, project, fileChooser);
-    myCourseLocationField.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        String fileName = myCourseLocationField.getText();
-        myGenerator.setMyLocalCourseBaseFileName(fileName);
-        myErrorLabel.setVisible(false);
-        myErrorIconLabel.setVisible(false);
-        myOKAction.setEnabled(true);
-      }
-    });
+    myCourseLocationField.addActionListener(new LocalCourseChosenListener());
+    myDefaultCoursesComboBox.addActionListener(new CourseSelectedListener());
+    myRefreshButton.addActionListener(new RefreshActionListener());
+  }
 
-    myDefaultCoursesComboBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JComboBox cb = (JComboBox)e.getSource();
-        String selectedFileName = (String)cb.getSelectedItem();
-        myGenerator.setMyDefaultSelectedCourseName(selectedFileName);
-        myOKAction.setEnabled(true);
+  class LocalCourseChosenListener implements ActionListener {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      String fileName = myCourseLocationField.getText();
+      if (StudyUtils.isZip(fileName)) {
+        setError(INVALID_COURSE);
+        return;
       }
-    });
-    myRefreshButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myGenerator.downloadAndUnzip();
-        Map<String, File> newCourses = myGenerator.getDefaultCourses();
-        if (newCourses.size() != myGenerator.getMyDefaultCourseFiles().size() && newCourses.size() != 0) {
-          myGenerator.setMyDefaultCourseFiles(newCourses);
-          myErrorLabel.setVisible(false);
-          myErrorIconLabel.setVisible(false);
-          myDefaultCoursesComboBox.removeAllItems();
-          for (String course : newCourses.keySet()) {
-            myDefaultCoursesComboBox.addItem(course);
-          }
-          myOKAction.setEnabled(true);
-        }
-        else {
-          if (newCourses.size() == 0) {
-            myErrorLabel.setText(CONNECTION_ERROR);
-            myErrorIconLabel.setVisible(true);
-            myErrorLabel.setVisible(true);
-            myOKAction.setEnabled(false);
-          }
-        }
+      String courseName = myGenerator.addLocalCourse(fileName);
+      if (courseName !=null) {
+        myDefaultCoursesComboBox.addItem(courseName);
+        myDefaultCoursesComboBox.setSelectedItem(courseName);
+        setOK();
+      } else {
+        setError(INVALID_COURSE);
       }
-    });
-    myRefreshButton.setVisible(true);
+    }
+  }
+
+  class CourseSelectedListener implements ActionListener {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      JComboBox cb = (JComboBox)e.getSource();
+      String selectedCourseName = (String)cb.getSelectedItem();
+      myGenerator.setSelectedCourse(selectedCourseName);
+    }
+  }
+
+  class RefreshActionListener implements ActionListener {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      myGenerator.downloadAndUnzip(true);
+      Map<String, File> downloadedCourses = myGenerator.loadCourses();
+      if (downloadedCourses.isEmpty()) {
+        setError(CONNECTION_ERROR);
+        return;
+      }
+      Map<String, File> oldCourses = myGenerator.getMyDefaultCourseFiles();
+      Map<String, File> newCourses = new HashMap<String, File>();
+      if (!downloadedCourses.equals(oldCourses)) {
+        for (Map.Entry<String, File> course : oldCourses.entrySet()) {
+          File courseFile = course.getValue();
+          if (courseFile.exists()) {
+            newCourses.put(course.getKey(), courseFile);
+          }
+        }
+        for (Map.Entry<String, File> course : downloadedCourses.entrySet()) {
+          String courseName = course.getKey();
+          if (newCourses.get(courseName) == null) {
+            newCourses.put(courseName, course.getValue());
+            myDefaultCoursesComboBox.addItem(courseName);
+          }
+        }
+        myGenerator.setCourses(newCourses);
+      }
+    }
+  }
+
+  private void setOK() {
+    myErrorLabel.setVisible(false);
+    myErrorIconLabel.setVisible(false);
+    myOKAction.setEnabled(true);
+  }
+
+  private void setError(String errorText) {
+    myErrorLabel.setText(errorText);
+    myErrorLabel.setVisible(true);
+    myErrorIconLabel.setVisible(true);
+    myOKAction.setEnabled(false);
   }
 
 
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
-    return nyContentPane;
+    return myContentPane;
   }
 }

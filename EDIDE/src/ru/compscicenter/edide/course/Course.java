@@ -26,7 +26,7 @@ public class Course {
     return lessons;
   }
 
-  public void setParents() {
+  public void init() {
     for (Lesson lesson:lessons) {
       lesson.setParents(this);
     }

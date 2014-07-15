@@ -76,7 +76,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     Course course =  new Course();
     course.loadState(courseElement);
     myCourse = course;
-    myCourse.setParents();
+    myCourse.init();
   }
 
   @Override

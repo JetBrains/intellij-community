@@ -15,6 +15,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.DirectoryProjectGenerator;
+import com.intellij.platform.templates.github.GeneratorException;
 import com.intellij.platform.templates.github.ZipUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -22,11 +23,10 @@ import org.jetbrains.annotations.Nullable;
 import ru.compscicenter.edide.course.Course;
 import ru.compscicenter.edide.ui.StudyNewCourseDialog;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.*;
 import java.util.*;
-import java.util.zip.ZipFile;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * User: lia
@@ -34,15 +34,23 @@ import java.util.zip.ZipFile;
 public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
   private static final Logger LOG = Logger.getInstance(StudyDirectoryProjectGenerator.class.getName());
   //public static final String REPO_URL = "https://github.com/medvector/initial-python-course/archive/master.zip";
-  public static final String USER_NAME = "medvector";
-  public static final String REPO_URL = "https://github.com/medvector/courses-zip/archive/master.zip";
-  public static final String REPOSITORY_NAME = "courses-zip";
+  private static final String USER_NAME = "medvector";
+  private static final String REPO_URL = "https://github.com/medvector/courses-zip/archive/master.zip";
+  private static final String REPOSITORY_NAME = "courses-zip";
+  private static final String COURSE_META_FILE = "course.json";
+  private static final String COURSE_NAME_ATTRIBUTE = "name";
+  private static final Pattern CASH_PATTERN = Pattern.compile("(name=(.*)) (path=(.*course.json))");
   //public static final String REPOSITORY_NAME = "initial-python-course";
-  private File myDefaultCoursesBaseDir;
+  private final File myCoursesDir;
   private static final String CASH_NAME = "courseNames.txt";
-  private Map<String, File> myDefaultCourseFiles = new HashMap<String, File>();
-  private String myLocalCourseBaseFileName;
-  private String myDefaultSelectedCourseName;
+  private Map<String, File> myCourses = new HashMap<String, File>();
+  private File mySelectedCourseFile;
+  private Project myProject;
+
+
+  public StudyDirectoryProjectGenerator() {
+    myCoursesDir = new File(PathManager.getLibPath(), "courses");
+  }
 
   @Nls
   @NotNull
@@ -51,61 +59,83 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
     return "Study project";
   }
 
-  public void setMyDefaultCourseFiles(Map<String, File> defaultCourseFiles) {
-    myDefaultCourseFiles = defaultCourseFiles;
+  public void setCourses(Map<String, File> courses) {
+    myCourses = courses;
   }
 
-  public void setMyLocalCourseBaseFileName(String fileName) {
-    myLocalCourseBaseFileName = fileName;
-  }
-
-  public void setMyDefaultSelectedCourseName(String defaultSelectedCourseName) {
-    myDefaultSelectedCourseName = defaultSelectedCourseName;
-  }
-
-  public StudyDirectoryProjectGenerator() {
-    myDefaultCoursesBaseDir = new File(PathManager.getLibPath(), "courses");
-  }
-
-
-  public File getBaseCourseFile() {
-    if (myLocalCourseBaseFileName != null) {
-      File file = new File(myLocalCourseBaseFileName);
-      try {
-        String unzipedName = file.getName().substring(0, file.getName().indexOf("."));
-        File courseDir = new File(myDefaultCoursesBaseDir, unzipedName);
-        ZipUtil.unzip(null, courseDir, file,null, null, true);
-        File[] filesInCourse = courseDir.listFiles();
-        if (filesInCourse != null) {
-          for (File courseFile : filesInCourse) {
-            if (courseFile.getName().equals("course.json")) {
-              return courseFile;
-            }
-          }
-        }
-        System.out.println();
-
-      }
-      catch (IOException e) {
-        e.printStackTrace();
-      }
+  /**
+   * Finds selected course in courses by name.
+   *
+   * @param courseName name of selected course
+   */
+  public void setSelectedCourse(@NotNull String courseName) {
+    File courseFile = myCourses.get(courseName);
+    if (courseFile == null) {
+      LOG.error("invalid course in list");
     }
-    else {
-      if (myDefaultSelectedCourseName != null) {
-        File file = myDefaultCourseFiles.get(myDefaultSelectedCourseName);
-        if (file != null && file.exists()) {
-          return file;
+    mySelectedCourseFile = courseFile;
+  }
+
+  /**
+   * Adds course to courses specified in params
+   *
+   * @param courseDir must be directory containing course file
+   * @return added course name or null if course is invalid
+   */
+  @Nullable
+  private String addCourse(Map<String, File> courses, File courseDir) {
+    if (courseDir.isDirectory()) {
+      File[] courseFiles = courseDir.listFiles(new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+          return name.equals(COURSE_META_FILE);
         }
+      });
+      if (courseFiles.length != 1) {
+        LOG.error("User tried to add course with more than one or without course files");
+        return null;
       }
-      else {
-        if (myDefaultCourseFiles.size() > 0) {
-          return myDefaultCourseFiles.entrySet().iterator().next().getValue();
+      File courseFile = courseFiles[0];
+      String courseName = getCourseName(courseFile);
+      if (courseName != null) {
+        //appending index to courseName if there is another course with such name already
+        String newName = courseName;
+        int i = 2;
+        File item = courses.get(newName);
+        while (item != null && !FileUtil.filesEqual(item, courseFile)) {
+          newName = courseName + String.valueOf(i);
+          i++;
+          item = courses.get(newName);
         }
+        courses.put(newName, courseFile);
       }
+      return courseName;
     }
     return null;
   }
 
+
+  /**
+   * Adds course from zip archive to courses
+   *
+   * @return added course name or null if course is invalid
+   */
+  @Nullable
+  public String addLocalCourse(String zipFilePath) {
+    File file = new File(zipFilePath);
+    try {
+      String fileName = file.getName();
+      String unzippedName = fileName.substring(0, fileName.indexOf("."));
+      File courseDir = new File(myCoursesDir, unzippedName);
+      ZipUtil.unzip(null, courseDir, file, null, null, true);
+      return addCourse(myCourses, courseDir);
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+      LOG.error("Failed to unzip course archive");
+    }
+    return null;
+  }
 
   @Nullable
   @Override
@@ -117,24 +147,22 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
   @Override
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @Nullable Object settings, @NotNull Module module) {
-    myLocalCourseBaseFileName = null;
-    myDefaultSelectedCourseName = null;
+    myProject = project;
+    mySelectedCourseFile = null;
     StudyNewCourseDialog dlg = new StudyNewCourseDialog(project, this);
     dlg.show();
     Reader reader = null;
     try {
-      File baseCourseFile = getBaseCourseFile();
-      if (baseCourseFile == null) {
+      if (mySelectedCourseFile == null) {
         LOG.error("user didn't choose any course files");
         return;
       }
-
-      reader = new InputStreamReader(new FileInputStream(baseCourseFile));
+      reader = new InputStreamReader(new FileInputStream(mySelectedCourseFile));
       Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
       Course course = gson.fromJson(reader, Course.class);
-      course.setParents();
-      course.create(project, baseDir, new File(baseCourseFile.getParent()));
-      course.setResourcePath(baseCourseFile.getAbsolutePath());
+      course.init();
+      course.create(project, baseDir, new File(mySelectedCourseFile.getParent()));
+      course.setResourcePath(mySelectedCourseFile.getAbsolutePath());
       VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
       StudyTaskManager tm = StudyTaskManager.getInstance(project);
       tm.setCourse(course);
@@ -143,30 +171,37 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
       e.printStackTrace();
     }
     finally {
-     if (reader != null) {
-       try {
-         reader.close();
-       }
-       catch (IOException e) {
-         e.printStackTrace();
-       }
-     }
+      StudyUtils.closeSilently(reader);
     }
   }
 
-  public boolean downloadAndUnzip() {
+  /**
+   * Downloads courses from {@link ru.compscicenter.edide.StudyDirectoryProjectGenerator#REPO_URL}
+   * and unzips them into {@link ru.compscicenter.edide.StudyDirectoryProjectGenerator#myCoursesDir}
+   *
+   * @return true if download succeed
+   */
+
+  public boolean downloadAndUnzip(boolean needProgressBar) {
     File outputFile = new File(PathManager.getLibPath(), "courses.zip");
     try {
-      GithubDownloadUtil.downloadAtomically(null, REPO_URL,
-                                            outputFile, USER_NAME, REPOSITORY_NAME);
+      if (!needProgressBar) {
+        GithubDownloadUtil.downloadAtomically(null, REPO_URL,
+                                              outputFile, USER_NAME, REPOSITORY_NAME);
+      } else {
+        GithubDownloadUtil.downloadContentToFileWithProgressSynchronously(myProject, REPO_URL, "downloading courses", outputFile, USER_NAME, REPOSITORY_NAME, false);
+      }
       if (outputFile.exists()) {
-        ZipUtil.unzip(null, myDefaultCoursesBaseDir, outputFile, null, null, true);
-        File[] files = myDefaultCoursesBaseDir.listFiles();
+        ZipUtil.unzip(null, myCoursesDir, outputFile, null, null, true);
+        if (!outputFile.delete()) {
+          LOG.error("Failed to delete", outputFile.getName());
+        }
+        File[] files = myCoursesDir.listFiles();
         if (files != null) {
           for (File file : files) {
             String fileName = file.getName();
-            if (fileName.contains("zip")) {
-              ZipUtil.unzip(null, new File(myDefaultCoursesBaseDir, fileName.substring(0, fileName.indexOf("."))), file, null, null, true);
+            if (fileName.contains(".zip")) {
+              ZipUtil.unzip(null, new File(myCoursesDir, fileName.substring(0, fileName.indexOf("."))), file, null, null, true);
               if (!file.delete()) {
                 LOG.error("Failed to delete", fileName);
               }
@@ -179,84 +214,63 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
     catch (IOException e) {
       e.printStackTrace();
     }
+    catch (GeneratorException e) {
+      e.printStackTrace();
+    }
     return false;
-
   }
 
   public Map<String, File> getMyDefaultCourseFiles() {
-    return myDefaultCourseFiles;
+    return myCourses;
   }
 
-  //TODO: cash course names
-  public Map<String, File> getDefaultCourses() {
-    Map<String, File> defaultCourseFiles = new HashMap<String, File>();
-    if (!myDefaultCoursesBaseDir.exists()) {
-      return defaultCourseFiles;
-    }
-    try {
-      File cashFile = new File(myDefaultCoursesBaseDir, CASH_NAME);
-      PrintWriter writer =  new PrintWriter(cashFile);
-      File[] files = myDefaultCoursesBaseDir.listFiles();
-      if (files != null) {
-        for (File f : files) {
-          if (f.isDirectory()) {
-            File[] filesInCourse = f.listFiles();
-            if (filesInCourse != null) {
-              for (File courseFile : filesInCourse) {
-                if (courseFile.getName().equals("course.json")) {
-                  String name = getCourseName(courseFile);
-                  int i = 2;
-                  if (name != null) {
-                    File item = defaultCourseFiles.get(name);
-                    while (item != null && !FileUtil.filesEqual(item, courseFile)) {
-                      if (i > 2) {
-                        name = name.substring(0, name.length() - 2);
-                      }
-                      name = name + Integer.toString(i);
-                      i++;
-                      item = defaultCourseFiles.get(name);
-                    }
-                    defaultCourseFiles.put(name, courseFile);
-                    writer.println(name + " " + courseFile.getAbsolutePath());
-                  }
-                }
-              }
-            }
-          }
+  /**
+   * Parses courses located in {@link ru.compscicenter.edide.StudyDirectoryProjectGenerator#myCoursesDir}
+   * to {@link ru.compscicenter.edide.StudyDirectoryProjectGenerator#myCourses}
+   *
+   * @return map with course names and course files location
+   */
+  public Map<String, File> loadCourses() {
+    Map<String, File> courses =  new HashMap<String, File>();
+    if (myCoursesDir.exists()) {
+      File[] courseDirs = myCoursesDir.listFiles(new FileFilter() {
+        @Override
+        public boolean accept(File pathname) {
+          return pathname.isDirectory();
         }
-        //TODO:close in finally block
-        writer.close();
-        return defaultCourseFiles;
+      });
+      for (File courseDir : courseDirs) {
+        addCourse(courses, courseDir);
       }
     }
-    catch (NullPointerException e) {
-      LOG.error("default course folder doesn't exist");
-    }
-    catch (FileNotFoundException e) {
-      e.printStackTrace();
-    }
-    return myDefaultCourseFiles;
+    return courses;
   }
 
-  private String getCourseName(File file) {
-    InputStream metaIS;
-    String name = null;
+  /**
+   * Parses course json meta file and finds course name
+   *
+   * @return course name or null if course file is invalid
+   */
+  @Nullable
+  private String getCourseName(File courseFile) {
+    String courseName = null;
+    BufferedReader reader = null;
     try {
-      metaIS = new FileInputStream(file);
-      BufferedReader reader = new BufferedReader(new InputStreamReader(metaIS));
-      com.google.gson.stream.JsonReader r = new com.google.gson.stream.JsonReader(reader);
-      JsonParser parser = new JsonParser();
-      com.google.gson.JsonElement el = parser.parse(r);
-      name = el.getAsJsonObject().get("name").getAsString();
-      metaIS.close();
+      if (courseFile.getName().equals(COURSE_META_FILE)) {
+        reader = new BufferedReader(new InputStreamReader(new FileInputStream(courseFile)));
+        com.google.gson.stream.JsonReader r = new com.google.gson.stream.JsonReader(reader);
+        JsonParser parser = new JsonParser();
+        com.google.gson.JsonElement el = parser.parse(r);
+        courseName = el.getAsJsonObject().get(COURSE_NAME_ATTRIBUTE).getAsString();
+      }
     }
     catch (FileNotFoundException e) {
       e.printStackTrace();
     }
-    catch (IOException e) {
-      e.printStackTrace();
+    finally {
+      StudyUtils.closeSilently(reader);
     }
-    return name;
+    return courseName;
   }
 
   @NotNull
@@ -265,39 +279,72 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
     return ValidationResult.OK;
   }
 
+  /**
+   *
+   * @return courses from memory or from cash file or parses course directory
+   *
+   */
   public Map<String, File> getCourses() {
-   if (myDefaultCourseFiles.size() > 0) {
-     return myDefaultCourseFiles;
-   }
-   if (myDefaultCoursesBaseDir.exists()) {
-     File cashFile = new File(myDefaultCoursesBaseDir, CASH_NAME);
-     if (cashFile.exists()) {
-       myDefaultCourseFiles = getCoursesFromCash(cashFile);
-       if (myDefaultCourseFiles.size() > 0) {
-         return myDefaultCourseFiles;
-       }
-     }
-     myDefaultCourseFiles = getDefaultCourses();
-     if (myDefaultCourseFiles.size() > 0) {
-       return myDefaultCourseFiles;
-     }
-   }
-   downloadAndUnzip();
-   myDefaultCourseFiles = getDefaultCourses();
-   return myDefaultCourseFiles;
-
+    if (!myCourses.isEmpty()) {
+      return myCourses;
+    }
+    if (myCoursesDir.exists()) {
+      File cashFile = new File(myCoursesDir, CASH_NAME);
+      if (cashFile.exists()) {
+        myCourses = getCoursesFromCash(cashFile);
+        if (!myCourses.isEmpty()) {
+          return myCourses;
+        }
+      }
+      myCourses = loadCourses();
+      if (!myCourses.isEmpty()) {
+        return myCourses;
+      }
+    }
+    downloadAndUnzip(false);
+    myCourses = loadCourses();
+    flushCash();
+    return myCourses;
   }
 
+  /**
+   * Writes courses to cash file {@link ru.compscicenter.edide.StudyDirectoryProjectGenerator#CASH_NAME}
+   *
+   */
+  public void flushCash() {
+    File cashFile = new File(myCoursesDir, CASH_NAME);
+    PrintWriter writer =  null;
+    try {
+      writer = new PrintWriter(cashFile);
+      for (Map.Entry<String, File> course : myCourses.entrySet()) {
+        String line = "name=" + course.getKey() + " " + "path=" + course.getValue().getAbsolutePath();
+        writer.println(line);
+      }
+    }
+    catch (FileNotFoundException e) {
+      e.printStackTrace();
+    }
+    finally {
+      StudyUtils.closeSilently(writer);
+    }
+  }
+
+  /**
+   * Loads courses from {@link ru.compscicenter.edide.StudyDirectoryProjectGenerator#CASH_NAME} file
+   *
+   * @return map of course names and course files
+   */
   private Map<String, File> getCoursesFromCash(File cashFile) {
     Map<String, File> coursesFromCash = new HashMap<String, File>();
     try {
       BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(cashFile)));
       String line;
-      while ((line = reader.readLine())!=null) {
-        String[] lines = line.split(" ");
-        if (lines.length == 2) {
-          String courseName = lines[0];
-          File file = new File(lines[1]);
+
+      while ((line = reader.readLine()) != null) {
+        Matcher matcher = CASH_PATTERN.matcher(line);
+        if (matcher.matches()) {
+          String courseName = matcher.group(2);
+          File file = new File(matcher.group(4));
           if (file.exists()) {
             coursesFromCash.put(courseName, file);
           }
