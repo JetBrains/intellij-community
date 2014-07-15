@@ -16,7 +16,7 @@
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
+import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -46,29 +46,24 @@ class EditorPosition implements Cloneable {
   public int symbolWidthInPixels;
 
   private final Editor myEditor;
-  private final EditorTextRepresentationHelper myRepresentationHelper;
 
-  EditorPosition(@NotNull Editor editor, @NotNull EditorTextRepresentationHelper representationHelper) {
+  EditorPosition(@NotNull Editor editor) {
     myEditor = editor;
-    myRepresentationHelper = representationHelper;
   }
 
   EditorPosition(@NotNull LogicalPosition logical,
                  int offset,
-                 @NotNull Editor editor,
-                 @NotNull EditorTextRepresentationHelper representationHelper)
+                 @NotNull Editor editor)
   {
-    this(logical, logical.toVisualPosition(), offset, editor, representationHelper);
+    this(logical, logical.toVisualPosition(), offset, editor);
   }
 
   EditorPosition(@NotNull LogicalPosition logical,
                  @NotNull VisualPosition visual,
                  int offset,
-                 @NotNull Editor editor,
-                 @NotNull EditorTextRepresentationHelper representationHelper)
+                 @NotNull Editor editor)
   {
     myEditor = editor;
-    myRepresentationHelper = representationHelper;
     logicalLine = logical.line;
     logicalColumn = logical.column;
     softWrapLinesBefore = logical.softWrapLinesBeforeCurrentLogicalLine;
@@ -148,10 +143,11 @@ class EditorPosition implements Cloneable {
     if (logicalLine == endOffsetLogicalLine) {
       // Single-line fold region.
       if (collapsedSymbolsWidthInColumns < 0) {
-        collapsedSymbolsWidthInColumns = myRepresentationHelper.toVisualColumnSymbolsNumber(document.getCharsSequence(),
-                                                                                            foldRegion.getStartOffset(),
-                                                                                            foldRegion.getEndOffset(),
-                                                                                            x);
+        collapsedSymbolsWidthInColumns = SoftWrapModelImpl.getEditorTextRepresentationHelper(myEditor)
+          .toVisualColumnSymbolsNumber(document.getCharsSequence(),
+                                       foldRegion.getStartOffset(),
+                                       foldRegion.getEndOffset(),
+                                       x);
       }
       logicalColumn += collapsedSymbolsWidthInColumns;
       foldingColumnDiff += placeholder.length() - collapsedSymbolsWidthInColumns;
@@ -159,10 +155,11 @@ class EditorPosition implements Cloneable {
     else {
       // Multi-line fold region.
       if (collapsedSymbolsWidthInColumns < 0) {
-        collapsedSymbolsWidthInColumns = myRepresentationHelper.toVisualColumnSymbolsNumber(document.getCharsSequence(),
-                                                                                            foldRegion.getStartOffset(),
-                                                                                            foldRegion.getEndOffset(),
-                                                                                            0);
+        collapsedSymbolsWidthInColumns = SoftWrapModelImpl.getEditorTextRepresentationHelper(myEditor)
+          .toVisualColumnSymbolsNumber(document.getCharsSequence(),
+                                       foldRegion.getStartOffset(),
+                                       foldRegion.getEndOffset(),
+                                       0);
       }
       int linesDiff = endOffsetLogicalLine - logicalLine;
       logicalLine += linesDiff;
@@ -191,7 +188,7 @@ class EditorPosition implements Cloneable {
 
   @Override
   protected EditorPosition clone() {
-    EditorPosition result = new EditorPosition(myEditor, myRepresentationHelper);
+    EditorPosition result = new EditorPosition(myEditor);
     result.logicalLine = logicalLine;
     result.logicalColumn = logicalColumn;
     result.visualLine = visualLine;

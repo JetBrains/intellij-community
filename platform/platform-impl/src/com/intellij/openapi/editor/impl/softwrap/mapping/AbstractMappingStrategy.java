@@ -15,12 +15,10 @@
  */
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,10 +37,7 @@ import java.util.List;
  */
 abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
   
-  private static final Logger LOG = Logger.getInstance("#" + AbstractMappingStrategy.class.getName());
-
   protected final Editor myEditor;
-  protected final EditorTextRepresentationHelper myRepresentationHelper;
   protected final SoftWrapsStorage myStorage;
   protected final List<CacheEntry> myCache;
 
@@ -53,13 +48,11 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
 
   AbstractMappingStrategy(@NotNull Editor editor,
                           @NotNull SoftWrapsStorage storage,
-                          @NotNull List<CacheEntry> cache,
-                          @NotNull EditorTextRepresentationHelper representationHelper)
+                          @NotNull List<CacheEntry> cache)
   {
     myEditor = editor;
     myStorage = storage;
     myCache = cache;
-    myRepresentationHelper = representationHelper;
   }
 
   @Nullable
@@ -73,7 +66,7 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
   }
 
   protected void setFirstInitialPosition() {
-    myInitialPosition = new EditorPosition(new LogicalPosition(0, 0), 0, myEditor, myRepresentationHelper);
+    myInitialPosition = new EditorPosition(new LogicalPosition(0, 0), 0, myEditor);
   }
 
   @Nullable
