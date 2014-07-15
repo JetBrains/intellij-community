@@ -19,6 +19,7 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
 import com.intellij.ide.file.BatchFileChangeListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -1015,12 +1016,12 @@ public class GitUtil {
 
   public static void workingTreeChangeStarted(@NotNull Project project) {
     HeavyProcessLatch.INSTANCE.processStarted();
-    project.getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeStarted();
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeStarted(project);
   }
 
   public static void workingTreeChangeFinished(@NotNull Project project) {
     HeavyProcessLatch.INSTANCE.processFinished();
-    project.getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeCompleted();
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeCompleted(project);
   }
 
 }

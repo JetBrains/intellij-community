@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.file;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
 
 /**
@@ -27,8 +28,18 @@ public interface BatchFileChangeListener {
 
   Topic<BatchFileChangeListener> TOPIC = Topic.create("Batch File Update", BatchFileChangeListener.class);
 
-  void batchChangeStarted();
+  class Adapter implements BatchFileChangeListener {
+    @Override
+    public void batchChangeStarted(Project project) {
+    }
+    @Override
+    public void batchChangeCompleted(Project project) {
+    }
+  }
 
-  void batchChangeCompleted();
+
+  void batchChangeStarted(Project project);
+
+  void batchChangeCompleted(Project project);
 
 }
