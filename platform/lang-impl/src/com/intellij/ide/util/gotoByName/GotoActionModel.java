@@ -52,7 +52,8 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.ui.SimpleTextAttributes.*;
+import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
+import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
 
 public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, Comparator<Object>, EdtSortingModel {
   @Nullable private final Project myProject;
@@ -234,7 +235,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
           final Shortcut shortcut = preferKeyboardShortcut(KeymapManager.getInstance().getActiveKeymap().getShortcuts(getActionId(anAction)));
           if (shortcut != null) {
-            nameComponent.append(" (" + KeymapUtil.getShortcutText(shortcut) + ")", new SimpleTextAttributes(STYLE_ITALIC, fg));
+            nameComponent.append(" (" + KeymapUtil.getShortcutText(shortcut) + ")", new SimpleTextAttributes(STYLE_PLAIN, groupFg));
           }
 
           String groupName = actionWithParentGroup.getAction() instanceof ApplyIntentionAction ? null : actionWithParentGroup.getGroupName();
