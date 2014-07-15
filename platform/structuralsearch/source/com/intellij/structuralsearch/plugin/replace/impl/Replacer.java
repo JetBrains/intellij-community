@@ -223,7 +223,7 @@ public class Replacer {
               .commitDocument(FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile()));
           }
 
-          final int parentOffset = elementParent.getTextOffset();
+          final int parentOffset = elementParent.getTextRange().getStartOffset();
           CodeStyleManager.getInstance(project)
             .reformatRange(containingFile, parentOffset, parentOffset + elementParent.getTextLength(), true);
         }
