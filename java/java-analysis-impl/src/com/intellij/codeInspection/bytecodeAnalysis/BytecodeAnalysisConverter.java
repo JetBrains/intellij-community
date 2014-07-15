@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.io.*;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
@@ -224,7 +225,6 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       return -1;
     }
     return myCompoundKeyEnumerator.enumerate(new int[]{sigKey, mkDirectionKey(direction)});
-
   }
 
   private int mkPsiSignatureKey(@NotNull PsiMethod psiMethod) throws IOException {
@@ -271,6 +271,26 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     sigKey[1] = myCompoundKeyEnumerator.enumerate(shortSigKey);
 
     return myCompoundKeyEnumerator.enumerate(sigKey);
+  }
+
+  public IntArrayList mkInOutKeys(@NotNull PsiMethod psiMethod) throws IOException {
+    int primaryKey = mkPsiSignatureKey(psiMethod);
+    PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+    IntArrayList keys = new IntArrayList(parameters.length * 2 + 1);
+    for (int i = 0; i < parameters.length; i++) {
+      PsiParameter parameter = parameters[i];
+      PsiType parameterType = parameter.getType();
+      if (parameterType instanceof PsiPrimitiveType) {
+        if (PsiType.BOOLEAN.equals(parameterType)) {
+          keys.add(myCompoundKeyEnumerator.enumerate(new int[]{primaryKey, mkDirectionKey(new InOut(i, Value.False))}));
+          keys.add(myCompoundKeyEnumerator.enumerate(new int[]{primaryKey, mkDirectionKey(new InOut(i, Value.True))}));
+        }
+      } else {
+        keys.add(myCompoundKeyEnumerator.enumerate(new int[]{primaryKey, mkDirectionKey(new InOut(i, Value.NotNull))}));
+        keys.add(myCompoundKeyEnumerator.enumerate(new int[]{primaryKey, mkDirectionKey(new InOut(i, Value.Null))}));
+      }
+    }
+    return keys;
   }
 
 

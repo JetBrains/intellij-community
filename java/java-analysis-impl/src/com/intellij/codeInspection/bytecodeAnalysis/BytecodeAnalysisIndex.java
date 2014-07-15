@@ -19,7 +19,6 @@ import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
@@ -31,16 +30,14 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * @author lambdamix
  */
-public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Integer, Collection<IntIdEquation>> {
-  public static final ID<Integer, Collection<IntIdEquation>> NAME = ID.create("bytecodeAnalysis");
+public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Integer, IntIdEquation> {
+  public static final ID<Integer, IntIdEquation> NAME = ID.create("bytecodeAnalysis");
   private final EquationExternalizer myExternalizer = new EquationExternalizer();
-  private static final DataIndexer<Integer, Collection<IntIdEquation>, FileContent> INDEXER =
+  private static final DataIndexer<Integer, IntIdEquation, FileContent> INDEXER =
     new ClassDataIndexer(BytecodeAnalysisConverter.getInstance());
 
   private static final int ourInternalVersion = 3;
@@ -51,19 +48,15 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Integer, Coll
     return application.isInternal() || application.isUnitTestMode();
   }
 
-  public static int indexKey(VirtualFile file, boolean parameters) {
-    return (file instanceof VirtualFileWithId ? ((VirtualFileWithId)file).getId() * 2 :  -2) + (parameters ? 1 : 0);
-  }
-
   @NotNull
   @Override
-  public ID<Integer, Collection<IntIdEquation>> getName() {
+  public ID<Integer, IntIdEquation> getName() {
     return NAME;
   }
 
   @NotNull
   @Override
-  public DataIndexer<Integer, Collection<IntIdEquation>, FileContent> getIndexer() {
+  public DataIndexer<Integer, IntIdEquation, FileContent> getIndexer() {
     return INDEXER;
   }
 
@@ -75,7 +68,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Integer, Coll
 
   @NotNull
   @Override
-  public DataExternalizer<Collection<IntIdEquation>> getValueExternalizer() {
+  public DataExternalizer<IntIdEquation> getValueExternalizer() {
     return myExternalizer;
   }
 
@@ -100,68 +93,56 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Integer, Coll
     return ourInternalVersion + BytecodeAnalysisConverter.getInstance().getVersion() + (ourEnabled ? 0xFF : 0);
   }
 
-  public static class EquationExternalizer implements DataExternalizer<Collection<IntIdEquation>> {
+  public static class EquationExternalizer implements DataExternalizer<IntIdEquation> {
     @Override
-    public void save(@NotNull DataOutput out, Collection<IntIdEquation> equations) throws IOException {
-      DataInputOutputUtil.writeINT(out, equations.size());
+    public void save(@NotNull DataOutput out, IntIdEquation equation) throws IOException {
+      out.writeInt(equation.id);
+      IntIdResult rhs = equation.rhs;
+      if (rhs instanceof IntIdFinal) {
+        IntIdFinal finalResult = (IntIdFinal)rhs;
+        out.writeBoolean(true); // final flag
+        DataInputOutputUtil.writeINT(out, finalResult.value.ordinal());
+      } else {
+        IntIdPending pendResult = (IntIdPending)rhs;
+        out.writeBoolean(false); // pending flag
+        DataInputOutputUtil.writeINT(out, pendResult.delta.length);
 
-      for (IntIdEquation equation : equations) {
-        out.writeInt(equation.id);
-        IntIdResult rhs = equation.rhs;
-        if (rhs instanceof IntIdFinal) {
-          IntIdFinal finalResult = (IntIdFinal)rhs;
-          out.writeBoolean(true); // final flag
-          DataInputOutputUtil.writeINT(out, finalResult.value.ordinal());
-        } else {
-          IntIdPending pendResult = (IntIdPending)rhs;
-          out.writeBoolean(false); // pending flag
-          DataInputOutputUtil.writeINT(out, pendResult.delta.length);
-
-          for (IntIdComponent component : pendResult.delta) {
-            DataInputOutputUtil.writeINT(out, component.value.ordinal());
-            int[] ids = component.ids;
-            DataInputOutputUtil.writeINT(out, ids.length);
-            for (int id : ids) {
-              out.writeInt(id);
-            }
+        for (IntIdComponent component : pendResult.delta) {
+          DataInputOutputUtil.writeINT(out, component.value.ordinal());
+          int[] ids = component.ids;
+          DataInputOutputUtil.writeINT(out, ids.length);
+          for (int id : ids) {
+            out.writeInt(id);
           }
         }
       }
     }
 
     @Override
-    public Collection<IntIdEquation> read(@NotNull DataInput in) throws IOException {
+    public IntIdEquation read(@NotNull DataInput in) throws IOException {
+      int equationId = in.readInt();
+      boolean isFinal = in.readBoolean(); // flag
+      if (isFinal) {
+        int ordinal = DataInputOutputUtil.readINT(in);
+        Value value = Value.values()[ordinal];
+        return new IntIdEquation(equationId, new IntIdFinal(value));
+      } else {
 
-      int size = DataInputOutputUtil.readINT(in);
-      ArrayList<IntIdEquation> result = new ArrayList<IntIdEquation>(size);
+        int sumLength = DataInputOutputUtil.readINT(in);
+        IntIdComponent[] components = new IntIdComponent[sumLength];
 
-      for (int x = 0; x < size; x++) {
-        int equationId = in.readInt();
-        boolean isFinal = in.readBoolean(); // flag
-        if (isFinal) {
+        for (int i = 0; i < sumLength; i++) {
           int ordinal = DataInputOutputUtil.readINT(in);
           Value value = Value.values()[ordinal];
-          result.add(new IntIdEquation(equationId, new IntIdFinal(value)));
-        } else {
-
-          int sumLength = DataInputOutputUtil.readINT(in);
-          IntIdComponent[] components = new IntIdComponent[sumLength];
-
-          for (int i = 0; i < sumLength; i++) {
-            int ordinal = DataInputOutputUtil.readINT(in);
-            Value value = Value.values()[ordinal];
-            int componentSize = DataInputOutputUtil.readINT(in);
-            int[] ids = new int[componentSize];
-            for (int j = 0; j < componentSize; j++) {
-              ids[j] = in.readInt();
-            }
-            components[i] = new IntIdComponent(value, ids);
+          int componentSize = DataInputOutputUtil.readINT(in);
+          int[] ids = new int[componentSize];
+          for (int j = 0; j < componentSize; j++) {
+            ids[j] = in.readInt();
           }
-          result.add(new IntIdEquation(equationId, new IntIdPending(components)));
+          components[i] = new IntIdComponent(value, ids);
         }
+        return new IntIdEquation(equationId, new IntIdPending(components));
       }
-
-      return result;
     }
   }
 }
