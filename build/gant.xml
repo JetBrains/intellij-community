@@ -17,7 +17,6 @@
     </fileset>
     <fileset dir="${project.home}/build/kotlinc/lib" erroronmissingdir="false">
       <include name="kotlin-runtime.jar"/>
-      <include name="kotlin-compiler.jar"/>
     </fileset>
     <fileset dir="${idea.lib}">
        <include name="jdom.jar"/>
