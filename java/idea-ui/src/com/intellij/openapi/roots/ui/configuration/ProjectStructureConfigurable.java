@@ -240,9 +240,6 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
         addConfigurable(configurable, true);
       }
     }
-    if (Registry.is("ide.new.project.settings")) {
-      addErrorPane();
-    }
 
     mySidePanel.addSeparator("Platform Settings");
     addJdkListConfig();
@@ -252,6 +249,11 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
       for (Configurable configurable : adder.getExtraPlatformConfigurables(myProject, myContext)) {
         addConfigurable(configurable, true);
       }
+    }
+
+    if (Registry.is("ide.new.project.settings")) {
+      mySidePanel.addSeparator("--");
+      addErrorPane();
     }
   }
 
