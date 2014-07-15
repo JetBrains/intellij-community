@@ -61,6 +61,8 @@ import com.intellij.refactoring.*;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
+import com.intellij.refactoring.listeners.RefactoringEventData;
+import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.FieldConflictsResolver;
@@ -85,7 +87,8 @@ import java.util.*;
 public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceVariable.IntroduceVariableBase");
   @NonNls private static final String PREFER_STATEMENTS_OPTION = "introduce.variable.prefer.statements";
-
+  @NonNls private static final String REFACTORING_ID = "refactoring.extractVariable";
+  
   protected static final String REFACTORING_NAME = RefactoringBundle.message("introduce.variable.title");
   public static final Key<Boolean> NEED_PARENTHESIS = Key.create("NEED_PARENTHESIS");
 
@@ -677,13 +680,27 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
             occurrenceMarkers.add(topLevelEditor.getDocument().createRangeMarker(occurrence.getTextRange()));
           }
         }
+        final RefactoringEventData beforeData = new RefactoringEventData();
+        beforeData.addElement(expr);
+        project.getMessageBus()
+          .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(REFACTORING_ID, beforeData);
         final String expressionText = expr.getText();
         final Runnable runnable = introduce(project, expr, topLevelEditor, chosenAnchor, occurrences, settings, variable);
         CommandProcessor.getInstance().executeCommand(
           project,
           new Runnable() {
             public void run() {
-              ApplicationManager.getApplication().runWriteAction(runnable);
+              try {
+                ApplicationManager.getApplication().runWriteAction(runnable);
+              }
+              finally {
+                final RefactoringEventData afterData = new RefactoringEventData();
+                final SmartPsiElementPointer<PsiVariable> pointer = variable.get();
+                afterData.addElement(pointer != null ? pointer.getElement() : null);
+                project.getMessageBus()
+                  .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, afterData);
+              }
+
               if (isInplaceAvailableOnDataContext) {
                 final PsiVariable elementToRename = variable.get().getElement();
                 if (elementToRename != null) {
