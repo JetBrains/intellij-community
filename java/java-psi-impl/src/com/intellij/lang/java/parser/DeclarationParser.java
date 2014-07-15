@@ -282,7 +282,7 @@ public class DeclarationParser {
     if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(builder.getTokenType())) {
       type = parseTypeNotNull(builder);
     }
-    else if (builder.getTokenType() == JavaTokenType.IDENTIFIER || builder.getTokenType() == JavaTokenType.AT) {
+    else if (builder.getTokenType() == JavaTokenType.IDENTIFIER /*|| builder.getTokenType() == JavaTokenType.AT*/) {
       PsiBuilder.Marker idPos = builder.mark();
       type = parseTypeNotNull(builder);
       if (builder.getTokenType() == JavaTokenType.LPARENTH) {  // constructor
