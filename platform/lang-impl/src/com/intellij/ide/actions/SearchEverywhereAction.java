@@ -1187,16 +1187,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     return text;
   }
 
-  private void schedulePopupUpdate() {
-    myUpdateAlarm.cancelAllRequests();
-    myUpdateAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        updatePopupBounds();
-      }
-    }, 50);
-  }
-
   private static boolean isActionValue(Object o) {
     return o instanceof GotoActionModel.ActionWrapper || o instanceof AnAction;
   }
@@ -1876,57 +1866,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           }
         }
       });
-    }
-
-    private List<MatchResult> collectResults(String pattern, String[] names, final ChooseByNameModel model) {
-      if (names == null) return Collections.emptyList();
-      pattern = ChooseByNamePopup.getTransformedPattern(pattern, model);
-      pattern = DefaultChooseByNameItemProvider.getNamePattern(model, pattern);
-      if (model != myFileModel && model != myActionProvider && !pattern.startsWith("*") && pattern.length() > 1) {
-        pattern = "*" + pattern;
-      }
-      final ArrayList<MatchResult> results = new ArrayList<MatchResult>();
-      final String p = pattern;
-      MinusculeMatcher matcher = new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE) {
-        @Override
-        public boolean matches(@NotNull String name) {
-          if (!(model instanceof GotoActionModel) && p.indexOf(' ') > 0 && name.trim().indexOf(' ') < 0) {
-            return false;
-          }
-          return super.matches(name);
-        }
-      };
-      MatchResult result;
-
-      for (String name : names) {
-        check();
-        result = null;
-        if (model instanceof CustomMatcherModel) {
-          try {
-            result = ((CustomMatcherModel)model).matches(name, pattern) ? new MatchResult(name, 0, true) : null;
-            if (result != null && model == myActionProvider) {
-              ((CustomMatcherModel)model).matches(name, pattern);
-            }
-          }
-          catch (Exception ignore) {
-          }
-        }
-        else {
-          result = matcher.matches(name) ? new MatchResult(name, matcher.matchingDegree(name), matcher.isStartMatch(name)) : null;
-        }
-
-        if (result != null) {
-          results.add(result);
-        }
-      }
-
-      Collections.sort(results, new Comparator<MatchResult>() {
-        @Override
-        public int compare(MatchResult o1, MatchResult o2) {
-          return o1.compareTo(o2);
-        }
-      });
-      return results;
     }
 
     public ActionCallback cancel() {
