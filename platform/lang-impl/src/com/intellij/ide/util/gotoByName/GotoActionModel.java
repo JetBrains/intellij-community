@@ -177,6 +177,13 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
         return -1;
       }
 
+      if (value instanceof ActionWrapper && o.value instanceof ActionWrapper && ApplicationManager.getApplication().isDispatchThread()) {
+        boolean p1Enable = ((ActionWrapper)value).isAvailable();
+        boolean p2enable = ((ActionWrapper)o.value).isAvailable();
+        if (p1Enable && !p2enable) return -1;
+        if (!p1Enable && p2enable) return 1;
+      }
+
       int diff = o.getMatchingDegree() - getMatchingDegree();
       //noinspection unchecked
       return diff != 0 ? diff : value.compareTo(o.value);
@@ -628,20 +635,13 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
     @Override
     public int compareTo(@NotNull ActionWrapper o) {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        boolean p1Enable = visible();
-        boolean p2enable = o.visible();
-        if (p1Enable && !p2enable) return -1;
-        if (!p1Enable && p2enable) return 1;
-      }
-
       int compared = myMode.compareTo(o.getMode());
       return compared != 0
              ? compared
              : StringUtil.compare(myAction.getTemplatePresentation().getText(), o.getAction().getTemplatePresentation().getText(), true);
     }
 
-    private boolean visible() {
+    private boolean isAvailable() {
       return getPresentation().isEnabledAndVisible();
     }
 
