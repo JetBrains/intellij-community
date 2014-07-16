@@ -1399,7 +1399,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     private synchronized void buildFiles(final String pattern) {
-      final SearchResult files = getFiles(pattern, MAX_FILES);
+      final SearchResult files = getFiles(pattern, MAX_FILES, myFileChooseByName);
 
       check();
 
@@ -1422,7 +1422,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
 
     private synchronized void buildSymbols(final String pattern) {
-      final SearchResult symbols = getSymbols(pattern, MAX_SYMBOLS);
+      final SearchResult symbols = getSymbols(pattern, MAX_SYMBOLS, mySymbolsChooseByName);
       check();
 
       if (symbols.size() > 0) {
@@ -1510,7 +1510,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
       check();
 
-      final SearchResult classes = getClasses(pattern, showAll.get(), MAX_CLASSES);
+      final SearchResult classes = getClasses(pattern, showAll.get(), MAX_CLASSES, myClassChooseByName);
 
       check();
 
@@ -1532,10 +1532,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     }
 
-    private SearchResult getSymbols(String pattern, final int max) {
+    private SearchResult getSymbols(String pattern, final int max, ChooseByNamePopup chooseByNamePopup) {
       final SearchResult symbols = new SearchResult();
       final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
-      mySymbolsChooseByName.getProvider().filterElements(mySymbolsChooseByName, pattern, false,
+      chooseByNamePopup.getProvider().filterElements(chooseByNamePopup, pattern, false,
                                                          myProgressIndicator, new Processor<Object>() {
           @Override
           public boolean process(Object o) {
@@ -1555,9 +1555,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       return symbols;
     }
 
-    private SearchResult getClasses(String pattern, boolean includeLibs, final int max) {
+    private SearchResult getClasses(String pattern, boolean includeLibs, final int max, ChooseByNamePopup chooseByNamePopup) {
       final SearchResult classes = new SearchResult();
-      myClassChooseByName.getProvider().filterElements(myClassChooseByName, pattern, includeLibs,
+      if (chooseByNamePopup == null) {
+        return classes;
+      }
+      chooseByNamePopup.getProvider().filterElements(chooseByNamePopup, pattern, includeLibs,
                                                       myProgressIndicator, new Processor<Object>() {
           @Override
           public boolean process(Object o) {
@@ -1572,15 +1575,18 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           }
         });
       if (!includeLibs && classes.isEmpty()) {
-        return getClasses(pattern, true, max);
+        return getClasses(pattern, true, max, chooseByNamePopup);
       }
       return classes;
     }
 
-    private SearchResult getFiles(final String pattern, final int max) {
+    private SearchResult getFiles(final String pattern, final int max, ChooseByNamePopup chooseByNamePopup) {
       final SearchResult files = new SearchResult();
+      if (chooseByNamePopup == null) {
+        return files;
+      }
       final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
-      myFileChooseByName.getProvider().filterElements(myFileChooseByName, pattern, true,
+      chooseByNamePopup.getProvider().filterElements(chooseByNamePopup, pattern, true,
                                                       myProgressIndicator, new Processor<Object>() {
           @Override
           public boolean process(Object o) {
@@ -1882,10 +1888,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             public void run() {
               try {
                 final SearchResult result
-                  = id == WidgetID.CLASSES ? getClasses(pattern, showAll.get(), DEFAULT_MORE_STEP_COUNT)
-                  : id == WidgetID.FILES ? getFiles(pattern, DEFAULT_MORE_STEP_COUNT)
+                  = id == WidgetID.CLASSES ? getClasses(pattern, showAll.get(), DEFAULT_MORE_STEP_COUNT, myClassChooseByName)
+                  : id == WidgetID.FILES ? getFiles(pattern, DEFAULT_MORE_STEP_COUNT, myFileChooseByName)
                   : id == WidgetID.RUN_CONFIGURATIONS ? getConfigurations(pattern, DEFAULT_MORE_STEP_COUNT)
-                  : id == WidgetID.SYMBOLS ? getSymbols(pattern, DEFAULT_MORE_STEP_COUNT)
+                  : id == WidgetID.SYMBOLS ? getSymbols(pattern, DEFAULT_MORE_STEP_COUNT, mySymbolsChooseByName)
                   : id == WidgetID.ACTIONS ? getActionsOrSettings(pattern, DEFAULT_MORE_STEP_COUNT, true)
                   : id == WidgetID.SETTINGS ? getActionsOrSettings(pattern, DEFAULT_MORE_STEP_COUNT, false)
                   : new SearchResult();
