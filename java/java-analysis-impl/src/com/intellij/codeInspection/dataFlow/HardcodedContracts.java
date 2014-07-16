@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.psi.*;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -71,7 +72,7 @@ class HardcodedContracts {
             notArgs[0] instanceof PsiMethodCallExpression &&
             "equalTo".equals(((PsiMethodCallExpression)notArgs[0]).getMethodExpression().getReferenceName())) {
           PsiExpression[] equalArgs = ((PsiMethodCallExpression)notArgs[0]).getArgumentList().getExpressions();
-          if (equalArgs.length == 1 && equalArgs[0] instanceof PsiLiteralExpression && equalArgs[0].textMatches(PsiKeyword.NULL)) {
+          if (equalArgs.length == 1 && ExpressionUtils.isNullLiteral(equalArgs[0])) {
             return true;
           }
         }
