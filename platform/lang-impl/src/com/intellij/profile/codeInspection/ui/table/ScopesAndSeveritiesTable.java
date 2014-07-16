@@ -31,10 +31,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
-import java.util.EventObject;
 
 /**
  * @author Dmitry Batkovich
@@ -45,11 +46,9 @@ public class ScopesAndSeveritiesTable extends JBTable {
   private final static int SCOPE_ENABLED_COLUMN = 0;
   private final static int SCOPE_NAME_COLUMN = 1;
   private final static int SEVERITY_COLUMN = 2;
-  private final TableSettings myTableSettings;
 
   public ScopesAndSeveritiesTable(final TableSettings tableSettings) {
     super(new MyTableModel(tableSettings));
-    myTableSettings = tableSettings;
 
     final TableColumnModel columnModel = getColumnModel();
 
@@ -63,19 +62,20 @@ public class ScopesAndSeveritiesTable extends JBTable {
     setRowSelectionAllowed(true);
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
+    getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(final ListSelectionEvent e) {
+        final int idx = getSelectionModel().getMinSelectionIndex();
+        if (idx >= 0) {
+          final ScopeToolState scopeToolState = ((MyTableModel)getModel()).getScopeToolState(idx);
+          tableSettings.onScopeChosen(scopeToolState);
+        }
+      }
+    });
     setRowSelectionInterval(0, 0);
 
     setStriped(true);
     setShowGrid(false);
-  }
-
-  @Override
-  public boolean editCellAt(final int row, final int column, final EventObject e) {
-    final boolean res = super.editCellAt(row, column, e);
-    if (row >= 0) {
-      myTableSettings.onScopeChosen(((MyTableModel)getModel()).getScopeToolState(row));
-    }
-    return res;
   }
 
   public abstract static class TableSettings {
@@ -202,9 +202,13 @@ public class ScopesAndSeveritiesTable extends JBTable {
     }
 
     private ScopeToolState getScopeToolState(final int rowIndex) {
-      return rowIndex == 0
+      return rowIndex == lastRowIndex()
              ? myInspectionProfile.getToolDefaultState(myKeyName, myProject)
-             : myInspectionProfile.getNonDefaultTools(myKeyName, myProject).get(rowIndex - 1);
+             : myInspectionProfile.getNonDefaultTools(myKeyName, myProject).get(rowIndex);
+    }
+
+    private int lastRowIndex() {
+      return getRowCount() - 1;
     }
 
     @Override
@@ -218,11 +222,12 @@ public class ScopesAndSeveritiesTable extends JBTable {
           LOG.error("no display level found for name " + ((HighlightSeverity)value).getName());
           return;
         }
-        myInspectionProfile.setErrorLevel(myKey, level, rowIndex - 1, myProject);
+        final int idx = rowIndex == lastRowIndex() ? -1 : rowIndex;
+        myInspectionProfile.setErrorLevel(myKey, level, idx, myProject);
       }
       else if (columnIndex == SCOPE_ENABLED_COLUMN) {
         if ((Boolean)value) {
-          if (rowIndex == 0) {
+          if (rowIndex == lastRowIndex()) {
             myInspectionProfile.enableToolByDefault(myKeyName, myProject);
           }
           else {
@@ -230,7 +235,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
           }
         }
         else {
-          if (rowIndex == 0) {
+          if (rowIndex == lastRowIndex()) {
             myInspectionProfile.disableToolByDefault(myKeyName, myProject);
           }
           else {
@@ -242,7 +247,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
 
     @Override
     public void removeRow(final int idx) {
-      if (idx > 0) {
+      if (idx != lastRowIndex()) {
         myInspectionProfile.removeScope(myKeyName, getScopeToolState(idx), myProject);
         myTableSettings.onScopeRemoved(getRowCount());
       }
@@ -256,12 +261,11 @@ public class ScopesAndSeveritiesTable extends JBTable {
 
     @Override
     public void exchangeRows(final int oldIndex, final int newIndex) {
-      myInspectionProfile.moveScope(myKeyName, oldIndex - 1, newIndex - oldIndex, myProject);
     }
 
     @Override
     public boolean canExchangeRows(final int oldIndex, final int newIndex) {
-      return getRowCount() > 2 && oldIndex != 0 && newIndex != 0;
+      return false;
     }
   }
 }

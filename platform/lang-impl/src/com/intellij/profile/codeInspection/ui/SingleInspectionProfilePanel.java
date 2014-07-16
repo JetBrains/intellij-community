@@ -760,6 +760,7 @@ public class SingleInspectionProfilePanel extends JPanel {
                           new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL,
                                                  new Insets(10, 0, 10, 0), 0, 0));
         severityPanelWeightY = 0.0;
+        setConfigPanel(configPanelAnchor, defaultDescriptor.getState());
       }
       else {
         for (final Descriptor descriptor : descriptors.getNonDefaultDescriptors()) {
@@ -798,7 +799,6 @@ public class SingleInspectionProfilePanel extends JPanel {
                                                         new Insets(0, 0, 0, 0), 0, 0));
         severityPanelWeightY = 0.3;
       }
-      setConfigPanel(configPanelAnchor, defaultDescriptor.getState());
       myOptionsPanel.add(severityPanel, new GridBagConstraints(0, 0, 1, 1, 1.0, severityPanelWeightY, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
       myOptionsPanel.add(configPanelAnchor, new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH,
                                                                    new Insets(0, 0, 0, 0), 0, 0));
