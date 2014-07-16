@@ -368,7 +368,7 @@
     <projectService serviceInterface="com.intellij.semantic.SemService" serviceImplementation="com.intellij.semantic.SemServiceImpl"/>
 
     <!-- Global Code Style -->
-    <projectConfigurable groupId="editor" displayName="Code Style" instance="com.intellij.application.options.CodeStyleSchemesConfigurable" order="after colors"/>
+    <projectConfigurable groupId="editor" dynamic="true" displayName="Code Style" instance="com.intellij.application.options.CodeStyleSchemesConfigurable" order="after colors"/>
     <applicationService serviceInterface="com.intellij.application.options.codeStyle.CodeStyleSchemesUIConfiguration"
                         serviceImplementation="com.intellij.application.options.codeStyle.CodeStyleSchemesUIConfiguration"/>
 
