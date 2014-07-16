@@ -41,10 +41,21 @@ class HardcodedContracts {
         return Collections.singletonList(new MethodContract(createConstraintArray(paramCount), THROW_EXCEPTION));
       }
     }
-    else if ("junit.framework.Assert".equals(className) || "org.junit.Assert".equals(className) ||
-             "junit.framework.TestCase".equals(className) || "org.testng.Assert".equals(className) || "org.testng.AssertJUnit".equals(className)) {
+    else if ("com.google.common.base.Preconditions".equals(className)) {
+      if ("checkNotNull".equals(methodName) && paramCount > 0) {
+        MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
+        constraints[0] = NULL_VALUE;
+        return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
+      }
+    }
+    else if ("junit.framework.Assert".equals(className) ||
+             "org.junit.Assert".equals(className) ||
+             "junit.framework.TestCase".equals(className) ||
+             "org.testng.Assert".equals(className) ||
+             "org.testng.AssertJUnit".equals(className)) {
       return handleTestFrameworks(paramCount, className, methodName, call);
     }
+
     return Collections.emptyList();
   }
 

@@ -297,6 +297,14 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.enableInspections(new DataFlowInspection());
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
-  
+
+  public void testGuavaCheckNotNull() {
+    myFixture.addClass("package com.google.common.base; public class Preconditions { " +
+                       "public static <T> T checkNotNull(T reference) {}\n" +
+                       "}");
+    myFixture.enableInspections(new DataFlowInspection());
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+
   public void _testNullCheckBeforeInstanceof() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEA-113220
 }
