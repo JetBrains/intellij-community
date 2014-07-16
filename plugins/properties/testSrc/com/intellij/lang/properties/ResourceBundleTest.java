@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.properties;
 
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.refactoring.rename.ResourceBundleRenamerFactory;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiFile;
@@ -25,7 +26,16 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 /**
  * @author Dmitry Batkovich
  */
-public class ResourceBundleRenameTest extends LightPlatformCodeInsightFixtureTestCase {
+public class ResourceBundleTest extends LightPlatformCodeInsightFixtureTestCase {
+
+  public void testDefaultPropertyFile() {
+    final PsiFile rawDefault = myFixture.addFileToProject("p.properties", "");
+    myFixture.addFileToProject("p_en.properties", "");
+    final PropertiesFile defaultFile = PropertiesImplUtil.getPropertiesFile(rawDefault);
+    assertNotNull(defaultFile);
+    final PropertiesFile file = defaultFile.getResourceBundle().getDefaultPropertiesFile();
+    assertTrue(file.getContainingFile().isEquivalentTo(defaultFile.getContainingFile()));
+  }
 
   public void testRenameResourceBundleEntryFile() {
     final PsiFile toRenameFile = myFixture.addFileToProject("old_p.properties", "");
