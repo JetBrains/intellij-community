@@ -33,14 +33,12 @@ import java.util.regex.Pattern;
  */
 public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
   private static final Logger LOG = Logger.getInstance(StudyDirectoryProjectGenerator.class.getName());
-  //public static final String REPO_URL = "https://github.com/medvector/initial-python-course/archive/master.zip";
+  private static final String REPO_URL = "https://github.com/medvector/initial-python-course/archive/master.zip";
   private static final String USER_NAME = "medvector";
-  private static final String REPO_URL = "https://github.com/medvector/courses-zip/archive/master.zip";
-  private static final String REPOSITORY_NAME = "courses-zip";
   private static final String COURSE_META_FILE = "course.json";
   private static final String COURSE_NAME_ATTRIBUTE = "name";
   private static final Pattern CACHE_PATTERN = Pattern.compile("(name=(.*)) (path=(.*course.json))");
-  //public static final String REPOSITORY_NAME = "initial-python-course";
+  private static final String REPOSITORY_NAME = "initial-python-course";
   private final File myCoursesDir;
   private static final String CACHE_NAME = "courseNames.txt";
   private Map<String, File> myCourses = new HashMap<String, File>();

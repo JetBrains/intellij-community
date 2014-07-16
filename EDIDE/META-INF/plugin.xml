@@ -40,7 +40,7 @@
 
   <actions>
     <action id="CheckAction" class="ru.compscicenter.edide.actions.CheckAction" text="check"
-            description="Runnes tests for current tasks" icon="/icons/icon.jpg">
+            description="Runs tests for current tasks" icon="/icons/icon.jpg">
       <add-to-group group-id="MainToolBar" anchor="last"/>
       <keyboard-shortcut first-keystroke="shift C" keymap="$default"/>
     </action>
@@ -71,11 +71,8 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <!-- Add your extensions here -->
     <fileEditorProvider implementation="ru.compscicenter.edide.StudyFileEditorProvider"/>
     <directoryProjectGenerator implementation="ru.compscicenter.edide.StudyDirectoryProjectGenerator"/>
-    <!--documentationProvider implementation="ru.compscicenter.edide.StudyDocumentationProvider"/-->
-    <!--projectService  serviceImplementation="ru.compscicenter.edide.StudyPlugin"/-->
     <treeStructureProvider implementation="ru.compscicenter.edide.StudyTreeStructureProvider"/>
   </extensions>
 </idea-plugin>
