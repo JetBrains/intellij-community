@@ -477,7 +477,9 @@ public class PluginManagerCore {
 
   static void prepareLoadingPluginsErrorMessage(final String errorMessage) {
     if (errorMessage != null) {
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      if (ApplicationManager.getApplication() != null
+          && !ApplicationManager.getApplication().isHeadlessEnvironment()
+          && !ApplicationManager.getApplication().isUnitTestMode()) {
         if (myPluginError == null) {
           myPluginError = errorMessage;
         }
