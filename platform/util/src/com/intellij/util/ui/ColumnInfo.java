@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,18 +23,6 @@ import javax.swing.table.TableCellRenderer;
 import java.util.Comparator;
 
 public abstract class ColumnInfo <Item, Aspect> {
-
-  public static class StringColumn extends ColumnInfo<String, String> {
-      public StringColumn(final String name) {
-          super(name);
-      }
-
-      @Override
-      public String valueOf(final String item) {
-          return item;
-      }
-  }
-
   private String myName;
   public static final ColumnInfo[] EMPTY_ARRAY = new ColumnInfo[0];
 
