@@ -30,6 +30,7 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   public void testProblems2() throws Exception{ doTest(); }
   public void testNullableFieldNotnullParam() throws Exception{ doTest(); }
   public void testNotNullFieldNullableParam() throws Exception{ doTest(); }
+  public void testNotNullCustomException() throws Exception{ doTest(); }
 
   public void testGetterSetterProblems() throws Exception{ doTest(); }
   public void testOverriddenMethods() throws Exception{
