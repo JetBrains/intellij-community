@@ -52,6 +52,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
   private final static Logger LOG = Logger.getInstance(ScopesAndSeveritiesTable.class);
 
   private static final HighlightSeverity MIXED_FAKE_SEVERITY = new HighlightSeverity("Mixed", -1);
+  @SuppressWarnings("UnusedDeclaration")
   private static final HighlightDisplayLevel MIXED_FAKE_LEVEL = new HighlightDisplayLevel(MIXED_FAKE_SEVERITY, AllIcons.Actions.Help);
 
   private final static int SCOPE_ENABLED_COLUMN = 0;
