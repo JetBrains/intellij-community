@@ -41,9 +41,16 @@ public interface PasswordStorage {
    * @return the stored password or null if the password record was not found or was removed
    * @throws PasswordSafeException if password safe cannot be accessed
    * @throws IllegalStateException if the method is called from the read action.
+   *
+   * @deprecated To remove in IDEA 15. Use {@link #getPassword(Project, Class, String, ModalityState)}
    */
+  @Deprecated
   @Nullable
   String getPassword(@Nullable Project project, @NotNull Class requestor, String key) throws PasswordSafeException;
+
+  @Nullable
+  String getPassword(@Nullable Project project, @NotNull Class requestor, String key,
+                     @Nullable ModalityState state) throws PasswordSafeException;
   /**
    * Remove password stored in a password safe
    *

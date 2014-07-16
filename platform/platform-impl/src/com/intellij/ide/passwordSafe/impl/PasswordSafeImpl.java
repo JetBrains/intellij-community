@@ -22,6 +22,7 @@ import com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordS
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.PasswordDatabase;
 import com.intellij.ide.passwordSafe.impl.providers.memory.MemoryPasswordSafe;
 import com.intellij.ide.passwordSafe.impl.providers.nil.NilProvider;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -71,10 +72,17 @@ public class PasswordSafeImpl extends PasswordSafe {
 
   @Nullable
   public String getPassword(@Nullable Project project, @NotNull Class requester, String key) throws PasswordSafeException {
+    return getPassword(project, requester, key, null);
+  }
+
+  @Nullable
+  @Override
+  public String getPassword(@Nullable Project project, @NotNull Class requester, String key,
+                            @Nullable ModalityState modalityState) throws PasswordSafeException {
     if (mySettings.getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
-      String password = getMemoryProvider().getPassword(project, requester, key);
+      String password = getMemoryProvider().getPassword(project, requester, key, modalityState);
       if (password == null) {
-        password = provider().getPassword(project, requester, key);
+        password = provider().getPassword(project, requester, key, modalityState);
         if (password != null) {
           // cache the password in memory as well for easier access during the session
           getMemoryProvider().storePassword(project, requester, key, password);
@@ -82,7 +90,7 @@ public class PasswordSafeImpl extends PasswordSafe {
       }
       return password;
     }
-    return provider().getPassword(project, requester, key);
+    return provider().getPassword(project, requester, key, modalityState);
   }
 
   public void removePassword(@Nullable Project project, @NotNull Class requester, String key) throws PasswordSafeException {

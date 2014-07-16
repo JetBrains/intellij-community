@@ -17,6 +17,7 @@ package com.intellij.ide.passwordSafe.impl.providers.nil;
 
 import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,9 @@ public final class NilProvider extends PasswordSafeProvider {
     return "Do not Store";
   }
 
-  public String getPassword(@Nullable Project project, @NotNull Class requester, String key) throws PasswordSafeException {
+  @Nullable
+  public String getPassword(@Nullable Project project, @NotNull Class requester, String key,
+                            @Nullable ModalityState modalityState) throws PasswordSafeException {
     // nothing is stored
     return null;
   }

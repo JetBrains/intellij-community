@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github.extensions;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.AuthData;
 import git4idea.remote.GitHttpAuthDataProvider;
@@ -31,7 +32,7 @@ public class GithubHttpAuthDataProvider implements GitHttpAuthDataProvider {
 
   @Nullable
   @Override
-  public AuthData getAuthData(@NotNull String url) {
+  public AuthData getAuthData(@NotNull String url, @Nullable ModalityState modalityState) {
     if (!GithubUrlUtil.isGithubUrl(url)) {
       return null;
     }
