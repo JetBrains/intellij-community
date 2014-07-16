@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
@@ -54,6 +55,16 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     myTipComponent = new TipComponent();
 
+    myTipComponent.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseExited(MouseEvent e) {
+        // don't hide the hint if mouse exited to myComponent
+        if (myComponent.getMousePosition() == null) {
+          hideHint();
+        }
+      }
+    });
+
     myComponent.addMouseListener(
       new MouseListener() {
         @Override
@@ -63,7 +74,10 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
         @Override
         public void mouseExited(MouseEvent e) {
-          hideHint();
+          // don't hide the hint if mouse exited to it
+          if (myTipComponent.getMousePosition() == null) {
+            hideHint();
+          }
         }
 
         @Override
