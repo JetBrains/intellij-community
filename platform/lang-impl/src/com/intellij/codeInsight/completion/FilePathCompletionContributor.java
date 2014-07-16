@@ -154,8 +154,9 @@ public class FilePathCompletionContributor extends CompletionContributor {
                       }
                     }
                   }
-                  __result.addElement(new FilePathLookupItem(file, helperList));
-
+                  if (!helperList.isEmpty()) {
+                    __result.addElement(new FilePathLookupItem(file, helperList));
+                  }
                 }
               }
             }
