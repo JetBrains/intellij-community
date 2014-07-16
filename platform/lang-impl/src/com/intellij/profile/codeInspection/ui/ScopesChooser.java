@@ -87,7 +87,7 @@ public abstract class ScopesChooser extends ComboBoxAction {
       group.add(new AnAction(scope.getName()) {
         @Override
         public void actionPerformed(final AnActionEvent e) {
-          inspectionProfile.addScope(defaultDescriptor.getToolWrapper(), scope, defaultDescriptor.getLevel(), true, getEventProject(e));
+          inspectionProfile.addScope(defaultDescriptor.getToolWrapper().createCopy(), scope, defaultDescriptor.getLevel(), true, getEventProject(e));
           onScopeAdded();
         }
       });

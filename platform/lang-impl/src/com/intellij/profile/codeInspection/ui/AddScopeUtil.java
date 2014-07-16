@@ -63,7 +63,7 @@ public class AddScopeUtil {
 
     for (final InspectionConfigTreeNode node : nodes) {
       final Descriptor descriptor = node.getDefaultDescriptor();
-      final InspectionToolWrapper toolWrapper = descriptor.getToolWrapper(); //copy
+      final InspectionToolWrapper toolWrapper = descriptor.getToolWrapper().createCopy(); //copy
       final HighlightDisplayLevel level = inspectionProfile.getErrorLevel(descriptor.getKey(), chosenScope, project);
       final boolean enabled = inspectionProfile.isToolEnabled(descriptor.getKey());
       scopeToolState = inspectionProfile.addScope(toolWrapper, chosenScope, level, enabled, project);
