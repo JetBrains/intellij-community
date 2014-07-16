@@ -30,14 +30,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.siyeh.ig.numeric.UnnecessaryExplicitNumericCastInspection;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.regex.Pattern;
 
-import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
 import static com.intellij.psi.CommonClassNames.*;
 
 public class ControlFlowAnalyzer extends JavaElementVisitor {
@@ -1396,7 +1394,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     addConditionalRuntimeThrow();
-    List<MethodContract> contracts = method instanceof PsiMethod ? getMethodContracts((PsiMethod)method) : Collections.<MethodContract>emptyList();
+    List<MethodContract> contracts = method instanceof PsiMethod ? getMethodCallContracts((PsiMethod)method, expression) : Collections.<MethodContract>emptyList();
     addInstruction(new MethodCallInstruction(expression, createChainedVariableValue(expression), contracts));
     if (!contracts.isEmpty()) {
       // if a contract resulted in 'fail', handle it
@@ -1431,6 +1429,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
+  private static List<MethodContract> getMethodCallContracts(@NotNull final PsiMethod method, @NotNull PsiMethodCallExpression call) {
+    List<MethodContract> contracts = HardcodedContracts.getHardcodedContracts(method, call);
+    return !contracts.isEmpty() ? contracts : getMethodContracts(method);
+  }
+
   static List<MethodContract> getMethodContracts(@NotNull final PsiMethod method) {
     final PsiAnnotation contractAnno = findContractAnnotation(method);
     final int paramCount = method.getParameterList().getParametersCount();
@@ -1456,45 +1459,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           return Result.create(Collections.<MethodContract>emptyList(), contractAnno);
         }
       });
-    }
-
-    @NonNls String methodName = method.getName();
-
-    PsiClass owner = method.getContainingClass();
-    if (owner != null) {
-      final String className = owner.getQualifiedName();
-      if ("java.lang.System".equals(className)) {
-        if ("exit".equals(methodName)) {
-          return Collections.singletonList(new MethodContract(MethodContract.createConstraintArray(paramCount), ValueConstraint.THROW_EXCEPTION));
-        }
-      }
-      else if ("junit.framework.Assert".equals(className) || "org.junit.Assert".equals(className) ||
-               "junit.framework.TestCase".equals(className) || "org.testng.Assert".equals(className) || "org.testng.AssertJUnit".equals(className)) {
-        boolean testng = className.startsWith("org.testng.");
-        if ("fail".equals(methodName)) {
-          return Collections.singletonList(new MethodContract(MethodContract.createConstraintArray(paramCount), ValueConstraint.THROW_EXCEPTION));
-        }
-
-        int checkedParam = testng ? 0 : paramCount - 1;
-        ValueConstraint[] constraints = MethodContract.createConstraintArray(paramCount);
-        if ("assertTrue".equals(methodName)) {
-          constraints[checkedParam] = ValueConstraint.FALSE_VALUE;
-          return Collections.singletonList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
-        }
-        if ("assertFalse".equals(methodName)) {
-          constraints[checkedParam] = ValueConstraint.TRUE_VALUE;
-          return Collections.singletonList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
-        }
-        if ("assertNull".equals(methodName)) {
-          constraints[checkedParam] = ValueConstraint.NOT_NULL_VALUE;
-          return Collections.singletonList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
-        }
-        if ("assertNotNull".equals(methodName)) {
-          constraints[checkedParam] = ValueConstraint.NULL_VALUE;
-          return Collections.singletonList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
-        }
-        return Collections.emptyList();
-      }
     }
 
     return Collections.emptyList();

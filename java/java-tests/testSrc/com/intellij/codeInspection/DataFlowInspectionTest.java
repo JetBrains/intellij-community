@@ -282,6 +282,21 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.launchAction(myFixture.findSingleIntention("Remove redundant assignment"));
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
+
+  public void testAssertThat() {
+    myFixture.addClass("package org.hamcrest; public class CoreMatchers { " +
+                       "public static <T> Matcher<T> notNullValue() {}\n" +
+                       "public static <T> Matcher<T> not(Matcher<T> matcher) {}\n" +
+                       "public static <T> Matcher<T> equalTo(T operand) {}\n" +
+                       "}");
+    myFixture.addClass("package org.hamcrest; public interface Matcher<T> {}");
+    myFixture.addClass("package org.junit; public class Assert { " +
+                       "public static <T> void assertThat(T actual, org.hamcrest.Matcher<? super T> matcher) {}\n" +
+                       "public static <T> void assertThat(String msg, T actual, org.hamcrest.Matcher<? super T> matcher) {}\n" +
+                       "}");
+    myFixture.enableInspections(new DataFlowInspection());
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
   
   public void _testNullCheckBeforeInstanceof() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEA-113220
 }
