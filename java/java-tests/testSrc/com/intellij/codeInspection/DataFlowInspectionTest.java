@@ -174,6 +174,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
 
   public void testTransientFinalField() { doTest(); }
   public void testFinalFieldDuringInitialization() { doTest(); }
+  public void testFinalFieldDuringSuperInitialization() { doTest(); }
   public void _testSymmetricUncheckedCast() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEABKL-6871
   public void testNullCheckDoesntAffectUncheckedCast() { doTest(); }
   public void testThrowNull() { doTest(); }
