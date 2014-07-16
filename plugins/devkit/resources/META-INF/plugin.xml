@@ -46,8 +46,9 @@
     <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.Extensions"
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsImpl"/>
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.DevKitUseScopeEnlarger"/>
+    <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.references.RegistryImplicitPropertyUsageProvider"/>
 
-    <configurationType implementation="org.jetbrains.idea.devkit.run.PluginConfigurationType"/>
+    <configurationType implementation="org.jetbrains.idea.devkit.module.PluginModuleType"/>
     <moduleType id="PLUGIN_MODULE" implementationClass="org.jetbrains.idea.devkit.module.PluginModuleType" classpathProvider="true"/>
     <sdkType implementation="org.jetbrains.idea.devkit.projectRoots.IdeaJdk"/>
     <compileServer.plugin classpath="devkit-jps-plugin.jar"/>
