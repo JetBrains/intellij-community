@@ -44,7 +44,6 @@ public class TrelloCard extends TrelloModel {
   @SerializedName("desc")
   private String description;
   private String url;
-  @SerializedName("due")
   private boolean closed;
   private Date dateLastActivity;
   private List<TrelloLabel> labels;
@@ -91,7 +90,7 @@ public class TrelloCard extends TrelloModel {
   }
 
   @Override
-  public void setName(String name) {
+  public void setName(@NotNull String name) {
     this.name = name;
   }
 
