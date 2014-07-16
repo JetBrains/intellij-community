@@ -30,19 +30,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-/**
- * @author Nadya Zabrodina
- */
 public class GitCloneDialog extends CloneDvcsDialog {
 
   public GitCloneDialog(@NotNull Project project) {
     super(project, GitVcs.NAME, GitUtil.DOT_GIT);
   }
 
-  /*
-   * We have a hack here: if http response asked for a password, then the url is at least valid and existent, and we consider
-   * that the test passed.
-   */
   protected boolean test(@NotNull String url) {
     final GitLineHandlerPasswordRequestAware handler =
       new GitLineHandlerPasswordRequestAware(myProject, new File("."), GitCommand.LS_REMOTE);
