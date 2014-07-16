@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,23 @@
  * limitations under the License.
  */
 package org.jetbrains.jps.idea
+
 /**
  * @author max
  */
 public class IdeaProjectLoader {
   public static String guessHome(Script script) {
-    File home = new File(script["gant.file"].substring("file:".length()))
+    String uri = script["gant.file"]
+    File home = new File(new URI(uri).getSchemeSpecificPart())
 
     while (home != null) {
-      if (home.isDirectory()) {
-        if (new File(home, ".idea").exists()) return home.getCanonicalPath()
+      if (home.isDirectory() && new File(home, ".idea").exists()) {
+        return home.getCanonicalPath()
       }
 
       home = home.getParentFile()
     }
 
-    return null
+    throw new IllegalArgumentException("Cannot guess project home from '" + uri + "'")
   }
 }

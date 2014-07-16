@@ -88,7 +88,7 @@ private String require(String key) {
     this[key]
   }
   catch (MissingPropertyException ignored) {
-    projectBuilder.error("Property $key is required")
+    projectBuilder.error("Property '$key' is required")
   }
 }
 
@@ -97,7 +97,7 @@ private String require(String key, String defaultValue) {
     this[key]
   }
   catch (MissingPropertyException ignored) {
-    projectBuilder.info("$key is not defined. Defaulting to $defaultValue")
+    projectBuilder.info("'$key' is not defined. Defaulting to '$defaultValue'")
     this[key] = defaultValue
   }
 }
@@ -112,8 +112,9 @@ binding.setVariable("requireProperty", {String key, String defaultValue = null -
 })
 
 binding.setVariable("guessHome", {
-  // Current file is supposed to be at build/scripts/release.gant path
-  new File(requireProperty("gant.file").substring("file:".length())).getParentFile().getParentFile().getParent()
+  // current file is supposed to be at build/scripts/*.gant path
+  String uri = requireProperty("gant.file")
+  new File(new URI(uri).getSchemeSpecificPart()).getParentFile().getParentFile().getParent()
 })
 
 binding.setVariable("loadProject", {
