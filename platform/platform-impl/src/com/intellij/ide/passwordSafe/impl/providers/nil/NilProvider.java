@@ -25,48 +25,31 @@ import org.jetbrains.annotations.Nullable;
  * The most secure provider that does not store anything, so it cannot be cracked
  */
 public final class NilProvider extends PasswordSafeProvider {
-  /**
-   * {@inheritDoc}
-   */
+
   @Override
   public boolean isSupported() {
     return true;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public String getDescription() {
     return "The provider that does not remembers password.";
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public String getName() {
     return "Do not Store";
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public String getPassword(@Nullable Project project, @NotNull Class requester, String key) throws PasswordSafeException {
     // nothing is stored
     return null;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public void removePassword(@Nullable Project project, @NotNull Class requester, String key) throws PasswordSafeException {
     // do nothing
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public void storePassword(@Nullable Project project, @NotNull Class requester, String key, String value) throws PasswordSafeException {
     // just forget about password
   }
