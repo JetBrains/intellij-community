@@ -28,11 +28,11 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.containers.LongStack;
 import com.intellij.util.indexing.FileBasedIndex;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntStack;
+import gnu.trove.TLongArrayList;
+import gnu.trove.TLongHashSet;
+import gnu.trove.TLongObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,11 +91,11 @@ public class ProjectBytecodeAnalysis {
   @NotNull
   private PsiAnnotation[] collectInferredAnnotations(PsiModifierListOwner listOwner) {
     try {
-      int ownerKey = getKey(listOwner);
+      long ownerKey = getKey(listOwner);
       if (ownerKey == -1) {
         return PsiAnnotation.EMPTY_ARRAY;
       }
-      IntArrayList allKeys = contractKeys(listOwner, ownerKey);
+      TLongArrayList allKeys = contractKeys(listOwner, ownerKey);
       Annotations annotations = loadAnnotations(listOwner, ownerKey, allKeys);
       boolean notNull = annotations.notNulls.contains(ownerKey);
       String contractValue = annotations.contracts.get(ownerKey);
@@ -140,9 +140,8 @@ public class ProjectBytecodeAnalysis {
     return createAnnotationFromText("@org.jetbrains.annotations.Contract(" + contractValue + ")");
   }
 
-  public static int getKey(@NotNull PsiModifierListOwner owner) throws IOException {
+  public static long getKey(@NotNull PsiModifierListOwner owner) throws IOException {
     LOG.assertTrue(owner instanceof PsiCompiledElement, owner);
-
     if (owner instanceof PsiMethod) {
       return BytecodeAnalysisConverter.getInstance().mkPsiKey((PsiMethod)owner, new Out());
     }
@@ -160,41 +159,42 @@ public class ProjectBytecodeAnalysis {
     return -1;
   }
 
-  public static IntArrayList contractKeys(@NotNull PsiModifierListOwner owner, int primaryKey) throws IOException {
+  public static TLongArrayList contractKeys(@NotNull PsiModifierListOwner owner, long primaryKey) throws IOException {
     if (owner instanceof PsiMethod) {
-      IntArrayList result = BytecodeAnalysisConverter.getInstance().mkInOutKeys((PsiMethod)owner);
+      TLongArrayList result = BytecodeAnalysisConverter.getInstance().mkInOutKeys((PsiMethod)owner, primaryKey);
       result.add(primaryKey);
       return result;
     }
-    IntArrayList result = new IntArrayList(1);
+    TLongArrayList result = new TLongArrayList(1);
     result.add(primaryKey);
     return result;
   }
 
-  private Annotations loadAnnotations(@NotNull PsiModifierListOwner owner, int key, IntArrayList allKeys) throws IOException {
+  private Annotations loadAnnotations(@NotNull PsiModifierListOwner owner, long key, TLongArrayList allKeys) throws IOException {
     Annotations result = new Annotations();
     if (owner instanceof PsiParameter) {
-      final IntIdSolver solver = new IntIdSolver(new ELattice<Value>(Value.NotNull, Value.Top));
+      final Solver solver = new Solver(new ELattice<Value>(Value.NotNull, Value.Top));
       collectEquations(allKeys, solver);
-      TIntObjectHashMap<Value> solutions = solver.solve();
-      BytecodeAnalysisConverter.getInstance().addAnnotations(solutions, result);
+      TLongObjectHashMap<Value> solutions = solver.solve();
+      BytecodeAnalysisConverter.getInstance().addParameterAnnotations(solutions, result);
     } else if (owner instanceof PsiMethod) {
-      final IntIdSolver solver = new IntIdSolver(new ELattice<Value>(Value.Bot, Value.Top));
+      final Solver solver = new Solver(new ELattice<Value>(Value.Bot, Value.Top));
       collectEquations(allKeys, solver);
-      TIntObjectHashMap<Value> solutions = solver.solve();
-      BytecodeAnalysisConverter.getInstance().addAnnotations(solutions, result);
+      TLongObjectHashMap<Value> solutions = solver.solve();
+      BytecodeAnalysisConverter.getInstance().addMethodAnnotations(solutions, result, key,
+                                                                   ((PsiMethod)owner).getParameterList().getParameters().length);
     }
     return result;
   }
 
   // todo - should be some limit of equations
-  private void collectEquations(IntArrayList keys, IntIdSolver solver) {
+  private void collectEquations(TLongArrayList keys, Solver solver) {
     GlobalSearchScope librariesScope = ProjectScope.getLibrariesScope(myProject);
-    TIntHashSet queued = new TIntHashSet();
-    TIntStack queue = new TIntStack();
+    TLongHashSet queued = new TLongHashSet();
+    LongStack queue = new LongStack();
 
     for (int i = 0; i < keys.size(); i++) {
-      int key = keys.get(i);
+      long key = keys.get(i);
       queue.push(key);
       queued.add(key);
       // stable/unstable
@@ -203,21 +203,21 @@ public class ProjectBytecodeAnalysis {
     }
 
     FileBasedIndex index = FileBasedIndex.getInstance();
-    while (queue.size() > 0) {
-      List<IntIdEquation> equations = index.getValues(BytecodeAnalysisIndex.NAME, queue.pop(), librariesScope);
-      for (IntIdEquation equation : equations) {
-        IntIdResult rhs = equation.rhs;
+    while (!queue.empty()) {
+      List<IdEquation> equations = index.getValues(BytecodeAnalysisIndex.NAME, queue.pop(), librariesScope);
+      for (IdEquation equation : equations) {
+        IdResult rhs = equation.rhs;
         solver.addEquation(equation);
-        if (rhs instanceof IntIdPending) {
-          IntIdPending intIdPending = (IntIdPending)rhs;
+        if (rhs instanceof IdPending) {
+          IdPending intIdPending = (IdPending)rhs;
           for (IntIdComponent component :intIdPending.delta) {
-            for (int depKey : component.ids) {
+            for (long depKey : component.ids) {
               if (!queued.contains(depKey)) {
                 queue.push(depKey);
                 queued.add(depKey);
               }
               // stable/unstable
-              int swapped = -depKey;
+              long swapped = -depKey;
               if (!queued.contains(swapped)) {
                 queue.push(swapped);
                 queued.add(swapped);
@@ -239,7 +239,7 @@ public class ProjectBytecodeAnalysis {
 
 class Annotations {
   // @NotNull keys
-  final TIntHashSet notNulls = new TIntHashSet();
+  final TLongHashSet notNulls = new TLongHashSet();
   // @Contracts
-  final TIntObjectHashMap<String> contracts = new TIntObjectHashMap<String>();
+  final TLongObjectHashMap<String> contracts = new TLongObjectHashMap<String>();
 }

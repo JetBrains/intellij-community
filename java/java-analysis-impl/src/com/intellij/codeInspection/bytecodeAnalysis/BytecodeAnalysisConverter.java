@@ -25,11 +25,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.io.*;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectIterator;
+import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Type;
@@ -48,6 +45,7 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
 public class BytecodeAnalysisConverter implements ApplicationComponent {
 
   private static final String VERSION = "BytecodeAnalysisConverter.Enumerators";
+  public static final int SHIFT = 4096;
 
   public static BytecodeAnalysisConverter getInstance() {
     return ApplicationManager.getApplication().getComponent(BytecodeAnalysisConverter.class);
@@ -105,23 +103,23 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     return "BytecodeAnalysisConverter";
   }
 
-  IntIdEquation convert(Equation<Key, Value> equation) throws IOException {
+  IdEquation convert(Equation<Key, Value> equation) throws IOException {
     ProgressManager.checkCanceled();
 
     Result<Key, Value> rhs = equation.rhs;
-    IntIdResult result;
+    IdResult result;
     if (rhs instanceof Final) {
-      result = new IntIdFinal(((Final<Key, Value>)rhs).value);
+      result = new IdFinal(((Final<Key, Value>)rhs).value);
     } else {
       Pending<Key, Value> pending = (Pending<Key, Value>)rhs;
       Set<Product<Key, Value>> sumOrigin = pending.sum;
       IntIdComponent[] components = new IntIdComponent[sumOrigin.size()];
       int componentI = 0;
       for (Product<Key, Value> prod : sumOrigin) {
-        int[] intProd = new int[prod.ids.size()];
+        long[] intProd = new long[prod.ids.size()];
         int idI = 0;
         for (Key id : prod.ids) {
-          int rawId = mkAsmKey(id);
+          long rawId = mkAsmKey(id);
           if (rawId <= 0) {
             LOG.error("raw key should be positive. rawId = " + rawId);
           }
@@ -132,20 +130,22 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
         components[componentI] = intIdComponent;
         componentI++;
       }
-      result = new IntIdPending(components);
+      result = new IdPending(components);
     }
 
-    int rawKey = mkAsmKey(equation.id);
+    long rawKey = mkAsmKey(equation.id);
     if (rawKey <= 0) {
       LOG.error("raw key should be positive. rawKey = " + rawKey);
     }
 
-    int key = equation.id.stable ? rawKey : -rawKey;
-    return new IntIdEquation(key, result);
+    long key = equation.id.stable ? rawKey : -rawKey;
+    return new IdEquation(key, result);
   }
 
-  public int mkAsmKey(@NotNull Key key) throws IOException {
-    return myCompoundKeyEnumerator.enumerate(new int[]{mkAsmSignatureKey(key.method), mkDirectionKey(key.direction)});
+  public long mkAsmKey(@NotNull Key key) throws IOException {
+    long baseKey = mkAsmSignatureKey(key.method);
+    long directionKey = mkDirectionKey(key.direction);
+    return baseKey * SHIFT + directionKey;
   }
 
   private static int mkDirectionKey(Direction dir) throws IOException {
@@ -188,12 +188,11 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
   private int mkAsmShortSignatureKey(@NotNull Method method) throws IOException {
     Type[] argTypes = Type.getArgumentTypes(method.methodDesc);
     int arity = argTypes.length;
-    int[] sigKey = new int[3 + arity];
+    int[] sigKey = new int[2 + arity];
     sigKey[0] = mkAsmTypeKey(Type.getReturnType(method.methodDesc));
     sigKey[1] = myNamesEnumerator.enumerate(method.methodName);
-    sigKey[2] = argTypes.length;
     for (int i = 0; i < argTypes.length; i++) {
-      sigKey[3 + i] = mkAsmTypeKey(argTypes[i]);
+      sigKey[2 + i] = mkAsmTypeKey(argTypes[i]);
     }
     return myCompoundKeyEnumerator.enumerate(sigKey);
   }
@@ -214,17 +213,18 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     return myCompoundKeyEnumerator.enumerate(classKey);
   }
 
-  public int mkPsiKey(@NotNull PsiMethod psiMethod, Direction direction) throws IOException {
+  public long mkPsiKey(@NotNull PsiMethod psiMethod, Direction direction) throws IOException {
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class, false);
     if (psiClass == null) {
       LOG.debug("PsiClass was null for " + psiMethod.getName());
       return -1;
     }
-    int sigKey = mkPsiSignatureKey(psiMethod);
+    long sigKey = mkPsiSignatureKey(psiMethod);
     if (sigKey == -1) {
       return -1;
     }
-    return myCompoundKeyEnumerator.enumerate(new int[]{sigKey, mkDirectionKey(direction)});
+    long directionKey = mkDirectionKey(direction);
+    return sigKey * SHIFT + directionKey;
   }
 
   private int mkPsiSignatureKey(@NotNull PsiMethod psiMethod) throws IOException {
@@ -240,7 +240,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
 
     final int shift = isInnerClassConstructor ? 1 : 0;
     final int arity = parameters.length + shift;
-    int[] shortSigKey = new int[3 + arity];
+    int[] shortSigKey = new int[2 + arity];
     if (returnType == null) {
       shortSigKey[0] = mkPsiTypeKey(PsiType.VOID);
       shortSigKey[1] = myNamesEnumerator.enumerate("<init>");
@@ -248,13 +248,12 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       shortSigKey[0] = mkPsiTypeKey(returnType);
       shortSigKey[1] = myNamesEnumerator.enumerate(psiMethod.getName());
     }
-    shortSigKey[2] = arity;
     if (isInnerClassConstructor) {
-      shortSigKey[3] = mkPsiClassKey(outerClass, 0);
+      shortSigKey[2] = mkPsiClassKey(outerClass, 0);
     }
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
-      shortSigKey[3 + i + shift] = mkPsiTypeKey(parameter.getType());
+      shortSigKey[2 + i + shift] = mkPsiTypeKey(parameter.getType());
     }
     for (int aShortSigKey : shortSigKey) {
       if (aShortSigKey == -1) {
@@ -273,21 +272,20 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     return myCompoundKeyEnumerator.enumerate(sigKey);
   }
 
-  public IntArrayList mkInOutKeys(@NotNull PsiMethod psiMethod) throws IOException {
-    int primaryKey = mkPsiSignatureKey(psiMethod);
+  public TLongArrayList mkInOutKeys(@NotNull PsiMethod psiMethod, long primaryKey) throws IOException {
     PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-    IntArrayList keys = new IntArrayList(parameters.length * 2 + 1);
+    TLongArrayList keys = new TLongArrayList(parameters.length * 2 + 1);
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       PsiType parameterType = parameter.getType();
       if (parameterType instanceof PsiPrimitiveType) {
         if (PsiType.BOOLEAN.equals(parameterType)) {
-          keys.add(myCompoundKeyEnumerator.enumerate(new int[]{primaryKey, mkDirectionKey(new InOut(i, Value.False))}));
-          keys.add(myCompoundKeyEnumerator.enumerate(new int[]{primaryKey, mkDirectionKey(new InOut(i, Value.True))}));
+          keys.add(primaryKey + mkDirectionKey(new InOut(i, Value.False)));
+          keys.add(primaryKey + mkDirectionKey(new InOut(i, Value.True)));
         }
       } else {
-        keys.add(myCompoundKeyEnumerator.enumerate(new int[]{primaryKey, mkDirectionKey(new InOut(i, Value.NotNull))}));
-        keys.add(myCompoundKeyEnumerator.enumerate(new int[]{primaryKey, mkDirectionKey(new InOut(i, Value.Null))}));
+        keys.add(primaryKey + mkDirectionKey(new InOut(i, Value.NotNull)));
+        keys.add(primaryKey + mkDirectionKey(new InOut(i, Value.Null)));
       }
     }
     return keys;
@@ -363,62 +361,54 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     return -1;
   }
 
-  public void addAnnotations(TIntObjectHashMap<Value> internalIdSolutions, Annotations annotations) {
+  public void addMethodAnnotations(TLongObjectHashMap<Value> internalIdSolutions, Annotations annotations, long methodKey, int arity) {
 
-    TIntObjectHashMap<List<String>> contractClauses = new TIntObjectHashMap<List<String>>();
-    TIntObjectIterator<Value> solutionsIterator = internalIdSolutions.iterator();
+    List<String> clauses = new ArrayList<String>();
+    TLongObjectIterator<Value> solutionsIterator = internalIdSolutions.iterator();
 
-    TIntHashSet notNulls = annotations.notNulls;
-    TIntObjectHashMap<String> contracts = annotations.contracts;
-
+    TLongHashSet notNulls = annotations.notNulls;
+    TLongObjectHashMap<String> contracts = annotations.contracts;
     for (int i = internalIdSolutions.size(); i-- > 0;) {
       solutionsIterator.advance();
-      int key = Math.abs(solutionsIterator.key());
+      long key = Math.abs(solutionsIterator.key());
       Value value = solutionsIterator.value();
       if (value == Value.Top || value == Value.Bot) {
         continue;
       }
-      try {
-        int[] compoundKey = myCompoundKeyEnumerator.valueOf(key);
-        Direction direction = extractDirection(compoundKey[1]);
-        if (value == Value.NotNull && (direction instanceof In || direction instanceof Out)) {
-          notNulls.add(key);
-        }
-        else if (direction instanceof InOut) {
-          compoundKey = new int[]{compoundKey[0], 0};
-          try {
-            int baseKey = myCompoundKeyEnumerator.enumerate(compoundKey);
-            List<String> clauses = contractClauses.get(baseKey);
-            if (clauses == null) {
-              clauses = new ArrayList<String>();
-              contractClauses.put(baseKey, clauses);
-            }
-            int[] sig = myCompoundKeyEnumerator.valueOf(compoundKey[0]);
-            int[] shortSig = myCompoundKeyEnumerator.valueOf(sig[1]);
-            int arity = shortSig[2];
-            clauses.add(contractElement(arity, (InOut)direction, value));
-          }
-          catch (IOException e) {
-            LOG.debug(e);
-          }
-        }
+      Direction direction = extractDirection((int)(key % SHIFT));
+      if (value == Value.NotNull && direction instanceof Out && key == methodKey) {
+        notNulls.add(key);
       }
-      catch (IOException e) {
-        LOG.debug(e);
+      else if (direction instanceof InOut) {
+        long baseKey = key - (key % SHIFT);
+        if (baseKey == methodKey) {
+          clauses.add(contractElement(arity, (InOut)direction, value));
+        }
       }
     }
 
-    TIntObjectIterator<List<String>> buildersIterator = contractClauses.iterator();
-    for (int i = contractClauses.size(); i-- > 0;) {
-      buildersIterator.advance();
-      int key = buildersIterator.key();
-      if (!notNulls.contains(key)) {
-        List<String> clauses = buildersIterator.value();
-        Collections.sort(clauses);
-        StringBuilder sb = new StringBuilder("\"");
-        StringUtil.join(clauses, ";", sb);
-        sb.append('"');
-        contracts.put(key, sb.toString().intern());
+    if (!notNulls.contains(methodKey) && !clauses.isEmpty()) {
+      Collections.sort(clauses);
+      StringBuilder sb = new StringBuilder("\"");
+      StringUtil.join(clauses, ";", sb);
+      sb.append('"');
+      contracts.put(methodKey, sb.toString().intern());
+    }
+  }
+
+  public void addParameterAnnotations(TLongObjectHashMap<Value> internalIdSolutions, Annotations annotations) {
+    TLongObjectIterator<Value> solutionsIterator = internalIdSolutions.iterator();
+    TLongHashSet notNulls = annotations.notNulls;
+    for (int i = internalIdSolutions.size(); i-- > 0;) {
+      solutionsIterator.advance();
+      long key = Math.abs(solutionsIterator.key());
+      Value value = solutionsIterator.value();
+      if (value == Value.Top || value == Value.Bot) {
+        continue;
+      }
+      Direction direction = extractDirection((int)(key % SHIFT));
+      if (value == Value.NotNull && (direction instanceof In || direction instanceof Out)) {
+        notNulls.add(key);
       }
     }
   }
@@ -454,7 +444,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     return version;
   }
 
-  private static class IntArrayKeyDescriptor implements KeyDescriptor<int[]> {
+  private static class IntArrayKeyDescriptor implements KeyDescriptor<int[]>, DifferentSerializableBytesImplyNonEqualityPolicy {
 
     @Override
     public void save(@NotNull DataOutput out, int[] value) throws IOException {

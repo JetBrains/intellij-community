@@ -33,7 +33,7 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
 /**
  * @author lambdamix
  */
-public class ClassDataIndexer implements DataIndexer<Integer, IntIdEquation, FileContent> {
+public class ClassDataIndexer implements DataIndexer<Long, IdEquation, FileContent> {
   final BytecodeAnalysisConverter myConverter;
 
   public ClassDataIndexer(BytecodeAnalysisConverter converter) {
@@ -42,19 +42,19 @@ public class ClassDataIndexer implements DataIndexer<Integer, IntIdEquation, Fil
 
   @NotNull
   @Override
-  public Map<Integer, IntIdEquation> map(@NotNull FileContent inputData) {
-    HashMap<Integer, IntIdEquation> map = new HashMap<Integer, IntIdEquation>();
+  public Map<Long, IdEquation> map(@NotNull FileContent inputData) {
+    HashMap<Long, IdEquation> map = new HashMap<Long, IdEquation>();
     try {
       ClassEquations rawEquations = processClass(new ClassReader(inputData.getContent()));
       List<Equation<Key, Value>> rawParameterEquations = rawEquations.parameterEquations;
       List<Equation<Key, Value>> rawContractEquations = rawEquations.contractEquations;
 
       for (Equation<Key, Value> rawParameterEquation: rawParameterEquations) {
-        IntIdEquation equation = myConverter.convert(rawParameterEquation);
+        IdEquation equation = myConverter.convert(rawParameterEquation);
         map.put(equation.id, equation);
       }
       for (Equation<Key, Value> rawContractEquation: rawContractEquations) {
-        IntIdEquation equation = myConverter.convert(rawContractEquation);
+        IdEquation equation = myConverter.convert(rawContractEquation);
         map.put(equation.id, equation);
       }
     }
