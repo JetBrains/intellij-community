@@ -10,40 +10,40 @@
 :: 4. You quit IntelliJ IDEA
 
 IF NOT EXIST "%JAVA_HOME%\bin\java.exe" (
-  ECHO JAVA_HOME must be defined and point to a valid Java installaton
+  ECHO JAVA_HOME must be defined and point to a valid Java installation
   EXIT
 )
 
 IF NOT EXIST "%WORK_IDEA_HOME%\bin\idea.bat" (
-  @ECHO WORK_IDEA_HOME must be defined and point to build you're updating
+  ECHO WORK_IDEA_HOME must be defined and point to IDEA installation you wish to update
   EXIT
 )
 
 IF NOT EXIST "%DEV_IDEA_HOME%\build\update.cmd" (
-  @ECHO DEV_IDEA_HOME must be defined and point to source base your're updating from
+  ECHO DEV_IDEA_HOME must be defined and point to a source base you're updating from
   EXIT
 )
 
-ECHO Updating %WORK_IDEA_HOME% from compiled classes at %DEV_IDEA_HOME%
+ECHO Updating "%WORK_IDEA_HOME%" from compiled classes at "%DEV_IDEA_HOME%"
 
-CD %DEV_IDEA_HOME%
+CD "%DEV_IDEA_HOME%"
 
 SET ANT_HOME=%DEV_IDEA_HOME%\lib\ant
-SET EXEC_ANT="%JAVA_HOME%\bin\java.exe" -Dant.home=%ANT_HOME% -classpath "%ANT_HOME%\lib\ant-launcher.jar" org.apache.tools.ant.launch.Launcher
-CALL %EXEC_ANT% -f build/update.xml %*
+SET EXEC_ANT="%JAVA_HOME%\bin\java.exe" -Dant.home="%ANT_HOME%" -classpath "%ANT_HOME%\lib\ant-launcher.jar" org.apache.tools.ant.launch.Launcher
+%EXEC_ANT% -f build/update.xml
 IF NOT ERRORLEVEL 0 GOTO failed
+IF NOT EXIST "%DEV_IDEA_HOME%\out\deploy" GOTO failed
 
-DEL /Q /S %WORK_IDEA_HOME%\lib
-DEL /Q /S %WORK_IDEA_HOME%\plugins
+RMDIR /Q /S "%WORK_IDEA_HOME%\lib"
+RMDIR /Q /S "%WORK_IDEA_HOME%\plugins"
 
-XCOPY %DEV_IDEA_HOME%\bin\win\*.dll %WORK_IDEA_HOME%\bin\ /Q /E /Y
-XCOPY %DEV_IDEA_HOME%\bin\win\fsnotifier.exe %WORK_IDEA_HOME%\bin\ /Q /E /Y
-XCOPY %DEV_IDEA_HOME%\bin\win\runnerw.exe %WORK_IDEA_HOME%\bin\ /Q /E /Y
-XCOPY %DEV_IDEA_HOME%\out\deploy\*.* %WORK_IDEA_HOME%\ /Q /E /Y
+XCOPY "%DEV_IDEA_HOME%\bin\win\*.dll" "%WORK_IDEA_HOME%\bin\" /Q /E /Y
+XCOPY "%DEV_IDEA_HOME%\bin\win\*.exe" "%WORK_IDEA_HOME%\bin\" /Q /E /Y
+XCOPY "%DEV_IDEA_HOME%\out\deploy\*.*" "%WORK_IDEA_HOME%\" /Q /E /Y
 GOTO done
 
 :failed
-ECHO "Update failed; work IDEA build not modified."
+ECHO Update failed; work IDEA build not modified.
 
 :done
-CD /D %WORK_IDEA_HOME%\bin
+CD /D "%WORK_IDEA_HOME%\bin"
