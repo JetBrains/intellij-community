@@ -26,6 +26,7 @@ import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -89,7 +90,7 @@ public class ExtractMethodUtil {
         if (target != null) {
           expression.putCopyableUserData(RESOLVE_TARGET_KEY, null);
           try {
-            assertSameResolveTarget(target, expression, extracted);
+            addCastsToEnsureResolveTarget(target, expression);
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
@@ -102,7 +103,7 @@ public class ExtractMethodUtil {
 
     for (final Map.Entry<PsiMethodCallExpression, PsiMethod> entry : oldResolves.entrySet()) {
       try {
-        assertSameResolveTarget(entry.getValue(), entry.getKey(), extracted);
+        addCastsToEnsureResolveTarget(entry.getValue(), entry.getKey());
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -110,10 +111,10 @@ public class ExtractMethodUtil {
     }
   }
 
-  private static void assertSameResolveTarget(final PsiMethod oldTarget, final PsiMethodCallExpression call, final PsiMethod extracted)
+  public static void addCastsToEnsureResolveTarget(@NotNull final PsiMethod oldTarget, @NotNull final PsiMethodCallExpression call)
     throws IncorrectOperationException {
     final PsiMethod newTarget = call.resolveMethod();
-    final PsiManager manager = extracted.getManager();
+    final PsiManager manager = oldTarget.getManager();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     if (!manager.areElementsEquivalent(oldTarget, newTarget)) {
       final PsiParameter[] oldParameters = oldTarget.getParameterList().getParameters();

@@ -44,6 +44,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.extractMethod.ExtractMethodUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
@@ -279,8 +280,18 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
           PsiElement problemElement = descriptor.getPsiElement();
           if (problemElement == null) return;
 
+          PsiMethodCallExpression call = problemElement.getParent() instanceof PsiExpressionList &&
+                                         problemElement.getParent().getParent() instanceof PsiMethodCallExpression ?
+                                         (PsiMethodCallExpression)problemElement.getParent().getParent() :
+                                         null;
+          PsiMethod targetMethod = call == null ? null : call.resolveMethod();
+
           JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
           problemElement.replace(facade.getElementFactory().createExpressionFromText(exprText, null));
+
+          if (targetMethod != null) {
+            ExtractMethodUtil.addCastsToEnsureResolveTarget(targetMethod, call);
+          }
         }
       });
     }

@@ -139,6 +139,12 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
+  public void testReportConstantReferences_OverloadedCall() {
+    doTestReportConstantReferences();
+    myFixture.launchAction(myFixture.findSingleIntention("Replace with 'null'"));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
   public void testReportConstantReferencesAfterFinalFieldAccess() { doTestReportConstantReferences(); }
 
   private void doTestReportConstantReferences() {
