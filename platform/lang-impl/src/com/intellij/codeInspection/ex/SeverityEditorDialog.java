@@ -301,6 +301,9 @@ public class SeverityEditorDialog extends DialogWrapper {
   }
 
   private void reset(SeverityBasedTextAttributes info) {
+    if (info == null) {
+      return;
+    }
     final MyTextAttributesDescription description =
       new MyTextAttributesDescription(info.getType().toString(), null, info.getAttributes(), info.getType().getAttributesKey());
     @NonNls Element textAttributes = new Element("temp");
