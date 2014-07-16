@@ -69,12 +69,6 @@ public class InspectionConfigTreeNode extends CheckedTreeNode {
   }
 
   @Nullable
-  public NamedScope getScope(Project project) {
-    final ToolDescriptors descriptors = getDescriptors();
-    return descriptors == null ? null : descriptors.getScopeToolState().getScope(project);
-  }
-
-  @Nullable
   public String getGroupName() {
     return userObject instanceof String ? (String)userObject : null;
   }
@@ -82,7 +76,7 @@ public class InspectionConfigTreeNode extends CheckedTreeNode {
   @Nullable
   public String getScopeName() {
     final ToolDescriptors descriptors = getDescriptors();
-    return descriptors != null ? descriptors.getScopeToolState().getScopeName() : null;
+    return descriptors != null ? descriptors.getDefaultScopeToolState().getScopeName() : null;
   }
 
   public boolean isProperSetting() {

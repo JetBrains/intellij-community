@@ -466,8 +466,10 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     getTools(toolId, element.getProject()).disableTool(element);
   }
 
-  public void disableToolByDefault(@NotNull String toolId, Project project) {
-    getToolDefaultState(toolId, project).setEnabled(false);
+  public void disableToolByDefault(@NotNull List<String> toolIds, Project project) {
+    for (final String toolId : toolIds) {
+      getToolDefaultState(toolId, project).setEnabled(false);
+    }
   }
 
   @NotNull
@@ -475,8 +477,10 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return getTools(toolId, project).getDefaultState();
   }
 
-  public void enableToolByDefault(@NotNull String toolId, Project project) {
-    getToolDefaultState(toolId, project).setEnabled(true);
+  public void enableToolsByDefault(@NotNull List<String> toolIds, Project project) {
+    for (final String toolId : toolIds) {
+      getToolDefaultState(toolId, project).setEnabled(true);
+    }
   }
 
   public boolean wasInitialized() {
@@ -649,11 +653,22 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     getTools(inspectionTool, project).enableTool(namedScope, project);
   }
 
+  public void enableTools(@NotNull List<String> inspectionTools, NamedScope namedScope, Project project) {
+    for (String inspectionTool : inspectionTools) {
+      enableTool(inspectionTool, namedScope, project);
+    }
+  }
+
   @Override
   public void disableTool(@NotNull String inspectionTool, NamedScope namedScope, @NotNull Project project) {
     getTools(inspectionTool, project).disableTool(namedScope, project);
   }
 
+  public void disableTools(@NotNull List<String> inspectionTools, NamedScope namedScope, @NotNull Project project) {
+    for (String inspectionTool : inspectionTools) {
+      disableTool(inspectionTool, namedScope, project);
+    }
+  }
 
   @Override
   public void disableTool(@NotNull String inspectionTool, Project project) {
@@ -838,8 +853,14 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     getTools(toolId, project).removeScope(scopeIdx);
   }
 
-  public void removeScope(@NotNull String toolId, @NotNull ScopeToolState scope, Project project) {
+  public void removeScope(@NotNull String toolId, @NotNull NamedScope scope, Project project) {
     getTools(toolId, project).removeScope(scope);
+  }
+
+  public void removeScopes(@NotNull List<String> toolIds, @NotNull NamedScope scope, Project project) {
+    for (final String toolId : toolIds) {
+      removeScope(toolId, scope, project);
+    }
   }
 
   public void removeAllScopes(@NotNull String toolId, Project project) {
@@ -887,6 +908,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public void setErrorLevel(@NotNull HighlightDisplayKey key, @NotNull HighlightDisplayLevel level, int scopeIdx, Project project) {
     getTools(key.toString(), project).setLevel(level, scopeIdx, project);
+  }
+
+  public void setErrorLevel(@NotNull List<HighlightDisplayKey> keys, @NotNull HighlightDisplayLevel level, int scopeIdx, Project project) {
+    for (HighlightDisplayKey key : keys) {
+      getTools(key.toString(), project).setLevel(level, scopeIdx, project);
+    }
   }
 
   public ToolsImpl getTools(@NotNull String toolId, Project project) {

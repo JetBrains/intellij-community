@@ -58,12 +58,14 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
-import com.intellij.util.IconUtil;
+import com.intellij.util.Function;
 import com.intellij.util.config.StorageAccessors;
-import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.*;
+import com.intellij.util.containers.Queue;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -84,6 +86,7 @@ import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -259,7 +262,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
     fillTreeData(myProfileFilter.getFilter(), true);
     repaintTableData();
-    updateOptionsAndDescriptionPanel(myTree.getSelectionPath());
+    updateOptionsAndDescriptionPanel(myTree.getSelectionPaths());
   }
 
   @Nullable
@@ -463,8 +466,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        if (myTree.getSelectionPaths() != null && myTree.getSelectionPaths().length == 1) {
-          updateOptionsAndDescriptionPanel(myTree.getSelectionPaths()[0]);
+        if (myTree.getSelectionPaths() != null) {
+          updateOptionsAndDescriptionPanel(myTree.getSelectionPaths());
         }
         else {
           initOptionsAndDescriptionPanel();
@@ -680,20 +683,21 @@ public class SingleInspectionProfilePanel extends JPanel {
     TreeUtil.sort(myRoot, new InspectionsConfigTreeComparator());
   }
 
-  private void updateOptionsAndDescriptionPanel(TreePath path) {
+  private void updateOptionsAndDescriptionPanel(final TreePath... paths) {
+    final TreePath path = paths[0];
     if (path == null) return;
-    final InspectionConfigTreeNode node = (InspectionConfigTreeNode)path.getLastPathComponent();
-    final ToolDescriptors descriptors = node.getDescriptors();
-    if (descriptors != null) {
-      final Descriptor defaultDescriptor = descriptors.getDefaultDescriptor();
-      final String description = defaultDescriptor.loadDescription();
-
-      if (description != null) {
+    final List<InspectionConfigTreeNode> nodes = getInspectionsNodes(paths);
+    if (!nodes.isEmpty()) {
+      final InspectionConfigTreeNode singleNode = nodes.size() == 1 ? ContainerUtil.getFirstItem(nodes) : null;
+      if (singleNode != null && singleNode.getDefaultDescriptor().loadDescription() != null) {
         // need this in order to correctly load plugin-supplied descriptions
+        final Descriptor defaultDescriptor = singleNode.getDefaultDescriptor();
+        final String description = defaultDescriptor.loadDescription();
         try {
           final HintHint hintHint = new HintHint(myBrowser, new Point(0, 0));
           hintHint.setFont(myBrowser.getFont());
-          myBrowser.read(new StringReader(SearchUtil.markup(HintUtil.prepareHintText(description, hintHint), myProfileFilter.getFilter())), null);
+          myBrowser
+            .read(new StringReader(SearchUtil.markup(HintUtil.prepareHintText(description, hintHint), myProfileFilter.getFilter())), null);
         }
         catch (IOException e2) {
           try {
@@ -705,7 +709,10 @@ public class SingleInspectionProfilePanel extends JPanel {
           }
         }
         catch (Throwable t) {
-          LOG.error("Failed to load description for: " + defaultDescriptor.getToolWrapper().getTool().getClass() + "; description: " + description, t);
+          LOG.error("Failed to load description for: " +
+                    defaultDescriptor.getToolWrapper().getTool().getClass() +
+                    "; description: " +
+                    description, t);
         }
 
       }
@@ -719,31 +726,52 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
 
       myOptionsPanel.removeAll();
-
       final Project project = myProjectProfileManager.getProject();
-      final NamedScope scope = node.getScope(project);
       final JPanel severityPanel = new JPanel(new GridBagLayout());
       final double severityPanelWeightY;
       final JPanel configPanelAnchor = new JPanel(new GridLayout());
       configPanelAnchor.setBorder(IdeBorderFactory.createTitledBorder("Options", false, new Insets(0, 0, 0, 0)));
-      final HighlightDisplayKey key = defaultDescriptor.getKey();
-      final String toolId = key.toString();
-      final List<ScopeToolState> nonDefaultDescriptors =
-        mySelectedProfile.getNonDefaultTools(toolId, project);
-      if (nonDefaultDescriptors.isEmpty()) {
+
+      final Set<String> scopesNames = new THashSet<String>();
+      for (final InspectionConfigTreeNode node : nodes) {
+        final List<ScopeToolState> nonDefaultTools = mySelectedProfile.getNonDefaultTools(node.getDefaultDescriptor().getKey().toString(), project);
+        for (final ScopeToolState tool : nonDefaultTools) {
+          scopesNames.add(tool.getScopeName());
+        }
+      }
+
+      if (scopesNames.isEmpty()) {
+
         final LevelChooserAction severityLevelChooser =
           new LevelChooserAction(mySelectedProfile) {
             @Override
             protected void onChosen(final HighlightSeverity severity) {
               final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
-              final boolean toUpdate = mySelectedProfile.getErrorLevel(key, scope, project) != level;
-              mySelectedProfile.setErrorLevel(key, level, -1, project);
-              if (toUpdate) node.dropCache();
+              for (final InspectionConfigTreeNode node : nodes) {
+                final HighlightDisplayKey key = node.getDefaultDescriptor().getKey();
+                final NamedScope scope = node.getDefaultDescriptor().getScope();
+                final boolean toUpdate = mySelectedProfile.getErrorLevel(key, scope, project) != level;
+                mySelectedProfile.setErrorLevel(key, level, -1, project);
+                if (toUpdate) node.dropCache();
+              }
+
             }
           };
-        severityLevelChooser.setChosen(mySelectedProfile.getErrorLevel(key, scope, project).getSeverity());
+        final HighlightSeverity severity =
+          ScopesAndSeveritiesTable.getSeverity(ContainerUtil.map(nodes, new Function<InspectionConfigTreeNode, ScopeToolState>() {
+            @Override
+            public ScopeToolState fun(InspectionConfigTreeNode node) {
+              return node.getDefaultDescriptor().getState();
+            }
+          }));
+        severityLevelChooser.setChosen(severity);
 
-        final ScopesChooser scopesChooser = new ScopesChooser(defaultDescriptor, mySelectedProfile, project) {
+        final ScopesChooser scopesChooser = new ScopesChooser(ContainerUtil.map(nodes, new Function<InspectionConfigTreeNode, Descriptor>() {
+          @Override
+          public Descriptor fun(final InspectionConfigTreeNode node) {
+            return node.getDefaultDescriptor();
+          }
+        }), mySelectedProfile, project) {
           @Override
           protected void onScopeAdded() {
             updateOptionsAndDescriptionPanel();
@@ -760,14 +788,19 @@ public class SingleInspectionProfilePanel extends JPanel {
                           new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL,
                                                  new Insets(10, 0, 10, 0), 0, 0));
         severityPanelWeightY = 0.0;
-        setConfigPanel(configPanelAnchor, defaultDescriptor.getState());
+        if (singleNode != null) {
+          setConfigPanel(configPanelAnchor, mySelectedProfile.getToolDefaultState(singleNode.getDefaultDescriptor().getKey().toString(),
+                                                                                  project));
+        }
       }
       else {
-        for (final Descriptor descriptor : descriptors.getNonDefaultDescriptors()) {
-          descriptor.loadConfig();
+        if (singleNode != null) {
+          for (final Descriptor descriptor : singleNode.getDescriptors().getNonDefaultDescriptors()) {
+            descriptor.loadConfig();
+          }
         }
         final JTable scopesAndScopesAndSeveritiesTable =
-          new ScopesAndSeveritiesTable(new ScopesAndSeveritiesTable.TableSettings(node, mySelectedProfile, myTree, project) {
+          new ScopesAndSeveritiesTable(new ScopesAndSeveritiesTable.TableSettings(nodes, mySelectedProfile, myTree, project) {
             @Override
             protected void onScopeChosen(@NotNull final ScopeToolState state) {
               setConfigPanel(configPanelAnchor, state);
@@ -787,6 +820,7 @@ public class SingleInspectionProfilePanel extends JPanel {
             }
           });
 
+
         final ToolbarDecorator wrappedTable = ToolbarDecorator.createDecorator(scopesAndScopesAndSeveritiesTable);
         final JPanel panel = wrappedTable.createPanel();
         severityPanel.add(new JBLabel("Scopes & Severities"),
@@ -803,7 +837,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       myOptionsPanel.add(configPanelAnchor, new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH,
                                                                    new Insets(0, 0, 0, 0), 0, 0));
       myOptionsPanel.revalidate();
-      GuiUtils.enableChildren(myOptionsPanel, node.isChecked());
+      GuiUtils.enableChildren(myOptionsPanel, isThoughOneNodeChecked(nodes));
     }
     else {
       initOptionsAndDescriptionPanel();
@@ -811,10 +845,41 @@ public class SingleInspectionProfilePanel extends JPanel {
     myOptionsPanel.repaint();
   }
 
+  private static boolean isThoughOneNodeChecked(final List<InspectionConfigTreeNode> nodes) {
+    for (final InspectionConfigTreeNode node : nodes) {
+      if (node.isChecked()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static List<InspectionConfigTreeNode> getInspectionsNodes(final TreePath[] paths) {
+    final Set<InspectionConfigTreeNode> nodes = new THashSet<InspectionConfigTreeNode>();
+    final Queue<InspectionConfigTreeNode> q = new Queue<InspectionConfigTreeNode>(paths.length);
+    for (final TreePath path : paths) {
+      if (path != null) {
+        q.addLast((InspectionConfigTreeNode)path.getLastPathComponent());
+      }
+    }
+    while (!q.isEmpty()) {
+      final InspectionConfigTreeNode node = q.pullFirst();
+      if (node.getDescriptors() == null) {
+        for (int i = 0; i < node.getChildCount(); i++) {
+          final InspectionConfigTreeNode childNode = (InspectionConfigTreeNode) node.getChildAt(i);
+          q.addLast(childNode);
+        }
+      } else {
+        nodes.add(node);
+      }
+    }
+    return new ArrayList<InspectionConfigTreeNode>(nodes);
+  }
+
   private void updateOptionsAndDescriptionPanel() {
     final TreePath[] paths = myTree.getSelectionPaths();
-    if (paths != null && paths.length == 1) {
-      updateOptionsAndDescriptionPanel(myTree.getSelectionPath());
+    if (paths != null) {
+      updateOptionsAndDescriptionPanel(paths);
     } else {
       initOptionsAndDescriptionPanel();
     }
@@ -1094,8 +1159,8 @@ public class SingleInspectionProfilePanel extends JPanel {
         updateUpHierarchy(node, parent);
       }
     }
-    if (rows != null && rows.length == 1) {
-      updateOptionsAndDescriptionPanel(myTree.getPathForRow(rows[0]));
+    if (rows != null) {
+      updateOptionsAndDescriptionPanel(myTree.getSelectionPaths());
     }
     else {
       initOptionsAndDescriptionPanel();

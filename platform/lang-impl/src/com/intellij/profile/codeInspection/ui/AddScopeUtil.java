@@ -25,19 +25,13 @@ import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.profile.codeInspection.ui.InspectionConfigTreeNode;
-import com.intellij.profile.codeInspection.ui.ToolDescriptors;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IconUtil;
 
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -47,7 +41,7 @@ public class AddScopeUtil {
   public static ScopeToolState performAddScope(final Tree tree,
                                                final Project project,
                                                final InspectionProfileImpl inspectionProfile,
-                                               final InspectionConfigTreeNode... selectedNodes) {
+                                               final Collection<InspectionConfigTreeNode> selectedNodes) {
     final List<InspectionConfigTreeNode> nodes = new ArrayList<InspectionConfigTreeNode>();
     final List<Descriptor> descriptors = new ArrayList<Descriptor>();
     for (final InspectionConfigTreeNode node : selectedNodes) {

@@ -37,12 +37,12 @@ import java.util.Collections;
  */
 public abstract class ScopesChooser extends ComboBoxAction {
 
-  private final Descriptor myDefaultDescriptor;
+  private final List<Descriptor> myDefaultDescriptors;
   private final InspectionProfileImpl myInspectionProfile;
   private final Project myProject;
 
-  public ScopesChooser(final Descriptor defaultDescriptor, final InspectionProfileImpl inspectionProfile, final Project project) {
-    myDefaultDescriptor = defaultDescriptor;
+  public ScopesChooser(final List<Descriptor> defaultDescriptors, final InspectionProfileImpl inspectionProfile, final Project project) {
+    myDefaultDescriptors = defaultDescriptors;
     myInspectionProfile = inspectionProfile;
     myProject = project;
     setPopupTitle("Select a scope to change its settings");
@@ -61,9 +61,9 @@ public abstract class ScopesChooser extends ComboBoxAction {
       predefinedScopes.addAll(holder.getPredefinedScopes());
     }
     predefinedScopes.remove(CustomScopesProviderEx.getAllScope());
-    fillActionGroup(group, predefinedScopes, myDefaultDescriptor, myInspectionProfile);
+    fillActionGroup(group, predefinedScopes, myDefaultDescriptors, myInspectionProfile);
     group.addSeparator();
-    fillActionGroup(group, customScopes, myDefaultDescriptor, myInspectionProfile);
+    fillActionGroup(group, customScopes, myDefaultDescriptors, myInspectionProfile);
 
     //TODO edit scopes order
     //group.addSeparator();
@@ -81,13 +81,15 @@ public abstract class ScopesChooser extends ComboBoxAction {
 
   private void fillActionGroup(final DefaultActionGroup group,
                                       final List<NamedScope> scopes,
-                                      final Descriptor defaultDescriptor,
+                                      final List<Descriptor> defaultDescriptors,
                                       final InspectionProfileImpl inspectionProfile) {
     for (final NamedScope scope : scopes) {
       group.add(new AnAction(scope.getName()) {
         @Override
         public void actionPerformed(final AnActionEvent e) {
-          inspectionProfile.addScope(defaultDescriptor.getToolWrapper().createCopy(), scope, defaultDescriptor.getLevel(), true, getEventProject(e));
+          for (final Descriptor defaultDescriptor : defaultDescriptors) {
+            inspectionProfile.addScope(defaultDescriptor.getToolWrapper().createCopy(), scope, defaultDescriptor.getLevel(), true, getEventProject(e));
+          }
           onScopeAdded();
         }
       });

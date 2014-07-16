@@ -37,8 +37,6 @@ import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -260,10 +258,18 @@ public class ToolsImpl implements Tools {
     }
   }
 
-  public void removeScope(ScopeToolState scopeToolState) {
+  public void removeScope(final NamedScope scope) {
     if (myTools != null) {
-      final int idx = myTools.indexOf(scopeToolState);
-      removeScope(idx);
+      for (final ScopeToolState tool : myTools) {
+        if (Comparing.equal(tool.getScopeName(), scope.getName())) {
+          myTools.remove(tool);
+          break;
+        }
+      }
+      if (myTools.isEmpty()) {
+        myTools = null;
+        setEnabled(myDefaultState.isEnabled());
+      }
     }
   }
 

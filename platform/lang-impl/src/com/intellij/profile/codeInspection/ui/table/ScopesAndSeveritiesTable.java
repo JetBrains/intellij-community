@@ -19,13 +19,18 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.ui.AddScopeUtil;
 import com.intellij.profile.codeInspection.ui.InspectionConfigTreeNode;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,12 +41,18 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 /**
  * @author Dmitry Batkovich
  */
 public class ScopesAndSeveritiesTable extends JBTable {
   private final static Logger LOG = Logger.getInstance(ScopesAndSeveritiesTable.class);
+
+  private static final HighlightSeverity MIXED_FAKE_SEVERITY = new HighlightSeverity("Mixed", -1);
+  private static final HighlightDisplayLevel MIXED_FAKE_LEVEL = new HighlightDisplayLevel(MIXED_FAKE_SEVERITY, AllIcons.Actions.Help);
 
   private final static int SCOPE_ENABLED_COLUMN = 0;
   private final static int SCOPE_NAME_COLUMN = 1;
@@ -52,7 +63,10 @@ public class ScopesAndSeveritiesTable extends JBTable {
 
     final TableColumnModel columnModel = getColumnModel();
 
-    columnModel.getColumn(SCOPE_ENABLED_COLUMN).setMaxWidth(30);
+    final TableColumn scopeEnabledColumn = columnModel.getColumn(SCOPE_ENABLED_COLUMN);
+    scopeEnabledColumn.setMaxWidth(30);
+    scopeEnabledColumn.setCellRenderer(new ThreeStateCheckBoxRenderer());
+    scopeEnabledColumn.setCellEditor(new ThreeStateCheckBoxRenderer());
 
     final TableColumn severityColumn = columnModel.getColumn(SEVERITY_COLUMN);
     severityColumn.setCellRenderer(SeverityRenderer.create(tableSettings.getInspectionProfile()));
@@ -67,8 +81,11 @@ public class ScopesAndSeveritiesTable extends JBTable {
       public void valueChanged(final ListSelectionEvent e) {
         final int idx = getSelectionModel().getMinSelectionIndex();
         if (idx >= 0) {
-          final ScopeToolState scopeToolState = ((MyTableModel)getModel()).getScopeToolState(idx);
-          tableSettings.onScopeChosen(scopeToolState);
+          final ExistedScopesStatesAndNonExistNames scopeToolState = ((MyTableModel)getModel()).getScopeToolState(idx);
+          final List<ScopeToolState> existedStates = scopeToolState.getExistedStates();
+          if (existedStates.size() == 1) {
+            tableSettings.onScopeChosen(existedStates.get(0));
+          }
         }
       }
     });
@@ -79,35 +96,41 @@ public class ScopesAndSeveritiesTable extends JBTable {
   }
 
   public abstract static class TableSettings {
-    private final InspectionConfigTreeNode myNode;
+    private final List<InspectionConfigTreeNode> myNodes;
+    private final List<String> myKeyNames;
+    private final List<HighlightDisplayKey> myKeys;
     private final InspectionProfileImpl myInspectionProfile;
     private final Tree myTree;
     private final Project myProject;
-    private final HighlightDisplayKey myKey;
-    private final String myKeyName;
 
-    protected TableSettings(final InspectionConfigTreeNode node,
+    protected TableSettings(final List<InspectionConfigTreeNode> nodes,
                             final InspectionProfileImpl inspectionProfile,
                             final Tree tree,
                             final Project project) {
-      myNode = node;
-      myKey = node.getDefaultDescriptor().getKey();
-      myKeyName = myKey.toString();
+      myNodes = nodes;
+      myKeys = new ArrayList<HighlightDisplayKey>(myNodes.size());
+      myKeyNames = new ArrayList<String>(myNodes.size());
+      for(final InspectionConfigTreeNode node : nodes) {
+        final HighlightDisplayKey key = node.getDefaultDescriptor().getKey();
+        myKeys.add(key);
+        myKeyNames.add(key.toString());
+      }
+
       myInspectionProfile = inspectionProfile;
       myTree = tree;
       myProject = project;
     }
 
-    public HighlightDisplayKey getKey() {
-      return myKey;
+    public List<HighlightDisplayKey> getKeys() {
+      return myKeys;
     }
 
-    public String getKeyName() {
-      return myKeyName;
+    public List<String> getKeyNames() {
+      return myKeyNames;
     }
 
-    public InspectionConfigTreeNode getNode() {
-      return myNode;
+    public List<InspectionConfigTreeNode> getNodes() {
+      return myNodes;
     }
 
     public InspectionProfileImpl getInspectionProfile() {
@@ -129,23 +152,40 @@ public class ScopesAndSeveritiesTable extends JBTable {
     protected abstract void onScopeChosen(final @NotNull ScopeToolState scopeToolState);
   }
 
+  @NotNull
+  public static HighlightSeverity getSeverity(final List<ScopeToolState> scopeToolStates) {
+    HighlightSeverity previousValue = null;
+    for (final ScopeToolState scopeToolState : scopeToolStates) {
+      final HighlightSeverity currentValue = scopeToolState.getLevel().getSeverity();
+      if (previousValue == null) {
+        previousValue = currentValue;
+      } else if (!previousValue.equals(currentValue)){
+        return MIXED_FAKE_SEVERITY;
+      }
+    }
+    return previousValue;
+  }
+
   private static class MyTableModel extends AbstractTableModel implements EditableModel {
     private final InspectionProfileImpl myInspectionProfile;
-    private final String myKeyName;
-    private final InspectionConfigTreeNode myNode;
+    private final List<String> myKeyNames;
+    private final List<InspectionConfigTreeNode> myNodes;
     private final Tree myTree;
     private final Project myProject;
     private final TableSettings myTableSettings;
-    private final HighlightDisplayKey myKey;
+    private final List<HighlightDisplayKey> myKeys;
+
+    private String[] myScopeNames;
 
     public MyTableModel(final TableSettings tableSettings) {
       myTableSettings = tableSettings;
       myProject = tableSettings.getProject();
       myInspectionProfile = tableSettings.getInspectionProfile();
-      myKey = tableSettings.getKey();
-      myKeyName = tableSettings.getKeyName();
-      myNode = tableSettings.getNode();
+      myKeys = tableSettings.getKeys();
+      myKeyNames = tableSettings.getKeyNames();
+      myNodes = tableSettings.getNodes();
       myTree = tableSettings.getTree();
+      refreshAggregatedScopes();
     }
 
     @Override
@@ -155,7 +195,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
 
     @Override
     public int getRowCount() {
-      return myInspectionProfile.getNonDefaultTools(myKeyName, myProject).size() + 1;
+      return lastRowIndex() + 1;
     }
 
     @Nullable
@@ -188,27 +228,93 @@ public class ScopesAndSeveritiesTable extends JBTable {
       if (rowIndex < 0) {
         return null;
       }
-      final ScopeToolState state = getScopeToolState(rowIndex);
       switch (columnIndex) {
         case SCOPE_ENABLED_COLUMN:
-          return state.isEnabled();
+          return isEnabled(rowIndex);
         case SCOPE_NAME_COLUMN:
-          return state.getScopeName();
+          return getScope(rowIndex).getName();
         case SEVERITY_COLUMN:
-          return state.getLevel().getSeverity();
+          return getSeverity(rowIndex);
         default:
           throw new IllegalArgumentException("Invalid column index " + columnIndex);
       }
     }
 
-    private ScopeToolState getScopeToolState(final int rowIndex) {
-      return rowIndex == lastRowIndex()
-             ? myInspectionProfile.getToolDefaultState(myKeyName, myProject)
-             : myInspectionProfile.getNonDefaultTools(myKeyName, myProject).get(rowIndex);
+    private NamedScope getScope(final int rowIndex) {
+      return getScopeToolState(rowIndex).getExistedStates().get(0).getScope(myProject);
+    }
+
+    @NotNull
+    private HighlightSeverity getSeverity(final int rowIndex) {
+      final ExistedScopesStatesAndNonExistNames existedScopesStatesAndNonExistNames = getScopeToolState(rowIndex);
+      if (!existedScopesStatesAndNonExistNames.getNonExistNames().isEmpty()) {
+        return MIXED_FAKE_SEVERITY;
+      }
+      return ScopesAndSeveritiesTable.getSeverity(existedScopesStatesAndNonExistNames.getExistedStates());
+    }
+
+    @Nullable
+    private Boolean isEnabled(final int rowIndex) {
+      Boolean previousValue = null;
+      final ExistedScopesStatesAndNonExistNames existedScopesStatesAndNonExistNames = getScopeToolState(rowIndex);
+      for (final ScopeToolState scopeToolState : existedScopesStatesAndNonExistNames.getExistedStates()) {
+        final boolean currentValue = scopeToolState.isEnabled();
+        if (previousValue == null) {
+          previousValue = currentValue;
+        } else if (!previousValue.equals(currentValue)){
+          return null;
+        }
+      }
+      if (!existedScopesStatesAndNonExistNames.getNonExistNames().isEmpty() && !Boolean.FALSE.equals(previousValue)) {
+        return null;
+      }
+      return previousValue;
+    }
+
+    private ExistedScopesStatesAndNonExistNames getScopeToolState(final int rowIndex) {
+      final List<String> nonExistNames = new SmartList<String>();
+      final List<ScopeToolState> existedStates = new SmartList<ScopeToolState>();
+      for (final String keyName : myKeyNames) {
+        final ScopeToolState scopeToolState = getScopeToolState(keyName, rowIndex);
+        if (scopeToolState != null) {
+          existedStates.add(scopeToolState);
+        } else {
+          nonExistNames.add(keyName);
+        }
+      }
+      return new ExistedScopesStatesAndNonExistNames(existedStates, nonExistNames);
+    }
+
+    @Nullable
+    private ScopeToolState getScopeToolState(final String keyName, final int rowIndex) {
+      if (rowIndex == lastRowIndex()) {
+        return myInspectionProfile.getToolDefaultState(keyName, myProject);
+      }
+      else {
+        final String scopeName = myScopeNames[rowIndex];
+        final List<ScopeToolState> nonDefaultTools = myInspectionProfile.getNonDefaultTools(keyName, myProject);
+        for (final ScopeToolState nonDefaultTool : nonDefaultTools) {
+          if (Comparing.equal(scopeName, nonDefaultTool.getScopeName())) {
+            return nonDefaultTool;
+          }
+        }
+      }
+      return null;
+    }
+
+    private void refreshAggregatedScopes() {
+      final LinkedHashSet<String> scopesNames = new LinkedHashSet<String>();
+      for (final String keyName : myKeyNames) {
+        final List<ScopeToolState> nonDefaultTools = myInspectionProfile.getNonDefaultTools(keyName, myProject);
+        for (final ScopeToolState tool : nonDefaultTools) {
+          scopesNames.add(tool.getScopeName());
+        }
+      }
+      myScopeNames = ArrayUtil.toStringArray(scopesNames);
     }
 
     private int lastRowIndex() {
-      return getRowCount() - 1;
+      return myScopeNames.length;
     }
 
     @Override
@@ -223,23 +329,25 @@ public class ScopesAndSeveritiesTable extends JBTable {
           return;
         }
         final int idx = rowIndex == lastRowIndex() ? -1 : rowIndex;
-        myInspectionProfile.setErrorLevel(myKey, level, idx, myProject);
+        myInspectionProfile.setErrorLevel(myKeys, level, idx, myProject);
       }
       else if (columnIndex == SCOPE_ENABLED_COLUMN) {
+        final NamedScope scope = getScope(rowIndex);
         if ((Boolean)value) {
           if (rowIndex == lastRowIndex()) {
-            myInspectionProfile.enableToolByDefault(myKeyName, myProject);
+            myInspectionProfile.enableToolsByDefault(myKeyNames, myProject);
           }
           else {
-            myInspectionProfile.enableTool(myKeyName, getScopeToolState(rowIndex).getScope(myProject), myProject);
+            //TODO create scopes states if not exist (need scope sorting)
+            myInspectionProfile.enableTools(myKeyNames, scope, myProject);
           }
         }
         else {
           if (rowIndex == lastRowIndex()) {
-            myInspectionProfile.disableToolByDefault(myKeyName, myProject);
+            myInspectionProfile.disableToolByDefault(myKeyNames, myProject);
           }
           else {
-            myInspectionProfile.disableTool(myKeyName, getScopeToolState(rowIndex).getScope(myProject), myProject);
+            myInspectionProfile.disableTools(myKeyNames, scope, myProject);
           }
         }
       }
@@ -248,15 +356,17 @@ public class ScopesAndSeveritiesTable extends JBTable {
     @Override
     public void removeRow(final int idx) {
       if (idx != lastRowIndex()) {
-        myInspectionProfile.removeScope(myKeyName, getScopeToolState(idx), myProject);
+        myInspectionProfile.removeScopes(myKeyNames, getScope(idx), myProject);
+        refreshAggregatedScopes();
         myTableSettings.onScopeRemoved(getRowCount());
       }
     }
 
     @Override
     public void addRow() {
-      AddScopeUtil.performAddScope(myTree, myProject, myInspectionProfile, myNode);
+      AddScopeUtil.performAddScope(myTree, myProject, myInspectionProfile, myNodes);
       myTableSettings.onScopeAdded();
+      refreshAggregatedScopes();
     }
 
     @Override
@@ -266,6 +376,25 @@ public class ScopesAndSeveritiesTable extends JBTable {
     @Override
     public boolean canExchangeRows(final int oldIndex, final int newIndex) {
       return false;
+    }
+  }
+
+  private static class ExistedScopesStatesAndNonExistNames {
+
+    private final List<ScopeToolState> myExistedStates;
+    private final List<String> myNonExistNames;
+
+    public ExistedScopesStatesAndNonExistNames(final List<ScopeToolState> existedStates, final List<String> nonExistNames) {
+      myExistedStates = existedStates;
+      myNonExistNames = nonExistNames;
+    }
+
+    public List<ScopeToolState> getExistedStates() {
+      return myExistedStates;
+    }
+
+    public List<String> getNonExistNames() {
+      return myNonExistNames;
     }
   }
 }

@@ -20,9 +20,6 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -67,7 +64,7 @@ public class ToolDescriptors {
   }
 
   @NotNull
-  public ScopeToolState getScopeToolState() {
+  public ScopeToolState getDefaultScopeToolState() {
     return myDefaultDescriptor.getState();
   }
 }
