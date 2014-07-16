@@ -11,6 +11,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -149,6 +151,11 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
     mySelectedCourseFile = null;
     StudyNewCourseDialog dlg = new StudyNewCourseDialog(project, this);
     dlg.show();
+    if (dlg.getExitCode() == DialogWrapper.CANCEL_EXIT_CODE) {
+      LOG.info("User canceled creation study project");
+      Messages.showErrorDialog("You've canceled creation of Study Project. Empty project will be created.", "Cancel");
+      return;
+    }
     Reader reader = null;
     try {
       if (mySelectedCourseFile == null) {
@@ -218,7 +225,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
     return false;
   }
 
-  public Map<String, File> getMyDefaultCourseFiles() {
+  public Map<String, File> getLoadedCourses() {
     return myCourses;
   }
 

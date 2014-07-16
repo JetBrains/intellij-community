@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class StudyNewCourseDialog extends DialogWrapper {
-  public static final String DIALOG_TITLE = "Select The Course";
+  private static final String DIALOG_TITLE = "Select The Course";
   private JPanel myContentPane;
   private JButton myRefreshButton;
   private JComboBox myDefaultCoursesComboBox;
@@ -61,7 +61,7 @@ public class StudyNewCourseDialog extends DialogWrapper {
    * Handles choosing course zip archive from local file system
    * Automatically sets course chosen as selected course if it is valid
    */
-  class LocalCourseChosenListener implements ActionListener {
+  private class LocalCourseChosenListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
       String fileName = myCourseLocationField.getText();
@@ -85,7 +85,7 @@ public class StudyNewCourseDialog extends DialogWrapper {
    * Sets selected course in combo box as selected in
    * {@link ru.compscicenter.edide.ui.StudyNewCourseDialog#myGenerator}
    */
-  class CourseSelectedListener implements ActionListener {
+  private class CourseSelectedListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
       JComboBox cb = (JComboBox)e.getSource();
@@ -99,7 +99,7 @@ public class StudyNewCourseDialog extends DialogWrapper {
    * Old courses added to new courses only if their
    * meta file still exists in local file system
    */
-  class RefreshActionListener implements ActionListener {
+  private class RefreshActionListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
       myGenerator.downloadAndUnzip(true);
@@ -108,7 +108,7 @@ public class StudyNewCourseDialog extends DialogWrapper {
         setError(CONNECTION_ERROR);
         return;
       }
-      Map<String, File> oldCourses = myGenerator.getMyDefaultCourseFiles();
+      Map<String, File> oldCourses = myGenerator.getLoadedCourses();
       Map<String, File> newCourses = new HashMap<String, File>();
       if (!downloadedCourses.equals(oldCourses)) {
         for (Map.Entry<String, File> course : oldCourses.entrySet()) {
@@ -125,6 +125,7 @@ public class StudyNewCourseDialog extends DialogWrapper {
           }
         }
         myGenerator.setCourses(newCourses);
+        myGenerator.flushCache();
       }
     }
   }
