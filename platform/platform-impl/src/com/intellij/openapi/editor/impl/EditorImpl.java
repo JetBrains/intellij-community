@@ -66,6 +66,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
@@ -6735,7 +6737,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private static class TablessBorder extends SideBorder {
+  private class TablessBorder extends SideBorder {
     private TablessBorder() {
       super(UIUtil.getBorderColor(), SideBorder.ALL);
     }
@@ -6760,7 +6762,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public Insets getBorderInsets(Component c) {
       Container splitters = SwingUtilities.getAncestorOfClass(EditorsSplitters.class, c);
-      return splitters == null ? super.getBorderInsets(c) : new Insets(1, 0, 0, 0);
+      boolean thereIsSomethingAbove = UISettings.getInstance().SHOW_MAIN_TOOLBAR || UISettings.getInstance().SHOW_NAVIGATION_BAR ||
+                  !ToolWindowManagerEx.getInstanceEx(EditorImpl.this.myProject).getIdsOn(ToolWindowAnchor.TOP).isEmpty();
+      return splitters == null ? super.getBorderInsets(c) : new Insets(thereIsSomethingAbove ? 1 : 0, 0, 0, 0);
     }
 
     @Override

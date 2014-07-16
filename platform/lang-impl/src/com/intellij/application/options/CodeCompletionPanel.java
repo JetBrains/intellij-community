@@ -28,8 +28,10 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.ui.components.JBCheckBox;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -56,7 +58,7 @@ public class CodeCompletionPanel {
   private static final String CASE_SENSITIVE_FIRST_LETTER = ApplicationBundle.message("combobox.autocomplete.case.sensitive.first.letter");
   private static final String[] CASE_VARIANTS = {CASE_SENSITIVE_ALL, CASE_SENSITIVE_NONE, CASE_SENSITIVE_FIRST_LETTER};
 
-  public CodeCompletionPanel(){
+  public CodeCompletionPanel() {
     //noinspection unchecked
     myCaseSensitiveCombo.setModel(new DefaultComboBoxModel(CASE_VARIANTS));
 
@@ -73,7 +75,7 @@ public class CodeCompletionPanel {
     myCbAutocompletion.addActionListener(
      new ActionListener() {
        @Override
-       public void actionPerformed(ActionEvent event) {
+       public void actionPerformed(@NotNull ActionEvent event) {
          boolean selected = myCbAutocompletion.isSelected();
          myCbSelectByChars.setEnabled(selected);
        }
@@ -83,7 +85,7 @@ public class CodeCompletionPanel {
    myCbAutopopupJavaDoc.addActionListener(
      new ActionListener() {
        @Override
-       public void actionPerformed(ActionEvent event) {
+       public void actionPerformed(@NotNull ActionEvent event) {
          myAutopopupJavaDocField.setEnabled(myCbAutopopupJavaDoc.isSelected());
        }
      }
@@ -92,7 +94,7 @@ public class CodeCompletionPanel {
    myCbParameterInfoPopup.addActionListener(
      new ActionListener() {
        @Override
-       public void actionPerformed(ActionEvent event) {
+       public void actionPerformed(@NotNull ActionEvent event) {
          myParameterInfoDelayField.setEnabled(myCbParameterInfoPopup.isSelected());
        }
      }
@@ -205,16 +207,8 @@ public class CodeCompletionPanel {
   }
 
   private static int getIntegerValue(String s, int defaultValue) {
-    int value = defaultValue;
-    try {
-      value = Integer.parseInt(s);
-      if(value < 0) {
-        return defaultValue;
-      }
-    }
-    catch (NumberFormatException ignored) {
-    }
-    return value;
+    int value = StringUtilRt.parseInt(s, defaultValue);
+    return value < 0 ? defaultValue : value;
   }
 
   @MagicConstant(intValues = {CodeInsightSettings.ALL, CodeInsightSettings.NONE, CodeInsightSettings.FIRST_LETTER})
