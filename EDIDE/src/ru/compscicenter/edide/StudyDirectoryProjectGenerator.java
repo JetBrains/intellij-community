@@ -39,10 +39,10 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
   private static final String REPOSITORY_NAME = "courses-zip";
   private static final String COURSE_META_FILE = "course.json";
   private static final String COURSE_NAME_ATTRIBUTE = "name";
-  private static final Pattern CASH_PATTERN = Pattern.compile("(name=(.*)) (path=(.*course.json))");
+  private static final Pattern CACHE_PATTERN = Pattern.compile("(name=(.*)) (path=(.*course.json))");
   //public static final String REPOSITORY_NAME = "initial-python-course";
   private final File myCoursesDir;
-  private static final String CASH_NAME = "courseNames.txt";
+  private static final String CACHE_NAME = "courseNames.txt";
   private Map<String, File> myCourses = new HashMap<String, File>();
   private File mySelectedCourseFile;
   private Project myProject;
@@ -289,9 +289,9 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
       return myCourses;
     }
     if (myCoursesDir.exists()) {
-      File cashFile = new File(myCoursesDir, CASH_NAME);
+      File cashFile = new File(myCoursesDir, CACHE_NAME);
       if (cashFile.exists()) {
-        myCourses = getCoursesFromCash(cashFile);
+        myCourses = getCoursesFromCache(cashFile);
         if (!myCourses.isEmpty()) {
           return myCourses;
         }
@@ -303,16 +303,16 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
     }
     downloadAndUnzip(false);
     myCourses = loadCourses();
-    flushCash();
+    flushCache();
     return myCourses;
   }
 
   /**
-   * Writes courses to cash file {@link ru.compscicenter.edide.StudyDirectoryProjectGenerator#CASH_NAME}
+   * Writes courses to cash file {@link ru.compscicenter.edide.StudyDirectoryProjectGenerator#CACHE_NAME}
    *
    */
-  public void flushCash() {
-    File cashFile = new File(myCoursesDir, CASH_NAME);
+  public void flushCache() {
+    File cashFile = new File(myCoursesDir, CACHE_NAME);
     PrintWriter writer =  null;
     try {
       writer = new PrintWriter(cashFile);
@@ -330,18 +330,18 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
   }
 
   /**
-   * Loads courses from {@link ru.compscicenter.edide.StudyDirectoryProjectGenerator#CASH_NAME} file
+   * Loads courses from {@link ru.compscicenter.edide.StudyDirectoryProjectGenerator#CACHE_NAME} file
    *
    * @return map of course names and course files
    */
-  private Map<String, File> getCoursesFromCash(File cashFile) {
+  private Map<String, File> getCoursesFromCache(File cashFile) {
     Map<String, File> coursesFromCash = new HashMap<String, File>();
     try {
       BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(cashFile)));
       String line;
 
       while ((line = reader.readLine()) != null) {
-        Matcher matcher = CASH_PATTERN.matcher(line);
+        Matcher matcher = CACHE_PATTERN.matcher(line);
         if (matcher.matches()) {
           String courseName = matcher.group(2);
           File file = new File(matcher.group(4));
