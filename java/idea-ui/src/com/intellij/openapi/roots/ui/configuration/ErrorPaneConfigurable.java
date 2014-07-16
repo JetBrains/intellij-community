@@ -46,6 +46,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     super(new BorderLayout());
     myContent.setEditorKit(UIUtil.getHTMLEditorKit());
     myContent.setEditable(false);
+    myContent.setBackground(UIUtil.getListBackground());
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myContent, true);
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     add(pane);
@@ -62,13 +63,33 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     myAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        String html = "<html><body>";
+        String html = "<html>" +
+                      "<header><style type='text/css'>" +
+                      "body {" +
+                      "  color: #333333;" +
+                      "  font-family: '" + UIUtil.getLabelFont().getName() + "';" +
+                      "  font-size: " + UIUtil.getLabelFont().getSize() + ";" +
+                      "}" +
+                      "a {" +
+                      " text-decoration: none;" +
+                      "}" +
+                      "</style>" +
+                      "</headear>" +
+                      "<body>";
         int i = 0;
+        html += "<ol>";
         for (ConfigurationError error : myErrors) {
           i++;
-          html+= i + ". " + error.getDescription() + "<br/>";
+          String description = error.getDescription();
+          if (description.startsWith("Module '")) {
+            final int start = 8;
+            final int end = description.indexOf("'", 9);
+            final String moduleName = description.substring(start, end);
+            description = "Module <a href='module://" + moduleName + "'>" + moduleName + "</a> " + description.substring(end + 1);
+          }
+          html+= "<li>" + description + "</li>";
         }
-        html += "</body></html>";
+        html += "</ol></body></html>";
         myContent.setText(html);
       }
     }, 100);
