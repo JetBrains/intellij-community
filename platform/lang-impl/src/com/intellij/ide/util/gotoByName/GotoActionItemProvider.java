@@ -116,10 +116,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
       for (OptionDescription description : optionDescriptions) {
         for (ActionFromOptionDescriptorProvider converter : ActionFromOptionDescriptorProvider.EP.getExtensions()) {
           AnAction action = converter.provide(description);
-          if (action != null) {
-            String title = myModel.getGroupName(description);
-            options.add(new ActionWrapper(action, title, MatchMode.NAME, dataContext));
-          }
+          if (action != null) options.add(new ActionWrapper(action, null, MatchMode.NAME, dataContext));
           options.add(description);
         }
       }
