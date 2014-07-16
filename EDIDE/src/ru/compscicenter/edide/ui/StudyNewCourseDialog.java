@@ -57,6 +57,10 @@ public class StudyNewCourseDialog extends DialogWrapper {
     myRefreshButton.addActionListener(new RefreshActionListener());
   }
 
+  /**
+   * Handles choosing course zip archive from local file system
+   * Automatically sets course chosen as selected course if it is valid
+   */
   class LocalCourseChosenListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -76,6 +80,11 @@ public class StudyNewCourseDialog extends DialogWrapper {
     }
   }
 
+  /**
+   * Handles selecting course in combo box
+   * Sets selected course in combo box as selected in
+   * {@link ru.compscicenter.edide.ui.StudyNewCourseDialog#myGenerator}
+   */
   class CourseSelectedListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -85,6 +94,11 @@ public class StudyNewCourseDialog extends DialogWrapper {
     }
   }
 
+  /**
+   * Handles refreshing courses
+   * Old courses added to new courses only if their
+   * meta file still exists in local file system
+   */
   class RefreshActionListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -115,6 +129,9 @@ public class StudyNewCourseDialog extends DialogWrapper {
     }
   }
 
+  /**
+   * Sets normal state of dialog
+   */
   private void setOK() {
     myErrorLabel.setVisible(false);
     myErrorIconLabel.setVisible(false);
