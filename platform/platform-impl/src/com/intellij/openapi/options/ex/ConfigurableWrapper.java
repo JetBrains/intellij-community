@@ -48,15 +48,7 @@ public class ConfigurableWrapper implements SearchableConfigurable {
   @Nullable
   public static <T extends UnnamedConfigurable> T wrapConfigurable(ConfigurableEP<T> ep) {
     if (ep.displayName != null || ep.key != null) {
-      if (ep.children != null || ep.childrenEPName != null || ep.dynamic) {
-        T configurable = ep.createConfigurable();
-        return configurable != null
-               ? (T)new CompositeWrapper(ep, configurable)
-               : null;
-      }
-      else {
-        return (T)new ConfigurableWrapper(ep, null);
-      }
+      return (T)(ep.children != null || ep.childrenEPName != null || ep.dynamic ? new CompositeWrapper(ep) : new ConfigurableWrapper(ep));
     }
     else {
       return ep.createConfigurable();
@@ -84,9 +76,8 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
   private final ConfigurableEP myEp;
 
-  private ConfigurableWrapper(@NotNull ConfigurableEP ep, @Nullable UnnamedConfigurable configurable) {
+  private ConfigurableWrapper(@NotNull ConfigurableEP ep) {
     myEp = ep;
-    myConfigurable = configurable;
   }
 
   private UnnamedConfigurable myConfigurable;
@@ -181,8 +172,8 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
     private Configurable[] myKids;
 
-    private CompositeWrapper(@NotNull ConfigurableEP ep, @NotNull UnnamedConfigurable configurable, Configurable... kids) {
-      super(ep, configurable);
+    private CompositeWrapper(ConfigurableEP ep, Configurable... kids) {
+      super(ep);
       if (ep.dynamic) {
         kids = ((Composite)getConfigurable()).getConfigurables();
       }
