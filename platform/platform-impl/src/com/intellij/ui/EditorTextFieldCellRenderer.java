@@ -57,21 +57,20 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
   protected abstract EditorColorsScheme getColorScheme();
 
-  protected abstract String getText(JTable table, Object value, int row, int column);
+  protected abstract String getText(FontMetrics fontMetrics, JTable table, Object value, int row, int column);
 
   protected void customizeEditor(EditorEx editor, Object value, boolean selected, int row, int col) {
   }
 
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-    String text = getText(table, value, row, column);
     MyPanel panel = getEditorPanel(table);
     EditorEx editor = panel.editor;
     int tableFontSize = table.getFont().getSize();
     if (editor.getColorsScheme().getEditorFontSize() != tableFontSize) {
       editor.getColorsScheme().setEditorFontSize(tableFontSize);
     }
-    setText(editor, text);
+    setText(editor, getText(((EditorImpl)editor).getFontMetrics(Font.PLAIN), table, value, row, column));
 
     if (isSelected) {
       ((EditorImpl)editor).setPaintSelection(true);
