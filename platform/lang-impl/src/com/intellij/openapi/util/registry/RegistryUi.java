@@ -109,11 +109,11 @@ public class RegistryUi implements Disposable {
           final RegistryValue value = myModel.getRegistryValue(selected);
           String desc = value.getDescription();
           if (value.isRestartRequired()) {
-            String required = "Requires IDE restart.";
+            String required = " Requires IDE restart.";
             if (desc.endsWith(".")) {
               desc += required;
             } else {
-              desc += ". " + required;
+              desc += "." + required;
             }
           }
           myDescriptionLabel.setText(desc);
