@@ -655,6 +655,9 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private void updateOptionsAndDescriptionPanel(final TreePath... paths) {
+    if (paths == null || paths.length == 0) {
+      return;
+    }
     final TreePath path = paths[0];
     if (path == null) return;
     final List<InspectionConfigTreeNode> nodes = InspectionsAggregationUtil.getInspectionsNodes(paths);
