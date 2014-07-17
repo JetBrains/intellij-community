@@ -25,6 +25,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleFileIndex;
@@ -33,6 +34,8 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -43,10 +46,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ProjectViewDirectoryHelper {
   protected static final Logger LOG = Logger.getInstance("#" + ProjectViewDirectoryHelper.class.getName());
@@ -123,7 +123,7 @@ public class ProjectViewDirectoryHelper {
     final Module module = fileIndex.getModuleForFile(psiDirectory.getVirtualFile());
     final ModuleFileIndex moduleFileIndex = module == null ? null : ModuleRootManager.getInstance(module).getFileIndex();
     if (!settings.isFlattenPackages() || skipDirectory(psiDirectory)) {
-      processPsiDirectoryChildren(psiDirectory, directoryChildrenInProject(psiDirectory),
+      processPsiDirectoryChildren(psiDirectory, directoryChildrenInProject(fileIndex, psiDirectory),
                                   children, fileIndex, null, settings, withSubDirectories);
     }
     else { // source directory in "flatten packages" mode
@@ -137,7 +137,13 @@ public class ProjectViewDirectoryHelper {
           continue;
         }
         VirtualFile directoryFile = subdir.getVirtualFile();
-        if (fileIndex.isIgnored(directoryFile)) continue;
+
+        if (Registry.is("ide.hide.excluded.files")) {
+          if (fileIndex.isIgnored(directoryFile)) continue;
+        }
+        else {
+          if (FileTypeRegistry.getInstance().isFileIgnored(directoryFile)) continue;
+        }
 
         if (withSubDirectories) {
           children.add(new PsiDirectoryNode(project, subdir, settings));
@@ -163,9 +169,9 @@ public class ProjectViewDirectoryHelper {
     return topLevelContentRoots;
   }
 
-  private PsiElement[] directoryChildrenInProject(PsiDirectory psiDirectory) {
+  private PsiElement[] directoryChildrenInProject(ProjectFileIndex fileIndex, PsiDirectory psiDirectory) {
     VirtualFile dir = psiDirectory.getVirtualFile();
-    if (myIndex.getInfoForDirectory(dir) != null) {
+    if (isInProject(dir)) {
       return psiDirectory.getChildren();
     }
 
@@ -187,6 +193,16 @@ public class ProjectViewDirectoryHelper {
     }
 
     return PsiUtilCore.toPsiElementArray(directoriesOnTheWayToContentRoots);
+  }
+
+  private boolean isInProject(VirtualFile dir) {
+    if (myIndex.getInfoForDirectory(dir) != null) {
+      return true;
+    }
+    if (Registry.is("ide.hide.excluded.files")) {
+      return false;
+    }
+    return VfsUtilCore.isUnder(dir, new HashSet<VirtualFile>(getTopLevelRoots()));
   }
 
   // used only for non-flatten packages mode
@@ -211,7 +227,7 @@ public class ProjectViewDirectoryHelper {
           vFile = dir.getVirtualFile();
           if (!vFile.equals(projectFileIndex.getSourceRootForFile(vFile))) { // if is not a source root
             if (viewSettings.isHideEmptyMiddlePackages() && !skipDirectory(psiDir) && isEmptyMiddleDirectory(dir, true)) {
-              processPsiDirectoryChildren(dir, directoryChildrenInProject(dir),
+              processPsiDirectoryChildren(dir, directoryChildrenInProject(projectFileIndex, dir),
                                           container, projectFileIndex, moduleFileIndex, viewSettings, withSubDirectories); // expand it recursively
               continue;
             }

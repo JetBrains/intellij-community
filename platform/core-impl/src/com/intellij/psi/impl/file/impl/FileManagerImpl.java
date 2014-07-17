@@ -26,12 +26,14 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -398,7 +400,12 @@ public class FileManagerImpl implements FileManager {
     PsiDirectory psiDir = myVFileToPsiDirMap.get(vFile);
     if (psiDir != null) return psiDir;
 
-    if (myFileIndex.isExcludedFile(vFile)) return null;
+    if (Registry.is("ide.hide.excluded.files")) {
+      if (myFileIndex.isExcludedFile(vFile)) return null;
+    }
+    else {
+      if (FileTypeRegistry.getInstance().isFileIgnored(vFile)) return null;
+    }
 
     VirtualFile parent = vFile.getParent();
     if (parent != null) { //?
