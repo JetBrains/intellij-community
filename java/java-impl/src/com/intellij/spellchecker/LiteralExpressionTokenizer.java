@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.spellchecker;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -37,12 +36,10 @@ import java.util.Collections;
 public class LiteralExpressionTokenizer extends Tokenizer<PsiLiteralExpression> {
   @Override
   public void tokenize(@NotNull PsiLiteralExpression element, TokenConsumer consumer) {
-    PsiLiteralExpressionImpl literalExpression = (PsiLiteralExpressionImpl) element;
-    if (literalExpression.getLiteralElementType() != JavaTokenType.STRING_LITERAL) {
-      return;  // not a string literal
-    }
+    PsiLiteralExpressionImpl literalExpression = (PsiLiteralExpressionImpl)element;
+    if (literalExpression.getLiteralElementType() != JavaTokenType.STRING_LITERAL) return;  // not a string literal
 
-    if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element)) return;
+    if (InjectedLanguageUtil.hasInjections(literalExpression)) return;
 
     final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class);
     if (listOwner != null && AnnotationUtil.isAnnotated(listOwner, Collections.singleton(AnnotationUtil.NON_NLS), false, false)) {
