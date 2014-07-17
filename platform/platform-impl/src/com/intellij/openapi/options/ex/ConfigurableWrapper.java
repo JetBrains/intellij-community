@@ -153,6 +153,11 @@ public class ConfigurableWrapper implements SearchableConfigurable {
     return myEp.id == null ? myEp.instanceClass == null ? myEp.providerClass : myEp.instanceClass : myEp.id;
   }
 
+  @NotNull
+  public ConfigurableEP getExtensionPoint() {
+    return myEp;
+  }
+
   public String getGroupId() {
     return myEp.groupId;
   }

@@ -15,15 +15,18 @@
  */
 package com.intellij.openapi.options.newEditor;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.treeStructure.*;
@@ -287,7 +290,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
   class Renderer extends GroupedElementsRenderer.Tree {
 
-
+    private JLabel myProjectIcon;
     private JLabel myHandle;
 
     @Override
@@ -304,6 +307,9 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       myHandle.setOpaque(false);
       content.add(myHandle, BorderLayout.WEST);
       content.add(myComponent, BorderLayout.CENTER);
+      myProjectIcon = new JLabel(AllIcons.General.ProjectConfigurable);
+      myProjectIcon.setOpaque(true);
+      content.add(myProjectIcon, BorderLayout.EAST);
       myRendererComponent.add(content, BorderLayout.CENTER);
     }
 
@@ -394,7 +400,26 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
       myTextLabel.setOpaque(selected);
 
+      myProjectIcon.setVisible(Registry.is("ide.file.settings.order.new") && getConfigurableProject(base) != null);
+      if (myProjectIcon.isVisible()) {
+        myProjectIcon.setBackground(selected ? getSelectionBackground() : getBackground());
+      }
       return result;
+    }
+
+    private Project getConfigurableProject(SimpleNode node) {
+      if (node == null) {
+        return null;
+      }
+      if (node instanceof EditorNode) {
+        EditorNode editor = (EditorNode)node;
+        Configurable configurable = editor.getConfigurable();
+        if (configurable instanceof ConfigurableWrapper) {
+          ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+          return wrapper.getExtensionPoint().getProject();
+        }
+      }
+      return getConfigurableProject(node.getParent());
     }
 
     protected JComponent createItemComponent() {
