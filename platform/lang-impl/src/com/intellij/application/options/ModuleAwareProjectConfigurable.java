@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -116,8 +115,7 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
     for (Module module : modules) {
       final T configurable = createModuleConfigurable(module);
       myModuleConfigurables.put(module, configurable);
-      final JComponent component = new JBScrollPane(configurable.createComponent());
-      component.setBorder(new EmptyBorder(0, 0, 0, 0));
+      final JComponent component = configurable.createComponent();
       cardPanel.add(component, module.getName());
     }
     moduleList.addListSelectionListener(new ListSelectionListener() {
