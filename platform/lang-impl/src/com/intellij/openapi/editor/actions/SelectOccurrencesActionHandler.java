@@ -19,8 +19,11 @@ import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.find.EditorSearchComponent;
 import com.intellij.find.FindBundle;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.find.FindModel;
+import com.intellij.find.editorHeaderActions.EditorHeaderAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorLastActionTracker;
@@ -95,5 +98,34 @@ abstract public class SelectOccurrencesActionHandler extends EditorActionHandler
   protected static boolean isRepeatedActionInvocation() {
     String lastActionId = EditorLastActionTracker.getInstance().getLastActionId();
     return SELECT_ACTIONS.contains(lastActionId);
+  }
+
+  protected static FindModel getFindModel(String text, boolean wholeWords) {
+    FindModel model = new FindModel();
+    model.setStringToFind(text);
+    model.setCaseSensitive(true);
+    model.setWholeWordsOnly(wholeWords);
+    return model;
+  }
+
+  protected boolean executeEquivalentFindPanelAction(Editor editor, DataContext context) {
+    if (editor.getHeaderComponent() instanceof EditorSearchComponent) {
+      EditorSearchComponent searchComponent = (EditorSearchComponent)editor.getHeaderComponent();
+      EditorHeaderAction action = getEquivalentFindPanelAction(searchComponent);
+      if (action != null) {
+        Presentation presentation = new Presentation();
+        AnActionEvent event = new AnActionEvent(null, context, ActionPlaces.MAIN_MENU, presentation, ActionManager.getInstance(), 0);
+        action.update(event);
+        if (presentation.isEnabled()) {
+          action.actionPerformed(event);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  protected EditorHeaderAction getEquivalentFindPanelAction(EditorSearchComponent searchComponent) {
+    return null;
   }
 }
