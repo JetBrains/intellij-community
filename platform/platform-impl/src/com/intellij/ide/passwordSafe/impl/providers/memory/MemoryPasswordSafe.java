@@ -59,11 +59,6 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
     return Registry.intValue("passwordSafe.memorySafe.ttl");
   }
 
-  /**
-   * @param project the project to use
-   * @param requestor
-   * @return the secret key used by provider
-   */
   @Override
   protected byte[] key(Project project, @NotNull Class requestor, @Nullable ModalityState modalityState) {
     if (key.get() == null) {
@@ -74,49 +69,31 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
     return key.get();
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected byte[] getEncryptedPassword(byte[] key) {
     return database.get().get(new ByteArrayWrapper(key));
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected void removeEncryptedPassword(byte[] key) {
     database.get().remove(new ByteArrayWrapper(key));
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected void storeEncryptedPassword(byte[] key, byte[] encryptedPassword) {
     database.get().put(new ByteArrayWrapper(key), encryptedPassword);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public boolean isSupported() {
     return true;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public String getDescription() {
     return "Memory-based password safe provider. The passwords are stored only for the duration of IDEA process.";
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public String getName() {
     return "Memory PasswordSafe";
