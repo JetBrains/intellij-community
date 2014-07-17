@@ -307,7 +307,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       myHandle.setOpaque(false);
       content.add(myHandle, BorderLayout.WEST);
       content.add(myComponent, BorderLayout.CENTER);
-      myProjectIcon = new JLabel(AllIcons.General.ProjectConfigurable);
+      myProjectIcon = new JLabel(" ", AllIcons.General.ProjectConfigurable, SwingConstants.LEFT);
       myProjectIcon.setOpaque(true);
       content.add(myProjectIcon, BorderLayout.EAST);
       myRendererComponent.add(content, BorderLayout.CENTER);
@@ -399,6 +399,9 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground() : fg);
 
       myTextLabel.setOpaque(selected);
+      if (Registry.is("ide.file.settings.order.new")) {
+        myTextLabel.setBorder(new EmptyBorder(1,2,1,0));
+      }
 
       myProjectIcon.setVisible(Registry.is("ide.file.settings.order.new") && getConfigurableProject(base) != null);
       if (myProjectIcon.isVisible()) {
