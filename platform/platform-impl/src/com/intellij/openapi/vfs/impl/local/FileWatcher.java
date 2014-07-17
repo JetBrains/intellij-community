@@ -120,9 +120,6 @@ public class FileWatcher {
         }
       });
     }
-    else if (!isUpToDate(myExecutable)) {
-      notifyOnFailure(ApplicationBundle.message("watcher.exe.outdated"), null);
-    }
     else {
       try {
         startupProcess(false);
@@ -199,14 +196,6 @@ public class FileWatcher {
     else if (SystemInfo.isMac) return (withSubDir ? "mac" + File.separator : "") + "fsnotifier";
     else if (SystemInfo.isLinux) return (withSubDir ? "linux" + File.separator : "") + (SystemInfo.isAMD64 ? "fsnotifier64" : "fsnotifier");
     return null;
-  }
-
-  private static boolean isUpToDate(File executable) {
-    long length = SystemInfo.isWindows ? 71208 :
-                  SystemInfo.isMac ? 13984 :
-                  SystemInfo.isLinux ? SystemInfo.isAMD64 ? 29155 : 22791 :
-                  -1;
-    return length < 0 || length == executable.length();
   }
 
   public void notifyOnFailure(final String cause, @Nullable final NotificationListener listener) {
