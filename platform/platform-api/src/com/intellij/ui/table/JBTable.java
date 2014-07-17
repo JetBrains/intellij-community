@@ -470,8 +470,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     isTypeAhead = false;
   }
 
+  @NotNull
   @Override
-  public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+  public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
     Component result = super.prepareRenderer(renderer, row, column);
 
     // Fix GTK background
