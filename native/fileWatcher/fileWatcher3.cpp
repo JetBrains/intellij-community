@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-#include "stdafx.h"
+#include <process.h>
+#include <stdio.h>
+#include <tchar.h>
+#include <windows.h>
 
 struct WatchRootInfo {
     char driveLetter;
@@ -70,7 +73,7 @@ bool IsUnwatchableFS(const char *path) {
     SetErrorMode(SEM_FAILCRITICALERRORS);
     if (!GetVolumeInformationA(path, volumeName, MAX_PATH - 1, NULL, &maxComponentLength, &fsFlags, fsName, MAX_PATH - 1))
         return false;
-    if (strcmp(fsName, "NTFS") && strcmp(fsName, "FAT") && strcmp(fsName, "FAT32") && stricmp(fsName, "exFAT"))
+    if (strcmp(fsName, "NTFS") && strcmp(fsName, "FAT") && strcmp(fsName, "FAT32") && _stricmp(fsName, "exFAT"))
         return true;
 
     if (!strcmp(fsName, "NTFS") && maxComponentLength != 255 && !(fsFlags & FILE_SUPPORTS_REPARSE_POINTS)) {
