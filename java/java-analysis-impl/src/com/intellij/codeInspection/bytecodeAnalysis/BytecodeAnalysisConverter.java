@@ -44,7 +44,10 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
  */
 public class BytecodeAnalysisConverter implements ApplicationComponent {
 
-  private static final String VERSION = "BytecodeAnalysisConverter.Enumerators";
+  private static final String LOGIC_VERSION_KEY = "BytecodeAnalysisConverter.Logic";
+  private static final int LOGIC_VERSION = 1;
+  private static final String ENUMERATORS_VERSION_KEY = "BytecodeAnalysisConverter.Enumerators";
+
   public static final int SHIFT = 4096;
 
   public static BytecodeAnalysisConverter getInstance() {
@@ -57,10 +60,18 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
 
   @Override
   public void initComponent() {
-    version = PropertiesComponent.getInstance().getOrInitInt(VERSION, 0);
+
     final File keysDir = new File(PathManager.getIndexRoot(), "bytecodekeys");
     final File namesFile = new File(keysDir, "names");
     final File compoundKeysFile = new File(keysDir, "compound");
+
+    final int previousLogicVersion = PropertiesComponent.getInstance().getOrInitInt(LOGIC_VERSION_KEY, 0);
+    version = PropertiesComponent.getInstance().getOrInitInt(ENUMERATORS_VERSION_KEY, 0);
+
+    if (previousLogicVersion != LOGIC_VERSION) {
+      IOUtil.deleteAllFilesStartingWith(keysDir);
+      version++;
+    }
 
     try {
       IOUtil.openCleanOrResetBroken(new ThrowableComputable<Void, IOException>() {
@@ -75,15 +86,15 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
         public void run() {
           LOG.info("Error during initialization of enumerators in bytecode analysis. Re-initializing.");
           IOUtil.deleteAllFilesStartingWith(keysDir);
-          version ++;
+          version++;
         }
       });
     }
     catch (IOException e) {
       LOG.error("Re-initialization of enumerators in bytecode analysis failed.", e);
     }
-    // TODO: is it enough for rebuilding indices?
-    PropertiesComponent.getInstance().setValue(VERSION, String.valueOf(version));
+    PropertiesComponent.getInstance().setValue(ENUMERATORS_VERSION_KEY, String.valueOf(version));
+    PropertiesComponent.getInstance().setValue(LOGIC_VERSION_KEY, String.valueOf(LOGIC_VERSION));
   }
 
   @Override
