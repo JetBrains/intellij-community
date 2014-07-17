@@ -30,7 +30,7 @@ public class RegistryImplicitPropertyUsageProvider extends ImplicitPropertyUsage
       final PsiFile file = property.getContainingFile();
       if (file != null && file.getName().equals("registry.properties")) {
         final String name = property.getName();
-        return name.endsWith(".description");
+        return name.endsWith(".description") || name.endsWith(".restartRequired");
       }
     }
     return false;
