@@ -2385,6 +2385,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String s12_4 = "@Foo('value:value2 = 'baz3:baz3 ) int 'a;)";
     String s12_5 = "@Foo('value:value2 = 'baz3:baz ) int 'a;)";
     String s12_6 = "@Foo('value:value2 = 'baz3 ) int 'a;)";
+    String s12_7 = "@Foo('value:value2 = ) int 'a;";
 
     assertEquals("Find anno parameter value",1,findMatchesCount(s11,s12));
     assertEquals("Find anno parameter value",2,findMatchesCount(s11,s12_2));
@@ -2392,6 +2393,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find anno parameter value",3,findMatchesCount(s11,s12_4));
     assertEquals("Find anno parameter value",0,findMatchesCount(s11,s12_5));
     assertEquals("Find anno parameter value",4,findMatchesCount(s11,s12_6));
+    assertEquals("Find anno parameter value",4,findMatchesCount(s11,s12_7));
   }
 
   public void testBoxingAndUnboxing() {
