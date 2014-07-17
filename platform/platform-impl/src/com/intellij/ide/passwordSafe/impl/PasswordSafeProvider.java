@@ -45,4 +45,14 @@ public abstract class PasswordSafeProvider implements PasswordStorage {
     return getPassword(project, requestor, key, null);
   }
 
+  @Override
+  public void storePassword(@Nullable Project project, @NotNull Class requestor, String key, String value) throws PasswordSafeException {
+    storePassword(project, requestor, key, value, null);
+  }
+
+  @Override
+  public void removePassword(@Nullable Project project, @NotNull Class requestor, String key) throws PasswordSafeException {
+    removePassword(project, requestor, key, null);
+  }
+
 }

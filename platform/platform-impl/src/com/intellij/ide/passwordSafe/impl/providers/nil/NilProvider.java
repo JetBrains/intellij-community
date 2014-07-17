@@ -49,11 +49,15 @@ public final class NilProvider extends PasswordSafeProvider {
     return null;
   }
 
-  public void removePassword(@Nullable Project project, @NotNull Class requester, String key) throws PasswordSafeException {
+  @Override
+  public void removePassword(@Nullable Project project, @NotNull Class requester, String key,
+                             @Nullable ModalityState modalityState) throws PasswordSafeException {
     // do nothing
   }
 
-  public void storePassword(@Nullable Project project, @NotNull Class requester, String key, String value) throws PasswordSafeException {
+  @Override
+  public void storePassword(@Nullable Project project, @NotNull Class requester, String key, String value,
+                            @Nullable ModalityState modalityState) throws PasswordSafeException {
     // just forget about password
   }
 }
