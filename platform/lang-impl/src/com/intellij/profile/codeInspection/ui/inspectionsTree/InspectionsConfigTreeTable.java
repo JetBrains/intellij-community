@@ -19,6 +19,8 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.ide.IdeTooltip;
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -28,13 +30,15 @@ import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.profile.codeInspection.ui.table.ThreeStateCheckBoxRenderer;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
-import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -58,6 +62,24 @@ public class InspectionsConfigTreeTable extends TreeTable {
     isEnabledColumn.setMaxWidth(20);
     isEnabledColumn.setCellRenderer(new ThreeStateCheckBoxRenderer());
     isEnabledColumn.setCellEditor(new ThreeStateCheckBoxRenderer());
+
+    addMouseMotionListener(new MouseAdapter() {
+      @Override
+      public void mouseMoved(final MouseEvent e) {
+        final Point point = e.getPoint();
+        final int column = columnAtPoint(point);
+        if (column != SEVERITIES_COLUMN) {
+          return;
+        }
+        final int row = rowAtPoint(point);
+        final Object maybeIcon = getModel().getValueAt(row, column);
+        if (maybeIcon instanceof MultiScopeSeverityIcon) {
+          final LinkedHashMap<String, HighlightSeverity> scopeToAverageSeverityMap =
+            ((MultiScopeSeverityIcon)maybeIcon).getScopeToAverageSeverityMap();
+          IdeTooltipManager.getInstance().show(new IdeTooltip(InspectionsConfigTreeTable.this, point, new ScopesAndSeveritiesHintTable(scopeToAverageSeverityMap)), false);
+        }
+      }
+    });
   }
 
   public abstract static class InspectionsConfigTreeTableSettings {
@@ -180,7 +202,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
 
   private static class MultiColoredHighlightSeverityIconSink {
 
-    private final Map<String, HighlightSeverity> myScopeToAverageSeverityMap = new HashMap<String, HighlightSeverity>();
+    private final LinkedHashMap<String, HighlightSeverity> myScopeToAverageSeverityMap = new LinkedHashMap<String, HighlightSeverity>();
 
     private boolean myIsFirst = true;
 

@@ -23,7 +23,7 @@ import com.intellij.ui.JBColor;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
-import java.util.Map;
+import java.util.LinkedHashMap;
 
 /**
  * @author Dmitry Batkovich
@@ -33,10 +33,14 @@ public class MultiScopeSeverityIcon implements Icon {
 
   private final static int SIZE = 12;
 
-  private final Map<String, HighlightSeverity> myScopeToAverageSeverityMap;
+  private final LinkedHashMap<String, HighlightSeverity> myScopeToAverageSeverityMap;
 
-  public MultiScopeSeverityIcon(final Map<String, HighlightSeverity> scopeToAverageSeverityMap) {
+  public MultiScopeSeverityIcon(final LinkedHashMap<String, HighlightSeverity> scopeToAverageSeverityMap) {
     myScopeToAverageSeverityMap = scopeToAverageSeverityMap;
+  }
+
+  public LinkedHashMap<String, HighlightSeverity> getScopeToAverageSeverityMap() {
+    return myScopeToAverageSeverityMap;
   }
 
   @Override
