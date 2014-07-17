@@ -181,30 +181,16 @@ public class FileWatcher {
 
   @Nullable
   private static File getExecutable() {
-    String execPath = null;
+    String execPath = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
+    if (execPath != null) return new File(execPath);
 
-    final String altExecPath = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
-    if (altExecPath != null && new File(altExecPath).isFile()) {
-      execPath = FileUtil.toSystemDependentName(altExecPath);
-    }
+    String execName = getExecutableName(false);
+    if (execName == null) return null;
 
-    if (execPath == null) {
-      final String execName = getExecutableName(false);
-      if (execName == null) {
-        return null;
-      }
-      execPath = FileUtil.join(PathManager.getBinPath(), execName);
-    }
-
-    File exec = new File(execPath);
-    if (!exec.exists()) {
-      String homePath = PathManager.getHomePath();
-      if (new File(homePath, "community").exists()) {
-        homePath += File.separator + "community";
-      }
-      exec = new File(FileUtil.join(homePath, "bin", getExecutableName(true)));
-    }
-    return exec;
+    return FileUtil.findFirstThatExist(
+      FileUtil.join(PathManager.getBinPath(), execName),
+      FileUtil.join(PathManager.getHomePath(), "community", "bin", getExecutableName(true)),
+      FileUtil.join(PathManager.getBinPath(), getExecutableName(true)));
   }
 
   @Nullable
