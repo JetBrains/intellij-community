@@ -195,7 +195,7 @@ public class GithubRebaseAction extends DumbAwareAction {
     }
 
     try {
-      return GithubUtil.runTask(project, GithubAuthDataHolder.createFromSettings(), indicator,
+      return GithubUtil.runTask(project, GithubAuthDataHolder.createFromSettings(indicator.getModalityState()), indicator,
                                 new ThrowableConvertor<GithubAuthData, GithubRepoDetailed, IOException>() {
                                   @NotNull
                                   @Override

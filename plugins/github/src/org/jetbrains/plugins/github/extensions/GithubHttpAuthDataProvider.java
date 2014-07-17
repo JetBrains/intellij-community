@@ -48,7 +48,7 @@ public class GithubHttpAuthDataProvider implements GitHttpAuthDataProvider {
       return null;
     }
 
-    GithubAuthData auth = settings.getAuthData();
+    GithubAuthData auth = settings.getAuthData(modalityState);
     switch (auth.getAuthType()) {
       case BASIC:
         GithubAuthData.BasicAuth basicAuth = auth.getBasicAuth();

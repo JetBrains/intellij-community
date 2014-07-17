@@ -54,12 +54,12 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
 
   @NotNull
   protected GithubAuthDataHolder getAuthDataHolder() {
-    return new GithubAuthDataHolder(myGitHubSettings.getAuthData());
+    return new GithubAuthDataHolder(myGitHubSettings.getAuthData(null));
   }
 
   protected void deleteGist() throws IOException {
     if (GIST_ID != null) {
-      GithubApiUtil.deleteGist(myGitHubSettings.getAuthData(), GIST_ID);
+      GithubApiUtil.deleteGist(myGitHubSettings.getAuthData(null), GIST_ID);
       GIST = null;
       GIST_ID = null;
     }
@@ -82,7 +82,7 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
 
     if (GIST == null) {
       try {
-        GIST = GithubApiUtil.getGist(myGitHubSettings.getAuthData(), GIST_ID);
+        GIST = GithubApiUtil.getGist(myGitHubSettings.getAuthData(null), GIST_ID);
       }
       catch (IOException e) {
         System.err.println(e.getMessage());
