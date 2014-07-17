@@ -1220,4 +1220,51 @@ public class GitHistoryUtils {
       return GitRevisionNumber.resolve(project, root, output);
     }
   }
+
+  public static void resolveRecentTags(Project project, final VirtualFile root, final List<GitFileRevision> revisions)  {
+    List<String> committish = new ArrayList<String>();
+    for (GitFileRevision revision : revisions) {
+      committish.add(revision.getHash());
+    }
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.DESCRIBE);
+    h.addParameters("--always");
+    h.addParameters("--abbrev=0");
+    h.addParameters(committish);
+
+    final Ref<Integer> lineIndex = new Ref<Integer>(new Integer(0));
+
+    final Semaphore semaphore = new Semaphore();
+    h.addLineListener(new GitLineHandlerListener() {
+      @Override
+      public void onLineAvailable(String line, Key outputType) {
+        if (!ProcessOutputTypes.STDOUT.equals(outputType)) {
+          return;
+        }
+        if (lineIndex.get() >= revisions.size()) {
+          return;
+        }
+        GitFileRevision revisionByIndex = revisions.get(lineIndex.get().intValue());
+
+        if (!line.startsWith(revisionByIndex.getHash())) {
+          //recent tag for this revision exists
+          revisionByIndex.setRecentTag(line);
+        }
+        lineIndex.set(lineIndex.get() + 1);
+      }
+
+      @Override
+      public void processTerminated(int exitCode) {
+        semaphore.up();
+      }
+
+      @Override
+      public void startFailed(Throwable exception) {
+        semaphore.up();
+      }
+    });
+    semaphore.down();
+    h.start();
+    semaphore.waitFor();
+  }
+
 }

@@ -61,6 +61,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public String RECENT_COMMON_BRANCH = null;
     public boolean AUTO_COMMIT_ON_CHERRY_PICK = false;
     public boolean WARN_ABOUT_CRLF = true;
+    public boolean SHOW_RECENT_TAG = false;
   }
 
   public GitVcsSettings(GitVcsApplicationSettings appSettings) {
@@ -176,6 +177,15 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   public void setWarnAboutCrlf(boolean warn) {
     myState.WARN_ABOUT_CRLF = warn;
   }
+
+  public boolean showRecentTag() {
+    return myState.SHOW_RECENT_TAG;
+  }
+
+  public void setShowRecentTag(boolean showRecentTag) {
+    myState.SHOW_RECENT_TAG = showRecentTag;
+  }
+
 
   /**
    * Provides migration from project settings.

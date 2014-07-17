@@ -45,6 +45,7 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
   @Nullable private final String myBranch;
   @Nullable private final Date myAuthorTime;
   @NotNull private final Collection<String> myParents;
+  @Nullable private String myRecentTag;
 
   public GitFileRevision(@NotNull Project project, @NotNull FilePath path, @NotNull GitRevisionNumber revision) {
     this(project, path, revision, null, null, null, null, Collections.<String>emptyList());
@@ -163,4 +164,12 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
     return myRevision.getRev();
   }
 
+  @Nullable
+  public String getRecentTag() {
+    return myRecentTag;
+  }
+
+  public void setRecentTag(@Nullable String recentTag) {
+    myRecentTag = recentTag;
+  }
 }

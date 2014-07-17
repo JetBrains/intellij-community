@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -37,8 +38,10 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
 import git4idea.config.GitExecutableValidator;
+import git4idea.config.GitVcsSettings;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.wholeTree.SelectRevisionInGitLogAction;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -46,27 +49,59 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
  * Git history provider implementation
  */
-public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHistorySessionFactory<Boolean, VcsAbstractHistorySession>,
-                                           VcsBaseRevisionAdviser {
+public class GitHistoryProvider
+  implements VcsHistoryProvider, VcsCacheableHistorySessionFactory<Boolean, VcsAbstractHistorySession>, VcsBaseRevisionAdviser {
   private static final Logger log = Logger.getInstance(GitHistoryProvider.class.getName());
 
   @NotNull private final Project myProject;
+
+  public static final ColumnInfo<VcsFileRevision, String> TAG =
+    new ColumnInfo<VcsFileRevision, String>(GitBundle.message("tag.recent.title")) {
+
+      public String valueOf(VcsFileRevision vcsFileRevision) {
+        if (!(vcsFileRevision instanceof GitFileRevision)) return "";
+        return ((GitFileRevision)vcsFileRevision).getRecentTag();
+      }
+
+      public Comparator<VcsFileRevision> getComparator() {
+        return new Comparator<VcsFileRevision>() {
+          public int compare(VcsFileRevision r1, VcsFileRevision r2) {
+            if (!(r1 instanceof GitFileRevision)) return 1;
+            if (!(r2 instanceof GitFileRevision)) return -1;
+            String r1_tag = ((GitFileRevision)r1).getRecentTag();
+            String r2_tag = ((GitFileRevision)r2).getRecentTag();
+            if (r1_tag == null) return 1;
+            if (r2_tag == null) return -1;
+            return r1_tag.compareTo(r2_tag);
+          }
+        };
+      }
+    };
 
   public GitHistoryProvider(@NotNull Project project) {
     myProject = project;
   }
 
   public VcsDependentHistoryComponents getUICustomization(final VcsHistorySession session, JComponent forShortcutRegistration) {
-    return VcsDependentHistoryComponents.createOnlyColumns(new ColumnInfo[0]);
+    ColumnInfo[] columns;
+    if (isShowRecentTag()) {
+      columns = new ColumnInfo[]{TAG};
+    }
+    else {
+      columns = new ColumnInfo[]{};
+    }
+    return VcsDependentHistoryComponents.createOnlyColumns(columns);
   }
 
   public AnAction[] getAdditionalActions(Runnable refresher) {
-    return new AnAction[]{ ShowAllAffectedGenericAction.getInstance(), new CopyRevisionNumberAction(), new SelectRevisionInGitLogAction()};
+    return new AnAction[]{ShowAllAffectedGenericAction.getInstance(), new CopyRevisionNumberAction(), new SelectRevisionInGitLogAction()};
   }
 
   public boolean isDateOmittable() {
@@ -101,13 +136,15 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     List<VcsFileRevision> revisions = null;
     try {
       revisions = GitHistoryUtils.history(myProject, filePath);
-    } catch (VcsException e) {
+    }
+    catch (VcsException e) {
       GitVcs.getInstance(myProject).getExecutableValidator().showNotificationOrThrow(e);
     }
     return createSession(filePath, revisions, null);
   }
 
-  private VcsAbstractHistorySession createSession(final FilePath filePath, final List<VcsFileRevision> revisions,
+  private VcsAbstractHistorySession createSession(final FilePath filePath,
+                                                  final List<VcsFileRevision> revisions,
                                                   @Nullable final VcsRevisionNumber number) {
     return new VcsAbstractHistorySession(revisions, number) {
       @Nullable
@@ -139,8 +176,7 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
   public boolean getBaseVersionContent(FilePath filePath,
                                        Processor<CharSequence> processor,
                                        final String beforeVersionId,
-                                       List<String> warnings)
-    throws VcsException {
+                                       List<String> warnings) throws VcsException {
     if (StringUtil.isEmptyOrSpaces(beforeVersionId) || filePath.getVirtualFile() == null) return false;
     // apply if base revision id matches revision
     final VirtualFile root = GitUtil.getGitRoot(filePath);
@@ -156,7 +192,7 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     if (content == null) {
       throw new VcsException("Can not load content of '" + filePath.getPath() + "' for revision '" + shaHash.getValue() + "'");
     }
-    return ! processor.process(content.getContent());
+    return !processor.process(content.getContent());
   }
 
   public void reportAppendableHistory(final FilePath path, final VcsAppendableHistorySessionPartner partner) throws VcsException {
@@ -164,22 +200,60 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     partner.reportCreatedEmptySession(emptySession);
 
     VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
-    String[] additionalArgs = vcsConfiguration.LIMIT_HISTORY ?
-                              new String[] { "--max-count=" + vcsConfiguration.MAXIMUM_HISTORY_ROWS } :
-                              ArrayUtil.EMPTY_STRING_ARRAY;
+    String[] additionalArgs =
+      vcsConfiguration.LIMIT_HISTORY ? new String[]{"--max-count=" + vcsConfiguration.MAXIMUM_HISTORY_ROWS} : ArrayUtil.EMPTY_STRING_ARRAY;
 
     final GitExecutableValidator validator = GitVcs.getInstance(myProject).getExecutableValidator();
-    GitHistoryUtils.history(myProject, refreshPath(path), null, new Consumer<GitFileRevision>() {
-      public void consume(GitFileRevision gitFileRevision) {
-        partner.acceptRevision(gitFileRevision);
-      }
-    }, new Consumer<VcsException>() {
-      public void consume(VcsException e) {
-        if (validator.checkExecutableAndNotifyIfNeeded()) {
-          partner.reportException(e);
+
+    if (!isShowRecentTag()) {
+      GitHistoryUtils.history(myProject, refreshPath(path), null, new Consumer<GitFileRevision>() {
+                                public void consume(GitFileRevision gitFileRevision) {
+                                  partner.acceptRevision(gitFileRevision);
+                                }
+                              }, new Consumer<VcsException>() {
+                                public void consume(VcsException e) {
+                                  if (validator.checkExecutableAndNotifyIfNeeded()) {
+                                    partner.reportException(e);
+                                  }
+                                }
+                              }, additionalArgs
+      );
+    }
+    else {
+      final LinkedList<GitFileRevision> revisions = new LinkedList<GitFileRevision>();
+      final VcsException[] vcsException = new VcsException[1];
+      FilePath refreshedPath = refreshPath(path);
+      GitHistoryUtils.history(myProject, refreshedPath, null, new Consumer<GitFileRevision>() {
+                                public void consume(GitFileRevision gitFileRevision) {
+                                  revisions.add(gitFileRevision);
+                                }
+                              }, new Consumer<VcsException>() {
+                                public void consume(VcsException e) {
+                                  if (validator.checkExecutableAndNotifyIfNeeded()) {
+                                    vcsException[0] = e;
+                                  }
+                                }
+                              }, additionalArgs
+      );
+
+
+      if (vcsException[0] == null) {
+        GitRepositoryManager manager = GitUtil.getRepositoryManager(myProject);
+        GitRepository repository = manager.getRepositoryForFile(refreshedPath);
+        if (repository.getRoot() != null) {
+          GitHistoryUtils.resolveRecentTags(myProject, repository.getRoot(), revisions);
         }
       }
-    }, additionalArgs);
+
+      for (GitFileRevision revision : revisions) {
+        partner.acceptRevision(revision);
+      }
+      if (vcsException[0] != null) {
+        partner.reportException(vcsException[0]);
+      }
+
+    }
+
   }
 
   /**
@@ -210,4 +284,8 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     return repository != null && !repository.isFresh();
   }
 
+  private boolean isShowRecentTag() {
+    GitVcsSettings settings = GitVcsSettings.getInstance(myProject);
+    return settings.showRecentTag();
+  }
 }
