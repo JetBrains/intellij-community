@@ -70,6 +70,11 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
                       "  font-family: '" + UIUtil.getLabelFont().getName() + "';" +
                       "  font-size: " + UIUtil.getLabelFont().getSize() + ";" +
                       "}" +
+                      "li {" +
+                      "  margin-bottom: 3;" +
+                      "}" +
+                      "ol {" +
+                      "}" +
                       "a {" +
                       " text-decoration: none;" +
                       "}" +
@@ -81,11 +86,17 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
         for (ConfigurationError error : myErrors) {
           i++;
           String description = error.getDescription();
+          if (description.startsWith("<html>") && description.endsWith("</html>")) {
+            description = description.substring(6, description.length() - 7);
+          }
           if (description.startsWith("Module '")) {
             final int start = 8;
             final int end = description.indexOf("'", 9);
             final String moduleName = description.substring(start, end);
             description = "Module <a href='module://" + moduleName + "'>" + moduleName + "</a> " + description.substring(end + 1);
+          }
+          if (error.canBeFixed()) {
+            description += " <a href='fix://" + i + "'>Fix</a>";
           }
           html+= "<li>" + description + "</li>";
         }
