@@ -154,7 +154,17 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
             }
           }
 
-          for (PsiExpression rhs : DfaPsiUtil.findAllConstructorInitializers(field)) {
+          List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers(field);
+          if (annotated.isDeclaredNotNull && initializers.isEmpty()) {
+            final PsiAnnotation annotation = AnnotationUtil.findAnnotation(field, manager.getNotNulls());
+            if (annotation != null) {
+              holder.registerProblem(annotation.isPhysical() ? annotation : field.getNameIdentifier(),
+                                     "Not-null fields must be initialized",
+                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+            }
+          }
+
+          for (PsiExpression rhs : initializers) {
             if (rhs instanceof PsiReferenceExpression) {
               PsiElement target = ((PsiReferenceExpression)rhs).resolve();
               if (target instanceof PsiParameter) {
