@@ -25,10 +25,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.ui.AddScopeUtil;
-import com.intellij.profile.codeInspection.ui.InspectionConfigTreeNode;
+import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.table.JBTable;
-import com.intellij.ui.treeStructure.Tree;
+import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.EditableModel;
@@ -51,9 +51,9 @@ import java.util.List;
 public class ScopesAndSeveritiesTable extends JBTable {
   private final static Logger LOG = Logger.getInstance(ScopesAndSeveritiesTable.class);
 
-  private static final HighlightSeverity MIXED_FAKE_SEVERITY = new HighlightSeverity("Mixed", -1);
+  public static final HighlightSeverity MIXED_FAKE_SEVERITY = new HighlightSeverity("Mixed", -1);
   @SuppressWarnings("UnusedDeclaration")
-  private static final HighlightDisplayLevel MIXED_FAKE_LEVEL = new HighlightDisplayLevel(MIXED_FAKE_SEVERITY, AllIcons.Actions.Help);
+  public static final HighlightDisplayLevel MIXED_FAKE_LEVEL = new HighlightDisplayLevel(MIXED_FAKE_SEVERITY, AllIcons.Actions.Help);
 
   private final static int SCOPE_ENABLED_COLUMN = 0;
   private final static int SCOPE_NAME_COLUMN = 1;
@@ -101,12 +101,12 @@ public class ScopesAndSeveritiesTable extends JBTable {
     private final List<String> myKeyNames;
     private final List<HighlightDisplayKey> myKeys;
     private final InspectionProfileImpl myInspectionProfile;
-    private final Tree myTree;
+    private final TreeTable myTreeTable;
     private final Project myProject;
 
     protected TableSettings(final List<InspectionConfigTreeNode> nodes,
                             final InspectionProfileImpl inspectionProfile,
-                            final Tree tree,
+                            final TreeTable treeTable,
                             final Project project) {
       myNodes = nodes;
       myKeys = new ArrayList<HighlightDisplayKey>(myNodes.size());
@@ -118,7 +118,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
       }
 
       myInspectionProfile = inspectionProfile;
-      myTree = tree;
+      myTreeTable = treeTable;
       myProject = project;
     }
 
@@ -138,8 +138,8 @@ public class ScopesAndSeveritiesTable extends JBTable {
       return myInspectionProfile;
     }
 
-    public Tree getTree() {
-      return myTree;
+    public TreeTable getTreeTable() {
+      return myTreeTable;
     }
 
     public Project getProject() {
@@ -151,6 +151,8 @@ public class ScopesAndSeveritiesTable extends JBTable {
     protected abstract void onScopeRemoved(final int scopesCount);
 
     protected abstract void onScopeChosen(final @NotNull ScopeToolState scopeToolState);
+
+    protected abstract void onChange();
   }
 
   @NotNull
@@ -171,7 +173,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
     private final InspectionProfileImpl myInspectionProfile;
     private final List<String> myKeyNames;
     private final List<InspectionConfigTreeNode> myNodes;
-    private final Tree myTree;
+    private final TreeTable myTreeTable;
     private final Project myProject;
     private final TableSettings myTableSettings;
     private final List<HighlightDisplayKey> myKeys;
@@ -185,7 +187,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
       myKeys = tableSettings.getKeys();
       myKeyNames = tableSettings.getKeyNames();
       myNodes = tableSettings.getNodes();
-      myTree = tableSettings.getTree();
+      myTreeTable = tableSettings.getTreeTable();
       refreshAggregatedScopes();
     }
 
@@ -352,6 +354,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
           }
         }
       }
+      myTableSettings.onChange();
     }
 
     @Override
@@ -365,7 +368,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
 
     @Override
     public void addRow() {
-      AddScopeUtil.performAddScope(myTree, myProject, myInspectionProfile, myNodes);
+      AddScopeUtil.performAddScope(myTreeTable, myProject, myInspectionProfile, myNodes);
       myTableSettings.onScopeAdded();
       refreshAggregatedScopes();
     }

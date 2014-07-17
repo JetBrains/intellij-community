@@ -27,10 +27,12 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.ArrayUtil;
 
 import javax.swing.tree.DefaultTreeModel;
@@ -38,7 +40,7 @@ import javax.swing.tree.TreePath;
 import java.util.*;
 
 public class AddScopeUtil {
-  public static ScopeToolState performAddScope(final Tree tree,
+  public static ScopeToolState performAddScope(final TreeTable treeTable,
                                                final Project project,
                                                final InspectionProfileImpl inspectionProfile,
                                                final Collection<InspectionConfigTreeNode> selectedNodes) {
@@ -49,11 +51,12 @@ public class AddScopeUtil {
     }
 
     final List<String> availableScopes = getAvailableScopes(descriptors, project, inspectionProfile);
-    final int idx = Messages.showChooseDialog(tree, "Scope:", "Choose Scope", ArrayUtil.toStringArray(availableScopes), availableScopes.get(0), Messages.getQuestionIcon());
+    final int idx = Messages.showChooseDialog(treeTable, "Scope:", "Choose Scope", ArrayUtil.toStringArray(availableScopes), availableScopes.get(0), Messages.getQuestionIcon());
     if (idx == -1) return null;
     final NamedScope chosenScope = NamedScopesHolder.getScope(project, availableScopes.get(idx));
 
     ScopeToolState scopeToolState = null;
+    final Tree tree = treeTable.getTree();
 
     for (final InspectionConfigTreeNode node : nodes) {
       final Descriptor descriptor = node.getDefaultDescriptor();

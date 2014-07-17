@@ -18,7 +18,7 @@
  * User: anna
  * Date: 14-May-2009
  */
-package com.intellij.profile.codeInspection.ui;
+package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.Descriptor;
@@ -26,29 +26,23 @@ import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.ui.CheckboxTree;
-import com.intellij.ui.JBColor;
+import com.intellij.profile.codeInspection.ui.ToolDescriptors;
+import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-abstract class InspectionsConfigTreeRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
-  private final Project myProject;
-
-  public InspectionsConfigTreeRenderer(Project project) {
-    myProject = project;
-  }
-
+public abstract class InspectionsConfigTreeRenderer extends ColoredTreeCellRenderer {
   protected abstract String getFilter();
 
   @Override
-  public void customizeRenderer(final JTree tree,
+  public void customizeCellRenderer(@NotNull final JTree tree,
                                     final Object value,
                                     final boolean selected,
                                     final boolean expanded,
@@ -81,22 +75,17 @@ abstract class InspectionsConfigTreeRenderer extends CheckboxTree.CheckboxTreeCe
     }
 
     if (text != null) {
-      SearchUtil.appendFragments(getFilter(), text, style, foreground, background,
-                                 getTextRenderer());
+      SearchUtil.appendFragments(getFilter(), text, style, foreground, background, this);
     }
     if (hint != null) {
-      getTextRenderer()
-        .append(" " + hint, selected ? new SimpleTextAttributes(Font.PLAIN, foreground) : SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      append(" " + hint, selected ? new SimpleTextAttributes(Font.PLAIN, foreground) : SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
     setForeground(foreground);
   }
 
   @Nullable
-  private static String getHint(Descriptor descriptor) {
+  private static String getHint(final Descriptor descriptor) {
     final InspectionToolWrapper toolWrapper = descriptor.getToolWrapper();
-    if (toolWrapper == null) {
-      return InspectionsBundle.message("inspection.tool.availability.in.tree.node");
-    }
     if (toolWrapper instanceof LocalInspectionToolWrapper ||
         toolWrapper instanceof GlobalInspectionToolWrapper && !((GlobalInspectionToolWrapper)toolWrapper).worksInBatchModeOnly()) {
       return null;

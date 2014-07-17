@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.profile.codeInspection.ui;
+package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.Descriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.ui.CheckedTreeNode;
+import com.intellij.profile.codeInspection.ui.ToolDescriptors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.tree.DefaultMutableTreeNode;
 
 /**
  * @author anna
  * @since 14-May-2009
  */
-public class InspectionConfigTreeNode extends CheckedTreeNode {
+public class InspectionConfigTreeNode extends DefaultMutableTreeNode {
   private final ClearableLazyValue<Boolean> myProperSetting = new ClearableLazyValue<Boolean>() {
     @NotNull
     @Override
@@ -51,9 +52,8 @@ public class InspectionConfigTreeNode extends CheckedTreeNode {
     super(userObject);
   }
 
-  public InspectionConfigTreeNode(@NotNull ToolDescriptors descriptors, boolean isEnabled) {
-    this(descriptors);
-    setChecked(isEnabled);
+  public HighlightDisplayKey getKey() {
+    return getDefaultDescriptor().getKey();
   }
 
   @Nullable
