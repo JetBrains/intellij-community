@@ -18,9 +18,7 @@ package com.intellij.profile.codeInspection.ui.inspectionsTree;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
-import com.intellij.ui.LightweightHint;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
