@@ -47,16 +47,17 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
   @Nullable
   public static <T extends UnnamedConfigurable> T wrapConfigurable(ConfigurableEP<T> ep) {
-    if (ep.displayName != null || ep.key != null) {
-      if (ep.children != null || ep.childrenEPName != null || ep.dynamic) {
-        T configurable = ep.createConfigurable();
-        return configurable != null
-               ? (T)new CompositeWrapper(ep, configurable)
-               : null;
+    if (ep.displayName != null || ep.key != null || ep.groupId != null) {
+      T configurable = null;
+      if (ep.providerClass != null) {
+        configurable = ep.createConfigurable();
+        if (configurable == null) {
+          return null; // it is allowed to return null from provider
+        }
       }
-      else {
-        return (T)new ConfigurableWrapper(ep, null);
-      }
+      return ep.children != null || ep.childrenEPName != null || ep.dynamic
+             ? (T)new CompositeWrapper(ep, configurable)
+             : (T)new ConfigurableWrapper(ep, configurable);
     }
     else {
       return ep.createConfigurable();
@@ -104,6 +105,12 @@ public class ConfigurableWrapper implements SearchableConfigurable {
   @Nls
   @Override
   public String getDisplayName() {
+    if (myEp.displayName == null && myEp.key == null) {
+      UnnamedConfigurable configurable = getConfigurable();
+      if (configurable instanceof Configurable) {
+        return ((Configurable)configurable).getDisplayName();
+      }
+    }
     return myEp.getDisplayName();
   }
 
