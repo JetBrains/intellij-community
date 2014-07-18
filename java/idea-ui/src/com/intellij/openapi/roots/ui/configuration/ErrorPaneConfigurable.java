@@ -67,11 +67,11 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
                       "<header><style type='text/css'>" +
                       "body {" +
                       "  color: #333333;" +
-                      "  font-family: '" + UIUtil.getLabelFont().getName() + "';" +
+                      "  font-family: '" + UIUtil.getLabelFont().getName() + ",serif';" +
                       "  font-size: " + UIUtil.getLabelFont().getSize() + ";" +
                       "}" +
                       "li {" +
-                      "  margin-bottom: 3;" +
+                      "  margin-bottom: 5;" +
                       "}" +
                       "ol {" +
                       "}" +
@@ -79,7 +79,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
                       " text-decoration: none;" +
                       "}" +
                       "</style>" +
-                      "</headear>" +
+                      "</header>" +
                       "<body>";
         int i = 0;
         html += "<ol>";
@@ -96,7 +96,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
             description = "Module <a href='module://" + moduleName + "'>" + moduleName + "</a> " + description.substring(end + 1);
           }
           if (error.canBeFixed()) {
-            description += " <a href='fix://" + i + "'>Fix</a>";
+            description += " <a href='fix://" + i + "'>[Fix]</a>";
           }
           html+= "<li>" + description + "</li>";
         }
