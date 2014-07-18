@@ -578,6 +578,116 @@ public class LineStatusTracker {
     }
   }
 
+  public void rollbackChanges(@NotNull SegmentTree lines) {
+    myApplication.assertWriteAccessAllowed();
+
+    synchronized (myLock) {
+      List<Range> affectedRanges = new ArrayList<Range>();
+
+      boolean wasEnd = false;
+      boolean simple = true;
+      for (Range range : myRanges) {
+        boolean check;
+        if (range.getOffset1() == range.getOffset2()) {
+          check = lines.check(range.getOffset1());
+        }
+        else {
+          check = lines.check(range.getOffset1(), range.getOffset2());
+        }
+        if (check) {
+          if (wasEnd) simple = false;
+          affectedRanges.add(range);
+        }
+        else {
+          if (!affectedRanges.isEmpty()) wasEnd = true;
+        }
+      }
+
+      if (simple) {
+        rollbackChangesSimple(affectedRanges);
+      }
+      else {
+        rollbackChangesComplex(affectedRanges);
+      }
+    }
+  }
+
+  private void rollbackChangesSimple(@NotNull List<Range> ranges) {
+    if (ranges.isEmpty()) return;
+
+    Range first = ranges.get(0);
+    Range last = ranges.get(ranges.size() - 1);
+
+    byte type = first == last ? first.getType() : Range.MODIFIED;
+    final Range merged = new Range(first.getOffset1(), last.getOffset2(), first.getUOffset1(), last.getUOffset2(), type);
+
+    // We don't expect complex Insertion/Deletion operation - they shouldn't exist
+    assert type != Range.MODIFIED || (first.getOffset1() != last.getOffset2() && first.getUOffset1() != last.getUOffset2());
+
+    rollbackChanges(merged);
+  }
+
+  private void rollbackChangesComplex(@NotNull List<Range> ranges) {
+    // We can't relay on assumption, that revert of a single change will not affect any other.
+    // This, among the others, is because of 'magic' ranges for revert, that will affect nearby lines implicitly.
+    // So it's dangerous to apply ranges ony-by-one and we have to create single atomic modification.
+    // Usage of Bulk mode will lead to full rebuild of tracker, and therefore will be slow..
+
+    if (ranges.isEmpty()) return;
+    if (ranges.size() == 1) {
+      rollbackChanges(ranges.get(0));
+      return;
+    }
+
+    Range first = ranges.get(0);
+    Range last = ranges.get(ranges.size() - 1);
+
+    // We don't expect complex Insertion/Deletion operation - they shouldn't exist.
+    assert first != last && first.getOffset1() != last.getOffset2() && first.getUOffset1() != last.getUOffset2();
+
+    final int start = getCurrentTextRange(first).getStartOffset();
+    final int end = getCurrentTextRange(last).getEndOffset();
+
+    StringBuilder builder = new StringBuilder();
+
+    int lastOffset = start;
+    for (Range range : ranges) {
+      TextRange textRange = getCurrentTextRange(range);
+
+      builder.append(myDocument.getText(new TextRange(lastOffset, textRange.getStartOffset())));
+      lastOffset = textRange.getEndOffset();
+
+      if (range.getType() == Range.MODIFIED) {
+        builder.append(getUpToDateContent(range));
+      }
+      else if (range.getType() == Range.INSERTED) {
+        if (builder.length() > 0) {
+          builder.deleteCharAt(builder.length() - 1);
+        }
+        else {
+          lastOffset++;
+        }
+      }
+      else if (range.getType() == Range.DELETED) {
+        CharSequence content = getUpToDateContent(range);
+        if (range.getOffset2() == getLineCount(myDocument)) {
+          builder.append('\n').append(content);
+        }
+        else {
+          builder.append(content).append('\n');
+        }
+      }
+      else {
+        throw new IllegalArgumentException("Unknown range type: " + range.getType());
+      }
+    }
+    builder.append(myDocument.getText(new TextRange(lastOffset, end)));
+
+    final String s = builder.toString();
+
+    myDocument.replaceString(start, end, s);
+  }
+
   public CharSequence getUpToDateContent(@NotNull Range range) {
     synchronized (myLock) {
       TextRange textRange = getUpToDateRange(range);
@@ -589,17 +699,23 @@ public class LineStatusTracker {
 
   @NotNull
   TextRange getCurrentTextRange(@NotNull Range range) {
-    return getRange(range.getType(), range.getOffset1(), range.getOffset2(), Range.DELETED, myDocument);
+    return getRange(range.getOffset1(), range.getOffset2(), myDocument);
   }
 
   @NotNull
   TextRange getUpToDateRange(@NotNull Range range) {
-    return getRange(range.getType(), range.getUOffset1(), range.getUOffset2(), Range.INSERTED, myUpToDateDocument);
+    return getRange(range.getUOffset1(), range.getUOffset2(), myUpToDateDocument);
   }
 
+  /**
+   * Return affected range, without non-internal '\n'
+   * so if last line is not empty, the last symbol will be not '\n'
+   * <p/>
+   * So we consider '\n' not as a part of line, but a separator between lines
+   */
   @NotNull
-  private static TextRange getRange(byte rangeType, int offset1, int offset2, byte emptyRangeCondition, Document document) {
-    if (rangeType == emptyRangeCondition) {
+  private static TextRange getRange(int offset1, int offset2, @NotNull Document document) {
+    if (offset1 == offset2) {
       int lineStartOffset = offset1 < getLineCount(document) ? document.getLineStartOffset(offset1) : document.getTextLength();
       return new TextRange(lineStartOffset, lineStartOffset);
     }

@@ -265,6 +265,9 @@
       <add-to-group group-id="CloseEditorsGroup" anchor="before" relative-to-action="CloseAllUnpinnedEditors"/>
     </action>
 
+    <action id="RollbackLineStatusChanges" class="com.intellij.openapi.vcs.ex.RollbackLineStatusAction">
+    </action>
+
     <action id="WelcomeScreen.GetFromVcs" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVcsAction"
       icon="AllIcons.General.GetProjectfromVCS">
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>

@@ -12,41 +12,28 @@
  */
 package com.intellij.openapi.vcs.ex;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
-* @author irengrig
-*/
-public class RollbackLineStatusRangeAction extends BaseLineStatusRangeAction {
-  public RollbackLineStatusRangeAction(final LineStatusTracker lineStatusTracker, final Range range, final Editor editor) {
-    super(VcsBundle.message("action.name.rollback"), AllIcons.Actions.Reset, lineStatusTracker, range);
+public class RollbackLineStatusRangeAction extends RollbackLineStatusAction {
+  @NotNull private final LineStatusTracker myTracker;
+  @Nullable private final Editor myEditor;
+  @NotNull private final Range myRange;
+
+  public RollbackLineStatusRangeAction(@NotNull LineStatusTracker tracker, @NotNull Range range, @Nullable Editor editor) {
+    myTracker = tracker;
+    myEditor = editor;
+    myRange = range;
   }
 
-  public boolean isEnabled() {
-    return true;
+  @Override
+  public void update(AnActionEvent e) {
+    e.getPresentation().setEnabled(true);
   }
 
   public void actionPerformed(final AnActionEvent e) {
-    CommandProcessor.getInstance().executeCommand(myLineStatusTracker.getProject(), new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            if (!myLineStatusTracker.getDocument().isWritable()) {
-              final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler
-                .getInstance(myLineStatusTracker.getProject()).ensureFilesWritable(myLineStatusTracker.getVirtualFile());
-              if (operationStatus.hasReadonlyFiles()) return;
-            }
-            myLineStatusTracker.rollbackChanges(myRange);
-          }
-        });
-      }
-    }, VcsBundle.message("command.name.rollback.change"), null);
-
+    rollback(myTracker, myEditor, myRange);
   }
 }
