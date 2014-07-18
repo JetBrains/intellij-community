@@ -43,8 +43,6 @@ import java.util.ArrayList;
  * @author Konstantin Bulenkov
  */
 public class ErrorPaneConfigurable extends JPanel implements Configurable, Disposable, ConfigurationErrors {
-  private final Project myProject;
-  private final StructureConfigurableContext myContext;
   private final Alarm myAlarm;
   private final ArrayList<ConfigurationError> myErrors = new ArrayList<ConfigurationError>();
   private final JTextPane myContent = new JTextPane();
@@ -57,8 +55,6 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myContent, true);
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     add(pane);
-    myProject = project;
-    myContext = context;
     myAlarm = new Alarm(this);
     project.getMessageBus().connect(this).subscribe(ConfigurationErrors.TOPIC, this);
     myContent.addHyperlinkListener(new HyperlinkAdapter() {
