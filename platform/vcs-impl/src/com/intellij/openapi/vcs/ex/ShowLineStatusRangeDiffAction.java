@@ -25,27 +25,22 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author irengrig
  */
 public class ShowLineStatusRangeDiffAction extends BaseLineStatusRangeAction {
-  public ShowLineStatusRangeDiffAction(final LineStatusTracker lineStatusTracker, final Range range, final Editor editor) {
+  public ShowLineStatusRangeDiffAction(@NotNull LineStatusTracker lineStatusTracker, @NotNull Range range, @Nullable Editor editor) {
     super(VcsBundle.message("action.name.show.difference"), AllIcons.Actions.Diff, lineStatusTracker, range);
   }
 
+  @Override
   public boolean isEnabled() {
-    return isModifiedRange() || isDeletedRange();
+    return true;
   }
 
-  private boolean isDeletedRange() {
-    return Range.DELETED == myRange.getType();
-  }
-
-  private boolean isModifiedRange() {
-    return Range.MODIFIED == myRange.getType();
-  }
-
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     DiffManager.getInstance().getDiffTool().show(createDiffData());
   }
@@ -54,12 +49,13 @@ public class ShowLineStatusRangeDiffAction extends BaseLineStatusRangeAction {
     return new DiffRequest(myLineStatusTracker.getProject()) {
       @NotNull
       public DiffContent[] getContents() {
+        Range range = expand(myRange, myLineStatusTracker.getDocument(), myLineStatusTracker.getUpToDateDocument());
         return new DiffContent[]{
           createDiffContent(myLineStatusTracker.getUpToDateDocument(),
-                            myLineStatusTracker.getUpToDateRange(myRange),
+                            myLineStatusTracker.getUpToDateRange(range),
                             null),
           createDiffContent(myLineStatusTracker.getDocument(),
-                            myLineStatusTracker.getCurrentTextRange(myRange),
+                            myLineStatusTracker.getCurrentTextRange(range),
                             myLineStatusTracker.getVirtualFile())};
       }
 
@@ -74,9 +70,25 @@ public class ShowLineStatusRangeDiffAction extends BaseLineStatusRangeAction {
     };
   }
 
-  private DiffContent createDiffContent(final Document uDocument, final TextRange textRange, final VirtualFile file) {
+  @NotNull
+  private DiffContent createDiffContent(@NotNull Document uDocument, @NotNull TextRange textRange, @Nullable VirtualFile file) {
     final Project project = myLineStatusTracker.getProject();
     final DiffContent diffContent = new DocumentContent(project, uDocument);
     return new FragmentContent(diffContent, textRange, project, file);
+  }
+
+  @NotNull
+  private static Range expand(@NotNull Range range, @NotNull Document document, @NotNull Document uDocument) {
+    if (range.getType() == Range.MODIFIED) return range;
+    if (range.getType() == Range.INSERTED || range.getType() == Range.DELETED) {
+      boolean canExpandBefore = range.getOffset1() != 0 && range.getUOffset1() != 0;
+      boolean canExpandAfter = range.getOffset2() < document.getLineCount() && range.getUOffset2() < uDocument.getLineCount();
+      int offset1 = range.getOffset1() - (canExpandBefore ? 1 : 0);
+      int uOffset1 = range.getUOffset1() - (canExpandBefore ? 1 : 0);
+      int offset2 = range.getOffset2() + (canExpandAfter ? 1 : 0);
+      int uOffset2 = range.getUOffset2() + (canExpandAfter ? 1 : 0);
+      return new Range(offset1, offset2, uOffset1, uOffset2, range.getType());
+    }
+    throw new IllegalArgumentException("Unknown range type: " + range.getType());
   }
 }
