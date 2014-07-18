@@ -1,8 +1,6 @@
 """Raw data collector for Coverage."""
 
-import os
-import sys
-import threading
+import os, sys, threading
 
 try:
     # Use the C extension code when we can, for speed.

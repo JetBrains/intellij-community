@@ -1,7 +1,7 @@
 """Bytecode manipulation for coverage.py"""
 
-import opcode
-import types
+import opcode, types
+
 from coverage.backward import byte_to_int
 
 class ByteCode(object):

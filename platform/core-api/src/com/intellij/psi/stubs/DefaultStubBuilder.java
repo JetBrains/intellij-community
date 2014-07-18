@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,11 +36,13 @@ public class DefaultStubBuilder implements StubBuilder {
     return buildStubTreeFor(file, createStubForFile(file));
   }
 
+  @NotNull
   protected StubElement createStubForFile(@NotNull PsiFile file) {
     @SuppressWarnings("unchecked") PsiFileStubImpl stub = new PsiFileStubImpl(file);
     return stub;
   }
 
+  @NotNull
   private StubElement buildStubTreeFor(@NotNull PsiElement root, @NotNull StubElement parentStub) {
     Stack<StubElement> parentStubs = new Stack<StubElement>();
     Stack<PsiElement> parentElements = new Stack<PsiElement>();
@@ -84,6 +86,7 @@ public class DefaultStubBuilder implements StubBuilder {
     return false;
   }
 
+  @NotNull
   protected StubElement buildStubTreeFor(@NotNull ASTNode root, @NotNull StubElement parentStub) {
     Stack<StubElement> parentStubs = new Stack<StubElement>();
     Stack<ASTNode> parentNodes = new Stack<ASTNode>();

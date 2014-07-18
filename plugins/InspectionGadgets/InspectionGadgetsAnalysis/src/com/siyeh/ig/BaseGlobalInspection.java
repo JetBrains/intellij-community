@@ -16,6 +16,7 @@
 package com.siyeh.ig;
 
 import com.intellij.codeInspection.GlobalJavaBatchInspectionTool;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -34,8 +35,7 @@ public abstract class BaseGlobalInspection extends GlobalJavaBatchInspectionTool
       assert name.endsWith(INSPECTION) :
         "class name must end with 'Inspection' to correctly" +
         " calculate the short name: " + name;
-      shortName = name.substring(name.lastIndexOf((int)'.') + 1,
-                                 name.length() - INSPECTION.length());
+      shortName = InspectionProfileEntry.getShortName(getClass().getSimpleName());
     }
     return shortName;
   }
