@@ -2,14 +2,8 @@
 
 from coverage.backward import to_string
 from coverage.misc import CoverageException
-import fnmatch
-import os
-import os.path
-import re
-import sys
-import ntpath
-import posixpath
-
+import fnmatch, os, os.path, re, sys
+import ntpath, posixpath
 
 class FileLocator(object):
     """Understand how filenames work."""

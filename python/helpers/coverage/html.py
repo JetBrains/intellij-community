@@ -1,9 +1,7 @@
 """HTML reporting for Coverage."""
 
-import os
-import re
-import shutil
-import sys
+import os, re, shutil, sys
+
 import coverage
 from coverage.backward import pickle
 from coverage.misc import CoverageException, Hasher

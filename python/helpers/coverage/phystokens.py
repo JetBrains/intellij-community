@@ -1,11 +1,6 @@
 """Better tokenizing for coverage.py."""
 
-import codecs
-import keyword
-import re
-import sys
-import token
-import tokenize
+import codecs, keyword, re, sys, token, tokenize
 from coverage.backward import set                       # pylint: disable=W0622
 from coverage.parser import generate_tokens
 

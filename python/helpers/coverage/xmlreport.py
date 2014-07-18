@@ -1,13 +1,11 @@
 """XML reporting for coverage.py"""
 
-import os
-import sys
-import time
+import os, sys, time
 import xml.dom.minidom
+
 from coverage import __url__, __version__
 from coverage.backward import sorted, rpartition    # pylint: disable=W0622
 from coverage.report import Reporter
-
 
 def rate(hit, num):
     """Return the fraction of `hit`/`num`, as a string."""
