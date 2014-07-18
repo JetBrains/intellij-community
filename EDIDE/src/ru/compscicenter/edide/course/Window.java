@@ -12,27 +12,30 @@ import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * User: lia
  * Date: 21.06.14
  * Time: 18:54
+ * Implementation of windows which user should type in
  */
-public class Window implements Comparable{
-  public static final String WINDOW_ELEMENT_NAME = "window";
-  public static final String LINE_ATTRIBUTE_NAME = "line";
-  public static final String START_ATTRIBUTE_NAME = "start";
-  public static final String TEXT_ATTRIBUTE_NAME = "text";
-  public static final String HINT_ATTRIBUTE_NAME = "hint";
-  public static final String POSSIBLE_ANSWER_ATTRIBUTE_NAME = "possibleAnswer";
-  public static final String RESOLVE_STATUS_ATTRIBUTE_NAME = "myResolveStatus";
-  public static final String LENGTH_ATTRIBUTE_NAME = "myLength";
-  public static final String INITIAL_LINE_ATTRIBUTE_NAME = "myInitialLine";
-  public static final String INITIAL_START_ATTRIBUTE_NAME = "myInitialStart";
-  public static final String INITIAL_LENGTH_ATTRIBUTE_NAME = "myInitialLength";
-  public static final String INDEX_ATTRIBUTE_NAME = "myIndex";
+public class Window implements Comparable {
+  private static final String WINDOW_ELEMENT_NAME = "window";
+  private static final String LINE_ATTRIBUTE_NAME = "line";
+  private static final String START_ATTRIBUTE_NAME = "start";
+  private static final String TEXT_ATTRIBUTE_NAME = "text";
+  private static final String HINT_ATTRIBUTE_NAME = "hint";
+  private static final String POSSIBLE_ANSWER_ATTRIBUTE_NAME = "possibleAnswer";
+  private static final String RESOLVE_STATUS_ATTRIBUTE_NAME = "myResolveStatus";
+  private static final String LENGTH_ATTRIBUTE_NAME = "myLength";
+  private static final String INITIAL_LINE_ATTRIBUTE_NAME = "myInitialLine";
+  private static final String INITIAL_START_ATTRIBUTE_NAME = "myInitialStart";
+  private static final String INITIAL_LENGTH_ATTRIBUTE_NAME = "myInitialLength";
+  private static final String INDEX_ATTRIBUTE_NAME = "myIndex";
   private int line = 0;
   private int start = 0;
-  private String text ="";
+  private String text = "";
   private String hint = "";
   private String possibleAnswer = "";
   private boolean myResolveStatus = false;
@@ -42,11 +45,6 @@ public class Window implements Comparable{
   private int myInitialLine = -1;
   private int myInitialStart = -1;
   private int myInitialLength = -1;
-
-  //TODO: use it
-  public int getIndex() {
-    return myIndex;
-  }
 
   public void setIndex(int index) {
     myIndex = index;
@@ -130,21 +128,14 @@ public class Window implements Comparable{
   }
 
 
+  /**
+   * Draw task window with color according to its status
+   */
   public void draw(Editor editor, boolean drawSelection, boolean moveCaret) {
-    if (myLength == 0) {
-      myLength = myInitialLength;
-    }
     TextAttributes defaultTestAttributes =
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.LIVE_TEMPLATE_ATTRIBUTES);
-    JBColor color;
-    if (myResolveStatus) {
-      color = JBColor.GREEN;
-    }
-    else {
-      color = JBColor.BLUE;
-    }
+    JBColor color = myResolveStatus ? JBColor.GREEN : JBColor.BLUE;
     int startOffset = editor.getDocument().getLineStartOffset(line) + start;
-
     RangeHighlighter
       rh = editor.getMarkupModel().addRangeHighlighter(startOffset, startOffset + myLength, HighlighterLayer.LAST + 1,
                                                        new TextAttributes(defaultTestAttributes.getForegroundColor(),
@@ -166,9 +157,15 @@ public class Window implements Comparable{
     return editor.getDocument().getLineStartOffset(line) + start;
   }
 
+  /**
+   * Initializes window
+   *
+   * @param file task file which window belongs to
+   */
   public void init(TaskFile file) {
     myInitialLine = line;
-    myInitialLength = text.length();
+    myLength = text.length();
+    myInitialLength = myLength;
     myInitialStart = start;
     myTaskFile = file;
   }
@@ -180,9 +177,9 @@ public class Window implements Comparable{
   @Override
   public int compareTo(@NotNull Object o) {
     if (!(o instanceof Window)) {
-      throw  new ClassCastException();
+      throw new ClassCastException();
     }
-    Window window = (Window) o;
+    Window window = (Window)o;
     if (window.getTaskFile() != myTaskFile) {
       throw new ClassCastException();
     }
@@ -190,36 +187,26 @@ public class Window implements Comparable{
       return 0;
     }
     if (window.getLine() == line) {
-      if (window.start < start) {
-        return 1;
-      } else {
-        return -1;
-      }
+      return window.start < start ? 1 : -1;
     }
-    if (window.getLine() < line) {
-      return 1;
-    }
-    return -1;
+    return window.getLine() < line ? 1 : -1;
   }
 
   public Window getNext() {
-    boolean shouldReturn = false;
-    for (Window window : myTaskFile.getWindows()) {
-      if (shouldReturn) {
-        return window;
-      }
-      if (window == this) {
-        shouldReturn = true;
-      }
+    List<Window> windows = myTaskFile.getWindows();
+    if (myIndex + 1 < windows.size()) {
+      return windows.get(myIndex + 1);
     }
     return null;
   }
 
+  /**
+   * Returns window to its initial state
+   */
   public void reset() {
     myResolveStatus = false;
     line = myInitialLine;
     start = myInitialStart;
     myLength = myInitialLength;
   }
-
 }

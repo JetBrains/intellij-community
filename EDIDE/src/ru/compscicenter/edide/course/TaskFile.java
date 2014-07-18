@@ -127,7 +127,9 @@ public class TaskFile {
     if (index > 0) {
       systemIndependentName = systemIndependentName.substring(index + 1);
     }
-    FileUtil.copy(new File(resourceRoot, name), new File(taskDir.getPath(), systemIndependentName));
+    File resourceFile = new File(resourceRoot, name);
+    File fileInProject = new File(taskDir.getPath(), systemIndependentName);
+    FileUtil.copy(resourceFile, fileInProject);
   }
 
   public void drawAllWindows(Editor editor) {

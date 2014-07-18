@@ -1,6 +1,5 @@
 package ru.compscicenter.edide.course;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -16,87 +15,91 @@ import java.util.List;
  * Time: 18:40
  */
 public class Lesson {
+  public static final String LESSON_ELEMENT_NAME = "lessonElement";
+  public static final String NAME_ATTRIBUTE_NAME = "name";
+  public static final String INDEX_ATTRIBUTE_NAME = "myIndex";
   private String name;
   private List<Task> taskList;
   private Course myCourse = null;
   private int myIndex = -1;
   public static final String LESSON_DIR = "lesson";
 
+  /**
+   * Saves lesson state for serialization
+   *
+   * @return xml element with attributes and content typical for lesson
+   */
   public Element saveState() {
-    Element lessonElement = new Element("lessonElement");
-    lessonElement.setAttribute("name", name);
-    lessonElement.setAttribute("myIndex", String.valueOf(myIndex));
-    for (Task task:taskList) {
+    Element lessonElement = new Element(LESSON_ELEMENT_NAME);
+    lessonElement.setAttribute(NAME_ATTRIBUTE_NAME, name);
+    lessonElement.setAttribute(INDEX_ATTRIBUTE_NAME, String.valueOf(myIndex));
+    for (Task task : taskList) {
       lessonElement.addContent(task.saveState());
     }
     return lessonElement;
   }
 
-  public void loadState(Element rootElement) {
-    name = rootElement.getAttributeValue("name");
+  /**
+   * initializes lesson after reopening of project or IDE restart
+   *
+   * @param lessonElement xml element which contains information about lesson
+   */
+  public void loadState(Element lessonElement) {
+    name = lessonElement.getAttributeValue(NAME_ATTRIBUTE_NAME);
     try {
-      myIndex = rootElement.getAttribute("myIndex").getIntValue();
+      myIndex = lessonElement.getAttribute(INDEX_ATTRIBUTE_NAME).getIntValue();
+      List<Element> taskElements = lessonElement.getChildren();
+      taskList = new ArrayList<Task>(taskElements.size());
+      for (Element taskElement : taskElements) {
+        Task task = new Task();
+        task.loadState(taskElement);
+        taskList.add(task);
+      }
     }
     catch (DataConversionException e) {
       e.printStackTrace();
     }
-    List<Element> taskElements = rootElement.getChildren();
-    taskList = new ArrayList<Task>(taskElements.size());
-    for (Element taskElement:taskElements) {
-      Task task =  new Task();
-      task.loadState(taskElement);
-      taskList.add(task);
-    }
-  }
-
-  public boolean isResolved() {
-    for (Task task:taskList) {
-      if (!task.isResolved()) {
-        return false;
-      }
-    }
-    return true;
   }
 
   public boolean isSolved() {
-    for (Task task:taskList) {
+    for (Task task : taskList) {
       if (!task.isSolved()) {
         return false;
       }
     }
     return true;
   }
+
   public String getName() {
     return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
   }
 
   public List<Task> getTaskList() {
     return taskList;
   }
 
-  public void setTaskList(List<Task> taskList) {
-    this.taskList = taskList;
-  }
 
-  public void create(VirtualFile baseDir, File resourseRoot) throws IOException {
-    VirtualFile lessonDir =  baseDir.createChildDirectory(this, LESSON_DIR + Integer.toString(myIndex + 1));
+  /**
+   * Creates lesson directory in its course folder in project user created
+   *
+   * @param courseDir project directory of course
+   * @param resourceRoot directory where original lesson stored
+   * @throws IOException
+   */
+  public void create(VirtualFile courseDir, File resourceRoot) throws IOException {
+    String lessonDirName = LESSON_DIR + Integer.toString(myIndex + 1);
+    VirtualFile lessonDir = courseDir.createChildDirectory(this, lessonDirName);
     for (int i = 0; i < taskList.size(); i++) {
       taskList.get(i).setIndex(i);
-      taskList.get(i).create(lessonDir, new File(resourseRoot, lessonDir.getName()));
+      taskList.get(i).create(lessonDir, new File(resourceRoot, lessonDir.getName()));
     }
-
   }
-
 
 
   public void setParents(Course course) {
     myCourse = course;
-    for (Task task: taskList) {
-      task.setParents(this);
+    for (Task task : taskList) {
+      task.init(this);
     }
   }
 
