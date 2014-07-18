@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -133,13 +134,19 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       }
       if (resultFiles.isEmpty()) return;
     }
+
     if (resultFiles == null || resultFiles.isEmpty()) return;
     final List<PsiExpression> foundExpr = new ArrayList<PsiExpression>();
+
     for (PsiFile file : resultFiles) {
       progress.checkCanceled();
-      CharSequence text = file.getViewProvider().getContents();
+      FileViewProvider viewProvider = file.getViewProvider();
+      // important: skip non-java files with given word in literal (IDEA-126201)
+      if (viewProvider.getPsi(JavaLanguage.INSTANCE) == null) continue;
+      CharSequence text = viewProvider.getContents();
       final char[] textArray = CharArrayUtil.fromSequenceWithoutCopying(text);
       StringSearcher searcher = new StringSearcher(stringToFind, true, true);
+
       for (int offset = LowLevelSearchUtil.searchWord(text, textArray, 0, text.length(), searcher, progress);
            offset >= 0;
            offset = LowLevelSearchUtil.searchWord(text, textArray, offset + searcher.getPattern().length(), text.length(), searcher, progress)
