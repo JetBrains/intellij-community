@@ -99,7 +99,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     final String name = StringUtil.escapeXml(libraryName);
     buffer.append("Library ");
     if (Registry.is("ide.new.project.settings")) {
-      buffer.append("<a href='library://").append(name).append("'>").append(name).append("</a>");
+      buffer.append("<a href='http://library/").append(name).append("'>").append(name).append("</a>");
     } else {
       buffer.append("'").append(name).append("'");
     }
@@ -159,7 +159,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   public ProjectStructureProblemDescription createUnusedElementWarning() {
     final List<ConfigurationErrorQuickFix> fixes = Arrays.asList(new AddLibraryToDependenciesFix(), new RemoveLibraryFix(), new RemoveAllUnusedLibrariesFix());
     final String name = StringUtil.escapeXml(myLibrary.getName());
-    String libraryName = Registry.is("ide.new.project.settings") ? "<a href='library://" + name + "'>" + name + "</a>"
+    String libraryName = Registry.is("ide.new.project.settings") ? "<a href='http://library/" + name + "'>" + name + "</a>"
                          : "'" + name + "'";
     return new ProjectStructureProblemDescription("Library " + libraryName + " is not used", null, createPlace(),
                                                   ProjectStructureProblemType.unused("unused-library"), ProjectStructureProblemDescription.ProblemLevel.PROJECT,
