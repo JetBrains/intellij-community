@@ -18,7 +18,6 @@ package com.intellij.psi.util;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -174,9 +173,9 @@ public class MethodSignatureUtil {
     PsiClass superClassCandidate = superMethodCandidate.getContainingClass();
     PsiClass derivedClass = derivedMethod.getContainingClass();
     if (derivedClass == null || superClassCandidate == null) return false;
-    final PsiSubstitutor superSubstitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(superClassCandidate, derivedClass,
-                                                                                             PsiSubstitutor.EMPTY, new THashSet<PsiClass>());
-    if (superSubstitutor == null) return false;
+    if (!derivedClass.isInheritor(superClassCandidate, true)) return false;
+    final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClassCandidate, derivedClass,
+                                                                                        PsiSubstitutor.EMPTY);
     final MethodSignature superSignature = superMethodCandidate.getSignature(superSubstitutor);
     final MethodSignature derivedSignature = derivedMethod.getSignature(PsiSubstitutor.EMPTY);
     return isSubsignature(superSignature, derivedSignature);

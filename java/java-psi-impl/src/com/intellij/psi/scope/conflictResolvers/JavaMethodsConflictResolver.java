@@ -316,8 +316,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
         // prefer derived class
         signatures.put(signature, info);
-      }
-      else {
+      } else {
         final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(myArgumentsList, PsiMethodCallExpression.class);
         if (methodCallExpression != null) {
           final PsiReferenceExpression expression = methodCallExpression.getMethodExpression();
@@ -325,19 +324,14 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
           PsiClass currentClass;
           if (qualifierExpression != null) {
             currentClass = PsiUtil.resolveClassInClassTypeOnly(qualifierExpression.getType());
-          }
-          else {
+          } else {
             currentClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
           }
 
-          if (currentClass != null) {
-            final PsiSubstitutor eSubstitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(existingClass, currentClass,
-                                                                                                 PsiSubstitutor.EMPTY,
-                                                                                                 new THashSet<PsiClass>());
-            final PsiSubstitutor cSubstitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(class1, currentClass, PsiSubstitutor.EMPTY,
-                                                                                                 new THashSet<PsiClass>());
-            if (eSubstitutor != null && cSubstitutor != null &&
-                MethodSignatureUtil.areSignaturesEqual(existingMethod.getSignature(eSubstitutor), method.getSignature(cSubstitutor))) {
+          if (currentClass != null && InheritanceUtil.isInheritorOrSelf(currentClass, class1, true) && InheritanceUtil.isInheritorOrSelf(currentClass, existingClass, true)) {
+            final PsiSubstitutor eSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(existingClass, currentClass, PsiSubstitutor.EMPTY);
+            final PsiSubstitutor cSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(class1, currentClass, PsiSubstitutor.EMPTY);
+            if (MethodSignatureUtil.areSignaturesEqual(existingMethod.getSignature(eSubstitutor), method.getSignature(cSubstitutor))) {
               final PsiType returnType = eSubstitutor.substitute(existingMethod.getReturnType());
               final PsiType returnType1 = cSubstitutor.substitute(method.getReturnType());
               if (returnType != null && returnType1 != null && !returnType1.equals(returnType)) {
