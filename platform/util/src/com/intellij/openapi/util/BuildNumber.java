@@ -38,11 +38,17 @@ public class BuildNumber implements Comparable<BuildNumber> {
   private final String myProductCode;
   private final int myBaselineVersion;
   private final int myBuildNumber;
+  private final String myAttemptInfo;
 
   public BuildNumber(String productCode, int baselineVersion, int buildNumber) {
+    this(productCode, baselineVersion, buildNumber, null);
+  }
+
+  public BuildNumber(String productCode, int baselineVersion, int buildNumber, String attemptInfo) {
     myProductCode = productCode;
     myBaselineVersion = baselineVersion;
     myBuildNumber = buildNumber;
+    myAttemptInfo = StringUtil.isEmpty(attemptInfo) ? null : attemptInfo;
   }
 
   public String asString() {
@@ -67,6 +73,10 @@ public class BuildNumber implements Comparable<BuildNumber> {
     }
     else {
       builder.append(SNAPSHOT);
+    }
+
+    if (myAttemptInfo != null) {
+      builder.append('.').append(myAttemptInfo);
     }
 
     return builder.toString();
@@ -98,6 +108,8 @@ public class BuildNumber implements Comparable<BuildNumber> {
     int baselineVersionSeparator = code.indexOf('.');
     int baselineVersion;
     int buildNumber;
+    String attemptInfo = null;
+
     if (baselineVersionSeparator > 0) {
       try {
         String baselineVersionString = code.substring(0, baselineVersionSeparator);
@@ -110,7 +122,10 @@ public class BuildNumber implements Comparable<BuildNumber> {
       }
 
       int minorBuildSeparator = code.indexOf('.'); // allow <BuildNumber>.<BuildAttemptNumber> skipping BuildAttemptNumber
-      if (minorBuildSeparator > 0) code = code.substring(0, minorBuildSeparator);
+      if (minorBuildSeparator > 0) {
+        attemptInfo = code.substring(minorBuildSeparator + 1);
+        code = code.substring(0, minorBuildSeparator);
+      }
       buildNumber = parseBuildNumber(version, code, name);
     }
     else {
@@ -118,13 +133,13 @@ public class BuildNumber implements Comparable<BuildNumber> {
 
       if (buildNumber <= 2000) {
         // it's probably a baseline, not a build number
-        return new BuildNumber(productCode, buildNumber, 0);
+        return new BuildNumber(productCode, buildNumber, 0, null);
       }
 
       baselineVersion = getBaseLineForHistoricBuilds(buildNumber);
     }
 
-    return new BuildNumber(productCode, baselineVersion, buildNumber);
+    return new BuildNumber(productCode, baselineVersion, buildNumber, attemptInfo);
   }
 
   private static int parseBuildNumber(String version, String code, String name) {
@@ -190,6 +205,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
     if (myBaselineVersion != that.myBaselineVersion) return false;
     if (myBuildNumber != that.myBuildNumber) return false;
     if (!myProductCode.equals(that.myProductCode)) return false;
+    if (!Comparing.equal(myAttemptInfo, that.myAttemptInfo)) return false;
 
     return true;
   }
@@ -199,6 +215,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
     int result = myProductCode.hashCode();
     result = 31 * result + myBaselineVersion;
     result = 31 * result + myBuildNumber;
+    if (myAttemptInfo != null) result = 31 * result + myAttemptInfo.hashCode();
     return result;
   }
 
