@@ -17,20 +17,15 @@
 package com.intellij.ui.classFilter;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.jdom.Element;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Tag("class-filter")
-public class ClassFilter implements JDOMExternalizable, Cloneable{
+public class ClassFilter implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.classFilter.ClassFilter");
   public static final ClassFilter[] EMPTY_ARRAY = new ClassFilter[0];
 
@@ -72,14 +67,6 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
     return getPattern();
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-  }
-
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof ClassFilter)) return false;
@@ -99,6 +86,7 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
     return result;
   }
 
+  @Override
   public ClassFilter clone() {
     try {
       return (ClassFilter) super.clone();
