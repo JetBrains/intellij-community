@@ -134,7 +134,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       if (needRebuild) {
         LOG.info("Version has changed for stub index " + extension.getKey() + ". The index will be rebuilt.");
       }
-      FileUtil.delete(indexRootDir);
+      FileUtil.deleteWithRenaming(indexRootDir);
       IndexingStamp.rewriteVersion(versionFile, version); // todo snapshots indices
     }
 
@@ -154,13 +154,22 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         break;
       }
       catch (IOException e) {
-        LOG.info(e);
         needRebuild = true;
-        FileUtil.delete(indexRootDir);
-        IndexingStamp.rewriteVersion(versionFile, version); // todo snapshots indices
+        onExceptionInstantiatingIndex(version, versionFile, indexRootDir, e);
+      } catch (RuntimeException e) {
+        //noinspection ThrowableResultOfMethodCallIgnored
+        Throwable cause = FileBasedIndexImpl.getCauseToRebuildIndex(e);
+        if (cause == null) throw e;
+        onExceptionInstantiatingIndex(version, versionFile, indexRootDir, e);
       }
     }
     return needRebuild;
+  }
+
+  private static void onExceptionInstantiatingIndex(int version, File versionFile, File indexRootDir, Exception e) throws IOException {
+    LOG.info(e);
+    FileUtil.deleteWithRenaming(indexRootDir);
+    IndexingStamp.rewriteVersion(versionFile, version); // todo snapshots indices
   }
 
   private static class StubIdExternalizer implements DataExternalizer<StubIdList> {

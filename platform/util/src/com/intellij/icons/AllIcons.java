@@ -458,6 +458,7 @@ public class AllIcons {
     public static final Icon Pin_tab = IconLoader.getIcon("/general/pin_tab.png"); // 16x16
     public static final Icon PluginManager = IconLoader.getIcon("/general/pluginManager.png"); // 32x32
     public static final Icon Progress = IconLoader.getIcon("/general/progress.png"); // 8x10
+    public static final Icon ProjectConfigurable = IconLoader.getIcon("/general/projectConfigurable.png"); // 9x9
     public static final Icon ProjectSettings = IconLoader.getIcon("/general/projectSettings.png"); // 16x16
     public static final Icon ProjectStructure = IconLoader.getIcon("/general/projectStructure.png"); // 16x16
     public static final Icon ProjectTab = IconLoader.getIcon("/general/projectTab.png"); // 16x16

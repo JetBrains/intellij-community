@@ -838,7 +838,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         if (split.length != 3 || text.equals(split[0])) {
           continue;
         }
-        history.add(new HistoryItem(split[0], split[1], split[2]));
+        if (!StringUtil.isEmpty(split[0])) {
+          history.add(new HistoryItem(split[0], split[1], split[2]));
+        }
       }
     }
     history.add(0, new HistoryItem(text, type == null ? null : type.name(), fqn));

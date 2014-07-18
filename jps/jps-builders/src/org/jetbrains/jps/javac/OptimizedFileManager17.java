@@ -33,6 +33,7 @@ import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharsetDecoder;
+import java.nio.file.LinkOption;
 import java.util.*;
 
 /**
@@ -362,12 +363,20 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
       if (kind == Kind.OTHER && getKind() != kind) {
         return false;
       }
-      String n = cn + kind.extension;
+      final String n = cn + kind.extension;
       if (name.equals(n)) {
         return true;
       }
       if (name.equalsIgnoreCase(n)) {
-        return file.getName().equals(n);
+        // if we are on a case-insensitive file system,
+        // try to compare against the real (exactly as on the disk) file name
+        //
+        try {
+          //noinspection Since15
+          return n.equals(file.toPath().toRealPath(LinkOption.NOFOLLOW_LINKS).getFileName().toString());
+        }
+        catch (IOException ignored) {
+        }
       }
       return false;
     }

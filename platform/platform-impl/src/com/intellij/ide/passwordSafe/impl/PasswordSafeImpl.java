@@ -71,6 +71,7 @@ public class PasswordSafeImpl extends PasswordSafe {
   }
 
   @Nullable
+  @Override
   public String getPassword(@Nullable Project project, @NotNull Class requester, String key) throws PasswordSafeException {
     return getPassword(project, requester, key, null);
   }
@@ -93,18 +94,32 @@ public class PasswordSafeImpl extends PasswordSafe {
     return provider().getPassword(project, requester, key, modalityState);
   }
 
-  public void removePassword(@Nullable Project project, @NotNull Class requester, String key) throws PasswordSafeException {
+  @Override
+  public void removePassword(@Nullable Project project, @NotNull Class requestor, String key) throws PasswordSafeException {
+    removePassword(project, requestor, key, null);
+  }
+
+  @Override
+  public void removePassword(@Nullable Project project, @NotNull Class requester, String key,
+                             @Nullable ModalityState modalityState) throws PasswordSafeException {
     if (mySettings.getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
       getMemoryProvider().removePassword(project, requester, key);
     }
-    provider().removePassword(project, requester, key);
+    provider().removePassword(project, requester, key, modalityState);
   }
 
-  public void storePassword(@Nullable Project project, @NotNull Class requester, String key, String value) throws PasswordSafeException {
+  @Override
+  public void storePassword(@Nullable Project project, @NotNull Class requestor, String key, String value) throws PasswordSafeException {
+    storePassword(project, requestor, key, value, null);
+  }
+
+  @Override
+  public void storePassword(@Nullable Project project, @NotNull Class requester, String key, String value,
+                            @Nullable ModalityState modalityState) throws PasswordSafeException {
     if (mySettings.getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
       getMemoryProvider().storePassword(project, requester, key, value);
     }
-    provider().storePassword(project, requester, key, value);
+    provider().storePassword(project, requester, key, value, modalityState);
   }
 
   /**

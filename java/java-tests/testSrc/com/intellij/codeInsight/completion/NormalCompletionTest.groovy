@@ -768,6 +768,8 @@ public class ListUtils {
     assertStringItems("fofoo", "fofoo");
   }
 
+  public void testMethodMergingMinimalTail() { doTest() }
+
   public void testAnnotationQualifiedName() throws Throwable {
     doTest();
   }

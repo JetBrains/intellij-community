@@ -36,7 +36,7 @@ public class GithubRequestPagingTest extends GithubTest {
 
   public void testAvailableRepos() throws Throwable {
 
-    List<GithubRepo> availableRepos = GithubApiUtil.getUserRepos(myGitHubSettings.getAuthData(), myLogin2);
+    List<GithubRepo> availableRepos = GithubApiUtil.getUserRepos(myGitHubSettings.getAuthData(null), myLogin2);
     List<String> realData = new ArrayList<String>();
     for (GithubRepo info : availableRepos) {
       realData.add(info.getName());

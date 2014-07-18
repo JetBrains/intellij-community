@@ -19,8 +19,11 @@ import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.find.EditorSearchComponent;
 import com.intellij.find.FindBundle;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.find.FindModel;
+import com.intellij.find.editorHeaderActions.EditorHeaderAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorLastActionTracker;
@@ -28,12 +31,23 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.Set;
 
 abstract public class SelectOccurrencesActionHandler extends EditorActionHandler {
 
   private static final Key<Boolean> NOT_FOUND = Key.create("select.next.occurence.not.found");
   private static final Key<Boolean> WHOLE_WORDS = Key.create("select.next.occurence.whole.words");
+
+  private static final Set<String> SELECT_ACTIONS = new HashSet<String>(Arrays.asList(
+    IdeActions.ACTION_SELECT_NEXT_OCCURENCE,
+    IdeActions.ACTION_UNSELECT_PREVIOUS_OCCURENCE,
+    IdeActions.ACTION_FIND_NEXT,
+    IdeActions.ACTION_FIND_PREVIOUS
+  ));
 
   protected static void setSelection(Editor editor, Caret caret, TextRange selectionRange) {
     EditorActionUtil.makePositionVisible(editor, selectionRange.getStartOffset());
@@ -83,6 +97,35 @@ abstract public class SelectOccurrencesActionHandler extends EditorActionHandler
 
   protected static boolean isRepeatedActionInvocation() {
     String lastActionId = EditorLastActionTracker.getInstance().getLastActionId();
-    return IdeActions.ACTION_SELECT_NEXT_OCCURENCE.equals(lastActionId) || IdeActions.ACTION_UNSELECT_PREVIOUS_OCCURENCE.equals(lastActionId);
+    return SELECT_ACTIONS.contains(lastActionId);
+  }
+
+  protected static FindModel getFindModel(String text, boolean wholeWords) {
+    FindModel model = new FindModel();
+    model.setStringToFind(text);
+    model.setCaseSensitive(true);
+    model.setWholeWordsOnly(wholeWords);
+    return model;
+  }
+
+  protected boolean executeEquivalentFindPanelAction(Editor editor, DataContext context) {
+    if (editor.getHeaderComponent() instanceof EditorSearchComponent) {
+      EditorSearchComponent searchComponent = (EditorSearchComponent)editor.getHeaderComponent();
+      EditorHeaderAction action = getEquivalentFindPanelAction(searchComponent);
+      if (action != null) {
+        Presentation presentation = new Presentation();
+        AnActionEvent event = new AnActionEvent(null, context, ActionPlaces.MAIN_MENU, presentation, ActionManager.getInstance(), 0);
+        action.update(event);
+        if (presentation.isEnabled()) {
+          action.actionPerformed(event);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  protected EditorHeaderAction getEquivalentFindPanelAction(EditorSearchComponent searchComponent) {
+    return null;
   }
 }
