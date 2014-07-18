@@ -224,6 +224,11 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
   }
 
   @Override
+  protected String getRefactoringId() {
+    return "refactoring.extractConstant";
+  }
+
+  @Override
   protected boolean startsOnTheSameElement(RefactoringActionHandler handler, PsiElement element) {
     return super.startsOnTheSameElement(handler, element) && handler instanceof IntroduceConstantHandler;
   }

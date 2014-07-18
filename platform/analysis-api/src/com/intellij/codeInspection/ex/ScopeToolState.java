@@ -57,6 +57,10 @@ public class ScopeToolState {
     myLevel = level;
   }
 
+  public ScopeToolState copy() {
+    return new ScopeToolState(myScopeName, myToolWrapper, myEnabled, myLevel);
+  }
+
   @Nullable
   public NamedScope getScope(Project project) {
     if (myScope == null) {

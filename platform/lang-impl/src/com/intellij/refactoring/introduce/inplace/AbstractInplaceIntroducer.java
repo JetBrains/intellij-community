@@ -45,6 +45,8 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.listeners.RefactoringEventData;
+import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.ui.DottedBorder;
 import com.intellij.util.ui.PositionTracker;
@@ -537,6 +539,13 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {
+        final String refactoringId = getRefactoringId();
+        if (refactoringId != null) {
+          final RefactoringEventData beforeData = new RefactoringEventData();
+          beforeData.addElements(new PsiElement[] {getLocalVariable(), getExpr()});
+          myProject.getMessageBus()
+            .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, beforeData);
+        }
         performIntroduce();
       }
     }, getCommandName(), getCommandName());
@@ -567,9 +576,20 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     }
     if (success) {
       performPostIntroduceTasks();
+      final String refactoringId = getRefactoringId();
+      if (refactoringId != null) {
+        final RefactoringEventData afterData = new RefactoringEventData();
+        afterData.addElement(getVariable());
+        myProject.getMessageBus()
+          .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(refactoringId, afterData);
+      }
     }
   }
 
+  protected String getRefactoringId() {
+    return null;
+  }
+  
   @Override
   protected boolean startsOnTheSameElement(RefactoringActionHandler handler, PsiElement element) {
     return super.startsOnTheSameElement(handler, element) || getLocalVariable() == element;

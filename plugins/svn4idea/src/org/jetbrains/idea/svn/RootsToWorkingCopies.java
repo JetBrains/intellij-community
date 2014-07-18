@@ -29,14 +29,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
-import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 import java.io.File;
 import java.util.HashMap;
@@ -127,7 +122,7 @@ public class RootsToWorkingCopies implements VcsListener {
     WorkingCopy workingCopy = null;
 
     if (workingCopyRoot != null) {
-      final SVNInfo svnInfo = myVcs.getInfo(workingCopyRoot);
+      final Info svnInfo = myVcs.getInfo(workingCopyRoot);
 
       if (svnInfo != null && svnInfo.getURL() != null) {
         workingCopy = new WorkingCopy(workingCopyRoot, svnInfo.getURL(), true);

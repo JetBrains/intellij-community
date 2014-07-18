@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
@@ -33,8 +34,8 @@ public class SvnKitBrowseClient extends BaseSvnClient implements BrowseClient {
   @Override
   public void list(@NotNull SvnTarget target,
                    @Nullable SVNRevision revision,
-                   @Nullable SVNDepth depth,
-                   @Nullable ISVNDirEntryHandler handler) throws VcsException {
+                   @Nullable Depth depth,
+                   @Nullable DirectoryEntryConsumer handler) throws VcsException {
     assertUrl(target);
 
     SVNLogClient client = myVcs.getSvnKitManager().createLogClient();
@@ -42,10 +43,10 @@ public class SvnKitBrowseClient extends BaseSvnClient implements BrowseClient {
 
     try {
       if (target.isFile()) {
-        client.doList(target.getFile(), target.getPegRevision(), revision, true, depth, SVNDirEntry.DIRENT_ALL, wrappedHandler);
+        client.doList(target.getFile(), target.getPegRevision(), notNullize(revision), true, toDepth(depth), SVNDirEntry.DIRENT_ALL, wrappedHandler);
       }
       else {
-        client.doList(target.getURL(), target.getPegRevision(), revision, true, depth, SVNDirEntry.DIRENT_ALL, wrappedHandler);
+        client.doList(target.getURL(), target.getPegRevision(), notNullize(revision), true, toDepth(depth), SVNDirEntry.DIRENT_ALL, wrappedHandler);
       }
     }
     catch (SVNException e) {
@@ -69,26 +70,26 @@ public class SvnKitBrowseClient extends BaseSvnClient implements BrowseClient {
   }
 
   @Nullable
-  private static ISVNDirEntryHandler wrapHandler(@Nullable ISVNDirEntryHandler handler) {
+  private static ISVNDirEntryHandler wrapHandler(@Nullable DirectoryEntryConsumer handler) {
     return handler == null ? null : new SkipEmptyNameDirectoriesHandler(handler);
   }
 
   public static class SkipEmptyNameDirectoriesHandler implements ISVNDirEntryHandler {
 
-    @NotNull private final ISVNDirEntryHandler handler;
+    @NotNull private final DirectoryEntryConsumer handler;
 
-    public SkipEmptyNameDirectoriesHandler(@NotNull ISVNDirEntryHandler handler) {
+    public SkipEmptyNameDirectoriesHandler(@NotNull DirectoryEntryConsumer handler) {
       this.handler = handler;
     }
 
     @Override
     public void handleDirEntry(SVNDirEntry dirEntry) throws SVNException {
       if (!isEmptyNameDirectory(dirEntry)) {
-        handler.handleDirEntry(dirEntry);
+        handler.consume(DirectoryEntry.create(dirEntry));
       }
     }
 
-    private static boolean isEmptyNameDirectory(SVNDirEntry dirEntry) {
+    private static boolean isEmptyNameDirectory(@NotNull SVNDirEntry dirEntry) {
       return SVNNodeKind.DIR.equals(dirEntry.getKind()) && StringUtil.isEmpty(dirEntry.getName());
     }
   }

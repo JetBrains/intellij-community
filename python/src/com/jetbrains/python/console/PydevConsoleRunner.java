@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,8 +52,8 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -360,7 +360,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
         manager.createRemoteProcess(getProject(), myRemoteCredentials, mappings, commandLine, true);
 
 
-      Pair<Integer, Integer> remotePorts = getRemotePortsFromProcess(remoteProcess);
+      Couple<Integer> remotePorts = getRemotePortsFromProcess(remoteProcess);
 
       remoteProcess.addLocalTunnel(myPorts[0], myRemoteCredentials.getHost(), remotePorts.first);
       remoteProcess.addRemoteTunnel(remotePorts.second, "localhost", myPorts[1]);
@@ -374,10 +374,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     }
   }
 
-  private static Pair<Integer, Integer> getRemotePortsFromProcess(RemoteSshProcess process) throws ExecutionException {
+  private static Couple<Integer> getRemotePortsFromProcess(RemoteSshProcess process) throws ExecutionException {
     Scanner s = new Scanner(process.getInputStream());
 
-    return Pair.create(readInt(s, process), readInt(s, process));
+    return Couple.of(readInt(s, process), readInt(s, process));
   }
 
   private static int readInt(Scanner s, Process process) throws ExecutionException {

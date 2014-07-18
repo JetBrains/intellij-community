@@ -17,7 +17,6 @@ package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.util.Ref;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
@@ -25,7 +24,10 @@ import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Encapsulates information to cache for the single visual line.
@@ -59,7 +61,6 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
   public boolean locked;
 
   private final Editor myEditor;
-  private final EditorTextRepresentationHelper myRepresentationHelper;
 
   /** Holds positions for the tabulation symbols on a target visual line sorted by offset in ascending order. */
   private List<TabData> myTabPositions = Collections.EMPTY_LIST;
@@ -67,10 +68,9 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
   /** Holds information about single line fold regions representation data. */
   private TIntObjectHashMap<FoldingData> myFoldingData = DUMMY;
 
-  CacheEntry(int visualLine, @NotNull Editor editor, @NotNull EditorTextRepresentationHelper representationHelper) {
+  CacheEntry(int visualLine, @NotNull Editor editor) {
     this.visualLine = visualLine;
     myEditor = editor;
-    myRepresentationHelper = representationHelper;
   }
 
   public void setLineStartPosition(@NotNull EditorPosition context) {
@@ -99,7 +99,7 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
   }
 
   public EditorPosition buildStartLinePosition() {
-    EditorPosition result = new EditorPosition(myEditor, myRepresentationHelper);
+    EditorPosition result = new EditorPosition(myEditor);
     result.logicalLine = startLogicalLine;
     result.logicalColumn = startLogicalColumn;
     result.offset = startOffset;
@@ -114,7 +114,7 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
   }
 
   public EditorPosition buildEndLinePosition() {
-    EditorPosition result = new EditorPosition(myEditor, myRepresentationHelper);
+    EditorPosition result = new EditorPosition(myEditor);
     result.logicalLine = endLogicalLine;
     result.logicalColumn = endLogicalColumn;
     result.offset = endOffset;
@@ -246,7 +246,7 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
 
   @Override
   protected CacheEntry clone() {
-    final CacheEntry result = new CacheEntry(visualLine, myEditor, myRepresentationHelper);
+    final CacheEntry result = new CacheEntry(visualLine, myEditor);
 
     result.startLogicalLine = startLogicalLine;
     result.startLogicalColumn = startLogicalColumn;

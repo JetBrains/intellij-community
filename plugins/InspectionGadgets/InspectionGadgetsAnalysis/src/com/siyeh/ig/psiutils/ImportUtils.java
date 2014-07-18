@@ -388,6 +388,14 @@ public class ImportUtils {
     }
     final PsiImportStatementBase existingImportStatement = importList.findSingleImportStatement(memberName);
     if (existingImportStatement != null) {
+      if (existingImportStatement instanceof PsiImportStaticStatement) {
+        final PsiImportStaticStatement importStaticStatement = (PsiImportStaticStatement)existingImportStatement;
+        if (!memberName.equals(importStaticStatement.getReferenceName())) {
+          return false;
+        }
+        final PsiClass targetClass = importStaticStatement.resolveTargetClass();
+        return targetClass != null && qualifierClass.equals(targetClass.getQualifiedName());
+      }
       return false;
     }
     final PsiImportStaticStatement onDemandImportStatement = findOnDemandImportStaticStatement(importList, qualifierClass);

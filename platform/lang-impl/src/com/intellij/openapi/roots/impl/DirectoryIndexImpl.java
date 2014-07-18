@@ -149,12 +149,19 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
   @Override
   public DirectoryInfo getInfoForDirectory(@NotNull VirtualFile dir) {
+    DirectoryInfo info = getInfoForFile(dir);
+    return info.isInProject() ? info : null;
+  }
+
+  @NotNull
+  @Override
+  public DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
     checkAvailability();
     dispatchPendingEvents();
 
-    if (!(dir instanceof NewVirtualFile)) return null;
+    if (!(file instanceof NewVirtualFile)) return NonProjectDirectoryInfo.NOT_SUPPORTED_VIRTUAL_FILE_IMPLEMENTATION;
 
-    return getRootIndex().getInfoForDirectory(dir);
+    return getRootIndex().getInfoForFile(file);
   }
 
   @Override
@@ -172,14 +179,6 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     if (!(dir instanceof NewVirtualFile)) return false;
 
     return getRootIndex().isProjectExcludeRoot(dir);
-  }
-
-  @Override
-  public boolean isModuleExcludeRoot(@NotNull VirtualFile dir) {
-    checkAvailability();
-    if (!(dir instanceof NewVirtualFile)) return false;
-
-    return getRootIndex().isModuleExcludeRoot(dir);
   }
 
   @Override

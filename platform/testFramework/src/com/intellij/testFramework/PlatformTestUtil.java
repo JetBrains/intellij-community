@@ -762,7 +762,7 @@ public class PlatformTestUtil {
 
   public static String getCommunityPath() {
     final String homePath = PathManager.getHomePath();
-    if (new File(homePath, "community").exists()) {
+    if (new File(homePath, "community/.idea").isDirectory()) {
       return homePath + File.separatorChar + "community";
     }
     return homePath;

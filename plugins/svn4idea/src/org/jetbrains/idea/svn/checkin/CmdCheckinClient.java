@@ -29,13 +29,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.commandLine.*;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.commandLine.CommandUtil;
+import org.jetbrains.idea.svn.commandLine.LineCommandAdapter;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.commandLine.SvnCommandName;
+import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
-import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -57,26 +58,21 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
 
   @NotNull
   @Override
-  public SVNCommitInfo[] commit(@NotNull Collection<File> paths, @NotNull String message) throws VcsException {
+  public CommitInfo[] commit(@NotNull Collection<File> paths, @NotNull String message) throws VcsException {
     // if directory renames were used, IDEA reports all files under them as moved, but for svn we can not pass some of them
     // to commit command - since not all paths are registered as changes -> so we need to filter these cases, but only if
     // there at least some child-parent relationships in passed paths
-    try {
-      paths = filterCommittables(paths);
-    }
-    catch (SVNException e) {
-      throw new SvnBindException(e);
-    }
+    paths = filterCommittables(paths);
 
     return commit(ArrayUtil.toObjectArray(paths, File.class), message);
   }
 
   @NotNull
-  public SVNCommitInfo[] commit(@NotNull File[] paths, @NotNull String message) throws VcsException {
-    if (paths.length == 0) return new SVNCommitInfo[]{SVNCommitInfo.NULL};
+  public CommitInfo[] commit(@NotNull File[] paths, @NotNull String message) throws VcsException {
+    if (paths.length == 0) return new CommitInfo[]{CommitInfo.EMPTY};
 
     final List<String> parameters = new ArrayList<String>();
-    CommandUtil.put(parameters, SVNDepth.EMPTY);
+    CommandUtil.put(parameters, Depth.EMPTY);
     CommandUtil.put(parameters, false, "--no-unlock");
     CommandUtil.put(parameters, false, "--keep-changelists");
     CommandUtil.putChangeLists(parameters, null);
@@ -95,7 +91,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
 
     long revision = validateRevisionNumber(listener.getCommittedRevision());
 
-    return new SVNCommitInfo[]{new SVNCommitInfo(revision, null, null, null)};
+    return new CommitInfo[]{new CommitInfo.Builder().setRevision(revision).build()};
   }
 
   private static long validateRevisionNumber(long revision) throws VcsException {
@@ -106,7 +102,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
     return revision;
   }
 
-  private Collection<File> filterCommittables(@NotNull Collection<File> committables) throws SVNException {
+  private Collection<File> filterCommittables(@NotNull Collection<File> committables) throws SvnBindException {
     final Set<String> childrenOfSomebody = ContainerUtil.newHashSet();
     new AbstractFilterChildren<File>() {
       @Override
@@ -135,13 +131,13 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
         }
         else {
           try {
-            final SVNStatus status = statusClient.doStatus(file, false);
-            if (status != null && !SVNStatusType.STATUS_NONE.equals(status.getContentsStatus()) &&
-                !SVNStatusType.STATUS_UNVERSIONED.equals(status.getContentsStatus())) {
+            final Status status = statusClient.doStatus(file, false);
+            if (status != null && !StatusType.STATUS_NONE.equals(status.getContentsStatus()) &&
+                !StatusType.STATUS_UNVERSIONED.equals(status.getContentsStatus())) {
               result.add(file);
             }
           }
-          catch (SVNException e) {
+          catch (SvnBindException e) {
             // not versioned
             LOG.info(e);
             throw e;

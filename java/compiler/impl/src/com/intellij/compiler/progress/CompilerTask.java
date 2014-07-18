@@ -463,6 +463,9 @@ public class CompilerTask extends Task.Backgroundable {
   }
 
   private void removeAllContents(Project project, Content notRemove) {
+    if (project.isDisposed()) {
+      return;
+    }
     final MessageView messageView = MessageView.SERVICE.getInstance(project);
     Content[] contents = messageView.getContentManager().getContents();
     for (Content content : contents) {

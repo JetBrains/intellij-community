@@ -33,6 +33,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import git4idea.GitPlatformFacade;
+import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitSimpleEventDetector;
@@ -80,15 +81,21 @@ public class GitCherryPicker {
 
   public void cherryPick(@NotNull Map<GitRepository, List<VcsFullCommitDetails>> commitsInRoots) {
     List<GitCommitWrapper> successfulCommits = new ArrayList<GitCommitWrapper>();
-    for (Map.Entry<GitRepository, List<VcsFullCommitDetails>> entry : commitsInRoots.entrySet()) {
-      GitRepository repository = entry.getKey();
-      boolean result = cherryPick(repository, entry.getValue(), successfulCommits);
-      repository.update();
-      if (!result) {
-        return;
+    GitUtil.workingTreeChangeStarted(myProject);
+    try {
+      for (Map.Entry<GitRepository, List<VcsFullCommitDetails>> entry : commitsInRoots.entrySet()) {
+        GitRepository repository = entry.getKey();
+        boolean result = cherryPick(repository, entry.getValue(), successfulCommits);
+        repository.update();
+        if (!result) {
+          return;
+        }
       }
+      notifySuccess(successfulCommits);
     }
-    notifySuccess(successfulCommits);
+    finally {
+      GitUtil.workingTreeChangeFinished(myProject);
+    }
   }
 
   // return true to continue with other roots, false to break execution

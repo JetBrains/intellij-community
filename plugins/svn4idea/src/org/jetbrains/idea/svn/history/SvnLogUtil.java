@@ -24,8 +24,6 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.ISVNLogEntryHandler;
-import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -50,7 +48,7 @@ public class SvnLogUtil implements SvnLogLoader {
                                                 final int maxCount, final boolean includingYoungest, final boolean includeOldest)
     throws VcsException {
     final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
-    ISVNLogEntryHandler handler = createLogHandler(fromIncluding, toIncluding, includingYoungest, includeOldest, result);
+    LogEntryConsumer handler = createLogHandler(fromIncluding, toIncluding, includingYoungest, includeOldest, result);
     SvnTarget target = SvnTarget.fromURL(myLocation.toSvnUrl());
 
     myVcs.getFactory(target).createHistoryClient().doLog(target, fromIncluding, toIncluding, true, true, false, maxCount, null, handler);
@@ -59,12 +57,13 @@ public class SvnLogUtil implements SvnLogLoader {
   }
 
   @NotNull
-  private ISVNLogEntryHandler createLogHandler(final SVNRevision fromIncluding,
+  private LogEntryConsumer createLogHandler(final SVNRevision fromIncluding,
                                                final SVNRevision toIncluding,
                                                final boolean includingYoungest,
                                                final boolean includeOldest, final List<CommittedChangeList> result) {
-    return new ISVNLogEntryHandler() {
-      public void handleLogEntry(SVNLogEntry logEntry) {
+    return new LogEntryConsumer() {
+      @Override
+      public void consume(LogEntry logEntry) {
         if (myProject.isDisposed()) throw new ProcessCanceledException();
         final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
         if (progress != null) {

@@ -19,10 +19,12 @@ import com.intellij.ide.passwordSafe.impl.PasswordSafeTimed;
 import com.intellij.ide.passwordSafe.impl.providers.BasePasswordSafeProvider;
 import com.intellij.ide.passwordSafe.impl.providers.ByteArrayWrapper;
 import com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.security.SecureRandom;
 import java.util.Collections;
@@ -57,13 +59,8 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
     return Registry.intValue("passwordSafe.memorySafe.ttl");
   }
 
-  /**
-   * @param project the project to use
-   * @param requestor
-   * @return the secret key used by provider
-   */
   @Override
-  protected byte[] key(Project project, @NotNull Class requestor) {
+  protected byte[] key(Project project, @NotNull Class requestor, @Nullable ModalityState modalityState) {
     if (key.get() == null) {
       byte[] rnd = new byte[EncryptionUtil.SECRET_KEY_SIZE_BYTES * 16];
       new SecureRandom().nextBytes(rnd);
@@ -72,49 +69,31 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
     return key.get();
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected byte[] getEncryptedPassword(byte[] key) {
     return database.get().get(new ByteArrayWrapper(key));
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected void removeEncryptedPassword(byte[] key) {
     database.get().remove(new ByteArrayWrapper(key));
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected void storeEncryptedPassword(byte[] key, byte[] encryptedPassword) {
     database.get().put(new ByteArrayWrapper(key), encryptedPassword);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public boolean isSupported() {
     return true;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public String getDescription() {
     return "Memory-based password safe provider. The passwords are stored only for the duration of IDEA process.";
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public String getName() {
     return "Memory PasswordSafe";

@@ -107,7 +107,8 @@ public class TestMethodGradleConfigurationProducer extends RunConfigurationProdu
     if (!configuration.getSettings().getTaskNames().containsAll(TASKS_TO_RUN)) return false;
 
     final String scriptParameters = configuration.getSettings().getScriptParameters() + ' ';
-    return scriptParameters.contains(String.format("--tests %s.%s ", containingClass.getQualifiedName(), psiMethod.getName()));
+    final String testFilter = creatTestFilter(containingClass, psiMethod);
+    return scriptParameters.contains(testFilter);
   }
 
   @Override
@@ -163,11 +164,16 @@ public class TestMethodGradleConfigurationProducer extends RunConfigurationProdu
 
     StringBuilder buf = new StringBuilder();
     for (PsiClass aClass : containingClasses) {
-      buf.append(String.format("--tests %s.%s ", aClass.getQualifiedName(), psiMethod.getName()));
+      buf.append(creatTestFilter(aClass, psiMethod));
     }
 
-    configuration.getSettings().setScriptParameters(buf.toString());
+    configuration.getSettings().setScriptParameters(buf.toString().trim());
     configuration.setName(psiMethod.getName());
     return true;
+  }
+
+  private static String creatTestFilter(@NotNull PsiClass aClass, @NotNull PsiMethod psiMethod) {
+    String testFilterPattern = aClass.getQualifiedName() + '.' + psiMethod.getName();
+    return String.format("--tests \"%s\" ", StringUtil.replaceChar(testFilterPattern, '\"', '*'));
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.SeverityUtil;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.SeverityEditorDialog;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -26,6 +27,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.profile.codeInspection.SeverityProvider;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,24 +42,15 @@ public abstract class LevelChooserAction extends ComboBoxAction {
   private final SeverityRegistrar mySeverityRegistrar;
   private HighlightSeverity myChosen = null;
 
-  public LevelChooserAction(final SeverityRegistrar severityRegistrar) {
-    mySeverityRegistrar = severityRegistrar;
+  public LevelChooserAction(final InspectionProfileImpl profile) {
+    mySeverityRegistrar = ((SeverityProvider)profile.getProfileManager()).getOwnSeverityRegistrar();
   }
 
   @NotNull
   @Override
-  protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
+  public DefaultActionGroup createPopupActionGroup(final JComponent anchor) {
     final DefaultActionGroup group = new DefaultActionGroup();
-
-    final SortedSet<HighlightSeverity> severities = new TreeSet<HighlightSeverity>(mySeverityRegistrar);
-    for (final SeverityRegistrar.SeverityBasedTextAttributes type : SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar)) {
-      severities.add(type.getSeverity());
-    }
-    severities.add(HighlightSeverity.ERROR);
-    severities.add(HighlightSeverity.WARNING);
-    severities.add(HighlightSeverity.WEAK_WARNING);
-    severities.add(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING);
-    for (final HighlightSeverity severity : severities) {
+    for (final HighlightSeverity severity : getSeverities(mySeverityRegistrar)) {
       final HighlightSeverityAction action = new HighlightSeverityAction(severity);
       if (myChosen == null) {
         setChosen(action.getSeverity());
@@ -68,7 +61,7 @@ public abstract class LevelChooserAction extends ComboBoxAction {
     group.add(new AnAction("Edit severities...") {
       @Override
       public void actionPerformed(final AnActionEvent e) {
-        final SeverityEditorDialog dlg = new SeverityEditorDialog(button, myChosen, mySeverityRegistrar);
+        final SeverityEditorDialog dlg = new SeverityEditorDialog(anchor, myChosen, mySeverityRegistrar);
         dlg.show();
         if (dlg.isOK()) {
           final HighlightInfoType type = dlg.getSelectedType();
@@ -81,6 +74,18 @@ public abstract class LevelChooserAction extends ComboBoxAction {
       }
     });
     return group;
+  }
+
+  public static SortedSet<HighlightSeverity> getSeverities(final SeverityRegistrar severityRegistrar) {
+    final SortedSet<HighlightSeverity> severities = new TreeSet<HighlightSeverity>(severityRegistrar);
+    for (final SeverityRegistrar.SeverityBasedTextAttributes type : SeverityUtil.getRegisteredHighlightingInfoTypes(severityRegistrar)) {
+      severities.add(type.getSeverity());
+    }
+    severities.add(HighlightSeverity.ERROR);
+    severities.add(HighlightSeverity.WARNING);
+    severities.add(HighlightSeverity.WEAK_WARNING);
+    severities.add(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING);
+    return severities;
   }
 
   protected abstract void onChosen(final HighlightSeverity severity);

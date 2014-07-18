@@ -25,11 +25,11 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
-import org.tmatesoft.svn.core.wc.SVNEvent;
 
 public class StatusWalkerPartner {
   private final SvnVcs myVcs;
@@ -50,9 +50,9 @@ public class StatusWalkerPartner {
   }
 
   @NotNull
-  public ISVNEventHandler getEventHandler() {
-    return new ISVNEventHandler() {
-      public void handleEvent(SVNEvent event, double progress) throws SVNException {
+  public ProgressTracker getEventHandler() {
+    return new ProgressTracker() {
+      public void consume(ProgressEvent event) throws SVNException {
         //
       }
 

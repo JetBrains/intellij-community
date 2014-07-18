@@ -182,7 +182,7 @@
                         serviceImplementation="com.intellij.application.options.editor.WebEditorOptions"/>
     <exportable serviceInterface="com.intellij.application.options.editor.WebEditorOptions"/>
 
-    <applicationConfigurable provider="com.intellij.application.options.emmet.EmmetConfigurableProvider"/>
+    <applicationConfigurable groupId="editor" key="emmet.configuration.title" bundle="messages.XmlBundle" provider="com.intellij.application.options.emmet.EmmetConfigurableProvider"/>
     <applicationService serviceInterface="com.intellij.application.options.emmet.EmmetOptions"
                         serviceImplementation="com.intellij.application.options.emmet.EmmetOptions"/>
     <exportable serviceInterface="com.intellij.application.options.emmet.EmmetOptions"/>
@@ -527,7 +527,7 @@
     <selectInTarget implementation="com.intellij.ide.browsers.actions.SelectInDefaultBrowserTarget"/>
     <xml.xmlExtension implementation="com.intellij.xml.HtmlXmlExtension"/>
 
-    <applicationConfigurable instance="com.intellij.ide.browsers.BrowserSettings" id="reference.settings.ide.settings.web.browsers"
+    <applicationConfigurable groupId="tools" instance="com.intellij.ide.browsers.BrowserSettings" id="reference.settings.ide.settings.web.browsers"
                              key="browsers.settings" bundle="messages.IdeBundle"/>
     <lang.inspectionSuppressor language="XML" implementationClass="com.intellij.codeInspection.XmlInspectionSuppressor"/>
   </extensions>

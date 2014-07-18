@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -29,10 +30,22 @@ public abstract class ColorChooserService {
   }
 
   @Nullable
+  @Deprecated
+  /**
+   * @deprecated Use {@link #showDialog(java.awt.Component, String, java.awt.Color, boolean, java.util.List, boolean)}
+   */
   public abstract Color showDialog(Component parent, String caption, Color preselectedColor, boolean enableOpacity,
                                    ColorPickerListener[] listeners);
 
   @Nullable
+  @Deprecated
+  /**
+   * @deprecated Use {@link #showDialog(java.awt.Component, String, java.awt.Color, boolean, java.util.List, boolean)}
+   */
   public abstract Color showDialog(Component parent, String caption, Color preselectedColor, boolean enableOpacity,
                                    ColorPickerListener[] listeners, boolean opacityInPercent);
+
+  @Nullable
+  public abstract Color showDialog(Component parent, String caption, Color preselectedColor, boolean enableOpacity,
+                                   List<ColorPickerListener> listeners, boolean opacityInPercent);
 }

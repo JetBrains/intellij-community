@@ -28,6 +28,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Mike
  */
@@ -43,6 +46,19 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
 
   protected boolean createConstantField() {
     return false;
+  }
+
+  @NotNull
+  @Override
+  protected List<PsiClass> getTargetClasses(PsiElement element) {
+    final List<PsiClass> targetClasses = new ArrayList<PsiClass>();
+    for (PsiClass psiClass : super.getTargetClasses(element)) {
+      if (psiClass.getManager().isInProject(psiClass) && 
+          (!psiClass.isInterface() && !psiClass.isAnnotationType() || shouldCreateStaticMember(myReferenceExpression, psiClass))) {
+        targetClasses.add(psiClass);
+      }
+    }
+    return targetClasses;
   }
 
   @Override

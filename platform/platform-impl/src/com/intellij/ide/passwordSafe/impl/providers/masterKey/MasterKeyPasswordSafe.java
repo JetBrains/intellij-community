@@ -42,17 +42,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * The password safe that stores information in configuration file encrypted by master password
  */
 public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
-  /**
-   * The test password key
-   */
   private static final String TEST_PASSWORD_KEY = "TEST_PASSWORD:";
-  /**
-   * The test password value
-   */
   private static final String TEST_PASSWORD_VALUE = "test password";
-  /**
-   * The password database instance
-   */
   final PasswordDatabase database;
   /**
    * The key to use to encrypt data
@@ -68,18 +59,10 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
     }
   };
 
-  /**
-   * The constructor
-   *
-   * @param database the password database
-   */
   public MasterKeyPasswordSafe(PasswordDatabase database) {
     this.database = database;
   }
 
-  /**
-   * @return true if the component is running in the test mode
-   */
   protected boolean isTestMode() {
     return false;
   }
@@ -130,7 +113,6 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
     else {
       return true;
     }
-
   }
 
   /**
@@ -167,18 +149,13 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
   }
 
 
-  /**
-   * The test key
-   *
-   * @param password the password for the test key
-   * @return the test key
-   */
   private static String testKey(String password) {
     return TEST_PASSWORD_KEY + password;
   }
 
   @Override
-  protected byte[] key(@Nullable final Project project, @NotNull final Class requestor) throws PasswordSafeException {
+  protected byte[] key(@Nullable final Project project, @NotNull final Class requestor,
+                       @Nullable ModalityState modalityState) throws PasswordSafeException {
     Application application = ApplicationManager.getApplication();
     if (!isTestMode() && application.isHeadlessEnvironment()) {
       throw new MasterPasswordUnavailableException("The provider is not available in headless environment");
@@ -223,7 +200,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
               }
             }
           }
-        }, ModalityState.defaultModalityState());
+        }, modalityState == null ? ModalityState.defaultModalityState() : modalityState);
         //noinspection ThrowableResultOfMethodCallIgnored
         if (ex.get() != null) {
           throw ex.get();
@@ -233,20 +210,15 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
     return result.get();
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
-  public String getPassword(@Nullable Project project, @NotNull Class requestor, String key) throws PasswordSafeException {
+  public String getPassword(@Nullable Project project, @NotNull Class requestor, String key,
+                            @Nullable ModalityState modalityState) throws PasswordSafeException {
     if (database.isEmpty()) {
       return null;
     }
-    return super.getPassword(project, requestor, key);
+    return super.getPassword(project, requestor, key, modalityState);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public void removePassword(@Nullable Project project, @NotNull Class requester, String key) throws PasswordSafeException {
     if (database.isEmpty()) {
@@ -255,50 +227,32 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
     super.removePassword(project, requester, key);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected byte[] getEncryptedPassword(byte[] key) {
     return database.get(key);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected void removeEncryptedPassword(byte[] key) {
     database.remove(key);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected void storeEncryptedPassword(byte[] key, byte[] encryptedPassword) {
     database.put(key, encryptedPassword);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public boolean isSupported() {
     return !ApplicationManager.getApplication().isHeadlessEnvironment();
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public String getDescription() {
     return "This provider stores passwords in IDEA config and uses master password to encrypt other passwords. " +
            "The passwords for the same resources are shared between different projects.";
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public String getName() {
     return "Master Key PasswordSafe";
@@ -309,9 +263,6 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
     return setMasterPassword("");
   }
 
-  /**
-   * @return true, if OS protected passwords are supported for the current platform
-   */
   @SuppressWarnings({"MethodMayBeStatic"})
   public boolean isOsProtectedPasswordSupported() {
     // TODO extension point needed?
@@ -351,9 +302,6 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
     }
   }
 
-  /**
-   * @return true, if the password is currently encrypted in the database
-   */
   public boolean isPasswordEncrypted() {
     if (!isOsProtectedPasswordSupported()) return false;
 
@@ -361,9 +309,6 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
     return i != null && i.length > 0;
   }
 
-  /**
-   * @return check if provider database is empty
-   */
   public boolean isEmpty() {
     return database.isEmpty();
   }

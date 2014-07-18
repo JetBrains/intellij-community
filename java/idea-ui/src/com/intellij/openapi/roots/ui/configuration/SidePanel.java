@@ -18,14 +18,13 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.EngravedLabel;
-import com.intellij.ui.Gray;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,6 +37,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import static javax.swing.SwingConstants.CENTER;
+import static javax.swing.SwingConstants.LEFT;
 
 public class SidePanel extends JPanel {
 
@@ -94,6 +96,44 @@ public class SidePanel extends JPanel {
     myList.setCellRenderer(new GroupedItemsListRenderer(descriptor) {
       {
         mySeparatorComponent.setCaptionCentered(false);
+      }
+
+      @Override
+      protected Color getForeground() {
+        return Registry.is("ide.new.project.settings") ? new JBColor(Gray._60, Gray._140) : super.getForeground();
+      }
+
+      @Override
+      protected SeparatorWithText createSeparator() {
+        return new SeparatorWithText() {
+          @Override
+          protected void paintComponent(Graphics g) {
+            if (Registry.is("ide.new.project.settings")) {
+              g.setColor(new JBColor(POPUP_SEPARATOR_FOREGROUND, Gray._80));
+              if ("--".equals(getCaption())) {
+                g.drawLine(0, getHeight()/ 2, getWidth(), getHeight() /2);
+                return;
+              }
+              Rectangle viewR = new Rectangle(0, getVgap(), getWidth() - 1, getHeight() - getVgap() - 1);
+              Rectangle iconR = new Rectangle();
+              Rectangle textR = new Rectangle();
+              String s = SwingUtilities
+                .layoutCompoundLabel(g.getFontMetrics(), getCaption(), null, CENTER,
+                                     LEFT,
+                                     CENTER,
+                                     LEFT,
+                                     viewR, iconR, textR, 0);
+              GraphicsUtil.setupAAPainting(g);
+              g.setColor(new JBColor(Gray._255.withAlpha(80), Gray._0.withAlpha(80)));
+              g.drawString(s, textR.x + 10, textR.y + 1 + g.getFontMetrics().getAscent());
+              g.setColor(new JBColor(new Color(0x5F6D7B), Gray._120));
+              g.drawString(s, textR.x + 10, textR.y + g.getFontMetrics().getAscent());
+            }
+            else {
+              super.paintComponent(g);
+            }
+          }
+        };
       }
 
       @Override

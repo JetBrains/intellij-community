@@ -81,27 +81,34 @@ abstract class GitMergeAction extends GitRepositoryAction {
         final Git git = ServiceManager.getService(Git.class);
         final GitLocalChangesWouldBeOverwrittenDetector localChangesDetector =
           new GitLocalChangesWouldBeOverwrittenDetector(selectedRoot, MERGE);
-        final GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector = 
+        final GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector =
           new GitUntrackedFilesOverwrittenByOperationDetector(selectedRoot);
-        GitCommandResult result = git.runCommand(new Computable<GitLineHandler>() {
-          @Override
-          public GitLineHandler compute() {
-            GitLineHandler handler = handlerProvider.compute();
-            handler.addLineListener(localChangesDetector);
-            handler.addLineListener(untrackedFilesDetector);
-            return handler;
-          }
-        });
-        affectedRoots.add(selectedRoot);
 
-        GitRepository repository = repositoryManager.getRepositoryForRoot(selectedRoot);
-        assert repository != null : "Repository can't be null for root " + selectedRoot;
-        String revision = repository.getCurrentRevision();
-        if (revision == null) {
-          return;
+        GitUtil.workingTreeChangeStarted(project);
+        try {
+          GitCommandResult result = git.runCommand(new Computable<GitLineHandler>() {
+            @Override
+            public GitLineHandler compute() {
+              GitLineHandler handler = handlerProvider.compute();
+              handler.addLineListener(localChangesDetector);
+              handler.addLineListener(untrackedFilesDetector);
+              return handler;
+            }
+          });
+          affectedRoots.add(selectedRoot);
+
+          GitRepository repository = repositoryManager.getRepositoryForRoot(selectedRoot);
+          assert repository != null : "Repository can't be null for root " + selectedRoot;
+          String revision = repository.getCurrentRevision();
+          if (revision == null) {
+            return;
+          }
+          final GitRevisionNumber currentRev = new GitRevisionNumber(revision);
+          handleResult(result, project, localChangesDetector, untrackedFilesDetector, repository, currentRev, affectedRoots, beforeLabel);
         }
-        final GitRevisionNumber currentRev = new GitRevisionNumber(revision);
-        handleResult(result, project, localChangesDetector, untrackedFilesDetector, repository, currentRev, affectedRoots, beforeLabel);
+        finally {
+          GitUtil.workingTreeChangeFinished(project);
+        }
       }
 
     }.queue();

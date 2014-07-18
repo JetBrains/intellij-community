@@ -15,10 +15,11 @@
  */
 package com.intellij.ui;
 
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -31,7 +32,7 @@ public class ColorChooserServiceImpl extends ColorChooserService {
                           Color preselectedColor,
                           boolean enableOpacity,
                           ColorPickerListener[] listeners) {
-    return ColorPicker.showDialog(parent, caption, preselectedColor, enableOpacity, listeners, false);
+    return showDialog(parent, caption, preselectedColor, enableOpacity, Arrays.asList(listeners), false);
   }
 
   @Nullable
@@ -41,6 +42,17 @@ public class ColorChooserServiceImpl extends ColorChooserService {
                           Color preselectedColor,
                           boolean enableOpacity,
                           ColorPickerListener[] listeners,
+                          boolean opacityInPercent) {
+    return showDialog(parent, caption, preselectedColor, enableOpacity, Arrays.asList(listeners), opacityInPercent);
+  }
+
+  @Nullable
+  @Override
+  public Color showDialog(Component parent,
+                          String caption,
+                          Color preselectedColor,
+                          boolean enableOpacity,
+                          List<ColorPickerListener> listeners,
                           boolean opacityInPercent) {
     return ColorPicker.showDialog(parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent);
   }

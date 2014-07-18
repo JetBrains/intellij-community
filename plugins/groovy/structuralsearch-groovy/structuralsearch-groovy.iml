@@ -15,7 +15,7 @@
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="structuralsearch-tests" scope="TEST" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
-    <orderEntry type="module" module-name="duplicates-analysis" scope="TEST" />
+    <orderEntry type="module" module-name="duplicates-analysis" />
   </component>
 </module>
 

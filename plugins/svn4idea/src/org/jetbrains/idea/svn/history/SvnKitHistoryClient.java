@@ -8,6 +8,7 @@ import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -28,22 +29,38 @@ public class SvnKitHistoryClient extends BaseSvnClient implements HistoryClient 
                     boolean includeMergedRevisions,
                     long limit,
                     @Nullable String[] revisionProperties,
-                    @Nullable ISVNLogEntryHandler handler) throws VcsException {
+                    @Nullable LogEntryConsumer handler) throws VcsException {
     try {
       // TODO: a bug noticed when testing: we should pass "limit + 1" to get "limit" rows
       SVNLogClient client = myVcs.getSvnKitManager().createLogClient();
 
       if (target.isFile()) {
         client.doLog(new File[]{target.getFile()}, startRevision, endRevision, target.getPegRevision(), stopOnCopy, discoverChangedPaths,
-                     includeMergedRevisions, limit, revisionProperties, handler);
+                     includeMergedRevisions, limit, revisionProperties, toHandler(handler));
       }
       else {
         client.doLog(target.getURL(), ArrayUtil.EMPTY_STRING_ARRAY, target.getPegRevision(), startRevision, endRevision, stopOnCopy,
-                     discoverChangedPaths, includeMergedRevisions, limit, revisionProperties, handler);
+                     discoverChangedPaths, includeMergedRevisions, limit, revisionProperties, toHandler(handler));
       }
     }
     catch (SVNException e) {
       throw new SvnBindException(e);
     }
+  }
+
+  @Nullable
+  private static ISVNLogEntryHandler toHandler(@Nullable final LogEntryConsumer handler) {
+    ISVNLogEntryHandler result = null;
+
+    if (handler != null) {
+      result = new ISVNLogEntryHandler() {
+        @Override
+        public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
+          handler.consume(LogEntry.create(logEntry));
+        }
+      };
+    }
+
+    return result;
   }
 }

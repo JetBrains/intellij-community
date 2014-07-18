@@ -25,7 +25,6 @@ import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
-import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInspection.actions.CleanupAllIntention;
@@ -208,8 +207,6 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   }
 
   private void getIntentionActionsToShow() {
-    if (LookupManager.getInstance(myProject).getActiveLookup() != null) return;
-
     getActionsToShow(myEditor, myFile, myIntentionsInfo, myPassIdToShowIntentionsFor);
     if (myFile instanceof IntentionFilterOwner) {
       final IntentionFilterOwner.IntentionActionsFilter actionsFilter = ((IntentionFilterOwner)myFile).getIntentionActionsFilter();

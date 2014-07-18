@@ -124,7 +124,7 @@
                         serviceImplementation="com.intellij.ide.passwordSafe.config.PasswordSafeSettings"/>
     <applicationService serviceInterface="com.intellij.ide.passwordSafe.PasswordSafe"
                         serviceImplementation="com.intellij.ide.passwordSafe.impl.PasswordSafeImpl"/>
-    <applicationConfigurable instance="com.intellij.ide.passwordSafe.config.PasswordSafeConfigurable" id="application.passwordSafe"
+    <applicationConfigurable parentId="preferences.general" instance="com.intellij.ide.passwordSafe.config.PasswordSafeConfigurable" id="application.passwordSafe"
                              displayName="Passwords"/>
     <applicationService serviceInterface="com.intellij.execution.process.ColoredOutputTypeRegistry"
                         serviceImplementation="com.intellij.execution.process.ColoredOutputTypeRegistry"/>
@@ -193,32 +193,32 @@
     <projectService serviceImplementation="com.intellij.openapi.editor.LazyRangeMarkerFactory"/>
 
     <!-- General -->
-    <applicationConfigurable instance="com.intellij.ide.GeneralSettingsConfigurable"/>
+    <applicationConfigurable groupId="appearance" key="title.general" bundle="messages.IdeBundle" id="preferences.general" instance="com.intellij.ide.GeneralSettingsConfigurable"/>
 
     <!-- Appearance -->
-    <applicationConfigurable instance="com.intellij.ide.ui.AppearanceConfigurable" id="appearance" key="title.appearance"
+    <applicationConfigurable groupId="appearance" instance="com.intellij.ide.ui.AppearanceConfigurable" id="appearance" key="title.appearance"
                              bundle="messages.IdeBundle"/>
 
     <!-- Keymap -->
-    <applicationConfigurable instance="com.intellij.openapi.keymap.impl.ui.KeymapPanel" id="preferences.keymap" key="keymap.display.name"
+    <applicationConfigurable groupId="appearance" instance="com.intellij.openapi.keymap.impl.ui.KeymapPanel" id="preferences.keymap" key="keymap.display.name"
                              bundle="messages.KeyMapBundle"/>
-    <applicationConfigurable instance="com.intellij.openapi.keymap.impl.ui.QuickListsPanel" id="reference.idesettings.quicklists"
+    <applicationConfigurable parentId="appearance" instance="com.intellij.openapi.keymap.impl.ui.QuickListsPanel" id="reference.idesettings.quicklists"
                              displayName="Quick Lists"/>
 
     <!-- Customizations -->
-    <applicationConfigurable instance="com.intellij.ide.ui.customization.CustomizationConfigurable" id="preferences.customizations"
+    <applicationConfigurable parentId="appearance" instance="com.intellij.ide.ui.customization.CustomizationConfigurable" id="preferences.customizations"
                              key="title.customizations" bundle="messages.IdeBundle"/>
 
     <!-- Notifications -->
-    <applicationConfigurable instance="com.intellij.notification.impl.NotificationsConfigurable"/>
+    <applicationConfigurable groupId="appearance" displayName="Notifications" instance="com.intellij.notification.impl.NotificationsConfigurable"/>
 
     <!-- Plugins -->
-    <applicationConfigurable instance="com.intellij.ide.plugins.PluginManagerConfigurable" id="preferences.pluginManager"
+    <applicationConfigurable groupId="appearance" instance="com.intellij.ide.plugins.PluginManagerConfigurable" id="preferences.pluginManager"
                              displayName="Plugins"/>
     <actionFromOptionDescriptorProvider implementation="com.intellij.ide.plugins.InstalledPluginsManagerMain$PluginsActionFromOptionDescriptorProvider"/>
-    <applicationConfigurable instance="com.intellij.util.net.HTTPProxySettingsPanel" id="http.proxy" displayName="HTTP Proxy" />
-    <applicationConfigurable instance="com.intellij.util.net.ssl.CertificateConfigurable"/>
-    <applicationConfigurable instance="com.intellij.openapi.diff.impl.external.DiffOptionsForm" id="diff" displayName="External Diff Tools" />
+    <applicationConfigurable parentId="preferences.general" instance="com.intellij.util.net.HTTPProxySettingsPanel" id="http.proxy" displayName="HTTP Proxy" />
+    <applicationConfigurable groupId="tools" displayName="Server Certificates" instance="com.intellij.util.net.ssl.CertificateConfigurable"/>
+    <applicationConfigurable groupId="tools" instance="com.intellij.openapi.diff.impl.external.DiffOptionsForm" id="diff" displayName="External Diff Tools" />
     <!--<applicationConfigurable instance="com.intellij.ui.switcher.QuickAccessConfigurable"/>-->
 
     <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>
@@ -226,7 +226,7 @@
     <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"
                         serviceImplementation="com.intellij.openapi.options.colors.pages.ColorSettingsPagesImpl"/>
 
-    <applicationConfigurable instance="com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable" id="preferences.updates"
+    <applicationConfigurable parentId="preferences.general" instance="com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable" id="preferences.updates"
                              key="updates.settings.title" bundle="messages.IdeBundle"/>
 
     <applicationService serviceInterface="com.intellij.psi.search.scope.packageSet.PackageSetFactory"
@@ -242,7 +242,7 @@
     <componentConfigurationMerger implementation="com.intellij.openapi.vcs.changes.shelf.ShelfManagerConfigurationMerger"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"/>
 
-    <projectConfigurable instance="com.intellij.javaee.ExternalResourceConfigurable" key="display.name.edit.external.resource"
+    <projectConfigurable groupId="language" instance="com.intellij.javaee.ExternalResourceConfigurable" key="display.name.edit.external.resource"
                          bundle="messages.XmlBundle" id="preferences.externalResources">
       <configurable instance="com.intellij.javaee.XMLCatalogConfigurable" displayName="XML Catalog" id="xml.catalog"/>
     </projectConfigurable>
@@ -262,7 +262,7 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.UiInfoUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.JdkInfoUsageCollector"/>
 
-    <applicationConfigurable instance="com.intellij.internal.statistic.configurable.StatisticsConfigurable" id="usage.statistics"
+    <applicationConfigurable parentId="preferences.general" instance="com.intellij.internal.statistic.configurable.StatisticsConfigurable" id="usage.statistics"
                              displayName="Usage Statistics"/>
 
     <virtualFileSystem key="dummy" implementationClass="com.intellij.openapi.vfs.ex.dummy.DummyFileSystem"/>

@@ -28,8 +28,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.*;
@@ -44,7 +45,7 @@ import java.util.List;
 public class Merger implements IMerger {
   protected final List<CommittedChangeList> myChangeLists;
   protected final File myTarget;
-  @Nullable private final ISVNEventHandler myHandler;
+  @Nullable private final ProgressTracker myHandler;
   protected int myCount;
   private final ProgressIndicator myProgressIndicator;
   protected CommittedChangeList myLatestProcessed;
@@ -128,7 +129,7 @@ public class Merger implements IMerger {
     SvnTarget source = SvnTarget.fromURL(myCurrentBranchUrl);
     MergeClient client = myVcs.getFactory(myTarget).createMergeClient();
 
-    client.merge(source, createRange(), myTarget, SVNDepth.INFINITY, mySvnConfig.isMergeDryRun(), isRecordOnly(), true,
+    client.merge(source, createRange(), myTarget, Depth.INFINITY, mySvnConfig.isMergeDryRun(), isRecordOnly(), true,
                  mySvnConfig.getMergeOptions(), myHandler);
   }
 

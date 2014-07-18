@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -61,6 +62,7 @@ public class Graphics2DDelegate extends Graphics2D{
     myDelegate.copyArea(x, y, width, height, dx, dy);
   }
 
+  @NotNull
   @Override
   public Graphics create() {
     return new Graphics2DDelegate((Graphics2D)myDelegate.create());

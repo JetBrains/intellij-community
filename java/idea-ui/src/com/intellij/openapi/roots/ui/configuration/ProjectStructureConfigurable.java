@@ -209,7 +209,9 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
     myComponent.add(mySplitter, BorderLayout.CENTER);
     myErrorsComponent = new ConfigurationErrorsComponent(myProject);
-    myComponent.add(myErrorsComponent, BorderLayout.SOUTH);
+    if (!Registry.is("ide.new.project.settings")) {
+      myComponent.add(myErrorsComponent, BorderLayout.SOUTH);
+    }
 
     myUiInitialized = true;
 
@@ -247,6 +249,11 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
       for (Configurable configurable : adder.getExtraPlatformConfigurables(myProject, myContext)) {
         addConfigurable(configurable, true);
       }
+    }
+
+    if (Registry.is("ide.new.project.settings")) {
+      mySidePanel.addSeparator("--");
+      addErrorPane();
     }
   }
 
@@ -292,6 +299,10 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
   private void addProjectLibrariesConfig() {
     addConfigurable(myProjectLibrariesConfig, ConfigurableId.PROJECT_LIBRARIES);
+  }
+
+  private void addErrorPane() {
+    addConfigurable(new ErrorPaneConfigurable(myProject, myContext), true);
   }
 
   private void addGlobalLibrariesConfig() {

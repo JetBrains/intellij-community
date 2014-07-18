@@ -720,7 +720,7 @@ public class JavaDocInfoGenerator {
       final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
       if (nameReferenceElement == null) continue;
       final PsiElement resolved = nameReferenceElement.resolve();
-      boolean inferred = InferredAnnotationsManager.getInstance(annotation.getProject()).isInferredAnnotation(annotation);
+      boolean inferred = AnnotationUtil.isInferredAnnotation(annotation);
       if (resolved instanceof PsiClass) {
         final PsiClass annotationType = (PsiClass)resolved;
         if (AnnotationUtil.isAnnotated(annotationType, "java.lang.annotation.Documented", false)) {
@@ -742,7 +742,7 @@ public class JavaDocInfoGenerator {
               }
               final PsiAnnotationMemberValue value = pair.getValue();
               if (value != null) {
-                buffer.append(value.getText());
+                buffer.append(XmlStringUtil.escapeString(value.getText()));
               }
             }
             buffer.append(")");
@@ -752,13 +752,13 @@ public class JavaDocInfoGenerator {
         }
       } else if (external) {
         if (inferred) buffer.append("<i>");
-        buffer.append(annotation.getText());
+        buffer.append(XmlStringUtil.escapeString(annotation.getText()));
         buffer.append("&nbsp;");
         if (inferred) buffer.append("</i>");
       }
       else {
         buffer.append("<font color=red>");
-        buffer.append(annotation.getText());
+        buffer.append(XmlStringUtil.escapeString(annotation.getText()));
         buffer.append("</font>");
         buffer.append("&nbsp;");
       }

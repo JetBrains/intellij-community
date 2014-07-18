@@ -25,9 +25,10 @@ import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -84,9 +85,6 @@ public class LatestExistentSearcher {
       myVcs.getFactory(target).createHistoryClient().doLog(target, startRevision, SVNRevision.HEAD, false, true, false, 0, null,
                                                            createHandler(latest));
     }
-    catch (SVNException e) {
-      LOG.info(e);
-    }
     catch (VcsException e) {
       LOG.info(e);
     }
@@ -95,12 +93,13 @@ public class LatestExistentSearcher {
   }
 
   @NotNull
-  private ISVNLogEntryHandler createHandler(@NotNull final Ref<Long> latest) {
-    return new ISVNLogEntryHandler() {
-      public void handleLogEntry(final SVNLogEntry logEntry) throws SVNException {
+  private LogEntryConsumer createHandler(@NotNull final Ref<Long> latest) {
+    return new LogEntryConsumer() {
+      @Override
+      public void consume(final LogEntry logEntry) throws SVNException {
         final Map changedPaths = logEntry.getChangedPaths();
         for (Object o : changedPaths.values()) {
-          final SVNLogEntryPath path = (SVNLogEntryPath)o;
+          final LogEntryPath path = (LogEntryPath)o;
           if ((path.getType() == 'D') && (myRelativeUrl.equals(path.getPath()))) {
             latest.set(logEntry.getRevision());
             throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE);
@@ -125,7 +124,7 @@ public class LatestExistentSearcher {
         }
       }
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       LOG.info(e);
     }
 
@@ -138,7 +137,7 @@ public class LatestExistentSearcher {
       final RootUrlInfo rootUrlInfo = mapping.getWcRootForUrl(myUrl.toString());
       if (rootUrlInfo == null) return true;
       final VirtualFile vf = rootUrlInfo.getVirtualFile();
-      final SVNInfo info = myVcs.getInfo(vf);
+      final Info info = myVcs.getInfo(vf);
       if ((info == null) || (info.getRevision() == null)) {
         return false;
       }
@@ -149,24 +148,24 @@ public class LatestExistentSearcher {
   }
 
   @Nullable
-  private SVNURL getExistingParent(SVNURL url) throws SVNException {
+  private SVNURL getExistingParent(SVNURL url) throws SvnBindException {
     while (url != null && !url.equals(myRepositoryUrl) && !existsInRevision(url, myEndNumber)) {
-      url = url.removePathTail();
+      url = SvnUtil.removePathTail(url);
     }
 
     return url;
   }
 
-  private boolean existsInRevision(@NotNull SVNURL url, long revisionNumber) throws SVNException {
+  private boolean existsInRevision(@NotNull SVNURL url, long revisionNumber) throws SvnBindException {
     SVNRevision revision = SVNRevision.create(revisionNumber);
-    SVNInfo info = null;
+    Info info = null;
 
     try {
       info = myVcs.getInfo(url, revision, revision);
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       // throw error if not "does not exist" error code
-      if (!SVNErrorCode.RA_ILLEGAL_URL.equals(e.getErrorMessage().getErrorCode())) {
+      if (!e.contains(SVNErrorCode.RA_ILLEGAL_URL)) {
         throw e;
       }
     }
@@ -174,7 +173,7 @@ public class LatestExistentSearcher {
     return info != null;
   }
 
-  private long getLatestRevision() throws SVNException {
+  private long getLatestRevision() throws SvnBindException {
     return SvnUtil.getHeadRevision(myVcs, myRepositoryUrl).getNumber();
   }
 }

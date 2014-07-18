@@ -15,8 +15,10 @@
  */
 package org.jetbrains.plugins.github.util;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 public class GithubAuthDataHolder {
@@ -40,7 +42,7 @@ public class GithubAuthDataHolder {
     myAuthData = task.compute();
   }
 
-  public static GithubAuthDataHolder createFromSettings() {
-    return new GithubAuthDataHolder(GithubSettings.getInstance().getAuthData());
+  public static GithubAuthDataHolder createFromSettings(@Nullable ModalityState state) {
+    return new GithubAuthDataHolder(GithubSettings.getInstance().getAuthData(state));
   }
 }

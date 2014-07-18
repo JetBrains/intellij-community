@@ -54,13 +54,17 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.BooleanFunction;
+import com.intellij.util.Consumer;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -572,7 +576,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       final PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
       if (ref != null) {
         element = assertSameProject(util.adjustReference(ref));
-        if (element == null && ref instanceof PsiPolyVariantReference) {
+        if (ref instanceof PsiPolyVariantReference) {
           element = assertSameProject(ref.getElement());
         }
       }
@@ -595,16 +599,17 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
         int offset = editor.getCaretModel().getOffset();
         if (offset > 0 && offset == editor.getDocument().getTextLength()) offset--;
-        final PsiElement contextElement = file == null? null : file.findElementAt(offset);
-        final PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
+        PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
+        PsiElement contextElement = file == null? null : file.findElementAt(offset);
+        PsiElement targetElement = ref != null ? ref.getElement() : contextElement;
+        if (targetElement != null) {
+          PsiUtilCore.ensureValid(targetElement);
+        }
 
-        final DocumentationProvider documentationProvider = getProviderFromElement(file);
+        DocumentationProvider documentationProvider = getProviderFromElement(file);
 
-        return documentationProvider.getDocumentationElementForLookupItem(
-          PsiManager.getInstance(myProject),
-          item.getObject(),
-          ref != null ? ref.getElement():contextElement
-        );
+        PsiManager psiManager = PsiManager.getInstance(myProject);
+        return documentationProvider.getDocumentationElementForLookupItem(psiManager, item.getObject(), targetElement);
       }
     }
     return null;

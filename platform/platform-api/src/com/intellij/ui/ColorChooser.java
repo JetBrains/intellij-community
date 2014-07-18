@@ -18,6 +18,9 @@ package com.intellij.ui;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Utility wrapper around JColorChooser. Helps to avoid memory leak through JColorChooser.ColorChooserDialog.cancelButton.
@@ -27,24 +30,38 @@ import java.awt.*;
  */
 public class ColorChooser {
   @Nullable
+  @Deprecated
+  /**
+   * @deprecated Use {@link #chooseColor(java.awt.Component, String, java.awt.Color, boolean, java.util.List, boolean)}
+   */
   public static Color chooseColor(Component parent,
                                   String caption,
                                   @Nullable Color preselectedColor,
                                   boolean enableOpacity,
                                   ColorPickerListener[] listeners,
                                   boolean opacityInPercent) {
+    return chooseColor(parent, caption, preselectedColor, enableOpacity, Arrays.asList(listeners), opacityInPercent);
+  }
+
+  @Nullable
+  public static Color chooseColor(Component parent,
+                                  String caption,
+                                  @Nullable Color preselectedColor,
+                                  boolean enableOpacity,
+                                  List<ColorPickerListener> listeners,
+                                  boolean opacityInPercent) {
     return ColorChooserService.getInstance().showDialog(parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent);
   }
 
   @Nullable
   public static Color chooseColor(Component parent, String caption, @Nullable Color preselectedColor, boolean enableOpacity) {
-    return chooseColor(parent, caption, preselectedColor, enableOpacity, ColorPickerListener.EMPTY_ARRAY, false);
+    return chooseColor(parent, caption, preselectedColor, enableOpacity, Collections.<ColorPickerListener>emptyList(), false);
   }
 
   @Nullable
   public static Color chooseColor(Component parent, String caption, @Nullable Color preselectedColor, boolean enableOpacity,
                                   boolean opacityInPercent) {
-    return chooseColor(parent, caption, preselectedColor, enableOpacity, ColorPickerListener.EMPTY_ARRAY, opacityInPercent);
+    return chooseColor(parent, caption, preselectedColor, enableOpacity, Collections.<ColorPickerListener>emptyList(), opacityInPercent);
   }
 
   @Nullable

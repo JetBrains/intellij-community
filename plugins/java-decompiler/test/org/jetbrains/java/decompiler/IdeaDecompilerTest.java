@@ -40,10 +40,7 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
     VirtualFile file = StandardFileSystems.jar().findFileByPath(path);
     assertNotNull(path, file);
 
-    CharSequence text = new IdeaDecompiler().getText(file);
-    assertNotNull(text);
-
-    String decompiled = text.toString();
+    String decompiled = new IdeaDecompiler().getText(file).toString();
     assertTrue(decompiled, decompiled.contains("public final class String"));
     assertTrue(decompiled, decompiled.contains("@deprecated"));
     assertTrue(decompiled, decompiled.contains("private static class CaseInsensitiveComparator"));
@@ -57,6 +54,7 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
   public void testParameters() { doTestDecompiler(); }
   public void testConstants() { doTestDecompiler(); }
   public void testAnonymous() { doTestDecompiler(); }
+  public void testCodeConstructs() { doTestDecompiler(); }
 
   private void doTestDecompiler() {
     String name = PluginPathManager.getPluginHomePath("java-decompiler") + "/testData/" + getName().substring(4);
@@ -103,7 +101,6 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        if (file.getName().equals("Jps.class")) return true;  // temp. fix
         if (!file.isDirectory() && file.getFileType() == StdFileTypes.CLASS && !file.getName().contains("$")) {
           PsiFile clsFile = getPsiManager().findFile(file);
           assertNotNull(file.getPath(), clsFile);

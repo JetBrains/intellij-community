@@ -58,14 +58,19 @@ public class ToolsImpl implements Tools {
   private boolean myEnabled;
 
   public ToolsImpl(@NotNull InspectionToolWrapper toolWrapper, @NotNull HighlightDisplayLevel level, boolean enabled, boolean enabledByDefault) {
-    myShortName = toolWrapper.getShortName();
-    myEnabled = enabled;
-    myDefaultState = new ScopeToolState(CustomScopesProviderEx.getAllScope(), toolWrapper, enabledByDefault, level);
+    this(toolWrapper.getShortName(), new ScopeToolState(CustomScopesProviderEx.getAllScope(), toolWrapper, enabledByDefault, level), null, enabled);
   }
 
   @TestOnly
   public ToolsImpl(@NotNull InspectionToolWrapper toolWrapper, @NotNull HighlightDisplayLevel level, boolean enabled) {
     this(toolWrapper, level, enabled, enabled);
+  }
+
+  private ToolsImpl(@NotNull String shortName, @NotNull ScopeToolState defaultState, @Nullable List<ScopeToolState> tools, boolean enabled) {
+    myShortName = shortName;
+    myDefaultState = defaultState;
+    myTools = tools;
+    myEnabled = enabled;
   }
 
   @NotNull
@@ -78,13 +83,23 @@ public class ToolsImpl implements Tools {
     return insertTool(scope, toolWrapper, enabled, level, 0);
   }
 
+  public ScopeToolState addTool(@NotNull String scopeName, @NotNull InspectionToolWrapper toolWrapper, boolean enabled, @NotNull HighlightDisplayLevel level) {
+    return insertTool(new ScopeToolState(scopeName, toolWrapper, enabled, level), myTools != null ? myTools.size() : 0);
+  }
+
   @NotNull
   private ScopeToolState insertTool(@NotNull NamedScope scope, @NotNull InspectionToolWrapper toolWrapper, boolean enabled, @NotNull HighlightDisplayLevel level, int idx) {
+    return insertTool(new ScopeToolState(scope, toolWrapper, enabled, level), idx);
+  }
+
+  @NotNull
+  private ScopeToolState insertTool(@NotNull final ScopeToolState scopeToolState, final int idx) {
     if (myTools == null) {
       myTools = new ArrayList<ScopeToolState>();
-      setEnabled(true);
+      if (scopeToolState.isEnabled()) {
+        setEnabled(true);
+      }
     }
-    final ScopeToolState scopeToolState = new ScopeToolState(scope, toolWrapper, enabled, level);
     myTools.add(idx, scopeToolState);
     return scopeToolState;
   }
@@ -166,7 +181,6 @@ public class ToolsImpl implements Tools {
     myDefaultState.setLevel(level);
     final String enabled = toolElement.getAttributeValue(ENABLED_ATTRIBUTE);
     final boolean isEnabled = enabled != null && Boolean.parseBoolean(enabled);
-    myEnabled = isEnabled;
 
     final String enabledTool = toolElement.getAttributeValue(ENABLED_BY_DEFAULT_ATTRIBUTE);
     myDefaultState.setEnabled(enabledTool != null ? Boolean.parseBoolean(enabledTool) : isEnabled);
@@ -208,16 +222,8 @@ public class ToolsImpl implements Tools {
     if (toolElement.getAttributes().size() > 4 || toolElement.getChildren().size() > scopeElements.size()) {
       toolWrapper.getTool().readSettings(toolElement);
     }
-  }
 
-  public ScopeToolState addTool(@NotNull String scopeName, @NotNull InspectionToolWrapper toolWrapper, boolean enabled, @NotNull HighlightDisplayLevel level) {
-    if (myTools == null) {
-      myTools = new ArrayList<ScopeToolState>();
-      setEnabled(true);
-    }
-    final ScopeToolState scopeToolState = new ScopeToolState(scopeName, toolWrapper, enabled, level);
-    myTools.add(scopeToolState);
-    return scopeToolState;
+    myEnabled = isEnabled;
   }
 
   @NotNull
@@ -245,6 +251,21 @@ public class ToolsImpl implements Tools {
   public void removeScope(int scopeIdx) {
     if (myTools != null && scopeIdx >= 0 && myTools.size() > scopeIdx) {
       myTools.remove(scopeIdx);
+      if (myTools.isEmpty()) {
+        myTools = null;
+        setEnabled(myDefaultState.isEnabled());
+      }
+    }
+  }
+
+  public void removeScope(final NamedScope scope) {
+    if (myTools != null) {
+      for (final ScopeToolState tool : myTools) {
+        if (Comparing.equal(tool.getScopeName(), scope.getName())) {
+          myTools.remove(tool);
+          break;
+        }
+      }
       if (myTools.isEmpty()) {
         myTools = null;
         setEnabled(myDefaultState.isEnabled());

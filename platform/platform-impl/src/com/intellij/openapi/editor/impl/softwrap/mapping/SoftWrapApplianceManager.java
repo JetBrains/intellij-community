@@ -28,10 +28,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
-import com.intellij.openapi.editor.impl.IterationState;
-import com.intellij.openapi.editor.impl.TextChangeImpl;
+import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.impl.softwrap.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
@@ -99,7 +96,6 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
   private int myVerticalScrollBarWidth  = -1;
 
   private VisibleAreaWidthProvider       myWidthProvider;
-  private EditorTextRepresentationHelper myRepresentationHelper;
   private LineWrapPositionStrategy       myLineWrapPositionStrategy;
   private IncrementalCacheUpdateEvent    myEventBeingProcessed;
   private boolean                        myVisualAreaListenerAttached;
@@ -112,12 +108,11 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
   public SoftWrapApplianceManager(@NotNull SoftWrapsStorage storage,
                                   @NotNull EditorEx editor,
                                   @NotNull SoftWrapPainter painter,
-                                  @NotNull EditorTextRepresentationHelper representationHelper, SoftWrapDataMapper dataMapper)
+                                  SoftWrapDataMapper dataMapper)
   {
     myStorage = storage;
     myEditor = editor;
     myPainter = painter;
-    myRepresentationHelper = representationHelper;
     myDataMapper = dataMapper;
     myWidthProvider = new DefaultVisibleAreaWidthProvider(editor);
   }
@@ -272,7 +267,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
     myContext.fontType = attributes.getFontType();
     myContext.rangeEndOffset = event.getNewEndOffset();
 
-    EditorPosition position = new EditorPosition(logical, start, myEditor, myRepresentationHelper);
+    EditorPosition position = new EditorPosition(logical, start, myEditor);
     position.x = point.x;
     int spaceWidth = EditorUtil.getSpaceWidth(myContext.fontType, myEditor);
 
@@ -333,7 +328,8 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
     }
     int placeholderWidthInPixels = 0;
     for (int i = 0; i < placeholder.length(); i++) {
-      placeholderWidthInPixels += myRepresentationHelper.charWidth(placeholder.charAt(i), myContext.fontType);
+      placeholderWidthInPixels += SoftWrapModelImpl.getEditorTextRepresentationHelper(myEditor)
+        .charWidth(placeholder.charAt(i), myContext.fontType);
     }
     int newX = myContext.currentPosition.x + placeholderWidthInPixels;
     
@@ -617,7 +613,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
       return EditorUtil.nextTabStop(myContext.currentPosition.x, myEditor);
     }
     else {
-      return myContext.currentPosition.x + myRepresentationHelper.charWidth(c, myContext.fontType);
+      return myContext.currentPosition.x + SoftWrapModelImpl.getEditorTextRepresentationHelper(myEditor).charWidth(c, myContext.fontType);
       //FontInfo fontInfo = EditorUtil.fontForChar(c, myContext.fontType, myEditor);
       //return myContext.currentPosition.x + fontInfo.charWidth(c, myContext.contentComponent);
     }
@@ -1006,11 +1002,6 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
 
   public void setWidthProvider(@NotNull VisibleAreaWidthProvider widthProvider) {
     myWidthProvider = widthProvider;
-    reset();
-  }
-
-  public void setRepresentationHelper(@NotNull EditorTextRepresentationHelper representationHelper) {
-    myRepresentationHelper = representationHelper;
     reset();
   }
 

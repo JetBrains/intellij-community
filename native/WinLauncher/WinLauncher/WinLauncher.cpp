@@ -169,12 +169,16 @@ bool FindJVMInRegistryWithVersion(const char* version, bool wow64_32)
 bool FindJVMInRegistry()
 {
 #ifndef _M_X64
+        if (FindJVMInRegistryWithVersion("1.8", true))
+        	return true;
 	if (FindJVMInRegistryWithVersion("1.7", true))
 		return true;
 	if (FindJVMInRegistryWithVersion("1.6", true))
 		return true;
 #endif
 
+        if (FindJVMInRegistryWithVersion("1.8", false))
+                return true;
 	if (FindJVMInRegistryWithVersion("1.7", false))
 		return true;
 	if (FindJVMInRegistryWithVersion("1.6", false))

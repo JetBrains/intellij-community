@@ -23,7 +23,7 @@ public class BuilderStatisticsMessage extends BuildMessage {
   private final long myElapsedTimeMs;
 
   public BuilderStatisticsMessage(String builderName, long elapsedTimeMs) {
-    super(builderName + " elapsed " + elapsedTimeMs + "ms", Kind.INFO);
+    super("", Kind.INFO);
     myBuilderName = builderName;
     myElapsedTimeMs = elapsedTimeMs;
   }

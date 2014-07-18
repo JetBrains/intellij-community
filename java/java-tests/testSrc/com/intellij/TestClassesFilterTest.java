@@ -21,6 +21,8 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
+import java.util.Collections;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -41,7 +43,7 @@ public class TestClassesFilterTest {
                         "com.intellij.package6.ExcludedTest\n" +
                         "com.intellij.package7.*package8";
 
-    TestClassesFilter classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), "Group1");
+    TestClassesFilter classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), Collections.singletonList("Group1"));
     assertTrue(classesFilter.matches("com.intellij.package1.Test"));
     assertTrue(classesFilter.matches("com.intellij.package1.Test2"));
     assertFalse(classesFilter.matches("com.intellij.package2.Test"));
@@ -59,7 +61,7 @@ public class TestClassesFilterTest {
     assertFalse(classesFilter.matches("com.intellij.package7.package5.package8"));
     assertFalse(classesFilter.matches("com.intellij.package7"));
 
-    classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), "Group2");
+    classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), Collections.singletonList("Group2"));
     assertFalse(classesFilter.matches("com.intellij.package1.Test"));
     assertFalse(classesFilter.matches("com.intellij.package1.Test2"));
     assertFalse(classesFilter.matches("com.intellij.package2.Test"));
@@ -77,18 +79,29 @@ public class TestClassesFilterTest {
     assertTrue(classesFilter.matches("com.intellij.package7.package5.package8"));
     assertFalse(classesFilter.matches("com.intellij.package7"));
 
-    classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), null);
-    checkForNullGroup(classesFilter);
+    classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText),
+                                                       Collections.singletonList(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED));
+    checkForAllExcludedDefinedGroup(classesFilter);
 
-    classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED);
-    checkForNullGroup(classesFilter);
+    classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), Collections.<String>emptyList());
+    checkForAllExcludedDefinedGroup(classesFilter);
+
+    classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), Arrays.asList("Group1", "Group2"));
+    assertTrue(classesFilter.matches("com.intellij.package1.Test"));
+    assertTrue(classesFilter.matches("com.intellij.package5.Test"));
+    assertFalse(classesFilter.matches("com.intellij.package4.Test"));
+
+    classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), Arrays.asList("Group1", GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED));
+    assertTrue(classesFilter.matches("com.intellij.package1.Test"));
+    assertFalse(classesFilter.matches("com.intellij.package5.Test"));
+    assertTrue(classesFilter.matches("com.intellij.package4.Test"));
   }
 
   private static InputStreamReader getReader(String filterText) throws UnsupportedEncodingException {
     return new InputStreamReader(new ByteArrayInputStream(filterText.getBytes("UTF-8")));
   }
 
-  private static void checkForNullGroup(TestClassesFilter classesFilter) {
+  private static void checkForAllExcludedDefinedGroup(TestClassesFilter classesFilter) {
     assertFalse(classesFilter.matches("com.intellij.package1.Test"));
     assertFalse(classesFilter.matches("com.intellij.package1.Test2"));
     assertTrue(classesFilter.matches("com.intellij.package2.Test"));

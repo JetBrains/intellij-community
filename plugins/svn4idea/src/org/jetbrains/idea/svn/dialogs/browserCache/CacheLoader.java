@@ -16,9 +16,8 @@
 package org.jetbrains.idea.svn.dialogs.browserCache;
 
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
-import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 
 import javax.swing.*;
 import java.util.List;
@@ -40,7 +39,7 @@ public class CacheLoader extends Loader {
       public void run() {
         final String nodeUrl = node.getURL().toString();
 
-        final List<SVNDirEntry> cached = myCache.getChildren(nodeUrl);
+        final List<DirectoryEntry> cached = myCache.getChildren(nodeUrl);
         if (cached != null) {
           refreshNode(node, cached, expander);
         }

@@ -17,14 +17,14 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.svn.status.Status;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNStatus;
 
 import java.util.EventListener;
 
 public interface StatusReceiver extends EventListener {
-  void process(final FilePath path, final SVNStatus status) throws SVNException;
+  void process(final FilePath path, final Status status) throws SVNException;
   void processIgnored(final VirtualFile vFile);
   void processUnversioned(final VirtualFile vFile);
   void processCopyRoot(VirtualFile file, SVNURL url, WorkingCopyFormat format, SVNURL rootURL);

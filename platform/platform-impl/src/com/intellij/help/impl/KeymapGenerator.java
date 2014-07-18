@@ -23,9 +23,11 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import gnu.trove.THashSet;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Set;
 
 /**
  * @author Konstantin Bulenkov
@@ -52,8 +54,14 @@ public class KeymapGenerator implements ApplicationStarter {
         String shortcuts = KeymapUtil.getShortcutsText(keymap.getShortcuts(id));
         if (!StringUtil.isEmpty(shortcuts)) {
           xml.append("    <Action id=\"").append(id).append("\">\n");
+          Set<String> addedShortcuts = new THashSet<String>();
           for (Shortcut shortcut : keymap.getShortcuts(id)) {
-            xml.append("      <Shortcut>").append(KeymapUtil.getShortcutText(shortcut)).append("</Shortcut>\n");
+            // Different shortcuts may have equal display strings (e.g. shift+minus and shift+subtract)
+            // We don't want them do be duplicated for users
+            String shortcutText = KeymapUtil.getShortcutText(shortcut);
+            if (addedShortcuts.add(shortcutText)) {
+              xml.append("      <Shortcut>").append(shortcutText).append("</Shortcut>\n");
+            }
           }
           xml.append("    </Action>\n");
         }

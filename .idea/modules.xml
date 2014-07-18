@@ -166,10 +166,10 @@
       <module fileurl="file://$PROJECT_DIR$/platform/smRunner/smRunner.iml" filepath="$PROJECT_DIR$/platform/smRunner/smRunner.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/smartcvs-src/smartcvs-src.iml" filepath="$PROJECT_DIR$/plugins/cvs/smartcvs-src/smartcvs-src.iml" group="plugins/VCS/cvs" />
       <module fileurl="file://$PROJECT_DIR$/spellchecker/spellchecker.iml" filepath="$PROJECT_DIR$/spellchecker/spellchecker.iml" group="plugins" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/structuralsearch/structuralsearch.iml" filepath="$PROJECT_DIR$/plugins/structuralsearch/structuralsearch.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/structuralsearch/structuralsearch-java/structuralsearch-java.iml" filepath="$PROJECT_DIR$/plugins/structuralsearch/structuralsearch-java/structuralsearch-java.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/structuralsearch/structuralsearch.iml" filepath="$PROJECT_DIR$/platform/structuralsearch/structuralsearch.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/structuralsearch-groovy/structuralsearch-groovy.iml" filepath="$PROJECT_DIR$/plugins/groovy/structuralsearch-groovy/structuralsearch-groovy.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/structuralsearch/structuralsearch-tests.iml" filepath="$PROJECT_DIR$/plugins/structuralsearch/structuralsearch-tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/structuralsearch-java/structuralsearch-java.iml" filepath="$PROJECT_DIR$/java/structuralsearch-java/structuralsearch-java.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/structuralsearch/structuralsearch-tests.iml" filepath="$PROJECT_DIR$/platform/structuralsearch/structuralsearch-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/structure-view-api/structure-view-api.iml" filepath="$PROJECT_DIR$/platform/structure-view-api/structure-view-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/structure-view-impl/structure-view-impl.iml" filepath="$PROJECT_DIR$/platform/structure-view-impl/structure-view-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/svn4idea/svn4idea.iml" filepath="$PROJECT_DIR$/plugins/svn4idea/svn4idea.iml" group="plugins/VCS" />
@@ -185,7 +185,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/testng/testng.iml" filepath="$PROJECT_DIR$/plugins/testng/testng.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/testng_rt/testng_rt.iml" filepath="$PROJECT_DIR$/plugins/testng_rt/testng_rt.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/bootstrap/tests_bootstrap.iml" filepath="$PROJECT_DIR$/platform/testFramework/bootstrap/tests_bootstrap.iml" group="platform" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/typeMigration/typeMigration.iml" filepath="$PROJECT_DIR$/plugins/typeMigration/typeMigration.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/typeMigration/typeMigration.iml" filepath="$PROJECT_DIR$/java/typeMigration/typeMigration.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer/ui-designer.iml" filepath="$PROJECT_DIR$/plugins/ui-designer/ui-designer.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer-core/ui-designer-core.iml" filepath="$PROJECT_DIR$/plugins/ui-designer-core/ui-designer-core.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer/jps-plugin/ui-designer-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/ui-designer/jps-plugin/ui-designer-jps-plugin.iml" group="plugins" />

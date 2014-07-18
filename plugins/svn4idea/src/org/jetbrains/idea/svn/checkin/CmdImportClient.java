@@ -4,9 +4,9 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -23,7 +23,7 @@ public class CmdImportClient extends BaseSvnClient implements ImportClient {
   @Override
   public long doImport(@NotNull File path,
                        @NotNull SVNURL url,
-                       @Nullable SVNDepth depth,
+                       @Nullable Depth depth,
                        @NotNull String message,
                        boolean noIgnore,
                        @Nullable CommitEventHandler handler,

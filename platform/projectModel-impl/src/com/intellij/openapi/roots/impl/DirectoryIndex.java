@@ -34,13 +34,21 @@ public abstract class DirectoryIndex {
   @TestOnly
   public abstract void checkConsistency();
 
+  /**
+   * The same as {@link #getInfoForFile} but works only for directories or file roots and returns {@code null} for directories
+   * which aren't included in project content or libraries
+   * @deprecated use {@link #getInfoForFile(com.intellij.openapi.vfs.VirtualFile)} instead
+   */
+  @Deprecated
   public abstract DirectoryInfo getInfoForDirectory(@NotNull VirtualFile dir);
+
+  @NotNull
+  public abstract DirectoryInfo getInfoForFile(@NotNull VirtualFile file);
 
   @Nullable
   public abstract JpsModuleSourceRootType<?> getSourceRootType(@NotNull DirectoryInfo info);
 
   public abstract boolean isProjectExcludeRoot(@NotNull VirtualFile dir);
-  public abstract boolean isModuleExcludeRoot(@NotNull VirtualFile dir);
 
   @NotNull
   public abstract

@@ -36,6 +36,7 @@ import com.intellij.util.config.Storage;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -239,8 +240,9 @@ public class DualView extends JPanel {
         return createWrappedRenderer(super.getCellRenderer(row, column));
       }
 
+      @NotNull
       @Override
-      public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+      public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
         final Component c = super.prepareRenderer(renderer, row, column);
         if (c instanceof JComponent && !myFlatView.getCellSelectionEnabled()) {
           ((JComponent)c).setBorder(null);

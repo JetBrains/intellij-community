@@ -1,0 +1,39 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.structuralsearch.profile"
+                    interface="com.intellij.structuralsearch.StructuralSearchProfile"/>
+    <extensionPoint qualifiedName="com.intellij.tokenindex.tokenizer" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+    <extensionPoint qualifiedName="com.intellij.structuralsearch.matchPredicateProvider" 
+                    interface="com.intellij.structuralsearch.impl.matcher.MatchPredicateProvider"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <localInspection shortName="SSBasedInspection" bundle="messages.SSRBundle" key="SSRInspection.display.name" groupName="General"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection"/>
+    <postStartupActivity
+        implementation="com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspectionCompiledPatternsCache"/>
+    <!--<fileBasedIndex implementation="com.intellij.tokenindex.TokenIndex"/>-->
+    <structuralsearch.profile implementation="com.intellij.structuralsearch.XmlStructuralSearchProfile"/>
+  </extensions>
+
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.structuralsearch.plugin.StructuralSearchPlugin</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+  </project-components>
+
+  <actions>
+    <group id="StructuralSearchActions">
+      <action id="StructuralSearchPlugin.StructuralSearchAction" class="com.intellij.structuralsearch.plugin.StructuralSearchAction">
+        <add-to-group group-id="FindMenuGroup" anchor="after" relative-to-action="ReplaceInPath"/>
+      </action>
+
+      <action id="StructuralSearchPlugin.StructuralReplaceAction" class="com.intellij.structuralsearch.plugin.StructuralReplaceAction">
+        <add-to-group group-id="FindMenuGroup" anchor="after" relative-to-action="StructuralSearchPlugin.StructuralSearchAction"/>
+      </action>
+    </group>
+  </actions>
+</idea-plugin>

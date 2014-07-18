@@ -80,8 +80,11 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "manifest",
     "platform-main",
     "remote-servers-java-impl",
+    "structuralsearch",
+    "structuralsearch-java",
     "testFramework",
     "tests_bootstrap",
+    "typeMigration",
     "ui-designer-core"
   ].flatten()
   implementationModules.removeAll(jpsCommonModules) //todo[nik] remove jps modules from platformImplementationModules instead and update layouts of minor IDEs accordingly
@@ -256,7 +259,7 @@ public def layoutCommunityPlugins(String home) {
   }
 
   dir("plugins") {
-    def simplePlugins = ["commander", "copyright", "java-i18n", "hg4idea", "github", "typeMigration"] //, "tasks-time-tracking"]
+    def simplePlugins = ["commander", "copyright", "java-i18n", "hg4idea", "github"] //, "tasks-time-tracking"]
 
     simplePlugins.each {
       layoutPlugin it
@@ -531,15 +534,6 @@ public def layoutCommunityPlugins(String home) {
         }
 
         fileset(dir: "${home}/plugins/coverage/lib", excludes: "**/jacoco_src.zip")
-      }
-    }
-
-    pluginDir("structuralsearch") {
-      dir("lib") {
-        jar("structuralsearch.jar") {
-          module("structuralsearch")
-          module("structuralsearch-java")
-        }
       }
     }
 

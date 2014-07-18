@@ -47,6 +47,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   private static final Icon DISABLED_ARROW_ICON = IconLoader.getDisabledIcon(ARROW_ICON);
 
   private boolean mySmallVariant = true;
+  private String myPopupTitle;
   private DataContext myDataContext;
 
   protected ComboBoxAction() {
@@ -75,6 +76,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
   public void setSmallVariant(boolean smallVariant) {
     mySmallVariant = smallVariant;
+  }
+
+  public void setPopupTitle(String popupTitle) {
+    myPopupTitle = popupTitle;
   }
 
   @Override
@@ -247,7 +252,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       DataContext context = getDataContext();
       myDataContext = null;
       final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-        null, group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, onDispose, getMaxRows());
+        myPopupTitle, group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, onDispose, getMaxRows());
       popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
       return popup;
     }

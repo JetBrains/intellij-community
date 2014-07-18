@@ -56,6 +56,7 @@ import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
 import org.jetbrains.jps.incremental.storage.OutputToTargetRegistry;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
+import org.jetbrains.jps.javac.JavacMain;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -176,6 +177,7 @@ public class IncProjectBuilder {
     final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(new Runnable() {
       @Override
       public void run() {
+        JavacMain.clearCompilerZipFileCache();
         myProjectDescriptor.dataManager.flush(false);
         myProjectDescriptor.timestamps.getStorage().force();
       }

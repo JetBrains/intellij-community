@@ -22,6 +22,11 @@
   </problem>
   <problem>
     <file>CaseAndNpe.java</file>
+    <line>56</line>
+    <description>Condition &lt;code&gt;i &lt; 5&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;</description>
+  </problem>
+  <problem>
+    <file>CaseAndNpe.java</file>
     <line>80</line>
     <description>Condition is always true</description>
   </problem>

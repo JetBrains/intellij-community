@@ -203,7 +203,9 @@ public class JiraRepository extends BaseRepositoryImpl {
       XmlRpcRequest request = new XmlRpcRequest("jira1.getServerInfo", parameters);
       @SuppressWarnings("unchecked") Hashtable<String, Object> response =
         (Hashtable<String, Object>)client.execute(request, new CommonsXmlRpcTransport(new URL(getUrl()), getHttpClient()));
-      myJiraVersion = (String)response.get("version");
+      if (response != null) {
+        myJiraVersion = (String)response.get("version");
+      }
     }
     catch (Exception e) {
       LOG.error("Cannot find out JIRA version via XML-RPC", e);

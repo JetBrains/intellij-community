@@ -72,76 +72,82 @@ class GitMergeOperation extends GitBranchOperation {
     saveAllDocuments();
     boolean fatalErrorHappened = false;
     int alreadyUpToDateRepositories = 0;
-    while (hasMoreRepositories() && !fatalErrorHappened) {
-      final GitRepository repository = next();
-      LOG.info("next repository: " + repository);
+    GitUtil.workingTreeChangeStarted(myProject);
+    try {
+      while (hasMoreRepositories() && !fatalErrorHappened) {
+        final GitRepository repository = next();
+        LOG.info("next repository: " + repository);
 
-      VirtualFile root = repository.getRoot();
-      GitLocalChangesWouldBeOverwrittenDetector localChangesDetector =
-        new GitLocalChangesWouldBeOverwrittenDetector(root, GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE);
-      GitSimpleEventDetector unmergedFiles = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED_PREVENTING_MERGE);
-      GitUntrackedFilesOverwrittenByOperationDetector untrackedOverwrittenByMerge =
-        new GitUntrackedFilesOverwrittenByOperationDetector(root);
-      GitSimpleEventDetector mergeConflict = new GitSimpleEventDetector(GitSimpleEventDetector.Event.MERGE_CONFLICT);
-      GitSimpleEventDetector alreadyUpToDateDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.ALREADY_UP_TO_DATE);
+        VirtualFile root = repository.getRoot();
+        GitLocalChangesWouldBeOverwrittenDetector localChangesDetector =
+          new GitLocalChangesWouldBeOverwrittenDetector(root, GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE);
+        GitSimpleEventDetector unmergedFiles = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED_PREVENTING_MERGE);
+        GitUntrackedFilesOverwrittenByOperationDetector untrackedOverwrittenByMerge =
+          new GitUntrackedFilesOverwrittenByOperationDetector(root);
+        GitSimpleEventDetector mergeConflict = new GitSimpleEventDetector(GitSimpleEventDetector.Event.MERGE_CONFLICT);
+        GitSimpleEventDetector alreadyUpToDateDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.ALREADY_UP_TO_DATE);
 
-      GitCommandResult result = myGit.merge(repository, myBranchToMerge, Collections.<String>emptyList(),
-                                          localChangesDetector, unmergedFiles, untrackedOverwrittenByMerge, mergeConflict,
-                                          alreadyUpToDateDetector);
-      if (result.success()) {
-        LOG.info("Merged successfully");
-        refresh(repository);
-        markSuccessful(repository);
-        if (alreadyUpToDateDetector.hasHappened()) {
-          alreadyUpToDateRepositories += 1;
+        GitCommandResult result = myGit.merge(repository, myBranchToMerge, Collections.<String>emptyList(),
+                                            localChangesDetector, unmergedFiles, untrackedOverwrittenByMerge, mergeConflict,
+                                            alreadyUpToDateDetector);
+        if (result.success()) {
+          LOG.info("Merged successfully");
+          refresh(repository);
+          markSuccessful(repository);
+          if (alreadyUpToDateDetector.hasHappened()) {
+            alreadyUpToDateRepositories += 1;
+          }
         }
-      }
-      else if (unmergedFiles.hasHappened()) {
-        LOG.info("Unmerged files error!");
-        fatalUnmergedFilesError();
-        fatalErrorHappened = true;
-      }
-      else if (localChangesDetector.wasMessageDetected()) {
-        LOG.info("Local changes would be overwritten by merge!");
-        boolean smartMergeSucceeded = proposeSmartMergePerformAndNotify(repository, localChangesDetector);
-        if (!smartMergeSucceeded) {
+        else if (unmergedFiles.hasHappened()) {
+          LOG.info("Unmerged files error!");
+          fatalUnmergedFilesError();
+          fatalErrorHappened = true;
+        }
+        else if (localChangesDetector.wasMessageDetected()) {
+          LOG.info("Local changes would be overwritten by merge!");
+          boolean smartMergeSucceeded = proposeSmartMergePerformAndNotify(repository, localChangesDetector);
+          if (!smartMergeSucceeded) {
+            fatalErrorHappened = true;
+          }
+        }
+        else if (mergeConflict.hasHappened()) {
+          LOG.info("Merge conflict");
+          myConflictedRepositories.put(repository, Boolean.FALSE);
+          refresh(repository);
+          markSuccessful(repository);
+        }
+        else if (untrackedOverwrittenByMerge.wasMessageDetected()) {
+          LOG.info("Untracked files would be overwritten by merge!");
+          fatalUntrackedFilesError(repository.getRoot(), untrackedOverwrittenByMerge.getRelativeFilePaths());
+          fatalErrorHappened = true;
+        }
+        else {
+          LOG.info("Unknown error. " + result);
+          fatalError(getCommonErrorTitle(), result.getErrorOutputAsJoinedString());
           fatalErrorHappened = true;
         }
       }
-      else if (mergeConflict.hasHappened()) {
-        LOG.info("Merge conflict");
-        myConflictedRepositories.put(repository, Boolean.FALSE);
-        refresh(repository);
-        markSuccessful(repository);
-      }
-      else if (untrackedOverwrittenByMerge.wasMessageDetected()) {
-        LOG.info("Untracked files would be overwritten by merge!");
-        fatalUntrackedFilesError(repository.getRoot(), untrackedOverwrittenByMerge.getRelativeFilePaths());
-        fatalErrorHappened = true;
+
+      if (fatalErrorHappened) {
+        notifyAboutRemainingConflicts();
       }
       else {
-        LOG.info("Unknown error. " + result);
-        fatalError(getCommonErrorTitle(), result.getErrorOutputAsJoinedString());
-        fatalErrorHappened = true;
-      }
-    }
-
-    if (fatalErrorHappened) {
-      notifyAboutRemainingConflicts();
-    }
-    else {
-      boolean allConflictsResolved = resolveConflicts();
-      if (allConflictsResolved) {
-        if (alreadyUpToDateRepositories < getRepositories().size()) {
-          notifySuccess();
-        }
-        else {
-          notifySuccess("Already up-to-date");
+        boolean allConflictsResolved = resolveConflicts();
+        if (allConflictsResolved) {
+          if (alreadyUpToDateRepositories < getRepositories().size()) {
+            notifySuccess();
+          }
+          else {
+            notifySuccess("Already up-to-date");
+          }
         }
       }
-    }
 
-    restoreLocalChanges();
+      restoreLocalChanges();
+    }
+    finally {
+      GitUtil.workingTreeChangeFinished(myProject);
+    }
   }
 
   private void notifyAboutRemainingConflicts() {

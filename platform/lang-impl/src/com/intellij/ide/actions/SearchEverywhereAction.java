@@ -58,8 +58,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.IdeConfigurablesGroup;
-import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -139,9 +137,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   MySearchTextField myPopupField;
   private volatile GotoClassModel2 myClassModel;
   private volatile GotoFileModel myFileModel;
-  private volatile GotoActionModel myActionModel;
+  private volatile GotoActionItemProvider myActionProvider;
   private volatile GotoSymbolModel2 mySymbolsModel;
-  private volatile String[] myActions;
   private Component myFocusComponent;
   private JBPopup myPopup;
   private Map<String, String> myConfigurables = new HashMap<String, String>();
@@ -841,7 +838,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         if (split.length != 3 || text.equals(split[0])) {
           continue;
         }
-        history.add(new HistoryItem(split[0], split[1], split[2]));
+        if (!StringUtil.isEmpty(split[0])) {
+          history.add(new HistoryItem(split[0], split[1], split[2]));
+        }
       }
     }
     history.add(0, new HistoryItem(text, type == null ? null : type.name(), fqn));
@@ -1190,16 +1189,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     return text;
   }
 
-  private void schedulePopupUpdate() {
-    myUpdateAlarm.cancelAllRequests();
-    myUpdateAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        updatePopupBounds();
-      }
-    }, 50);
-  }
-
   private static boolean isActionValue(Object o) {
     return o instanceof GotoActionModel.ActionWrapper || o instanceof AnAction;
   }
@@ -1358,21 +1347,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private SearchResult getActionsOrSettings(final String pattern, final int max, final boolean actions) {
       final SearchResult result = new SearchResult();
       final MinusculeMatcher matcher = new MinusculeMatcher("*" +pattern, NameUtil.MatchingCaseSensitivity.NONE);
-      if (myActions == null) {
-        if (myActionModel == null) {
-          myActionModel = createActionModel();
-        }
-        myActions = myActionModel.getNames(true);
+      if (myActionProvider == null) {
+        myActionProvider = createActionProvider();
       }
 
-      List<MatchResult> matches = collectResults(pattern, myActions, myActionModel);
-
-      for (MatchResult o : matches) {
-        check();
-        Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
-        for (Object object : objects) {
+      myActionProvider.filterElements(pattern, true, new Processor<GotoActionModel.MatchedValue>() {
+        @Override
+        public boolean process(GotoActionModel.MatchedValue matched) {
           check();
-          if (myListModel.contains(object)) continue;
+          Object object = matched.value;
+          if (myListModel.contains(object)) return true;
 
           if (!actions && isSetting(object)) {
             if (matcher.matches(getSettingText((OptionDescription)object))) {
@@ -1381,9 +1365,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           } else if (actions && !isToolWindowAction(object) && isActionValue(object)) {
             result.add(object);
           }
-          if (result.size() == max) return result;
+          return result.size() <= max;
         }
-      }
+      });
+
       return result;
     }
 
@@ -1416,7 +1401,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     private synchronized void buildFiles(final String pattern) {
-      final SearchResult files = getFiles(pattern, MAX_FILES);
+      final SearchResult files = getFiles(pattern, MAX_FILES, myFileChooseByName);
 
       check();
 
@@ -1439,7 +1424,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
 
     private synchronized void buildSymbols(final String pattern) {
-      final SearchResult symbols = getSymbols(pattern, MAX_SYMBOLS);
+      final SearchResult symbols = getSymbols(pattern, MAX_SYMBOLS, mySymbolsChooseByName);
       check();
 
       if (symbols.size() > 0) {
@@ -1527,7 +1512,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
       check();
 
-      final SearchResult classes = getClasses(pattern, showAll.get(), MAX_CLASSES);
+      final SearchResult classes = getClasses(pattern, showAll.get(), MAX_CLASSES, myClassChooseByName);
 
       check();
 
@@ -1549,10 +1534,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     }
 
-    private SearchResult getSymbols(String pattern, final int max) {
+    private SearchResult getSymbols(String pattern, final int max, ChooseByNamePopup chooseByNamePopup) {
       final SearchResult symbols = new SearchResult();
       final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
-      mySymbolsChooseByName.getProvider().filterElements(mySymbolsChooseByName, pattern, false,
+      chooseByNamePopup.getProvider().filterElements(chooseByNamePopup, pattern, false,
                                                          myProgressIndicator, new Processor<Object>() {
           @Override
           public boolean process(Object o) {
@@ -1572,9 +1557,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       return symbols;
     }
 
-    private SearchResult getClasses(String pattern, boolean includeLibs, final int max) {
+    private SearchResult getClasses(String pattern, boolean includeLibs, final int max, ChooseByNamePopup chooseByNamePopup) {
       final SearchResult classes = new SearchResult();
-      myClassChooseByName.getProvider().filterElements(myClassChooseByName, pattern, includeLibs,
+      if (chooseByNamePopup == null) {
+        return classes;
+      }
+      chooseByNamePopup.getProvider().filterElements(chooseByNamePopup, pattern, includeLibs,
                                                       myProgressIndicator, new Processor<Object>() {
           @Override
           public boolean process(Object o) {
@@ -1589,15 +1577,18 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           }
         });
       if (!includeLibs && classes.isEmpty()) {
-        return getClasses(pattern, true, max);
+        return getClasses(pattern, true, max, chooseByNamePopup);
       }
       return classes;
     }
 
-    private SearchResult getFiles(final String pattern, final int max) {
+    private SearchResult getFiles(final String pattern, final int max, ChooseByNamePopup chooseByNamePopup) {
       final SearchResult files = new SearchResult();
+      if (chooseByNamePopup == null) {
+        return files;
+      }
       final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
-      myFileChooseByName.getProvider().filterElements(myFileChooseByName, pattern, true,
+      chooseByNamePopup.getProvider().filterElements(chooseByNamePopup, pattern, true,
                                                       myProgressIndicator, new Processor<Object>() {
           @Override
           public boolean process(Object o) {
@@ -1791,10 +1782,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myClassChooseByName = ChooseByNamePopup.createPopup(project, myClassModel, (PsiElement)null);
         mySymbolsChooseByName = ChooseByNamePopup.createPopup(project, mySymbolsModel, (PsiElement)null);
         project.putUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
-        myActionModel = createActionModel();
+        myActionProvider = createActionProvider();
         myConfigurables.clear();
-        fillConfigurablesIds(null, new IdeConfigurablesGroup().getConfigurables());
-        fillConfigurablesIds(null, new ProjectConfigurablesGroup(project).getConfigurables());
+        fillConfigurablesIds(null, ShowSettingsUtilImpl.getConfigurables(project, true));
       }
     }
 
@@ -1802,14 +1792,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       buildRecentFiles("");
     }
 
-    private GotoActionModel createActionModel() {
-      return new GotoActionModel(project, myFocusComponent, myEditor, myFile) {
+    private GotoActionItemProvider createActionProvider() {
+      GotoActionModel model = new GotoActionModel(project, myFocusComponent, myEditor, myFile) {
         @Override
         protected MatchMode actionMatches(String pattern, @NotNull AnAction anAction) {
           return NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE)
-            .matches(anAction.getTemplatePresentation().getText()) ? MatchMode.NAME : MatchMode.NONE;
+                   .matches(anAction.getTemplatePresentation().getText()) ? MatchMode.NAME : MatchMode.NONE;
         }
       };
+      return new GotoActionItemProvider(model);
     }
 
     @SuppressWarnings("SSBasedInspection")
@@ -1885,57 +1876,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       });
     }
 
-    private List<MatchResult> collectResults(String pattern, String[] names, final ChooseByNameModel model) {
-      if (names == null) return Collections.emptyList();
-      pattern = ChooseByNamePopup.getTransformedPattern(pattern, model);
-      pattern = DefaultChooseByNameItemProvider.getNamePattern(model, pattern);
-      if (model != myFileModel && model != myActionModel && !pattern.startsWith("*") && pattern.length() > 1) {
-        pattern = "*" + pattern;
-      }
-      final ArrayList<MatchResult> results = new ArrayList<MatchResult>();
-      final String p = pattern;
-      MinusculeMatcher matcher = new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE) {
-        @Override
-        public boolean matches(@NotNull String name) {
-          if (!(model instanceof GotoActionModel) && p.indexOf(' ') > 0 && name.trim().indexOf(' ') < 0) {
-            return false;
-          }
-          return super.matches(name);
-        }
-      };
-      MatchResult result;
-
-      for (String name : names) {
-        check();
-        result = null;
-        if (model instanceof CustomMatcherModel) {
-          try {
-            result = ((CustomMatcherModel)model).matches(name, pattern) ? new MatchResult(name, 0, true) : null;
-            if (result != null && model == myActionModel) {
-              ((CustomMatcherModel)model).matches(name, pattern);
-            }
-          }
-          catch (Exception ignore) {
-          }
-        }
-        else {
-          result = matcher.matches(name) ? new MatchResult(name, matcher.matchingDegree(name), matcher.isStartMatch(name)) : null;
-        }
-
-        if (result != null) {
-          results.add(result);
-        }
-      }
-
-      Collections.sort(results, new Comparator<MatchResult>() {
-        @Override
-        public int compare(MatchResult o1, MatchResult o2) {
-          return o1.compareTo(o2);
-        }
-      });
-      return results;
-    }
-
     public ActionCallback cancel() {
       myProgressIndicator.cancel();
       myDone.setRejected();
@@ -1950,10 +1890,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             public void run() {
               try {
                 final SearchResult result
-                  = id == WidgetID.CLASSES ? getClasses(pattern, showAll.get(), DEFAULT_MORE_STEP_COUNT)
-                  : id == WidgetID.FILES ? getFiles(pattern, DEFAULT_MORE_STEP_COUNT)
+                  = id == WidgetID.CLASSES ? getClasses(pattern, showAll.get(), DEFAULT_MORE_STEP_COUNT, myClassChooseByName)
+                  : id == WidgetID.FILES ? getFiles(pattern, DEFAULT_MORE_STEP_COUNT, myFileChooseByName)
                   : id == WidgetID.RUN_CONFIGURATIONS ? getConfigurations(pattern, DEFAULT_MORE_STEP_COUNT)
-                  : id == WidgetID.SYMBOLS ? getSymbols(pattern, DEFAULT_MORE_STEP_COUNT)
+                  : id == WidgetID.SYMBOLS ? getSymbols(pattern, DEFAULT_MORE_STEP_COUNT, mySymbolsChooseByName)
                   : id == WidgetID.ACTIONS ? getActionsOrSettings(pattern, DEFAULT_MORE_STEP_COUNT, true)
                   : id == WidgetID.SETTINGS ? getActionsOrSettings(pattern, DEFAULT_MORE_STEP_COUNT, false)
                   : new SearchResult();
@@ -2035,8 +1975,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         if (lock != null) {
           synchronized (lock) {
             myClassModel = null;
-            myActionModel = null;
-            myActions = null;
+            myActionProvider = null;
             mySymbolsModel = null;
             myConfigurables.clear();
             myFocusComponent = null;

@@ -141,14 +141,20 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
       }
     }
     // revert files from HEAD
-    for (Map.Entry<VirtualFile, List<FilePath>> entry : toRevert.entrySet()) {
-      listener.accept(entry.getValue());
-      try {
-        revert(entry.getKey(), entry.getValue());
+    GitUtil.workingTreeChangeStarted(myProject);
+    try {
+      for (Map.Entry<VirtualFile, List<FilePath>> entry : toRevert.entrySet()) {
+        listener.accept(entry.getValue());
+        try {
+          revert(entry.getKey(), entry.getValue());
+        }
+        catch (VcsException e) {
+          exceptions.add(e);
+        }
       }
-      catch (VcsException e) {
-        exceptions.add(e);
-      }
+    }
+    finally {
+      GitUtil.workingTreeChangeFinished(myProject);
     }
     LocalFileSystem lfs = LocalFileSystem.getInstance();
     HashSet<File> filesToRefresh = new HashSet<File>();

@@ -21,6 +21,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.*;
@@ -89,9 +90,10 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   private       SoftWrapPainter                    myPainter;
   private final SoftWrapApplianceManager           myApplianceManager;
   private final SoftWrapAwareVisualSizeManager     myVisualSizeManager;
+  private       EditorTextRepresentationHelper     myEditorTextRepresentationHelper;
 
   private final EditorEx myEditor;
-  
+
   /**
    * We don't want to use soft wraps-aware processing from non-EDT and profiling shows that 'is EDT' check that is called too
    * often is rather expensive. Hence, we use caching here for performance improvement.
@@ -101,6 +103,8 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   private int myActive;
   private boolean myUseSoftWraps;
   private int myTabWidth = -1;
+  @NotNull
+  private FontPreferences myFontPreferences;
 
   /**
    * Soft wraps need to be kept up-to-date on all editor modification (changing text, adding/removing/expanding/collapsing fold
@@ -132,9 +136,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myEditor = editor;
     myStorage = new SoftWrapsStorage();
     myPainter = new CompositeSoftWrapPainter(editor);
-    DefaultEditorTextRepresentationHelper representationHelper = new DefaultEditorTextRepresentationHelper(editor);
-    myDataMapper = new CachingSoftWrapDataMapper(editor, myStorage, representationHelper);
-    myApplianceManager = new SoftWrapApplianceManager(myStorage, editor, myPainter, representationHelper, myDataMapper);
+    myEditorTextRepresentationHelper = new DefaultEditorTextRepresentationHelper(editor);
+    myDataMapper = new CachingSoftWrapDataMapper(editor, myStorage);
+    myApplianceManager = new SoftWrapApplianceManager(myStorage, editor, myPainter, myDataMapper);
     myFoldBasedApplianceStrategy = new SoftWrapFoldBasedApplianceStrategy(editor);
     myVisualSizeManager = new SoftWrapAwareVisualSizeManager(myPainter);
 
@@ -150,6 +154,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     });
     EditorSettings settings = myEditor.getSettings();
     myUseSoftWraps = settings.isUseSoftWraps();
+    myFontPreferences = myEditor.getColorsScheme().getFontPreferences();
     
     editor.addPropertyChangeListener(this);
 
@@ -168,8 +173,16 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
     int tabWidthBefore = myTabWidth;
     myTabWidth = getCurrentTabWidth();
+
+    boolean fontsChanged = false;
+    if (!myFontPreferences.equals(myEditor.getColorsScheme().getFontPreferences())
+        && myEditorTextRepresentationHelper instanceof DefaultEditorTextRepresentationHelper) {
+      fontsChanged = true;
+      myFontPreferences = myEditor.getColorsScheme().getFontPreferences();
+      ((DefaultEditorTextRepresentationHelper)myEditorTextRepresentationHelper).clearSymbolWidthCache();
+    }
     
-    if ((myUseSoftWraps ^ softWrapsUsedBefore) || (tabWidthBefore >= 0 && myTabWidth != tabWidthBefore)) {
+    if ((myUseSoftWraps ^ softWrapsUsedBefore) || (tabWidthBefore >= 0 && myTabWidth != tabWidthBefore) || fontsChanged) {
       myApplianceManager.reset();
       myDeferredFoldRegions.clear();
       myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
@@ -703,6 +716,20 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myPainter = painter;
     myApplianceManager.setSoftWrapPainter(painter);
     myVisualSizeManager.setSoftWrapPainter(painter);
+  }
+
+  public static EditorTextRepresentationHelper getEditorTextRepresentationHelper(@NotNull Editor editor) {
+    return ((SoftWrapModelEx)editor.getSoftWrapModel()).getEditorTextRepresentationHelper();
+  }
+
+  public EditorTextRepresentationHelper getEditorTextRepresentationHelper() {
+    return myEditorTextRepresentationHelper;
+  }
+
+  @TestOnly
+  public void setEditorTextRepresentationHelper(EditorTextRepresentationHelper editorTextRepresentationHelper) {
+    myEditorTextRepresentationHelper = editorTextRepresentationHelper;
+    myApplianceManager.reset();
   }
 
   @NotNull

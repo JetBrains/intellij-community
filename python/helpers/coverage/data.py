@@ -2,7 +2,9 @@
 
 import os
 
-from coverage.backward import pickle, sorted        # pylint: disable=W0622
+from coverage.backward import iitems, pickle, sorted    # pylint: disable=W0622
+from coverage.files import PathAliases
+from coverage.misc import file_be_gone
 
 
 class CoverageData(object):
@@ -21,15 +23,18 @@ class CoverageData(object):
 
     """
 
-    def __init__(self, basename=None, collector=None):
+    def __init__(self, basename=None, collector=None, debug=None):
         """Create a CoverageData.
 
         `basename` is the name of the file to use for storing data.
 
         `collector` is a string describing the coverage measurement software.
 
+        `debug` is a `DebugControl` object for writing debug messages.
+
         """
         self.collector = collector or 'unknown'
+        self.debug = debug
 
         self.use_file = True
 
@@ -58,10 +63,6 @@ class CoverageData(object):
         #       }
         #
         self.arcs = {}
-
-        self.os = os
-        self.sorted = sorted
-        self.pickle = pickle
 
     def usefile(self, use_file=True):
         """Set whether or not to use a disk file for data."""
@@ -92,21 +93,21 @@ class CoverageData(object):
     def erase(self):
         """Erase the data, both in this object, and from its file storage."""
         if self.use_file:
-            if self.filename and os.path.exists(self.filename):
-                os.remove(self.filename)
+            if self.filename:
+                file_be_gone(self.filename)
         self.lines = {}
         self.arcs = {}
 
     def line_data(self):
         """Return the map from filenames to lists of line numbers executed."""
         return dict(
-            [(f, self.sorted(lmap.keys())) for f, lmap in self.lines.items()]
+            [(f, sorted(lmap.keys())) for f, lmap in iitems(self.lines)]
             )
 
     def arc_data(self):
         """Return the map from filenames to lists of line number pairs."""
         return dict(
-            [(f, self.sorted(amap.keys())) for f, amap in self.arcs.items()]
+            [(f, sorted(amap.keys())) for f, amap in iitems(self.arcs)]
             )
 
     def write_file(self, filename):
@@ -123,10 +124,13 @@ class CoverageData(object):
         if self.collector:
             data['collector'] = self.collector
 
+        if self.debug and self.debug.should('dataio'):
+            self.debug.write("Writing data to %r" % (filename,))
+
         # Write the pickle to the file.
         fdata = open(filename, 'wb')
         try:
-            self.pickle.dump(data, fdata, 2)
+            pickle.dump(data, fdata, 2)
         finally:
             fdata.close()
 
@@ -136,6 +140,8 @@ class CoverageData(object):
 
     def raw_data(self, filename):
         """Return the raw pickled data from `filename`."""
+        if self.debug and self.debug.should('dataio'):
+            self.debug.write("Reading data from %r" % (filename,))
         fdata = open(filename, 'rb')
         try:
             data = pickle.load(fdata)
@@ -158,33 +164,39 @@ class CoverageData(object):
                 # Unpack the 'lines' item.
                 lines = dict([
                     (f, dict.fromkeys(linenos, None))
-                        for f, linenos in data.get('lines', {}).items()
+                        for f, linenos in iitems(data.get('lines', {}))
                     ])
                 # Unpack the 'arcs' item.
                 arcs = dict([
                     (f, dict.fromkeys(arcpairs, None))
-                        for f, arcpairs in data.get('arcs', {}).items()
+                        for f, arcpairs in iitems(data.get('arcs', {}))
                     ])
         except Exception:
             pass
         return lines, arcs
 
-    def combine_parallel_data(self):
+    def combine_parallel_data(self, aliases=None):
         """Combine a number of data files together.
 
         Treat `self.filename` as a file prefix, and combine the data from all
         of the data files starting with that prefix plus a dot.
 
+        If `aliases` is provided, it's a `PathAliases` object that is used to
+        re-map paths to match the local machine's.
+
         """
+        aliases = aliases or PathAliases()
         data_dir, local = os.path.split(self.filename)
         localdot = local + '.'
         for f in os.listdir(data_dir or '.'):
             if f.startswith(localdot):
                 full_path = os.path.join(data_dir, f)
                 new_lines, new_arcs = self._read_file(full_path)
-                for filename, file_data in new_lines.items():
+                for filename, file_data in iitems(new_lines):
+                    filename = aliases.map(filename)
                     self.lines.setdefault(filename, {}).update(file_data)
-                for filename, file_data in new_arcs.items():
+                for filename, file_data in iitems(new_arcs):
+                    filename = aliases.map(filename)
                     self.arcs.setdefault(filename, {}).update(file_data)
                 if f != local:
                     os.remove(full_path)
@@ -195,7 +207,7 @@ class CoverageData(object):
         `line_data` is { filename: { lineno: None, ... }, ...}
 
         """
-        for filename, linenos in line_data.items():
+        for filename, linenos in iitems(line_data):
             self.lines.setdefault(filename, {}).update(linenos)
 
     def add_arc_data(self, arc_data):
@@ -204,7 +216,7 @@ class CoverageData(object):
         `arc_data` is { filename: { (l1,l2): None, ... }, ...}
 
         """
-        for filename, arcs in arc_data.items():
+        for filename, arcs in iitems(arc_data):
             self.arcs.setdefault(filename, {}).update(arcs)
 
     def touch_file(self, filename):
@@ -245,8 +257,8 @@ class CoverageData(object):
         if fullpath:
             filename_fn = lambda f: f
         else:
-            filename_fn = self.os.path.basename
-        for filename, lines in self.lines.items():
+            filename_fn = os.path.basename
+        for filename, lines in iitems(self.lines):
             summ[filename_fn(filename)] = len(lines)
         return summ
 

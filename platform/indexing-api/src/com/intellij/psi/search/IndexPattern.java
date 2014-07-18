@@ -16,6 +16,7 @@
 package com.intellij.psi.search;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -50,11 +51,11 @@ public class IndexPattern {
     return myPatternString;
   }
 
-  public Pattern getPattern() {
+  public @Nullable Pattern getPattern() {
     return myPattern;
   }
 
-  public Pattern getOptimizedIndexingPattern() {
+  public @Nullable Pattern getOptimizedIndexingPattern() {
     return myOptimizedIndexingPattern;
   }
 

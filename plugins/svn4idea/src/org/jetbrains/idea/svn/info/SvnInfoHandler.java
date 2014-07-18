@@ -21,12 +21,11 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
-import org.tmatesoft.svn.core.SVNDepth;
+import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.lock.Lock;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -42,14 +41,14 @@ import java.util.*;
  */
 public class SvnInfoHandler extends DefaultHandler {
   @Nullable private final File myBase;
-  private final Consumer<SVNInfo> myInfoConsumer;
-  private Map<File, SVNInfo> myResultsMap;
+  private final Consumer<org.jetbrains.idea.svn.info.Info> myInfoConsumer;
+  private Map<File, org.jetbrains.idea.svn.info.Info> myResultsMap;
   private SvnInfoStructure myPending;
   private final Map<String, Getter<ElementHandlerBase>> myElementsMap;
   private final List<ElementHandlerBase> myParseStack;
   private final StringBuilder mySb;
 
-  public SvnInfoHandler(@Nullable File base, final Consumer<SVNInfo> infoConsumer) {
+  public SvnInfoHandler(@Nullable File base, final Consumer<org.jetbrains.idea.svn.info.Info> infoConsumer) {
     myBase = base;
     myInfoConsumer = infoConsumer;
     myPending = createPending();
@@ -57,12 +56,12 @@ public class SvnInfoHandler extends DefaultHandler {
     fillElements();
     myParseStack = new ArrayList<ElementHandlerBase>();
     myParseStack.add(new Fake());
-    myResultsMap = new HashMap<File, SVNInfo>();
+    myResultsMap = new HashMap<File, org.jetbrains.idea.svn.info.Info>();
     mySb = new StringBuilder();
   }
 
   private void switchPending() throws SAXException {
-    final SVNInfo info;
+    final org.jetbrains.idea.svn.info.Info info;
     try {
       info = myPending.convert();
     }
@@ -78,7 +77,7 @@ public class SvnInfoHandler extends DefaultHandler {
 
   private SvnInfoStructure createPending() {
     SvnInfoStructure pending = new SvnInfoStructure();
-    pending.myDepth = SVNDepth.INFINITY;
+    pending.myDepth = org.jetbrains.idea.svn.api.Depth.INFINITY;
 
     return pending;
   }
@@ -280,7 +279,7 @@ public class SvnInfoHandler extends DefaultHandler {
     myElementsMap.put("lock", new Getter<ElementHandlerBase>() {
       @Override
       public ElementHandlerBase get() {
-        return new Lock();
+        return new LockElement();
       }
     });
     myElementsMap.put("token", new Getter<ElementHandlerBase>() {
@@ -345,7 +344,7 @@ public class SvnInfoHandler extends DefaultHandler {
     });
   }
 
-  public Map<File, SVNInfo> getResultsMap() {
+  public Map<File, org.jetbrains.idea.svn.info.Info> getResultsMap() {
     return myResultsMap;
   }
 
@@ -514,8 +513,7 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, SvnInfoStructure structure) throws SAXException {
-      final SVNDate date = SVNDate.parseDate(s);
-      structure.myCommittedDate = date;
+      structure.myCommittedDate = s;
     }
   }
 
@@ -600,8 +598,7 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, SvnInfoStructure structure) throws SAXException {
-      final SVNDate date = SVNDate.parseDate(s);
-      structure.myTextTime = date;
+      structure.myTextTime = s;
     }
   }
 
@@ -616,7 +613,7 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, SvnInfoStructure structure) throws SAXException {
-      structure.myDepth = SVNDepth.fromString(s);
+      structure.myDepth = org.jetbrains.idea.svn.api.Depth.from(s);
     }
   }
 
@@ -796,14 +793,14 @@ public class SvnInfoHandler extends DefaultHandler {
     }
   }
 
-  private static class Lock extends ElementHandlerBase {
-    private Lock() {
+  private static class LockElement extends ElementHandlerBase {
+    private LockElement() {
       super(new String[]{"token", "owner", "comment", "created"}, new String[]{});
     }
 
     @Override
     protected void updateInfo(Attributes attributes, SvnInfoStructure structure) throws SAXException {
-      structure.myLockWrapper = new SVNLockWrapper();
+      structure.myLockBuilder = new Lock.Builder();
     }
 
     @Override
@@ -822,7 +819,7 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, SvnInfoStructure structure) throws SAXException {
-      structure.myLockWrapper.setID(s);
+      structure.myLockBuilder.setToken(s);
     }
   }
 
@@ -837,7 +834,7 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, SvnInfoStructure structure) throws SAXException {
-      structure.myLockWrapper.setOwner(s);
+      structure.myLockBuilder.setOwner(s);
     }
   }
 
@@ -852,7 +849,7 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, SvnInfoStructure structure) throws SAXException {
-      structure.myLockWrapper.setComment(s);
+      structure.myLockBuilder.setComment(s);
     }
   }
 
@@ -867,7 +864,7 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, SvnInfoStructure structure) throws SAXException {
-      structure.myLockWrapper.setCreationDate(SVNDate.parseDate(s));
+      structure.myLockBuilder.setCreationDate(SVNDate.parseDate(s));
     }
   }
 
@@ -883,7 +880,7 @@ public class SvnInfoHandler extends DefaultHandler {
     protected void updateInfo(Attributes attributes, SvnInfoStructure structure) throws SAXException {
       final String kind = attributes.getValue("kind");
       assertSAX(! StringUtil.isEmptyOrSpaces(kind));
-      structure.myKind = SVNNodeKind.parseKind(kind);
+      structure.myKind = NodeKind.from(kind);
 
       if (myBase != null) {
         final String path = attributes.getValue("path");

@@ -19,6 +19,7 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -121,8 +122,10 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection imple
         }
         modifierList = (PsiModifierList)parent;
       }
-      modifierList.setModifierProperty(PsiModifier.STATIC, false);
       final PsiElement modifierOwner = modifierList.getParent();
+      if (!(modifierOwner instanceof PsiMethod && PsiUtil.isLanguageLevel8OrHigher(modifierList))) {
+        modifierList.setModifierProperty(PsiModifier.STATIC, false);
+      }
       assert modifierOwner != null;
       if (modifierOwner instanceof PsiClass) {
         final PsiClass aClass = (PsiClass)modifierOwner;

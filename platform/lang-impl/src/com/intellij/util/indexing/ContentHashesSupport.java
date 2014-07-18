@@ -64,7 +64,7 @@ class ContentHashesSupport {
   }
 
   static void flushContentHashes() {
-    if (ourHashesWithFileType.isDirty()) ourHashesWithFileType.force();
+    if (ourHashesWithFileType != null && ourHashesWithFileType.isDirty()) ourHashesWithFileType.force();
   }
 
 

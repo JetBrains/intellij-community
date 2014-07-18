@@ -29,7 +29,7 @@
     <projectService serviceInterface="com.intellij.xdebugger.impl.XDebuggerHistoryManager"
                     serviceImplementation="com.intellij.xdebugger.impl.XDebuggerHistoryManager"/>
 
-    <applicationConfigurable provider="com.intellij.xdebugger.impl.settings.DebuggerConfigurableProvider"/>
+    <applicationConfigurable groupId="build" dynamic="true" key="debugger.configurable.display.name" bundle="messages.XDebuggerBundle" provider="com.intellij.xdebugger.impl.settings.DebuggerConfigurableProvider"/>
 
     <customizableActionGroupProvider implementation="com.intellij.xdebugger.impl.ui.XDebugTabCustomizableActionGroupProvider"/>
 

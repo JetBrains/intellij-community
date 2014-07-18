@@ -1,6 +1,21 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInspection.inheritance.search;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -32,7 +47,7 @@ public class InheritorsStatisticalDataSearch {
     disabledNames.add(aClassName);
     disabledNames.add(superClassName);
     final Set<InheritorsCountData> collector = new TreeSet<InheritorsCountData>();
-    final Pair<Integer, Integer> collectingResult = collectInheritorsInfo(superClass, collector, disabledNames);
+    final Couple<Integer> collectingResult = collectInheritorsInfo(superClass, collector, disabledNames);
     final int allAnonymousInheritors = collectingResult.getSecond();
     final int allInheritors = collectingResult.getFirst() + allAnonymousInheritors - 1;
 
@@ -64,19 +79,19 @@ public class InheritorsStatisticalDataSearch {
     return result;
   }
 
-  private static Pair<Integer, Integer> collectInheritorsInfo(final PsiClass superClass,
+  private static Couple<Integer> collectInheritorsInfo(final PsiClass superClass,
                                                               final Set<InheritorsCountData> collector,
                                                               final Set<String> disabledNames) {
     return collectInheritorsInfo(superClass, collector, disabledNames, new HashSet<String>(), new HashSet<String>());
   }
 
-  private static Pair<Integer, Integer> collectInheritorsInfo(final PsiClass aClass,
+  private static Couple<Integer> collectInheritorsInfo(final PsiClass aClass,
                                                               final Set<InheritorsCountData> collector,
                                                               final Set<String> disabledNames,
                                                               final Set<String> processedElements,
                                                               final Set<String> allNotAnonymousInheritors) {
     final String className = aClass.getName();
-    if (!processedElements.add(className)) return Pair.create(0, 0);
+    if (!processedElements.add(className)) return Couple.of(0, 0);
 
     final MyInheritorsInfoProcessor processor = new MyInheritorsInfoProcessor(collector, disabledNames, processedElements);
     DirectClassInheritorsSearch.search(aClass).forEach(processor);
@@ -87,7 +102,7 @@ public class InheritorsStatisticalDataSearch {
     if (!aClass.isInterface() && allInheritorsCount != 0 && !disabledNames.contains(className)) {
       collector.add(new InheritorsCountData(aClass, allInheritorsCount));
     }
-    return Pair.create(allNotAnonymousInheritors.size(), processor.getAnonymousInheritorsCount());
+    return Couple.of(allNotAnonymousInheritors.size(), processor.getAnonymousInheritorsCount());
   }
 
   private static class MyInheritorsInfoProcessor implements Processor<PsiClass> {
@@ -120,8 +135,11 @@ public class InheritorsStatisticalDataSearch {
         myAnonymousInheritorsCount++;
       }
       else {
-        final Pair<Integer, Integer> res =
-          collectInheritorsInfo(psiClass, myCollector, myDisabledNames, myProcessedElements, myAllNotAnonymousInheritors);
+        final Couple<Integer> res = collectInheritorsInfo(psiClass,
+                                                          myCollector,
+                                                          myDisabledNames,
+                                                          myProcessedElements,
+                                                          myAllNotAnonymousInheritors);
         myAnonymousInheritorsCount += res.getSecond();
         if (!psiClass.isInterface()) {
           myAllNotAnonymousInheritors.add(inheritorName);

@@ -18,14 +18,12 @@ package com.intellij.internal;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
@@ -53,10 +51,7 @@ public class DumpDirectoryInfoAction extends AnAction {
             public boolean processFile(VirtualFile fileOrDir) {
               LOG.info(fileOrDir.getPath());
 
-              final DirectoryInfo directoryInfo = index.getInfoForDirectory(fileOrDir);
-              if (directoryInfo != null) {
-                LOG.info(directoryInfo.toString());
-              }
+              LOG.info(index.getInfoForFile(fileOrDir).toString());
               return true;
             }
           };

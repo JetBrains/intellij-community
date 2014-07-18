@@ -46,6 +46,7 @@ import java.awt.image.ImageObserver;
 import java.awt.image.MemoryImageSource;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -64,7 +65,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   private final JTextField myBlue;
   private final JTextField myHex;
   private final Alarm myUpdateQueue;
-  private final ColorPickerListener[] myExternalListeners;
+  private final List<ColorPickerListener> myExternalListeners;
 
   private final boolean myOpacityInPercent;
 
@@ -88,13 +89,13 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   };
 
   public ColorPicker(@NotNull Disposable parent, @Nullable Color color, boolean enableOpacity) {
-    this(parent, color, true, enableOpacity, new ColorPickerListener[0], false);
+    this(parent, color, true, enableOpacity, Collections.<ColorPickerListener>emptyList(), false);
   }
 
   private ColorPicker(Disposable parent,
                       @Nullable Color color,
                       boolean restoreColors, boolean enableOpacity,
-                      ColorPickerListener[] listeners, boolean opacityInPercent) {
+                      List<ColorPickerListener> listeners, boolean opacityInPercent) {
     myUpdateQueue = new Alarm(Alarm.ThreadToUse.SWING_THREAD, parent);
     myRed = createColorField(false);
     myGreen = createColorField(false);
@@ -332,7 +333,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
                                  String caption,
                                  Color preselectedColor,
                                  boolean enableOpacity,
-                                 ColorPickerListener[] listeners,
+                                 List<ColorPickerListener> listeners,
                                  boolean opacityInPercent) {
     final ColorPickerDialog dialog = new ColorPickerDialog(parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent);
     dialog.show();
@@ -884,7 +885,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   static class ColorPickerDialog extends DialogWrapper {
 
     private final Color myPreselectedColor;
-    private final ColorPickerListener[] myListeners;
+    private final List<ColorPickerListener> myListeners;
     private ColorPicker myColorPicker;
     private final boolean myEnableOpacity;
     private ColorPipette myPicker;
@@ -894,7 +895,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
                              String caption,
                              @Nullable Color preselectedColor,
                              boolean enableOpacity,
-                             ColorPickerListener[] listeners,
+                             List<ColorPickerListener> listeners,
                              boolean opacityInPercent) {
       super(parent, true);
       myListeners = listeners;

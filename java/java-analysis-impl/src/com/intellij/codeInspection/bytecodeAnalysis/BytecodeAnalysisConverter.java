@@ -68,7 +68,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
         @Override
         public Void compute() throws IOException {
           myNamesEnumerator = new PersistentStringEnumerator(namesFile, true);
-          myCompoundKeyEnumerator = new PersistentEnumeratorDelegate<int[]>(compoundKeysFile, new IntArrayKeyDescriptor(), 1024 * 4);
+          myCompoundKeyEnumerator = new IntArrayPersistentEnumerator(compoundKeysFile, new IntArrayKeyDescriptor());
           return null;
         }
       }, new Runnable() {
@@ -451,4 +451,34 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     }
   }
 
+  private static class IntArrayPersistentEnumerator extends PersistentEnumeratorDelegate<int[]> {
+    private final CachingEnumerator<int[]> myCache;
+
+    public IntArrayPersistentEnumerator(File compoundKeysFile, IntArrayKeyDescriptor descriptor) throws IOException {
+      super(compoundKeysFile, descriptor, 1024 * 4);
+      myCache = new CachingEnumerator<int[]>(new DataEnumerator<int[]>() {
+        @Override
+        public int enumerate(@Nullable int[] value) throws IOException {
+          return IntArrayPersistentEnumerator.super.enumerate(value);
+        }
+
+        @Nullable
+        @Override
+        public int[] valueOf(int idx) throws IOException {
+          return IntArrayPersistentEnumerator.super.valueOf(idx);
+        }
+      }, descriptor);
+    }
+
+    @Override
+    public int enumerate(@Nullable int[] value) throws IOException {
+      return myCache.enumerate(value);
+    }
+
+    @Nullable
+    @Override
+    public int[] valueOf(int idx) throws IOException {
+      return myCache.valueOf(idx);
+    }
+  }
 }

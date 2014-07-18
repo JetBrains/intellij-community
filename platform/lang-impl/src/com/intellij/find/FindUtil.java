@@ -31,6 +31,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.actions.IncrementalFindAction;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -70,10 +71,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class FindUtil {
   private static final Key<Direction> KEY = Key.create("FindUtil.KEY");
@@ -385,7 +383,7 @@ public class FindUtil {
     }
     else {
       editor.putUserData(KEY, null);
-      offset = editor.getCaretModel().getOffset();
+      offset = model.isGlobal() && model.isForward() ? editor.getSelectionModel().getSelectionEnd() : editor.getCaretModel().getOffset();
       if (!model.isForward() && offset > 0) {
         offset--;
       }
@@ -714,7 +712,18 @@ public class FindUtil {
       final ScrollType scrollType = forward ? ScrollType.CENTER_DOWN : ScrollType.CENTER_UP;
 
       if (model.isGlobal()) {
-        caretModel.moveToOffset(result.getEndOffset());
+        int targetCaretPosition = result.getEndOffset();
+        if (selection.getSelectionEnd() - selection.getSelectionStart() == result.getLength()) {
+          // keeping caret's position relative to selection
+          // use case: FindNext is used after SelectNextOccurrence action
+          targetCaretPosition = caretModel.getOffset() - selection.getSelectionStart() + result.getStartOffset();
+        }
+        if (caretModel.getCaretAt(editor.offsetToVisualPosition(targetCaretPosition)) != null) {
+          // if there's a different caret at target position, don't move current caret/selection
+          // use case: FindNext is used after SelectNextOccurrence action
+          return result;
+        }
+        caretModel.moveToOffset(targetCaretPosition);
         selection.removeSelection();
         scrollingModel.scrollToCaret(scrollType);
         scrollingModel.runActionOnScrollingFinished(
@@ -829,17 +838,12 @@ public class FindUtil {
       editor.getCaretModel().addCaretListener(listener);
     }
     JComponent component = HintUtil.createInformationLabel(JDOMUtil.escapeText(message, false, false));
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      LivePreview.processNotFound();
-    } else {
-      final LightweightHint hint = new LightweightHint(component);
-      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, position,
-                                                       HintManager.HIDE_BY_ANY_KEY |
-                                                       HintManager.HIDE_BY_TEXT_CHANGE |
-                                                       HintManager.HIDE_BY_SCROLLING,
-                                                       0, false);
-    }
+    final LightweightHint hint = new LightweightHint(component);
+    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, position,
+                                                     HintManager.HIDE_BY_ANY_KEY |
+                                                     HintManager.HIDE_BY_TEXT_CHANGE |
+                                                     HintManager.HIDE_BY_SCROLLING,
+                                                     0, false);
   }
 
   public static TextRange doReplace(final Project project,
@@ -953,5 +957,69 @@ public class FindUtil {
       }
     });
     return view;
+  }
+
+  /**
+   * Creates a selection in editor per each search result. Existing carets and selections in editor are discarded.
+   *
+   * @param caretShiftFromSelectionStart if non-negative, defines caret position relative to selection start, for each created selection.
+   *                                     if negative, carets will be positioned at selection ends
+   */
+  public static void selectSearchResultsInEditor(@NotNull Editor editor,
+                                                 @NotNull Iterator<FindResult> resultIterator,
+                                                 int caretShiftFromSelectionStart) {
+    if (!editor.getCaretModel().supportsMultipleCarets()) {
+      return;
+    }
+    ArrayList<CaretState> caretStates = new ArrayList<CaretState>();
+    while (resultIterator.hasNext()) {
+      FindResult findResult = resultIterator.next();
+      int caretOffset = getCaretPosition(findResult, caretShiftFromSelectionStart);
+      int selectionStartOffset = findResult.getStartOffset();
+      int selectionEndOffset = findResult.getEndOffset();
+      EditorActionUtil.makePositionVisible(editor, caretOffset);
+      EditorActionUtil.makePositionVisible(editor, selectionStartOffset);
+      EditorActionUtil.makePositionVisible(editor, selectionEndOffset);
+      caretStates.add(new CaretState(editor.offsetToLogicalPosition(caretOffset),
+                                     editor.offsetToLogicalPosition(selectionStartOffset),
+                                     editor.offsetToLogicalPosition(selectionEndOffset)));
+    }
+    if (caretStates.isEmpty()) {
+      return;
+    }
+    editor.getCaretModel().setCaretsAndSelections(caretStates);
+  }
+
+  /**
+   * Attempts to add a new caret to editor, with selection corresponding to given search result.
+   *
+   * @param caretShiftFromSelectionStart if non-negative, defines caret position relative to selection start, for each created selection.
+   *                                     if negative, caret will be positioned at selection end
+   * @return <code>true</code> if caret was added successfully, <code>false</code> if it cannot be done, e.g. because a caret already
+   * exists at target position
+   */
+  public static boolean selectSearchResultInEditor(@NotNull Editor editor, @NotNull FindResult result, int caretShiftFromSelectionStart) {
+    if (!editor.getCaretModel().supportsMultipleCarets()) {
+      return false;
+    }
+    int caretOffset = getCaretPosition(result, caretShiftFromSelectionStart);
+    EditorActionUtil.makePositionVisible(editor, caretOffset);
+    Caret newCaret = editor.getCaretModel().addCaret(editor.offsetToVisualPosition(caretOffset));
+    if (newCaret == null) {
+      return false;
+    }
+    else {
+      int selectionStartOffset = result.getStartOffset();
+      int selectionEndOffset = result.getEndOffset();
+      EditorActionUtil.makePositionVisible(editor, selectionStartOffset);
+      EditorActionUtil.makePositionVisible(editor, selectionEndOffset);
+      newCaret.setSelection(selectionStartOffset, selectionEndOffset);
+      return true;
+    }
+  }
+
+  private static int getCaretPosition(FindResult findResult, int caretShiftFromSelectionStart) {
+    return caretShiftFromSelectionStart < 0
+           ? findResult.getEndOffset() : Math.min(findResult.getStartOffset() + caretShiftFromSelectionStart, findResult.getEndOffset());
   }
 }

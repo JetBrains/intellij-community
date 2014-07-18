@@ -4,8 +4,8 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.api.SvnClient;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 
 import java.io.File;
 import java.util.List;
@@ -15,7 +15,7 @@ import java.util.List;
  */
 public interface UpgradeClient extends SvnClient {
 
-  void upgrade(@NotNull File path, @NotNull WorkingCopyFormat format, @Nullable ISVNEventHandler handler) throws VcsException;
+  void upgrade(@NotNull File path, @NotNull WorkingCopyFormat format, @Nullable ProgressTracker handler) throws VcsException;
 
   List<WorkingCopyFormat> getSupportedFormats() throws VcsException;
 }

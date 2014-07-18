@@ -122,6 +122,8 @@ public class CachingSoftWrapDataMapperTest {
     final Project project = myMockery.mock(Project.class);
     final SoftWrapPainter painter = myMockery.mock(SoftWrapPainter.class);
 
+    myRepresentationHelper = new MockEditorTextRepresentationHelper(SPACE_SIZE, TAB_SIZE);
+
     myMockery.checking(new Expectations() {{
       // Document
       allowing(myEditor).getDocument();will(returnValue(myDocument));
@@ -165,6 +167,7 @@ public class CachingSoftWrapDataMapperTest {
           return getSoftWrap((Integer)invocation.getParameter(0));
         }
       });
+      allowing(mySoftWrapModel).getEditorTextRepresentationHelper(); will(returnValue(myRepresentationHelper));
 
       // Folding.
       allowing(myEditor).getFoldingModel();will(returnValue(myFoldingModel));
@@ -220,9 +223,7 @@ public class CachingSoftWrapDataMapperTest {
       allowing(painter).getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP); will(returnValue(SOFT_WRAP_DRAWING_WIDTH));
     }});
 
-    myRepresentationHelper = new MockEditorTextRepresentationHelper(SPACE_SIZE, TAB_SIZE);
-
-    myMapper = new CachingSoftWrapDataMapper(myEditor, myStorage, myRepresentationHelper);
+    myMapper = new CachingSoftWrapDataMapper(myEditor, myStorage);
   }
   
   @After
@@ -699,7 +700,7 @@ public class CachingSoftWrapDataMapperTest {
     int     foldingStartVisualColumn;
 
     TestEditorPosition() {
-      super(myEditor, myRepresentationHelper);
+      super(myEditor);
       lineStartPosition = clone();
     }
 

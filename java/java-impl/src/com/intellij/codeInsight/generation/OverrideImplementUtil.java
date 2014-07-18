@@ -257,7 +257,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
         if (moduleScope != null && facade.findClass(annotation, moduleScope) == null) continue;
         if (AnnotationUtil.isAnnotated(overridden, annotation, false, false) && !AnnotationUtil.isAnnotated(method, annotation, false, false)) {
           PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotation(overridden, annotation);
-          if (psiAnnotation != null && InferredAnnotationsManager.getInstance(project).isInferredAnnotation(psiAnnotation)) {
+          if (psiAnnotation != null && AnnotationUtil.isInferredAnnotation(psiAnnotation)) {
             continue;
           }
 

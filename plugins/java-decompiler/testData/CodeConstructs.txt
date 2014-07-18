@@ -1,0 +1,15 @@
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by Fernflower decompiler)
+//
+
+
+class CodeConstructs {
+
+    CodeConstructs() {
+    }
+
+    void expressions() {
+        (new String()).hashCode();
+    }
+}

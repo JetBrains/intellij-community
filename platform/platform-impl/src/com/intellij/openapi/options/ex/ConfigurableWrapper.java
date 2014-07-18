@@ -47,8 +47,17 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
   @Nullable
   public static <T extends UnnamedConfigurable> T wrapConfigurable(ConfigurableEP<T> ep) {
-    if (ep.displayName != null || ep.key != null) {
-      return (T)(ep.children != null || ep.childrenEPName != null || ep.dynamic ? new CompositeWrapper(ep) : new ConfigurableWrapper(ep));
+    if (ep.displayName != null || ep.key != null || ep.groupId != null) {
+      T configurable = null;
+      if (ep.providerClass != null) {
+        configurable = ep.createConfigurable();
+        if (configurable == null) {
+          return null; // it is allowed to return null from provider
+        }
+      }
+      return ep.children != null || ep.childrenEPName != null || ep.dynamic
+             ? (T)new CompositeWrapper(ep, configurable)
+             : (T)new ConfigurableWrapper(ep, configurable);
     }
     else {
       return ep.createConfigurable();
@@ -76,8 +85,9 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
   private final ConfigurableEP myEp;
 
-  private ConfigurableWrapper(@NotNull ConfigurableEP ep) {
+  private ConfigurableWrapper(@NotNull ConfigurableEP ep, @Nullable UnnamedConfigurable configurable) {
     myEp = ep;
+    myConfigurable = configurable;
   }
 
   private UnnamedConfigurable myConfigurable;
@@ -95,6 +105,12 @@ public class ConfigurableWrapper implements SearchableConfigurable {
   @Nls
   @Override
   public String getDisplayName() {
+    if (myEp.displayName == null && myEp.key == null) {
+      UnnamedConfigurable configurable = getConfigurable();
+      if (configurable instanceof Configurable) {
+        return ((Configurable)configurable).getDisplayName();
+      }
+    }
     return myEp.getDisplayName();
   }
 
@@ -141,16 +157,24 @@ public class ConfigurableWrapper implements SearchableConfigurable {
   @NotNull
   @Override
   public String getId() {
-    return myEp.id == null ? myEp.instanceClass : myEp.id;
+    return myEp.id == null ? myEp.instanceClass == null ? myEp.providerClass : myEp.instanceClass : myEp.id;
   }
 
+  @NotNull
+  public ConfigurableEP getExtensionPoint() {
+    return myEp;
+  }
+
+  public String getGroupId() {
+    return myEp.groupId;
+  }
 
   public String getParentId() {
     return myEp.parentId;
   }
 
   public ConfigurableWrapper addChild(Configurable configurable) {
-    return new CompositeWrapper(myEp, configurable);
+    return new CompositeWrapper(myEp, null, configurable);
   }
 
   @Override
@@ -169,8 +193,8 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
     private Configurable[] myKids;
 
-    private CompositeWrapper(ConfigurableEP ep, Configurable... kids) {
-      super(ep);
+    private CompositeWrapper(@NotNull ConfigurableEP ep, @Nullable UnnamedConfigurable configurable, Configurable... kids) {
+      super(ep, configurable);
       if (ep.dynamic) {
         kids = ((Composite)getConfigurable()).getConfigurables();
       }

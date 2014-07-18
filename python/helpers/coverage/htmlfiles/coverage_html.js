@@ -122,6 +122,11 @@ coverage.pyfile_ready = function ($) {
         .bind('keydown', '1', coverage.to_first_chunk)
         ;
 
+    $(".button_toggle_run").click(function (evt) {coverage.toggle_lines(evt.target, "run");});
+    $(".button_toggle_exc").click(function (evt) {coverage.toggle_lines(evt.target, "exc");});
+    $(".button_toggle_mis").click(function (evt) {coverage.toggle_lines(evt.target, "mis");});
+    $(".button_toggle_par").click(function (evt) {coverage.toggle_lines(evt.target, "par");});
+
     coverage.assign_shortkeys();
     coverage.wire_up_help_panel();
 };
@@ -369,4 +374,3 @@ coverage.scroll_window = function (to_pos) {
 coverage.finish_scrolling = function () {
     $("html,body").stop(true, true);
 };
-

@@ -19,31 +19,43 @@ package com.intellij.ide.util;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.internal.statistic.UsageTrigger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 
 public class TipDialog extends DialogWrapper{
-  private final TipPanel myTipPanel;
+  private TipPanel myTipPanel;
 
   public TipDialog(){
-    super(true);
-    setModal(false);
-    setTitle(IdeBundle.message("title.tip.of.the.day"));
-    setCancelButtonText(CommonBundle.getCloseButtonText());
-    myTipPanel = new TipPanel();
-    myTipPanel.nextTip();
-    setHorizontalStretch(1.33f);
-    setVerticalStretch(1.25f);
-    init();
-    if (getPeer() instanceof DialogWrapperPeerImpl) {
-      ((DialogWrapperPeerImpl)getPeer()).setAutoRequestFocus(false);
-    }
+    super(WindowManagerEx.getInstanceEx().findVisibleFrame(), true);
+    initialize();
   }
+
+  public TipDialog(@NotNull final Window parent) {
+    super(parent, true);
+    initialize();
+  }
+
+  private void initialize () {
+      setModal(false);
+      setTitle(IdeBundle.message("title.tip.of.the.day"));
+      setCancelButtonText(CommonBundle.getCloseButtonText());
+      myTipPanel = new TipPanel();
+      myTipPanel.nextTip();
+      setHorizontalStretch(1.33f);
+      setVerticalStretch(1.25f);
+      init();
+      if (getPeer() instanceof DialogWrapperPeerImpl) {
+        ((DialogWrapperPeerImpl)getPeer()).setAutoRequestFocus(false);
+      }
+    }
 
   @NotNull
   protected Action[] createActions(){
@@ -56,6 +68,11 @@ public class TipDialog extends DialogWrapper{
 
   public void dispose(){
     super.dispose();
+  }
+
+  public static TipDialog createForProject(final Project project) {
+    final Window w = WindowManagerEx.getInstanceEx().suggestParentWindow(project);
+    return (w == null) ? new TipDialog() : new TipDialog(w);
   }
 
   private class PreviousTipAction extends AbstractAction{

@@ -65,10 +65,12 @@ import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.api.CmdClientFactory;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.SvnKitClientFactory;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnExecutableChecker;
 import org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
@@ -76,14 +78,19 @@ import org.jetbrains.idea.svn.history.LoadedRevisionsCache;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
+import org.jetbrains.idea.svn.info.Info;
+import org.jetbrains.idea.svn.info.InfoConsumer;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
+import org.jetbrains.idea.svn.status.Status;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.jetbrains.idea.svn.svnkit.SvnKitManager;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.SVNPropertyData;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -213,6 +220,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     myWorkingCopiesContent.activate();
   }
 
+  /**
+   * TODO: This seems to be related to some issues when upgrading from 1.6 to 1.7. So it is not currently required for 1.8 and later
+   * TODO: formats. And should be removed when 1.6 working copies are no longer supported by IDEA.
+   */
   private void cleanup17copies() {
     final Runnable callCleanupWorker = new Runnable() {
       public void run() {
@@ -251,7 +262,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public boolean checkCommandLineVersion() {
     boolean isValid = true;
 
-    if (!isProject16() && (myConfiguration.isCommandLine() || isProject18())) {
+    if (!isProject16() && (myConfiguration.isCommandLine() || isProject18OrGreater())) {
       isValid = myChecker.checkExecutableAndNotifyIfNeeded();
     }
 
@@ -588,28 +599,17 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public boolean fileExistsInVcs(FilePath path) {
     File file = path.getIOFile();
     try {
-      SVNStatus status = getFactory(file).createStatusClient().doStatus(file, false);
+      Status status = getFactory(file).createStatusClient().doStatus(file, false);
       if (status != null) {
-        if (svnStatusIs(status, SVNStatusType.STATUS_ADDED)) {
-          return status.isCopied();
-        }
-        return !(svnStatusIsUnversioned(status) ||
-                 svnStatusIs(status, SVNStatusType.STATUS_IGNORED) ||
-                 svnStatusIs(status, SVNStatusType.STATUS_OBSTRUCTED));
+        return status.is(StatusType.STATUS_ADDED)
+               ? status.isCopied()
+               : !status.is(StatusType.STATUS_UNVERSIONED, StatusType.STATUS_IGNORED, StatusType.STATUS_OBSTRUCTED);
       }
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       LOG.info(e);
     }
     return false;
-  }
-
-  public static boolean svnStatusIsUnversioned(final SVNStatus status) {
-    return svnStatusIs(status, SVNStatusType.STATUS_UNVERSIONED);
-  }
-
-  public static boolean svnStatusIs(final SVNStatus status, @NotNull final SVNStatusType value) {
-    return value.equals(status.getNodeStatus()) || value.equals(status.getContentsStatus());
   }
 
   @Override
@@ -623,33 +623,33 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Nullable
-  public SVNInfo getInfo(@NotNull SVNURL url,
+  public Info getInfo(@NotNull SVNURL url,
                          SVNRevision pegRevision,
-                         SVNRevision revision) throws SVNException {
+                         SVNRevision revision) throws SvnBindException {
     return getFactory().createInfoClient().doInfo(url, pegRevision, revision);
   }
 
   @Nullable
-  public SVNInfo getInfo(@NotNull SVNURL url, SVNRevision revision) throws SVNException {
+  public Info getInfo(@NotNull SVNURL url, SVNRevision revision) throws SvnBindException {
     return getInfo(url, SVNRevision.UNDEFINED, revision);
   }
 
   @Nullable
-  public SVNInfo getInfo(@NotNull final VirtualFile file) {
+  public Info getInfo(@NotNull final VirtualFile file) {
     return getInfo(new File(file.getPath()));
   }
 
   @Nullable
-  public SVNInfo getInfo(@NotNull String path) {
+  public Info getInfo(@NotNull String path) {
     return getInfo(new File(path));
   }
 
   @Nullable
-  public SVNInfo getInfo(@NotNull File ioFile) {
+  public Info getInfo(@NotNull File ioFile) {
     return getInfo(ioFile, SVNRevision.UNDEFINED);
   }
 
-  public void collectInfo(@NotNull Collection<File> files, @Nullable ISVNInfoHandler handler) {
+  public void collectInfo(@NotNull Collection<File> files, @Nullable InfoConsumer handler) {
     File first = ContainerUtil.getFirstItem(files);
 
     if (first != null) {
@@ -663,41 +663,42 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
           // TODO: Generally this should be moved in SvnKit info client implementation.
           // TODO: Currently left here to have exception logic as in handleInfoException to be applied for each file separately.
           for (File file : files) {
-            SVNInfo info = getInfo(file);
+            Info info = getInfo(file);
             if (handler != null) {
-              handler.handleInfo(info);
+              handler.consume(info);
             }
           }
         }
       }
       catch (SVNException e) {
+        handleInfoException(new SvnBindException(e));
+      }
+      catch (SvnBindException e) {
         handleInfoException(e);
       }
     }
   }
 
   @Nullable
-  public SVNInfo getInfo(@NotNull File ioFile, @NotNull SVNRevision revision) {
-    SVNInfo result = null;
+  public Info getInfo(@NotNull File ioFile, @NotNull SVNRevision revision) {
+    Info result = null;
 
     try {
       result = getFactory(ioFile).createInfoClient().doInfo(ioFile, revision);
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       handleInfoException(e);
     }
 
     return result;
   }
 
-  private void handleInfoException(SVNException e) {
-    final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
-
+  private void handleInfoException(@NotNull SvnBindException e) {
     if (!myLogExceptions ||
-        SvnUtil.isUnversionedOrNotFound(errorCode) ||
+        SvnUtil.isUnversionedOrNotFound(e) ||
         // do not log working copy format vs client version inconsistencies as errors
-        SVNErrorCode.WC_UNSUPPORTED_FORMAT.equals(errorCode) ||
-        SVNErrorCode.WC_UPGRADE_REQUIRED.equals(errorCode)) {
+        e.contains(SVNErrorCode.WC_UNSUPPORTED_FORMAT) ||
+        e.contains(SVNErrorCode.WC_UPGRADE_REQUIRED)) {
       LOG.debug(e);
     }
     else {
@@ -797,7 +798,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     List<WCInfo> result = new ArrayList<WCInfo>(getAllWcInfos());
 
     for (RootUrlInfo info : getSvnFileUrlMapping().getErrorRoots()) {
-      result.add(new WCInfo(info, SvnUtil.isWorkingCopyRoot(info.getIoFile()), SVNDepth.UNKNOWN));
+      result.add(new WCInfo(info, SvnUtil.isWorkingCopyRoot(info.getIoFile()), Depth.UNKNOWN));
     }
 
     return result;
@@ -948,14 +949,15 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return svnKitManager;
   }
 
-  public boolean isProject18() {
-    return WorkingCopyFormat.ONE_DOT_EIGHT.equals(getProjectRootFormat());
+  public boolean isProject18OrGreater() {
+    return getProjectRootFormat().isOrGreater(WorkingCopyFormat.ONE_DOT_EIGHT);
   }
 
   public boolean isProject16() {
     return WorkingCopyFormat.ONE_DOT_SIX.equals(getProjectRootFormat());
   }
 
+  @NotNull
   private WorkingCopyFormat getProjectRootFormat() {
     return !getProject().isDefault() ? getWorkingCopyFormat(new File(getProject().getBaseDir().getPath())) : WorkingCopyFormat.UNKNOWN;
   }
@@ -993,11 +995,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @NotNull
   private ClientFactory getFactory(@NotNull WorkingCopyFormat format, boolean useProjectRootForUnknown) {
-    boolean is18 = WorkingCopyFormat.ONE_DOT_EIGHT.equals(format);
+    boolean is18OrGreater = format.isOrGreater(WorkingCopyFormat.ONE_DOT_EIGHT);
     boolean is16 = WorkingCopyFormat.ONE_DOT_SIX.equals(format);
     boolean isUnknown = WorkingCopyFormat.UNKNOWN.equals(format);
 
-    return is18
+    return is18OrGreater
            ? cmdClientFactory
            : (is16 ? svnKitClientFactory : (useProjectRootForUnknown && isUnknown ? getFactory() : getFactoryFromSettings()));
   }

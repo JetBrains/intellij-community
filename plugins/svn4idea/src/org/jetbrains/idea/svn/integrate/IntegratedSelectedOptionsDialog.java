@@ -32,8 +32,8 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -248,7 +248,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
 
   @Nullable
   private static SVNURL realTargetUrl(final SvnVcs vcs, final WorkingCopyInfo info, final String targetBranchUrl) {
-    final SVNInfo svnInfo = vcs.getInfo(info.getLocalPath());
+    final Info svnInfo = vcs.getInfo(info.getLocalPath());
     final SVNURL svnurl = svnInfo != null ? svnInfo.getURL() : null;
 
     return (svnurl != null) && (svnurl.toString().startsWith(targetBranchUrl)) ? svnurl : null;

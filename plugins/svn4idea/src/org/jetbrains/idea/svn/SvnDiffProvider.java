@@ -32,7 +32,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.history.LatestExistentSearcher;
+import org.jetbrains.idea.svn.info.InfoConsumer;
+import org.jetbrains.idea.svn.info.Info;
+import org.jetbrains.idea.svn.status.Status;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
@@ -55,13 +60,13 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   }
 
   public VcsRevisionNumber getCurrentRevision(VirtualFile file) {
-    final SVNInfo svnInfo = myVcs.getInfo(new File(file.getPresentableUrl()));
+    final Info svnInfo = myVcs.getInfo(new File(file.getPresentableUrl()));
 
     return getRevision(svnInfo);
   }
 
   @Nullable
-  private static VcsRevisionNumber getRevision(@Nullable SVNInfo info) {
+  private static VcsRevisionNumber getRevision(@Nullable Info info) {
     VcsRevisionNumber result = null;
 
     if (info != null) {
@@ -106,11 +111,11 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   }
 
   @NotNull
-  private static ISVNInfoHandler createInfoHandler(@NotNull final Map<VirtualFile, VcsRevisionNumber> revisionMap,
+  private static InfoConsumer createInfoHandler(@NotNull final Map<VirtualFile, VcsRevisionNumber> revisionMap,
                                                    @NotNull final Map<String, VirtualFile> fileMap) {
-    return new ISVNInfoHandler() {
+    return new InfoConsumer() {
       @Override
-      public void handleInfo(SVNInfo info) throws SVNException {
+      public void consume(Info info) throws SVNException {
         if (info != null) {
           VirtualFile file = fileMap.get(info.getFile().getAbsolutePath());
 
@@ -132,7 +137,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   }
 
   private VcsRevisionDescription getCurrentRevisionDescription(File path) {
-    final SVNInfo svnInfo = myVcs.getInfo(path);
+    final Info svnInfo = myVcs.getInfo(path);
     if (svnInfo == null) {
       return null;
     }
@@ -187,20 +192,20 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     }
 
     // not clear why we need it, with remote check..
-    SVNStatus svnStatus = getFileStatus(new File(selectedFile.getPresentableUrl()), false);
+    Status svnStatus = getFileStatus(new File(selectedFile.getPresentableUrl()), false);
     if (svnStatus != null && svnRevision.equals(svnStatus.getRevision())) {
         return SvnContentRevision.createBaseRevision(myVcs, filePath, svnRevision);
     }
     return SvnContentRevision.createRemote(myVcs, filePath, svnRevision);
   }
 
-  private SVNStatus getFileStatus(File file, boolean remote) {
-    SVNStatus result = null;
+  private Status getFileStatus(File file, boolean remote) {
+    Status result = null;
 
     try {
-      result = myVcs.getFactory(file).createStatusClient().doStatus(file, remote, false);
+      result = myVcs.getFactory(file).createStatusClient().doStatus(file, remote);
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       LOG.debug(e);
     }
 
@@ -217,10 +222,10 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   }
 
   private ItemLatestState getLastRevision(final File file) {
-    final SVNStatus svnStatus = getFileStatus(file, true);
+    final Status svnStatus = getFileStatus(file, true);
     if (svnStatus == null || itemExists(svnStatus) && SVNRevision.UNDEFINED.equals(svnStatus.getRemoteRevision())) {
       // IDEADEV-21785 (no idea why this can happen)
-      final SVNInfo info = myVcs.getInfo(file, SVNRevision.HEAD);
+      final Info info = myVcs.getInfo(file, SVNRevision.HEAD);
       if (info == null || info.getURL() == null) {
         LOG.info("No SVN status returned for " + file.getPath());
         return defaultResult();
@@ -232,8 +237,8 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
       WorkingCopyFormat format = myVcs.getWorkingCopyFormat(file);
       long revision = -1;
 
-      // skipped for 1.8
-      if (!WorkingCopyFormat.ONE_DOT_EIGHT.equals(format)) {
+      // skipped for >= 1.8
+      if (format.less(WorkingCopyFormat.ONE_DOT_EIGHT)) {
         // get really latest revision
         // TODO: Algorithm seems not to be correct in all cases - for instance, when some subtree was deleted and replaced by other
         // TODO: with same names. pegRevision should be used somehow but this complicates the algorithm
@@ -254,8 +259,8 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     return createResult(svnStatus.getRevision(), exists, false);
   }
 
-  private boolean itemExists(SVNStatus svnStatus) {
-    return ! SVNStatusType.STATUS_DELETED.equals(svnStatus.getRemoteContentsStatus()) &&
-      ! SVNStatusType.STATUS_DELETED.equals(svnStatus.getRemoteNodeStatus());
+  private boolean itemExists(Status svnStatus) {
+    return ! StatusType.STATUS_DELETED.equals(svnStatus.getRemoteContentsStatus()) &&
+      ! StatusType.STATUS_DELETED.equals(svnStatus.getRemoteNodeStatus());
   }
 }

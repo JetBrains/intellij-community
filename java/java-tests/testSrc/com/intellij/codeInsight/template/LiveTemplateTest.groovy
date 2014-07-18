@@ -797,4 +797,30 @@ class Foo {
 }
 """
   }
+
+  public void "test two static imports"() {
+    myFixture.configureByText "a.java", """
+
+class Foo {
+  {
+    <caret>
+  }
+}
+"""
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("xxx", "user", 'java.lang.Math.abs(java.lang.Math.PI);');
+    template.setValue(USE_STATIC_IMPORT_IF_POSSIBLE, true);
+
+    startTemplate(template);
+    myFixture.checkResult """\
+import static java.lang.Math.PI;
+import static java.lang.Math.abs;
+
+class Foo {
+  {
+    abs(PI);<caret>
+  }
+}
+"""
+  }
 }

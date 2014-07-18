@@ -17,7 +17,10 @@ package com.intellij.ide.browsers;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -322,15 +325,6 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
       }
     }
     return null;
-  }
-
-  @NotNull
-  @Deprecated
-  /**
-   * @deprecated Use {@link #getFirstBrowser(BrowserFamily)}
-   */
-  public WebBrowser getBrowser(@NotNull BrowserFamily family) {
-    return getFirstBrowser(family);
   }
 
   @NotNull

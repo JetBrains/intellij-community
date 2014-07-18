@@ -464,7 +464,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
         if (expr.isQualified()) {
           final PyClassTypeImpl object_type = (PyClassTypeImpl)PyBuiltinCache.getInstance(node).getObjectType();
-          if ((object_type != null) && object_type.getPossibleInstanceMembers().contains(refName)) return;
+          if ((object_type != null) && object_type.getPossibleInstanceMembers().contains(refName)){
+            return;
+          }
         }
         else {
           if (PyUnreachableCodeInspection.hasAnyInterruptedControlFlowPaths(expr)) {
@@ -494,7 +496,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
         // unqualified:
         // may be module's
-        if (PyModuleType.getPossibleInstanceMembers().contains(refName)) return;
+        if (PyModuleType.getPossibleInstanceMembers().contains(refName)) {
+          return;
+        }
         // may be a "try: import ..."; not an error not to resolve
         if ((
           PsiTreeUtil.getParentOfType(

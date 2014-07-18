@@ -64,40 +64,46 @@ class GitCheckoutOperation extends GitBranchOperation {
   protected void execute() {
     saveAllDocuments();
     boolean fatalErrorHappened = false;
-    while (hasMoreRepositories() && !fatalErrorHappened) {
-      final GitRepository repository = next();
+    GitUtil.workingTreeChangeStarted(myProject);
+    try {
+      while (hasMoreRepositories() && !fatalErrorHappened) {
+        final GitRepository repository = next();
 
-      VirtualFile root = repository.getRoot();
-      GitLocalChangesWouldBeOverwrittenDetector localChangesDetector =
-        new GitLocalChangesWouldBeOverwrittenDetector(root, GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT);
-      GitSimpleEventDetector unmergedFiles = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED_PREVENTING_CHECKOUT);
-      GitUntrackedFilesOverwrittenByOperationDetector untrackedOverwrittenByCheckout =
-        new GitUntrackedFilesOverwrittenByOperationDetector(root);
+        VirtualFile root = repository.getRoot();
+        GitLocalChangesWouldBeOverwrittenDetector localChangesDetector =
+          new GitLocalChangesWouldBeOverwrittenDetector(root, GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT);
+        GitSimpleEventDetector unmergedFiles = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED_PREVENTING_CHECKOUT);
+        GitUntrackedFilesOverwrittenByOperationDetector untrackedOverwrittenByCheckout =
+          new GitUntrackedFilesOverwrittenByOperationDetector(root);
 
-      GitCommandResult result = myGit.checkout(repository, myStartPointReference, myNewBranch, false,
-                                             localChangesDetector, unmergedFiles, untrackedOverwrittenByCheckout);
-      if (result.success()) {
-        refresh(repository);
-        markSuccessful(repository);
-      }
-      else if (unmergedFiles.hasHappened()) {
-        fatalUnmergedFilesError();
-        fatalErrorHappened = true;
-      }
-      else if (localChangesDetector.wasMessageDetected()) {
-        boolean smartCheckoutSucceeded = smartCheckoutOrNotify(repository, localChangesDetector);
-        if (!smartCheckoutSucceeded) {
+        GitCommandResult result = myGit.checkout(repository, myStartPointReference, myNewBranch, false,
+                                               localChangesDetector, unmergedFiles, untrackedOverwrittenByCheckout);
+        if (result.success()) {
+          refresh(repository);
+          markSuccessful(repository);
+        }
+        else if (unmergedFiles.hasHappened()) {
+          fatalUnmergedFilesError();
+          fatalErrorHappened = true;
+        }
+        else if (localChangesDetector.wasMessageDetected()) {
+          boolean smartCheckoutSucceeded = smartCheckoutOrNotify(repository, localChangesDetector);
+          if (!smartCheckoutSucceeded) {
+            fatalErrorHappened = true;
+          }
+        }
+        else if (untrackedOverwrittenByCheckout.wasMessageDetected()) {
+          fatalUntrackedFilesError(repository.getRoot(), untrackedOverwrittenByCheckout.getRelativeFilePaths());
+          fatalErrorHappened = true;
+        }
+        else {
+          fatalError(getCommonErrorTitle(), result.getErrorOutputAsJoinedString());
           fatalErrorHappened = true;
         }
       }
-      else if (untrackedOverwrittenByCheckout.wasMessageDetected()) {
-        fatalUntrackedFilesError(repository.getRoot(), untrackedOverwrittenByCheckout.getRelativeFilePaths());
-        fatalErrorHappened = true;
-      }
-      else {
-        fatalError(getCommonErrorTitle(), result.getErrorOutputAsJoinedString());
-        fatalErrorHappened = true;
-      }
+    }
+    finally {
+      GitUtil.workingTreeChangeFinished(myProject);
     }
 
     if (!fatalErrorHappened) {

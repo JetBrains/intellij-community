@@ -21,10 +21,10 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNErrorCode;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
@@ -108,8 +108,8 @@ public class ForNestedRootChecker {
     @NotNull private final SvnVcs myVcs;
     @NotNull private final VirtualFile myFile;
     @NotNull private final File myIoFile;
-    @Nullable private SVNInfo myInfo;
-    @Nullable private SVNException myError;
+    @Nullable private Info myInfo;
+    @Nullable private SvnBindException myError;
 
     private VcsFileResolver(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
       myVcs = vcs;
@@ -128,7 +128,7 @@ public class ForNestedRootChecker {
       try {
         myInfo = myVcs.getFactory(myIoFile, false).createInfoClient().doInfo(myIoFile, SVNRevision.UNDEFINED);
       }
-      catch (SVNException e) {
+      catch (SvnBindException e) {
         myError = e;
       }
     }
@@ -138,9 +138,7 @@ public class ForNestedRootChecker {
       Node result = null;
 
       if (myError != null) {
-        SVNErrorCode errorCode = myError.getErrorMessage().getErrorCode();
-
-        if (!SvnUtil.isUnversionedOrNotFound(errorCode)) {
+        if (!SvnUtil.isUnversionedOrNotFound(myError)) {
           // error code does not indicate that myFile is unversioned or path is invalid => create result, but indicate error
           result = new Node(myFile, getFakeUrl(), getFakeUrl(), myError);
         }

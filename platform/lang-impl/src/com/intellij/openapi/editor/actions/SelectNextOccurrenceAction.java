@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.find.FindManager;
-import com.intellij.find.FindModel;
-import com.intellij.find.FindResult;
+import com.intellij.find.*;
+import com.intellij.find.editorHeaderActions.AddOccurrenceAction;
+import com.intellij.find.editorHeaderActions.EditorHeaderAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -40,6 +40,8 @@ public class SelectNextOccurrenceAction extends EditorAction {
 
     @Override
     public void doExecute(Editor editor, @Nullable Caret c, DataContext dataContext) {
+      if (executeEquivalentFindPanelAction(editor, dataContext)) return;
+
       Caret caret = c == null ? editor.getCaretModel().getPrimaryCaret() : c;
       TextRange wordSelectionRange = getSelectionRange(editor, caret);
       boolean notFoundPreviously = getAndResetNotFoundStatus(editor);
@@ -52,25 +54,20 @@ public class SelectNextOccurrenceAction extends EditorAction {
         }
         FindManager findManager = FindManager.getInstance(project);
 
-        FindModel model = new FindModel();
-        model.setStringToFind(selectedText);
-        model.setCaseSensitive(true);
-        model.setWholeWordsOnly(wholeWordSearch);
+        FindModel model = getFindModel(selectedText, wholeWordSearch);
+
+        findManager.setFindWasPerformed();
+        findManager.setFindNextModel(model);
 
         int searchStartOffset = notFoundPreviously ? 0 : caret.getSelectionEnd();
         FindResult findResult = findManager.findString(editor.getDocument().getCharsSequence(), searchStartOffset, model);
         if (findResult.isStringFound()) {
-          int newCaretOffset = caret.getOffset() - caret.getSelectionStart() + findResult.getStartOffset();
-          EditorActionUtil.makePositionVisible(editor, newCaretOffset);
-          Caret newCaret = editor.getCaretModel().addCaret(editor.offsetToVisualPosition(newCaretOffset));
-          if (newCaret == null) {
+          boolean caretAdded = FindUtil.selectSearchResultInEditor(editor, findResult, caret.getOffset() - caret.getSelectionStart());
+          if (!caretAdded) {
             // this means that the found occurence is already selected
             if (notFoundPreviously) {
               setNotFoundStatus(editor); // to make sure we won't show hint anymore if there are no more occurrences
             }
-          }
-          else {
-            setSelection(editor, newCaret, findResult);
           }
         }
         else {
@@ -86,6 +83,11 @@ public class SelectNextOccurrenceAction extends EditorAction {
         setWholeWordSearch(editor, true);
       }
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    }
+
+    @Override
+    protected EditorHeaderAction getEquivalentFindPanelAction(EditorSearchComponent searchComponent) {
+      return new AddOccurrenceAction(searchComponent);
     }
   }
 }
