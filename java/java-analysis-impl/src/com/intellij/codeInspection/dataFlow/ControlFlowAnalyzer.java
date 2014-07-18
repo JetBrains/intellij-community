@@ -186,7 +186,21 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     addInstruction(new AssignInstruction(rExpr));
+
+    flushArrayElementsOnUnknownIndexAssignment(lExpr);
+
     finishElement(expression);
+  }
+
+  private void flushArrayElementsOnUnknownIndexAssignment(PsiExpression lExpr) {
+    if (lExpr instanceof PsiArrayAccessExpression &&
+        myFactory.createValue(lExpr) == null // check for unknown index, otherwise AssignInstruction will flush only that element
+      ) {
+      DfaValue arrayVar = myFactory.createValue(((PsiArrayAccessExpression)lExpr).getArrayExpression());
+      if (arrayVar instanceof DfaVariableValue) {
+        addInstruction(new FlushVariableInstruction((DfaVariableValue)arrayVar));
+      }
+    }
   }
 
   private void generateDefaultAssignmentBinOp(PsiExpression lExpr, PsiExpression rExpr, final PsiType exprType) {
@@ -1007,7 +1021,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new PopInstruction());
     }
 
-    pushTypeOrUnknown(arrayExpression);
+    DfaValue toPush = myFactory.createValue(expression);
+    addInstruction(new PushInstruction(toPush != null ? toPush : myFactory.createTypeValue(expression.getType(), Nullness.UNKNOWN), null));
     finishElement(expression);
   }
 
@@ -1448,20 +1463,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return AnnotationUtil.findAnnotation(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
   }
 
-  private void pushTypeOrUnknown(PsiExpression expr) {
-    PsiType type = expr.getType();
-
-    final DfaValue dfaValue;
-    if (type instanceof PsiClassType) {
-      dfaValue = myFactory.createTypeValue(type, Nullness.UNKNOWN);
-    }
-    else {
-      dfaValue = null;
-    }
-
-    addInstruction(new PushInstruction(dfaValue, null));
-  }
-
   @Override public void visitNewExpression(PsiNewExpression expression) {
     startElement(expression);
 
@@ -1635,7 +1636,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       generateBoxingUnboxingInstructionFor(operand, castExpression.getType());
     }
     else {
-      pushTypeOrUnknown(castExpression);
+      addInstruction(new PushInstruction(myFactory.createTypeValue(castExpression.getType(), Nullness.UNKNOWN), null));
     }
 
     final PsiTypeElement typeElement = castExpression.getCastType();

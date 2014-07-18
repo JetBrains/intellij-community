@@ -24,9 +24,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -54,6 +56,7 @@ public class DfaExpressionFactory {
   }
 
   private final DfaValueFactory myFactory;
+  private Map<Integer, PsiVariable> myMockIndices = ContainerUtil.newHashMap();
 
   public DfaExpressionFactory(DfaValueFactory factory) {
     myFactory = factory;
@@ -65,6 +68,18 @@ public class DfaExpressionFactory {
 
     if (expression instanceof PsiParenthesizedExpression) {
       return getExpressionDfaValue(((PsiParenthesizedExpression)expression).getExpression());
+    }
+
+    if (expression instanceof PsiArrayAccessExpression) {
+      PsiExpression arrayExpression = ((PsiArrayAccessExpression)expression).getArrayExpression();
+      DfaValue qualifier = getExpressionDfaValue(arrayExpression);
+      if (qualifier instanceof DfaVariableValue) {
+        PsiVariable indexVar = getArrayIndexVariable(((PsiArrayAccessExpression)expression).getIndexExpression());
+        if (indexVar != null) {
+          return myFactory.getVarFactory().createVariableValue(indexVar, expression.getType(), false, (DfaVariableValue)qualifier);
+        }
+      }
+      return null;
     }
 
     if (expression instanceof PsiMethodCallExpression) {
@@ -136,5 +151,20 @@ public class DfaExpressionFactory {
     }
     return null;
   }
+
+  @Nullable
+  private PsiVariable getArrayIndexVariable(@Nullable PsiExpression indexExpression) {
+    Object constant = JavaConstantExpressionEvaluator.computeConstantExpression(indexExpression, false);
+    if (constant instanceof Integer) {
+      PsiVariable mockVar = myMockIndices.get(constant);
+      if (mockVar == null) {
+        mockVar = JavaPsiFacade.getElementFactory(indexExpression.getProject()).createField("$array$index$" + constant, PsiType.INT);
+        myMockIndices.put((Integer)constant, mockVar);
+      }
+      return mockVar;
+    }
+    return null;
+  }
+
 
 }
