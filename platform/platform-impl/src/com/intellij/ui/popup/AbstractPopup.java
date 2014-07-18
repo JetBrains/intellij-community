@@ -809,6 +809,7 @@ public class AbstractPopup implements JBPopup {
     myPopup.getWindow().pack();
 
     myPopup.setRequestFocus(myRequestFocus);
+    LOG.debug("popup window size: " + myPopup.getWindow().getSize());
     myPopup.show();
 
     final Window window = SwingUtilities.getWindowAncestor(myContent);
