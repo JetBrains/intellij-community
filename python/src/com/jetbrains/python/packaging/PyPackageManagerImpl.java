@@ -795,14 +795,22 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private String getHelperPath(String helper) {
     String helperPath;
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
-    if (sdkData instanceof RemoteSdkCredentials) {
-      final RemoteSdkCredentials remoteSdkCredentials = (RemoteSdkCredentials)sdkData;
-      if (!StringUtil.isEmpty(remoteSdkCredentials.getHelpersPath())) {
-        helperPath = new RemoteFile(remoteSdkCredentials.getHelpersPath(),
-                                    helper).getPath();
+    if (sdkData instanceof PyRemoteSdkAdditionalDataBase) {
+      PyRemoteSdkAdditionalDataBase remoteSdkData = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
+
+      try {
+        final RemoteSdkCredentials remoteSdkCredentials = remoteSdkData.getRemoteSdkCredentials(false);
+        if (!StringUtil.isEmpty(remoteSdkCredentials.getHelpersPath())) {
+          helperPath = new RemoteFile(remoteSdkCredentials.getHelpersPath(),
+                                      helper).getPath();
+        }
+        else {
+          helperPath = null;
+        }
       }
-      else {
+      catch (Exception e) {
         helperPath = null;
+        LOG.error(e);
       }
     }
     else {
@@ -833,25 +841,26 @@ public class PyPackageManagerImpl extends PyPackageManager {
       catch (final ExecutionException e) {
         if (e.getCause() instanceof VagrantNotStartedException) {
           throw new PyExternalProcessException(ERROR_VAGRANT_NOT_LAUNCHED, helperPath, args, "Vagrant instance is down. <a href=\"" +
-                                                                      LAUNCH_VAGRANT +
-                                                                      "\">Launch vagrant</a>").withHandler(LAUNCH_VAGRANT, new Runnable() {
-            @Override
-            public void run() {
-              final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
-              if (manager != null) {
+                                                                                             LAUNCH_VAGRANT +
+                                                                                             "\">Launch vagrant</a>")
+            .withHandler(LAUNCH_VAGRANT, new Runnable() {
+              @Override
+              public void run() {
+                final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
+                if (manager != null) {
 
-                try {
-                  manager.runVagrant(((VagrantNotStartedException)e.getCause()).getVagrantFolder());
-                  clearCaches();
-
-                }
-                catch (ExecutionException e1) {
-                  throw new RuntimeException(e1);
+                  try {
+                    manager.runVagrant(((VagrantNotStartedException)e.getCause()).getVagrantFolder());
+                    clearCaches();
+                  }
+                  catch (ExecutionException e1) {
+                    throw new RuntimeException(e1);
+                  }
                 }
               }
-            }
-          });
-        } else {
+            });
+        }
+        else {
           throw new PyExternalProcessException(ERROR_REMOTE_ACCESS, helperPath, args, e.getMessage());
         }
       }
