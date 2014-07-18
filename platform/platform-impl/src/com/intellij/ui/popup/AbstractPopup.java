@@ -806,7 +806,7 @@ public class AbstractPopup implements JBPopup {
     }
 
     // can be improved by moving in myPopup code
-    myPopup.getWindow().setSize(myContent.getSize());
+    myPopup.getWindow().pack();
 
     myPopup.setRequestFocus(myRequestFocus);
     myPopup.show();
