@@ -259,6 +259,7 @@ public class LineStatusTracker {
         if (range.getHighlighter() != null) {
           range.getHighlighter().dispose();
         }
+        range.invalidate();
       }
       myRanges.clear();
     }
@@ -432,6 +433,7 @@ public class LineStatusTracker {
           range.getHighlighter().dispose();
         }
         range.setHighlighter(null);
+        range.invalidate();
       }
       for (Range range : newRangesInChange) {
         range.setHighlighter(createHighlighter(range));
@@ -538,10 +540,14 @@ public class LineStatusTracker {
   }
 
   public void rollbackChanges(@NotNull Range range) {
-    // TODO: range could be outdated. We should add 'isValid' flag and catch exception
     myApplication.assertWriteAccessAllowed();
 
     synchronized (myLock) {
+      if (!range.isValid()) {
+        LOG.warn("Rollback of invalid range");
+        return;
+      }
+
       if (range.getType() == Range.MODIFIED) {
         TextRange currentTextRange = getCurrentTextRange(range);
         int offset1 = currentTextRange.getStartOffset();
@@ -587,6 +593,11 @@ public class LineStatusTracker {
       boolean wasEnd = false;
       boolean simple = true;
       for (Range range : myRanges) {
+        if (!range.isValid()) {
+          LOG.warn("Rollback of invalid range");
+          return;
+        }
+
         boolean check;
         if (range.getOffset1() == range.getOffset2()) {
           check = lines.check(range.getOffset1());
@@ -699,12 +710,24 @@ public class LineStatusTracker {
 
   @NotNull
   TextRange getCurrentTextRange(@NotNull Range range) {
-    return getRange(range.getOffset1(), range.getOffset2(), myDocument);
+    synchronized (myLock) {
+      if (!range.isValid()) {
+        LOG.warn("Current TextRange of invalid range");
+      }
+
+      return getRange(range.getOffset1(), range.getOffset2(), myDocument);
+    }
   }
 
   @NotNull
   TextRange getUpToDateRange(@NotNull Range range) {
-    return getRange(range.getUOffset1(), range.getUOffset2(), myUpToDateDocument);
+    synchronized (myLock) {
+      if (!range.isValid()) {
+        LOG.warn("UpToDate TextRange of invalid range");
+      }
+
+      return getRange(range.getUOffset1(), range.getUOffset2(), myUpToDateDocument);
+    }
   }
 
   /**
