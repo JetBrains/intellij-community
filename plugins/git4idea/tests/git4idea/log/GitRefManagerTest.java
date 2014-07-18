@@ -74,6 +74,12 @@ public class GitRefManagerTest extends UsefulTestCase {
           expect("HEAD", "master", "release", "origin/master", "origin/great_feature", "tag/v1"));
   }
 
+  // may happen e.g. in multi-repo case
+  public void testTwoMasters() {
+    check(given("master", "master"),
+          expect("master", "master"));
+  }
+
   private static Collection<VcsRef> given(String... refs) {
     return convertToRefs(refs);
   }
