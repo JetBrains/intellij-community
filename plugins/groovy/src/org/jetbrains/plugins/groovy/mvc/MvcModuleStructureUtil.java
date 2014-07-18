@@ -362,10 +362,11 @@ public class MvcModuleStructureUtil {
       if (file == null || !structure.isValidContentRoot(file)) {
         toRemoveContent.add(entry);
       }
-
-      for (SourceFolder folder : entry.getSourceFolders()) {
-        if (folder.getFile() == null) {
-          toRemove.add(folder);
+      else {
+        for (SourceFolder folder : entry.getSourceFolders()) {
+          if (folder.getFile() == null) {
+            toRemove.add(folder);
+          }
         }
       }
     }
@@ -374,14 +375,15 @@ public class MvcModuleStructureUtil {
       actions.add(new Consumer<ModifiableRootModel>() {
         @Override
         public void consume(ModifiableRootModel model) {
-          for (final ContentEntry entry : toRemoveContent) {
-            model.removeContentEntry(entry);
-          }
-
           for (ContentEntry entry : model.getContentEntries()) {
-            for (SourceFolder folder : entry.getSourceFolders()) {
-              if (toRemove.remove(folder)) {
-                entry.removeSourceFolder(folder);
+            if (toRemoveContent.remove(entry)) {
+              model.removeContentEntry(entry);
+            }
+            else {
+              for (SourceFolder folder : entry.getSourceFolders()) {
+                if (toRemove.remove(folder)) {
+                  entry.removeSourceFolder(folder);
+                }
               }
             }
           }
