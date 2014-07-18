@@ -307,7 +307,7 @@ public class NewExprent extends Exprent {
 					}
 
           int start = enumconst ? 2 : 0;
-          if(start < lstParameters.size()) {
+          if(!enumconst || start < lstParameters.size()) {
             buf.append("(");
 
             boolean firstpar = true;
