@@ -419,8 +419,14 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     KeyStroke originalKeyStroke=KeyStroke.getKeyStrokeForEvent(e);
     KeyStroke keyStroke=getKeyStrokeWithoutMouseModifiers(originalKeyStroke);
-    if (SystemInfo.isMac && SystemInfo.isOracleJvm && (keyStroke.getModifiers() & InputEvent.ALT_MASK) == InputEvent.ALT_MASK) {
-      keyStroke = getKeyStrokeWithoutCtrlModifier(keyStroke);
+
+
+
+    if (Registry.is("fix.jdk7.alt.shortcuts") && SystemInfo.isMac && SystemInfo.isOracleJvm && (keyStroke.getModifiers() & InputEvent.ALT_MASK) == InputEvent.ALT_MASK)
+    {
+      if (KeymapManager.getInstance().getActiveKeymap().getActionIds(new KeyboardShortcut(keyStroke, null)).length == 0) {
+        keyStroke = getKeyStrokeWithoutCtrlModifier(keyStroke);
+      }
     }
 
     if (myKeyGestureProcessor.processInitState()) {
