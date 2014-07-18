@@ -970,7 +970,8 @@ public class InferenceSession {
         addConstraint(new TypeCompatibilityConstraint(getParameterType(parameters, i, PsiSubstitutor.EMPTY, varargs), pType));
       }
     }
-    else if (parameters.length + 1 == functionalMethodParameters.length && !varargs || !isStatic && varargs && functionalMethodParameters.length > 0) { //instance methods
+    else if (parameters.length + 1 == functionalMethodParameters.length && !varargs || 
+             !isStatic && varargs && functionalMethodParameters.length > 0 && PsiMethodReferenceUtil.hasReceiver(reference, method)) { //instance methods
       initBounds(containingClass.getTypeParameters());
 
       final PsiType pType = signature.getParameterTypes()[0];
