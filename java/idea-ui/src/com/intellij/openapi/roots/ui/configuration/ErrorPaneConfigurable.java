@@ -21,7 +21,10 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -29,7 +32,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.text.Element;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.net.URL;
 import java.util.ArrayList;
 
 /**
@@ -42,7 +49,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
   private final ArrayList<ConfigurationError> myErrors = new ArrayList<ConfigurationError>();
   private final JTextPane myContent = new JTextPane();
 
-  public ErrorPaneConfigurable(Project project, StructureConfigurableContext context) {
+  public ErrorPaneConfigurable(final Project project, StructureConfigurableContext context) {
     super(new BorderLayout());
     myContent.setEditorKit(UIUtil.getHTMLEditorKit());
     myContent.setEditable(false);
@@ -54,6 +61,49 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     myContext = context;
     myAlarm = new Alarm(this);
     project.getMessageBus().connect(this).subscribe(ConfigurationErrors.TOPIC, this);
+    myContent.addHyperlinkListener(new HyperlinkAdapter() {
+      @Override
+      public void hyperlinkActivated(HyperlinkEvent e) {
+        final URL url = e.getURL();
+        final AWTEvent awtEvent = EventQueue.getCurrentEvent();
+        if (!(awtEvent instanceof MouseEvent)) {
+          return;
+        }
+        final MouseEvent me = (MouseEvent)awtEvent;
+
+        if (url != null) {
+          ConfigurationError error = null;
+          Element element = e.getSourceElement();
+          while (element != null) {
+            if ("li".equals(element.getName())) {
+              final Element ol = element.getParentElement();
+              for (int i = 0; i < ol.getElementCount(); i++) {
+                if (ol.getElement(i) == element) {
+                  error = myErrors.get(i);
+                }
+              }
+              break;
+            }
+            element = element.getParentElement();
+          }
+          if (error == null) return;
+          final String host = url.getHost();
+          String path = url.getPath();
+          if (path != null && path.startsWith("/")) {
+            path = StringUtil.unescapeXml(path.substring(1));
+          }
+          if (path != null) {
+            if ("fix".equals(host)) {
+              final MouseEvent mouseEvent = new MouseEvent(me.getComponent(), me.getID(), me.getWhen(), me.getModifiers(),
+                                                           me.getX() - 15, me.getY() + 10, me.getClickCount(), me.isPopupTrigger());
+              error.fix(myContent, new RelativePoint(mouseEvent));
+            } else {
+              error.navigate();
+            }
+          }
+        }
+      }
+    });
 
     refresh();
   }
@@ -93,10 +143,11 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
             final int start = 8;
             final int end = description.indexOf("'", 9);
             final String moduleName = description.substring(start, end);
-            description = "Module <a href='module://" + moduleName + "'>" + moduleName + "</a> " + description.substring(end + 1);
+            description = "Module <a href='http://module/" + StringUtil.escapeXml(moduleName) + "'>" + StringUtil.escapeXml(moduleName) + "</a> " + description.substring(
+              end + 1);
           }
           if (error.canBeFixed()) {
-            description += " <a href='fix://" + i + "'>[Fix]</a>";
+            description += " <a href='http://fix/" + i + "'>[Fix]</a>";
           }
           html+= "<li>" + description + "</li>";
         }
