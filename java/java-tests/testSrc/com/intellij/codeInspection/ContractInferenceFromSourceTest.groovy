@@ -277,7 +277,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
   }
 
   private List<String> inferContracts(String method) {
-    def clazz = myFixture.addClass("class Foo { $method }")
+    def clazz = myFixture.addClass("final class Foo { $method }")
     return ContractInference.inferContracts(clazz.methods[0]).collect { it as String }
   }
 }

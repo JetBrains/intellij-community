@@ -17,16 +17,19 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
 import com.intellij.codeInspection.dataFlow.ContractInference;
-import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT;
 
 public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
   @Nullable
@@ -37,7 +40,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
       return fromBytecode;
     }
 
-    if (listOwner instanceof PsiMethod && ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN)) {
+    if (listOwner instanceof PsiMethod && ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN) && !PsiUtil.canBeOverriden((PsiMethod)listOwner)) {
       List<MethodContract> contracts = ContractInference.inferContracts((PsiMethod)listOwner);
       if (!contracts.isEmpty()) {
         return ProjectBytecodeAnalysis.getInstance(listOwner.getProject()).createContractAnnotation("\"" + StringUtil.join(contracts, "; ") + "\"");
@@ -50,19 +53,25 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
   @NotNull
   @Override
   public PsiAnnotation[] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
+    List<PsiAnnotation> result = ContainerUtil.newArrayList();
     PsiAnnotation[] fromBytecode = ProjectBytecodeAnalysis.getInstance(listOwner.getProject()).findInferredAnnotations(listOwner);
-    if (fromBytecode.length > 0) {
-      return fromBytecode;
-    }
-
-    if (listOwner instanceof PsiMethod) {
-      List<MethodContract> contracts = ContractInference.inferContracts((PsiMethod)listOwner);
-      if (!contracts.isEmpty()) {
-        return new PsiAnnotation[]{ProjectBytecodeAnalysis.getInstance(listOwner.getProject()).createContractAnnotation("\"" + StringUtil.join(contracts, "; ") + "\"")};
+    for (PsiAnnotation annotation : fromBytecode) {
+      if (!ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotation.getQualifiedName()) ||
+          !(listOwner instanceof PsiMethod) ||
+          !PsiUtil.canBeOverriden((PsiMethod)listOwner)) {
+        result.add(annotation);
       }
     }
 
-    return PsiAnnotation.EMPTY_ARRAY;
+    if (listOwner instanceof PsiMethod && !PsiUtil.canBeOverriden((PsiMethod)listOwner)) {
+      List<MethodContract> contracts = ContractInference.inferContracts((PsiMethod)listOwner);
+      if (!contracts.isEmpty()) {
+        result.add(ProjectBytecodeAnalysis.getInstance(listOwner.getProject())
+                     .createContractAnnotation("\"" + StringUtil.join(contracts, "; ") + "\""));
+      }
+    }
+
+    return result.isEmpty() ? PsiAnnotation.EMPTY_ARRAY : result.toArray(new PsiAnnotation[result.size()]);
   }
 
   @Override
