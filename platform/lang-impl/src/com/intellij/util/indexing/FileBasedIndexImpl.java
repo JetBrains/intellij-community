@@ -1200,6 +1200,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @Nullable
   public static Throwable getCauseToRebuildIndex(@NotNull RuntimeException e) {
+    if (e instanceof IndexOutOfBoundsException) return e; // something wrong with direct byte buffer
     Throwable cause = e.getCause();
     if (cause instanceof StorageException || cause instanceof IOException ||
         cause instanceof IllegalArgumentException) return cause;
