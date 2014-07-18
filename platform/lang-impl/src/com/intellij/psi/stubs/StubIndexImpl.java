@@ -134,7 +134,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       if (needRebuild) {
         LOG.info("Version has changed for stub index " + extension.getKey() + ". The index will be rebuilt.");
       }
-      FileUtil.deleteWithRenaming(indexRootDir);
+      FileUtil.delete(indexRootDir);
       IndexingStamp.rewriteVersion(versionFile, version); // todo snapshots indices
     }
 
@@ -168,7 +168,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
   private static void onExceptionInstantiatingIndex(int version, File versionFile, File indexRootDir, Exception e) throws IOException {
     LOG.info(e);
-    FileUtil.deleteWithRenaming(indexRootDir);
+    FileUtil.delete(indexRootDir);
     IndexingStamp.rewriteVersion(versionFile, version); // todo snapshots indices
   }
 
