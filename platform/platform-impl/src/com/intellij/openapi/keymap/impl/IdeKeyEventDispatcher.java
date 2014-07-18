@@ -314,6 +314,30 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
   }
 
+  private static KeyStroke getKeyStrokeWithoutCtrlModifier(KeyStroke originalKeyStroke){
+    int modifier=originalKeyStroke.getModifiers()&~InputEvent.CTRL_MASK&~InputEvent.CTRL_DOWN_MASK;
+    try {
+      Method[] methods=AWTKeyStroke.class.getDeclaredMethods();
+      Method getCachedStrokeMethod=null;
+      for (Method method : methods) {
+        if (GET_CACHED_STROKE_METHOD_NAME.equals(method.getName())) {
+          getCachedStrokeMethod = method;
+          getCachedStrokeMethod.setAccessible(true);
+          break;
+        }
+      }
+      if(getCachedStrokeMethod==null){
+        throw new IllegalStateException("not found method with name getCachedStrokeMethod");
+      }
+      Object[] getCachedStrokeMethodArgs=
+        {originalKeyStroke.getKeyChar(), originalKeyStroke.getKeyCode(), modifier, originalKeyStroke.isOnKeyRelease()};
+      return (KeyStroke)getCachedStrokeMethod.invoke(originalKeyStroke, getCachedStrokeMethodArgs);
+    }
+    catch(Exception exc){
+      throw new IllegalStateException(exc.getMessage());
+    }
+  }
+
   private boolean inSecondStrokeInProgressState() {
     KeyEvent e = myContext.getInputEvent();
 
@@ -395,6 +419,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     KeyStroke originalKeyStroke=KeyStroke.getKeyStrokeForEvent(e);
     KeyStroke keyStroke=getKeyStrokeWithoutMouseModifiers(originalKeyStroke);
+    if (SystemInfo.isMac && SystemInfo.isOracleJvm && (keyStroke.getModifiers() & InputEvent.ALT_MASK) == InputEvent.ALT_MASK) {
+      keyStroke = getKeyStrokeWithoutCtrlModifier(keyStroke);
+    }
 
     if (myKeyGestureProcessor.processInitState()) {
       return true;
