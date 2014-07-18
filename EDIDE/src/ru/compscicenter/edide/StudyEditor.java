@@ -3,6 +3,7 @@ package ru.compscicenter.edide;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.*;
@@ -24,6 +25,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * User: lia
@@ -39,6 +42,7 @@ public class StudyEditor implements FileEditor {
   private JButton myPrevTaskButton;
   private JButton myRefreshButton;
   private JButton myWatchInputButton;
+  private static Map<Document, StudyDocumentListener> myDocumentListeners = new HashMap<Document, StudyDocumentListener>();
 
   public JButton getWatchInputButton() {
     return myWatchInputButton;
@@ -59,6 +63,19 @@ public class StudyEditor implements FileEditor {
     newButton.setSize(new Dimension(icon.getIconWidth(), icon.getIconHeight()));
     parentComponent.add(newButton);
     return newButton;
+  }
+
+  public static void addDocumentListener(Document document, StudyDocumentListener listener) {
+    myDocumentListeners.put(document, listener);
+  }
+
+  @Nullable
+  public static StudyDocumentListener getListener(Document document) {
+    return myDocumentListeners.get(document);
+  }
+
+  public  static void removeListener(Document document) {
+    myDocumentListeners.remove(document);
   }
 
   public StudyEditor(final Project project, VirtualFile file) {
