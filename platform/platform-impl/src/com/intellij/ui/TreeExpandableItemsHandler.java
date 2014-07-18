@@ -148,7 +148,6 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
   @Override
   protected void doPaintTooltipImage(final Component rComponent,
                                      final Rectangle cellBounds,
-                                     final int height,
                                      final Graphics2D g,
                                      Integer key) {
     final boolean opaque = rComponent.isOpaque();
@@ -169,7 +168,7 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
       rComponent.setBackground(bg);
     }
     
-    super.doPaintTooltipImage(rComponent, cellBounds, height, g, key);
+    super.doPaintTooltipImage(rComponent, cellBounds, g, key);
 
     if (rComponent instanceof JComponent) {
       ((JComponent)rComponent).setOpaque(opaque);
