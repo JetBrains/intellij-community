@@ -82,11 +82,11 @@ public class Lesson {
     this.taskList = taskList;
   }
 
-  public void create(final Project project, VirtualFile baseDir, File resourseRoot) throws IOException {
+  public void create(VirtualFile baseDir, File resourseRoot) throws IOException {
     VirtualFile lessonDir =  baseDir.createChildDirectory(this, LESSON_DIR + Integer.toString(myIndex + 1));
     for (int i = 0; i < taskList.size(); i++) {
       taskList.get(i).setIndex(i);
-      taskList.get(i).create(project, lessonDir, new File(resourseRoot, lessonDir.getName()));
+      taskList.get(i).create(lessonDir, new File(resourseRoot, lessonDir.getName()));
     }
 
   }

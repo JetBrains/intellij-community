@@ -6,9 +6,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import ru.compscicenter.edide.StudyDocumentListener;
 import ru.compscicenter.edide.StudyEditor;
 import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.course.Lesson;
@@ -16,6 +18,7 @@ import ru.compscicenter.edide.course.Task;
 import ru.compscicenter.edide.course.TaskFile;
 import ru.compscicenter.edide.course.Window;
 
+import javax.swing.event.DocumentListener;
 import java.io.*;
 
 /**
@@ -36,6 +39,10 @@ public class RefreshTaskAction extends AnAction {
               public void run() {
                 Editor editor = StudyEditor.getSelectedEditor(project);
                 Document document = editor.getDocument();
+                StudyDocumentListener listener = StudyEditor.getListener(document);
+                if (listener != null) {
+                  document.removeDocumentListener(listener);
+                }
                 document.deleteString(0, document.getLineEndOffset(document.getLineCount() - 1));
                 StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
                 File resourceFile = new File(taskManager.getCourse().getResourcePath());
@@ -65,7 +72,11 @@ public class RefreshTaskAction extends AnAction {
                     for (Window window : selectedTaskFile.getWindows()) {
                       window.reset();
                     }
+                    if (listener!=null) {
+                      document.addDocumentListener(listener);
+                    }
                     selectedTaskFile.drawAllWindows(editor);
+
                   }
                   catch (FileNotFoundException e1) {
                     e1.printStackTrace();

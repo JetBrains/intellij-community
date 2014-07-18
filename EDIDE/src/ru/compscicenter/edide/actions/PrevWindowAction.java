@@ -26,7 +26,6 @@ public class PrevWindowAction extends AnAction {
         StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
         TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
         if (selectedTaskFile != null) {
-          selectedTaskFile.updateOffsets(selectedEditor);
           Window selectedWindow = selectedTaskFile.getSelectedWindow();
           Window prev = null;
           for (Window window : selectedTaskFile.getWindows()) {

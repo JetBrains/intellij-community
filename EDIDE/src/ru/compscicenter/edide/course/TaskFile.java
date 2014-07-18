@@ -3,12 +3,11 @@ package ru.compscicenter.edide.course;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,11 +16,17 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * User: lia
+ * User: liana
  * Date: 21.06.14
  * Time: 18:53
+ * Implementation of task file which contains task windows for student to type in and
+ * which is visible to student in project view
  */
 public class TaskFile {
+  private static final String FILE_ELEMENT_NAME = "taskFile";
+  private static final String NAME_ATTRIBUTE_NAME = "name";
+  private static final String LINE_ATTRIBUTE_NAME = "myLineNum";
+  private static final String INDEX_ATTRIBUTE_NAME = "myIndex";
   private String name;
   private List<Window> windows;
   private int myLineNum = -1;
@@ -29,22 +34,33 @@ public class TaskFile {
   private Window mySelectedWindow = null;
   private int myIndex = -1;
 
+
+  /**
+   * Saves task file state for serialization
+   *
+   * @return xml element with attributes and content typical for task file
+   */
   public Element saveState() {
-    Element taskFileElement = new Element("taskFile");
-    taskFileElement.setAttribute("name", name);
-    taskFileElement.setAttribute("myLineNum", String.valueOf(myLineNum));
-    taskFileElement.setAttribute("myIndex", String.valueOf(myIndex));
-    for (Window window:windows) {
+    Element taskFileElement = new Element(FILE_ELEMENT_NAME);
+    taskFileElement.setAttribute(NAME_ATTRIBUTE_NAME, name);
+    taskFileElement.setAttribute(LINE_ATTRIBUTE_NAME, String.valueOf(myLineNum));
+    taskFileElement.setAttribute(INDEX_ATTRIBUTE_NAME, String.valueOf(myIndex));
+    for (Window window : windows) {
       taskFileElement.addContent(window.saveState());
     }
-    return  taskFileElement;
+    return taskFileElement;
   }
 
+  /**
+   * initializes task file after reopening of project or IDE restart
+   *
+   * @param taskFileElement xml element which contains information about task file
+   */
   public void loadState(Element taskFileElement) {
-    name = taskFileElement.getAttributeValue("name");
+    name = taskFileElement.getAttributeValue(NAME_ATTRIBUTE_NAME);
     try {
-      myLineNum = taskFileElement.getAttribute("myLineNum").getIntValue();
-      myIndex = taskFileElement.getAttribute("myIndex").getIntValue();
+      myLineNum = taskFileElement.getAttribute(LINE_ATTRIBUTE_NAME).getIntValue();
+      myIndex = taskFileElement.getAttribute(INDEX_ATTRIBUTE_NAME).getIntValue();
     }
     catch (DataConversionException e) {
       e.printStackTrace();
@@ -57,6 +73,10 @@ public class TaskFile {
       windows.add(window);
     }
   }
+
+  /**
+   * @return if all the windows in task file are marked as resolved
+   */
   public boolean isResolved() {
     for (Window window : windows) {
       if (!window.isResolveStatus()) {
@@ -74,42 +94,40 @@ public class TaskFile {
     return mySelectedWindow;
   }
 
+  /**
+   * @param selectedWindow window from this task file to be set as selected
+   */
   public void setSelectedWindow(Window selectedWindow) {
-    mySelectedWindow = selectedWindow;
+    if (selectedWindow.getTaskFile() == this) {
+      mySelectedWindow = selectedWindow;
+    }
+    else {
+      throw new IllegalArgumentException("Window may be set as selected only in task file which it belongs to");
+    }
   }
 
   public String getName() {
     return name;
   }
 
-  public void setName(String name) {
-    this.name = name;
-  }
-
   public List<Window> getWindows() {
     return windows;
   }
 
-  public void setWindows(List<Window> windows) {
-    this.windows = windows;
-  }
-
-  public int getLineNum() {
-    return myLineNum;
-  }
-
-  public void setLineNum(int lineNum) {
-    myLineNum = lineNum;
-  }
-
-  public void create(Project project, VirtualFile baseDir, File resourseRoot) throws IOException {
+  /**
+   * Creates task files in its task folder in project user created
+   *
+   * @param taskDir      project directory of task which task file belongs to
+   * @param resourceRoot directory where original task file stored
+   * @throws IOException
+   */
+  public void create(VirtualFile taskDir, File resourceRoot) throws IOException {
     String systemIndependentName = FileUtil.toSystemIndependentName(name);
-    String systemIndependentResourceRootName = FileUtil.toSystemIndependentName(resourseRoot.getName());
     final int index = systemIndependentName.lastIndexOf("/");
     if (index > 0) {
       systemIndependentName = systemIndependentName.substring(index + 1);
     }
-    FileUtil.copy(new File(resourseRoot, name), new File(baseDir.getPath(), systemIndependentName));
+    FileUtil.copy(new File(resourceRoot, name), new File(taskDir.getPath(), systemIndependentName));
   }
 
   public void drawAllWindows(Editor editor) {
@@ -118,18 +136,25 @@ public class TaskFile {
     }
   }
 
+
+  /**
+   * @param pos position in editor
+   * @return task window located in specified position or null if there is no task window in this position
+   */
+  @Nullable
   public Window getTaskWindow(Editor editor, LogicalPosition pos) {
     int line = pos.line;
-    if (line >= editor.getDocument().getLineCount()) {
+    Document document = editor.getDocument();
+    if (line >= document.getLineCount()) {
       return null;
     }
     int column = pos.column;
-    int realOffset = editor.getDocument().getLineStartOffset(line) + column;
+    int offset = document.getLineStartOffset(line) + column;
     for (Window tw : windows) {
       if (line == tw.getLine()) {
         int twStartOffset = tw.getRealStartOffset(editor);
-        int twEndOffset = twStartOffset + tw.getText().length();
-        if (twStartOffset < realOffset && realOffset < twEndOffset) {
+        int twEndOffset = twStartOffset + tw.getLength();
+        if (twStartOffset <= offset && offset <= twEndOffset) {
           return tw;
         }
       }
@@ -137,16 +162,13 @@ public class TaskFile {
     return null;
   }
 
-
-  public void incrementAfterOffset(int line, int afterOffset, int change) {
-    for (Window taskWindow : windows) {
-      if (taskWindow.getLine() == line && taskWindow.getStart() > afterOffset) {
-        taskWindow.setStart(taskWindow.getStart() + change);
-      }
-    }
-  }
-
-  public void increment(int startLine, int change) {
+  /**
+   * Updates task window lines
+   *
+   * @param startLine lines greater than this line and including this line will be updated
+   * @param change    change to be added to line numbers
+   */
+  public void incrementLines(int startLine, int change) {
     for (Window taskWindow : windows) {
       if (taskWindow.getLine() >= startLine) {
         taskWindow.setLine(taskWindow.getLine() + change);
@@ -154,8 +176,13 @@ public class TaskFile {
     }
   }
 
+  /**
+   * Initializes state of task file
+   *
+   * @param task task which task file belongs to
+   */
 
-  public void setParents(Task task) {
+  public void init(Task task) {
     myTask = task;
     for (Window window : windows) {
       window.init(this);
@@ -166,54 +193,28 @@ public class TaskFile {
     }
   }
 
-  public void setNewOffsetInLine(int startLine, int startOffset, int defaultOffet) {
-    for (Window taskWindow : windows) {
-      if (taskWindow.getLine() == startLine && taskWindow.getStart() > startOffset) {
-        taskWindow.setStart(defaultOffet + (taskWindow.getStart() - startOffset));
-      }
-    }
-  }
-
-  private int getLineNumByOffset(Editor editor, int offset) {
-    Document document = editor.getDocument();
-    int lineCount = document.getLineCount();
-    for (int i = 0; i < lineCount; i++) {
-      if (offset >= document.getLineStartOffset(i) && offset < document.getLineStartOffset(i + 1)) {
-        return i;
-      }
-    }
-    if (offset > document.getTextLength()) {
-      return -1;
-    }
-    return lineCount - 1;
-  }
-
-  public void updateOffsets(Editor selectedEditor) {
-    if (mySelectedWindow != null) {
-      RangeHighlighter selectedRangeHighlighter = mySelectedWindow.getRangeHighlighter();
-      if (selectedRangeHighlighter != null) {
-        int lineChange = selectedEditor.getDocument().getLineCount() - getLineNum();
-        if (lineChange != 0) {
-          int newStartLine = getLineNumByOffset(selectedEditor, selectedRangeHighlighter.getStartOffset());
-          int newEndLine = getLineNumByOffset(selectedEditor, selectedRangeHighlighter.getEndOffset());
-          increment(newStartLine, lineChange);
-          mySelectedWindow.setLine(mySelectedWindow.getLine() - lineChange);
-          setNewOffsetInLine(newEndLine, mySelectedWindow.getStart() + mySelectedWindow.getLength(),
-                             selectedRangeHighlighter.getEndOffset() - selectedEditor.getDocument().getLineStartOffset(newEndLine));
-        }
-        else {
-          int oldEnd = mySelectedWindow.getRealStartOffset(selectedEditor) + mySelectedWindow.getLength();
-          int endChange = selectedRangeHighlighter.getEndOffset() - oldEnd;
-          incrementAfterOffset(mySelectedWindow.getLine(), mySelectedWindow.getStart(), endChange);
-        }
-        int newLength = selectedRangeHighlighter.getEndOffset() - selectedRangeHighlighter.getStartOffset();
-        mySelectedWindow.setLength(newLength);
-      }
-    }
-  }
-
+  /**
+   * @param index index of task file in list of task files of its task
+   */
   public void setIndex(int index) {
     myIndex = index;
   }
 
+  /**
+   * Updates windows in specific line
+   *
+   * @param lineChange         change in line number
+   * @param line               line to be updated
+   * @param newEndOffsetInLine distance from line start to end of inserted fragment
+   * @param oldEndOffsetInLine distance from line start to end of changed fragment
+   */
+  public void updateLine(int lineChange, int line, int newEndOffsetInLine, int oldEndOffsetInLine) {
+    for (Window w : windows) {
+      if ((w.getLine() == line) && (w.getStart() > newEndOffsetInLine)) {
+        int distance = w.getStart() - oldEndOffsetInLine;
+        w.setStart(distance + newEndOffsetInLine);
+        w.setLine(line + lineChange);
+      }
+    }
+  }
 }

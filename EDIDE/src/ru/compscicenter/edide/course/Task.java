@@ -6,7 +6,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
-import ru.compscicenter.edide.StudyTaskManager;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -120,12 +119,12 @@ public class Task {
     this.text = text;
   }
 
-  public void create(Project project, VirtualFile baseDir, File resourceRoot) throws IOException {
+  public void create(VirtualFile baseDir, File resourceRoot) throws IOException {
     VirtualFile taskDir = baseDir.createChildDirectory(this, TASK_DIR + Integer.toString(myIndex + 1));
     File newResourceRoot = new File(resourceRoot, taskDir.getName());
     for (int i = 0; i < taskFiles.size(); i++) {
       taskFiles.get(i).setIndex(i);
-      taskFiles.get(i).create(project, taskDir, newResourceRoot);
+      taskFiles.get(i).create(taskDir, newResourceRoot);
     }
     File[] filesInTask = newResourceRoot.listFiles();
     if (filesInTask != null) {
@@ -152,7 +151,7 @@ public class Task {
   public void setParents(Lesson lesson) {
     myLesson = lesson;
     for (TaskFile tasFile : taskFiles) {
-      tasFile.setParents(this);
+      tasFile.init(this);
     }
   }
 

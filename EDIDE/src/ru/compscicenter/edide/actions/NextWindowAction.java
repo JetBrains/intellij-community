@@ -32,7 +32,6 @@ public class NextWindowAction extends AnAction {
         StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
         TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
         if (selectedTaskFile != null) {
-          selectedTaskFile.updateOffsets(selectedEditor);
           Window selectedWindow = selectedTaskFile.getSelectedWindow();
           boolean ifDraw = false;
           for (Window window : selectedTaskFile.getWindows()) {

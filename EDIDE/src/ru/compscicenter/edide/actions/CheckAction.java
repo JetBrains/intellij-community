@@ -48,7 +48,7 @@ public class CheckAction extends AnAction {
     TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
     Window selectedWindow = selectedTaskFile.getSelectedWindow();
     if (selectedWindow!=null)selectedWindow.setResolveStatus(true);
-    selectedTaskFile.setSelectedWindow(null);
+    //selectedTaskFile.setSelectedWindow(null);
     FileDocumentManager.getInstance().saveAllDocuments();
     if (!(project != null && project.isOpen())) {
       return;
