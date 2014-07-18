@@ -74,12 +74,6 @@ public class GitRefManagerTest extends UsefulTestCase {
           expect("HEAD", "master", "release", "origin/master", "origin/great_feature", "tag/v1"));
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
-  }
-
   private static Collection<VcsRef> given(String... refs) {
     return convertToRefs(refs);
   }
