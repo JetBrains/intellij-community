@@ -20,7 +20,6 @@ import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -34,31 +33,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.regex.Pattern;
 
 import static com.intellij.psi.CommonClassNames.*;
 
 public class ControlFlowAnalyzer extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer");
-  private static final Condition<String> FALSE_GETTERS = parseFalseGetters();
-
-  private static Condition<String> parseFalseGetters() {
-    try {
-      final Pattern pattern = Pattern.compile(Registry.stringValue("ide.dfa.getters.with.side.effects"));
-      return new Condition<String>() {
-        @Override
-        public boolean value(String s) {
-          return pattern.matcher(s).matches();
-        }
-      };
-    }
-    catch (Exception e) {
-      LOG.error(e);
-      //noinspection unchecked
-      return Condition.FALSE;
-    }
-  }
-
   public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = Contract.class.getName();
   private boolean myIgnoreAssertions;
 
@@ -633,7 +612,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                   ((PsiReferenceExpression)caseExpression).getQualifierExpression() == null &&
                   JavaPsiFacade.getInstance(body.getProject()).getConstantEvaluationHelper().computeConstantExpression(caseValue) != null) {
                 
-                addInstruction(new PushInstruction(getExpressionDfaValue((PsiReferenceExpression)caseExpression), caseExpression));
+                addInstruction(new PushInstruction(myFactory.createValue(caseExpression), caseExpression));
                 caseValue.accept(this);
                 addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, caseExpression.getProject()));
               }
@@ -1395,7 +1374,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     addConditionalRuntimeThrow();
     List<MethodContract> contracts = method instanceof PsiMethod ? getMethodCallContracts((PsiMethod)method, expression) : Collections.<MethodContract>emptyList();
-    addInstruction(new MethodCallInstruction(expression, createChainedVariableValue(expression), contracts));
+    addInstruction(new MethodCallInstruction(expression, myFactory.createValue(expression), contracts));
     if (!contracts.isEmpty()) {
       // if a contract resulted in 'fail', handle it
       addInstruction(new DupInstruction());
@@ -1621,86 +1600,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     boolean referenceRead = PsiUtil.isAccessedForReading(expression) && !PsiUtil.isAccessedForWriting(expression);
-    addInstruction(new PushInstruction(getExpressionDfaValue(expression), expression, referenceRead));
+    addInstruction(new PushInstruction(myFactory.createValue(expression), expression, referenceRead));
 
     finishElement(expression);
-  }
-
-  @Nullable
-  private DfaValue getExpressionDfaValue(PsiReferenceExpression expression) {
-    DfaValue dfaValue = myFactory.createReferenceValue(expression);
-    if (dfaValue == null) {
-      PsiElement resolved = expression.resolve();
-      if (resolved instanceof PsiField) {
-        dfaValue = createDfaValueForAnotherInstanceMemberAccess(expression, (PsiField)resolved);
-      }
-    }
-    return dfaValue;
-  }
-
-  @NotNull
-  private DfaValue createDfaValueForAnotherInstanceMemberAccess(PsiReferenceExpression expression, PsiField field) {
-    DfaValue dfaValue = null;
-    if (expression.getQualifierExpression() != null) {
-      dfaValue = createChainedVariableValue(expression);
-    }
-    if (dfaValue == null) {
-      PsiType type = expression.getType();
-      return myFactory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, field));
-    }
-    return dfaValue;
-  }
-
-  @Nullable
-  private DfaVariableValue createChainedVariableValue(@Nullable PsiExpression expression) {
-    if (expression instanceof PsiParenthesizedExpression) {
-      return createChainedVariableValue(((PsiParenthesizedExpression)expression).getExpression());
-    }
-
-    PsiReferenceExpression refExpr;
-    if (expression instanceof PsiMethodCallExpression) {
-      refExpr = ((PsiMethodCallExpression)expression).getMethodExpression();
-    }
-    else if (expression instanceof PsiReferenceExpression) {
-      refExpr = (PsiReferenceExpression)expression;
-    }
-    else {
-      return null;
-    }
-
-    PsiElement target = refExpr.resolve();
-    PsiModifierListOwner var = getAccessedVariable(target);
-    if (var == null) {
-      return null;
-    }
-
-    if (DfaValueFactory.isEffectivelyUnqualified(refExpr)) {
-      return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, null);
-    }
-
-    if (!(var instanceof PsiField) || !var.hasModifierProperty(PsiModifier.TRANSIENT) && !var.hasModifierProperty(PsiModifier.VOLATILE)) {
-      DfaVariableValue qualifierValue = createChainedVariableValue(refExpr.getQualifierExpression());
-      if (qualifierValue != null) {
-        return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, qualifierValue);
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static PsiModifierListOwner getAccessedVariable(final PsiElement target) {
-    if (target instanceof PsiVariable) {
-      return (PsiVariable)target;
-    }
-    if (target instanceof PsiMethod) {
-      if (PropertyUtil.isSimplePropertyGetter((PsiMethod)target)) {
-        String qName = PsiUtil.getMemberQualifiedName((PsiMethod)target);
-        if (qName == null || !FALSE_GETTERS.value(qName)) {
-          return (PsiMethod)target;
-        }
-      }
-    }
-    return null;
   }
 
   @Override public void visitSuperExpression(PsiSuperExpression expression) {
