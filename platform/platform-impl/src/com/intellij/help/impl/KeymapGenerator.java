@@ -49,7 +49,8 @@ public class KeymapGenerator implements ApplicationStarter {
     xml.append("<Keymaps>\n");
 
     for (Keymap keymap : KeymapManagerEx.getInstanceEx().getAllKeymaps()) {
-      xml.append("  <Keymap name=\"").append(keymap.getName()).append("\">\n");
+      
+      xml.append("  <Keymap name=\"").append(keymap.getPresentableName()).append("\">\n");
       for (String id : keymap.getActionIds()) {
         String shortcuts = KeymapUtil.getShortcutsText(keymap.getShortcuts(id));
         if (!StringUtil.isEmpty(shortcuts)) {
