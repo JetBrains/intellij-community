@@ -159,33 +159,35 @@ public class PluginInstaller {
       }
     }
 
-    synchronized (myLock) {
-      PluginDownloader downloader = null;
-      final String repositoryName = pluginNode.getRepositoryName();
-      if (repositoryName != null) {
-        try {
-          final Map<PluginId, PluginDownloader> downloaders = new HashMap<PluginId, PluginDownloader>();
-          if (!UpdateChecker.checkPluginsHost(repositoryName, downloaders)) {
-            return false;
-          }
-          downloader = downloaders.get(pluginNode.getPluginId());
-          if (downloader == null) return false;
-        }
-        catch (Exception e) {
+    PluginDownloader downloader = null;
+    final String repositoryName = pluginNode.getRepositoryName();
+    if (repositoryName != null) {
+      try {
+        final Map<PluginId, PluginDownloader> downloaders = new HashMap<PluginId, PluginDownloader>();
+        if (!UpdateChecker.checkPluginsHost(repositoryName, downloaders)) {
           return false;
         }
+        downloader = downloaders.get(pluginNode.getPluginId());
+        if (downloader == null) return false;
       }
-      else {
-        downloader = PluginDownloader.createDownloader(pluginNode);
-      }
-      if (downloader.prepareToInstall(ProgressManager.getInstance().getProgressIndicator())) {
-        downloader.install();
-        pluginNode.setStatus(PluginNode.STATUS_DOWNLOADED);
-      }
-      else {
+      catch (Exception e) {
         return false;
       }
     }
+    else {
+      downloader = PluginDownloader.createDownloader(pluginNode);
+    }
+
+    if (downloader.prepareToInstall(ProgressManager.getInstance().getProgressIndicator())) {
+      synchronized (myLock) {
+        downloader.install();
+      }
+      pluginNode.setStatus(PluginNode.STATUS_DOWNLOADED);
+    }
+    else {
+      return false;
+    }
+    
 
     return true;
   }
