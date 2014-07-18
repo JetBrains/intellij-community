@@ -166,6 +166,18 @@ LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH"
 export LD_LIBRARY_PATH
 
 # ---------------------------------------------------------------------
+# Check if the wmname tool is installed (part of the suckless-tools
+# package on debian) using the hash command (adopted from 
+# http://stackoverflow.com/a/677212). If it is installed set the fake
+# window manager name to LG3D. This makes intellij usable for users
+# of the awesome window manager (otherwise you just get a plain grey
+# window which is pretty sad.
+# ---------------------------------------------------------------------
+if hash wmname 2>/dev/null; then
+        wmname LG3D
+fi
+
+# ---------------------------------------------------------------------
 # Run the IDE.
 # ---------------------------------------------------------------------
 while true ; do
