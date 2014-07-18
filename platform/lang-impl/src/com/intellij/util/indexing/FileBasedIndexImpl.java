@@ -380,9 +380,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         LOG.info("Version has changed for index " + name + ". The index will be rebuilt.");
       }
       if (extension.hasSnapshotMapping() && (isCurrentVersionCorrupted || versionChanged)) {
-        safeDelete(IndexInfrastructure.getPersistentIndexRootDir(name));
+        FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(name));
       }
-      safeDelete(IndexInfrastructure.getIndexRootDir(name));
+      FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(name));
       IndexingStamp.rewriteVersion(versionFile, version);
     }
 
@@ -458,20 +458,14 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         catch (Exception ignored) {
         }
 
-        safeDelete(IndexInfrastructure.getIndexRootDir(name));
+        FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(name));
 
         if (extension.hasSnapshotMapping() && (!contentHashesEnumeratorOk || instantiatedStorage)) {
-          safeDelete(IndexInfrastructure.getPersistentIndexRootDir(name)); // todo there is possibility of corruption of storage and content hashes
+          FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(name)); // todo there is possibility of corruption of storage and content hashes
         }
         IndexingStamp.rewriteVersion(versionFile, version);
       }
     }
-  }
-
-  private static boolean safeDelete(File dir) {
-    File directory = FileUtil.findSequentNonexistentFile(dir.getParentFile(), dir.getName(), "");
-    boolean success = dir.renameTo(directory);
-    return FileUtil.delete(success ? directory:dir);
   }
 
   private static void saveRegisteredIndices(@NotNull Collection<ID<?, ?>> ids) {
@@ -1568,7 +1562,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       indicesToDrop.remove(key.toString());
     }
     for (String s : indicesToDrop) {
-      safeDelete(IndexInfrastructure.getIndexRootDir(ID.create(s)));
+      FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(ID.create(s)));
     }
   }
 
