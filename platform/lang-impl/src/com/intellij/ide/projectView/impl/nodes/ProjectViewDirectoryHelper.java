@@ -33,9 +33,9 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -46,7 +46,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public class ProjectViewDirectoryHelper {
   protected static final Logger LOG = Logger.getInstance("#" + ProjectViewDirectoryHelper.class.getName());
@@ -196,13 +199,13 @@ public class ProjectViewDirectoryHelper {
   }
 
   private boolean isInProject(VirtualFile dir) {
-    if (myIndex.getInfoForDirectory(dir) != null) {
-      return true;
+    DirectoryInfo directoryInfo = myIndex.getInfoForFile(dir);
+    if (directoryInfo.isInProject()) return true;
+
+    if (!Registry.is("ide.hide.excluded.files")) {
+      return directoryInfo.isExcluded();
     }
-    if (Registry.is("ide.hide.excluded.files")) {
-      return false;
-    }
-    return VfsUtilCore.isUnder(dir, new HashSet<VirtualFile>(getTopLevelRoots()));
+    return false;
   }
 
   // used only for non-flatten packages mode

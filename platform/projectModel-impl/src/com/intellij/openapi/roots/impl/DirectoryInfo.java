@@ -34,7 +34,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public abstract class DirectoryInfo {
-  public static final int MAX_ROOT_TYPE_ID = (1 << (Byte.SIZE - 2)) - 1;
+  public static final int MAX_ROOT_TYPE_ID = (1 << (Byte.SIZE - 3)) - 1;
   private final Module module; // module to which content it belongs or null
   private final VirtualFile libraryClassRoot; // class root in library
   private final VirtualFile contentRoot;
@@ -42,18 +42,33 @@ public abstract class DirectoryInfo {
 
   private static final byte MODULE_SOURCE_FLAG = 1; // set if files in this directory belongs to sources of the module (if field 'module' is not null)
   private static final byte LIBRARY_SOURCE_FLAG = 2; // set if it's a directory with sources of some library
-  private final byte sourceRootTypeData;//two least significant bits are used for MODULE_SOURCE_FLAG and LIBRARY_SOURCE_FLAG, the remaining bits store module root type id (source/tests/resources/...)
+  private static final byte EXCLUDED_FLAG = 4; // set if it's a directory under 'excluded' folder of a module
+  private final byte rootTypeData;//three least significant bits are used for MODULE_SOURCE_FLAG, LIBRARY_SOURCE_FLAG and EXCLUDED_FLAG, the remaining bits store module root type id (source/tests/resources/...)
 
   DirectoryInfo(Module module,
                 VirtualFile contentRoot,
                 VirtualFile sourceRoot,
                 VirtualFile libraryClassRoot,
-                byte sourceRootTypeData) {
+                byte rootTypeData) {
     this.module = module;
     this.libraryClassRoot = libraryClassRoot;
     this.contentRoot = contentRoot;
     this.sourceRoot = sourceRoot;
-    this.sourceRootTypeData = sourceRootTypeData;
+    this.rootTypeData = rootTypeData;
+  }
+
+  /**
+   * @return {@code true} if located under project content or library roots and not excluded or ignored
+   */
+  public boolean isInProject() {
+    return !isExcluded();
+  }
+
+  /**
+   * @return {@code true} if located under ignored directory
+   */
+  public boolean isIgnored() {
+    return false;
   }
 
   @Override
@@ -63,7 +78,7 @@ public abstract class DirectoryInfo {
 
     DirectoryInfo info = (DirectoryInfo)o;
 
-    return sourceRootTypeData == info.sourceRootTypeData &&
+    return rootTypeData == info.rootTypeData &&
            Comparing.equal(contentRoot, info.contentRoot) &&
            Comparing.equal(libraryClassRoot, info.libraryClassRoot) &&
            Comparing.equal(module, info.module) &&
@@ -77,7 +92,7 @@ public abstract class DirectoryInfo {
     result = 31 * result + (libraryClassRoot != null ? libraryClassRoot.hashCode() : 0);
     result = 31 * result + (contentRoot != null ? contentRoot.hashCode() : 0);
     result = 31 * result + (sourceRoot != null ? sourceRoot.hashCode() : 0);
-    result = 31 * result + (int)sourceRootTypeData;
+    result = 31 * result + (int)rootTypeData;
     return result;
   }
 
@@ -88,6 +103,7 @@ public abstract class DirectoryInfo {
            ", isInModuleSource=" + isInModuleSource() +
            ", rootTypeId=" + getSourceRootTypeId() +
            ", isInLibrarySource=" + isInLibrarySource() +
+           ", isExcludedFromModule=" + isExcluded() +
            ", libraryClassRoot=" + getLibraryClassRoot() +
            ", contentRoot=" + getContentRoot() +
            ", sourceRoot=" + getSourceRoot() +
@@ -214,11 +230,15 @@ public abstract class DirectoryInfo {
   }
 
   public boolean isInModuleSource() {
-    return BitUtil.isSet(sourceRootTypeData, MODULE_SOURCE_FLAG);
+    return BitUtil.isSet(rootTypeData, MODULE_SOURCE_FLAG);
   }
 
   public boolean isInLibrarySource() {
-    return BitUtil.isSet(sourceRootTypeData, LIBRARY_SOURCE_FLAG);
+    return BitUtil.isSet(rootTypeData, LIBRARY_SOURCE_FLAG);
+  }
+
+  public boolean isExcluded() {
+    return BitUtil.isSet(rootTypeData, EXCLUDED_FLAG);
   }
 
   public Module getModule() {
@@ -234,13 +254,15 @@ public abstract class DirectoryInfo {
   }
 
   public int getSourceRootTypeId() {
-    return sourceRootTypeData >> 2;
+    return rootTypeData >> 3;
   }
 
-  public static int createSourceRootTypeData(boolean isInModuleSources, boolean isInLibrarySource, int moduleSourceRootTypeId) {
+  public static int createRootTypeData(boolean isInModuleSources, boolean isInLibrarySource, boolean isExcludedFromModule,
+                                       int moduleSourceRootTypeId) {
     if (moduleSourceRootTypeId > MAX_ROOT_TYPE_ID) {
       throw new IllegalArgumentException("Module source root type id " + moduleSourceRootTypeId + " exceeds the maximum allowable value (" + MAX_ROOT_TYPE_ID + ")");
     }
-    return (isInModuleSources ? MODULE_SOURCE_FLAG : 0) | (isInLibrarySource ? LIBRARY_SOURCE_FLAG : 0) | moduleSourceRootTypeId << 2;
+    return (isInModuleSources ? MODULE_SOURCE_FLAG : 0) | (isInLibrarySource ? LIBRARY_SOURCE_FLAG : 0) | (isExcludedFromModule ? EXCLUDED_FLAG : 0)
+           | moduleSourceRootTypeId << 3;
   }
 }

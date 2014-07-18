@@ -43,16 +43,8 @@ import java.util.*;
 
 public class RootIndex extends DirectoryIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootIndex");
-  private static final DirectoryInfo NULL_INFO = new DirectoryInfo(null, null, null, null, (byte)0) {
-    @NotNull
-    @Override
-    public OrderEntry[] getOrderEntries() {
-      throw new UnsupportedOperationException("Not implemented");
-    }
-  };
 
   private final Set<VirtualFile> myProjectExcludedRoots = ContainerUtil.newHashSet();
-  private final Set<VirtualFile> myModuleExcludedRoots;
   private final MultiMap<String, VirtualFile> myPackagePrefixRoots = new MultiMap<String, VirtualFile>() {
     @NotNull
     @Override
@@ -77,15 +69,15 @@ public class RootIndex extends DirectoryIndex {
     Set<VirtualFile> allRoots = info.getAllRoots();
     for (VirtualFile root : allRoots) {
       List<VirtualFile> hierarchy = getHierarchy(root, allRoots, info);
-      Pair<DirectoryInfo, String> pair = hierarchy == null ? new Pair<DirectoryInfo, String>(null, null) : calcDirectoryInfo(root, hierarchy, info);
+      Pair<DirectoryInfo, String> pair = hierarchy != null
+                                         ? calcDirectoryInfo(root, hierarchy, info)
+                                         : new Pair<DirectoryInfo, String>(NonProjectDirectoryInfo.IGNORED, null);
       cacheInfos(root, root, pair.first);
       myPackagePrefixRoots.putValue(pair.second, root);
       if (info.shouldMarkAsProjectExcluded(root, hierarchy)) {
         myProjectExcludedRoots.add(root);
       }
     }
-
-    myModuleExcludedRoots = info.excludedFromModule.keySet();
   }
 
   @NotNull
@@ -263,14 +255,27 @@ public class RootIndex extends DirectoryIndex {
   }
 
   @Override
-  @Nullable
-  public DirectoryInfo getInfoForDirectory(@NotNull final VirtualFile dir) {
-    if (!dir.isValid()) {
-      return null;
+  public DirectoryInfo getInfoForDirectory(@NotNull VirtualFile dir) {
+    DirectoryInfo info = getInfoForFile(dir);
+    return info.isInProject() ? info : null;
+  }
+
+  @NotNull
+  @Override
+  public DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
+    if (!file.isValid()) {
+      return NonProjectDirectoryInfo.INVALID;
     }
-    if (!dir.isDirectory()) {
-      DirectoryInfo info = myInfoCache.getCachedInfo(dir);
-      return info == NULL_INFO ? null : info;
+    VirtualFile dir;
+    if (!file.isDirectory()) {
+      DirectoryInfo info = myInfoCache.getCachedInfo(file);
+      if (info != null) {
+        return info;
+      }
+      dir = file.getParent();
+    }
+    else {
+      dir = file;
     }
 
     int count = 0;
@@ -283,21 +288,21 @@ public class RootIndex extends DirectoryIndex {
         if (!dir.equals(root)) {
           cacheInfos(dir, root, info);
         }
-        return info == NULL_INFO ? null : info;
+        return info;
       }
 
       if (isIgnored(root)) {
-        return cacheInfos(dir, root, null);
+        return cacheInfos(dir, root, NonProjectDirectoryInfo.IGNORED);
       }
     }
 
-    return cacheInfos(dir, null, null);
+    return cacheInfos(dir, null, NonProjectDirectoryInfo.NOT_UNDER_PROJECT_ROOTS);
   }
 
-  @Nullable
-  private DirectoryInfo cacheInfos(VirtualFile dir, @Nullable VirtualFile stopAt, @Nullable DirectoryInfo info) {
+  @NotNull
+  private DirectoryInfo cacheInfos(VirtualFile dir, @Nullable VirtualFile stopAt, @NotNull DirectoryInfo info) {
     while (dir != null) {
-      myInfoCache.cacheInfo(dir, info == null ? NULL_INFO : info);
+      myInfoCache.cacheInfo(dir, info);
       if (dir.equals(stopAt)) {
         break;
       }
@@ -312,11 +317,6 @@ public class RootIndex extends DirectoryIndex {
   }
 
   @Override
-  public boolean isModuleExcludeRoot(@NotNull final VirtualFile dir) {
-    return myModuleExcludedRoots.contains(dir);
-  }
-
-  @Override
   @NotNull
   public Query<VirtualFile> getDirectoriesByPackageName(@NotNull final String packageName, final boolean includeLibrarySources) {
     List<VirtualFile> result = myDirectoriesByPackageNameCache.get(packageName);
@@ -327,7 +327,8 @@ public class RootIndex extends DirectoryIndex {
         String shortName = StringUtil.getShortName(packageName);
         for (VirtualFile parentDir : getDirectoriesByPackageName(StringUtil.getPackageName(packageName), true)) {
           VirtualFile child = parentDir.findChild(shortName);
-          if (child != null && child.isDirectory() && getInfoForDirectory(child) != null && packageName.equals(getPackageName(child))) {
+          if (child != null && child.isDirectory() && getInfoForFile(child).isInProject()
+              && packageName.equals(getPackageName(child))) {
             result.add(child);
           }
         }
@@ -344,8 +345,8 @@ public class RootIndex extends DirectoryIndex {
       result = ContainerUtil.filter(result, new Condition<VirtualFile>() {
         @Override
         public boolean value(VirtualFile file) {
-          DirectoryInfo info = getInfoForDirectory(file);
-          return info != null && (!info.isInLibrarySource() || info.isInModuleSource() || info.hasLibraryClassRoot());
+          DirectoryInfo info = getInfoForFile(file);
+          return info.isInProject() && (!info.isInLibrarySource() || info.isInModuleSource() || info.hasLibraryClassRoot());
         }
       });
     }
@@ -397,7 +398,7 @@ public class RootIndex extends DirectoryIndex {
     return false;
   }
 
-  @Nullable
+  @Nullable("returns null only if dir is under ignored folder")
   private static List<VirtualFile> getHierarchy(VirtualFile dir, @NotNull Set<VirtualFile> allRoots, @NotNull RootInfo info) {
     List<VirtualFile> hierarchy = ContainerUtil.newArrayList();
     boolean hasContentRoots = false;
@@ -467,6 +468,15 @@ public class RootIndex extends DirectoryIndex {
         if (excludedFrom != null || excludedFromProject.contains(root)) {
           return null;
         }
+      }
+      return null;
+    }
+
+    @Nullable
+    private Module findParentModuleForExcluded(@NotNull List<VirtualFile> hierarchy) {
+      for (VirtualFile root : hierarchy) {
+        Module module = contentRootOf.get(root);
+        if (module != null) return module;
       }
       return null;
     }
@@ -566,8 +576,12 @@ public class RootIndex extends DirectoryIndex {
     VirtualFile moduleContentRoot = info.findModuleRootInfo(hierarchy);
     VirtualFile libraryClassRoot = info.findLibraryRootInfo(hierarchy, false);
     VirtualFile librarySourceRoot = info.findLibraryRootInfo(hierarchy, true);
+    Module parentModuleForExcluded = null;
     if (moduleContentRoot == null && libraryClassRoot == null && librarySourceRoot == null) {
-      return new Pair<DirectoryInfo, String>(null, null);
+      parentModuleForExcluded = info.findParentModuleForExcluded(hierarchy);
+      if (parentModuleForExcluded == null) {
+        return new Pair<DirectoryInfo, String>(NonProjectDirectoryInfo.EXCLUDED, null);
+      }
     }
 
     VirtualFile sourceRoot = info.findPackageRootInfo(hierarchy, moduleContentRoot, null, librarySourceRoot);
@@ -577,11 +591,9 @@ public class RootIndex extends DirectoryIndex {
     boolean inLibrarySource = librarySourceRoot != null;
     int typeId = moduleSourceRoot != null ? info.rootTypeId.get(moduleSourceRoot) : 0;
 
-    DirectoryInfo directoryInfo = new DirectoryInfo(info.contentRootOf.get(moduleContentRoot),
-                                                    moduleContentRoot,
-                                                    sourceRoot,
-                                                    libraryClassRoot,
-                                                    (byte)DirectoryInfo.createSourceRootTypeData(inModuleSources, inLibrarySource, typeId)) {
+    Module module = parentModuleForExcluded != null ? parentModuleForExcluded : info.contentRootOf.get(moduleContentRoot);
+    byte rootTypeData = (byte)DirectoryInfo.createRootTypeData(inModuleSources, inLibrarySource, parentModuleForExcluded != null, typeId);
+    DirectoryInfo directoryInfo = new DirectoryInfo(module, moduleContentRoot, sourceRoot, libraryClassRoot, rootTypeData) {
       @NotNull
       @Override
       public OrderEntry[] getOrderEntries() {
