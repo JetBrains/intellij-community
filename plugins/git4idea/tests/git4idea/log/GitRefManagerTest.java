@@ -21,10 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author Kirill Likhodedov
- */
-public class GitLogRefSorterTest extends UsefulTestCase {
+public class GitRefManagerTest extends UsefulTestCase {
 
   public static final MockVirtualFile MOCK_VIRTUAL_FILE = new MockVirtualFile("mockFile");
 
