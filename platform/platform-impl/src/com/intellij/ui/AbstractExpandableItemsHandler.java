@@ -16,7 +16,6 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
@@ -333,7 +332,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     g.setClip(null);
     doFillBackground(height, width, g);
     g.translate(-(visibleRect.x + visibleRect.width - cellBounds.x), 0);
-    doPaintTooltipImage(renderer, cellBounds, height, g, key);
+    doPaintTooltipImage(renderer, cellBounds, g, key);
 
     if (isPaintBorder()) {
       g.translate(visibleRect.x + visibleRect.width - cellBounds.x, 0);
@@ -368,8 +367,8 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     g.fillRect(0, 0, width, height);
   }
 
-  protected void doPaintTooltipImage(Component rComponent, Rectangle cellBounds, int height, Graphics2D g, KeyType key) {
-    myRendererPane.paintComponent(g, rComponent, myComponent, 0, 0, cellBounds.width, height, true);
+  protected void doPaintTooltipImage(Component rComponent, Rectangle cellBounds, Graphics2D g, KeyType key) {
+    myRendererPane.paintComponent(g, rComponent, myComponent, 0, 0, cellBounds.width, cellBounds.height, true);
   }
 
   protected Rectangle getVisibleRect(KeyType key) {

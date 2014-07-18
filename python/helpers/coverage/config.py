@@ -1,10 +1,7 @@
 """Config file for coverage.py"""
 
-import os
-import re
-import sys
+import os, re, sys
 from coverage.backward import string_class, iitems
-
 
 # In py3, # ConfigParser was renamed to the more-standard configparser
 try:

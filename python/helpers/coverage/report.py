@@ -1,11 +1,9 @@
 """Reporter foundation for Coverage."""
 
-import fnmatch
-import os
+import fnmatch, os
 from coverage.codeunit import code_unit_factory
 from coverage.files import prep_patterns
 from coverage.misc import CoverageException, NoSource, NotPython
-
 
 class Reporter(object):
     """A base class for all reporters."""

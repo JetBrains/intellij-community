@@ -415,6 +415,16 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean delete(@NotNull File file) {
+    if (SystemInfo.isWindows) {
+      File tempFileNameForDeletion = findSequentNonexistentFile(file.getParentFile(), file.getName(), "");
+      boolean success = file.renameTo(tempFileNameForDeletion);
+      return doDelete(success ? tempFileNameForDeletion : file);
+    }
+
+    return doDelete(file);
+  }
+
+  private static boolean doDelete(File file) {
     FileAttributes attributes = FileSystemUtil.getAttributes(file);
     if (attributes == null) return true;
 

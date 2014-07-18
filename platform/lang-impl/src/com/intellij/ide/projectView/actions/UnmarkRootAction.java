@@ -18,12 +18,15 @@ package com.intellij.ide.projectView.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.Set;
@@ -33,9 +36,16 @@ import java.util.Set;
  */
 public class UnmarkRootAction extends MarkRootActionBase {
   @Override
-  public void update(AnActionEvent e) {
-    super.update(e);
-    RootsSelection selection = getSelection(e);
+  protected void doUpdate(@NotNull AnActionEvent e, @Nullable Module module, @NotNull RootsSelection selection) {
+    if (!Registry.is("ide.hide.excluded.files") && !selection.mySelectedExcludeRoots.isEmpty()
+        && selection.mySelectedDirectories.isEmpty() && selection.mySelectedRoots.isEmpty()) {
+      e.getPresentation().setEnabledAndVisible(true);
+      e.getPresentation().setText("Cancel Exclusion");
+      return;
+    }
+
+    super.doUpdate(e, module, selection);
+
     Set<JpsModuleSourceRootType<?>> selectedRootTypes = new HashSet<JpsModuleSourceRootType<?>>();
     for (SourceFolder root : selection.mySelectedRoots) {
       selectedRootTypes.add(root.getRootType());
@@ -60,6 +70,12 @@ public class UnmarkRootAction extends MarkRootActionBase {
     return selection.mySelectedDirectories.isEmpty() && !selection.mySelectedRoots.isEmpty();
   }
 
-  protected void modifyRoots(VirtualFile vFile, ContentEntry entry) {
+  protected void modifyRoots(VirtualFile file, ContentEntry entry) {
+    for (ExcludeFolder excludeFolder : entry.getExcludeFolders()) {
+      if (file.equals(excludeFolder.getFile())) {
+        entry.removeExcludeFolder(excludeFolder);
+        break;
+      }
+    }
   }
 }

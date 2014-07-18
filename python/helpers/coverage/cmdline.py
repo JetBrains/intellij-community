@@ -1,10 +1,7 @@
 """Command-line support for Coverage."""
 
-import optparse
-import os
-import sys
-import time
-import traceback
+import optparse, os, sys, time, traceback
+
 from coverage.backward import sorted                # pylint: disable=W0622
 from coverage.execfile import run_python_file, run_python_module
 from coverage.misc import CoverageException, ExceptionDuringRun, NoSource

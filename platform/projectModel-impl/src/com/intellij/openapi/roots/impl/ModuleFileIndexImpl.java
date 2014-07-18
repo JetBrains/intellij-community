@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -49,8 +48,8 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     for (VirtualFile contentRoot : contentRoots) {
       VirtualFile parent = contentRoot.getParent();
       if (parent != null) {
-        DirectoryInfo parentInfo = myDirectoryIndex.getInfoForDirectory(parent);
-        if (parentInfo != null && myModule.equals(parentInfo.getModule())) continue; // inner content - skip it
+        DirectoryInfo parentInfo = myDirectoryIndex.getInfoForFile(parent);
+        if (parentInfo.isInProject() && myModule.equals(parentInfo.getModule())) continue; // inner content - skip it
       }
 
       boolean finished = VfsUtilCore.iterateChildrenRecursively(contentRoot, myContentFilter, iterator);
@@ -68,50 +67,45 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info != null && myModule.equals(info.getModule());
+    return info.isInProject() && myModule.equals(info.getModule());
   }
 
   @Override
   public boolean isInSourceContent(@NotNull VirtualFile fileOrDir) {
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info != null && info.isInModuleSource() && myModule.equals(info.getModule());
+    return info.isInModuleSource() && myModule.equals(info.getModule());
   }
 
   @Override
   @NotNull
   public List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile fileOrDir) {
-    DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    if (info == null) return Collections.emptyList();
-    return info.findAllOrderEntriesWithOwnerModule(myModule);
+    return getInfoForFileOrDirectory(fileOrDir).findAllOrderEntriesWithOwnerModule(myModule);
   }
 
   @Override
   public OrderEntry getOrderEntryForFile(@NotNull VirtualFile fileOrDir) {
-    DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    if (info == null) return null;
-    return info.findOrderEntryWithOwnerModule(myModule);
+    return getInfoForFileOrDirectory(fileOrDir).findOrderEntryWithOwnerModule(myModule);
   }
 
   @Override
   public boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir) {
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info != null && info.isInModuleSource() && myModule.equals(info.getModule())
+    return info.isInModuleSource() && myModule.equals(info.getModule())
            && JavaModuleSourceRootTypes.isTestSourceOrResource(myDirectoryIndex.getSourceRootType(info));
   }
 
   @Override
   public boolean isUnderSourceRootOfType(@NotNull VirtualFile fileOrDir, @NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info != null && info.isInModuleSource() && myModule.equals(info.getModule())
-           && rootTypes.contains(myDirectoryIndex.getSourceRootType(info));
+    return info.isInModuleSource() && myModule.equals(info.getModule()) && rootTypes.contains(myDirectoryIndex.getSourceRootType(info));
   }
 
   private class ContentFilter implements VirtualFileFilter {
     @Override
     public boolean accept(@NotNull VirtualFile file) {
       if (file.isDirectory()) {
-        DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(file);
-        return info != null && myModule.equals(info.getModule());
+        DirectoryInfo info = myDirectoryIndex.getInfoForFile(file);
+        return info.isInProject() && myModule.equals(info.getModule());
       }
       else {
         return !myFileTypeRegistry.isFileIgnored(file);

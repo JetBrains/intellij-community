@@ -40,7 +40,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -177,12 +176,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
                 @Override
                 public InputStream getContent(final File file) throws IOException {
                   if (virtualFile.getFileType().isBinary() || PROJECT_TEMPLATE_XML.equals(virtualFile.getName())) return STANDARD.getContent(file);
-                  String result = ApplicationManager.getApplication().runReadAction(new ThrowableComputable<String, IOException>() {
-                    @Override
-                    public String compute() throws IOException {
-                      return getEncodedContent(virtualFile, project, parameters);
-                    }
-                  });
+                  String result = getEncodedContent(virtualFile, project, parameters);
                   return new ByteArrayInputStream(result.getBytes(TemplateModuleBuilder.UTF_8));
                 }
               });
@@ -253,10 +247,10 @@ public class SaveProjectAsTemplateAction extends AnAction {
   public static String getEncodedContent(VirtualFile virtualFile,
                                           Project project,
                                           Map<String, String> parameters) throws IOException {
+    String text = VfsUtilCore.loadText(virtualFile);
     final FileTemplate template = FileTemplateManager.getInstance().getDefaultTemplate(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
     final String templateText = template.getText();
     final Pattern pattern = FileHeaderChecker.getTemplatePattern(template, project, new TIntObjectHashMap<String>());
-    String text = VfsUtilCore.loadText(virtualFile);
     String result = convertTemplates(text, pattern, templateText);
     result = ProjectTemplateFileProcessor.encodeFile(result, virtualFile, project);
     for (Map.Entry<String, String> entry : parameters.entrySet()) {

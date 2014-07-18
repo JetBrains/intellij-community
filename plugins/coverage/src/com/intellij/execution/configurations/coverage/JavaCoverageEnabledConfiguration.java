@@ -23,6 +23,7 @@ import com.intellij.coverage.JavaCoverageRunner;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.classFilter.ClassFilter;
@@ -116,6 +117,7 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     myCoveragePatterns = coveragePatterns;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
 
@@ -126,14 +128,13 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     mySuiteToMergeWith = element.getAttributeValue(COVERAGE_MERGE_SUITE_ATT_NAME);
 
     // coverage patters
-    final List children = element.getChildren(COVERAGE_PATTERN_ELEMENT_NAME);
+    List<Element> children = element.getChildren(COVERAGE_PATTERN_ELEMENT_NAME);
     if (children.size() > 0) {
       myCoveragePatterns = new ClassFilter[children.size()];
       for (int i = 0; i < children.size(); i++) {
-        myCoveragePatterns[i] = new ClassFilter();
-        @NonNls final Element e = (Element)children.get(i);
-        myCoveragePatterns[i].readExternal(e);
-        final String val = e.getAttributeValue("value");
+        Element e = children.get(i);
+        myCoveragePatterns[i] = createClassFilter(e);
+        String val = e.getAttributeValue("value");
         if (val != null) {
           myCoveragePatterns[i].setPattern(val);
         }
@@ -141,6 +142,13 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     }
   }
 
+  public static ClassFilter createClassFilter(Element element) throws InvalidDataException {
+    ClassFilter filter = new ClassFilter();
+    DefaultJDOMExternalizer.readExternal(filter, element);
+    return filter;
+  }
+
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     // just for backward compatibility with settings format before "Huge Coverage Refactoring"
     // see [IDEA-56800] ProjectRunConfigurationManager component: "coverage" extension: "merge" attribute is misplaced
@@ -187,12 +195,13 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     if (myCoveragePatterns != null) {
       for (ClassFilter pattern : myCoveragePatterns) {
         @NonNls final Element patternElement = new Element(COVERAGE_PATTERN_ELEMENT_NAME);
-        pattern.writeExternal(patternElement);
+        DefaultJDOMExternalizer.writeExternal(pattern, patternElement);
         element.addContent(patternElement);
       }
     }
   }
 
+  @Override
   @Nullable
   public String getCoverageFilePath() {
     if (myCoverageFilePath != null ) {

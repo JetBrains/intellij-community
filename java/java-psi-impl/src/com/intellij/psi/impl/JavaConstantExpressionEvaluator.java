@@ -105,11 +105,11 @@ public class JavaConstantExpressionEvaluator extends JavaRecursiveElementWalking
     return myMapFactory.create();
   }
 
-  public static Object computeConstantExpression(PsiExpression expression, @Nullable Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow) {
+  public static Object computeConstantExpression(@Nullable PsiExpression expression, @Nullable Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow) {
     return computeConstantExpression(expression, visitedVars, throwExceptionOnOverflow, null);
   }
 
-  public static Object computeConstantExpression(PsiExpression expression, @Nullable Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow,
+  public static Object computeConstantExpression(@Nullable PsiExpression expression, @Nullable Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow,
                                                  final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
     if (expression == null) return null;
 
@@ -131,7 +131,7 @@ public class JavaConstantExpressionEvaluator extends JavaRecursiveElementWalking
     return cached == NO_VALUE ? null : cached;
   }
   
-  public static Object computeConstantExpression(PsiExpression expression, boolean throwExceptionOnOverflow) {
+  public static Object computeConstantExpression(@Nullable PsiExpression expression, boolean throwExceptionOnOverflow) {
     return computeConstantExpression(expression, null, throwExceptionOnOverflow);
   }
 }

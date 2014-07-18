@@ -409,7 +409,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       }
     }
     else {
-      buffer.append(getBuild().asString());
+      buffer.append(getBuild().asStringWithAllDetails());
     }
     return buffer.toString();
   }

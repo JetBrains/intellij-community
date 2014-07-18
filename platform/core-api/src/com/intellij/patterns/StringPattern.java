@@ -78,7 +78,6 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
       public boolean accepts(@NotNull final String str, final ProcessingContext context) {
         return StringUtil.contains(str, s);
       }
-
     });
   }
 
@@ -175,6 +174,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
       }
     });
   }
+
   public StringPattern shorterThan(final int maxLength) {
     return with(new PatternCondition<String>("shorterThan") {
       @Override
@@ -183,6 +183,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
       }
     });
   }
+
   public StringPattern withLength(final int length) {
     return with(new PatternCondition<String>("withLength") {
       @Override
@@ -192,9 +193,21 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
     });
   }
 
+  @Override
+  @NotNull
+  public StringPattern oneOf(@NonNls final String... values) {
+    return super.oneOf(values);
+  }
+
   @NotNull
   public StringPattern oneOfIgnoreCase(@NonNls final String... values) {
     return with(new CaseInsensitiveValuePatternCondition("oneOfIgnoreCase", values));
+  }
+
+  @Override
+  @NotNull
+  public StringPattern oneOf(@NonNls final Collection<String> set) {
+    return super.oneOf(set);
   }
 
   @NotNull

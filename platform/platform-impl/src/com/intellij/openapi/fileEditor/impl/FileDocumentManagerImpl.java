@@ -173,8 +173,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
         document.setModificationStamp(file.getModificationStamp());
         final FileType fileType = file.getFileType();
         document.setReadOnly(!file.isWritable() || fileType.isBinary());
-        myDocuments.put(file, document);
-        document.putUserData(FILE_KEY, file);
+        if (file instanceof LightVirtualFile) {
+          registerDocument(document, file);
+        } else {
+          myDocuments.put(file, document);
+          document.putUserData(FILE_KEY, file);
+        }
 
         if (!(file instanceof LightVirtualFile || file.getFileSystem() instanceof DummyFileSystem)) {
           document.addDocumentListener(

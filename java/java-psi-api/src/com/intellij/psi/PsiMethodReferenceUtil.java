@@ -44,7 +44,15 @@ public class PsiMethodReferenceUtil {
   public static String checkReturnType(PsiMethodReferenceExpression expression, JavaResolveResult result, PsiType functionalInterfaceType) {
     final PsiElement resolve = result.getElement();
     if (resolve instanceof PsiMethod) {
+      final PsiClass containingClass = ((PsiMethod)resolve).getContainingClass();
+      LOG.assertTrue(containingClass != null);
       PsiSubstitutor subst = result.getSubstitutor();
+      PsiClass qContainingClass = getQualifierResolveResult(expression).getContainingClass();
+      if (qContainingClass != null && InheritanceUtil.isInheritorOrSelf(qContainingClass, containingClass, true)) {
+        subst = TypeConversionUtil.getClassSubstitutor(containingClass, qContainingClass, subst);
+        LOG.assertTrue(subst != null);
+      }
+
 
       final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
 
@@ -57,7 +65,7 @@ public class PsiMethodReferenceUtil {
       PsiType methodReturnType = subst.substitute(returnType);
       if (interfaceReturnType != null && interfaceReturnType != PsiType.VOID) {
         if (methodReturnType == null) {
-          methodReturnType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(((PsiMethod)resolve).getContainingClass(), subst);
+          methodReturnType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(containingClass, subst);
         }
         if (!TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType, false)) {
           return "Bad return type in method reference: cannot convert " + methodReturnType.getCanonicalText() + " to " + interfaceReturnType.getCanonicalText();

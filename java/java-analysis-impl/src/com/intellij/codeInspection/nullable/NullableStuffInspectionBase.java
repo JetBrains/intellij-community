@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.InferredAnnotationsManager;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
@@ -155,7 +154,17 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
             }
           }
 
-          for (PsiExpression rhs : DfaPsiUtil.findAllConstructorInitializers(field)) {
+          List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers(field);
+          if (annotated.isDeclaredNotNull && initializers.isEmpty()) {
+            final PsiAnnotation annotation = AnnotationUtil.findAnnotation(field, manager.getNotNulls());
+            if (annotation != null) {
+              holder.registerProblem(annotation.isPhysical() ? annotation : field.getNameIdentifier(),
+                                     "Not-null fields must be initialized",
+                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+            }
+          }
+
+          for (PsiExpression rhs : initializers) {
             if (rhs instanceof PsiReferenceExpression) {
               PsiElement target = ((PsiReferenceExpression)rhs).resolve();
               if (target instanceof PsiParameter) {
@@ -204,6 +213,33 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
         if (!PsiUtil.isLanguageLevel5OrHigher(parameter)) return;
         check(parameter, holder, parameter.getType());
       }
+
+      @Override
+      public void visitAnnotation(PsiAnnotation annotation) {
+        if (!AnnotationUtil.NOT_NULL.equals(annotation.getQualifiedName())) return;
+
+        PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue("exception");
+        if (value instanceof PsiClassObjectAccessExpression) {
+          PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(((PsiClassObjectAccessExpression)value).getOperand().getType());
+          if (psiClass != null && !hasStringConstructor(psiClass)) {
+            holder.registerProblem(value,
+                                   "Custom exception class should have a constructor with a single message parameter of String type",
+                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+
+          }
+        }
+      }
+
+      private boolean hasStringConstructor(PsiClass aClass) {
+        for (PsiMethod method : aClass.getConstructors()) {
+          PsiParameterList list = method.getParameterList();
+          if (list.getParametersCount() == 1 &&
+              list.getParameters()[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+            return true;
+          }
+        }
+        return false;
+      }
     };
   }
 
@@ -232,7 +268,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     PsiAnnotation isDeclaredNotNull = AnnotationUtil.findAnnotation(parameter, manager.getNotNulls());
     PsiAnnotation isDeclaredNullable = AnnotationUtil.findAnnotation(parameter, manager.getNullables());
     if (isDeclaredNullable != null && isDeclaredNotNull != null) {
-      reportNullableNotNullConflict(holder, parameter, isDeclaredNullable,  isDeclaredNotNull);
+      reportNullableNotNullConflict(holder, parameter, isDeclaredNullable, isDeclaredNotNull);
     }
     if ((isDeclaredNotNull != null || isDeclaredNullable != null) && type != null && TypeConversionUtil.isPrimitive(type.getCanonicalText())) {
       PsiAnnotation annotation = isDeclaredNotNull == null ? isDeclaredNullable : isDeclaredNotNull;

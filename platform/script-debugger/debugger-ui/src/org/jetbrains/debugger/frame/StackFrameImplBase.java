@@ -38,6 +38,10 @@ public abstract class StackFrameImplBase extends XStackFrame {
     return false;
   }
 
+  protected boolean isInLibraryContent() {
+    return false;
+  }
+
   @Override
   public final void customizePresentation(@NotNull ColoredTextContainer component) {
     if (sourceInfo == null) {
@@ -48,18 +52,21 @@ public abstract class StackFrameImplBase extends XStackFrame {
     String fileName = sourceInfo.getFile().getName();
     int line = sourceInfo.getLine() + 1;
 
+    boolean isInLibraryContent = isInLibraryContent();
+    SimpleTextAttributes textAttributes = isInLibraryContent ? SimpleTextAttributes.GRAYED_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
+
     String functionName = sourceInfo.getFunctionName();
     if (functionName == null || (functionName.isEmpty() && isInFileScope())) {
-      component.append(fileName + ":" + line, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      component.append(fileName + ":" + line, textAttributes);
     }
     else {
       if (functionName.isEmpty()) {
-        component.append("anonymous", SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
+        component.append("anonymous", isInLibraryContent ? SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES : SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
       }
       else {
-        component.append(functionName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        component.append(functionName, textAttributes);
       }
-      component.append("(), " + fileName + ":" + line, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      component.append("(), " + fileName + ":" + line, textAttributes);
     }
     component.setIcon(AllIcons.Debugger.StackFrame);
   }

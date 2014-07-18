@@ -2,7 +2,7 @@ import org.jetbrains.annotations.Nullable;
 
 class Doo {
 
-  boolean isNotNull(@Nullable Object o) {
+  static boolean isNotNull(@Nullable Object o) {
     return o != null;
   }
 

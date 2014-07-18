@@ -45,6 +45,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.sun.jdi.*;
@@ -199,7 +200,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public static ClassFilter create(Element element) throws InvalidDataException {
     ClassFilter filter = new ClassFilter();
-    filter.readExternal(element);
+    DefaultJDOMExternalizer.readExternal(filter, element);
     return filter;
   }
 
@@ -245,24 +246,23 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return res;
   }
 
-  public static ClassFilter[] readFilters(List children) throws InvalidDataException {
-    if (children == null || children.size() == 0) {
+  public static ClassFilter[] readFilters(List<Element> children) throws InvalidDataException {
+    if (ContainerUtil.isEmpty(children)) {
       return ClassFilter.EMPTY_ARRAY;
     }
-    List<ClassFilter> classFiltersList = new ArrayList<ClassFilter>(children.size());
-    for (Object aChildren : children) {
-      final ClassFilter classFilter = new ClassFilter();
-      classFilter.readExternal((Element)aChildren);
-      classFiltersList.add(classFilter);
+
+    ClassFilter[] filters = new ClassFilter[children.size()];
+    for (int i = 0, size = children.size(); i < size; i++) {
+      filters[i] = create(children.get(i));
     }
-    return classFiltersList.toArray(new ClassFilter[classFiltersList.size()]);
+    return filters;
   }
 
   public static void writeFilters(Element parentNode, @NonNls String tagName, ClassFilter[] filters) throws WriteExternalException {
     for (ClassFilter filter : filters) {
       Element element = new Element(tagName);
       parentNode.addContent(element);
-      filter.writeExternal(element);
+      DefaultJDOMExternalizer.writeExternal(filter, element);
     }
   }
 

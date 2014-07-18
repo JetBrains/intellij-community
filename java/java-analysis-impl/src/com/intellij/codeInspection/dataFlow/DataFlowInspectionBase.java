@@ -32,7 +32,8 @@ import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFi
 import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -41,9 +42,9 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.extractMethod.ExtractMethodUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
@@ -106,7 +107,6 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       public void visitIfStatement(PsiIfStatement statement) {
         PsiExpression condition = statement.getCondition();
         if (BranchingInstruction.isBoolConst(condition)) {
-          assert condition != null;
           LocalQuickFix fix = createSimplifyBooleanExpressionFix(condition, condition.textMatches(PsiKeyword.TRUE));
           holder.registerProblem(condition, "Condition is always " + condition.getText(), fix);
         }
@@ -253,7 +253,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       final Object value = pair.second.getValue();
       PsiVariable constant = pair.second.getConstant();
       final String presentableName = constant != null ? constant.getName() : String.valueOf(value);
-      final String exprText = getConstantValueText(value, constant);
+      final String exprText = String.valueOf(value);
       if (presentableName == null || exprText == null) {
         continue;
       }
@@ -280,29 +280,21 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
           PsiElement problemElement = descriptor.getPsiElement();
           if (problemElement == null) return;
 
+          PsiMethodCallExpression call = problemElement.getParent() instanceof PsiExpressionList &&
+                                         problemElement.getParent().getParent() instanceof PsiMethodCallExpression ?
+                                         (PsiMethodCallExpression)problemElement.getParent().getParent() :
+                                         null;
+          PsiMethod targetMethod = call == null ? null : call.resolveMethod();
+
           JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-          PsiElement newElement = problemElement.replace(facade.getElementFactory().createExpressionFromText(exprText, null));
-          newElement = JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
-          if (newElement instanceof PsiJavaCodeReferenceElement) {
-            PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)newElement;
-            PsiElement target = ref.resolve();
-            String shortName = ref.getReferenceName();
-            if (target != null && shortName != null && ref.isQualified() &&
-                facade.getResolveHelper().resolveReferencedVariable(shortName, newElement) == target) {
-              newElement.replace(facade.getElementFactory().createExpressionFromText(shortName, null));
-            }
+          problemElement.replace(facade.getElementFactory().createExpressionFromText(exprText, null));
+
+          if (targetMethod != null) {
+            ExtractMethodUtil.addCastsToEnsureResolveTarget(targetMethod, call);
           }
         }
       });
     }
-  }
-
-  private static String getConstantValueText(Object value, @Nullable PsiVariable constant) {
-    if (constant != null) {
-      return constant instanceof PsiMember ? PsiUtil.getMemberQualifiedName((PsiMember)constant) : constant.getName();
-    }
-
-    return value instanceof String ? "\"" + StringUtil.escapeStringCharacters((String)value) + "\"" : String.valueOf(value);
   }
 
   private void reportNullableArgumentsPassedToNonAnnotated(DataFlowInstructionVisitor visitor, ProblemsHolder holder, Set<PsiElement> reportedAnchors) {

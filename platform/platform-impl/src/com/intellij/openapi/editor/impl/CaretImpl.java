@@ -1459,6 +1459,11 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     return myEditor;
   }
 
+  @Override
+  public String toString() {
+    return "Caret at " + myVisibleCaret + (mySelectionMarker == null ? "" : (", selection marker: " + mySelectionMarker.toString()));
+  }
+
   /**
    * Encapsulates information about target vertical range info - its <code>'y'</code> coordinate and height in pixels.
    */

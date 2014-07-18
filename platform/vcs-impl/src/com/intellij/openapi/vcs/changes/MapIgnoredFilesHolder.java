@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.HashSet;
+import gnu.trove.THashSet;
 
 import java.util.Collection;
 import java.util.Set;
@@ -40,8 +40,8 @@ public class MapIgnoredFilesHolder extends AbstractIgnoredFilesHolder {
   public MapIgnoredFilesHolder(Project project) {
     super(project);
     myProject = project;
-    mySet = new HashSet<VirtualFile>();
-    myVcsIgnoredSet = new HashSet<VirtualFile>();    //collect ignored files from VcsChangeProvider -> processIgnored
+    mySet = new THashSet<VirtualFile>();
+    myVcsIgnoredSet = new THashSet<VirtualFile>();    //collect ignored files from VcsChangeProvider -> processIgnored
   }
 
   @Override

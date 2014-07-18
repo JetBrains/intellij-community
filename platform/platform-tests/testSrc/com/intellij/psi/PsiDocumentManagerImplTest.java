@@ -75,7 +75,7 @@ public class PsiDocumentManagerImplTest extends PlatformLangTestCase {
   }
 
   public void testDocumentGced() throws Exception {
-    VirtualFile vFile = createFile();
+    VirtualFile vFile = getVirtualFile(createTempFile("txt", "abc"));
     PsiDocumentManagerImpl documentManager = getPsiDocumentManager();
     long id = System.identityHashCode(documentManager.getDocument(getPsiManager().findFile(vFile)));
 
@@ -93,7 +93,7 @@ public class PsiDocumentManagerImplTest extends PlatformLangTestCase {
     });
     //Class.forName("com.intellij.util.ProfilingUtil").getDeclaredMethod("forceCaptureMemorySnapshot").invoke(null);
 
-    for (int i=0;i<1000;i++) {
+    for (int i = 0; i < 1000; i++) {
       PlatformTestUtil.tryGcSoftlyReachableObjects();
       UIUtil.dispatchAllInvocationEvents();
       if (documentManager.getCachedDocument(getPsiManager().findFile(vFile)) == null) break;

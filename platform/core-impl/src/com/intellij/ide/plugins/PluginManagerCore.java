@@ -476,7 +476,7 @@ public class PluginManagerCore {
   }
 
   static void prepareLoadingPluginsErrorMessage(final String errorMessage) {
-    if (errorMessage != null) {
+    if (!StringUtil.isEmptyOrSpaces(errorMessage)) {
       if (ApplicationManager.getApplication() != null
           && !ApplicationManager.getApplication().isHeadlessEnvironment()
           && !ApplicationManager.getApplication().isUnitTestMode()) {
@@ -821,7 +821,7 @@ public class PluginManagerCore {
       message.insert(0, IdeBundle.message("error.problems.found.loading.plugins"));
       return message.toString();
     }
-    return null;
+    return "";
   }
 
   static void loadDescriptorsFromClassPath(@NotNull List<IdeaPluginDescriptorImpl> result, @Nullable StartupProgress progress) {
@@ -1084,6 +1084,9 @@ public class PluginManagerCore {
     String errorMessage = filterBadPlugins(result, disabledPluginNames);
 
     if (!brokenPluginsList.isEmpty()) {
+      if (!StringUtil.isEmptyOrSpaces(errorMessage)) {
+        errorMessage += "<br>";
+      }
       errorMessage += "Following plugins are incompatible with current IDE build: " + StringUtil.join(brokenPluginsList, ", ")
                       + "<br>\n" + StringUtil.notNullize(errorMessage);
     }
@@ -1110,6 +1113,9 @@ public class PluginManagerCore {
       final Couple<PluginId> circularDependency = builder.getCircularDependency();
       final PluginId id = circularDependency.getFirst();
       final PluginId parentId = circularDependency.getSecond();
+      if (!StringUtil.isEmptyOrSpaces(errorMessage)) {
+        errorMessage += "<br>";
+      }
       errorMessage += IdeBundle.message("error.plugins.should.not.have.cyclic.dependencies") + id + "->" + parentId + "->...->" + id;
     }
 

@@ -22,7 +22,9 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,23 +40,24 @@ import java.util.List;
 public abstract class MarkRootActionBase extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Module module = e.getData(LangDataKeys.MODULE);
-    VirtualFile[] vFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    if (module == null || vFiles == null) {
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    final Module module = getModule(e, files);
+    if (module == null) {
       return;
     }
+
     final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    for (VirtualFile vFile : vFiles) {
-      ContentEntry entry = findContentEntry(model, vFile);
+    for (VirtualFile file : files) {
+      ContentEntry entry = findContentEntry(model, file);
       if (entry != null) {
         final SourceFolder[] sourceFolders = entry.getSourceFolders();
         for (SourceFolder sourceFolder : sourceFolders) {
-          if (Comparing.equal(sourceFolder.getFile(), vFile)) {
+          if (Comparing.equal(sourceFolder.getFile(), file)) {
             entry.removeSourceFolder(sourceFolder);
             break;
           }
         }
-        modifyRoots(vFile, entry);
+        modifyRoots(file, entry);
       }
     }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -66,7 +69,7 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
     });
   }
 
-  protected abstract void modifyRoots(VirtualFile vFile, ContentEntry entry);
+  protected abstract void modifyRoots(VirtualFile file, ContentEntry entry);
 
   @Nullable
   public static ContentEntry findContentEntry(@NotNull ModuleRootModel model, @NotNull VirtualFile vFile) {
@@ -82,21 +85,22 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent e) {
-    Module module = e.getData(LangDataKeys.MODULE);
     RootsSelection selection = getSelection(e);
-    boolean enabled = module != null && (!selection.mySelectedRoots.isEmpty() || !selection.mySelectedDirectories.isEmpty()) && isEnabled(selection, module);
-    e.getPresentation().setVisible(enabled);
-    e.getPresentation().setEnabled(enabled);
+    doUpdate(e, e.getData(LangDataKeys.MODULE), selection);
+  }
+
+  protected void doUpdate(@NotNull AnActionEvent e, @Nullable Module module, @NotNull RootsSelection selection) {
+    boolean enabled = module != null && (!selection.mySelectedRoots.isEmpty() || !selection.mySelectedDirectories.isEmpty())
+                      && selection.mySelectedExcludeRoots.isEmpty() && isEnabled(selection, module);
+    e.getPresentation().setEnabledAndVisible(enabled);
   }
 
   protected abstract boolean isEnabled(@NotNull RootsSelection selection, @NotNull Module module);
 
   protected static RootsSelection getSelection(AnActionEvent e) {
-    Module module = e.getData(LangDataKeys.MODULE);
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    if (module == null || files == null) {
-      return RootsSelection.EMPTY;
-    }
+    Module module = getModule(e, files);
+    if (module == null) return RootsSelection.EMPTY;
 
     RootsSelection selection = new RootsSelection();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
@@ -105,7 +109,14 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
         return RootsSelection.EMPTY;
       }
       if (!fileIndex.isInContent(file)) {
-        return RootsSelection.EMPTY;
+        ExcludeFolder excludeFolder = ProjectRootsUtil.findExcludeFolder(module, file);
+        if (excludeFolder != null) {
+          selection.mySelectedExcludeRoots.add(excludeFolder);
+          continue;
+        }
+        else {
+          return RootsSelection.EMPTY;
+        }
       }
       SourceFolder folder;
       if (Comparing.equal(fileIndex.getSourceRootForFile(file), file) && ((folder = ProjectRootsUtil.findSourceFolder(module, file)) != null)) {
@@ -121,10 +132,39 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
     return selection;
   }
 
+  @Nullable
+  private static Module getModule(@NotNull AnActionEvent e, @Nullable VirtualFile[] files) {
+    if (files == null) return null;
+    Module module = e.getData(LangDataKeys.MODULE);
+    if (module == null) {
+      module = findParentModule(e.getProject(), files);
+    }
+    return module;
+  }
+
+  @Nullable
+  private static Module findParentModule(@Nullable Project project, @NotNull VirtualFile[] files) {
+    if (project == null) return null;
+    Module result = null;
+    DirectoryIndex index = DirectoryIndex.getInstance(project);
+    for (VirtualFile file : files) {
+      Module module = index.getInfoForFile(file).getModule();
+      if (module == null) return null;
+      if (result == null) {
+        result = module;
+      }
+      else if (!result.equals(module)) {
+        return null;
+      }
+    }
+    return result;
+  }
+
   protected static class RootsSelection {
     public static final RootsSelection EMPTY = new RootsSelection();
 
     public List<SourceFolder> mySelectedRoots = new ArrayList<SourceFolder>();
+    public List<ExcludeFolder> mySelectedExcludeRoots = new ArrayList<ExcludeFolder>();
     public List<VirtualFile> mySelectedDirectories = new ArrayList<VirtualFile>();
     public boolean myHaveSelectedFilesUnderSourceRoots;
   }

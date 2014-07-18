@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,14 @@
  */
 package com.intellij.find;
 
+import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.find.impl.livePreview.LivePreview;
 import com.intellij.find.impl.livePreview.LivePreviewController;
 import com.intellij.find.impl.livePreview.SearchResults;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.ui.LightweightHint;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -39,6 +43,13 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
 
     myOutputStream = new ByteArrayOutputStream();
     LivePreview.ourTestOutput = new PrintStream(myOutputStream);
+    EditorHintListener listener = new EditorHintListener() {
+      @Override
+      public void hintShown(Project project, LightweightHint hint, int flags) {
+        LivePreview.processNotFound();
+      }
+    };
+    ApplicationManager.getApplication().getMessageBus().connect(myTestRootDisposable).subscribe(EditorHintListener.TOPIC, listener);
   }
 
   private void initFind() {

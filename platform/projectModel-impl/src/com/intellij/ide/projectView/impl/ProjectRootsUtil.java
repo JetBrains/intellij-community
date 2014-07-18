@@ -109,4 +109,16 @@ public class ProjectRootsUtil {
     }
     return null;
   }
+
+  @Nullable
+  public static ExcludeFolder findExcludeFolder(@NotNull Module module, @NotNull VirtualFile root) {
+    for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
+      for (ExcludeFolder folder : entry.getExcludeFolders()) {
+        if (root.equals(folder.getFile())) {
+          return folder;
+        }
+      }
+    }
+    return null;
+  }
 }

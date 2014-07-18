@@ -76,6 +76,7 @@ annotate =  _singleton_method('annotate')
 # On Windows, we encode and decode deep enough that something goes wrong and
 # the encodings.utf_8 module is loaded and then unloaded, I don't know why.
 # Adding a reference here prevents it from being unloaded.  Yuk.
+import encodings.utf_8
 
 # Because of the "from coverage.control import fooey" lines at the top of the
 # file, there's an entry for coverage.coverage in sys.modules, mapped to None.

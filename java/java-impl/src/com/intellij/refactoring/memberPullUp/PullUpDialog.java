@@ -196,7 +196,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
         final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(currentSuperClass, myClass, PsiSubstitutor.EMPTY);
         final MethodSignature signature = ((PsiMethod) element).getSignature(superSubstitutor);
         final PsiMethod superClassMethod = MethodSignatureUtil.findMethodBySignature(currentSuperClass, signature, false);
-        if (superClassMethod != null) return false;
+        if (superClassMethod != null && !PsiUtil.isLanguageLevel8OrHigher(currentSuperClass)) return false;
         return !((PsiModifierListOwner) element).hasModifierProperty(PsiModifier.STATIC) || PsiUtil.isLanguageLevel8OrHigher(currentSuperClass);
       }
       return true;

@@ -32,6 +32,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -57,6 +58,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public class FileManagerImpl implements FileManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.FileManagerImpl");
+  private final Key<FileViewProvider> myPsiHardRefKey = Key.create("HARD_REFERENCE_TO_PSI"); //non-static!
 
   private final PsiManagerImpl myManager;
   private final FileIndexFacade myFileIndex;
@@ -168,7 +170,7 @@ public class FileManagerImpl implements FileManager {
   @NotNull
   public FileViewProvider findViewProvider(@NotNull final VirtualFile file) {
     assert !file.isDirectory();
-    FileViewProvider viewProvider = getFromInjected(file);
+    FileViewProvider viewProvider = findCachedViewProvider(file);
     if (viewProvider != null) return viewProvider;
     viewProvider = myVFileToViewProviderMap.get(file);
     if(viewProvider == null) {
@@ -180,8 +182,9 @@ public class FileManagerImpl implements FileManager {
   @Override
   public FileViewProvider findCachedViewProvider(@NotNull final VirtualFile file) {
     FileViewProvider viewProvider = getFromInjected(file);
-    if (viewProvider != null) return viewProvider;
-    return myVFileToViewProviderMap.get(file);
+    if (viewProvider == null) viewProvider = myVFileToViewProviderMap.get(file);
+    if (viewProvider == null) viewProvider = file.getUserData(myPsiHardRefKey);
+    return viewProvider;
   }
 
   @Nullable
@@ -216,9 +219,14 @@ public class FileManagerImpl implements FileManager {
         if (document != null) {
           PsiDocumentManagerBase.cachePsi(document, null);
         }
+        virtualFile.putUserData(myPsiHardRefKey, null);
       }
       else {
-        myVFileToViewProviderMap.put(virtualFile, fileViewProvider);
+        if (virtualFile instanceof LightVirtualFile) {
+          virtualFile.putUserData(myPsiHardRefKey, fileViewProvider);
+        } else {
+          myVFileToViewProviderMap.put(virtualFile, fileViewProvider);
+        }
       }
     }
   }
@@ -437,7 +445,8 @@ public class FileManagerImpl implements FileManager {
 
   @Nullable
   PsiFile getCachedPsiFileInner(@NotNull VirtualFile file) {
-    final FileViewProvider fileViewProvider = myVFileToViewProviderMap.get(file);
+    FileViewProvider fileViewProvider = myVFileToViewProviderMap.get(file);
+    if (fileViewProvider == null) fileViewProvider = file.getUserData(myPsiHardRefKey);
     return fileViewProvider instanceof SingleRootFileViewProvider
            ? ((SingleRootFileViewProvider)fileViewProvider).getCachedPsi(fileViewProvider.getBaseLanguage()) : null;
   }

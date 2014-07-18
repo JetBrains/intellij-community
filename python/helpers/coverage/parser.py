@@ -1,10 +1,7 @@
 """Code parsing for Coverage."""
 
-import dis
-import re
-import sys
-import token
-import tokenize
+import dis, re, sys, token, tokenize
+
 from coverage.backward import set, sorted, StringIO # pylint: disable=W0622
 from coverage.backward import open_source, range    # pylint: disable=W0622
 from coverage.backward import reversed              # pylint: disable=W0622

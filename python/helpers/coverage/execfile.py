@@ -1,9 +1,7 @@
 """Execute files of Python code."""
 
-import imp
-import marshal
-import os
-import sys
+import imp, marshal, os, sys
+
 from coverage.backward import exec_code_object, open_source
 from coverage.misc import ExceptionDuringRun, NoCode, NoSource
 
