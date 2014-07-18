@@ -52,14 +52,14 @@ public class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public String asString() {
-    return asString(true);
+    return asString(true, false);
   }
 
   public String asStringWithoutProductCode() {
-    return asString(false);
+    return asString(false, false);
   }
 
-  private String asString(boolean includeProductCode) {
+  private String asString(boolean includeProductCode, boolean withBuildAttempt) {
     StringBuilder builder = new StringBuilder();
 
     if (includeProductCode && !StringUtil.isEmpty(myProductCode)) {
@@ -75,7 +75,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
       builder.append(SNAPSHOT);
     }
 
-    if (myAttemptInfo != null) {
+    if (withBuildAttempt && myAttemptInfo != null) {
       builder.append('.').append(myAttemptInfo);
     }
 
@@ -274,5 +274,9 @@ public class BuildNumber implements Comparable<BuildNumber> {
 
   public boolean isSnapshot() {
     return myBuildNumber == Integer.MAX_VALUE;
+  }
+
+  public String asStringWithAllDetails() {
+    return asString(true, true);
   }
 }

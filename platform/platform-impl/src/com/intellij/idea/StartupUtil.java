@@ -319,7 +319,7 @@ public class StartupUtil {
     ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
     String buildDate = new SimpleDateFormat("dd MMM yyyy HH:ss", Locale.US).format(appInfo.getBuildDate().getTime());
-    log.info("IDE: " + namesInfo.getFullProductName() + " (build #" + appInfo.getBuild() + ", " + buildDate + ")");
+    log.info("IDE: " + namesInfo.getFullProductName() + " (build #" + appInfo.getBuild().asStringWithAllDetails() + ", " + buildDate + ")");
     log.info("OS: " + SystemInfoRt.OS_NAME + " (" + SystemInfoRt.OS_VERSION + ", " + SystemInfo.OS_ARCH + ")");
     log.info("JRE: " + System.getProperty("java.runtime.version", "-") + " (" + System.getProperty("java.vendor", "-") + ")");
     log.info("JVM: " + System.getProperty("java.vm.version", "-") + " (" + System.getProperty("java.vm.name", "-") + ")");
