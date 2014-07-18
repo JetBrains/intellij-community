@@ -16,6 +16,8 @@ public final class CallFrameView extends StackFrameImplBase implements VariableC
 
   private final Script script;
 
+  private final boolean inLibraryContent;
+
   public CallFrameView(@NotNull CallFrame callFrame, @NotNull DebuggerViewSupport debugProcess, @Nullable Script script) {
     this(callFrame, debugProcess.getSourceInfo(script, callFrame), debugProcess, script);
   }
@@ -29,6 +31,9 @@ public final class CallFrameView extends StackFrameImplBase implements VariableC
     this.debugProcess = debugProcess;
     this.callFrame = callFrame;
     this.script = script;
+
+    // isInLibraryContent call could be costly, so we compute it only once (our customizePresentation called on each repaint)
+    inLibraryContent = sourceInfo != null && debugProcess.isInLibraryContent(sourceInfo, script);
   }
 
   @Override
@@ -45,6 +50,11 @@ public final class CallFrameView extends StackFrameImplBase implements VariableC
   @Override
   public Object getEqualityObject() {
     return callFrame.getEqualityObject();
+  }
+
+  @Override
+  protected boolean isInLibraryContent() {
+    return inLibraryContent;
   }
 
   @Override

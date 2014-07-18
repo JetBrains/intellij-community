@@ -106,4 +106,9 @@ public class BasicDebuggerViewSupport implements DebuggerViewSupport, MemberFilt
   public Value transformErrorOnGetUsedReferenceValue(@Nullable Value value, @Nullable String error) {
     return value;
   }
+
+  @Override
+  public boolean isInLibraryContent(@NotNull SourceInfo sourceInfo, @Nullable Script script) {
+    return false;
+  }
 }
