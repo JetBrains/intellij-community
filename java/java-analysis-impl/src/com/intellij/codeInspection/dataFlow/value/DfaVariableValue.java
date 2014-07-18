@@ -105,7 +105,7 @@ public class DfaVariableValue extends DfaValue {
     return myTypeValue;
   }
 
-  @Nullable
+  @NotNull
   public PsiModifierListOwner getPsiVariable() {
     return myVariable;
   }
