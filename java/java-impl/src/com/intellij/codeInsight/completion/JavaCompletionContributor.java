@@ -426,7 +426,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (JavaCompletionData.isAfterPrimitiveOrArrayType(position)) {
       return false;
     }
-    
+
     return true;
   }
 
@@ -466,11 +466,11 @@ public class JavaCompletionContributor extends CompletionContributor {
 
       methods: for (PsiMethod method : annoClass.getMethods()) {
         if (!(method instanceof PsiAnnotationMethod)) continue;
-        
+
         final String attrName = method.getName();
         for (PsiNameValuePair existingAttr : existingPairs) {
           if (PsiTreeUtil.isAncestor(existingAttr, insertedElement, false)) break;
-          if (Comparing.equal(existingAttr.getName(), attrName) || 
+          if (Comparing.equal(existingAttr.getName(), attrName) ||
               PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(attrName) && existingAttr.getName() == null) continue methods;
         }
         LookupElementBuilder element = LookupElementBuilder.createWithIcon(method).withInsertHandler(new InsertHandler<LookupElement>() {
@@ -479,7 +479,7 @@ public class JavaCompletionContributor extends CompletionContributor {
             final Editor editor = context.getEditor();
             TailType.EQ.processTail(editor, editor.getCaretModel().getOffset());
             context.setAddCompletionChar(false);
-            
+
             context.commitDocument();
             PsiAnnotationParameterList paramList =
               PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiAnnotationParameterList.class, false);
@@ -702,7 +702,13 @@ public class JavaCompletionContributor extends CompletionContributor {
       iterator.advance();
     }
 
-    if (!iterator.atEnd() && (iterator.getTokenType() == JavaTokenType.LPARENTH || iterator.getTokenType() == JavaTokenType.COLON)) {
+    if (!iterator.atEnd() && (iterator.getTokenType() == JavaTokenType.LPARENTH)) {
+      return true;
+    }
+
+    if (!iterator.atEnd()
+        && (iterator.getTokenType() == JavaTokenType.COLON)
+        && null == PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiConditionalExpression.class, false)) {
       return true;
     }
 
