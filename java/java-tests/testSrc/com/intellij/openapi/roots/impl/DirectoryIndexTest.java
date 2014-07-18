@@ -358,6 +358,13 @@ public class DirectoryIndexTest extends IdeaTestCase {
     }
   }
 
+  public void testIgnoredFile() throws IOException {
+    VirtualFile ignoredFile = myModule1Dir.createChildData(this, "CVS");
+    DirectoryInfo info = myIndex.getInfoForFile(ignoredFile);
+    assertTrue(info.isIgnored());
+    assertTrue(ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(ignoredFile));
+  }
+
   public void testAddModule() throws Exception {
     myIndex.checkConsistency();
 

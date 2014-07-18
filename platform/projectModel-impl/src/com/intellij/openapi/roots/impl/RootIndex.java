@@ -272,6 +272,9 @@ public class RootIndex extends DirectoryIndex {
       if (info != null) {
         return info;
       }
+      if (isIgnored(file)) {
+        return NonProjectDirectoryInfo.IGNORED;
+      }
       dir = file.getParent();
     }
     else {
