@@ -49,7 +49,7 @@ public class FromStringHintProcessor extends SignatureHintProcessor {
             @Override
             public PsiType fun(String param) {
               try {
-                PsiType original = JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(param, method);
+                PsiType original = JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(param, method.getTypeParameterList());
                 return substitutor.substitute(original);
               }
               catch (IncorrectOperationException e) {
