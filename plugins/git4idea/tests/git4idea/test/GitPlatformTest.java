@@ -29,6 +29,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.vcs.AbstractVcsTestCase;
+import com.intellij.util.ObjectUtils;
 import git4idea.DialogManager;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
@@ -57,6 +58,7 @@ public abstract class GitPlatformTest extends UsefulTestCase {
   @NotNull protected GitVcsSettings myGitSettings;
   @NotNull protected GitPlatformFacade myPlatformFacade;
   @NotNull protected Git myGit;
+  @NotNull protected GitVcs myVcs;
 
   @NotNull protected TestDialogManager myDialogManager;
   @NotNull protected TestVcsNotifier myVcsNotifier;
@@ -97,7 +99,10 @@ public abstract class GitPlatformTest extends UsefulTestCase {
     myGitRepositoryManager = GitUtil.getRepositoryManager(myProject);
     myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
     myGit = ServiceManager.getService(myProject, Git.class);
+    myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(myProject));
+    myVcs.doActivate();
 
+    GitTestUtil.assumeSupportedGitVersion(myVcs);
     initChangeListManager();
     addSilently();
     removeSilently();

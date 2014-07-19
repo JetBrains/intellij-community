@@ -31,6 +31,7 @@ import java.io.File;
 import static com.intellij.openapi.vcs.Executor.*;
 import static git4idea.test.GitExecutor.git;
 import static junit.framework.Assert.assertNotNull;
+import static org.junit.Assume.assumeTrue;
 
 public class GitTestUtil {
 
@@ -107,5 +108,9 @@ public class GitTestUtil {
    */
   public static void setDefaultBuiltInServerPort() {
     System.setProperty(BuiltInServerManagerImpl.PROPERTY_RPC_PORT, "64463");
+  }
+
+  public static void assumeSupportedGitVersion(@NotNull GitVcs vcs) {
+    assumeTrue(vcs.getVersion().isSupported());
   }
 }
