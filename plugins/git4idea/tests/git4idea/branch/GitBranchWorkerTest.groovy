@@ -270,17 +270,6 @@ class GitBranchWorkerTest extends GitPlatformTest {
     return !GitVersionSpecialty.OLD_STYLE_OF_UNTRACKED_AND_LOCAL_CHANGES_WOULD_BE_OVERWRITTEN.existsIn(GitVersion.parse(git("version")));
   }
 
-  Change[] changesFromFiles(Collection<String> paths) {
-    paths.collect {
-      toChange(it)
-    }
-  }
-
-  Change toChange(String relPath) {
-    // we don't care about the before revision
-    new Change(null, CurrentContentRevision.create(new FilePathImpl(new MockVirtualFile(myProjectRoot + "/" + relPath))))
-  }
-
   public void "test agree to smart checkout should smart checkout"() {
     def localChanges = agree_to_smart_operation("checkout", "Checked out <b><code>feature</code></b>")
 
