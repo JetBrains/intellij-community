@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -112,9 +113,9 @@ public abstract class GitPlatformTest extends UsefulTestCase {
   @NotNull
   public String getTestName(boolean lowercaseFirstLetter) {
     String name = super.getTestName(lowercaseFirstLetter);
-    name = name.trim().replace(' ', '_');
-    if (name.length() > 50) {
-      name = name.substring(0, 50);
+    name = StringUtil.shortenTextWithEllipsis(name.trim().replace(" ", "_"), 12, 6, "_");
+    if (name.startsWith("_")) {
+      name = name.substring(1);
     }
     return name;
   }
