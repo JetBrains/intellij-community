@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve
 
+import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 
@@ -205,4 +206,15 @@ class Thing {
   }
 
 
+  void testClosureParamsUsingGenerics() {
+   doTest("""\
+    import groovy.transform.CompileStatic
+
+    @CompileStatic
+    class Idea {
+      public static void main(String[] args) {
+        ["bc", "a", ].sort { i<caret>t.size() }
+      }
+    }""", "java.lang.String")
+  }
 }

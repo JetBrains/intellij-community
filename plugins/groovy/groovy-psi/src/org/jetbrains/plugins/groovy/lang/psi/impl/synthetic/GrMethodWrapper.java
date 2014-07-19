@@ -43,7 +43,7 @@ public class GrMethodWrapper extends GrLightMethodBuilder implements PsiMirrorEl
 
     getModifierList().copyModifiers(method);
 
-    getParameterList().copyParameters(method, substitutor);
+    getParameterList().copyParameters(method, substitutor, this);
 
     if (method instanceof OriginInfoAwareElement) {
       setOriginInfo(((OriginInfoAwareElement)method).getOriginInfo());

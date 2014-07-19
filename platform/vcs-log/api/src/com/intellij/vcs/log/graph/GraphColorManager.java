@@ -36,11 +36,20 @@ public interface GraphColorManager<CommitId> {
   int getColorOfFragment(CommitId headCommit, int magicIndex);
 
   /**
-   * Returns 1, 0 or -1 if branch identified by commit {@code head1} is "more powerful", "equally powerful" or "less powerful"
-   * than the branch identified by commit {@code head2}.
-   * <p/>
-   * If branch1 is more powerful than branch2, it means that its color will be reused by the subgraph below the point when these branches
+   * Compares two head commits in terms of "importance" of reference labels pointing to these commits.
+   * It is used to order branches, branch labels, and for branch coloring. <br/>
+   * E.g. if branch1 is more important than branch2, its color will be reused by the subgraph below the point when these branches
    * were diverged.
+   * <p/>
+   * Then head1 is more important than head2, if its most important reference is more important than head2's most important reference
+   * (if they are the same, next are compared).
+   * <p/>
+   * References are compared by the following logic (see {@link com.intellij.vcs.log.VcsLogRefManager}: <ul>
+   * <li>Negative value is returned if first reference is <b>more</b> important than the second (i.e. it will be at the left in the log).
+   * <li>Positive value is returned if first reference is <b>less</b> important than the second (i.e. it will be at the right in the log).
+   * <li>Zero is returned if referenced are considered equally important.
+   * </ul>
+   * <p>
    */
   int compareHeads(CommitId head1, CommitId head2); // todo drop this
 

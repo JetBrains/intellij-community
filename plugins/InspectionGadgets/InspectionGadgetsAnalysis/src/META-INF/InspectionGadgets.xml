@@ -408,6 +408,10 @@
                      key="class.name.differs.from.file.name.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.classlayout.ClassNameDiffersFromFileNameInspection"/>
+    <localInspection language="JAVA" shortName="ClassWithOnlyPrivateConstructors" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="class.with.only.private.constructors.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.classlayout.ClassWithOnlyPrivateConstructorsInspection"/>
     <localInspection language="JAVA" shortName="ConstantDeclaredInAbstractClass" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="constant.declared.in.abstract.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"

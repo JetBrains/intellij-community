@@ -21,10 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author Kirill Likhodedov
- */
-public class GitLogRefSorterTest extends UsefulTestCase {
+public class GitRefManagerTest extends UsefulTestCase {
 
   public static final MockVirtualFile MOCK_VIRTUAL_FILE = new MockVirtualFile("mockFile");
 
@@ -77,10 +74,10 @@ public class GitLogRefSorterTest extends UsefulTestCase {
           expect("HEAD", "master", "release", "origin/master", "origin/great_feature", "tag/v1"));
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
+  // may happen e.g. in multi-repo case
+  public void testTwoMasters() {
+    check(given("master", "master"),
+          expect("master", "master"));
   }
 
   private static Collection<VcsRef> given(String... refs) {
@@ -205,7 +202,7 @@ public class GitLogRefSorterTest extends UsefulTestCase {
         return infos;
       }
     });
-    return new GitRefManager(manager).sort(refs);
+    return ContainerUtil.sorted(refs, new GitRefManager(manager).getComparator());
   }
 
   // TODO either use the real GitRepository, or move upwards and make more generic implementation

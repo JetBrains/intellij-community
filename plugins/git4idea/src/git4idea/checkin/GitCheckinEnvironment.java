@@ -601,8 +601,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.gridy = 0;
       c.weightx = 1;
       c.fill = GridBagConstraints.HORIZONTAL;
-      final List<String> usersList = getUsersList(project);
-      final Set<String> authors = new HashSet<String>(usersList);
+
+      Set<String> authors = new HashSet<String>(getUsersList(project));
       ContainerUtil.addAll(authors, mySettings.getCommitAuthors());
       List<String> list = new ArrayList<String>(authors);
       Collections.sort(list);

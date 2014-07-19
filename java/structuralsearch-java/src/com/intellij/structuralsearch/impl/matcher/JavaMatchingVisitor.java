@@ -330,15 +330,16 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     PsiIdentifier matchedNameValuePair = elementNameValuePair.getNameIdentifier();
 
     PsiAnnotationMemberValue annotationInitializer = pair.getValue();
-    boolean isTypedInitializer = annotationInitializer != null &&
-                                 myMatchingVisitor.getMatchContext().getPattern().isTypedVar(annotationInitializer) &&
-                                 annotationInitializer instanceof PsiReferenceExpression;
+    if (annotationInitializer != null) {
+      boolean isTypedInitializer = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(annotationInitializer) &&
+                                   annotationInitializer instanceof PsiReferenceExpression;
 
-    myMatchingVisitor.setResult(myMatchingVisitor.match(annotationInitializer, elementNameValuePair.getValue()) ||
-                                (isTypedInitializer &&
-                                 elementNameValuePair.getValue() == null &&
-                                 allowsAbsenceOfMatch(annotationInitializer)
-                                ));
+      myMatchingVisitor.setResult(myMatchingVisitor.match(annotationInitializer, elementNameValuePair.getValue()) ||
+                                  (isTypedInitializer &&
+                                   elementNameValuePair.getValue() == null &&
+                                   allowsAbsenceOfMatch(annotationInitializer)
+                                  ));
+    }
     if (myMatchingVisitor.getResult()) {
       final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(nameIdentifier);
 

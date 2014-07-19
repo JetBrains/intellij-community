@@ -85,6 +85,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private final ExternalInfo myExternalInfo = new ExternalInfo();
   @TestOnly
   public static boolean INIT_INSPECTIONS = false;
+  private List<NamedScope> myScopes = Collections.emptyList();
 
   @Override
   public void setModified(final boolean modified) {
@@ -941,5 +942,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @Override
   public boolean equals(Object o) {
     return super.equals(o) && ((InspectionProfileImpl)o).getProfileManager() == getProfileManager();
+  }
+
+  /**
+   * @return list of used scopes for all inspections
+   */
+  public List<NamedScope> getUsedScopes() {
+    return myScopes;
   }
 }

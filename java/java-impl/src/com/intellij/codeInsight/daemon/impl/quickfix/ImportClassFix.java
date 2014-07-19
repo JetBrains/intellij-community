@@ -111,7 +111,8 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
   @Override
   protected boolean canReferenceClass(PsiJavaCodeReferenceElement ref) {
     if (ref instanceof PsiReferenceExpression) {
-      return ref.getParent() instanceof PsiReferenceExpression;
+      PsiElement parent = ref.getParent();
+      return parent instanceof PsiReferenceExpression || parent instanceof PsiExpressionStatement;
     }
     return true;
   }

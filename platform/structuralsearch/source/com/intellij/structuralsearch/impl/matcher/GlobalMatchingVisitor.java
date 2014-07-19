@@ -51,10 +51,6 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     return myResult;
   }
 
-  public void setElement(PsiElement element) {
-    this.myElement = element;
-  }
-
   public void setResult(boolean result) {
     this.myResult = result;
   }

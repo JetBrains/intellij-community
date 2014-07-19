@@ -90,17 +90,10 @@ public class HgRefManager implements VcsLogRefManager {
     }
   };
 
-/*
-  public HgRefManager(@NotNull RepositoryManager<HgRepository> repositoryManager) {
-    myRepositoryManager = repositoryManager;
-  }*/
-
   @NotNull
   @Override
-  public List<VcsRef> sort(Collection<VcsRef> refs) {
-    ArrayList<VcsRef> list = new ArrayList<VcsRef>(refs);
-    Collections.sort(list, REF_COMPARATOR);
-    return list;
+  public Comparator<VcsRef> getComparator() {
+    return REF_COMPARATOR;
   }
 
   @NotNull
@@ -112,6 +105,11 @@ public class HgRefManager implements VcsLogRefManager {
         return new SingletonRefGroup(ref);
       }
     });
+  }
+
+  @NotNull
+  private Collection<VcsRef> sort(@NotNull Collection<VcsRef> refs) {
+    return ContainerUtil.sorted(refs, getComparator());
   }
 
   private static class SimpleRefType implements VcsRefType {
