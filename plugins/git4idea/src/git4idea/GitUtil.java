@@ -37,7 +37,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
-import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -778,6 +777,8 @@ public class GitUtil {
   /**
    * Returns absolute paths which have changed remotely comparing to the current branch, i.e. performs
    * <code>git diff --name-only master..origin/master</code>
+   * <p/>
+   * Paths are absolute, Git-formatted (i.e. with forward slashes).
    */
   @NotNull
   public static Collection<String> getPathsDiffBetweenRefs(@NotNull Git git, @NotNull GitRepository repository,
@@ -797,7 +798,7 @@ public class GitUtil {
         continue;
       }
       final String path = repository.getRoot().getPath() + "/" + unescapePath(relative);
-      remoteChanges.add(FilePathsHelper.convertPath(path));
+      remoteChanges.add(path);
     }
     return remoteChanges;
   }

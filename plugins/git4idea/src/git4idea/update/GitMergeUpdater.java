@@ -19,15 +19,21 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
@@ -173,9 +179,14 @@ public class GitMergeUpdater extends GitUpdater {
       final Collection<String> remotelyChanged = GitUtil.getPathsDiffBetweenRefs(ServiceManager.getService(Git.class), repository,
                                                                                  currentBranch, remoteBranch);
       final List<File> locallyChanged = myChangeListManager.getAffectedPaths();
-      for (File localPath : locallyChanged) {
-        if (remotelyChanged.contains(FilePathsHelper.convertPath(localPath.getPath()))) {
-         // found a file which was changed locally and remotely => need to save
+      for (final File localPath : locallyChanged) {
+        if (ContainerUtil.exists(remotelyChanged, new Condition<String>() {
+          @Override
+          public boolean value(String remotelyChangedPath) {
+            return FileUtil.pathsEqual(localPath.getPath(), remotelyChangedPath);
+          }
+        })) {
+          // found a file which was changed locally and remotely => need to save
           return true;
         }
       }
