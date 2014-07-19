@@ -26,8 +26,7 @@ import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.RefsModel;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 public class GraphColorManagerImpl implements GraphColorManager<Integer> {
 
@@ -59,7 +58,7 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
     if (isEmptyRefs(refs, headCommit)) {
       return DEFAULT_COLOR;
     }
-    VcsRef firstRef = getRefManager(refs).sort(refs).get(0);
+    VcsRef firstRef = ContainerUtil.sorted(refs, getRefManager(refs).getComparator()).get(0);
     // TODO dark variant
     return firstRef.getName().hashCode();
   }
@@ -94,28 +93,36 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
       return 0;
     }
     if (firstEmpty) {
-      return -1;
+      return 1;
     }
     if (secondEmpty) {
-      return 1;
+      return -1;
     }
 
     VcsLogRefManager refManager1 = getRefManager(refs1);
     VcsLogRefManager refManager2 = getRefManager(refs2);
-    if (!refManager1.equals(refManager2)) {
+    if (!refManager1.equals(refManager2)) { // heads from different VCSs are not comparable => are considered equal for now
       return 0;
     }
 
-    Map<VcsRef, Boolean> positions = ContainerUtil.newHashMap();
-    for (VcsRef ref : refs1) {
-      positions.put(ref, true);
+    Comparator<VcsRef> comparator = refManager1.getComparator();
+    Iterator<VcsRef> it1 = ContainerUtil.sorted(refs1, comparator).iterator();
+    Iterator<VcsRef> it2 = ContainerUtil.sorted(refs2, comparator).iterator();
+    while (it1.hasNext() && it2.hasNext()) {
+      VcsRef ref1 = it1.next();
+      VcsRef ref2 = it2.next();
+      int compare = comparator.compare(ref1, ref2);
+      if (compare != 0) {
+        return compare;
+      }
     }
-    for (VcsRef ref : refs2) {
-      positions.put(ref, false);
+    if (it1.hasNext()) {
+      return -1;
     }
-
-    VcsRef firstRef = refManager1.sort(positions.keySet()).get(0);
-    return positions.get(firstRef) ? 1 : -1;
+    if (it2.hasNext()) {
+      return 1;
+    }
+    return 0;
   }
 
   @NotNull

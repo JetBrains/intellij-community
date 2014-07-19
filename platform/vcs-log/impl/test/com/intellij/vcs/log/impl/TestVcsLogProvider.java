@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
@@ -200,8 +201,13 @@ public class TestVcsLogProvider implements VcsLogProvider {
   private static class MockRefManager implements VcsLogRefManager {
     @NotNull
     @Override
-    public List<VcsRef> sort(Collection<VcsRef> refs) {
-      return ContainerUtil.newArrayList(refs);
+    public Comparator<VcsRef> getComparator() {
+      return new Comparator<VcsRef>() {
+        @Override
+        public int compare(VcsRef o1, VcsRef o2) {
+          return 0;
+        }
+      };
     }
 
     @NotNull

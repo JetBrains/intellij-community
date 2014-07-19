@@ -202,7 +202,7 @@ public class GitRefManagerTest extends UsefulTestCase {
         return infos;
       }
     });
-    return new GitRefManager(manager).sort(refs);
+    return ContainerUtil.sorted(refs, new GitRefManager(manager).getComparator());
   }
 
   // TODO either use the real GitRepository, or move upwards and make more generic implementation

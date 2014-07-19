@@ -129,10 +129,8 @@ public class GitRefManager implements VcsLogRefManager {
 
   @NotNull
   @Override
-  public List<VcsRef> sort(Collection<VcsRef> refs) {
-    ArrayList<VcsRef> list = new ArrayList<VcsRef>(refs);
-    Collections.sort(list, REF_COMPARATOR);
-    return list;
+  public Comparator<VcsRef> getComparator() {
+    return REF_COMPARATOR;
   }
 
   @NotNull
@@ -322,7 +320,7 @@ public class GitRefManager implements VcsLogRefManager {
     @NotNull
     @Override
     public List<VcsRef> getRefs() {
-      return sort(myBranches);
+      return ContainerUtil.sorted(myBranches, getComparator());
     }
 
     @NotNull

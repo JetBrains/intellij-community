@@ -1417,6 +1417,13 @@ public class ContainerUtil extends ContainerUtilRt {
     }
   }
 
+  @NotNull
+  public static <T> List<T> sorted(@NotNull Collection<T> list, @NotNull Comparator<T> comparator) {
+    List<T> sorted = newArrayList(list);
+    sort(sorted, comparator);
+    return sorted;
+  }
+
   public static <T> void sort(@NotNull T[] a, @NotNull Comparator<T> comparator) {
     int size = a.length;
 
