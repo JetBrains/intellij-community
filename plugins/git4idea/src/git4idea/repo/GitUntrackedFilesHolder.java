@@ -237,9 +237,6 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
         break;
       }
       String path = event.getPath();
-      if (path == null) {
-        continue;
-      }
       if (totalRefreshNeeded(path)) {
         allChanged = true;
       }
