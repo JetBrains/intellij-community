@@ -200,7 +200,11 @@ public class GrLightMethodBuilder  extends LightElement implements GrMethod, Ori
 
   @Override
   public GrTypeElement getReturnTypeElementGroovy() {
-    return null;
+    PsiType returnType = getReturnType();
+    if (returnType == null) {
+      return null;
+    }
+    return new GrLightTypeElement(returnType, getManager());
   }
 
   @Override
