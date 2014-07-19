@@ -19,7 +19,7 @@ public class IfStatementWithIdenticalBranches {
         System.out.println();
     }
 
-    int two() { 
+    int two() {
         if (true) {
             int i = 2;
             return i;
@@ -135,4 +135,31 @@ class NotADup {
         return null;
     }
 
+  public static String calculate(int someNumber) {
+    if (someNumber == 0 ) {
+      try {
+        return placeOrder(3, null);
+      }
+      catch( Exception e ) {
+        System.out.println("e = " + e);
+      }
+    }
+    else if (someNumber == 1) {
+      try {
+        return placeOrder(3, someNumber, null);
+      }
+      catch(Exception e ) {
+        System.out.println("e = " + e);
+      }
+    }
+    return null;
+  }
+
+  private static String placeOrder(int i, int someNumber, Object o) {
+    return null;
+  }
+
+  private static String placeOrder(int i, Object o) {
+    return null;
+  }
 }
