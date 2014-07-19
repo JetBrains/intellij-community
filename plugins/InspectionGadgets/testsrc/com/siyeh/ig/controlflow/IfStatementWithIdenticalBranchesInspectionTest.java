@@ -1,12 +1,18 @@
 package com.siyeh.ig.controlflow;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class IfStatementWithIdenticalBranchesInspectionTest
-  extends IGInspectionTestCase {
+public class IfStatementWithIdenticalBranchesInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/controlflow/if_statement_with_identical_branches",
-           new IfStatementWithIdenticalBranchesInspection());
+  public void testIfStatementWithIdenticalBranches() throws Exception {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new IfStatementWithIdenticalBranchesInspection();
   }
 }

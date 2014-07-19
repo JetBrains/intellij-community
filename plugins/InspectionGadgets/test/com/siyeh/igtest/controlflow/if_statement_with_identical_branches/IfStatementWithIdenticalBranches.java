@@ -7,12 +7,12 @@ import java.util.Set;
 public class IfStatementWithIdenticalBranches {
 
     void one() {
-        if (true) {
+        <warning descr="'if' statement with identical branches">if</warning> (true) {
 
         } else {
 
         }
-        if (false) {
+        <warning descr="'if' statement with identical branches">if</warning> (false) {
             System.out.println();
             return;
         }
@@ -20,7 +20,7 @@ public class IfStatementWithIdenticalBranches {
     }
 
     int two() {
-        if (true) {
+        <warning descr="'if' statement with identical branches">if</warning> (true) {
             int i = 2;
             return i;
         } else {
@@ -41,7 +41,7 @@ public class IfStatementWithIdenticalBranches {
 
     void four() {
         if (true) {
-            if (false) {
+            <warning descr="'if' statement with identical branches">if</warning> (false) {
                 System.out.println();
                 return;
             }
@@ -61,7 +61,7 @@ public class IfStatementWithIdenticalBranches {
 
     void six() {
         if (true) {
-            if (false) {
+            <warning descr="'if' statement with identical branches">if</warning> (false) {
                 System.out.println();
                 System.out.println();
                 return;
@@ -93,11 +93,11 @@ public class IfStatementWithIdenticalBranches {
     }
 
     void nine() {
-        if (true) {
+        <warning descr="'if' statement with identical branches">if</warning> (true) {
 
-        } else if (true) {
+        } else <warning descr="'if' statement with identical branches">if</warning> (true) {
 
-        } else if (true) {
+        } else <warning descr="'if' statement with identical branches">if</warning> (true) {
 
         } else {
 
@@ -105,7 +105,7 @@ public class IfStatementWithIdenticalBranches {
     }
 
   void blocks() {
-    if (true) {
+    <warning descr="'if' statement with identical branches">if</warning> (true) {
       System.out.println();
       return;
     }
