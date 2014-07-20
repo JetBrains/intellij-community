@@ -1,5 +1,6 @@
 package ru.compscicenter.edide.course;
 
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -7,6 +8,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -162,11 +164,13 @@ public class Window implements Comparable {
    *
    * @param file task file which window belongs to
    */
-  public void init(TaskFile file) {
-    myInitialLine = line;
-    myLength = text.length();
-    myInitialLength = myLength;
-    myInitialStart = start;
+  public void init(TaskFile file, boolean isRestarted) {
+    if (!isRestarted) {
+      myInitialLine = line;
+      myLength = text.length();
+      myInitialLength = myLength;
+      myInitialStart = start;
+    }
     myTaskFile = file;
   }
 
@@ -176,20 +180,15 @@ public class Window implements Comparable {
 
   @Override
   public int compareTo(@NotNull Object o) {
-    if (!(o instanceof Window)) {
-      throw new ClassCastException();
-    }
     Window window = (Window)o;
     if (window.getTaskFile() != myTaskFile) {
       throw new ClassCastException();
     }
-    if (window.getLine() == line && window.getStart() == start) {
-      return 0;
+    int lineDiff = line - window.line;
+    if (lineDiff == 0) {
+      return start - window.start;
     }
-    if (window.getLine() == line) {
-      return window.start < start ? 1 : -1;
-    }
-    return window.getLine() < line ? 1 : -1;
+    return lineDiff;
   }
 
   public Window getNext() {

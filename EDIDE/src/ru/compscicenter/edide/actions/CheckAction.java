@@ -58,7 +58,6 @@ public class CheckAction extends AnAction {
     if (selectedEditor == null) {
       return;
     }
-    //TODO: replace with platform independent path join
     File testFile = new File(openedFile.getParent().getCanonicalPath(), selectedTaskFile.getTask().getTestFile());
     String testPath = testFile.getAbsolutePath();
     GeneralCommandLine cmd = new GeneralCommandLine();

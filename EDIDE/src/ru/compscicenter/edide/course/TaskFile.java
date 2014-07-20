@@ -184,10 +184,10 @@ public class TaskFile {
    * @param task task which task file belongs to
    */
 
-  public void init(Task task) {
+  public void init(Task task, boolean isRestarted) {
     myTask = task;
     for (Window window : windows) {
-      window.init(this);
+      window.init(this, isRestarted);
     }
     Collections.sort(windows);
     for (int i = 0; i < windows.size(); i++) {

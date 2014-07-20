@@ -260,27 +260,23 @@ public class StudyEditor implements FileEditor {
 
 
   public static StudyEditor getSelectedStudyEditor(Project project) {
-    StudyEditor selectedStudyEditor = null;
     FileEditor fileEditor =
       FileEditorManagerImpl.getInstanceEx(project).getSplitters().getCurrentWindow().getSelectedEditor().getSelectedEditorWithProvider()
         .getFirst();
     if (fileEditor instanceof StudyEditor) {
-      selectedStudyEditor = (StudyEditor)fileEditor;
+      return (StudyEditor) fileEditor;
     }
-    return selectedStudyEditor;
+    return null;
   }
 
   public static Editor getSelectedEditor(Project project) {
-    Editor selectedEditor = null;
-    FileEditor fileEditor =
-      FileEditorManagerImpl.getInstanceEx(project).getSplitters().getCurrentWindow().getSelectedEditor().getSelectedEditorWithProvider()
-        .getFirst();
-    if (fileEditor instanceof StudyEditor) {
-      FileEditor defaultEditor = ((StudyEditor)fileEditor).getDefaultEditor();
+    StudyEditor studyEditor = getSelectedStudyEditor(project);
+    if (studyEditor != null) {
+      FileEditor defaultEditor = studyEditor.getDefaultEditor();
       if (defaultEditor instanceof PsiAwareTextEditorImpl) {
-        selectedEditor = ((PsiAwareTextEditorImpl)defaultEditor).getEditor();
+        return ((PsiAwareTextEditorImpl)defaultEditor).getEditor();
       }
     }
-    return selectedEditor;
+    return null;
   }
 }

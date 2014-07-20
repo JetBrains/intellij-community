@@ -121,7 +121,7 @@ public class Task {
   /**
    * Creates task directory in its lesson folder in project user created
    *
-   * @param lessonDir project directory of lesson which task belongs to
+   * @param lessonDir    project directory of lesson which task belongs to
    * @param resourceRoot directory where original task file stored
    * @throws IOException
    */
@@ -169,10 +169,10 @@ public class Task {
    *
    * @param lesson lesson which task belongs to
    */
-  public void init(Lesson lesson) {
+  public void init(Lesson lesson, boolean isRestarted) {
     myLesson = lesson;
     for (TaskFile taskFile : taskFiles) {
-      taskFile.init(this);
+      taskFile.init(this, isRestarted);
     }
   }
 
@@ -185,20 +185,7 @@ public class Task {
     if (nextLesson == null) {
       return null;
     }
-    //getting first task in next lesson
-    return nextLesson.getTaskList().iterator().next();
-  }
-
-  public void setIndex(int index) {
-    myIndex = index;
-  }
-
-  public int getIndex() {
-    return myIndex;
-  }
-
-  public Lesson getLesson() {
-    return myLesson;
+    return StudyUtils.getFirst(nextLesson.getTaskList());
   }
 
   public Task prev() {
@@ -214,6 +201,18 @@ public class Task {
     return prevLesson.getTaskList().get(prevLesson.getTaskList().size() - 1);
   }
 
+  public void setIndex(int index) {
+    myIndex = index;
+  }
+
+  public int getIndex() {
+    return myIndex;
+  }
+
+  public Lesson getLesson() {
+    return myLesson;
+  }
+
   public String getInput() {
     return input;
   }
@@ -225,6 +224,7 @@ public class Task {
 
   /**
    * Gets text of resource file such as test input file or task text in needed format
+   *
    * @param fileName name of resource file which should exist in task directory
    * @param wrapHTML if it's necessary to wrap text with html tags
    * @return text of resource file wrapped with html tags if necessary
@@ -258,9 +258,6 @@ public class Task {
               taskText.append("</html>");
             }
             return taskText.toString();
-          }
-          catch (FileNotFoundException e) {
-            e.printStackTrace();
           }
           catch (IOException e) {
             e.printStackTrace();

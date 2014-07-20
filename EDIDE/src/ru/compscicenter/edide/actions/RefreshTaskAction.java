@@ -1,5 +1,6 @@
 package ru.compscicenter.edide.actions;
 
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -72,6 +73,8 @@ public class RefreshTaskAction extends AnAction {
                     for (Window window : selectedTaskFile.getWindows()) {
                       window.reset();
                     }
+                    selectedTaskFile.getTask().setSolved(false);
+                    ProjectView.getInstance(project).refresh();
                     if (listener!=null) {
                       document.addDocumentListener(listener);
                     }

@@ -15,12 +15,16 @@ public class StudyUtils {
         stream.close();
       }
       catch (IOException e) {
-        e.printStackTrace();
+        // close silently
       }
     }
   }
 
   public static boolean isZip(String fileName) {
     return !fileName.contains(".zip");
+  }
+
+  public static <T> T getFirst(Iterable<T> container) {
+    return container.iterator().next();
   }
 }

@@ -15,9 +15,9 @@ import java.util.List;
  * Time: 18:40
  */
 public class Lesson {
-  public static final String LESSON_ELEMENT_NAME = "lessonElement";
-  public static final String NAME_ATTRIBUTE_NAME = "name";
-  public static final String INDEX_ATTRIBUTE_NAME = "myIndex";
+  private static final String LESSON_ELEMENT_NAME = "lessonElement";
+  private static final String NAME_ATTRIBUTE_NAME = "name";
+  private static final String INDEX_ATTRIBUTE_NAME = "myIndex";
   private String name;
   private List<Task> taskList;
   private Course myCourse = null;
@@ -70,10 +70,6 @@ public class Lesson {
     return true;
   }
 
-  public String getName() {
-    return name;
-  }
-
   public List<Task> getTaskList() {
     return taskList;
   }
@@ -82,7 +78,7 @@ public class Lesson {
   /**
    * Creates lesson directory in its course folder in project user created
    *
-   * @param courseDir project directory of course
+   * @param courseDir    project directory of course
    * @param resourceRoot directory where original lesson stored
    * @throws IOException
    */
@@ -96,10 +92,15 @@ public class Lesson {
   }
 
 
-  public void setParents(Course course) {
+  /**
+   * Initializes state of lesson
+   *
+   * @param course course which lesson belongs to
+   */
+  public void init(Course course, boolean isRestarted) {
     myCourse = course;
     for (Task task : taskList) {
-      task.init(this);
+      task.init(this, isRestarted);
     }
   }
 

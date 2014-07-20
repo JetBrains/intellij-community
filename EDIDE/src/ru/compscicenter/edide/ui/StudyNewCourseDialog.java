@@ -42,7 +42,7 @@ public class StudyNewCourseDialog extends DialogWrapper {
         myDefaultCoursesComboBox.addItem(courseName);
       }
       //setting the first course in list as selected
-      myGenerator.setSelectedCourse(availableCourses.iterator().next());
+      myGenerator.setSelectedCourse(StudyUtils.getFirst(availableCourses));
       setOK();
     }
     initListeners(project);
@@ -110,7 +110,6 @@ public class StudyNewCourseDialog extends DialogWrapper {
       }
       Map<String, File> oldCourses = myGenerator.getLoadedCourses();
       Map<String, File> newCourses = new HashMap<String, File>();
-      if (!downloadedCourses.equals(oldCourses)) {
         for (Map.Entry<String, File> course : oldCourses.entrySet()) {
           File courseFile = course.getValue();
           if (courseFile.exists()) {
@@ -126,7 +125,6 @@ public class StudyNewCourseDialog extends DialogWrapper {
         }
         myGenerator.setCourses(newCourses);
         myGenerator.flushCache();
-      }
     }
   }
 

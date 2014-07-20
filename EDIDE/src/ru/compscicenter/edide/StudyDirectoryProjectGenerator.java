@@ -153,7 +153,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
     dlg.show();
     if (dlg.getExitCode() == DialogWrapper.CANCEL_EXIT_CODE) {
       LOG.info("User canceled creation study project");
-      Messages.showErrorDialog("You've canceled creation of Study Project. Empty project will be created.", "Cancel");
+      Messages.showErrorDialog("Empty project will be created.", "Study Project Creation Was Canceled");
       return;
     }
     Reader reader = null;
@@ -165,12 +165,11 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
       reader = new InputStreamReader(new FileInputStream(mySelectedCourseFile));
       Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
       Course course = gson.fromJson(reader, Course.class);
-      course.init();
-      course.create(project, baseDir, new File(mySelectedCourseFile.getParent()));
+      course.init(false);
+      course.create(baseDir, new File(mySelectedCourseFile.getParent()));
       course.setResourcePath(mySelectedCourseFile.getAbsolutePath());
       VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
-      StudyTaskManager tm = StudyTaskManager.getInstance(project);
-      tm.setCourse(course);
+      StudyTaskManager.getInstance(project).setCourse(course);
     }
     catch (FileNotFoundException e) {
       e.printStackTrace();
@@ -205,7 +204,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
         if (files != null) {
           for (File file : files) {
             String fileName = file.getName();
-            if (fileName.contains(".zip")) {
+            if (StudyUtils.isZip(fileName)) {
               ZipUtil.unzip(null, new File(myCoursesDir, fileName.substring(0, fileName.indexOf("."))), file, null, null, true);
               if (!file.delete()) {
                 LOG.error("Failed to delete", fileName);
@@ -294,9 +293,9 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
       return myCourses;
     }
     if (myCoursesDir.exists()) {
-      File cashFile = new File(myCoursesDir, CACHE_NAME);
-      if (cashFile.exists()) {
-        myCourses = getCoursesFromCache(cashFile);
+      File cacheFile = new File(myCoursesDir, CACHE_NAME);
+      if (cacheFile.exists()) {
+        myCourses = getCoursesFromCache(cacheFile);
         if (!myCourses.isEmpty()) {
           return myCourses;
         }
@@ -322,7 +321,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
     try {
       writer = new PrintWriter(cashFile);
       for (Map.Entry<String, File> course : myCourses.entrySet()) {
-        String line = "name=" + course.getKey() + " " + "path=" + course.getValue().getAbsolutePath();
+        String line = String.format("name=%s path=%s", course.getKey(), course.getValue());
         writer.println(line);
       }
     }
