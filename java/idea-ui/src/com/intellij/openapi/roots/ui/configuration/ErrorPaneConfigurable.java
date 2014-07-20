@@ -22,8 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.HyperlinkAdapter;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
@@ -112,7 +111,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
         String html = "<html>" +
                       "<header><style type='text/css'>" +
                       "body {" +
-                      "  color: #333333;" +
+                      "  color: #" + ColorUtil.toHex(new JBColor(Gray.x33, UIUtil.getLabelForeground())) + ";" +
                       "  font-family: '" + UIUtil.getLabelFont().getName() + ",serif';" +
                       "  font-size: " + UIUtil.getLabelFont().getSize() + ";" +
                       "}" +
