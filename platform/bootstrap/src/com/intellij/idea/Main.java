@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,18 @@ package com.intellij.idea;
 import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Restarter;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "MethodNamesDifferingOnlyByCase"})
 public class Main {
@@ -42,13 +40,19 @@ public class Main {
   public static final int PLUGIN_ERROR = 5;
 
   private static final String AWT_HEADLESS = "java.awt.headless";
+  private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
+  private static final String[] NO_ARGS = {};
 
   private static boolean isHeadless;
   private static boolean isCommandLine;
 
   private Main() { }
 
-  public static void main(final String[] args) {
+  public static void main(String[] args) {
+    if (args.length == 1 && "%f".equals(args[0])) {
+      args = NO_ARGS;
+    }
+
     setFlags(args);
 
     if (isHeadless()) {
@@ -91,7 +95,6 @@ public class Main {
     for (int i = 0; i<=args.length;  i++){
       showMessage("Debug. arg["+ i + "]=", args[i], true);
     }
-
     isHeadless = isHeadless(args);
     isCommandLine = isCommandLine(args);
   }
@@ -122,38 +125,42 @@ public class Main {
   }
 
   private static void installPatch() throws IOException {
-    String platform = System.getProperty("idea.platform.prefix", "idea");
-    String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase();
-    File originalPatchFile = new File(System.getProperty("java.io.tmpdir"), patchFileName);
-    File copyPatchFile = new File(System.getProperty("java.io.tmpdir"), patchFileName + "_copy");
+    String platform = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea");
+    String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase(Locale.US);
+    String tempDir = System.getProperty("java.io.tmpdir");
 
     // always delete previous patch copy
-    if (!FileUtilRt.delete(copyPatchFile)) {
-      throw new IOException("Cannot create temporary patch file");
+    File patchCopy = new File(tempDir, patchFileName + "_copy");
+    File log4jCopy = new File(tempDir, "log4j.jar." + platform + "_copy");
+    if (!FileUtilRt.delete(patchCopy) || !FileUtilRt.delete(log4jCopy)) {
+      throw new IOException("Cannot delete temporary files in " + tempDir);
     }
 
-    if (!originalPatchFile.exists()) {
-      return;
-    }
-
-    if (!originalPatchFile.renameTo(copyPatchFile) || !FileUtilRt.delete(originalPatchFile)) {
-      throw new IOException("Cannot create temporary patch file");
-    }
+    File patch = new File(tempDir, patchFileName);
+    if (!patch.exists()) return;
+    File log4j = new File(PathManager.getLibPath(), "log4j.jar");
+    if (!log4j.exists()) throw new IOException("Log4J missing: " + log4j);
+    copyFile(patch, patchCopy, true);
+    copyFile(log4j, log4jCopy, false);
 
     int status = 0;
     if (Restarter.isSupported()) {
       List<String> args = new ArrayList<String>();
 
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
         args.add(Restarter.createTempExecutable(launcher).getPath());
       }
 
+      //noinspection SpellCheckingInspection
       Collections.addAll(args,
                          System.getProperty("java.home") + "/bin/java",
                          "-Xmx500m",
                          "-classpath",
-                         copyPatchFile.getPath() + File.pathSeparator + copyPatchFile.getPath() + "/lib/log4j.jar",
+                         patchCopy.getPath() + File.pathSeparator + log4jCopy.getPath(),
+                         "-Djava.io.tmpdir=" + tempDir,
+                         "-Didea.updater.log=" + PathManager.getLogPath(),
+                         "-Dswing.defaultlaf=" + UIManager.getSystemLookAndFeelClassName(),
                          "com.intellij.updater.Runner",
                          "install",
                          PathManager.getHomePath());
@@ -168,11 +175,31 @@ public class Main {
     System.exit(status);
   }
 
-  public static void showMessage(String title, Throwable t) {
-    String message = "Internal error. Please report to http://youtrack.jetbrains.com\n\n" + ExceptionUtil.getThrowableText(t);
-    showMessage(title, message, true);
+  private static void copyFile(File original, File copy, boolean move) throws IOException {
+    if (move) {
+      if (!original.renameTo(copy) || !FileUtilRt.delete(original)) {
+        throw new IOException("Cannot create temporary file: " + copy);
+      }
+    }
+    else {
+      FileUtilRt.copy(original, copy);
+      if (!copy.exists()) {
+        throw new IOException("Cannot create temporary file: " + copy);
+      }
+    }
   }
 
+  public static void showMessage(String title, Throwable t) {
+    StringWriter message = new StringWriter();
+    message.append("Internal error. Please report to http://");
+    boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
+    message.append(studio ? "code.google.com/p/android/issues" : "youtrack.jetbrains.com");
+    message.append("\n\n");
+    t.printStackTrace(new PrintWriter(message));
+    showMessage(title, message.toString(), true);
+  }
+
+  @SuppressWarnings({"UseJBColor", "UndesirableClassUsage"})
   public static void showMessage(String title, String message, boolean error) {
     if (isCommandLine()) {
       PrintStream stream = error ? System.err : System.out;
@@ -185,10 +212,21 @@ public class Main {
       JTextPane textPane = new JTextPane();
       textPane.setEditable(false);
       textPane.setText(message.replaceAll("\t", "    "));
-      textPane.setBackground(UIManager.getColor("Panel.background"));
+      textPane.setBackground(Color.white);
+      textPane.setCaretPosition(0);
+      JScrollPane scrollPane = new JScrollPane(
+        textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+      int maxHeight = Toolkit.getDefaultToolkit().getScreenSize().height - 150;
+      Dimension component = scrollPane.getPreferredSize();
+      if (component.height >= maxHeight) {
+        Object setting = UIManager.get("ScrollBar.width");
+        int width = setting instanceof Integer ? ((Integer)setting).intValue() : 20;
+        scrollPane.setPreferredSize(new Dimension(component.width + width, maxHeight));
+      }
 
       int type = error ? JOptionPane.ERROR_MESSAGE : JOptionPane.INFORMATION_MESSAGE;
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), textPane, title, type);
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), scrollPane, title, type);
     }
   }
 }
