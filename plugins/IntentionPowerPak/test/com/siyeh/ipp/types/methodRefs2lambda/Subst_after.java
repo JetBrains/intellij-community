@@ -5,5 +5,5 @@ class Bar {
 }
 
 class Test {
-    Comparator<Bar> comparator = (o1, o2) -> o1.xxx(o2);
+    Comparator<Bar> comparator = (bar, p) -> bar.xxx(p);
 }
