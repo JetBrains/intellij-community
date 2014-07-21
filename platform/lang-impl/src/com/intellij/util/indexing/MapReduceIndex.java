@@ -360,14 +360,16 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
               data = deserializeSavedPersistentData(bytes);
               havePersistentData = true;
               if (DebugAssertions.EXTRA_SANITY_CHECKS) {
-                boolean sameValueForSavedIndexedResultAndCurrentOne = myIndexer.map(content).equals(data);
+                Map<Key, Value> contentData = myIndexer.map(content);
+                boolean sameValueForSavedIndexedResultAndCurrentOne = contentData.equals(data);
                 if (!sameValueForSavedIndexedResultAndCurrentOne) {
                   DebugAssertions.error(
-                    "Unexpected difference in indexing of %s by index %s, file type %s, charset %s\nprevious indexed info %s",
+                    "Unexpected difference in indexing of %s by index %s, file type %s, charset %s\ndiff %s\nprevious indexed info %s",
                     fileContent.getFile(),
                     myIndexId,
                     fileContent.getFileType(),
                     ((FileContentImpl)fileContent).getCharset(),
+                    buildDiff(data, contentData),
                     myIndexingTrace.get(hashId)
                   );
                 }
@@ -395,7 +397,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
           FileContent fileContent = (FileContent)content;
           try {
             myIndexingTrace.put(hashId, ((FileContentImpl)fileContent).getCharset() + "," + fileContent.getFileType()+"," + fileContent.getFile().getPath() + "," +
-                                         ExceptionUtil.getThrowableText(new Throwable()));
+                                        ExceptionUtil.getThrowableText(new Throwable()));
           } catch (IOException ex) {
             LOG.error(ex);
           }
@@ -505,6 +507,41 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         return Boolean.TRUE;
       }
     };
+  }
+
+  private StringBuilder buildDiff(Map<Key, Value> data, Map<Key, Value> contentData) {
+    StringBuilder moreInfo = new StringBuilder();
+    if (contentData.size() != data.size()) {
+      moreInfo.append("Indexer has different number of elements, previously ").append(data.size()).append(" after ")
+        .append(contentData.size()).append("\n");
+    } else {
+      moreInfo.append("total ").append(contentData.size()).append(" entries\n");
+    }
+
+    for(Map.Entry<Key, Value> keyValueEntry:contentData.entrySet()) {
+      if (!data.containsKey(keyValueEntry.getKey())) {
+        moreInfo.append("Previous data doesn't contain:").append(keyValueEntry.getKey()).append( " with value ").append(keyValueEntry.getValue()).append("\n");
+      }
+      else {
+        Value value = data.get(keyValueEntry.getKey());
+        if (!Comparing.equal(keyValueEntry.getValue(), value)) {
+          moreInfo.append("Previous data has different value for key:").append(keyValueEntry.getKey()).append( ", new value ").append(keyValueEntry.getValue()).append( ", oldValue:").append(value).append("\n");
+        }
+      }
+    }
+
+    for(Map.Entry<Key, Value> keyValueEntry:data.entrySet()) {
+      if (!contentData.containsKey(keyValueEntry.getKey())) {
+        moreInfo.append("New data doesn't contain:").append(keyValueEntry.getKey()).append( " with value ").append(keyValueEntry.getValue()).append("\n");
+      }
+      else {
+        Value value = contentData.get(keyValueEntry.getKey());
+        if (!Comparing.equal(keyValueEntry.getValue(), value)) {
+          moreInfo.append("New data has different value for key:").append(keyValueEntry.getKey()).append( " new value ").append(value).append( ", oldValue:").append(keyValueEntry.getValue()).append("\n");
+        }
+      }
+    }
+    return moreInfo;
   }
 
   private Map<Key, Value> deserializeSavedPersistentData(ByteSequence bytes) throws IOException {
