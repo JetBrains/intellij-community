@@ -350,7 +350,6 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     @Override
     public Collection<? extends Configurable> getConfigurables() {
       final ArrayList<Configurable> configurables = new ArrayList<Configurable>();
-      configurables.add(new DebuggerSteppingConfigurable());
       configurables.add(new UserRenderersConfigurable(null));
       configurables.add(new DebuggerHotswapConfigurable());
       return configurables;
@@ -367,16 +366,16 @@ public class JavaDebuggerSupport extends DebuggerSupport {
       switch (category) {
         case DATA_VIEWS:
           return Collections.singletonList(new DebuggerDataViewsConfigurable(null));
+        case STEPPING:
+          return Collections.singletonList(new DebuggerSteppingConfigurable());
       }
       return Collections.emptyList();
     }
 
     @Override
     public void applied(@NotNull XDebuggerSettings.Category category) {
-      switch (category) {
-        case DATA_VIEWS:
-          NodeRendererSettings.getInstance().fireRenderersChanged();
-          break;
+      if (category == XDebuggerSettings.Category.DATA_VIEWS) {
+        NodeRendererSettings.getInstance().fireRenderersChanged();
       }
     }
   }

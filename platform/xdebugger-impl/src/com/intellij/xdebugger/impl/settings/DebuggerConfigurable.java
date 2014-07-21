@@ -20,6 +20,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,6 +70,11 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
 
     List<Configurable> configurables = new ArrayList<Configurable>();
     configurables.add(new DataViewsConfigurable());
+
+    List<Configurable> steppingConfigurables = DebuggerConfigurableProvider.getConfigurables(XDebuggerSettings.Category.STEPPING, providers);
+    if (!steppingConfigurables.isEmpty()) {
+      configurables.add(new SteppingConfigurable(steppingConfigurables));
+    }
 
     Configurable rootConfigurable = null;
     for (DebuggerSettingsPanelProvider provider : providers) {

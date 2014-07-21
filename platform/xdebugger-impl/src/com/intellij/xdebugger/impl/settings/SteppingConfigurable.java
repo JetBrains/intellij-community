@@ -21,33 +21,34 @@ import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-class DataViewsConfigurable extends SubCompositeConfigurable implements Configurable.NoScroll {
+import java.util.List;
+
+class SteppingConfigurable extends SubCompositeConfigurable implements Configurable.NoScroll {
+  public SteppingConfigurable(@NotNull List<Configurable> configurables) {
+    assert !configurables.isEmpty();
+    children = configurables.toArray(new Configurable[configurables.size()]);
+  }
+
   @NotNull
   @Override
   public String getId() {
-    return "debugger.dataViews";
+    return "debugger.stepping";
   }
 
   @Nls
   @Override
   public String getDisplayName() {
-    return XDebuggerBundle.message("debugger.dataViews.display.name");
+    return XDebuggerBundle.message("debugger.stepping.display.name");
   }
 
   @Override
   protected DataViewsConfigurableUi createRootUi() {
-    return new DataViewsConfigurableUi();
+    return null;
   }
 
   @NotNull
   @Override
   protected XDebuggerSettings.Category getCategory() {
-    return XDebuggerSettings.Category.DATA_VIEWS;
-  }
-
-  @NotNull
-  @Override
-  protected XDebuggerDataViewSettings getSettings() {
-    return XDebuggerSettingsManager.getInstanceImpl().getDataViewSettings();
+    return XDebuggerSettings.Category.STEPPING;
   }
 }

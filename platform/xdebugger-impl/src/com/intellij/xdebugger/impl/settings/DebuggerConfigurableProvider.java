@@ -23,6 +23,7 @@ import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -65,14 +66,21 @@ public class DebuggerConfigurableProvider extends ConfigurableProvider {
   @NotNull
   static List<Configurable> getConfigurables(@NotNull XDebuggerSettings.Category category) {
     List<DebuggerSettingsPanelProvider> providers = getSortedProviders();
-    if (providers.isEmpty()) {
-      return Collections.emptyList();
-    }
+    return providers.isEmpty() ? Collections.<Configurable>emptyList() : getConfigurables(category, providers);
+  }
 
-    List<Configurable> configurables = new SmartList<Configurable>();
+  @NotNull
+  static List<Configurable> getConfigurables(@NotNull XDebuggerSettings.Category category, @NotNull List<DebuggerSettingsPanelProvider> providers) {
+    List<Configurable> configurables = null;
     for (DebuggerSettingsPanelProvider provider : providers) {
-      configurables.addAll(provider.getConfigurable(category));
+      Collection<? extends Configurable> providerConfigurables = provider.getConfigurable(category);
+      if (!providerConfigurables.isEmpty()) {
+        if (configurables == null) {
+          configurables = new SmartList<Configurable>();
+        }
+        configurables.addAll(providerConfigurables);
+      }
     }
-    return configurables.isEmpty() ? Collections.<Configurable>emptyList() : configurables;
+    return ContainerUtil.isEmpty(configurables) ? Collections.<Configurable>emptyList() : configurables;
   }
 }
