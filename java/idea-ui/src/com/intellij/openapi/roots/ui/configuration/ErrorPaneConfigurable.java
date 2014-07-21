@@ -45,9 +45,11 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
   private final Alarm myAlarm;
   private final ArrayList<ConfigurationError> myErrors = new ArrayList<ConfigurationError>();
   private final JTextPane myContent = new JTextPane();
+  private Runnable myOnErrorsChanged;
 
-  public ErrorPaneConfigurable(final Project project, StructureConfigurableContext context) {
+  public ErrorPaneConfigurable(final Project project, StructureConfigurableContext context, Runnable onErrorsChanged) {
     super(new BorderLayout());
+    myOnErrorsChanged = onErrorsChanged;
     myContent.setEditorKit(UIUtil.getHTMLEditorKit());
     myContent.setEditable(false);
     myContent.setBackground(UIUtil.getListBackground());
@@ -148,6 +150,9 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
         }
         html += "</ol></body></html>";
         myContent.setText(html);
+        if (myOnErrorsChanged != null) {
+          myOnErrorsChanged.run();
+        }
       }
     }, 100);
   }
