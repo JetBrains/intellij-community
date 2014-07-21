@@ -263,11 +263,12 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
 
 
   private int mkPsiClassKey(PsiClass psiClass, int dimensions) throws IOException {
-    PsiClassOwner psiFile = (PsiClassOwner) psiClass.getContainingFile();
-    if (psiFile == null) {
-      LOG.debug("getContainingFile was null for " + psiClass.getQualifiedName());
+    PsiFile containingFile = psiClass.getContainingFile();
+    if (!(containingFile instanceof PsiClassOwner)) {
+      LOG.debug("containingFile was not resolved for " + psiClass.getQualifiedName());
       return -1;
     }
+    PsiClassOwner psiFile = (PsiClassOwner)containingFile;
     String packageName = psiFile.getPackageName();
     String qname = psiClass.getQualifiedName();
     if (qname == null) {
