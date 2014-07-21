@@ -68,6 +68,10 @@
     <action id="WatchInputAction" class="ru.compscicenter.edide.actions.WatchInputAction" text="WatchInputAction"
             description="watch input"/>
     <action id="StudyRunAction" class="ru.compscicenter.edide.actions.StudyRunAction" text="StudyRunAction" description="run your code"/>
+    <action id="ShowHintAction" class="ru.compscicenter.edide.actions.ShowHintAction" text="Show hint"
+            description="show hint" icon="/icons/showHint.png">
+      <add-to-group group-id="MainToolBar" anchor="last"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

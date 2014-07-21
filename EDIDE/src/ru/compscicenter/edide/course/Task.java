@@ -233,38 +233,13 @@ public class Task {
   public String getResourceText(Project project, String fileName, boolean wrapHTML) {
     String lessonDirName = Lesson.LESSON_DIR + String.valueOf(myLesson.getIndex() + 1);
     String taskDirName = TASK_DIR + String.valueOf(myIndex + 1);
-    BufferedReader reader = null;
     VirtualFile courseDir = project.getBaseDir().findChild(Course.COURSE_DIR);
     if (courseDir != null) {
       VirtualFile lessonDir = courseDir.findChild(lessonDirName);
       if (lessonDir != null) {
         VirtualFile parentDir = lessonDir.findChild(taskDirName);
         if (parentDir != null) {
-          File inputFile = new File(parentDir.getCanonicalPath(), fileName);
-          StringBuilder taskText = new StringBuilder();
-          if (wrapHTML) {
-            taskText.append("<html>");
-          }
-          try {
-            reader = new BufferedReader(new InputStreamReader(new FileInputStream(inputFile)));
-            String line;
-            while ((line = reader.readLine()) != null) {
-              taskText.append(line);
-              if (wrapHTML) {
-                taskText.append("<br>");
-              }
-            }
-            if (wrapHTML) {
-              taskText.append("</html>");
-            }
-            return taskText.toString();
-          }
-          catch (IOException e) {
-            e.printStackTrace();
-          }
-          finally {
-            StudyUtils.closeSilently(reader);
-          }
+          return StudyUtils.getFileText(parentDir.getCanonicalPath(), fileName, wrapHTML);
         }
       }
     }

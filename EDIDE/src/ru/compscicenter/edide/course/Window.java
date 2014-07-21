@@ -1,6 +1,5 @@
 package ru.compscicenter.edide.course;
 
-import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -8,7 +7,6 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -207,5 +205,9 @@ public class Window implements Comparable {
     line = myInitialLine;
     start = myInitialStart;
     myLength = myInitialLength;
+  }
+
+  public String getHint() {
+    return hint;
   }
 }

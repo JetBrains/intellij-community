@@ -26,6 +26,7 @@ public class Course {
   private String name;
   private String myResourcePath = "";
   public static final String COURSE_DIR = "course";
+  public static final String HINTS_DIR = "hints";
 
   public List<Lesson> getLessons() {
     return lessons;

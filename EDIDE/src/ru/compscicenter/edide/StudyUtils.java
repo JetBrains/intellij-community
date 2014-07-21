@@ -1,8 +1,6 @@
 package ru.compscicenter.edide;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.Reader;
+import java.io.*;
 
 /**
  * author: liana
@@ -10,7 +8,7 @@ import java.io.Reader;
  */
 public class StudyUtils {
   public static void closeSilently(Closeable stream) {
-    if (stream!= null) {
+    if (stream != null) {
       try {
         stream.close();
       }
@@ -26,5 +24,35 @@ public class StudyUtils {
 
   public static <T> T getFirst(Iterable<T> container) {
     return container.iterator().next();
+  }
+
+  public static String getFileText(String parentDir, String fileName, boolean wrapHTML) {
+    File inputFile = new File(parentDir, fileName);
+    StringBuilder taskText = new StringBuilder();
+    if (wrapHTML) {
+      taskText.append("<html>");
+    }
+    BufferedReader reader = null;
+    try {
+      reader = new BufferedReader(new InputStreamReader(new FileInputStream(inputFile)));
+      String line;
+      while ((line = reader.readLine()) != null) {
+        taskText.append(line);
+        if (wrapHTML) {
+          taskText.append("<br>");
+        }
+      }
+      if (wrapHTML) {
+        taskText.append("</html>");
+      }
+      return taskText.toString();
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
+    finally {
+      StudyUtils.closeSilently(reader);
+    }
+    return null;
   }
 }
