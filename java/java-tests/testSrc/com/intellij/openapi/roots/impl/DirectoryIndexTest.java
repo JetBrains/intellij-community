@@ -537,11 +537,6 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkExcluded(projectOutput, myModule);
     checkExcluded(module2Output, myModule);
     checkExcluded(module2TestOutput, myModule2);
-    
-    assertFalse(myIndex.isProjectExcludeRoot(excluded));
-    assertFalse(myIndex.isProjectExcludeRoot(projectOutput));
-    assertFalse(myIndex.isProjectExcludeRoot(module2Output));
-    assertFalse(myIndex.isProjectExcludeRoot(module2TestOutput));
 
     excluded.delete(this);
     projectOutput.delete(this);
@@ -556,43 +551,23 @@ public class DirectoryIndexTest extends IdeaTestCase {
         String fileName = e.getFileName();
         checkExcluded(file, fileName.contains("module2TestOutput") ? myModule2 : myModule);
         created.add(file);
-
-        if (fileName.equals("projectOutput")) {
-          assertFalse(myIndex.isProjectExcludeRoot(file));
-        }
-        if (fileName.equals("module2Output")) {
-          assertFalse(myIndex.isProjectExcludeRoot(file));
-        }
-        if (fileName.equals("module2TestOutput")) {
-          assertFalse(myIndex.isProjectExcludeRoot(file));
-        }
       }
     };
     VirtualFileManager.getInstance().addVirtualFileListener(l, getTestRootDisposable());
     
     excluded = myModule1Dir.createChildDirectory(this, excluded.getName());
-    assertFalse(myIndex.isProjectExcludeRoot(excluded));
-    
-    projectOutput = myModule1Dir.createChildDirectory(this, projectOutput.getName());
-    assertFalse(myIndex.isProjectExcludeRoot(projectOutput));
-    
-    module2Output = myModule1Dir.createChildDirectory(this, module2Output.getName());
-    assertFalse(myIndex.isProjectExcludeRoot(module2Output));
-    
-    module2TestOutput = myModule2Dir.createChildDirectory(this, module2TestOutput.getName());
-    assertFalse(myIndex.isProjectExcludeRoot(module2TestOutput));
-
     checkExcluded(excluded, myModule);
+
+    projectOutput = myModule1Dir.createChildDirectory(this, projectOutput.getName());
     checkExcluded(projectOutput, myModule);
+
+    module2Output = myModule1Dir.createChildDirectory(this, module2Output.getName());
     checkExcluded(module2Output, myModule);
+
+    module2TestOutput = myModule2Dir.createChildDirectory(this, module2TestOutput.getName());
     checkExcluded(module2TestOutput, myModule2);
 
     assertEquals(created.toString(), 4, created.size());
-
-    assertFalse(myIndex.isProjectExcludeRoot(excluded));
-    assertFalse(myIndex.isProjectExcludeRoot(projectOutput));
-    assertFalse(myIndex.isProjectExcludeRoot(module2Output));
-    assertFalse(myIndex.isProjectExcludeRoot(module2TestOutput));
   }
 
   public void testExcludesShouldBeRecognizedRightOnRefresh() throws Exception {
@@ -690,9 +665,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertTrue(fileIndex.isIgnored(myOutputDir));
     assertTrue(fileIndex.isIgnored(myModule1OutputDir));
     assertFalse(fileIndex.isIgnored(myOutputDir.getParent()));
-    assertTrue(myIndex.isProjectExcludeRoot(myOutputDir));
-    checkExcluded(myOutputDir, null);
-    assertFalse(myIndex.isProjectExcludeRoot(myModule1OutputDir));
+    assertExcludedFromProject(myOutputDir);
+    assertExcludedFromProject(myModule1OutputDir);
     String moduleOutputUrl = myModule1OutputDir.getUrl();
 
     myOutputDir.delete(this);
@@ -701,10 +675,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
     myOutputDir = myRootVFile.createChildDirectory(this, "out");
     myModule1OutputDir = myOutputDir.createChildDirectory(this, "module1");
 
-    assertTrue(myIndex.isProjectExcludeRoot(myOutputDir));
-    checkExcluded(myOutputDir, null);
-    assertTrue(myIndex.isProjectExcludeRoot(myModule1OutputDir));
-    checkExcluded(myModule1OutputDir, null);
+    assertExcludedFromProject(myOutputDir);
+    assertExcludedFromProject(myModule1OutputDir);
     assertTrue(fileIndex.isIgnored(myModule1OutputDir));
 
     PsiTestUtil.setCompilerOutputPath(myModule, moduleOutputUrl, true);
@@ -714,21 +686,20 @@ public class DirectoryIndexTest extends IdeaTestCase {
     PsiTestUtil.setCompilerOutputPath(myModule3, moduleOutputUrl, true);
     
     // now no module inherits project output dir, but it still should be project-excluded
-    assertTrue(myIndex.isProjectExcludeRoot(myOutputDir));
-    checkExcluded(myOutputDir, null);
+    assertExcludedFromProject(myOutputDir);
 
     // project output inside module content shouldn't be projectExcludeRoot
     VirtualFile projectOutputUnderContent = myModule1Dir.createChildDirectory(this, "projectOutputUnderContent");
     getCompilerProjectExtension().setCompilerOutputUrl(projectOutputUnderContent.getUrl());
     fireRootsChanged();
 
-    assertFalse(myIndex.isProjectExcludeRoot(myOutputDir));
-    assertFalse(myIndex.isProjectExcludeRoot(projectOutputUnderContent));
-    
+    assertNotExcluded(myOutputDir);
+    checkExcluded(projectOutputUnderContent, myModule);
+
     projectOutputUnderContent.delete(this);
     projectOutputUnderContent = myModule1Dir.createChildDirectory(this, "projectOutputUnderContent");
-    assertFalse(myIndex.isProjectExcludeRoot(myOutputDir));
-    assertFalse(myIndex.isProjectExcludeRoot(projectOutputUnderContent));
+    assertNotExcluded(myOutputDir);
+    checkExcluded(projectOutputUnderContent, myModule);
   }
 
   public void testFileContentAndSourceRoots() throws IOException {
@@ -972,6 +943,14 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertTrue(output2.toString(), info.isInProject());
     info.assertConsistency();
     return info;
+  }
+
+  private void assertNotExcluded(VirtualFile dir) {
+    assertFalse(myIndex.getInfoForFile(dir).isExcluded());
+  }
+
+  private void assertExcludedFromProject(VirtualFile file) {
+    checkExcluded(file, null);
   }
 
   private void checkPackage(String packageName, boolean includeLibrarySources, VirtualFile... expectedDirs) {

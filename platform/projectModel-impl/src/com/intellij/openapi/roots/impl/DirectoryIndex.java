@@ -48,8 +48,6 @@ public abstract class DirectoryIndex {
   @Nullable
   public abstract JpsModuleSourceRootType<?> getSourceRootType(@NotNull DirectoryInfo info);
 
-  public abstract boolean isProjectExcludeRoot(@NotNull VirtualFile dir);
-
   @NotNull
   public abstract
   Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources);

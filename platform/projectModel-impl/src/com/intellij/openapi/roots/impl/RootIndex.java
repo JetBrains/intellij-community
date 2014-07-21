@@ -315,11 +315,6 @@ public class RootIndex extends DirectoryIndex {
   }
 
   @Override
-  public boolean isProjectExcludeRoot(@NotNull final VirtualFile dir) {
-    return myProjectExcludedRoots.contains(dir);
-  }
-
-  @Override
   @NotNull
   public Query<VirtualFile> getDirectoriesByPackageName(@NotNull final String packageName, final boolean includeLibrarySources) {
     List<VirtualFile> result = myDirectoriesByPackageNameCache.get(packageName);
