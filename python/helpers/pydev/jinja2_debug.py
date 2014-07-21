@@ -28,8 +28,7 @@ class Jinja2LineBreakpoint(LineBreakpoint):
 def is_jinja2_render_call(frame):
     try:
         name = frame.f_code.co_name
-        if name == "root" or name == "loop" or name == "macro" or name.startswith("block_"):
-            #print "call on: " + str(frame.f_lineno) + " name: " + str(name)
+        if name in ("root", "loop", "macro") or name.startswith("block_"):
             return True
         return False
     except:
@@ -51,5 +50,8 @@ def suspend_jinja2(py_db_frame, mainDebugger, thread, frame, cmd=CMD_SET_BREAK):
     thread.additionalInfo.line = frame.f_lineno
 
     return frame
+
+def is_jinja2_suspended(thread):
+    return thread.additionalInfo.suspend_type == JINJA2_SUSPEND
 
 

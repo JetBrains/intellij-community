@@ -3,7 +3,7 @@ from django_debug import find_django_render_frame
 from django_frame import just_raised
 from django_frame import is_django_exception_break_context
 from django_frame import DjangoTemplateFrame
-from jinja2_debug import Jinja2LineBreakpoint, is_jinja2_render_call, suspend_jinja2
+from jinja2_debug import Jinja2LineBreakpoint, is_jinja2_render_call, suspend_jinja2, is_jinja2_suspended
 from jinja2_frame import Jinja2TemplateFrame, get_jinja2_template_filename, get_jinja2_template_line
 from pydevd_comm import * #@UnusedWildImport
 from pydevd_breakpoints import * #@UnusedWildImport
@@ -229,6 +229,10 @@ class PyDBFrame:
                         stop = stop and is_django_resolve_call(frame.f_back) and not is_django_context_get_call(frame)
                         if stop:
                             info.pydev_django_resolve_frame = 1 #we remember that we've go into python code from django rendering frame
+                    elif is_jinja2_suspended(thread):
+                        stop = False
+
+                    print "django stop", django_stop, "stop", stop
 
                 elif info.pydev_step_cmd == CMD_STEP_OVER:
                     if is_django_suspended(thread):
@@ -348,14 +352,12 @@ class PyDBFrame:
         mainDebugger, filename, info, thread = self._args
         flag = False
         filename = get_template_file_name(frame)
-        pydev_log.error_once("django keys:" + str(frame.f_locals.keys()))
         pydev_log.debug("Django is rendering a template: %s\n" % filename)
         django_breakpoints_for_file = mainDebugger.django_breakpoints.get(filename)
         if django_breakpoints_for_file:
             pydev_log.debug("Breakpoints for that file: %s\n" % django_breakpoints_for_file)
             template_line = get_template_line(frame)
             pydev_log.debug("Tracing template line: %d\n" % template_line)
-            print "Tracing template line: %d\n" % template_line
 
             if DictContains(django_breakpoints_for_file, template_line):
                 django_breakpoint = django_breakpoints_for_file[template_line]
@@ -409,9 +411,6 @@ class PyDBFrame:
 
                     if flag:
                         frame = suspend_jinja2(self, mainDebugger, thread, frame)
-                    else:
-                        frame = new_frame
-
         return flag, frame
 
 
