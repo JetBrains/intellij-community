@@ -50,6 +50,8 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_COMPLETE_STATEMENT = "EditorCompleteStatement";
   @NonNls String ACTION_EDITOR_USE_SOFT_WRAPS = "EditorToggleUseSoftWraps";
   @NonNls String ACTION_EDITOR_ADD_OR_REMOVE_CARET= "EditorAddOrRemoveCaret";
+  @NonNls String ACTION_EDITOR_CLONE_CARET_BELOW= "EditorCloneCaretBelow";
+  @NonNls String ACTION_EDITOR_CLONE_CARET_ABOVE= "EditorCloneCaretAbove";
 
   @NonNls String ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE = "NextTemplateVariable";
   @NonNls String ACTION_EDITOR_PREVIOUS_TEMPLATE_VARIABLE = "PreviousTemplateVariable";
