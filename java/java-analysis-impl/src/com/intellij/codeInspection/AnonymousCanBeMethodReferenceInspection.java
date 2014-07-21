@@ -69,7 +69,7 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
           final PsiClassType baseClassType = aClass.getBaseClassType();
           if (LambdaUtil.isFunctionalType(baseClassType)) {
             final PsiMethod[] methods = aClass.getMethods();
-            if (methods.length == 1 && aClass.getFields().length == 0) {
+            if (methods.length == 1 && aClass.getFields().length == 0 && !AnonymousCanBeLambdaInspection.hasForbiddenRefsInsideBody(methods[0], aClass)) {
               final PsiCodeBlock body = methods[0].getBody();
               final PsiCallExpression callExpression =
                 LambdaCanBeMethodReferenceInspection
