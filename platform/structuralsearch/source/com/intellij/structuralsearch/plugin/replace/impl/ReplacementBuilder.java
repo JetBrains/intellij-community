@@ -16,6 +16,8 @@ import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -186,6 +188,7 @@ public final class ReplacementBuilder {
     return scriptSupport.evaluate((MatchResultImpl)match, null);
   }
 
+  @Nullable
   public ParameterInfo findParameterization(String name) {
     if (parameterizations==null) return null;
 
@@ -208,7 +211,7 @@ public final class ReplacementBuilder {
     }
   }
 
-  public void addParametrization(ParameterInfo e) {
+  public void addParametrization(@NotNull ParameterInfo e) {
     assert parameterizations != null;
     parameterizations.add(e);
   }
