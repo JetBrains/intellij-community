@@ -141,6 +141,9 @@ public class ProjectBytecodeAnalysis {
 
   @Nullable
   public PsiAnnotation findInferredAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
+    if (!(listOwner instanceof PsiCompiledElement)) {
+      return null;
+    }
     if (annotationFQN.equals("org.jetbrains.annotations.NotNull")) {
       return findNotNullAnnotation(listOwner);
     }
@@ -154,6 +157,9 @@ public class ProjectBytecodeAnalysis {
 
   @NotNull
   public PsiAnnotation[] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
+    if (!(listOwner instanceof PsiCompiledElement)) {
+      return PsiAnnotation.EMPTY_ARRAY;
+    }
     return collectInferredAnnotations(listOwner);
   }
 
@@ -249,6 +255,8 @@ public class ProjectBytecodeAnalysis {
   }
 
   public static int getKey(@NotNull PsiModifierListOwner owner) throws IOException {
+    LOG.assertTrue(owner instanceof PsiCompiledElement, owner);
+
     if (owner instanceof PsiMethod) {
       return BytecodeAnalysisConverter.getInstance().mkPsiKey((PsiMethod)owner, new Out());
     }
