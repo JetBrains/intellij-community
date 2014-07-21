@@ -764,16 +764,7 @@ public class AbstractPopup implements JBPopup {
       popupOwner = root.getRootPane();
     }
     myPopup = factory.getPopup(popupOwner, myContent, targetBounds.x, targetBounds.y, this);
-    myPopup.getWindow().setSize(0, 0);
-    Container parent = myContent.getParent();
-    if (parent.getComponentCount() > 1) {
-      // JDK uses cached heavyweight popup without removing other components
-      for (Component component : parent.getComponents()) {
-        if (component != myContent) {
-          parent.remove(component);
-        }
-      }
-    }
+
     if (myResizable) {
       final JRootPane root = myContent.getRootPane();
       final IdeGlassPaneImpl glass = new IdeGlassPaneImpl(root);
@@ -814,7 +805,11 @@ public class AbstractPopup implements JBPopup {
       listener.beforeShown(new LightweightWindowEvent(this));
     }
 
+    // can be improved by moving in myPopup code
+    myPopup.getWindow().pack();
+
     myPopup.setRequestFocus(myRequestFocus);
+    LOG.debug("popup window size: " + myPopup.getWindow().getSize());
     myPopup.show();
 
     final Window window = SwingUtilities.getWindowAncestor(myContent);
