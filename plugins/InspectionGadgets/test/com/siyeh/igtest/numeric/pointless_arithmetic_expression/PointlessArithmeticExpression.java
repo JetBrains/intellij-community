@@ -124,4 +124,5 @@ class Expanded {{
   long g = 8L / 8L;
   long h = 9L * 0L;
   int a = 8 * 0 * 8 * ; // don't warn
+  int minus = 2 - 1 - 1;
 }}
