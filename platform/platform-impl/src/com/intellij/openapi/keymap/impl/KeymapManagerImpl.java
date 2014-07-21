@@ -28,6 +28,7 @@ import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -95,8 +96,12 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     }
     load();
 
-    ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_CLONE_CARET_ABOVE, KeyEvent.VK_CONTROL, KeyEvent.VK_UP);
-    ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_CLONE_CARET_BELOW, KeyEvent.VK_CONTROL, KeyEvent.VK_DOWN);
+    if (Registry.is("editor.add.carets.on.double.control.arrows")) {
+      ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_CLONE_CARET_ABOVE, KeyEvent.VK_CONTROL, KeyEvent.VK_UP);
+      ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_CLONE_CARET_BELOW, KeyEvent.VK_CONTROL, KeyEvent.VK_DOWN);
+      ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT, KeyEvent.VK_CONTROL, KeyEvent.VK_LEFT);
+      ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, KeyEvent.VK_CONTROL, KeyEvent.VK_RIGHT);
+    }
 
     ourKeymapManagerInitialized = true;
   }

@@ -119,7 +119,7 @@ public class ModifierKeyDoubleClickHandler {
           }
           handleModifier((KeyEvent)event);
           return false;
-        } else if (ourPressed.first.get() && ourReleased.first.get() && ourPressed.second.get() && myActionKeyCode != -1 && !isActionBound()) {
+        } else if (ourPressed.first.get() && ourReleased.first.get() && ourPressed.second.get() && myActionKeyCode != -1) {
           if (keyCode == myActionKeyCode) {
             if (event.getID() == KeyEvent.KEY_RELEASED) {
               run(keyEvent);
