@@ -50,14 +50,13 @@ public abstract class ProgressManager {
     };
   }
 
-  private static volatile ProgressManager ourInstance;
+  private static ProgressManager ourInstance;
 
   public static ProgressManager getInstance() {
-    ProgressManager progressManager = ourInstance;
-    if (progressManager == null) {
-      ourInstance = progressManager = ServiceManager.getService(ProgressManager.class);
+    if (ourInstance == null) {
+      ourInstance = ServiceManager.getService(ProgressManager.class);
     }
-    return progressManager;
+    return ourInstance;
   }
 
   public abstract boolean hasProgressIndicator();
