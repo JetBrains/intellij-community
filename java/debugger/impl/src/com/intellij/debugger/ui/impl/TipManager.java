@@ -117,14 +117,17 @@ public class TipManager implements Disposable, PopupMenuListener {
     return menu;
   }
 
+  @Override
   public void popupMenuWillBecomeVisible(final PopupMenuEvent e) {
     myPopupShown = true;
   }
 
+  @Override
   public void popupMenuWillBecomeInvisible(final PopupMenuEvent e) {
     onPopupClosed(e);
   }
 
+  @Override
   public void popupMenuCanceled(final PopupMenuEvent e) {
     onPopupClosed(e);
   }
@@ -174,6 +177,7 @@ public class TipManager implements Disposable, PopupMenuListener {
     myShowAlarm.cancelAllRequests();
     myHideAlarm.cancelAllRequests();
     myShowAlarm.addRequest(new Runnable() {
+      @Override
       public void run() {
         if (!myIsDisposed && !myPopupShown) {
           showTooltip(e, auto);
@@ -245,6 +249,7 @@ public class TipManager implements Disposable, PopupMenuListener {
       myCurrentTooltip = null;
     } else {
       myHideAlarm.addRequest(new Runnable() {
+        @Override
         public void run() {
           if (myInsideComponent) {
             hideTooltip(true);
@@ -273,10 +278,12 @@ public class TipManager implements Disposable, PopupMenuListener {
     myComponent = component;
 
     new UiNotifyConnector.Once(component, new Activatable() {
+      @Override
       public void showNotify() {
         installListeners();
       }
 
+      @Override
       public void hideNotify() {
       }
     });
@@ -284,6 +291,7 @@ public class TipManager implements Disposable, PopupMenuListener {
     final HideTooltipAction hide = new HideTooltipAction();
     hide.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)), myComponent);
     Disposer.register(this, new Disposable() {
+      @Override
       public void dispose() {
         hide.unregisterCustomShortcutSet(myComponent);
       }
@@ -292,6 +300,7 @@ public class TipManager implements Disposable, PopupMenuListener {
 
 
   private class HideTooltipAction extends AnAction {
+    @Override
     public void actionPerformed(AnActionEvent e) {
       hideTooltip(true);
     }
@@ -316,6 +325,7 @@ public class TipManager implements Disposable, PopupMenuListener {
     FrameStateManager.getInstance().addListener(myFrameStateListener);
   }
 
+  @Override
   public void dispose() {
     Disposer.dispose(this);
 
@@ -333,6 +343,7 @@ public class TipManager implements Disposable, PopupMenuListener {
 
   private class MyAwtPreprocessor implements AWTEventListener {
 
+    @Override
     public void eventDispatched(AWTEvent event) {
       if (event.getID() == MouseEvent.MOUSE_MOVED) {
         preventFromHideIfInsideTooltip(event);
