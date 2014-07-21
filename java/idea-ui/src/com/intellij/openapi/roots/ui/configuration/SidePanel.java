@@ -16,10 +16,13 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
@@ -29,6 +32,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -94,6 +98,8 @@ public class SidePanel extends JPanel {
     };
 
     myList.setCellRenderer(new GroupedItemsListRenderer(descriptor) {
+      JPanel myExtraPanel;
+      CountLabel myCountLabel;
       {
         mySeparatorComponent.setCaptionCentered(false);
       }
@@ -137,7 +143,37 @@ public class SidePanel extends JPanel {
       }
 
       @Override
+      protected void layout() {
+        if (Registry.is("ide.new.project.settings")) {
+          myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH);
+          myExtraPanel.add(myComponent, BorderLayout.CENTER);
+          myExtraPanel.add(myCountLabel, BorderLayout.EAST);
+          myRendererComponent.add(myExtraPanel, BorderLayout.CENTER);
+        } else {
+          super.layout();
+        }
+      }
+
+      @Override
+      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        myCountLabel.setText("");
+        final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if ("Problems".equals(descriptor.getTextFor(value))) {
+          final ErrorPaneConfigurable errorPane = (ErrorPaneConfigurable)((Place)value).getPath("category");
+          if (errorPane != null && errorPane.getErrorsCount() > 0) {
+            myCountLabel.setSelected(isSelected);
+            myCountLabel.setText(String.valueOf(errorPane.getErrorsCount()));
+          }
+        }
+        return component;
+      }
+
+      @Override
       protected JComponent createItemComponent() {
+        myExtraPanel = new NonOpaquePanel(new BorderLayout());
+        myCountLabel = new CountLabel();
+
+
         if (Registry.is("ide.new.project.settings")) {
           myTextLabel = new EngravedLabel();
           myTextLabel.setFont(myTextLabel.getFont().deriveFont(Font.BOLD));
@@ -187,5 +223,52 @@ public class SidePanel extends JPanel {
 
   public void select(final Place place) {
     myList.setSelectedValue(place, true);
+  }
+
+  private static class CountLabel extends JLabel {
+    private boolean mySelected;
+
+    public CountLabel() {
+      super();
+      setBorder(new Border() {
+        @Override
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+        }
+
+        @Override
+        public Insets getBorderInsets(Component c) {
+          return StringUtil.isEmpty(getText()) ? new Insets(0,0,0,0) : new Insets(2, 6, 2, 6 + 6);
+        }
+
+        @Override
+        public boolean isBorderOpaque() {
+          return false;
+        }
+      });
+      setFont(UIUtil.getListFont().deriveFont(Font.BOLD));
+    }
+
+    public boolean isSelected() {
+      return mySelected;
+    }
+
+    public void setSelected(boolean selected) {
+      mySelected = selected;
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      g.setColor(isSelected() ? UIUtil.getListSelectionBackground() : UIUtil.getSidePanelColor());
+      g.fillRect(0, 0, getWidth(), getHeight());
+      if (StringUtil.isEmpty(getText())) return;
+      final JBColor deepBlue = new JBColor(new Color(0x97A4B2), new Color(0x97A4B2));
+      g.setColor(isSelected() ? Gray._255.withAlpha(220) : deepBlue);
+      final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+      g.fillRoundRect(0, 3, getWidth() - 6 -1, getHeight()-6 , (getHeight() - 6), (getHeight() - 6));
+      config.restore();
+      setForeground(isSelected() ? deepBlue.darker() : UIUtil.getListForeground(true));
+
+      super.paintComponent(g);
+    }
   }
 }
