@@ -5,10 +5,10 @@ import com.intellij.psi.PsiElement;
 public final class ParameterInfo {
   private String name;
   private int startIndex;
-  private boolean parameterContext;
+  private boolean argumentContext;
   private boolean methodParameterContext;
   private boolean statementContext;
-  private boolean variableInitialContext;
+  private boolean variableInitializerContext;
   private int afterDelimiterPos;
   private boolean hasCommaBefore;
   private int beforeDelimiterPos;
@@ -32,12 +32,12 @@ public final class ParameterInfo {
     this.startIndex = startIndex;
   }
 
-  public boolean isParameterContext() {
-    return parameterContext;
+  public boolean isArgumentContext() {
+    return argumentContext;
   }
 
-  public void setParameterContext(boolean parameterContext) {
-    this.parameterContext = parameterContext;
+  public void setArgumentContext(boolean argumentContext) {
+    this.argumentContext = argumentContext;
   }
 
   public boolean isMethodParameterContext() {
@@ -56,12 +56,12 @@ public final class ParameterInfo {
     this.statementContext = statementContext;
   }
 
-  public boolean isVariableInitialContext() {
-    return variableInitialContext;
+  public boolean isVariableInitializerContext() {
+    return variableInitializerContext;
   }
 
-  public void setVariableInitialContext(boolean variableInitialContext) {
-    this.variableInitialContext = variableInitialContext;
+  public void setVariableInitializerContext(boolean variableInitializerContext) {
+    this.variableInitializerContext = variableInitializerContext;
   }
 
   public int getAfterDelimiterPos() {

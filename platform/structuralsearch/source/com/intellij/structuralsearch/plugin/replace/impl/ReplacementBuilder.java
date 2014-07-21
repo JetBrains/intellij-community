@@ -76,7 +76,7 @@ public final class ReplacementBuilder {
           info.setStatementContext(true);
         }
         else if (ch == ',' || ch == ')') {
-          info.setParameterContext(true);
+          info.setArgumentContext(true);
           info.setHasCommaAfter(ch == ',');
         }
         info.setAfterDelimiterPos(pos);
@@ -160,7 +160,7 @@ public final class ReplacementBuilder {
           result.delete(info.getAfterDelimiterPos() + offset, info.getAfterDelimiterPos() + 1 + offset);
           --offset;
         }
-        else if (info.isVariableInitialContext()) {
+        else if (info.isVariableInitializerContext()) {
           //if (info.afterDelimiterPos > 0) {
             result.delete(info.getBeforeDelimiterPos() + offset, info.getAfterDelimiterPos() + offset - 1);
             offset -= (info.getAfterDelimiterPos() - info.getBeforeDelimiterPos() - 1);
