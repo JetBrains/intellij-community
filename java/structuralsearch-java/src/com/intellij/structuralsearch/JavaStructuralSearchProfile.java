@@ -432,20 +432,6 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       }
 
       @Override
-      public void visitMethod(PsiMethod method) {
-        super.visitMethod(method);
-
-        String name = method.getName();
-        if (StructuralSearchUtil.isTypedVariable(name)) {
-          name = Replacer.stripTypedVariableDecoration(name);
-
-          ParameterInfo methodInfo = builder.findParameterization(name);
-          methodInfo.setScopeParameterization(true);
-          //if (scopedParameterizations != null) scopedParameterizations.put(method.getTextRange(), methodInfo);
-        }
-      }
-
-      @Override
       public void visitParameter(PsiParameter parameter) {
         super.visitParameter(parameter);
 

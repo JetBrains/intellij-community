@@ -13,7 +13,6 @@ public final class ParameterInfo {
   private boolean hasCommaBefore;
   private int beforeDelimiterPos;
   private boolean hasCommaAfter;
-  private boolean scopeParameterization;
   private boolean replacementVariable;
   private PsiElement myElement;
 
@@ -95,14 +94,6 @@ public final class ParameterInfo {
 
   public void setHasCommaAfter(boolean hasCommaAfter) {
     this.hasCommaAfter = hasCommaAfter;
-  }
-
-  public boolean isScopeParameterization() {
-    return scopeParameterization;
-  }
-
-  public void setScopeParameterization(boolean scopeParameterization) {
-    this.scopeParameterization = scopeParameterization;
   }
 
   public boolean isReplacementVariable() {

@@ -30,7 +30,6 @@ public final class ReplacementBuilder {
   private HashMap<String,MatchResult> matchMap;
   private final Map<String, ScriptSupport> replacementVarsMap;
   private final ReplaceOptions options;
-  //private Map<TextRange,ParameterInfo> scopedParameterizations;
 
   ReplacementBuilder(final Project project,final ReplaceOptions options) {
     replacementVarsMap = new HashMap<String, ScriptSupport>();
