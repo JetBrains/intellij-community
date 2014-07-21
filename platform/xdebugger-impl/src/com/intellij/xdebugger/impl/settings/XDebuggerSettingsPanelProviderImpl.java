@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,42 @@
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.project.Project;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
  */
 public class XDebuggerSettingsPanelProviderImpl extends DebuggerSettingsPanelProvider {
-  public int getPriority() {
-    return 0;
-  }
-
+  @NotNull
+  @Override
   public Collection<? extends Configurable> getConfigurables() {
-    ArrayList<Configurable> list = new ArrayList<Configurable>();
-    for (XDebuggerSettings settings : XDebuggerSettingsManager.getInstance().getSettingsList()) {
+    List<Configurable> list = new SmartList<Configurable>();
+    for (XDebuggerSettings settings : XDebuggerSettingsManager.getInstanceImpl().getSettingsList()) {
       list.add(settings.createConfigurable());
     }
     return list;
   }
 
+  @NotNull
+  @Override
+  public Collection<? extends Configurable> getConfigurable(@NotNull XDebuggerSettings.Category category) {
+    List<Configurable> list = null;
+    for (XDebuggerSettings settings : XDebuggerSettingsManager.getInstanceImpl().getSettingsList()) {
+      Configurable configurable = settings.createConfigurable(category);
+      if (configurable != null) {
+        if (list == null) {
+          list = new SmartList<Configurable>();
+        }
+        list.add(configurable);
+      }
+    }
+    return ContainerUtil.isEmpty(list) ? Collections.<Configurable>emptyList() : list;
+  }
 }

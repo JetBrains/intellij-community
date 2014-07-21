@@ -19,7 +19,10 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.settings.XDebuggerSettings;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,20 +33,38 @@ import java.util.List;
  * @author nik
  */
 public class DebuggerConfigurableProvider extends ConfigurableProvider {
-  @Override
-  public Configurable createConfigurable() {
-    List<DebuggerSettingsPanelProvider> providers = new SmartList<DebuggerSettingsPanelProvider>();
+  @NotNull
+  private static List<DebuggerSettingsPanelProvider> getSortedProviders() {
+    List<DebuggerSettingsPanelProvider> providers = null;
     for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
-      providers.add(support.getSettingsPanelProvider());
+      DebuggerSettingsPanelProvider provider = support.getSettingsPanelProvider();
+      if (providers == null) {
+        providers = new SmartList<DebuggerSettingsPanelProvider>();
+      }
+      providers.add(provider);
     }
 
+    if (ContainerUtil.isEmpty(providers)) {
+      return Collections.emptyList();
+    }
+
+    if (providers.size() > 1) {
+      Collections.sort(providers, new Comparator<DebuggerSettingsPanelProvider>() {
+        @Override
+        public int compare(DebuggerSettingsPanelProvider o1, DebuggerSettingsPanelProvider o2) {
+          return o2.getPriority() - o1.getPriority();
+        }
+      });
+    }
+    return providers;
+  }
+
+  @Override
+  public Configurable createConfigurable() {
+    List<DebuggerSettingsPanelProvider> providers = getSortedProviders();
+
     List<Configurable> configurables = new ArrayList<Configurable>();
-    Collections.sort(providers, new Comparator<DebuggerSettingsPanelProvider>() {
-      @Override
-      public int compare(final DebuggerSettingsPanelProvider o1, final DebuggerSettingsPanelProvider o2) {
-        return o2.getPriority() - o1.getPriority();
-      }
-    });
+    configurables.add(new DataViewsConfigurable());
 
     Configurable rootConfigurable = null;
     for (DebuggerSettingsPanelProvider provider : providers) {
@@ -71,5 +92,19 @@ public class DebuggerConfigurableProvider extends ConfigurableProvider {
     }
 
     return new DebuggerConfigurable(rootConfigurable, configurables);
+  }
+
+  @NotNull
+  static List<Configurable> getConfigurables(@NotNull XDebuggerSettings.Category category) {
+    List<DebuggerSettingsPanelProvider> providers = getSortedProviders();
+    if (providers.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<Configurable> configurables = new SmartList<Configurable>();
+    for (DebuggerSettingsPanelProvider provider : providers) {
+      configurables.addAll(provider.getConfigurable(category));
+    }
+    return configurables.isEmpty() ? Collections.<Configurable>emptyList() : configurables;
   }
 }

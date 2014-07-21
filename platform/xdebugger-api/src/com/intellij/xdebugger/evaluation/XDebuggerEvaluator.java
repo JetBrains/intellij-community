@@ -26,6 +26,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueCallback;
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -167,7 +168,7 @@ public abstract class XDebuggerEvaluator {
    * @return delay before showing value tooltip (in ms)
    */
   public int getValuePopupDelay() {
-    return 700;
+    return XDebuggerSettingsManager.getInstance().getDataViewSettings().getValueLookupDelay();
   }
 
   public interface XEvaluationCallback extends XValueCallback {

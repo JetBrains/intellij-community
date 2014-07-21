@@ -38,6 +38,7 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -58,7 +59,6 @@ public class ClassRenderer extends NodeRendererImpl{
   
   public static final @NonNls String UNIQUE_ID = "ClassRenderer";
 
-  public boolean SORT_ASCENDING = false;
   public boolean SHOW_SYNTHETICS = true;
   public boolean SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES = true;
   public boolean SHOW_STATIC = false;
@@ -177,7 +177,7 @@ public class ClassRenderer extends NodeRendererImpl{
           children.add(nodeManager.createNode(nodeDescriptorFactory.getFieldDescriptor(parentDescriptor, objRef, field), evaluationContext));
         }
 
-        if(SORT_ASCENDING) {
+        if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
           Collections.sort(children, NodeManagerImpl.getNodeComparator());
         }
       }

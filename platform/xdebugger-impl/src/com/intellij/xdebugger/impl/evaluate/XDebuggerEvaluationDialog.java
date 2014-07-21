@@ -111,7 +111,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       }
     });
 
-    EvaluationMode mode = XDebuggerSettingsManager.getInstance().getGeneralSettings().getEvaluationDialogMode();
+    EvaluationMode mode = XDebuggerSettingsManager.getInstanceImpl().getGeneralSettings().getEvaluationDialogMode();
     myIsCodeFragmentEvaluationSupported = evaluator.isCodeFragmentEvaluationSupported();
     if (mode == EvaluationMode.CODE_FRAGMENT && !myIsCodeFragmentEvaluationSupported) {
       mode = EvaluationMode.EXPRESSION;
@@ -185,7 +185,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private void switchToMode(EvaluationMode mode, XExpression text) {
     if (myMode == mode) return;
 
-    XDebuggerSettingsManager.getInstance().getGeneralSettings().setEvaluationDialogMode(mode);
+    XDebuggerSettingsManager.getInstanceImpl().getGeneralSettings().setEvaluationDialogMode(mode);
 
     myMode = mode;
 

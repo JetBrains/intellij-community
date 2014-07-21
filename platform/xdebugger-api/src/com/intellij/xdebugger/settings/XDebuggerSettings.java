@@ -19,8 +19,9 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.xdebugger.XDebuggerUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Implement this class to provide settings page for debugger. Settings page will be placed under 'Debugger' node in the 'Settings' dialog.
@@ -33,6 +34,10 @@ import org.jetbrains.annotations.NonNls;
  * @author nik
  */
 public abstract class XDebuggerSettings<T> implements PersistentStateComponent<T> {
+  public enum Category {
+    DATA_VIEWS
+  }
+
   public static final ExtensionPointName<XDebuggerSettings> EXTENSION_POINT = ExtensionPointName.create("com.intellij.xdebugger.settings");
   private final String myId;
 
@@ -50,4 +55,9 @@ public abstract class XDebuggerSettings<T> implements PersistentStateComponent<T
 
   @NotNull
   public abstract Configurable createConfigurable();
+
+  @Nullable
+  public Configurable createConfigurable(@NotNull Category category) {
+    return null;
+  }
 }

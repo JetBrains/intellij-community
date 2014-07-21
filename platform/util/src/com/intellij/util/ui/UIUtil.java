@@ -48,7 +48,9 @@ import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.DefaultEditorKit;
+import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.JTextComponent;
+import javax.swing.text.NumberFormatter;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import javax.swing.undo.UndoManager;
@@ -70,6 +72,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -2985,5 +2988,20 @@ public class UIUtil {
 
   public static Color getSidePanelColor() {
     return new JBColor(new Color(0xD2D6DD), new Color(60, 68, 71));
+  }
+
+  /**
+   * It is your responsibility to set correct horizontal align (left in case of UI Designer)
+   */
+  public static void configureNumericFormattedTextField(@NotNull JFormattedTextField textField) {
+    NumberFormat format = NumberFormat.getIntegerInstance();
+    format.setParseIntegerOnly(true);
+    format.setGroupingUsed(false);
+    NumberFormatter numberFormatter = new NumberFormatter(format);
+    numberFormatter.setMinimum(0);
+    textField.setFormatterFactory(new DefaultFormatterFactory(numberFormatter));
+    textField.setHorizontalAlignment(SwingConstants.TRAILING);
+
+    textField.setColumns(4);
   }
 }

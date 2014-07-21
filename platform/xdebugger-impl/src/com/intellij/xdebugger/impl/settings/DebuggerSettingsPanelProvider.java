@@ -16,18 +16,25 @@
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
+import com.intellij.xdebugger.settings.XDebuggerSettings;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author nik
  */
 public abstract class DebuggerSettingsPanelProvider {
+  public int getPriority() {
+    return 0;
+  }
 
-  public abstract int getPriority();
-
-  public abstract Collection<? extends Configurable> getConfigurables();
+  @NotNull
+  public Collection<? extends Configurable> getConfigurables() {
+    return Collections.emptyList();
+  }
 
   public void apply() {
   }
@@ -35,5 +42,16 @@ public abstract class DebuggerSettingsPanelProvider {
   @Nullable
   public Configurable getRootConfigurable() {
     return null;
+  }
+
+  @NotNull
+  public Collection<? extends Configurable> getConfigurable(@NotNull XDebuggerSettings.Category category) {
+    return Collections.emptyList();
+  }
+
+  /**
+   * General settings of category were applied
+   */
+  public void applied(@NotNull XDebuggerSettings.Category category) {
   }
 }
