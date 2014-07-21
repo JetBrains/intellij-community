@@ -19,7 +19,7 @@ public class StudyUtils {
   }
 
   public static boolean isZip(String fileName) {
-    return !fileName.contains(".zip");
+    return fileName.contains(".zip");
   }
 
   public static <T> T getFirst(Iterable<T> container) {

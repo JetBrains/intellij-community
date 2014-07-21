@@ -128,11 +128,13 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
       String unzippedName = fileName.substring(0, fileName.indexOf("."));
       File courseDir = new File(myCoursesDir, unzippedName);
       ZipUtil.unzip(null, courseDir, file, null, null, true);
-      return addCourse(myCourses, courseDir);
+      String courseName = addCourse(myCourses, courseDir);
+      flushCache();
+      return  courseName;
     }
     catch (IOException e) {
-      e.printStackTrace();
       LOG.error("Failed to unzip course archive");
+      LOG.error(e);
     }
     return null;
   }

@@ -65,7 +65,7 @@ public class StudyNewCourseDialog extends DialogWrapper {
     @Override
     public void actionPerformed(ActionEvent e) {
       String fileName = myCourseLocationField.getText();
-      if (StudyUtils.isZip(fileName)) {
+      if (!StudyUtils.isZip(fileName)) {
         setError(INVALID_COURSE);
         return;
       }
