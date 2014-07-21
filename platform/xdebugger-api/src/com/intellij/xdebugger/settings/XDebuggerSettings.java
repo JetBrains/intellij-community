@@ -53,7 +53,7 @@ public abstract class XDebuggerSettings<T> implements PersistentStateComponent<T
     return myId;
   }
 
-  @NotNull
+  @Nullable
   public abstract Configurable createConfigurable();
 
   @Nullable

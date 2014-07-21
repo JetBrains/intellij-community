@@ -34,7 +34,7 @@ public class XDebuggerSettingsPanelProviderImpl extends DebuggerSettingsPanelPro
   public Collection<? extends Configurable> getConfigurables() {
     List<Configurable> list = new SmartList<Configurable>();
     for (XDebuggerSettings settings : XDebuggerSettingsManager.getInstanceImpl().getSettingsList()) {
-      list.add(settings.createConfigurable());
+      ContainerUtil.addIfNotNull(list, settings.createConfigurable());
     }
     return list;
   }

@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.settings;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
@@ -26,11 +27,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 
-public class DataViewsConfigurable implements SearchableConfigurable.Parent {
+class DataViewsConfigurable implements SearchableConfigurable.Parent {
   private DataViewsConfigurableUi root;
   private Configurable[] children;
+
+  private JComponent component;
 
   @Override
   public boolean hasOwnContent() {
@@ -48,7 +52,7 @@ public class DataViewsConfigurable implements SearchableConfigurable.Parent {
       List<Configurable> configurables = DebuggerConfigurableProvider.getConfigurables(XDebuggerSettings.Category.DATA_VIEWS);
       children = configurables.toArray(new Configurable[configurables.size()]);
     }
-    return children;
+    return children.length == 1 ? DebuggerConfigurable.EMPTY_CONFIGURABLES : children;
   }
 
   @NotNull
@@ -72,21 +76,44 @@ public class DataViewsConfigurable implements SearchableConfigurable.Parent {
   @Nullable
   @Override
   public String getHelpTopic() {
-    return null;
+    getConfigurables();
+    return children.length == 1 ? children[0].getHelpTopic() : null;
   }
 
   @Nullable
   @Override
   public JComponent createComponent() {
-    if (root == null) {
-      root = new DataViewsConfigurableUi();
+    if (component == null) {
+      if (root == null) {
+        root = new DataViewsConfigurableUi();
+      }
+
+      getConfigurables();
+      if (children.length == 1) {
+        JPanel panel = new JPanel(new BorderLayout(0, IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET));
+        panel.add(root.getComponent(), BorderLayout.NORTH);
+        Configurable configurable = children[0];
+        JComponent configurableComponent = configurable.createComponent();
+        assert configurableComponent != null;
+        configurableComponent.setBorder(IdeBorderFactory.createTitledBorder(configurable.getDisplayName(), false));
+        panel.add(configurableComponent, BorderLayout.CENTER);
+        component = panel;
+      }
+      else {
+        component = root.getComponent();
+      }
     }
-    return root.getComponent();
+    return component;
   }
 
   @Override
   public boolean isModified() {
-    return root != null && root.isModified(XDebuggerSettingsManager.getInstanceImpl().getDataViewSettings());
+    if (root != null && root.isModified(XDebuggerSettingsManager.getInstanceImpl().getDataViewSettings())) {
+      return true;
+    }
+    else {
+      return children.length == 1 && children[0].isModified();
+    }
   }
 
   @Override
@@ -97,6 +124,10 @@ public class DataViewsConfigurable implements SearchableConfigurable.Parent {
         support.getSettingsPanelProvider().applied(XDebuggerSettings.Category.DATA_VIEWS);
       }
     }
+
+    if (children.length == 1) {
+      children[0].apply();
+    }
   }
 
   @Override
@@ -104,11 +135,19 @@ public class DataViewsConfigurable implements SearchableConfigurable.Parent {
     if (root != null) {
       root.reset(XDebuggerSettingsManager.getInstanceImpl().getDataViewSettings());
     }
+    if (children.length == 1) {
+      children[0].reset();
+    }
   }
 
   @Override
   public void disposeUIResources() {
     root = null;
+    component = null;
+
+    if (children.length == 1) {
+      children[0].disposeUIResources();
+    }
     children = null;
   }
 }

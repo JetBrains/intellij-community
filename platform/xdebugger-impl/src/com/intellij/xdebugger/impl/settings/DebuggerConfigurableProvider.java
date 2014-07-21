@@ -17,14 +17,12 @@ package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -34,7 +32,7 @@ import java.util.List;
  */
 public class DebuggerConfigurableProvider extends ConfigurableProvider {
   @NotNull
-  private static List<DebuggerSettingsPanelProvider> getSortedProviders() {
+  static List<DebuggerSettingsPanelProvider> getSortedProviders() {
     List<DebuggerSettingsPanelProvider> providers = null;
     for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
       DebuggerSettingsPanelProvider provider = support.getSettingsPanelProvider();
@@ -61,37 +59,7 @@ public class DebuggerConfigurableProvider extends ConfigurableProvider {
 
   @Override
   public Configurable createConfigurable() {
-    List<DebuggerSettingsPanelProvider> providers = getSortedProviders();
-
-    List<Configurable> configurables = new ArrayList<Configurable>();
-    configurables.add(new DataViewsConfigurable());
-
-    Configurable rootConfigurable = null;
-    for (DebuggerSettingsPanelProvider provider : providers) {
-      configurables.addAll(provider.getConfigurables());
-      final Configurable aRootConfigurable = provider.getRootConfigurable();
-      if (aRootConfigurable != null) {
-        if (rootConfigurable != null) {
-          configurables.add(aRootConfigurable);
-        }
-        else {
-          rootConfigurable = aRootConfigurable;
-        }
-      }
-    }
-    if (configurables.isEmpty() && rootConfigurable == null) {
-      return null;
-    }
-
-    //Perhaps we always should have a root node 'Debugger' with separate nodes for language-specific settings under it.
-    //However for AppCode there is only one language which is clearly associated with the product
-    //This code should removed when we extract the common debugger settings to the root node.
-    if (PlatformUtils.isCidr() && rootConfigurable == null && configurables.size() == 1) {
-      rootConfigurable = configurables.get(0);
-      configurables = Collections.emptyList();
-    }
-
-    return new DebuggerConfigurable(rootConfigurable, configurables);
+    return new DebuggerConfigurable();
   }
 
   @NotNull
