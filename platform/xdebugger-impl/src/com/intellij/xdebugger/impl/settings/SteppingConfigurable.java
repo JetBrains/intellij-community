@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,42 +16,39 @@
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 
-/**
- * @author nik
- */
-public abstract class DebuggerSettingsPanelProvider {
-  public int getPriority() {
-    return 0;
+class SteppingConfigurable extends SubCompositeConfigurable implements Configurable.NoScroll {
+  public SteppingConfigurable(@NotNull List<Configurable> configurables) {
+    assert !configurables.isEmpty();
+    children = configurables.toArray(new Configurable[configurables.size()]);
   }
 
   @NotNull
-  public Collection<? extends Configurable> getConfigurables() {
-    return Collections.emptyList();
+  @Override
+  public String getId() {
+    return "debugger.stepping";
   }
 
-  public void apply() {
+  @Nls
+  @Override
+  public String getDisplayName() {
+    return XDebuggerBundle.message("debugger.stepping.display.name");
   }
 
-  @Nullable
-  public Configurable getRootConfigurable() {
+  @Override
+  protected DataViewsConfigurableUi createRootUi() {
     return null;
   }
 
   @NotNull
-  public Collection<? extends Configurable> getConfigurable(@NotNull XDebuggerSettings.Category category) {
-    return Collections.emptyList();
-  }
-
-  /**
-   * General settings of category were applied
-   */
-  public void applied(@NotNull XDebuggerSettings.Category category) {
+  @Override
+  protected XDebuggerSettings.Category getCategory() {
+    return XDebuggerSettings.Category.STEPPING;
   }
 }

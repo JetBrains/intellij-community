@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,42 +16,38 @@
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
+class DataViewsConfigurable extends SubCompositeConfigurable implements Configurable.NoScroll {
+  @NotNull
+  @Override
+  public String getId() {
+    return "debugger.dataViews";
+  }
 
-/**
- * @author nik
- */
-public abstract class DebuggerSettingsPanelProvider {
-  public int getPriority() {
-    return 0;
+  @Nls
+  @Override
+  public String getDisplayName() {
+    return XDebuggerBundle.message("debugger.dataViews.display.name");
+  }
+
+  @Override
+  protected DataViewsConfigurableUi createRootUi() {
+    return new DataViewsConfigurableUi();
   }
 
   @NotNull
-  public Collection<? extends Configurable> getConfigurables() {
-    return Collections.emptyList();
-  }
-
-  public void apply() {
-  }
-
-  @Nullable
-  public Configurable getRootConfigurable() {
-    return null;
+  @Override
+  protected XDebuggerSettings.Category getCategory() {
+    return XDebuggerSettings.Category.DATA_VIEWS;
   }
 
   @NotNull
-  public Collection<? extends Configurable> getConfigurable(@NotNull XDebuggerSettings.Category category) {
-    return Collections.emptyList();
-  }
-
-  /**
-   * General settings of category were applied
-   */
-  public void applied(@NotNull XDebuggerSettings.Category category) {
+  @Override
+  protected XDebuggerDataViewSettings getSettings() {
+    return XDebuggerSettingsManager.getInstanceImpl().getDataViewSettings();
   }
 }

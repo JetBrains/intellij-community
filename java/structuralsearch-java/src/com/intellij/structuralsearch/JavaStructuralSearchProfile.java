@@ -411,7 +411,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
             final ParameterInfo initInfo = builder.findParameterization(Replacer.stripTypedVariableDecoration(initText));
 
             if (initInfo != null) {
-              initInfo.setVariableInitialContext(true);
+              initInfo.setVariableInitializerContext(true);
             }
           }
         }
@@ -432,20 +432,6 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       }
 
       @Override
-      public void visitMethod(PsiMethod method) {
-        super.visitMethod(method);
-
-        String name = method.getName();
-        if (StructuralSearchUtil.isTypedVariable(name)) {
-          name = Replacer.stripTypedVariableDecoration(name);
-
-          ParameterInfo methodInfo = builder.findParameterization(name);
-          methodInfo.setScopeParameterization(true);
-          //if (scopedParameterizations != null) scopedParameterizations.put(method.getTextRange(), methodInfo);
-        }
-      }
-
-      @Override
       public void visitParameter(PsiParameter parameter) {
         super.visitParameter(parameter);
 
@@ -462,8 +448,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
           ParameterInfo typeInfo = builder.findParameterization(type);
 
           if (nameInfo != null && typeInfo != null && !(parameter.getParent() instanceof PsiCatchSection)) {
-            nameInfo.setParameterContext(false);
-            typeInfo.setParameterContext(false);
+            nameInfo.setArgumentContext(false);
+            typeInfo.setArgumentContext(false);
             typeInfo.setMethodParameterContext(true);
             nameInfo.setMethodParameterContext(true);
             typeInfo.setElement(parameter.getTypeElement());
@@ -524,7 +510,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
                 buf.append('\n');
               }
             }
-            else if (info.isParameterContext()) {
+            else if (info.isArgumentContext()) {
               buf.append(',');
             }
             else if (parent instanceof PsiClass) {

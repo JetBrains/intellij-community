@@ -120,7 +120,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     PsiMethodCallExpression call = getMethodCall();
     if (call == null) return Collections.emptyList();
     for (PsiClass target : targets) {
-      if (target.isInterface() && shouldCreateStaticMember(call.getMethodExpression(), target)) continue;
+      if (target.isInterface() && shouldCreateStaticMember(call.getMethodExpression(), target) && !PsiUtil.isLanguageLevel8OrHigher(target)) continue;
       if (!isMethodSignatureExists(call, target)) {
         result.add(target);
       }
@@ -155,7 +155,8 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
 
     PsiCodeBlock body = method.getBody();
     assert body != null;
-    if (shouldBeAbstract(targetClass)) {
+    final boolean shouldBeAbstract = shouldBeAbstract(expression.getMethodExpression(), targetClass);
+    if (shouldBeAbstract) {
       body.delete();
       if (!targetClass.isInterface()) {
         method.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, true);
@@ -167,14 +168,14 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     expression = getMethodCall();
     LOG.assertTrue(expression.isValid());
 
-    if (!targetClass.isInterface() && shouldCreateStaticMember(expression.getMethodExpression(), targetClass) && !shouldBeAbstract(targetClass)) {
+    if ((!targetClass.isInterface() || PsiUtil.isLanguageLevel8OrHigher(targetClass)) && shouldCreateStaticMember(expression.getMethodExpression(), targetClass) && !shouldBeAbstract) {
       PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true);
     }
 
     final PsiElement context = PsiTreeUtil.getParentOfType(expression, PsiClass.class, PsiMethod.class);
 
     PsiExpression[] arguments = expression.getArgumentList().getExpressions();
-    doCreate(targetClass, method, shouldBeAbstract(targetClass),
+    doCreate(targetClass, method, shouldBeAbstract,
              ContainerUtil.map2List(arguments, Pair.<PsiExpression, PsiType>createFunction(null)),
              getTargetSubstitutor(expression),
              CreateFromUsageUtils.guessExpectedTypes(expression, true),
@@ -213,7 +214,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
 
   public static void doCreate(PsiClass targetClass, PsiMethod method, List<Pair<PsiExpression, PsiType>> arguments, PsiSubstitutor substitutor,
                               ExpectedTypeInfo[] expectedTypes, @Nullable PsiElement context) {
-    doCreate(targetClass, method, shouldBeAbstractImpl(targetClass), arguments, substitutor, expectedTypes, context);
+    doCreate(targetClass, method, shouldBeAbstractImpl(null, targetClass), arguments, substitutor, expectedTypes, context);
   }
 
   public static void doCreate(PsiClass targetClass,
@@ -340,12 +341,12 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     return false;
   }
 
-  protected boolean shouldBeAbstract(PsiClass targetClass) {
-    return shouldBeAbstractImpl(targetClass);
+  protected boolean shouldBeAbstract(PsiReferenceExpression expression, PsiClass targetClass) {
+    return shouldBeAbstractImpl(expression, targetClass);
   }
 
-  private static boolean shouldBeAbstractImpl(PsiClass targetClass) {
-    return targetClass.isInterface();
+  private static boolean shouldBeAbstractImpl(PsiReferenceExpression expression, PsiClass targetClass) {
+    return targetClass.isInterface() && (expression == null || !shouldCreateStaticMember(expression, targetClass));
   }
 
   @Override

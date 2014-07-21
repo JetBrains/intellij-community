@@ -48,6 +48,10 @@ public class VerticalFlowLayout extends FlowLayout implements Serializable {
     this(alignment, 5, 5, fillHorizontally, fillVertically);
   }
 
+  public VerticalFlowLayout(int hGap, int vGap) {
+    this(TOP, hGap, vGap, true, false);
+  }
+
   public VerticalFlowLayout(@VerticalFlowAlignment int alignment, int hGap, int vGap, boolean fillHorizontally, boolean fillVertically) {
     setAlignment(alignment);
     this.hGap = hGap;

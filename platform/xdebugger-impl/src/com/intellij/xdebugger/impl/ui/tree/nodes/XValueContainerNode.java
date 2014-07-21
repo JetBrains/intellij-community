@@ -21,9 +21,9 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
 import com.intellij.xdebugger.frame.*;
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

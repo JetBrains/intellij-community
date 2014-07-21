@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,12 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,26 +33,77 @@ import java.util.List;
  */
 public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   public static final String DISPLAY_NAME = XDebuggerBundle.message("debugger.configurable.display.name");
+
+  static final Configurable[] EMPTY_CONFIGURABLES = new Configurable[0];
+
   private Configurable myRootConfigurable;
   private Configurable[] myChildren;
 
-  public DebuggerConfigurable(Configurable rootConfigurable, List<Configurable> children) {
-    myRootConfigurable = rootConfigurable;
-    myChildren = children.toArray(new Configurable[children.size()]);
-  }
-
+  @Override
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @Override
   public String getHelpTopic() {
-    return myRootConfigurable != null? myRootConfigurable.getHelpTopic() : null;
+    return myRootConfigurable != null ? myRootConfigurable.getHelpTopic() : null;
   }
 
+  @Override
   public Configurable[] getConfigurables() {
-    return myChildren;
+    compute();
+
+    if (myChildren.length == 0 && myRootConfigurable instanceof SearchableConfigurable.Parent) {
+      return ((Parent)myRootConfigurable).getConfigurables();
+    }
+    else {
+      return myChildren;
+    }
   }
 
+  private void compute() {
+    if (myChildren != null) {
+      return;
+    }
+
+    List<DebuggerSettingsPanelProvider> providers = DebuggerConfigurableProvider.getSortedProviders();
+
+    List<Configurable> configurables = new ArrayList<Configurable>();
+    configurables.add(new DataViewsConfigurable());
+
+    List<Configurable> steppingConfigurables = DebuggerConfigurableProvider.getConfigurables(XDebuggerSettings.Category.STEPPING, providers);
+    if (!steppingConfigurables.isEmpty()) {
+      configurables.add(new SteppingConfigurable(steppingConfigurables));
+    }
+
+    Configurable rootConfigurable = null;
+    for (DebuggerSettingsPanelProvider provider : providers) {
+      configurables.addAll(provider.getConfigurables());
+      Configurable aRootConfigurable = provider.getRootConfigurable();
+      if (aRootConfigurable != null) {
+        if (rootConfigurable != null) {
+          configurables.add(aRootConfigurable);
+        }
+        else {
+          rootConfigurable = aRootConfigurable;
+        }
+      }
+    }
+
+    if (configurables.isEmpty() && rootConfigurable == null) {
+      myChildren = EMPTY_CONFIGURABLES;
+    }
+    else if (rootConfigurable == null && configurables.size() == 1) {
+      myRootConfigurable = configurables.get(0);
+      myChildren = EMPTY_CONFIGURABLES;
+    }
+    else {
+      myChildren = configurables.toArray(new Configurable[configurables.size()]);
+      myRootConfigurable = rootConfigurable;
+    }
+  }
+
+  @Override
   public void apply() throws ConfigurationException {
     for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
       support.getSettingsPanelProvider().apply();
@@ -60,38 +113,48 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     }
   }
 
+  @Override
   public boolean hasOwnContent() {
+    compute();
     return myRootConfigurable != null;
   }
 
+  @Override
   public boolean isVisible() {
     return true;
   }
 
+  @Override
   public Runnable enableSearch(final String option) {
     return null;
   }
 
+  @Override
   public JComponent createComponent() {
+    compute();
     return myRootConfigurable != null ? myRootConfigurable.createComponent() : null;
   }
 
+  @Override
   public boolean isModified() {
     return myRootConfigurable != null && myRootConfigurable.isModified();
   }
 
+  @Override
   public void reset() {
     if (myRootConfigurable != null) {
       myRootConfigurable.reset();
     }
   }
 
+  @Override
   public void disposeUIResources() {
     if (myRootConfigurable != null) {
       myRootConfigurable.disposeUIResources();
     }
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getId() {

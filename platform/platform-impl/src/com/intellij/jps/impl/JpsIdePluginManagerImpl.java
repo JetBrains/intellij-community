@@ -37,15 +37,23 @@ public class JpsIdePluginManagerImpl extends JpsPluginManager {
 
   public JpsIdePluginManagerImpl() {
     ExtensionsArea rootArea = Extensions.getRootArea();
-    //todo[nik] introduce more generic platform extension for JPS plugins instead
+    rootArea.getExtensionPoint(JpsPluginBean.EP_NAME).addExtensionPointListener(new ExtensionPointListener<JpsPluginBean>() {
+      @Override
+      public void extensionAdded(@NotNull JpsPluginBean extension, @Nullable PluginDescriptor pluginDescriptor) {
+        ContainerUtil.addIfNotNull(pluginDescriptor, myExternalBuildPlugins);
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull JpsPluginBean extension, @Nullable PluginDescriptor pluginDescriptor) {
+      }
+    });
     if (rootArea.hasExtensionPoint("com.intellij.compileServer.plugin")) {
       ExtensionPoint extensionPoint = rootArea.getExtensionPoint("com.intellij.compileServer.plugin");
+      //noinspection unchecked
       extensionPoint.addExtensionPointListener(new ExtensionPointListener() {
         @Override
         public void extensionAdded(@NotNull Object extension, @Nullable PluginDescriptor pluginDescriptor) {
-          if (pluginDescriptor != null) {
-            myExternalBuildPlugins.add(pluginDescriptor);
-          }
+          ContainerUtil.addIfNotNull(pluginDescriptor, myExternalBuildPlugins);
         }
 
         @Override

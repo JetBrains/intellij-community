@@ -763,7 +763,27 @@ public class AbstractPopup implements JBPopup {
       RootPaneContainer root = (RootPaneContainer)popupOwner;
       popupOwner = root.getRootPane();
     }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("expected preferred size: " + myContent.getPreferredSize());
+    }
     myPopup = factory.getPopup(popupOwner, myContent, targetBounds.x, targetBounds.y, this);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("  actual preferred size: " + myContent.getPreferredSize());
+    }
+    if ((targetBounds.width != myContent.getWidth()) || (targetBounds.height != myContent.getHeight())) {
+      // JDK uses cached heavyweight popup that is not initialized properly
+      LOG.debug("the expected size is not equal to the actual size");
+      Window popup = myPopup.getWindow();
+      if (popup != null) {
+        popup.setSize(targetBounds.width, targetBounds.height);
+        if (myContent.getParent().getComponentCount() != 1) {
+          LOG.debug("unexpected count of components in heavy-weight popup");
+        }
+      }
+      else {
+        LOG.debug("cannot fix size for non-heavy-weight popup");
+      }
+    }
 
     if (myResizable) {
       final JRootPane root = myContent.getRootPane();
@@ -805,11 +825,7 @@ public class AbstractPopup implements JBPopup {
       listener.beforeShown(new LightweightWindowEvent(this));
     }
 
-    // can be improved by moving in myPopup code
-    myPopup.getWindow().pack();
-
     myPopup.setRequestFocus(myRequestFocus);
-    LOG.debug("popup window size: " + myPopup.getWindow().getSize());
     myPopup.show();
 
     final Window window = SwingUtilities.getWindowAncestor(myContent);

@@ -38,6 +38,7 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -58,7 +59,6 @@ public class ClassRenderer extends NodeRendererImpl{
   
   public static final @NonNls String UNIQUE_ID = "ClassRenderer";
 
-  public boolean SORT_ASCENDING = false;
   public boolean SHOW_SYNTHETICS = true;
   public boolean SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES = true;
   public boolean SHOW_STATIC = false;
@@ -83,22 +83,27 @@ public class ClassRenderer extends NodeRendererImpl{
     return typeName;
   }
 
+  @Override
   public String getUniqueId() {
     return UNIQUE_ID;
   }
 
+  @Override
   public boolean isEnabled() {
     return myProperties.isEnabled();
   }
 
+  @Override
   public void setEnabled(boolean enabled) {
     myProperties.setEnabled(enabled);
   }
 
+  @Override
   public ClassRenderer clone() {
     return (ClassRenderer) super.clone();
   }
 
+  @Override
   public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener)  throws EvaluateException {
     return calcLabel(descriptor);
   }
@@ -151,6 +156,7 @@ public class ClassRenderer extends NodeRendererImpl{
     }
   }
 
+  @Override
   public void buildChildren(final Value value, final ChildrenBuilder builder, final EvaluationContext evaluationContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final ValueDescriptorImpl parentDescriptor = (ValueDescriptorImpl)builder.getParentDescriptor();
@@ -171,7 +177,7 @@ public class ClassRenderer extends NodeRendererImpl{
           children.add(nodeManager.createNode(nodeDescriptorFactory.getFieldDescriptor(parentDescriptor, objRef, field), evaluationContext));
         }
 
-        if(SORT_ASCENDING) {
+        if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
           Collections.sort(children, NodeManagerImpl.getNodeComparator());
         }
       }
@@ -211,16 +217,19 @@ public class ClassRenderer extends NodeRendererImpl{
     return true;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
+  @Override
   public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
     FieldDescriptor fieldDescriptor = (FieldDescriptor)node.getDescriptor();
 
@@ -251,19 +260,23 @@ public class ClassRenderer extends NodeRendererImpl{
     return false;
   }
 
+  @Override
   public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return valueExpandable(value);
   }
 
+  @Override
   public boolean isApplicable(Type type) {
     return type instanceof ReferenceType && !(type instanceof ArrayType);
   }
 
+  @Override
   public @NonNls String getName() {
     return "Object";
   }
 
+  @Override
   public void setName(String text) {
     LOG.assertTrue(false);
   }

@@ -2288,14 +2288,19 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "@MyBean2(\"\")\n" +
                 "public class TestBean {}\n" +
                 "@MyBean2(\"\")\n" +
-                "@MyBean(\"\")\n" +
+                "@MyBean(value=\"\")\n" +
                 "public class TestBean2 {}\n" +
-                "public class TestBean3 {}\n";
+                "public class TestBean3 {}\n" +
+                "@MyBean(\"a\")\n" +
+                "@MyBean2(\"a\")\n" +
+                "public class TestBean4";
     String s2 = "@MyBean(\"\")\n" +
                 "@MyBean2(\"\")\n" +
                 "public class $a$ {}\n";
 
     assertEquals("Simple find annotated class",2,findMatchesCount(s1,s2,false));
+    assertEquals("Match value of anonymous name value pair 1", 1, findMatchesCount(s1, "@MyBean(\"a\") class $a$ {}"));
+    assertEquals("Match value of anonymous name value pair 2", 2, findMatchesCount(s1, "@MyBean(\"\") class $a$ {}"));
 
     String s3 = "@VisualBean(\"????????? ?????????? ? ??\")\n" +
                 "public class TestBean\n" +

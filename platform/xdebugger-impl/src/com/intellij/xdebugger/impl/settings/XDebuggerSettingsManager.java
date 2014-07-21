@@ -26,12 +26,15 @@ import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 /**
  * @author nik
+ * todo rename to XDebuggerSettingsManagerImpl
  */
+@SuppressWarnings("ClassNameSameAsAncestorName")
 @State(
     name = XDebuggerSettingsManager.COMPONENT_NAME,
     storages = {
@@ -40,17 +43,18 @@ import java.util.*;
       )
     }
 )
-public class XDebuggerSettingsManager implements PersistentStateComponent<XDebuggerSettingsManager.SettingsState>{
+public class XDebuggerSettingsManager extends com.intellij.xdebugger.settings.XDebuggerSettingsManager implements PersistentStateComponent<XDebuggerSettingsManager.SettingsState>{
   @NonNls public static final String COMPONENT_NAME = "XDebuggerSettings";
   private Map<String, XDebuggerSettings<?>> mySettingsById;
   private Map<Class<? extends XDebuggerSettings>, XDebuggerSettings<?>> mySettingsByClass;
   private XDebuggerDataViewSettings myDataViewSettings = new XDebuggerDataViewSettings();
   private XDebuggerGeneralSettings myGeneralSettings = new XDebuggerGeneralSettings();
 
-  public static XDebuggerSettingsManager getInstance() {
-    return ServiceManager.getService(XDebuggerSettingsManager.class);
+  public static XDebuggerSettingsManager getInstanceImpl() {
+    return (XDebuggerSettingsManager)com.intellij.xdebugger.settings.XDebuggerSettingsManager.getInstance();
   }
 
+  @Override
   public SettingsState getState() {
     SettingsState settingsState = new SettingsState();
     settingsState.setDataViewSettings(myDataViewSettings);
@@ -69,6 +73,8 @@ public class XDebuggerSettingsManager implements PersistentStateComponent<XDebug
     return Collections.unmodifiableCollection(mySettingsById.values());
   }
 
+  @Override
+  @NotNull
   public XDebuggerDataViewSettings getDataViewSettings() {
     return myDataViewSettings;
   }
@@ -77,6 +83,7 @@ public class XDebuggerSettingsManager implements PersistentStateComponent<XDebug
     return myGeneralSettings;
   }
 
+  @Override
   public void loadState(final SettingsState state) {
     myDataViewSettings = state.getDataViewSettings();
     myGeneralSettings = state.getGeneralSettings();

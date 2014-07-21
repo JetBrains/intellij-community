@@ -32,10 +32,7 @@ import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -91,16 +88,12 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
               final PsiMethod[] methods = aClass.getMethods();
               if (methods.length == 1 && aClass.getFields().length == 0) {
                 final PsiCodeBlock body = methods[0].getBody();
-                if (body != null) {
-                  final ForbiddenRefsChecker checker = new ForbiddenRefsChecker(methods[0], aClass);
-                  body.accept(checker);
-                  if (!checker.hasForbiddenRefs()) {
-                    final PsiElement lBrace = aClass.getLBrace();
-                    LOG.assertTrue(lBrace != null);
-                    final TextRange rangeInElement = new TextRange(0, aClass.getStartOffsetInParent() + lBrace.getStartOffsetInParent());
-                    holder.registerProblem(aClass.getParent(), "Anonymous #ref #loc can be replaced with lambda",
-                                           ProblemHighlightType.LIKE_UNUSED_SYMBOL, rangeInElement, new ReplaceWithLambdaFix());
-                  }
+                if (body != null && !hasForbiddenRefsInsideBody(methods[0], aClass)) {
+                  final PsiElement lBrace = aClass.getLBrace();
+                  LOG.assertTrue(lBrace != null);
+                  final TextRange rangeInElement = new TextRange(0, aClass.getStartOffsetInParent() + lBrace.getStartOffsetInParent());
+                  holder.registerProblem(aClass.getParent(), "Anonymous #ref #loc can be replaced with lambda",
+                                         ProblemHighlightType.LIKE_UNUSED_SYMBOL, rangeInElement, new ReplaceWithLambdaFix());
                 }
               }
             }
@@ -108,6 +101,14 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         }
       }
     };
+  }
+
+  public static boolean hasForbiddenRefsInsideBody(PsiMethod method, PsiAnonymousClass aClass) {
+    final ForbiddenRefsChecker checker = new ForbiddenRefsChecker(method, aClass);
+    final PsiCodeBlock body = method.getBody();
+    LOG.assertTrue(body != null);
+    body.accept(checker);
+    return checker.hasForbiddenRefs();
   }
 
   private static PsiType getInferredType(PsiAnonymousClass aClass) {
@@ -369,14 +370,14 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     private final PsiMethod myMethod;
     private final PsiAnonymousClass myAnonymClass;
 
-    private final boolean myRawType;
+    private final boolean myEqualInference;
 
     public ForbiddenRefsChecker(PsiMethod method,
                                 PsiAnonymousClass aClass) {
       myMethod = method;
       myAnonymClass = aClass;
       final PsiType inferredType = getInferredType(aClass);
-      myRawType = inferredType instanceof PsiClassType && ((PsiClassType)inferredType).isRaw(); 
+      myEqualInference = !aClass.getBaseClassType().equals(inferredType); 
     }
 
     @Override
@@ -467,7 +468,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         }
       }
 
-      if (myRawType) {
+      if (myEqualInference) {
         final PsiElement resolved = expression.resolve();
         if (resolved instanceof PsiParameter && ((PsiParameter)resolved).getDeclarationScope() == myMethod) {
           final int parameterIndex = myMethod.getParameterList().getParameterIndex((PsiParameter)resolved);

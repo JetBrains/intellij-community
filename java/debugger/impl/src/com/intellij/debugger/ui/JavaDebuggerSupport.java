@@ -42,12 +42,14 @@ import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.settings.DebuggerSettingsPanelProvider;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author nik
@@ -333,7 +335,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     //}
   }
 
-  public static class JavaDebuggerSettingsPanelProvider extends DebuggerSettingsPanelProvider {
+  final static class JavaDebuggerSettingsPanelProvider extends DebuggerSettingsPanelProvider {
     @Override
     public int getPriority() {
       return 1;
@@ -344,11 +346,10 @@ public class JavaDebuggerSupport extends DebuggerSupport {
       return new DebuggerLaunchingConfigurable();
     }
 
+    @NotNull
     @Override
     public Collection<? extends Configurable> getConfigurables() {
       final ArrayList<Configurable> configurables = new ArrayList<Configurable>();
-      configurables.add(new DebuggerDataViewsConfigurable(null));
-      configurables.add(new DebuggerSteppingConfigurable());
       configurables.add(new UserRenderersConfigurable(null));
       configurables.add(new DebuggerHotswapConfigurable());
       return configurables;
@@ -357,6 +358,25 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     @Override
     public void apply() {
       NodeRendererSettings.getInstance().fireRenderersChanged();
+    }
+
+    @NotNull
+    @Override
+    public Collection<? extends Configurable> getConfigurable(@NotNull XDebuggerSettings.Category category) {
+      switch (category) {
+        case DATA_VIEWS:
+          return Collections.singletonList(new DebuggerDataViewsConfigurable(null));
+        case STEPPING:
+          return Collections.singletonList(new DebuggerSteppingConfigurable());
+      }
+      return Collections.emptyList();
+    }
+
+    @Override
+    public void applied(@NotNull XDebuggerSettings.Category category) {
+      if (category == XDebuggerSettings.Category.DATA_VIEWS) {
+        NodeRendererSettings.getInstance().fireRenderersChanged();
+      }
     }
   }
 

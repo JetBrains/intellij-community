@@ -865,7 +865,7 @@ public class XDebugSessionImpl implements XDebugSession {
     if (myValueMarkers != null) {
       myValueMarkers.clear();
     }
-    if (XDebuggerSettingsManager.getInstance().getGeneralSettings().isUnmuteOnStop()) {
+    if (XDebuggerSettingsManager.getInstanceImpl().getGeneralSettings().isUnmuteOnStop()) {
       mySessionData.setBreakpointsMuted(false);
     }
     myStopped = true;

@@ -29,15 +29,23 @@ public class JavaMethodParameterUnwrapper extends JavaUnwrapper {
     super("");
   }
 
+  private static PsiElement adjustElementToTheLeft(PsiElement element) {
+    if (element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.RPARENTH) {
+      return element.getPrevSibling();
+    }
+    return element;
+  }
+
   @Override
   public String getDescription(PsiElement e) {
-    String text = e.getText();
+    String text = adjustElementToTheLeft(e).getText();
     if (text.length() > 20) text = text.substring(0, 17) + "...";
     return CodeInsightBundle.message("unwrap.with.placeholder", text);
   }
 
   @Override
   public boolean isApplicableTo(PsiElement e) {
+    e = adjustElementToTheLeft(e);
     final PsiElement parent = e.getParent();
     if (e instanceof PsiExpression){
       if (parent instanceof PsiExpressionList) {
@@ -62,6 +70,7 @@ public class JavaMethodParameterUnwrapper extends JavaUnwrapper {
 
   @Override
   public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
+    e = adjustElementToTheLeft(e);
     super.collectAffectedElements(e, toExtract);
     return isTopLevelCall(e) ? e.getParent() : e.getParent().getParent();
   }
@@ -73,6 +82,7 @@ public class JavaMethodParameterUnwrapper extends JavaUnwrapper {
 
   @Override
   protected void doUnwrap(PsiElement element, Context context) throws IncorrectOperationException {
+    element = adjustElementToTheLeft(element);
     PsiElement methodCall = isTopLevelCall(element) ? element.getParent() : element.getParent().getParent();
     final PsiElement extractedElement = isTopLevelCall(element) ? getArg(element) : element;
     context.extractElement(extractedElement, methodCall);

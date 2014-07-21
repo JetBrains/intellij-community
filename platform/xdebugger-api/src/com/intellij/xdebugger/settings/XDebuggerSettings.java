@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,9 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.xdebugger.XDebuggerUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Implement this class to provide settings page for debugger. Settings page will be placed under 'Debugger' node in the 'Settings' dialog.
@@ -33,6 +34,20 @@ import org.jetbrains.annotations.NonNls;
  * @author nik
  */
 public abstract class XDebuggerSettings<T> implements PersistentStateComponent<T> {
+  public enum Category {
+    DATA_VIEWS(true), STEPPING(true);
+
+    private final boolean separatePage;
+
+    Category(boolean separatePage) {
+      this.separatePage = separatePage;
+    }
+
+    public boolean isSeparatePage() {
+      return separatePage;
+    }
+  }
+
   public static final ExtensionPointName<XDebuggerSettings> EXTENSION_POINT = ExtensionPointName.create("com.intellij.xdebugger.settings");
   private final String myId;
 
@@ -48,6 +63,11 @@ public abstract class XDebuggerSettings<T> implements PersistentStateComponent<T
     return myId;
   }
 
-  @NotNull
+  @Nullable
   public abstract Configurable createConfigurable();
+
+  @Nullable
+  public Configurable createConfigurable(@NotNull Category category) {
+    return null;
+  }
 }

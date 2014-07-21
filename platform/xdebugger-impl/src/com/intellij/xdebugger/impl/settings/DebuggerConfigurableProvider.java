@@ -17,10 +17,13 @@ package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
-import com.intellij.util.PlatformUtils;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.settings.XDebuggerSettings;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -29,46 +32,55 @@ import java.util.List;
  * @author nik
  */
 public class DebuggerConfigurableProvider extends ConfigurableProvider {
+  @NotNull
+  static List<DebuggerSettingsPanelProvider> getSortedProviders() {
+    List<DebuggerSettingsPanelProvider> providers = null;
+    for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
+      DebuggerSettingsPanelProvider provider = support.getSettingsPanelProvider();
+      if (providers == null) {
+        providers = new SmartList<DebuggerSettingsPanelProvider>();
+      }
+      providers.add(provider);
+    }
+
+    if (ContainerUtil.isEmpty(providers)) {
+      return Collections.emptyList();
+    }
+
+    if (providers.size() > 1) {
+      Collections.sort(providers, new Comparator<DebuggerSettingsPanelProvider>() {
+        @Override
+        public int compare(DebuggerSettingsPanelProvider o1, DebuggerSettingsPanelProvider o2) {
+          return o2.getPriority() - o1.getPriority();
+        }
+      });
+    }
+    return providers;
+  }
+
   @Override
   public Configurable createConfigurable() {
-    final List<DebuggerSettingsPanelProvider> providers = new ArrayList<DebuggerSettingsPanelProvider>();
-    final DebuggerSupport[] supports = DebuggerSupport.getDebuggerSupports();
-    for (DebuggerSupport support : supports) {
-      providers.add(support.getSettingsPanelProvider());
-    }
+    return new DebuggerConfigurable();
+  }
 
-    List<Configurable> configurables = new ArrayList<Configurable>();
-    Collections.sort(providers, new Comparator<DebuggerSettingsPanelProvider>() {
-      public int compare(final DebuggerSettingsPanelProvider o1, final DebuggerSettingsPanelProvider o2) {
-        return o2.getPriority() - o1.getPriority();
-      }
-    });
+  @NotNull
+  static List<Configurable> getConfigurables(@NotNull XDebuggerSettings.Category category) {
+    List<DebuggerSettingsPanelProvider> providers = getSortedProviders();
+    return providers.isEmpty() ? Collections.<Configurable>emptyList() : getConfigurables(category, providers);
+  }
 
-    Configurable rootConfigurable = null;
+  @NotNull
+  static List<Configurable> getConfigurables(@NotNull XDebuggerSettings.Category category, @NotNull List<DebuggerSettingsPanelProvider> providers) {
+    List<Configurable> configurables = null;
     for (DebuggerSettingsPanelProvider provider : providers) {
-      configurables.addAll(provider.getConfigurables());
-      final Configurable aRootConfigurable = provider.getRootConfigurable();
-      if (aRootConfigurable != null) {
-        if (rootConfigurable != null) {
-          configurables.add(aRootConfigurable);
+      Collection<? extends Configurable> providerConfigurables = provider.getConfigurable(category);
+      if (!providerConfigurables.isEmpty()) {
+        if (configurables == null) {
+          configurables = new SmartList<Configurable>();
         }
-        else {
-          rootConfigurable = aRootConfigurable;
-        }
+        configurables.addAll(providerConfigurables);
       }
     }
-    if (configurables.isEmpty() && rootConfigurable == null) {
-      return null;
-    }
-
-    //Perhaps we always should have a root node 'Debugger' with separate nodes for language-specific settings under it.
-    //However for AppCode there is only one language which is clearly associated with the product
-    //This code should removed when we extract the common debugger settings to the root node.
-    if (PlatformUtils.isCidr() && rootConfigurable == null && configurables.size() == 1) {
-      rootConfigurable = configurables.get(0);
-      configurables = Collections.emptyList();
-    }
-
-    return new DebuggerConfigurable(rootConfigurable, configurables);
+    return ContainerUtil.isEmpty(configurables) ? Collections.<Configurable>emptyList() : configurables;
   }
 }

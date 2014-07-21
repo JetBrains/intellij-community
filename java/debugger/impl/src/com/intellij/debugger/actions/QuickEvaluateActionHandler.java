@@ -22,13 +22,13 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.ValueHint;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -53,6 +53,6 @@ public class QuickEvaluateActionHandler extends QuickEvaluateHandler {
 
   @Override
   public int getValueLookupDelay(final Project project) {
-    return DebuggerSettings.getInstance().VALUE_LOOKUP_DELAY;
+    return XDebuggerSettingsManager.getInstance().getDataViewSettings().getValueLookupDelay();
   }
 }
