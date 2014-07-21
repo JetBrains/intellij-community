@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class JavaLightStubBuilder extends LightStubBuilder {
     if (pkg != null) {
       LighterASTNode ref = LightTreeUtil.firstChildOfType(tree, pkg, JavaElementType.JAVA_CODE_REFERENCE);
       if (ref != null) {
-        refText = SourceUtil.getReferenceText(tree, ref);
+        refText = JavaSourceUtil.getReferenceText(tree, ref);
       }
     }
     return new PsiJavaFileStubImpl((PsiJavaFile)file, StringRef.fromString(refText), false);

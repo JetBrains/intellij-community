@@ -761,7 +761,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   private String getCachedNormalizedText() {
     String whiteSpaceAndComments = myCachedNormalizedText;
     if (whiteSpaceAndComments == null) {
-      myCachedNormalizedText = whiteSpaceAndComments = SourceUtil.getReferenceText(this);
+      myCachedNormalizedText = whiteSpaceAndComments = JavaSourceUtil.getReferenceText(this);
     }
     return whiteSpaceAndComments;
   }
