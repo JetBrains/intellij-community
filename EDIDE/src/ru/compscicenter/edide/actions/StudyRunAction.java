@@ -16,8 +16,6 @@ import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.course.Task;
 import ru.compscicenter.edide.course.TaskFile;
 
-import java.io.File;
-
 /**
  * author: liana
  * data: 7/10/14.

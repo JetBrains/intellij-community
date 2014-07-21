@@ -7,9 +7,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import ru.compscicenter.edide.StudyDocumentListener;
 import ru.compscicenter.edide.StudyEditor;
@@ -19,7 +22,6 @@ import ru.compscicenter.edide.course.Task;
 import ru.compscicenter.edide.course.TaskFile;
 import ru.compscicenter.edide.course.Window;
 
-import javax.swing.event.DocumentListener;
 import java.io.*;
 
 /**
@@ -79,6 +81,11 @@ public class RefreshTaskAction extends AnAction {
                       document.addDocumentListener(listener);
                     }
                     selectedTaskFile.drawAllWindows(editor);
+                    BalloonBuilder balloonBuilder =
+                      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("You can now start again", MessageType.INFO, null);
+                    Balloon balloon = balloonBuilder.createBalloon();
+                    StudyEditor selectedStudyEditor = StudyEditor.getSelectedStudyEditor(project);
+                    balloon.showInCenterOf(selectedStudyEditor.getRefreshButton());
 
                   }
                   catch (FileNotFoundException e1) {

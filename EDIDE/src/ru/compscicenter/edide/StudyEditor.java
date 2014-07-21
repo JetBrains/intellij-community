@@ -138,14 +138,14 @@ public class StudyEditor implements FileEditor {
       @Override
       public void actionPerformed(ActionEvent e) {
         NextTaskAction nextTaskAction = (NextTaskAction)ActionManager.getInstance().getAction("NextTaskAction");
-        nextTaskAction.nextTask(project);
+        nextTaskAction.navigateTask(project);
       }
     });
     myPrevTaskButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         PreviousTaskAction prevTaskAction = (PreviousTaskAction)ActionManager.getInstance().getAction("PreviousTaskAction");
-        prevTaskAction.previousTask(project);
+        prevTaskAction.navigateTask(project);
       }
     });
     myRefreshButton.addActionListener(new ActionListener() {
@@ -159,6 +159,10 @@ public class StudyEditor implements FileEditor {
 
   public JButton getNextTaskButton() {
     return myNextTaskButton;
+  }
+
+  public JButton getRefreshButton() {
+    return myRefreshButton;
   }
 
   public FileEditor getDefaultEditor() {

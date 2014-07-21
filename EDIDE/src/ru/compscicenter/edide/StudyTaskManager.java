@@ -8,8 +8,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.compscicenter.edide.course.*;
-import ru.compscicenter.edide.course.Task;
-import ru.compscicenter.edide.course.TaskFile;
+
 import java.util.HashMap;
 import java.util.Map;
 

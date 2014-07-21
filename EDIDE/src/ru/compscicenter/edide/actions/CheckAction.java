@@ -1,10 +1,7 @@
 package ru.compscicenter.edide.actions;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunContentExecutor;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -16,14 +13,11 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.ui.JBColor;
 import ru.compscicenter.edide.StudyEditor;
 import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.course.TaskFile;
 import ru.compscicenter.edide.course.Window;
-import sun.java2d.loops.ProcessPath;
 
 import java.awt.*;
 import java.io.*;

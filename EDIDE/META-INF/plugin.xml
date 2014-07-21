@@ -1,3 +1,4 @@
+<!--suppress XmlUnboundNsPrefix -->
 <idea-plugin version="2">
   <id>ru.compscicenter.edide</id>
   <name>Educational Python IDE</name>
