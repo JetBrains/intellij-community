@@ -205,4 +205,8 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     myErrors.remove(error);
     refresh();
   }
+
+  public int getErrorsCount() {
+    return myErrors.size();
+  }
 }
