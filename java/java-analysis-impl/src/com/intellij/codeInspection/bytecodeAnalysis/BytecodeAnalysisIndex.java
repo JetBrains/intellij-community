@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.SystemProperties;
@@ -82,7 +82,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Integer, Coll
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.CLASS) {
+    return new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE) {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {
         return ourEnabled && super.acceptInput(file);
