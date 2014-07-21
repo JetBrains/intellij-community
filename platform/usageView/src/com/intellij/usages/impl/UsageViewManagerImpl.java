@@ -122,23 +122,23 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                     @NotNull final UsageViewPresentation presentation,
                                     @NotNull final FindUsagesProcessPresentation processPresentation,
                                     @Nullable final UsageViewStateListener listener) {
-    final SearchScope searchScope = getSearchScope(searchFor);
+    final SearchScope searchScope = getMaxSearchScopeToWarnOfFallingOutOf(searchFor);
     return doSearchAndShow(searchFor, searcherFactory, presentation, processPresentation, listener, searchScope);
   }
 
-  UsageView doSearchAndShow(@NotNull final UsageTarget[] searchFor,
+  private UsageView doSearchAndShow(@NotNull final UsageTarget[] searchFor,
                                     @NotNull final Factory<UsageSearcher> searcherFactory,
                                     @NotNull final UsageViewPresentation presentation,
                                     @NotNull final FindUsagesProcessPresentation processPresentation,
                                     @Nullable final UsageViewStateListener listener,
-                                    @NotNull final SearchScope searchScope) {
+                                    @NotNull final SearchScope searchScopeToWarnOfFallingOutOf) {
     final AtomicReference<UsageViewImpl> usageViewRef = new AtomicReference<UsageViewImpl>();
 
     Task.Backgroundable task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         new SearchForUsagesRunnable(UsageViewManagerImpl.this, UsageViewManagerImpl.this.myProject, usageViewRef, presentation, searchFor, searcherFactory,
-                                    processPresentation, searchScope, listener).run();
+                                    processPresentation, searchScopeToWarnOfFallingOutOf, listener).run();
       }
 
       @NotNull
@@ -159,7 +159,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   @NotNull
-  private SearchScope getSearchScope(@NotNull UsageTarget[] searchFor) {
+  private SearchScope getMaxSearchScopeToWarnOfFallingOutOf(@NotNull UsageTarget[] searchFor) {
     UsageTarget target = searchFor[0];
     if (target instanceof TypeSafeDataProvider) {
       final SearchScope[] scope = new SearchScope[1];
@@ -171,7 +171,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       });
       return scope[0];
     }
-    return GlobalSearchScope.projectScope(myProject);
+    return GlobalSearchScope.allScope(myProject); // by default do not warn of falling out of scope
   }
 
   @Override

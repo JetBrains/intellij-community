@@ -47,7 +47,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.content.Content;
@@ -55,7 +54,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.FindUsagesProcessPresentation;
-import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.Function;
 import com.intellij.util.PatternUtil;
@@ -326,7 +324,7 @@ public class FindInProjectUtil {
     return processPresentation;
   }
 
-  public static class StringUsageTarget implements ConfigurableUsageTarget, ItemPresentation, TypeSafeDataProvider {
+  public static class StringUsageTarget implements ConfigurableUsageTarget, ItemPresentation {
     @NotNull protected final Project myProject;
     @NotNull protected final FindModel myFindModel;
 
@@ -424,13 +422,6 @@ public class FindInProjectUtil {
     @Override
     public KeyboardShortcut getShortcut() {
       return ActionManager.getInstance().getKeyboardShortcut("FindInPath");
-    }
-
-    @Override
-    public void calcData(DataKey key, DataSink sink) {
-      if (key == UsageView.USAGE_SCOPE) {
-        sink.put(UsageView.USAGE_SCOPE, GlobalSearchScope.allScope(myProject));
-      }
     }
   }
 }
