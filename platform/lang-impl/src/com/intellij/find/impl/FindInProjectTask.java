@@ -231,6 +231,7 @@ class FindInProjectTask {
     final GlobalSearchScope globalCustomScope = toGlobal(customScope);
 
     final ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
+    final boolean hasTrigrams = hasTrigrams(myFindModel.getStringToFind());
 
     class EnumContentIterator implements ContentIterator {
       final Set<PsiFile> myFiles = new LinkedHashSet<PsiFile>();
@@ -238,8 +239,6 @@ class FindInProjectTask {
       @Override
       public boolean processFile(@NotNull final VirtualFile virtualFile) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
-          final boolean hasTrigrams = hasTrigrams(myFindModel.getStringToFind());
-
           @Override
           public void run() {
             ProgressManager.checkCanceled();
@@ -249,9 +248,6 @@ class FindInProjectTask {
               return;
             }
 
-            if (virtualFile.getFileType().isBinary()) {
-              return;
-            }
             if (skipIndexed && isCoveredByIndex(virtualFile) &&
                 (fileIndex.isInContent(virtualFile) || fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile))) {
               return;
@@ -261,7 +257,9 @@ class FindInProjectTask {
             if (psiFile != null && !(psiFile instanceof PsiBinaryFile) && !alreadySearched.contains(psiFile)) {
               PsiFile sourceFile = (PsiFile)psiFile.getNavigationElement();
               if (sourceFile != null) psiFile = sourceFile;
-              myFiles.add(psiFile);
+              if (!psiFile.getFileType().isBinary()) {
+                myFiles.add(psiFile);
+              }
             }
           }
 
@@ -290,7 +288,9 @@ class FindInProjectTask {
       for (VirtualFile file : getLocalScopeFiles((LocalSearchScope)customScope)) {
         iterator.processFile(file);
       }
-    } else if (customScope instanceof Iterable) {  // GlobalSearchScope can span files out of project roots e.g. FileScope / FilesScope
+    }
+    else if (customScope instanceof Iterable) {  // GlobalSearchScope can span files out of project roots e.g. FileScope / FilesScope
+      //noinspection unchecked
       for (VirtualFile file : (Iterable<VirtualFile>)customScope) {
         iterator.processFile(file);
       }
@@ -382,16 +382,14 @@ class FindInProjectTask {
     return myFindModel.isWholeWordsOnly() && text.indexOf('$') < 0 && !StringUtil.getWordsInStringLongestFirst(text).isEmpty();
   }
 
-  private static boolean hasTrigrams(String text) {
-    if (TrigramIndex.ENABLED) {
-      return !TrigramBuilder.processTrigrams(text, new TrigramBuilder.TrigramProcessor() {
-        @Override
-        public boolean execute(int value) {
-          return false;
-        }
-      });
-    }
-    return false;
+  private static boolean hasTrigrams(@NotNull String text) {
+    return TrigramIndex.ENABLED &&
+           !TrigramBuilder.processTrigrams(text, new TrigramBuilder.TrigramProcessor() {
+             @Override
+             public boolean execute(int value) {
+               return false;
+             }
+           });
   }
 
 
@@ -430,6 +428,7 @@ class FindInProjectTask {
         final List<VirtualFile> hits = new ArrayList<VirtualFile>();
         final GlobalSearchScope finalScope = scope;
         ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
           public void run() {
             FileBasedIndex.getInstance().getFilesWithKey(TrigramIndex.INDEX_ID, keys, new CommonProcessors.CollectProcessor<VirtualFile>(hits),
                                                          finalScope);
