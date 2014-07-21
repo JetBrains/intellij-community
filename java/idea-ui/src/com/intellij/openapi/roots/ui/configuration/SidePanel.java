@@ -261,8 +261,8 @@ public class SidePanel extends JPanel {
       g.setColor(isSelected() ? UIUtil.getListSelectionBackground() : UIUtil.getSidePanelColor());
       g.fillRect(0, 0, getWidth(), getHeight());
       if (StringUtil.isEmpty(getText())) return;
-      final JBColor deepBlue = new JBColor(new Color(0x97A4B2), new Color(0x97A4B2));
-      g.setColor(isSelected() ? Gray._255.withAlpha(220) : deepBlue);
+      final JBColor deepBlue = new JBColor(new Color(0x97A4B2), new Color(92, 98, 113));
+      g.setColor(isSelected() ? Gray._255.withAlpha(UIUtil.isUnderDarcula() ? 100 : 220) : deepBlue);
       final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
       g.fillRoundRect(0, 3, getWidth() - 6 -1, getHeight()-6 , (getHeight() - 6), (getHeight() - 6));
       config.restore();
