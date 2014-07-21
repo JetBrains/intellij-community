@@ -379,7 +379,7 @@ public class InferenceSession {
       PsiType returnType = method.getReturnType();
       if (!PsiType.VOID.equals(returnType) && returnType != null) {
         PsiType targetType = getTargetType(context);
-        if (targetType != null) {
+        if (targetType != null && !PsiType.VOID.equals(targetType)) {
           registerReturnTypeConstraints(PsiUtil.isRawSubstitutor(method, mySiteSubstitutor) ? returnType : mySiteSubstitutor.substitute(returnType), targetType);
         }
       }
