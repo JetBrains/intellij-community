@@ -114,6 +114,7 @@ class Outer {
   void <error descr="Annotations are not allowed here">@TA</error> misplaced() { }
 
   @TA Outer() { }
+  <T> <error descr="Annotations are not allowed here">@TA</error> Outer(T t) { }
 
   class MyClass<@TA @TPA T> { }
   interface MyInterface<@TA @TPA E> { }
