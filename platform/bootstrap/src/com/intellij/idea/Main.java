@@ -88,6 +88,10 @@ public class Main {
   }
 
   public static void setFlags(String[] args) {
+    for (int i = 0; i<=args.length;  i++){
+      showMessage("Debug. arg["+ i + "]=", args[i], true);
+    }
+
     isHeadless = isHeadless(args);
     isCommandLine = isCommandLine(args);
   }
