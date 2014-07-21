@@ -3,6 +3,8 @@ from django_debug import find_django_render_frame
 from django_frame import just_raised
 from django_frame import is_django_exception_break_context
 from django_frame import DjangoTemplateFrame
+from jinja2_debug import Jinja2LineBreakpoint, is_jinja2_render_call, suspend_jinja2
+from jinja2_frame import Jinja2TemplateFrame, get_jinja2_template_filename, get_jinja2_template_line
 from pydevd_comm import * #@UnusedWildImport
 from pydevd_breakpoints import * #@UnusedWildImport
 import traceback #@Reimport
@@ -49,7 +51,6 @@ class PyDBFrame:
 
       if info.pydev_state != STATE_SUSPEND:  #and breakpoint is not None:
           (exception, value, trace) = arg
-
           if trace is not None: #on jython trace is None on the first event
               exception_breakpoint = get_exception_breakpoint(exception, dict(mainDebugger.exception_set), NOTIFY_ALWAYS)
               if exception_breakpoint is not None:
@@ -111,7 +112,6 @@ class PyDBFrame:
 
             if event is not 'exception':
                 breakpoints_for_file = mainDebugger.breakpoints.get(filename)
-
                 can_skip = False
 
                 if info.pydev_state == STATE_RUN:
@@ -122,6 +122,9 @@ class PyDBFrame:
                     or (info.pydev_step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and info.pydev_step_stop is not frame)
 
                 if  mainDebugger.django_breakpoints:
+                    can_skip = False
+
+                if  mainDebugger.jinja2_breakpoints:
                     can_skip = False
 
                 # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint,
@@ -160,12 +163,15 @@ class PyDBFrame:
 
             try:
                 line = frame.f_lineno
-
-
                 flag = False
+
                 if event == 'call' and info.pydev_state != STATE_SUSPEND and mainDebugger.django_breakpoints \
                 and is_django_render_call(frame):
                     (flag, frame) = self.shouldStopOnDjangoBreak(frame, event, arg)
+
+                if event in ('line', 'call') and info.pydev_state != STATE_SUSPEND and mainDebugger.jinja2_breakpoints \
+                        and is_jinja2_render_call(frame):
+                    (flag, frame) = self.shouldStopOnJinja2Break(frame, event, arg)
 
                 #return is not taken into account for breakpoint hit because we'd have a double-hit in this case
                 #(one for the line and the other for the return).
@@ -235,7 +241,6 @@ class PyDBFrame:
                             info.pydev_step_stop = info.pydev_django_resolve_frame
                             info.pydev_django_resolve_frame = None
                             thread.additionalInfo.suspend_type = DJANGO_SUSPEND
-
 
                         stop = info.pydev_step_stop is frame and event in ('line', 'return')
 
@@ -343,12 +348,14 @@ class PyDBFrame:
         mainDebugger, filename, info, thread = self._args
         flag = False
         filename = get_template_file_name(frame)
+        pydev_log.error_once("django keys:" + str(frame.f_locals.keys()))
         pydev_log.debug("Django is rendering a template: %s\n" % filename)
         django_breakpoints_for_file = mainDebugger.django_breakpoints.get(filename)
         if django_breakpoints_for_file:
             pydev_log.debug("Breakpoints for that file: %s\n" % django_breakpoints_for_file)
             template_line = get_template_line(frame)
             pydev_log.debug("Tracing template line: %d\n" % template_line)
+            print "Tracing template line: %d\n" % template_line
 
             if DictContains(django_breakpoints_for_file, template_line):
                 django_breakpoint = django_breakpoints_for_file[template_line]
@@ -381,5 +388,35 @@ class PyDBFrame:
                         frame = suspend_django(self, mainDebugger, thread, frame)
         return (flag, frame)
 
+
+    def shouldStopOnJinja2Break(self, frame, event, arg):
+        mainDebugger, filename, info, thread = self._args
+        flag = False
+        filename = get_jinja2_template_filename(frame)
+        jinja2_breakpoints_for_file = mainDebugger.jinja2_breakpoints.get(filename)
+        new_frame = Jinja2TemplateFrame(frame)
+        if jinja2_breakpoints_for_file:
+            lineno = frame.f_lineno
+            template_lineno = get_jinja2_template_line(frame)
+
+            if template_lineno is not None and DictContains(jinja2_breakpoints_for_file, template_lineno):
+                #print "breakpoint!"
+                jinja2_breakpoint = jinja2_breakpoints_for_file[template_lineno]
+
+                if jinja2_breakpoint.is_triggered(frame):
+                    flag = True
+                    # TODO: check condition and expression
+
+                    if flag:
+                        frame = suspend_jinja2(self, mainDebugger, thread, frame)
+                    else:
+                        frame = new_frame
+
+        return flag, frame
+
+
 def add_exception_to_frame(frame, exception_info):
     frame.f_locals['__exception__'] = exception_info
+
+
+

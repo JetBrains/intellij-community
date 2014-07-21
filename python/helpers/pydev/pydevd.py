@@ -1,6 +1,7 @@
 #IMPORTANT: pydevd_constants must be the 1st thing defined because it'll keep a reference to the original sys._getframe
 import traceback
 
+from jinja2_debug import Jinja2LineBreakpoint
 from django_debug import DjangoLineBreakpoint
 from pydevd_signature import SignatureFactory
 from pydevd_frame import add_exception_to_frame
@@ -306,6 +307,7 @@ class PyDB:
         self._cmd_queue = {}  # the hash of Queues. Key is thread id, value is thread
         self.breakpoints = {}
         self.django_breakpoints = {}
+        self.jinja2_breakpoints = {}
         self.exception_set = {}
         self.always_exception_set = set()
         self.django_exception_break = {}
@@ -726,6 +728,9 @@ class PyDB:
                     elif type == 'django-line':
                         breakpoint = DjangoLineBreakpoint(type, file, line, True, condition, func_name, expression)
                         breakpoint.add(self.django_breakpoints, file, line, func_name)
+                    elif type == 'jinja2-line':
+                        breakpoint = Jinja2LineBreakpoint(type, file, line, True, condition, func_name, expression)
+                        breakpoint.add(self.jinja2_breakpoints, file, line, func_name)
                     else:
                         raise NameError(type)
 
@@ -746,11 +751,18 @@ class PyDB:
                         try:
                             if type == 'django-line':
                                 del self.django_breakpoints[file][line]
+                            elif type == 'jinja2-line':
+                                del self.jinja2_breakpoints[file][line]
                             elif type == 'python-line':
                                 del self.breakpoints[file][line] #remove the breakpoint in that line
                             else:
                                 try:
                                     del self.django_breakpoints[file][line]
+                                    found = True
+                                except:
+                                    pass
+                                try:
+                                    del self.jinja2_breakpoints[file][line]
                                     found = True
                                 except:
                                     pass
@@ -1122,16 +1134,16 @@ class PyDB:
         if frame.f_trace is None:
           frame.f_trace = dispatch_func
         else:
-          if overwrite_prev:
-              frame.f_trace = dispatch_func
-          else:
-              try:
-                  #If it's the trace_exception, go back to the frame trace dispatch!
-                  if frame.f_trace.im_func.__name__ == 'trace_exception':
-                      frame.f_trace = frame.f_trace.im_self.trace_dispatch
-              except AttributeError:
-                  pass
-              frame = frame.f_back
+            if overwrite_prev:
+                frame.f_trace = dispatch_func
+            else:
+                try:
+                    #If it's the trace_exception, go back to the frame trace dispatch!
+                    if frame.f_trace.im_func.__name__ == 'trace_exception':
+                        frame.f_trace = frame.f_trace.im_self.trace_dispatch
+                except AttributeError:
+                    pass
+                frame = frame.f_back
         del frame
 
     def prepareToRun(self):
