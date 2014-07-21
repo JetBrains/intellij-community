@@ -160,7 +160,7 @@ public class LineStatusTrackerDrawing {
     localShowPrevAction.copyFrom(globalShowPrevAction);
 
     final RollbackLineStatusRangeAction rollback = new RollbackLineStatusRangeAction(tracker, range, editor);
-    EmptyAction.setupAction(rollback, IdeActions.CHANGES_VIEW_ROLLBACK, editorComponent);
+    EmptyAction.setupAction(rollback, IdeActions.SELECTED_CHANGES_ROLLBACK, editorComponent);
     group.add(rollback);
 
     group.add(new ShowLineStatusRangeDiffAction(tracker, range, editor));
