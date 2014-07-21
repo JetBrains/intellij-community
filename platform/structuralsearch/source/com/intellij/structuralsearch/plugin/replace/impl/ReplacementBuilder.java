@@ -27,7 +27,6 @@ import java.util.*;
 public final class ReplacementBuilder {
   private String replacement;
   private List<ParameterInfo> parameterizations;
-  private HashMap<String,MatchResult> matchMap;
   private final Map<String, ScriptSupport> replacementVarsMap;
   private final ReplaceOptions options;
 
@@ -135,7 +134,7 @@ public final class ReplacementBuilder {
     }
 
     final StringBuilder result = new StringBuilder(replacement);
-    matchMap = new HashMap<String,MatchResult>();
+    HashMap<String, MatchResult> matchMap = new HashMap<String, MatchResult>();
     fill(match, matchMap);
 
     int offset = 0;
