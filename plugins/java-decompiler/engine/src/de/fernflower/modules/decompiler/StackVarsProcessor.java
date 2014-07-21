@@ -206,6 +206,8 @@ public class StackVarsProcessor {
 					
 					int[] ret = iterateExprent(lst, index, next, mapVarValues, ssa);
 					
+					//System.out.println("***************** \r\n"+root.toJava());
+					
 					if(ret[0] >= 0) {
 						index = ret[0];
 					} else {
