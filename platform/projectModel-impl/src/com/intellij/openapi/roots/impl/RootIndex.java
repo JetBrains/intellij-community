@@ -595,8 +595,8 @@ public class RootIndex extends DirectoryIndex {
     int typeId = moduleSourceRoot != null ? info.rootTypeId.get(moduleSourceRoot) : 0;
 
     Module module = parentModuleForExcluded != null ? parentModuleForExcluded : info.contentRootOf.get(moduleContentRoot);
-    byte rootTypeData = (byte)DirectoryInfo.createRootTypeData(inModuleSources, inLibrarySource, parentModuleForExcluded != null, typeId);
-    DirectoryInfo directoryInfo = new DirectoryInfo(module, moduleContentRoot, sourceRoot, libraryClassRoot, rootTypeData) {
+    DirectoryInfo directoryInfo = new DirectoryInfo(module, moduleContentRoot, sourceRoot, libraryClassRoot, inModuleSources, inLibrarySource,
+                                                    parentModuleForExcluded != null, typeId) {
       @NotNull
       @Override
       public OrderEntry[] getOrderEntries() {

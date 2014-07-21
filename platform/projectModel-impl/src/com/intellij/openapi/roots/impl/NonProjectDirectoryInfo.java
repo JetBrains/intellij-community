@@ -33,19 +33,18 @@ class NonProjectDirectoryInfo extends DirectoryInfo {
       return true;
     }
   };
-  public static final NonProjectDirectoryInfo EXCLUDED = new NonProjectDirectoryInfo("excluded from project") {
-    @Override
-    public boolean isExcluded() {
-      return true;
-    }
-  };
+  public static final NonProjectDirectoryInfo EXCLUDED = new NonProjectDirectoryInfo("excluded from project", true);
   public static final NonProjectDirectoryInfo NOT_UNDER_PROJECT_ROOTS = new NonProjectDirectoryInfo("not under project roots");
   public static final NonProjectDirectoryInfo INVALID = new NonProjectDirectoryInfo("invalid");
   public static final NonProjectDirectoryInfo NOT_SUPPORTED_VIRTUAL_FILE_IMPLEMENTATION = new NonProjectDirectoryInfo("not supported VirtualFile implementation");
   private final String myDebugName;
 
   private NonProjectDirectoryInfo(String debugName) {
-    super(null, null, null, null, (byte)0);
+    this(debugName, false);
+  }
+
+  private NonProjectDirectoryInfo(String debugName, boolean isExcluded) {
+    super(null, null, null, null, false, false, isExcluded, 0);
     myDebugName = debugName;
   }
 

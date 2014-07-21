@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,27 +33,32 @@ import java.util.Comparator;
 import java.util.List;
 
 public abstract class DirectoryInfo {
-  public static final int MAX_ROOT_TYPE_ID = (1 << (Byte.SIZE - 3)) - 1;
+  public static final int MAX_ROOT_TYPE_ID = Byte.MAX_VALUE;
   private final Module module; // module to which content it belongs or null
   private final VirtualFile libraryClassRoot; // class root in library
   private final VirtualFile contentRoot;
   private final VirtualFile sourceRoot;
-
-  private static final byte MODULE_SOURCE_FLAG = 1; // set if files in this directory belongs to sources of the module (if field 'module' is not null)
-  private static final byte LIBRARY_SOURCE_FLAG = 2; // set if it's a directory with sources of some library
-  private static final byte EXCLUDED_FLAG = 4; // set if it's a directory under 'excluded' folder of a module
-  private final byte rootTypeData;//three least significant bits are used for MODULE_SOURCE_FLAG, LIBRARY_SOURCE_FLAG and EXCLUDED_FLAG, the remaining bits store module root type id (source/tests/resources/...)
+  private boolean myInModuleSource;
+  private boolean myInLibrarySource;
+  private boolean myExcluded;
+  private byte mySourceRootTypeId;
 
   DirectoryInfo(Module module,
                 VirtualFile contentRoot,
                 VirtualFile sourceRoot,
                 VirtualFile libraryClassRoot,
-                byte rootTypeData) {
+                boolean inModuleSource, boolean inLibrarySource, boolean isExcluded, int sourceRootTypeId) {
     this.module = module;
     this.libraryClassRoot = libraryClassRoot;
     this.contentRoot = contentRoot;
     this.sourceRoot = sourceRoot;
-    this.rootTypeData = rootTypeData;
+    myInModuleSource = inModuleSource;
+    myInLibrarySource = inLibrarySource;
+    myExcluded = isExcluded;
+    if (sourceRootTypeId > MAX_ROOT_TYPE_ID) {
+      throw new IllegalArgumentException("Module source root type id " + sourceRootTypeId + " exceeds the maximum allowable value (" + MAX_ROOT_TYPE_ID + ")");
+    }
+    mySourceRootTypeId = (byte)sourceRootTypeId;
   }
 
   /**
@@ -78,7 +82,10 @@ public abstract class DirectoryInfo {
 
     DirectoryInfo info = (DirectoryInfo)o;
 
-    return rootTypeData == info.rootTypeData &&
+    return mySourceRootTypeId == info.mySourceRootTypeId &&
+           myInModuleSource == info.myInModuleSource &&
+           myInLibrarySource == info.myInLibrarySource &&
+           myExcluded == info.myExcluded &&
            Comparing.equal(contentRoot, info.contentRoot) &&
            Comparing.equal(libraryClassRoot, info.libraryClassRoot) &&
            Comparing.equal(module, info.module) &&
@@ -92,7 +99,10 @@ public abstract class DirectoryInfo {
     result = 31 * result + (libraryClassRoot != null ? libraryClassRoot.hashCode() : 0);
     result = 31 * result + (contentRoot != null ? contentRoot.hashCode() : 0);
     result = 31 * result + (sourceRoot != null ? sourceRoot.hashCode() : 0);
-    result = 31 * result + (int)rootTypeData;
+    result = 31 * result + (myInModuleSource ? 1 : 0);
+    result = 31 * result + (myInLibrarySource ? 1 : 0);
+    result = 31 * result + (myExcluded ? 1 : 0);
+    result = 31 * result + (int)mySourceRootTypeId;
     return result;
   }
 
@@ -230,15 +240,15 @@ public abstract class DirectoryInfo {
   }
 
   public boolean isInModuleSource() {
-    return BitUtil.isSet(rootTypeData, MODULE_SOURCE_FLAG);
+    return myInModuleSource;
   }
 
   public boolean isInLibrarySource() {
-    return BitUtil.isSet(rootTypeData, LIBRARY_SOURCE_FLAG);
+    return myInLibrarySource;
   }
 
   public boolean isExcluded() {
-    return BitUtil.isSet(rootTypeData, EXCLUDED_FLAG);
+    return myExcluded;
   }
 
   public Module getModule() {
@@ -254,15 +264,6 @@ public abstract class DirectoryInfo {
   }
 
   public int getSourceRootTypeId() {
-    return rootTypeData >> 3;
-  }
-
-  public static int createRootTypeData(boolean isInModuleSources, boolean isInLibrarySource, boolean isExcludedFromModule,
-                                       int moduleSourceRootTypeId) {
-    if (moduleSourceRootTypeId > MAX_ROOT_TYPE_ID) {
-      throw new IllegalArgumentException("Module source root type id " + moduleSourceRootTypeId + " exceeds the maximum allowable value (" + MAX_ROOT_TYPE_ID + ")");
-    }
-    return (isInModuleSources ? MODULE_SOURCE_FLAG : 0) | (isInLibrarySource ? LIBRARY_SOURCE_FLAG : 0) | (isExcludedFromModule ? EXCLUDED_FLAG : 0)
-           | moduleSourceRootTypeId << 3;
+    return mySourceRootTypeId;
   }
 }
