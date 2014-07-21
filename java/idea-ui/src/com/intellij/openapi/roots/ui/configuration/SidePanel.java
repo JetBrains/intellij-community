@@ -205,6 +205,10 @@ public class SidePanel extends JPanel {
     });
   }
 
+  public JList getList() {
+    return myList;
+  }
+
   public void addPlace(Place place, @NotNull Presentation presentation) {
     myModel.addElement(place);
     myPlaces.add(place);
