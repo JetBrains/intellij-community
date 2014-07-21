@@ -28,6 +28,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.classFilter.ClassFilterEditor;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,7 +99,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myCbShowStatic = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.static.fields"));
     myCbShowStaticFinalFields = new StateRestoringCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.static.final.fields"));
     myCbEnableAlternateViews = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.alternate.view"));
-    myCbEnableAutoExpressions = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.auto.expressions"));
+    myCbEnableAutoExpressions = new JCheckBox(XDebuggerBundle.message("setting.enable.auto.expressions.label"));
     myCbShowStatic.addChangeListener(new ChangeListener(){
       @Override
       public void stateChanged(ChangeEvent e) {
@@ -158,7 +159,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
                                                                 Registry.stringValue("ide.forcedShowTooltip")));
     panel.add(myAutoTooltip, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
 
-    final JLabel tooltipLabel = new JLabel(DebuggerBundle.message("label.debugger.general.configurable.tooltips.delay"));
+    final JLabel tooltipLabel = new JLabel(XDebuggerBundle.message("setting.value.tooltip.delay.label"));
     panel.add(tooltipLabel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
     myValueTooltipDelayField = new JTextField(10);
     myValueTooltipDelayField.setMinimumSize(new Dimension(50, myValueTooltipDelayField.getPreferredSize().height));

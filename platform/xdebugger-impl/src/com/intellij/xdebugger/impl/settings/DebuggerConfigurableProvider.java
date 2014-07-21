@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.settings;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.SmartList;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 
 import java.util.ArrayList;
@@ -31,14 +32,14 @@ import java.util.List;
 public class DebuggerConfigurableProvider extends ConfigurableProvider {
   @Override
   public Configurable createConfigurable() {
-    final List<DebuggerSettingsPanelProvider> providers = new ArrayList<DebuggerSettingsPanelProvider>();
-    final DebuggerSupport[] supports = DebuggerSupport.getDebuggerSupports();
-    for (DebuggerSupport support : supports) {
+    List<DebuggerSettingsPanelProvider> providers = new SmartList<DebuggerSettingsPanelProvider>();
+    for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
       providers.add(support.getSettingsPanelProvider());
     }
 
     List<Configurable> configurables = new ArrayList<Configurable>();
     Collections.sort(providers, new Comparator<DebuggerSettingsPanelProvider>() {
+      @Override
       public int compare(final DebuggerSettingsPanelProvider o1, final DebuggerSettingsPanelProvider o2) {
         return o2.getPriority() - o1.getPriority();
       }

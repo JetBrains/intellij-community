@@ -29,7 +29,6 @@ import java.util.ResourceBundle;
  * @author nik
  */
 public class XDebuggerBundle {
-
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
