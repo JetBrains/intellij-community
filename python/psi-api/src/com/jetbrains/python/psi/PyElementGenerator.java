@@ -90,8 +90,6 @@ public abstract class PyElementGenerator {
   @NotNull
   public abstract PyCallExpression createCallExpression(final LanguageLevel langLevel, String functionName);
 
-  public abstract PyImportStatement createImportStatementFromText(final LanguageLevel languageLevel, String text);
-
   public abstract PyImportElement createImportElement(final LanguageLevel languageLevel, String name);
 
   public abstract PyFunction createProperty(final LanguageLevel languageLevel,
@@ -139,4 +137,32 @@ public abstract class PyElementGenerator {
    */
   @NotNull
   public abstract PsiElement createNewLine();
+
+  /**
+   * Creates import statement of form {@code from qualifier import name as alias}.
+   *
+   * @param languageLevel language level for created element
+   * @param qualifier     from where {@code name} will be imported (module name)
+   * @param name          text of the reference in import element
+   * @param alias         optional alias for {@code as alias} part
+   * @return created {@link com.jetbrains.python.psi.PyFromImportStatement}
+   */
+  @NotNull
+  public abstract PyFromImportStatement createFromImportStatement(@NotNull LanguageLevel languageLevel,
+                                                                  @NotNull String qualifier,
+                                                                  @NotNull String name,
+                                                                  @Nullable String alias);
+
+  /**
+   * Creates import statement of form {@code import name as alias}.
+   *
+   * @param languageLevel language level for created element
+   * @param name          text of the reference in import element (module name)
+   * @param alias         optional alias for {@code as alias} part
+   * @return created {@link com.jetbrains.python.psi.PyImportStatement}
+   */
+  @NotNull
+  public abstract PyImportStatement createImportStatement(@NotNull LanguageLevel languageLevel,
+                                                          @NotNull String name,
+                                                          @Nullable String alias);
 }

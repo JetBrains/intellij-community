@@ -69,7 +69,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.HashSet;
 
 import static com.jetbrains.python.inspections.quickfix.AddIgnoredIdentifierQuickFix.END_WILDCARD;
 
@@ -832,6 +831,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
         else {
           actions.add(importFix);
+        }
+        if (ScopeUtil.getScopeOwner(node) instanceof PyFunction) {
+          actions.add(importFix.forLocalImport());
         }
       }
     }
