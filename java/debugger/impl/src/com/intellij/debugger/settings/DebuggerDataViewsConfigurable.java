@@ -71,16 +71,19 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myArrayRendererConfigurable = new ArrayRendererConfigurable(NodeRendererSettings.getInstance().getArrayRenderer());
   }
 
+  @Override
   public void disposeUIResources() {
     myArrayRendererConfigurable.disposeUIResources();
     myToStringFilterEditor = null;
     myProject = null;
   }
 
+  @Override
   public String getDisplayName() {
     return DebuggerBundle.message("base.renderer.configurable.display.name");
   }
 
+  @Override
   public JComponent createComponent() {
     if (myProject == null) {
       myProject = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
@@ -97,6 +100,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myCbEnableAlternateViews = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.alternate.view"));
     myCbEnableAutoExpressions = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.auto.expressions"));
     myCbShowStatic.addChangeListener(new ChangeListener(){
+      @Override
       public void stateChanged(ChangeEvent e) {
         if(myCbShowStatic.isSelected()) {
           myCbShowStaticFinalFields.makeSelectable();
@@ -121,14 +125,15 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myCbShowFQNames = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.fq.names"));
     myCbShowObjectId = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.object.id"));
 
-    myCbEnableToString = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.enable.tostring"));
-    myRbAllThatOverride = new JRadioButton(DebuggerBundle.message("label.base.renderer.configurable.all.overridding"));
+    myCbEnableToString = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.enable.toString"));
+    myRbAllThatOverride = new JRadioButton(DebuggerBundle.message("label.base.renderer.configurable.all.overriding"));
     myRbFromList = new JRadioButton(DebuggerBundle.message("label.base.renderer.configurable.classes.from.list"));
     ButtonGroup group = new ButtonGroup();
     group.add(myRbAllThatOverride);
     group.add(myRbFromList);
     myToStringFilterEditor = new ClassFilterEditor(myProject, null, "reference.viewBreakpoints.classFilters.newPattern");
     myCbEnableToString.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         final boolean enabled = myCbEnableToString.isSelected();
         myRbAllThatOverride.setEnabled(enabled);
@@ -137,6 +142,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
       }
     });
     myRbFromList.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         myToStringFilterEditor.setEnabled(myCbEnableToString.isSelected() && myRbFromList.isSelected());
       }
@@ -174,6 +180,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
 
     final JPanel arraysPanel = new JPanel(new BorderLayout(0, UIUtil.DEFAULT_VGAP));
     final JComponent arraysComponent = myArrayRendererConfigurable.createComponent();
+    assert arraysComponent != null;
     arraysPanel.add(arraysComponent, BorderLayout.CENTER);
     arraysPanel.add(myCbHideNullArrayElements, BorderLayout.SOUTH);
     arraysPanel.setBorder(IdeBorderFactory.createTitledBorder("Arrays", true));
@@ -191,6 +198,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     return panel;
   }
 
+  @Override
   public void apply() {
     final ViewsGeneralSettings generalSettings = ViewsGeneralSettings.getInstance();
     final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
@@ -227,6 +235,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     rendererSettings.fireRenderersChanged();
   }
 
+  @Override
   public void reset() {
     final ViewsGeneralSettings generalSettings = ViewsGeneralSettings.getInstance();
     final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
@@ -268,6 +277,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myArrayRendererConfigurable.reset();
   }
 
+  @Override
   public boolean isModified() {
     return areGeneralSettingsModified() || areDefaultRenderersModified() || areDebuggerSettingsModified();
   }
@@ -325,16 +335,20 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     return false;
   }
 
+  @SuppressWarnings("SpellCheckingInspection")
+  @Override
   @NotNull
   public String getHelpTopic() {
     return "reference.idesettings.debugger.dataviews";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   public Runnable enableSearch(String option) {
     return null;
   }
