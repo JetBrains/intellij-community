@@ -12,6 +12,9 @@
     <extensionPoint name="errorHandler"
                     interface="com.intellij.openapi.diagnostic.ErrorReportSubmitter"/>
 
+    <extensionPoint name="jps.plugin"
+                    beanClass="com.intellij.jps.impl.JpsPluginBean"/>
+
     <extensionPoint name="codeInsight.containerProvider"
                     interface="com.intellij.codeInsight.ContainerProvider"/>
 
