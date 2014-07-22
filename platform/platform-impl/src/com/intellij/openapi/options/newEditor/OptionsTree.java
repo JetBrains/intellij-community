@@ -20,6 +20,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
@@ -403,9 +404,16 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         myTextLabel.setBorder(new EmptyBorder(1,2,1,0));
       }
 
-      myProjectIcon.setVisible(Registry.is("ide.file.settings.order.new") && getConfigurableProject(base) != null);
-      if (myProjectIcon.isVisible()) {
+      Project project = getConfigurableProject(base);
+      if (project != null && Registry.is("ide.file.settings.order.new")) {
         myProjectIcon.setBackground(selected ? getSelectionBackground() : getBackground());
+        myProjectIcon.setVisible(true);
+        tree.setToolTipText(OptionsBundle.message(project.isDefault()
+                                                  ? "configurable.default.project.tooltip"
+                                                  : "configurable.current.project.tooltip"));
+      } else {
+        myProjectIcon.setVisible(false);
+        tree.setToolTipText(null);
       }
       return result;
     }
