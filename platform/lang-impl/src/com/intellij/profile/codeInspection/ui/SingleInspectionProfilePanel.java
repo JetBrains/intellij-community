@@ -661,12 +661,13 @@ public class SingleInspectionProfilePanel extends JPanel {
       keySetList.addAll(SearchUtil.findKeys(filter, quoted));
     }
     Project project = myProjectProfileManager.getProject();
+    final boolean emptyFilter = myInspectionsFilter.isEmptyFilter();
     for (ToolDescriptors toolDescriptors : myInitialToolDescriptors) {
       final Descriptor descriptor = toolDescriptors.getDefaultDescriptor();
       if (filter != null && !filter.isEmpty() && !isDescriptorAccepted(descriptor, filter, forceInclude, keySetList, quoted)) {
         continue;
       }
-      if (!myInspectionsFilter.matches(mySelectedProfile.getTools(toolDescriptors.getDefaultDescriptor().getKey().toString(), project))) {
+      if (!emptyFilter && !myInspectionsFilter.matches(mySelectedProfile.getTools(toolDescriptors.getDefaultDescriptor().getKey().toString(), project))) {
         continue;
       }
       final InspectionConfigTreeNode node = new InspectionConfigTreeNode(toolDescriptors);

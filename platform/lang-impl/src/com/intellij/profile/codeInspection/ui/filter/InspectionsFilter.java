@@ -66,6 +66,10 @@ public abstract class InspectionsFilter {
     filterChanged();
   }
 
+  public boolean isEmptyFilter() {
+    return mySuitableInspectionsStates == null && !myAvailableOnlyForAnalyze && mySuitableSeverities.isEmpty();
+  }
+
   public boolean matches(final Tools tools) {
     if (mySuitableInspectionsStates != null && mySuitableInspectionsStates != tools.isEnabled()) {
       return false;
