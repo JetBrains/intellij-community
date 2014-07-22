@@ -98,7 +98,8 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     context.setTailOffset(context.getOffset(refEnd));
 
     context.commitDocument();
-    if (shouldInsertParentheses(file.findElementAt(context.getTailOffset() - 1))) {
+    if (item.getUserData(JavaChainLookupElement.CHAIN_QUALIFIER) == null &&
+        shouldInsertParentheses(file.findElementAt(context.getTailOffset() - 1))) {
       if (ConstructorInsertHandler.insertParentheses(context, item, psiClass, false)) {
         fillTypeArgs |= psiClass.hasTypeParameters() && PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5);
       }

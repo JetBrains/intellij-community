@@ -1474,6 +1474,11 @@ class Bar {
     doTest()
   }
 
+  public void testUnimportedStaticInnerClass() {
+    myFixture.addClass("package foo; public class Super { public static class Inner {} }");
+    doTest()
+  }
+
   public void testNoJavaLangPackagesInImport() { doAntiTest() }
 
   public void testNoStaticDuplicatesFromExpectedMemberFactories() {
