@@ -26,6 +26,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,9 +57,9 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
   private final Divider myFirstDivider;
   private final Divider myLastDivider;
 
-  private JComponent myFirstComponent;
-  private JComponent myInnerComponent;
-  private JComponent myLastComponent;
+  @Nullable private JComponent myFirstComponent;
+  @Nullable private JComponent myInnerComponent;
+  @Nullable private JComponent myLastComponent;
 
   private int myFirstSize = 10;
   private int myLastSize = 10;
@@ -303,6 +304,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     repaint();
   }
 
+  @Nullable
   public JComponent getFirstComponent() {
     return myFirstComponent;
   }
@@ -312,7 +314,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
    * repaint the splitter. If there is already
    *
    */
-  public void setFirstComponent(JComponent component) {
+  public void setFirstComponent(@Nullable JComponent component) {
     if (myFirstComponent != component) {
       if (myFirstComponent != null) {
         remove(myFirstComponent);
@@ -325,6 +327,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     }
   }
 
+  @Nullable
   public JComponent getLastComponent() {
     return myLastComponent;
   }
@@ -335,7 +338,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
    * repaint the splitter.
    *
    */
-  public void setLastComponent(JComponent component) {
+  public void setLastComponent(@Nullable JComponent component) {
     if (myLastComponent != component) {
       if (myLastComponent != null) {
         remove(myLastComponent);
@@ -348,7 +351,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     }
   }
 
-
+  @Nullable
   public JComponent getInnerComponent() {
     return myInnerComponent;
   }
@@ -359,7 +362,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
    * repaint the splitter.
    *
    */
-  public void setInnerComponent(JComponent component) {
+  public void setInnerComponent(@Nullable JComponent component) {
     if (myInnerComponent != component) {
       if (myInnerComponent != null) {
         remove(myInnerComponent);

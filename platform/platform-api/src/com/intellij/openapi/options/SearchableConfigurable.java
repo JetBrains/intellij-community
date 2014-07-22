@@ -36,41 +36,49 @@ public interface SearchableConfigurable extends Configurable {
     boolean hasOwnContent();
     boolean isVisible();
 
-
     abstract class Abstract implements Parent {
       private Configurable[] myKids;
 
+      @Override
       public JComponent createComponent() {
         return null;
       }
 
+      @Override
       public boolean hasOwnContent() {
         return false;
       }
 
       
+      @Override
       public boolean isModified() {
         return false;
       }
 
+      @Override
       public void apply() throws ConfigurationException {
       }
 
+      @Override
       public void reset() {
       }
 
+      @Override
       public void disposeUIResources() {
         myKids = null;
       }
 
+      @Override
       public Runnable enableSearch(final String option) {
         return null;
       }
 
+      @Override
       public boolean isVisible() {
         return true;
       }
 
+      @Override
       public final Configurable[] getConfigurables() {
         if (myKids != null) return myKids;
         myKids = buildConfigurables();

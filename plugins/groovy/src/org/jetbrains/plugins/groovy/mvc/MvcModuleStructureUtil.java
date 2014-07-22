@@ -356,11 +356,11 @@ public class MvcModuleStructureUtil {
 
   private static void removeInvalidSourceRoots(List<Consumer<ModifiableRootModel>> actions, MvcProjectStructure structure) {
     final Set<SourceFolder> toRemove = ContainerUtil.newTroveSet();
-    final Set<ContentEntry> toRemoveContent = ContainerUtil.newTroveSet();
+    final Set<String> toRemoveContent = ContainerUtil.newTroveSet();
     for (ContentEntry entry : ModuleRootManager.getInstance(structure.myModule).getContentEntries()) {
       final VirtualFile file = entry.getFile();
       if (file == null || !structure.isValidContentRoot(file)) {
-        toRemoveContent.add(entry);
+        toRemoveContent.add(entry.getUrl());
       }
       else {
         for (SourceFolder folder : entry.getSourceFolders()) {
@@ -376,7 +376,7 @@ public class MvcModuleStructureUtil {
         @Override
         public void consume(ModifiableRootModel model) {
           for (ContentEntry entry : model.getContentEntries()) {
-            if (toRemoveContent.remove(entry)) {
+            if (toRemoveContent.remove(entry.getUrl())) {
               model.removeContentEntry(entry);
             }
             else {

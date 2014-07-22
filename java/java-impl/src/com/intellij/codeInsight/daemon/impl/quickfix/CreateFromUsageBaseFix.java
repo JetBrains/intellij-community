@@ -168,6 +168,9 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       list.deleteChildRange(list.getFirstChild(), list.getLastChild());
       return;
     }
+    if (targetClass.isInterface()) {
+      return;
+    }
     final String visibility = getVisibility(parentClass, targetClass);
     if (VisibilityUtil.ESCALATE_VISIBILITY.equals(visibility)) {
       list.setModifierProperty(PsiModifier.PRIVATE, true);

@@ -13,6 +13,8 @@
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="remote-servers-impl" />
+    <orderEntry type="module" module-name="java-impl" />
+    <orderEntry type="module" module-name="openapi" />
   </component>
 </module>
 

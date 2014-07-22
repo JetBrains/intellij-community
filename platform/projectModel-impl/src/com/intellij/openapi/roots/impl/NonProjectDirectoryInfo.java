@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,11 +46,9 @@ class NonProjectDirectoryInfo extends DirectoryInfo {
   private final String myDebugName;
 
   private NonProjectDirectoryInfo(String debugName) {
-    super(null, null, null, null, (byte)0);
     myDebugName = debugName;
   }
 
-  @Override
   public boolean isInProject() {
     return false;
   }
@@ -61,13 +60,11 @@ class NonProjectDirectoryInfo extends DirectoryInfo {
   }
 
   @Nullable
-  @Override
   OrderEntry findOrderEntryWithOwnerModule(@NotNull Module ownerModule) {
     return null;
   }
 
   @NotNull
-  @Override
   List<OrderEntry> findAllOrderEntriesWithOwnerModule(@NotNull Module ownerModule) {
     return Collections.emptyList();
   }
@@ -85,5 +82,46 @@ class NonProjectDirectoryInfo extends DirectoryInfo {
   @Override
   public int hashCode() {
     return System.identityHashCode(this);
+  }
+
+  public boolean isIgnored() {
+    return false;
+  }
+
+  @Nullable
+  public VirtualFile getSourceRoot() {
+    return null;
+  }
+
+  public VirtualFile getLibraryClassRoot() {
+    return null;
+  }
+
+  @Nullable
+  public VirtualFile getContentRoot() {
+    return null;
+  }
+
+  public boolean isInModuleSource() {
+    return false;
+  }
+
+  public boolean isInLibrarySource() {
+    return false;
+  }
+
+  public boolean isExcluded() {
+    return false;
+  }
+
+  public Module getModule() {
+    return null;
+  }
+
+  void assertConsistency() {
+  }
+
+  public int getSourceRootTypeId() {
+    return 0;
   }
 }

@@ -130,7 +130,7 @@ public abstract class GroupedElementsRenderer {
 
   public abstract static class List extends GroupedElementsRenderer {
     @Override
-    protected final void layout() {
+    protected void layout() {
       myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH);
       myRendererComponent.add(myComponent, BorderLayout.CENTER);
     }

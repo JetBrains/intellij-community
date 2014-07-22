@@ -1045,11 +1045,103 @@ PsiJavaFile:TypeAnnotations.java
         PsiWhiteSpace('\n  ')
         PsiJavaToken:RBRACE('}')
     PsiWhiteSpace('\n\n  ')
-    PsiComment(END_OF_LINE_COMMENT)('//interface TestClass {')
-    PsiWhiteSpace('\n  ')
-    PsiComment(END_OF_LINE_COMMENT)('//  <T> @Nullable List<T> test();')
-    PsiWhiteSpace('\n  ')
-    PsiComment(END_OF_LINE_COMMENT)('//}')
+    PsiClass:TestClass
+      PsiModifierList:
+        <empty list>
+      PsiKeyword:interface('interface')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:TestClass('TestClass')
+      PsiTypeParameterList
+        <empty list>
+      PsiReferenceList
+        <empty list>
+      PsiReferenceList
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiJavaToken:LBRACE('{')
+      PsiWhiteSpace('\n    ')
+      PsiMethod:test
+        PsiModifierList:
+          <empty list>
+        PsiTypeParameterList
+          PsiJavaToken:LT('<')
+          PsiTypeParameter:T
+            PsiIdentifier:T('T')
+            PsiElement(EXTENDS_BOUND_LIST)
+              <empty list>
+          PsiJavaToken:GT('>')
+        PsiWhiteSpace(' ')
+        PsiTypeElement:@Nullable List<T>
+          PsiAnnotation
+            PsiJavaToken:AT('@')
+            PsiJavaCodeReferenceElement:Nullable
+              PsiIdentifier:Nullable('Nullable')
+              PsiReferenceParameterList
+                <empty list>
+            PsiAnnotationParameterList
+              <empty list>
+          PsiWhiteSpace(' ')
+          PsiJavaCodeReferenceElement:List<T>
+            PsiIdentifier:List('List')
+            PsiReferenceParameterList
+              PsiJavaToken:LT('<')
+              PsiTypeElement:T
+                PsiJavaCodeReferenceElement:T
+                  PsiIdentifier:T('T')
+                  PsiReferenceParameterList
+                    <empty list>
+              PsiJavaToken:GT('>')
+        PsiWhiteSpace(' ')
+        PsiIdentifier:test('test')
+        PsiParameterList:()
+          PsiJavaToken:LPARENTH('(')
+          PsiJavaToken:RPARENTH(')')
+        PsiReferenceList
+          <empty list>
+        PsiJavaToken:SEMICOLON(';')
+      PsiWhiteSpace('\n    ')
+      PsiMethod:test
+        PsiModifierList:
+          <empty list>
+        PsiTypeParameterList
+          PsiJavaToken:LT('<')
+          PsiTypeParameter:T
+            PsiIdentifier:T('T')
+            PsiElement(EXTENDS_BOUND_LIST)
+              <empty list>
+          PsiJavaToken:GT('>')
+        PsiWhiteSpace(' ')
+        PsiTypeElement:@Positive int
+          PsiAnnotation
+            PsiJavaToken:AT('@')
+            PsiJavaCodeReferenceElement:Positive
+              PsiIdentifier:Positive('Positive')
+              PsiReferenceParameterList
+                <empty list>
+            PsiAnnotationParameterList
+              <empty list>
+          PsiWhiteSpace(' ')
+          PsiKeyword:int('int')
+        PsiWhiteSpace(' ')
+        PsiIdentifier:test('test')
+        PsiParameterList:(T t)
+          PsiJavaToken:LPARENTH('(')
+          PsiParameter:t
+            PsiModifierList:
+              <empty list>
+            PsiTypeElement:T
+              PsiJavaCodeReferenceElement:T
+                PsiIdentifier:T('T')
+                PsiReferenceParameterList
+                  <empty list>
+            PsiWhiteSpace(' ')
+            PsiIdentifier:t('t')
+          PsiJavaToken:RPARENTH(')')
+        PsiReferenceList
+          <empty list>
+        PsiJavaToken:SEMICOLON(';')
+      PsiWhiteSpace('\n  ')
+      PsiJavaToken:RBRACE('}')
     PsiWhiteSpace('\n\n  ')
     PsiComment(END_OF_LINE_COMMENT)('//')
     PsiWhiteSpace('\n  ')
@@ -1492,7 +1584,47 @@ PsiJavaFile:TypeAnnotations.java
         PsiWhiteSpace(' ')
         PsiJavaToken:RBRACE('}')
     PsiWhiteSpace('\n  ')
-    PsiComment(END_OF_LINE_COMMENT)('//<T> @Immutable SpecSamples(T t) { }')
+    PsiMethod:SpecSamples
+      PsiModifierList:
+        <empty list>
+      PsiTypeParameterList
+        PsiJavaToken:LT('<')
+        PsiTypeParameter:T
+          PsiIdentifier:T('T')
+          PsiElement(EXTENDS_BOUND_LIST)
+            <empty list>
+        PsiJavaToken:GT('>')
+      PsiWhiteSpace(' ')
+      PsiAnnotation
+        PsiJavaToken:AT('@')
+        PsiJavaCodeReferenceElement:Immutable
+          PsiIdentifier:Immutable('Immutable')
+          PsiReferenceParameterList
+            <empty list>
+        PsiAnnotationParameterList
+          <empty list>
+      PsiWhiteSpace(' ')
+      PsiIdentifier:SpecSamples('SpecSamples')
+      PsiParameterList:(T t)
+        PsiJavaToken:LPARENTH('(')
+        PsiParameter:t
+          PsiModifierList:
+            <empty list>
+          PsiTypeElement:T
+            PsiJavaCodeReferenceElement:T
+              PsiIdentifier:T('T')
+              PsiReferenceParameterList
+                <empty list>
+          PsiWhiteSpace(' ')
+          PsiIdentifier:t('t')
+        PsiJavaToken:RPARENTH(')')
+      PsiReferenceList
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiCodeBlock
+        PsiJavaToken:LBRACE('{')
+        PsiWhiteSpace(' ')
+        PsiJavaToken:RBRACE('}')
     PsiWhiteSpace('\n\n  ')
     PsiComment(END_OF_LINE_COMMENT)('//')
     PsiWhiteSpace('\n  ')

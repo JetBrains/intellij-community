@@ -237,7 +237,7 @@ public abstract class StructuralSearchProfile {
           final PsiElement currentElement = matchResult.getMatch();
           
           if (buf.length() > 0) {
-            if (info.isParameterContext()) {
+            if (info.isArgumentContext()) {
               buf.append(',');
             } else {
               buf.append(' ');

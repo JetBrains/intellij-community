@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.psi.impl.java.stubs.impl.PsiImportStatementStubImpl;
 import com.intellij.psi.impl.source.PsiImportStatementImpl;
 import com.intellij.psi.impl.source.PsiImportStaticStatementImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.impl.source.tree.SourceUtil;
+import com.intellij.psi.impl.source.tree.JavaSourceUtil;
 import com.intellij.psi.impl.source.tree.java.ImportStaticStatementElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
@@ -68,7 +68,7 @@ public abstract class JavaImportStatementElementType extends JavaStubElementType
     for (LighterASTNode child : tree.getChildren(node)) {
       IElementType type = child.getTokenType();
       if (type == JavaElementType.JAVA_CODE_REFERENCE || type == JavaElementType.IMPORT_STATIC_REFERENCE) {
-        refText = SourceUtil.getReferenceText(tree, child);
+        refText = JavaSourceUtil.getReferenceText(tree, child);
       }
       else if (type == JavaTokenType.ASTERISK) {
         isOnDemand = true;

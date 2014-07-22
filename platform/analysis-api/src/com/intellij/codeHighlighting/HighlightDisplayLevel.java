@@ -107,8 +107,8 @@ public class HighlightDisplayLevel {
     }
   }
 
-  private static class ImageHolder {
-    private static final Image ourErrorMaskImage = ImageLoader.loadFromResource("/general/errorMask.png");
+  public static class ImageHolder {
+    public static final Image ourErrorMaskImage = ImageLoader.loadFromResource("/general/errorMask.png");
   }
 
   private static final int EMPTY_ICON_DIM = 12;

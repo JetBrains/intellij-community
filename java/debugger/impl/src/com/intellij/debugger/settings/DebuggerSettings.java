@@ -57,7 +57,6 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   @NonNls public static final String RUN_HOTSWAP_ASK = "RunHotswapAsk";
 
   public boolean TRACING_FILTERS_ENABLED;
-  public int VALUE_LOOKUP_DELAY; // ms
   public int DEBUGGER_TRANSPORT;
   public boolean FORCE_CLASSIC_VM;
   public boolean DISABLE_JIT;
@@ -144,7 +143,6 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
 
     return
       TRACING_FILTERS_ENABLED == secondSettings.TRACING_FILTERS_ENABLED &&
-      VALUE_LOOKUP_DELAY == secondSettings.VALUE_LOOKUP_DELAY &&
       DEBUGGER_TRANSPORT == secondSettings.DEBUGGER_TRANSPORT &&
       FORCE_CLASSIC_VM == secondSettings.FORCE_CLASSIC_VM &&
       DISABLE_JIT == secondSettings.DISABLE_JIT &&

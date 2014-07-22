@@ -251,11 +251,22 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     final Set<MethodSignature> existingSignatures = new HashSet<MethodSignature>(aClass.getVisibleSignatures());
     final Set<PsiMethodMember> selection = new HashSet<PsiMethodMember>();
     Map<PsiClass, PsiSubstitutor> superSubstitutors = new HashMap<PsiClass, PsiSubstitutor>();
+
+    final PsiClass containingClass = targetMember.getContainingClass();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(target.getProject());
     for (PsiMethod method : allMethods) {
       final PsiClass superClass = method.getContainingClass();
       if (CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) continue;
       if (method.isConstructor()) continue;
+
+      //do not suggest to override final method
+      if (method.hasModifierProperty(PsiModifier.FINAL)) {
+        PsiMethod overridden = containingClass.findMethodBySignature(method, true);
+        if (overridden != null && overridden.getContainingClass() != containingClass) {
+          continue;
+        }
+      }
+
       PsiSubstitutor superSubstitutor = superSubstitutors.get(superClass);
       if (superSubstitutor == null) {
         superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, targetClass, substitutor);

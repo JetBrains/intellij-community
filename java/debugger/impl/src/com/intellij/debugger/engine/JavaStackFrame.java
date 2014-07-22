@@ -27,7 +27,6 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
-import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.impl.FrameVariablesTree;
 import com.intellij.debugger.ui.impl.watch.*;
@@ -47,6 +46,7 @@ import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.ExceptionEvent;
@@ -271,7 +271,7 @@ public class JavaStackFrame extends XStackFrame {
     }
 
     try {
-      if (!ViewsGeneralSettings.getInstance().ENABLE_AUTO_EXPRESSIONS && !myAutoWatchMode) {
+      if (!XDebuggerSettingsManager.getInstance().getDataViewSettings().isAutoExpressions() && !myAutoWatchMode) {
         // optimization
         superBuildVariables(evaluationContext, children);
       }

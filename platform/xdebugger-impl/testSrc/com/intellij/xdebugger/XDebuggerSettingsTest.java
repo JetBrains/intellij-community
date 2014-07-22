@@ -36,11 +36,11 @@ public class XDebuggerSettingsTest extends PlatformLiteFixture {
     registerExtensionPoint(XDebuggerSettings.EXTENSION_POINT, XDebuggerSettings.class);
     registerExtension(XDebuggerSettings.EXTENSION_POINT, new MyDebuggerSettings());
     getApplication().registerService(XDebuggerUtil.class, XDebuggerUtilImpl.class);
-    getApplication().registerService(XDebuggerSettingsManager.class, XDebuggerSettingsManager.class);
+    getApplication().registerService(com.intellij.xdebugger.settings.XDebuggerSettingsManager.class, XDebuggerSettingsManager.class);
   }
 
   public void testSerialize() throws Exception {
-    XDebuggerSettingsManager settingsManager = XDebuggerSettingsManager.getInstance();
+    XDebuggerSettingsManager settingsManager = XDebuggerSettingsManager.getInstanceImpl();
 
     MyDebuggerSettings settings = MyDebuggerSettings.getInstance();
     assertNotNull(settings);

@@ -174,14 +174,6 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   }
 
   @Override
-  public boolean isProjectExcludeRoot(@NotNull VirtualFile dir) {
-    checkAvailability();
-    if (!(dir instanceof NewVirtualFile)) return false;
-
-    return getRootIndex().isProjectExcludeRoot(dir);
-  }
-
-  @Override
   public String getPackageName(@NotNull VirtualFile dir) {
     checkAvailability();
     if (!(dir instanceof NewVirtualFile)) return null;

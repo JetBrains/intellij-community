@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class ProgressIndicatorProvider {
   @Nullable
-  public static volatile ProgressIndicatorProvider ourInstance;
+  public static ProgressIndicatorProvider ourInstance;
 
   @Nullable
   public static ProgressIndicatorProvider getInstance() {
@@ -36,27 +36,22 @@ public abstract class ProgressIndicatorProvider {
 
   @Nullable
   public static ProgressIndicator getGlobalProgressIndicator() {
-    ProgressIndicatorProvider provider = ourInstance;
-    return provider != null ? provider.getProgressIndicator() : null;
+    return ourInstance != null ? ourInstance.getProgressIndicator() : null;
   }
 
   public abstract NonCancelableSection startNonCancelableSection();
 
   @NotNull
   public static NonCancelableSection startNonCancelableSectionIfSupported() {
-    ProgressIndicatorProvider provider = ourInstance;
-    return provider != null ? provider.startNonCancelableSection() : NonCancelableSection.EMPTY;
+    return ourInstance != null ? ourInstance.startNonCancelableSection() : NonCancelableSection.EMPTY;
   }
 
   public static volatile boolean ourNeedToCheckCancel = false;
   public static void checkCanceled() throws ProcessCanceledException {
     // smart optimization! There's a thread started in ProgressManagerImpl, that set's this flag up once in 10 milliseconds
-    if (ourNeedToCheckCancel) {
-      ProgressIndicatorProvider provider = ourInstance;
-      if (provider != null) {
-        provider.doCheckCanceled();
-        ourNeedToCheckCancel = false;
-      }
+    if (ourNeedToCheckCancel && ourInstance != null) {
+      ourInstance.doCheckCanceled();
+      ourNeedToCheckCancel = false;
     }
   }
 }

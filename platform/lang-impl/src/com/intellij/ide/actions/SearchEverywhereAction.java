@@ -56,6 +56,7 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.MacKeymapUtil;
+import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -151,105 +152,24 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private Component myContextComponent;
   private CalcThread myCalcThread;
   private static AtomicBoolean ourShiftIsPressed = new AtomicBoolean(false);
-  private final static Couple<AtomicBoolean> ourPressed = Couple.of(new AtomicBoolean(false), new AtomicBoolean(false));
-  private final static Couple<AtomicBoolean> ourReleased = Couple.of(new AtomicBoolean(false), new AtomicBoolean(false));
-  private static AtomicBoolean ourOtherKeyWasPressed = new AtomicBoolean(false);
-  private static AtomicLong ourLastTimePressed = new AtomicLong(0);
   private static AtomicBoolean showAll = new AtomicBoolean(false);
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
   private int myHistoryIndex = 0;
   boolean mySkipFocusGain = false;
 
   static {
+    ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_SEARCH_EVERYWHERE, KeyEvent.VK_SHIFT, -1);
+
     IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
       @Override
       public boolean dispatch(AWTEvent event) {
         if (event instanceof KeyEvent) {
-          final KeyEvent keyEvent = (KeyEvent)event;
-          final int keyCode = keyEvent.getKeyCode();
-
+          final int keyCode = ((KeyEvent)event).getKeyCode();
           if (keyCode == KeyEvent.VK_SHIFT) {
             ourShiftIsPressed.set(event.getID() == KeyEvent.KEY_PRESSED);
-
-            if (keyEvent.isControlDown() || keyEvent.isAltDown() || keyEvent.isMetaDown()) {
-              resetState();
-              return false;
-            }
-            if (ourOtherKeyWasPressed.get() && System.currentTimeMillis() - ourLastTimePressed.get() < 500) {
-              resetState();
-              return false;
-            }
-            ourOtherKeyWasPressed.set(false);
-            if (ourPressed.first.get() && System.currentTimeMillis() - ourLastTimePressed.get() > 500) {
-              resetState();
-            }
-            handleShift((KeyEvent)event);
-            return false;
-          } else {
-            ourLastTimePressed.set(System.currentTimeMillis());
-            ourOtherKeyWasPressed.set(true);
-            if (keyCode == KeyEvent.VK_ESCAPE || keyCode == KeyEvent.VK_TAB)  {
-              ourLastTimePressed.set(0);
-            }
           }
-          resetState();
         }
         return false;
-      }
-
-      private void resetState() {
-        ourPressed.first.set(false);
-        ourPressed.second.set(false);
-        ourReleased.first.set(false);
-        ourReleased.second.set(false);
-      }
-
-      private void handleShift(KeyEvent event) {
-        if (ourPressed.first.get() && System.currentTimeMillis() - ourLastTimePressed.get() > 300) {
-          resetState();
-          return;
-        }
-
-        if (event.getID() == KeyEvent.KEY_PRESSED) {
-          if (!ourPressed.first.get()) {
-            resetState();
-            ourPressed.first.set(true);
-            ourLastTimePressed.set(System.currentTimeMillis());
-            return;
-          } else {
-            if (ourPressed.first.get() && ourReleased.first.get()) {
-              ourPressed.second.set(true);
-              ourLastTimePressed.set(System.currentTimeMillis());
-              return;
-            }
-          }
-        } else if (event.getID() == KeyEvent.KEY_RELEASED) {
-          if (ourPressed.first.get() && !ourReleased.first.get()) {
-            ourReleased.first.set(true);
-            ourLastTimePressed.set(System.currentTimeMillis());
-            return;
-          } else if (ourPressed.first.get() && ourReleased.first.get() && ourPressed.second.get()) {
-            resetState();
-            run(event);
-            return;
-          }
-        }
-        resetState();
-      }
-
-      private void run(KeyEvent event) {
-        final ActionManager actionManager = ActionManager.getInstance();
-                  final AnAction action = actionManager.getAction(IdeActions.ACTION_SEARCH_EVERYWHERE);
-                  if (KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).length > 0) {
-                    return;
-                  }
-                  final AnActionEvent anActionEvent = new AnActionEvent(event,
-                                                                        DataManager.getInstance().getDataContext(IdeFocusManager.findInstance().getFocusOwner()),
-                                                                        ActionPlaces.MAIN_MENU,
-                                                                        action.getTemplatePresentation(),
-                                                                        actionManager,
-                                                                        0);
-                  action.actionPerformed(anActionEvent);
       }
     }, null);
   }
@@ -1796,8 +1716,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       GotoActionModel model = new GotoActionModel(project, myFocusComponent, myEditor, myFile) {
         @Override
         protected MatchMode actionMatches(String pattern, @NotNull AnAction anAction) {
-          return NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE)
-                   .matches(anAction.getTemplatePresentation().getText()) ? MatchMode.NAME : MatchMode.NONE;
+          String text = anAction.getTemplatePresentation().getText();
+          return text != null && NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE)
+                   .matches(text) ? MatchMode.NAME : MatchMode.NONE;
         }
       };
       return new GotoActionItemProvider(model);

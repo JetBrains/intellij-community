@@ -51,7 +51,7 @@ public class CreateAbstractMethodFromUsageFix extends CreateMethodFromUsageFix {
   }
 
   @Override
-  protected boolean shouldBeAbstract(PsiClass targetClass) {
+  protected boolean shouldBeAbstract(PsiReferenceExpression expression, PsiClass targetClass) {
     return true;
   }
 }

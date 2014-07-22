@@ -218,6 +218,7 @@ public class JavaDocInfoGenerator {
       LOG.debug(text);
     }
 
+    text = StringUtil.replaceIgnoreCase(text, "<p/>", "<p></p>");
     return StringUtil.replace(text, "/>", ">");
   }
 

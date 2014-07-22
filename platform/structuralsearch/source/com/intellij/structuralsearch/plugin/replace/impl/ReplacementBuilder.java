@@ -16,6 +16,8 @@ import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -27,10 +29,8 @@ import java.util.*;
 public final class ReplacementBuilder {
   private String replacement;
   private List<ParameterInfo> parameterizations;
-  private HashMap<String,MatchResult> matchMap;
   private final Map<String, ScriptSupport> replacementVarsMap;
   private final ReplaceOptions options;
-  //private Map<TextRange,ParameterInfo> scopedParameterizations;
 
   ReplacementBuilder(final Project project,final ReplaceOptions options) {
     replacementVarsMap = new HashMap<String, ScriptSupport>();
@@ -76,7 +76,7 @@ public final class ReplacementBuilder {
           info.setStatementContext(true);
         }
         else if (ch == ',' || ch == ')') {
-          info.setParameterContext(true);
+          info.setArgumentContext(true);
           info.setHasCommaAfter(ch == ',');
         }
         info.setAfterDelimiterPos(pos);
@@ -136,7 +136,7 @@ public final class ReplacementBuilder {
     }
 
     final StringBuilder result = new StringBuilder(replacement);
-    matchMap = new HashMap<String,MatchResult>();
+    HashMap<String, MatchResult> matchMap = new HashMap<String, MatchResult>();
     fill(match, matchMap);
 
     int offset = 0;
@@ -160,7 +160,7 @@ public final class ReplacementBuilder {
           result.delete(info.getAfterDelimiterPos() + offset, info.getAfterDelimiterPos() + 1 + offset);
           --offset;
         }
-        else if (info.isVariableInitialContext()) {
+        else if (info.isVariableInitializerContext()) {
           //if (info.afterDelimiterPos > 0) {
             result.delete(info.getBeforeDelimiterPos() + offset, info.getAfterDelimiterPos() + offset - 1);
             offset -= (info.getAfterDelimiterPos() - info.getBeforeDelimiterPos() - 1);
@@ -188,6 +188,7 @@ public final class ReplacementBuilder {
     return scriptSupport.evaluate((MatchResultImpl)match, null);
   }
 
+  @Nullable
   public ParameterInfo findParameterization(String name) {
     if (parameterizations==null) return null;
 
@@ -210,7 +211,7 @@ public final class ReplacementBuilder {
     }
   }
 
-  public void addParametrization(ParameterInfo e) {
+  public void addParametrization(@NotNull ParameterInfo e) {
     assert parameterizations != null;
     parameterizations.add(e);
   }

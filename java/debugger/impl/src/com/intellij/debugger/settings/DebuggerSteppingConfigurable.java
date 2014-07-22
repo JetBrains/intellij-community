@@ -18,6 +18,7 @@ package com.intellij.debugger.settings;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.classFilter.ClassFilterEditor;
@@ -75,7 +76,7 @@ public class DebuggerSteppingConfigurable implements SearchableConfigurable, Con
   }
 
   public String getDisplayName() {
-    return DebuggerBundle.message("debugger.stepping.configurable.display.name");
+    return OptionsBundle.message("options.java.display.name");
   }
 
   @NotNull

@@ -105,7 +105,7 @@ public class PointlessArithmeticExpressionInspection
         fromTarget = (i == length - 1) ? polyadicExpression.getTokenBeforeOperand(operand) : operand;
         break;
       }
-      else if ((tokenType.equals(JavaTokenType.MINUS) || tokenType.equals(JavaTokenType.DIV)) &&
+      else if ((tokenType.equals(JavaTokenType.MINUS) && i == 1 || tokenType.equals(JavaTokenType.DIV)) &&
                EquivalenceChecker.expressionsAreEquivalent(previousOperand, operand)) {
         fromTarget = previousOperand;
         untilTarget = operand;
@@ -229,9 +229,10 @@ public class PointlessArithmeticExpressionInspection
 
     private boolean subtractionExpressionIsPointless(PsiExpression[] expressions) {
       PsiExpression previousExpression = null;
-      for (PsiExpression expression : expressions) {
+      for (int i = 0; i < expressions.length; i++) {
+        PsiExpression expression = expressions[i];
         if (previousExpression != null &&
-            (isZero(expression) || EquivalenceChecker.expressionsAreEquivalent(previousExpression, expression))) {
+            (isZero(expression) || i == 1 && EquivalenceChecker.expressionsAreEquivalent(previousExpression, expression))) {
           return true;
         }
         previousExpression = expression;

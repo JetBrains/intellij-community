@@ -102,6 +102,6 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
     if (myTargetDirectory == null) {
       myTargetDirectory = RefactoringUtil.createPackageDirectoryInSourceRoot(myPackage, mySourceRoot);
     }
-    return RefactoringUtil.createPackageDirectoryInSourceRoot(myPackage, mySourceRoot);
+    return myTargetDirectory;
   }
 }

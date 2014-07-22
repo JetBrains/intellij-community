@@ -149,8 +149,10 @@ public class InspectionsConfigTreeTable extends TreeTable {
         final MultiColoredHighlightSeverityIconSink sink = new MultiColoredHighlightSeverityIconSink();
         for (final HighlightDisplayKey selectedInspectionsNode : inspectionsKeys) {
           final String toolId = selectedInspectionsNode.toString();
-          sink.put(mySettings.getInspectionProfile().getToolDefaultState(toolId, mySettings.getProject()),
-                   mySettings.getInspectionProfile().getNonDefaultTools(toolId, mySettings.getProject()));
+          if (mySettings.getInspectionProfile().getTools(toolId, mySettings.getProject()).isEnabled()) {
+            sink.put(mySettings.getInspectionProfile().getToolDefaultState(toolId, mySettings.getProject()),
+                     mySettings.getInspectionProfile().getNonDefaultTools(toolId, mySettings.getProject()));
+          }
         }
         return sink.constructIcon();
       } else if (column == IS_ENABLED_COLUMN) {
@@ -207,6 +209,9 @@ public class InspectionsConfigTreeTable extends TreeTable {
     private boolean myIsFirst = true;
 
     public Icon constructIcon() {
+      if (myScopeToAverageSeverityMap.isEmpty()) {
+        return null;
+      }
       //TODO order scopes
       return !allScopesHasMixedSeverity()
              ? new MultiScopeSeverityIcon(myScopeToAverageSeverityMap)

@@ -459,7 +459,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     }
     final String groupName = myActionsMap.get(anAction);
     if (groupName == null) {
-      return matcher.matches(text, compiledPattern) ? MatchMode.NON_MENU : MatchMode.NONE;
+      return text != null && matcher.matches(text, compiledPattern) ? MatchMode.NON_MENU : MatchMode.NONE;
     }
     return text != null && matcher.matches(groupName + " " + text, compiledPattern) ? MatchMode.GROUP : MatchMode.NONE;
   }

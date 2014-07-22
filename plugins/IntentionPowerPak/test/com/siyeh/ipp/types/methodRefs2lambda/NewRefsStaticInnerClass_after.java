@@ -10,6 +10,6 @@ class MyTest {
     
 
   static {
-      I i1 = (receiver) -> new Inner(receiver);
+      I i1 = (outer) -> new Inner(outer);
   }
 }

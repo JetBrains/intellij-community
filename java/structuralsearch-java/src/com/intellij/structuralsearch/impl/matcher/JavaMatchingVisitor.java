@@ -321,18 +321,14 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   @Override
   public void visitNameValuePair(PsiNameValuePair pair) {
     final PsiIdentifier nameIdentifier = pair.getNameIdentifier();
-    if (nameIdentifier == null) {
-      myMatchingVisitor.setResult(true);
-      return;
-    }
 
     final PsiNameValuePair elementNameValuePair = (PsiNameValuePair)myMatchingVisitor.getElement();
-    PsiIdentifier matchedNameValuePair = elementNameValuePair.getNameIdentifier();
+    final PsiIdentifier otherIdentifier = elementNameValuePair.getNameIdentifier();
 
-    PsiAnnotationMemberValue annotationInitializer = pair.getValue();
+    final PsiAnnotationMemberValue annotationInitializer = pair.getValue();
     if (annotationInitializer != null) {
-      boolean isTypedInitializer = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(annotationInitializer) &&
-                                   annotationInitializer instanceof PsiReferenceExpression;
+      final boolean isTypedInitializer = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(annotationInitializer) &&
+                                         annotationInitializer instanceof PsiReferenceExpression;
 
       myMatchingVisitor.setResult(myMatchingVisitor.match(annotationInitializer, elementNameValuePair.getValue()) ||
                                   (isTypedInitializer &&
@@ -344,13 +340,13 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(nameIdentifier);
 
       if (handler instanceof SubstitutionHandler) {
-        myMatchingVisitor
-          .setResult(((SubstitutionHandler)handler).handle(matchedNameValuePair,
-                                                           myMatchingVisitor.getMatchContext()));
+        myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(otherIdentifier, myMatchingVisitor.getMatchContext()));
+      }
+      else if (nameIdentifier != null) {
+        myMatchingVisitor.setResult(myMatchingVisitor.match(nameIdentifier, otherIdentifier));
       }
       else {
-        myMatchingVisitor
-          .setResult(myMatchingVisitor.match(nameIdentifier, matchedNameValuePair));
+        myMatchingVisitor.setResult(otherIdentifier == null || otherIdentifier.getText().equals("value"));
       }
     }
   }
