@@ -181,7 +181,7 @@ public class PyPackageUtil {
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        if (!fileIndex.isIgnored(file) && file.isDirectory() && file.findChild(PyNames.INIT_DOT_PY) != null) {
+        if (!fileIndex.isExcluded(file) && file.isDirectory() && file.findChild(PyNames.INIT_DOT_PY) != null) {
           results.add(VfsUtilCore.getRelativePath(file, root, '.'));
         }
         return true;

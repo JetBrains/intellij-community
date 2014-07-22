@@ -142,7 +142,7 @@ public class ProjectViewDirectoryHelper {
         VirtualFile directoryFile = subdir.getVirtualFile();
 
         if (Registry.is("ide.hide.excluded.files")) {
-          if (fileIndex.isIgnored(directoryFile)) continue;
+          if (fileIndex.isExcluded(directoryFile)) continue;
         }
         else {
           if (FileTypeRegistry.getInstance().isFileIgnored(directoryFile)) continue;

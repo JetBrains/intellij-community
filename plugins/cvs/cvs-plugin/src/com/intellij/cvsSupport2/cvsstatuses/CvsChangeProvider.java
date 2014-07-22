@@ -169,7 +169,7 @@ public class CvsChangeProvider implements ChangeProvider {
         for (VirtualFile file : children) {
           progress.checkCanceled();
           if (file.isDirectory()) {
-            final boolean isIgnored = myFileIndex.isIgnored(file);
+            final boolean isIgnored = myFileIndex.isExcluded(file);
             if (!isIgnored) {
               processEntriesIn(file, scope, builder, true, progress);
             }

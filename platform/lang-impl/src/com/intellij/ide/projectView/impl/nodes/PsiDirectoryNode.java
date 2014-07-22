@@ -188,7 +188,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     if (Registry.is("ide.hide.excluded.files")) {
       final Project project = value.getProject();
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      return !fileIndex.isIgnored(file);
+      return !fileIndex.isExcluded(file);
     }
     else {
       return !FileTypeRegistry.getInstance().isFileIgnored(file);

@@ -169,7 +169,7 @@ public class MvcModuleStructureUtil {
   @Nullable
   public static Consumer<ModifiableRootModel> addJarDirectory(VirtualFile root, Module module, final String libName) {
     final VirtualFile libDir = root.findFileByRelativePath("lib");
-    if (libDir == null || !libDir.isDirectory() || ProjectRootManager.getInstance(module.getProject()).getFileIndex().isIgnored(libDir)) {
+    if (libDir == null || !libDir.isDirectory() || ProjectRootManager.getInstance(module.getProject()).getFileIndex().isExcluded(libDir)) {
       return null;
     }
 

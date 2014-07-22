@@ -73,7 +73,7 @@ public class IdeaGateway {
       if (Comparing.equal(each.getWorkspaceFile(), f)) return false;
       ProjectFileIndex index = ProjectRootManager.getInstance(each).getFileIndex();
       
-      if (index.isIgnored(f)) return false;
+      if (index.isExcluded(f)) return false;
       isInContent |= index.isInContent(f);
     }
     if (shouldBeInContent && !isInContent) return false;

@@ -42,7 +42,7 @@ public class ProjectFilesScope extends NamedScope {
         if (file == null) return false;
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
         return holder.getProject().isInitialized()
-               && !fileIndex.isIgnored(file)
+               && !fileIndex.isExcluded(file)
                && fileIndex.getContentRootForFile(file) != null;
       }
     });

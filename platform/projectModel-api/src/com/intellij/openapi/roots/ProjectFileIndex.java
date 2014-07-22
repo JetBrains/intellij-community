@@ -129,11 +129,18 @@ public interface ProjectFileIndex extends FileIndex {
   boolean isInLibrarySource(@NotNull VirtualFile fileOrDir);
 
   /**
-   * Checks if the specified file or directory is ignored (either excluded by exclude roots
-   * or ignored by {@link com.intellij.openapi.fileTypes.FileTypeManager#isFileIgnored(String)}).
+   * @deprecated name of this method may be confusing. If you want to check if the file is excluded or ignored use {@link #isExcluded(com.intellij.openapi.vfs.VirtualFile)}.
+   * If you want to check if the file is ignored use {@link com.intellij.openapi.fileTypes.FileTypeRegistry#isFileIgnored(com.intellij.openapi.vfs.VirtualFile)}.
+   */
+  @Deprecated
+  boolean isIgnored(@NotNull VirtualFile file);
+
+  /**
+   * Checks if the specified file or directory is located under project roots but the file itself or one of its parent directories is
+   * either excluded from the project or ignored by {@link com.intellij.openapi.fileTypes.FileTypeRegistry#isFileIgnored(com.intellij.openapi.vfs.VirtualFile)}).
    *
    * @param file the file to check.
-   * @return true if <code>file</code> is ignored, false otherwise.
+   * @return true if <code>file</code> is excluded or ignored, false otherwise.
    */
-  boolean isIgnored(@NotNull VirtualFile file);
+  boolean isExcluded(@NotNull VirtualFile file);
 }

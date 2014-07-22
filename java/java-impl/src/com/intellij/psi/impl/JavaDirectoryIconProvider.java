@@ -70,7 +70,7 @@ public class JavaDirectoryIconProvider extends IconProvider implements DumbAware
       else if (JavaDirectoryService.getInstance().getPackage(psiDirectory) != null) {
         symbolIcon = PlatformIcons.PACKAGE_ICON;
       }
-      else if (!Registry.is("ide.hide.excluded.files") && ProjectRootManager.getInstance(project).getFileIndex().isIgnored(vFile)) {
+      else if (!Registry.is("ide.hide.excluded.files") && ProjectRootManager.getInstance(project).getFileIndex().isExcluded(vFile)) {
         symbolIcon = AllIcons.Modules.ExcludeRoot;
       }
       else {

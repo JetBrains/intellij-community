@@ -151,11 +151,11 @@ public class ImportTree extends NodeRenderer {
       return;
     }
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    if (!fileIndex.isIgnored(selectedFile)) {
+    if (!fileIndex.isExcluded(selectedFile)) {
       return;
     }
     final VirtualFile parent = selectedFile.getParent();
-    if (parent != null && fileIndex.isIgnored(parent)) {
+    if (parent != null && fileIndex.isExcluded(parent)) {
       return;
     }
     for (final VirtualFile excludedFile : myExcludedFiles) {
@@ -183,11 +183,11 @@ public class ImportTree extends NodeRenderer {
         continue;
       }
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      if (!fileIndex.isIgnored(selectedFile)) {
+      if (!fileIndex.isExcluded(selectedFile)) {
         continue;
       }
       final VirtualFile parent = selectedFile.getParent();
-      if (parent == null || fileIndex.isIgnored(parent) || myExcludedFiles.contains(parent)) {
+      if (parent == null || fileIndex.isExcluded(parent) || myExcludedFiles.contains(parent)) {
         continue;
       }
       if (!myIncludedFiles.contains(selectedFile)) {
@@ -211,7 +211,7 @@ public class ImportTree extends NodeRenderer {
         return true;
       }
     }
-    if (myProject == null || !ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(file)) {
+    if (myProject == null || !ProjectRootManager.getInstance(myProject).getFileIndex().isExcluded(file)) {
       return false;
     }
     for (VirtualFile includedFile : myIncludedFiles) {
@@ -242,7 +242,7 @@ public class ImportTree extends NodeRenderer {
         if (FileTypeManager.getInstance().isFileIgnored(abstractFileObject.getName())) return true;
         if (myProject != null && !includedFiles.contains(file)) {
           final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-          if (vFile != null && ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(vFile)) {
+          if (vFile != null && ProjectRootManager.getInstance(myProject).getFileIndex().isExcluded(vFile)) {
             return true;
           }
         }

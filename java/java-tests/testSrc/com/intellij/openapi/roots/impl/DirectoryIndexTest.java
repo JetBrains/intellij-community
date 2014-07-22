@@ -362,7 +362,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     VirtualFile ignoredFile = myModule1Dir.createChildData(this, "CVS");
     DirectoryInfo info = myIndex.getInfoForFile(ignoredFile);
     assertTrue(info.isIgnored());
-    assertTrue(ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(ignoredFile));
+    assertTrue(ProjectRootManager.getInstance(myProject).getFileIndex().isExcluded(ignoredFile));
   }
 
   public void testAddModule() throws Exception {
@@ -386,10 +386,10 @@ public class DirectoryIndexTest extends IdeaTestCase {
   public void testModuleUnderIgnoredDir() throws IOException {
     final VirtualFile ignored = myRootVFile.createChildDirectory(this, "RCS");
     assertTrue(FileTypeManager.getInstance().isFileIgnored(ignored));
-    assertTrue(ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(ignored));
+    assertTrue(ProjectRootManager.getInstance(myProject).getFileIndex().isExcluded(ignored));
     final VirtualFile module4 = ignored.createChildDirectory(this, "module4");
     assertFalse(FileTypeManager.getInstance().isFileIgnored(module4));
-    assertTrue(ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(module4));
+    assertTrue(ProjectRootManager.getInstance(myProject).getFileIndex().isExcluded(module4));
 
     new WriteCommandAction.Simple(getProject()) {
       @Override
@@ -427,9 +427,9 @@ public class DirectoryIndexTest extends IdeaTestCase {
   public void testExcludedDirsInLibraries() {
     ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     assertFalse(index.isInLibraryClasses(myExcludedLibClsDir));
-    assertTrue(index.isIgnored(myExcludedLibClsDir));
+    assertTrue(index.isExcluded(myExcludedLibClsDir));
     assertFalse(index.isInLibrarySource(myExcludedLibSrcDir));
-    assertTrue(index.isIgnored(myExcludedLibSrcDir));
+    assertTrue(index.isExcluded(myExcludedLibSrcDir));
   }
 
   public void testExplicitExcludeOfInner() throws Exception {
@@ -662,9 +662,9 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
   public void testExcludeCompilerOutputOutsideOfContentRoot() throws Exception {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    assertTrue(fileIndex.isIgnored(myOutputDir));
-    assertTrue(fileIndex.isIgnored(myModule1OutputDir));
-    assertFalse(fileIndex.isIgnored(myOutputDir.getParent()));
+    assertTrue(fileIndex.isExcluded(myOutputDir));
+    assertTrue(fileIndex.isExcluded(myModule1OutputDir));
+    assertFalse(fileIndex.isExcluded(myOutputDir.getParent()));
     assertExcludedFromProject(myOutputDir);
     assertExcludedFromProject(myModule1OutputDir);
     String moduleOutputUrl = myModule1OutputDir.getUrl();
@@ -677,7 +677,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
     assertExcludedFromProject(myOutputDir);
     assertExcludedFromProject(myModule1OutputDir);
-    assertTrue(fileIndex.isIgnored(myModule1OutputDir));
+    assertTrue(fileIndex.isExcluded(myModule1OutputDir));
 
     PsiTestUtil.setCompilerOutputPath(myModule, moduleOutputUrl, true);
     PsiTestUtil.setCompilerOutputPath(myModule2, moduleOutputUrl, false);

@@ -79,7 +79,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   @Override
-  public boolean isIgnored(@NotNull VirtualFile file) {
+  public boolean isExcluded(@NotNull VirtualFile file) {
     DirectoryInfo info = getInfoForFileOrDirectory(file);
     return info.isIgnored() || info.isExcluded();
   }
@@ -147,6 +147,11 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public boolean isInLibrarySource(@NotNull VirtualFile fileOrDir) {
     return getInfoForFileOrDirectory(fileOrDir).isInLibrarySource();
+  }
+
+  @Override
+  public boolean isIgnored(@NotNull VirtualFile file) {
+    return isExcluded(file);
   }
 
   @Override

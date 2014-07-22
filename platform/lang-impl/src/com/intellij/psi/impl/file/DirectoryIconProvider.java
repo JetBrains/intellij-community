@@ -50,7 +50,7 @@ public class DirectoryIconProvider extends IconProvider implements DumbAware {
       }
       else {
         if (!Registry.is("ide.hide.excluded.files")) {
-          boolean ignored = ProjectRootManager.getInstance(project).getFileIndex().isIgnored(vFile);
+          boolean ignored = ProjectRootManager.getInstance(project).getFileIndex().isExcluded(vFile);
           if (ignored) {
             return AllIcons.Modules.ExcludeRoot;
           }
