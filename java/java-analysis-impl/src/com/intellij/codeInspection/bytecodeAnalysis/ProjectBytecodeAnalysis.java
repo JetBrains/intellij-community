@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
@@ -27,6 +28,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.LongStack;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -45,6 +47,7 @@ import java.util.List;
 public class ProjectBytecodeAnalysis {
   public static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis");
   public static final Key<Boolean> INFERRED_ANNOTATION = Key.create("INFERRED_ANNOTATION");
+  public static final int EQUATIONS_LIMIT = 1000;
   private final Project myProject;
 
   public static ProjectBytecodeAnalysis getInstance(@NotNull Project project) {
@@ -124,6 +127,11 @@ public class ProjectBytecodeAnalysis {
       LOG.debug(e);
       return PsiAnnotation.EMPTY_ARRAY;
     }
+    catch (EquationsLimitException e) {
+      String externalName = PsiFormatUtil.getExternalName(listOwner, false, Integer.MAX_VALUE);
+      LOG.info("Too many equations for " + externalName);
+      return PsiAnnotation.EMPTY_ARRAY;
+    }
   }
 
   private PsiAnnotation getNotNullAnnotation() {
@@ -170,7 +178,8 @@ public class ProjectBytecodeAnalysis {
     return result;
   }
 
-  private Annotations loadAnnotations(@NotNull PsiModifierListOwner owner, long key, TLongArrayList allKeys) throws IOException {
+  private Annotations loadAnnotations(@NotNull PsiModifierListOwner owner, long key, TLongArrayList allKeys)
+    throws IOException, EquationsLimitException {
     Annotations result = new Annotations();
     if (owner instanceof PsiParameter) {
       final Solver solver = new Solver(new ELattice<Value>(Value.NotNull, Value.Top));
@@ -187,8 +196,7 @@ public class ProjectBytecodeAnalysis {
     return result;
   }
 
-  // todo - should be some limit of equations
-  private void collectEquations(TLongArrayList keys, Solver solver) {
+  private void collectEquations(TLongArrayList keys, Solver solver) throws EquationsLimitException {
     GlobalSearchScope librariesScope = ProjectScope.getLibrariesScope(myProject);
     TLongHashSet queued = new TLongHashSet();
     LongStack queue = new LongStack();
@@ -204,13 +212,17 @@ public class ProjectBytecodeAnalysis {
 
     FileBasedIndex index = FileBasedIndex.getInstance();
     while (!queue.empty()) {
+      if (queued.size() > EQUATIONS_LIMIT) {
+        throw new EquationsLimitException();
+      }
+      ProgressManager.checkCanceled();
       List<IdEquation> equations = index.getValues(BytecodeAnalysisIndex.NAME, queue.pop(), librariesScope);
       for (IdEquation equation : equations) {
         IdResult rhs = equation.rhs;
         solver.addEquation(equation);
         if (rhs instanceof IdPending) {
           IdPending intIdPending = (IdPending)rhs;
-          for (IntIdComponent component :intIdPending.delta) {
+          for (IntIdComponent component : intIdPending.delta) {
             for (long depKey : component.ids) {
               if (!queued.contains(depKey)) {
                 queue.push(depKey);
@@ -243,3 +255,5 @@ class Annotations {
   // @Contracts
   final TLongObjectHashMap<String> contracts = new TLongObjectHashMap<String>();
 }
+
+class EquationsLimitException extends Exception {}
