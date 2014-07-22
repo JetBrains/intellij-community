@@ -52,6 +52,8 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManagerImpl;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
+import com.intellij.profile.codeInspection.ui.filter.InspectionFilterAction;
+import com.intellij.profile.codeInspection.ui.filter.InspectionsFilter;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeComparator;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeRenderer;
@@ -105,6 +107,12 @@ public class SingleInspectionProfilePanel extends JPanel {
   private JPanel myOptionsPanel;
   private JPanel myInspectionProfilePanel = null;
   private FilterComponent myProfileFilter;
+  private final InspectionsFilter myInspectionsFilter = new InspectionsFilter() {
+    @Override
+    protected void filterChanged() {
+      filterTree(myProfileFilter.getFilter());
+    }
+  };
   private final InspectionConfigTreeNode myRoot =
     new InspectionConfigTreeNode(InspectionsBundle.message("inspection.root.node.title"));
   private final Alarm myAlarm = new Alarm();
@@ -308,7 +316,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     myProfileFilter.setFilter(filter);
   }
 
-  public void filterTree(String filter) {
+  private void filterTree(@Nullable String filter) {
     if (myTreeTable != null) {
       getExpandedNodes(mySelectedProfile).saveVisibleState(myTreeTable.getTree());
       fillTreeData(filter, true);
@@ -318,6 +326,10 @@ public class SingleInspectionProfilePanel extends JPanel {
         TreeUtil.selectFirstNode(myTreeTable.getTree());
       }
     }
+  }
+
+  private void filterTree() {
+    filterTree(myProfileFilter != null ? myProfileFilter.getFilter() : null);
   }
 
   private void reloadModel() {
@@ -346,6 +358,10 @@ public class SingleInspectionProfilePanel extends JPanel {
     final CommonActionsManager actionManager = CommonActionsManager.getInstance();
 
     DefaultActionGroup actions = new DefaultActionGroup();
+
+    actions.add(new InspectionFilterAction(mySelectedProfile, myInspectionsFilter));
+    actions.addSeparator();
+
     actions.add(actionManager.createExpandAllAction(myTreeExpander, myTreeTable));
     actions.add(actionManager.createCollapseAllAction(myTreeExpander, myTreeTable));
 
@@ -391,8 +407,6 @@ public class SingleInspectionProfilePanel extends JPanel {
         mySelectedProfile.lockProfile(state);
       }
     });
-
-    actions.addSeparator();
 
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
     actionToolbar.setTargetComponent(this);
@@ -637,7 +651,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     return forceInclude;
   }
 
-  private void fillTreeData(String filter, boolean forceInclude) {
+  private void fillTreeData(@Nullable String filter, boolean forceInclude) {
     if (mySelectedProfile == null) return;
     myRoot.removeAllChildren();
     myRoot.dropCache();
@@ -646,9 +660,13 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (filter != null && !filter.isEmpty()) {
       keySetList.addAll(SearchUtil.findKeys(filter, quoted));
     }
+    Project project = myProjectProfileManager.getProject();
     for (ToolDescriptors toolDescriptors : myInitialToolDescriptors) {
       final Descriptor descriptor = toolDescriptors.getDefaultDescriptor();
       if (filter != null && !filter.isEmpty() && !isDescriptorAccepted(descriptor, filter, forceInclude, keySetList, quoted)) {
+        continue;
+      }
+      if (!myInspectionsFilter.matches(mySelectedProfile.getTools(toolDescriptors.getDefaultDescriptor().getKey().toString(), project))) {
         continue;
       }
       final InspectionConfigTreeNode node = new InspectionConfigTreeNode(toolDescriptors);
@@ -908,7 +926,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       myInitialProfile = mySelectedProfile.getName();
     }
     initToolStates();
-    filterTree(myProfileFilter != null ? myProfileFilter.getFilter() : null);
+    filterTree();
   }
 
   @Override
@@ -962,8 +980,8 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     final JPanel northPanel = new JPanel(new GridBagLayout());
     northPanel.setBorder(IdeBorderFactory.createEmptyBorder(2, 0, 2, 0));
-    northPanel.add(createTreeToolbarPanel().getComponent(), new GridBagConstraints(0, 0, 1, 1, 0.5, 1, GridBagConstraints.BASELINE_LEADING, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-    northPanel.add(myProfileFilter, new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.BASELINE_TRAILING, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    northPanel.add(myProfileFilter, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.BASELINE_TRAILING, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    northPanel.add(createTreeToolbarPanel().getComponent(), new GridBagConstraints(1, 0, 1, 1, 0.5, 1, GridBagConstraints.BASELINE_LEADING, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     treePanel.add(northPanel, BorderLayout.NORTH);
 
     myMainSplitter = new Splitter(false);
