@@ -541,7 +541,17 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     });
 
-    myTreeExpander = new DefaultTreeExpander(myTreeTable.getTree());
+    myTreeExpander = new DefaultTreeExpander(myTreeTable.getTree()) {
+      @Override
+      public boolean canExpand() {
+        return myTreeTable.isShowing();
+      }
+
+      @Override
+      public boolean canCollapse() {
+        return myTreeTable.isShowing();
+      }
+    };
     myProfileFilter = new MyFilterComponent();
 
     return scrollPane;
