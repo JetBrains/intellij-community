@@ -22,7 +22,6 @@ import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -52,6 +51,6 @@ public class XDebuggerSettingsPanelProviderImpl extends DebuggerSettingsPanelPro
         list.add(configurable);
       }
     }
-    return ContainerUtil.isEmpty(list) ? Collections.<Configurable>emptyList() : list;
+    return ContainerUtil.notNullize(list);
   }
 }

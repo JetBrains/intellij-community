@@ -2072,6 +2072,17 @@ public class ContainerUtil extends ContainerUtilRt {
     return collection == null || collection.isEmpty();
   }
 
+  @NotNull
+  public static <T, C extends Collection<T>> C notNullize(@Nullable C collection) {
+    //noinspection unchecked
+    return collection == null ? (C)ContainerUtilRt.emptyList() : collection;
+  }
+
+  @Nullable
+  public static <T, C extends Collection<T>> C nullize(@Nullable C collection) {
+    return isEmpty(collection) ? null : collection;
+  }
+
   private interface ConcurrentMapFactory {
     @NotNull <T, V> ConcurrentMap<T, V> createMap();
     @NotNull <T, V> ConcurrentMap<T, V> createMap(int initialCapacity);

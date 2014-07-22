@@ -81,6 +81,6 @@ public class DebuggerConfigurableProvider extends ConfigurableProvider {
         configurables.addAll(providerConfigurables);
       }
     }
-    return ContainerUtil.isEmpty(configurables) ? Collections.<Configurable>emptyList() : configurables;
+    return ContainerUtil.notNullize(configurables);
   }
 }
