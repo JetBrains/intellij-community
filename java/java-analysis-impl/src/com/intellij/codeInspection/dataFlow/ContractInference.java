@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
@@ -218,7 +219,7 @@ class ContractInferenceInterpreter {
   }
 
   @Nullable
-  private static MethodContract contractWithConstraint(ValueConstraint[] state,
+  private MethodContract contractWithConstraint(ValueConstraint[] state,
                                                        int parameter, ValueConstraint paramConstraint,
                                                        ValueConstraint returnValue) {
     ValueConstraint[] newState = withConstraint(state, parameter, paramConstraint);
@@ -390,9 +391,15 @@ class ContractInferenceInterpreter {
   }
 
   @Nullable
-  private static ValueConstraint[] withConstraint(ValueConstraint[] constraints, int index, ValueConstraint constraint) {
+  private ValueConstraint[] withConstraint(ValueConstraint[] constraints, int index, ValueConstraint constraint) {
+    if (constraints[index] == constraint) return constraints;
+
     ValueConstraint negated = negateConstraint(constraint);
     if (negated != constraint && constraints[index] == negated) {
+      return null;
+    }
+
+    if (constraint == NULL_VALUE && NullableNotNullManager.isNotNull(myMethod.getParameterList().getParameters()[index])) {
       return null;
     }
 

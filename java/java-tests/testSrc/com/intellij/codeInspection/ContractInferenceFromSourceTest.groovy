@@ -272,6 +272,16 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['null, _ -> false', '!null, _ -> true']
   }
 
+  public void "test take explicit parameter notnull into account"() {
+    def c = inferContracts("""
+    final Object foo(@org.jetbrains.annotations.NotNull Object bar) {
+        if (!(bar instanceof CharSequence)) return null;
+        return new String("abc");
+    }
+    """)
+    assert c == []
+  }
+
   private String inferContract(String method) {
     return assertOneElement(inferContracts(method))
   }
