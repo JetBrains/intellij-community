@@ -63,7 +63,7 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
 
     if (isChildrenMerged()) {
       for (Configurable child : children) {
-        child.reset();
+        child.disposeUIResources();
       }
     }
     children = null;
