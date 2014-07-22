@@ -285,9 +285,8 @@ public class TypeConversionUtil {
         return checkSuperTypesWithDifferentTypeArguments(fromResult, toClass, manager, toResult.getSubstitutor(), null, languageLevel);
       }
       else {
-        if (!toClass.isInheritor(fromClass, true)) return false;
-        PsiSubstitutor toSubstitutor = getSuperClassSubstitutor(fromClass, toClass, toResult.getSubstitutor());
-        return areSameArgumentTypes(fromClass, fromResult.getSubstitutor(), toSubstitutor);
+        PsiSubstitutor toSubstitutor = getMaybeSuperClassSubstitutor(fromClass, toClass, toResult.getSubstitutor(), null);
+        return toSubstitutor != null && areSameArgumentTypes(fromClass, fromResult.getSubstitutor(), toSubstitutor);
       }
     }
     else if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
@@ -356,10 +355,12 @@ public class TypeConversionUtil {
       derivedSubstitutor = getSuperClassSubstitutor(derived, derived, derivedSubstitutor);
       return areSameArgumentTypes(derived, baseResult.getSubstitutor(), derivedSubstitutor, 1);
     }
-    else if (base.isInheritor(derived, true)) {
-      derivedSubstitutor = getSuperClassSubstitutor(derived, derived, derivedSubstitutor);
-      PsiSubstitutor baseSubstitutor = getSuperClassSubstitutor(derived, base, baseResult.getSubstitutor());
-      if (!areSameArgumentTypes(derived, baseSubstitutor, derivedSubstitutor)) return false;
+    else {
+      PsiSubstitutor baseSubstitutor = getMaybeSuperClassSubstitutor(derived, base, baseResult.getSubstitutor(), null);
+      if (baseSubstitutor != null) {
+        derivedSubstitutor = getSuperClassSubstitutor(derived, derived, derivedSubstitutor);
+        if (!areSameArgumentTypes(derived, baseSubstitutor, derivedSubstitutor)) return false;
+      }
     }
 
     if (visited == null) visited = new THashSet<PsiClass>();
@@ -1028,8 +1029,7 @@ public class TypeConversionUtil {
       }
       return derivedSubstitutor;
     }
-    if (!derivedClassCandidate.isInheritor(superClassCandidate, true)) return null;
-    return getSuperClassSubstitutor(superClassCandidate, derivedClassCandidate, derivedSubstitutor);
+    return getMaybeSuperClassSubstitutor(superClassCandidate, derivedClassCandidate, derivedSubstitutor, null);
   }
 
   private static final Set<String> ourReportedSuperClassSubstitutorExceptions = new ConcurrentHashSet<String>();
@@ -1049,30 +1049,11 @@ public class TypeConversionUtil {
   public static PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass superClass,
                                                         @NotNull PsiClass derivedClass,
                                                         @NotNull PsiSubstitutor derivedSubstitutor) {
-    if (!superClass.hasTypeParameters() && superClass.getContainingClass() == null) return PsiSubstitutor.EMPTY; //optimization
+    if (!superClass.hasTypeParameters() && superClass.getContainingClass() == null) return PsiSubstitutor.EMPTY; //optimization and protection against EJB queer hierarchy
 
-    final PsiManager manager = superClass.getManager();
-    if (PsiUtil.isRawSubstitutor(derivedClass, derivedSubstitutor)) {
-      return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createRawSubstitutor(superClass);
-    }
+    Set<PsiClass> visited = new THashSet<PsiClass>();
+    PsiSubstitutor substitutor = getMaybeSuperClassSubstitutor(superClass, derivedClass, derivedSubstitutor, visited);
 
-    final PsiClass objectClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, superClass.getResolveScope());
-    if (manager.areElementsEquivalent(superClass, objectClass)) {
-      return PsiSubstitutor.EMPTY;
-    }
-
-    PsiSubstitutor substitutor;
-    final Set<PsiClass> visited = new THashSet<PsiClass>();
-    if (derivedClass instanceof PsiAnonymousClass) {
-      final PsiClassType baseType = ((PsiAnonymousClass)derivedClass).getBaseClassType();
-      final JavaResolveResult result = baseType.resolveGenerics();
-      if (result.getElement() == null) return PsiSubstitutor.UNKNOWN;
-      substitutor = getSuperClassSubstitutorInner(superClass, (PsiClass)result.getElement(),
-                                                  derivedSubstitutor.putAll(result.getSubstitutor()), visited, manager);
-    }
-    else {
-      substitutor = getSuperClassSubstitutorInner(superClass, derivedClass, derivedSubstitutor, visited, manager);
-    }
     if (substitutor == null) {
       if (ourReportedSuperClassSubstitutorExceptions.add(derivedClass.getQualifiedName() + "/" + superClass.getQualifiedName())) {
         reportHierarchyInconsistency(superClass, derivedClass, visited);
@@ -1080,6 +1061,36 @@ public class TypeConversionUtil {
       return PsiSubstitutor.EMPTY;
     }
     return substitutor;
+  }
+
+  // the same as getSuperClassSubstitutor() but can return null, which means that classes were not inheritors
+  @Nullable
+  public static PsiSubstitutor getMaybeSuperClassSubstitutor(@NotNull PsiClass superClass,
+                                                             @NotNull PsiClass derivedClass,
+                                                             @NotNull PsiSubstitutor derivedSubstitutor,
+                                                             @Nullable Set<PsiClass> visited) {
+    if (!superClass.hasTypeParameters() && superClass.getContainingClass() == null) {
+      return InheritanceUtil.isInheritorOrSelf(derivedClass, superClass, true) ? PsiSubstitutor.EMPTY : null; //optimization
+    }
+
+    final PsiManager manager = superClass.getManager();
+    if (PsiUtil.isRawSubstitutor(derivedClass, derivedSubstitutor)) {
+      return InheritanceUtil.isInheritorOrSelf(derivedClass, superClass, true) ? JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createRawSubstitutor(superClass) : null;
+    }
+
+    if (CommonClassNames.JAVA_LANG_OBJECT_SHORT.equals(superClass.getName()) &&
+        manager.areElementsEquivalent(superClass, JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, superClass.getResolveScope()))) {
+      return PsiSubstitutor.EMPTY;
+    }
+
+    if (derivedClass instanceof PsiAnonymousClass) {
+      final PsiClassType baseType = ((PsiAnonymousClass)derivedClass).getBaseClassType();
+      final JavaResolveResult result = baseType.resolveGenerics();
+      if (result.getElement() == null) return PsiSubstitutor.UNKNOWN;
+      derivedClass = (PsiClass)result.getElement();
+      derivedSubstitutor = derivedSubstitutor.putAll(result.getSubstitutor());
+    }
+    return getSuperClassSubstitutorInner(superClass, derivedClass, derivedSubstitutor, visited == null ? new THashSet<PsiClass>() : visited, manager);
   }
 
   private static void reportHierarchyInconsistency(@NotNull PsiClass superClass, @NotNull PsiClass derivedClass, @NotNull Set<PsiClass> visited) {
