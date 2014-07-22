@@ -555,8 +555,11 @@ public class FileWatcher {
           case CREATE:
           case DELETE:
             for (String p : paths) {
+              myDirtyPaths.dirtyPaths.add(p);
               String parentPath = new File(p).getParent();
-              myDirtyPaths.dirtyPaths.add(parentPath != null ? parentPath : p);
+              if (parentPath != null) {
+                myDirtyPaths.dirtyPaths.add(parentPath);
+              }
             }
             break;
 
