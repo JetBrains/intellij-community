@@ -17,21 +17,19 @@ package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.components.panels.VerticalBox;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class DebuggerLaunchingConfigurable implements Configurable{
+public class DebuggerLaunchingConfigurable implements Configurable {
   private JRadioButton myRbSocket;
   private JRadioButton myRbShmem;
-  private JCheckBox myHideDebuggerCheckBox;
   private StateRestoringCheckBox myCbForceClassicVM;
   private JCheckBox myCbDisableJIT;
-  private JCheckBox myFocusAppCheckBox;
 
   @Override
   public void reset() {
@@ -49,10 +47,8 @@ public class DebuggerLaunchingConfigurable implements Configurable{
       }
       myRbShmem.setEnabled(true);
     }
-    myHideDebuggerCheckBox.setSelected(settings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION);
     myCbForceClassicVM.setSelected(settings.FORCE_CLASSIC_VM);
     myCbDisableJIT.setSelected(settings.DISABLE_JIT);
-    myFocusAppCheckBox.setSelected(Registry.is("debugger.mayBringFrameToFrontOnBreakpoint"));
   }
 
   @Override
@@ -67,10 +63,8 @@ public class DebuggerLaunchingConfigurable implements Configurable{
     else {
       settings.DEBUGGER_TRANSPORT = DebuggerSettings.SOCKET_TRANSPORT;
     }
-    settings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION = myHideDebuggerCheckBox.isSelected();
     settings.FORCE_CLASSIC_VM = myCbForceClassicVM.isSelectedWhenSelectable();
     settings.DISABLE_JIT = myCbDisableJIT.isSelected();
-    Registry.get("debugger.mayBringFrameToFrontOnBreakpoint").setValue(myFocusAppCheckBox.isSelected());
   }
 
   @Override
@@ -78,12 +72,12 @@ public class DebuggerLaunchingConfigurable implements Configurable{
     final DebuggerSettings currentSettings = DebuggerSettings.getInstance();
     final DebuggerSettings debuggerSettings = currentSettings.clone();
     getSettingsTo(debuggerSettings);
-    return !debuggerSettings.equals(currentSettings) || Registry.is("debugger.mayBringFrameToFrontOnBreakpoint") != myFocusAppCheckBox.isSelected();
+    return !debuggerSettings.equals(currentSettings);
   }
 
   @Override
   public String getDisplayName() {
-    return DebuggerBundle.message("debugger.launching.configurable.display.name");
+    return OptionsBundle.message("options.java.display.name");
   }
 
   @Override
@@ -95,10 +89,8 @@ public class DebuggerLaunchingConfigurable implements Configurable{
   public JComponent createComponent() {
     myCbForceClassicVM = new StateRestoringCheckBox(DebuggerBundle.message("label.debugger.launching.configurable.force.classic.vm"));
     myCbDisableJIT = new JCheckBox(DebuggerBundle.message("label.debugger.launching.configurable.disable.jit"));
-    myHideDebuggerCheckBox = new JCheckBox(DebuggerBundle.message("label.debugger.launching.configurable.hide.window"));
     myRbSocket = new JRadioButton(DebuggerBundle.message("label.debugger.launching.configurable.socket"));
     myRbShmem = new JRadioButton(DebuggerBundle.message("label.debugger.launching.configurable.shmem"));
-    myFocusAppCheckBox = new JCheckBox(DebuggerBundle.message("label.debugger.focusAppOnBreakpoint"));
 
     final ButtonGroup gr = new ButtonGroup();
     gr.add(myRbSocket);
@@ -115,8 +107,6 @@ public class DebuggerLaunchingConfigurable implements Configurable{
     panel.add(transportPanel);
     panel.add(myCbForceClassicVM);
     panel.add(myCbDisableJIT);
-    panel.add(myHideDebuggerCheckBox);
-    panel.add(myFocusAppCheckBox);
 
     JPanel result = new JPanel(new BorderLayout());
     result.add(panel, BorderLayout.NORTH);
@@ -128,5 +118,4 @@ public class DebuggerLaunchingConfigurable implements Configurable{
   @Override
   public void disposeUIResources() {
   }
-
 }

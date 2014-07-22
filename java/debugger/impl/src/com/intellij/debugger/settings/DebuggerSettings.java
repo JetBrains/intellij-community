@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -41,7 +40,7 @@ import java.util.Map;
     )}
 )
 public class DebuggerSettings implements Cloneable, PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.settings.DebuggerSettings");
+  private static final Logger LOG = Logger.getInstance(DebuggerSettings.class);
   public static final int SOCKET_TRANSPORT = 0;
   public static final int SHMEM_TRANSPORT = 1;
 
@@ -60,7 +59,6 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   public int DEBUGGER_TRANSPORT;
   public boolean FORCE_CLASSIC_VM;
   public boolean DISABLE_JIT;
-  public boolean HIDE_DEBUGGER_ON_PROCESS_TERMINATION;
   public boolean HOTSWAP_IN_BACKGROUND = true;
   public boolean SKIP_SYNTHETIC_METHODS;
   public boolean SKIP_CONSTRUCTORS;
@@ -146,7 +144,6 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       DEBUGGER_TRANSPORT == secondSettings.DEBUGGER_TRANSPORT &&
       FORCE_CLASSIC_VM == secondSettings.FORCE_CLASSIC_VM &&
       DISABLE_JIT == secondSettings.DISABLE_JIT &&
-      HIDE_DEBUGGER_ON_PROCESS_TERMINATION == secondSettings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION &&
       HOTSWAP_IN_BACKGROUND == secondSettings.HOTSWAP_IN_BACKGROUND &&
       SKIP_SYNTHETIC_METHODS == secondSettings.SKIP_SYNTHETIC_METHODS &&
       SKIP_CLASSLOADERS == secondSettings.SKIP_CLASSLOADERS &&
@@ -178,13 +175,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
     return null;
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "DebuggerSettings";
-  }
-
   public static class ContentState implements Cloneable {
-
     private final String myType;
     private boolean myMinimized;
     private String mySelectedTab;

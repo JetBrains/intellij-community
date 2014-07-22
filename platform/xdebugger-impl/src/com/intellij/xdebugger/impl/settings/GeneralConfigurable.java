@@ -15,44 +15,37 @@
  */
 package com.intellij.xdebugger.impl.settings;
 
-import com.intellij.openapi.options.Configurable;
-import com.intellij.xdebugger.settings.XDebuggerSettings;
+import com.intellij.openapi.options.ConfigurableBase;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
+class GeneralConfigurable extends ConfigurableBase<GeneralConfigurableUi, XDebuggerGeneralSettings> {
+  @Override
+  protected XDebuggerGeneralSettings getSettings() {
+    return XDebuggerSettingsManager.getInstanceImpl().getGeneralSettings();
+  }
 
-/**
- * @author nik
- */
-public abstract class DebuggerSettingsPanelProvider {
-  public int getPriority() {
-    return 0;
+  @Override
+  protected GeneralConfigurableUi createUi() {
+    return new GeneralConfigurableUi();
   }
 
   @NotNull
-  public Collection<? extends Configurable> getConfigurables() {
-    return Collections.emptyList();
+  @Override
+  public String getId() {
+    return "debugger.general";
   }
 
-  public void apply() {
+  @Nls
+  @Override
+  public String getDisplayName() {
+    return "";
   }
 
   @Nullable
-  @Deprecated
-  public Configurable getRootConfigurable() {
+  @Override
+  public String getHelpTopic() {
     return null;
-  }
-
-  @NotNull
-  public Collection<? extends Configurable> getConfigurable(@NotNull XDebuggerSettings.Category category) {
-    return Collections.emptyList();
-  }
-
-  /**
-   * General settings of category were applied
-   */
-  public void generalApplied(@NotNull XDebuggerSettings.Category category) {
   }
 }

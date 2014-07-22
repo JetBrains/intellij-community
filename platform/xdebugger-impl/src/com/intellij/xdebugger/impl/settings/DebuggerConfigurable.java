@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.settings;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.DebuggerSupport;
@@ -28,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -98,6 +101,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     Configurable deprecatedRootConfigurable = null;
     for (DebuggerSettingsPanelProvider provider : providers) {
       configurables.addAll(provider.getConfigurables());
+      @SuppressWarnings("deprecation")
       Configurable providerRootConfigurable = provider.getRootConfigurable();
       if (providerRootConfigurable != null) {
         if (deprecatedRootConfigurable == null) {
@@ -117,15 +121,19 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       Configurable[] mergedRootConfigurables = new Configurable[rootConfigurables.size() + (deprecatedRootConfigurable == null ? 0 : 1)];
       rootConfigurables.toArray(mergedRootConfigurables);
       if (deprecatedRootConfigurable != null) {
-        System.arraycopy(mergedRootConfigurables, 0, mergedRootConfigurables, 1, mergedRootConfigurables.length - 1);
-        mergedRootConfigurables[0] = deprecatedRootConfigurable;
+        mergedRootConfigurables[rootConfigurables.size()] = deprecatedRootConfigurable;
       }
-      return new MergedCompositeConfigurable(mergedRootConfigurables) {
-        @Override
-        protected boolean isUseTitledBorder() {
-          return false;
-        }
 
+      // move unnamed to top
+      Arrays.sort(mergedRootConfigurables, new Comparator<Configurable>() {
+        @Override
+        public int compare(Configurable o1, Configurable o2) {
+          boolean c1e = StringUtil.isEmpty(o1.getDisplayName());
+          return c1e == StringUtil.isEmpty(o2.getDisplayName()) ? 0 : (c1e ? -1 : 1);
+        }
+      });
+
+      return new MergedCompositeConfigurable(mergedRootConfigurables) {
         @NotNull
         @Override
         public String getId() {

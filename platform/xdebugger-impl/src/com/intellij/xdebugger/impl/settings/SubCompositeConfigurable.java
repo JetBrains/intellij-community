@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.util.List;
 
 abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent {
@@ -113,7 +112,7 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
           JPanel panel = new JPanel(new VerticalFlowLayout(0, 0));
           if (root != null) {
             JComponent c = root.getComponent();
-            c.setBorder(new EmptyBorder(0, 0, IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET, 0));
+            c.setBorder(MergedCompositeConfigurable.BOTTOM_INSETS);
             panel.add(c);
           }
           for (Configurable child : children) {
@@ -166,7 +165,7 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
     if (root != null) {
       root.apply(getSettings());
       for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
-        support.getSettingsPanelProvider().applied(getCategory());
+        support.getSettingsPanelProvider().generalApplied(getCategory());
       }
     }
 

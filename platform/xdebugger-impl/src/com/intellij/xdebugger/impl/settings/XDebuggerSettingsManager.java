@@ -42,7 +42,7 @@ import java.util.*;
       )
     }
 )
-public class XDebuggerSettingsManager extends com.intellij.xdebugger.settings.XDebuggerSettingsManager implements PersistentStateComponent<XDebuggerSettingsManager.SettingsState>{
+public class XDebuggerSettingsManager extends com.intellij.xdebugger.settings.XDebuggerSettingsManager implements PersistentStateComponent<XDebuggerSettingsManager.SettingsState> {
   @NonNls public static final String COMPONENT_NAME = "XDebuggerSettings";
   private Map<String, XDebuggerSettings<?>> mySettingsById;
   private Map<Class<? extends XDebuggerSettings>, XDebuggerSettings<?>> mySettingsByClass;
@@ -59,10 +59,13 @@ public class XDebuggerSettingsManager extends com.intellij.xdebugger.settings.XD
     settingsState.setDataViewSettings(myDataViewSettings);
     settingsState.setGeneralSettings(myGeneralSettings);
     for (XDebuggerSettings<?> settings : getSettingsList()) {
-      SpecificSettingsState state = new SpecificSettingsState();
-      state.setId(settings.getId());
-      state.setSettingsElement(XmlSerializer.serialize(settings.getState(), new SkipDefaultValuesSerializationFilters()));
-      settingsState.getSpecificStates().add(state);
+      Object subState = settings.getState();
+      if (subState != null) {
+        SpecificSettingsState state = new SpecificSettingsState();
+        state.setId(settings.getId());
+        state.setSettingsElement(XmlSerializer.serialize(subState, new SkipDefaultValuesSerializationFilters()));
+        settingsState.getSpecificStates().add(state);
+      }
     }
     return settingsState;
   }

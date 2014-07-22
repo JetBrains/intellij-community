@@ -18,7 +18,9 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.actions.*;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.settings.*;
+import com.intellij.debugger.settings.DebuggerHotswapConfigurable;
+import com.intellij.debugger.settings.NodeRendererSettings;
+import com.intellij.debugger.settings.UserRenderersConfigurable;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
@@ -42,14 +44,12 @@ import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.settings.DebuggerSettingsPanelProvider;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 
 /**
  * @author nik
@@ -341,11 +341,6 @@ public class JavaDebuggerSupport extends DebuggerSupport {
       return 1;
     }
 
-    @Override
-    public Configurable getRootConfigurable() {
-      return new DebuggerLaunchingConfigurable();
-    }
-
     @NotNull
     @Override
     public Collection<? extends Configurable> getConfigurables() {
@@ -358,25 +353,6 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     @Override
     public void apply() {
       NodeRendererSettings.getInstance().fireRenderersChanged();
-    }
-
-    @NotNull
-    @Override
-    public Collection<? extends Configurable> getConfigurable(@NotNull XDebuggerSettings.Category category) {
-      if (category == XDebuggerSettings.Category.DATA_VIEWS) {
-        return Collections.singletonList(new DebuggerDataViewsConfigurable(null));
-      }
-      else if (category == XDebuggerSettings.Category.STEPPING) {
-        return Collections.singletonList(new DebuggerSteppingConfigurable());
-      }
-      return Collections.emptyList();
-    }
-
-    @Override
-    public void applied(@NotNull XDebuggerSettings.Category category) {
-      if (category == XDebuggerSettings.Category.DATA_VIEWS) {
-        NodeRendererSettings.getInstance().fireRenderersChanged();
-      }
     }
   }
 

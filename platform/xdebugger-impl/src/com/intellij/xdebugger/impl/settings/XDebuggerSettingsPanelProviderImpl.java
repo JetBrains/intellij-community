@@ -41,7 +41,14 @@ public class XDebuggerSettingsPanelProviderImpl extends DebuggerSettingsPanelPro
   @NotNull
   @Override
   public Collection<? extends Configurable> getConfigurable(@NotNull XDebuggerSettings.Category category) {
-    List<Configurable> list = null;
+    List<Configurable> list;
+    if (category == XDebuggerSettings.Category.ROOT) {
+      list = new SmartList<Configurable>(new GeneralConfigurable());
+    }
+    else {
+      list = null;
+    }
+
     for (XDebuggerSettings settings : XDebuggerSettingsManager.getInstanceImpl().getSettingsList()) {
       Configurable configurable = settings.createConfigurable(category);
       if (configurable != null) {
@@ -52,5 +59,12 @@ public class XDebuggerSettingsPanelProviderImpl extends DebuggerSettingsPanelPro
       }
     }
     return ContainerUtil.notNullize(list);
+  }
+
+  @Override
+  public void generalApplied(@NotNull XDebuggerSettings.Category category) {
+    for (XDebuggerSettings settings : XDebuggerSettingsManager.getInstanceImpl().getSettingsList()) {
+      settings.generalApplied(category);
+    }
   }
 }

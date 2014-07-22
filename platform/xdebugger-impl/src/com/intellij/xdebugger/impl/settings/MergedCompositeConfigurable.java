@@ -4,6 +4,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TitledSeparator;
 import org.jetbrains.annotations.NotNull;
@@ -11,8 +12,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import java.awt.*;
 
 abstract class MergedCompositeConfigurable implements SearchableConfigurable {
+  static final EmptyBorder BOTTOM_INSETS = new EmptyBorder(0, 0, IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET, 0);
+
   protected final Configurable[] children;
   protected JComponent rootComponent;
 
@@ -49,7 +53,14 @@ abstract class MergedCompositeConfigurable implements SearchableConfigurable {
           JComponent component = child.createComponent();
           assert component != null;
           if (isUseTitledBorder()) {
-            component.setBorder(IdeBorderFactory.createTitledBorder(child.getDisplayName(), false));
+            String displayName = child.getDisplayName();
+            if (StringUtil.isEmpty(displayName)) {
+              component.setBorder(BOTTOM_INSETS);
+            }
+            else {
+              Insets insets = new Insets(children[0] == child ? 0 : IdeBorderFactory.TITLED_BORDER_TOP_INSET, 0, IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET, 0);
+              component.setBorder(IdeBorderFactory.createTitledBorder(displayName, false, insets));
+            }
           }
           panel.add(component);
         }
@@ -63,9 +74,10 @@ abstract class MergedCompositeConfigurable implements SearchableConfigurable {
   static JPanel createPanel(boolean isUseTitledBorder) {
     int verticalGap = TitledSeparator.TOP_INSET;
     JPanel panel = new JPanel(new VerticalFlowLayout(0, isUseTitledBorder ? 0 : verticalGap));
-    // 1) VerticalFlowLayout incorrectly use vertical gap as top inset
-    // 2) if isUseTitledBorder, created titled border will add gap before component
-    panel.setBorder(new EmptyBorder(-verticalGap, 0, 0, 0));
+    // VerticalFlowLayout incorrectly use vertical gap as top inset
+    if (!isUseTitledBorder) {
+      panel.setBorder(new EmptyBorder(-verticalGap, 0, 0, 0));
+    }
     return panel;
   }
 
