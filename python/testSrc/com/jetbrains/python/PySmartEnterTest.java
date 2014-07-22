@@ -169,4 +169,14 @@ public class PySmartEnterTest extends PyTestCase {
       pyCodeInsightSettings.INSERT_TYPE_DOCSTUB = oldInsertType;
     }
   }
+
+  // PY-12877
+  public void testWithTargetOmitted() {
+    doTest();
+  }
+
+  // PY-12877
+  public void testWithTargetIncomplete() {
+    doTest();
+  }
 }

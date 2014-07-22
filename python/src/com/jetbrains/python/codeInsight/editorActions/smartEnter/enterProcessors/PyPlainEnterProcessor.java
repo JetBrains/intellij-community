@@ -20,10 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.SmartEnterUtil;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyStatementList;
-import com.jetbrains.python.psi.PyStatementPart;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -43,10 +40,14 @@ public class PyPlainEnterProcessor implements EnterProcessor {
     }
     else if (psiElement instanceof PyClass) {
       return ((PyClass)psiElement).getStatementList();
-    } else {
-    final CaretModel caretModel = editor.getCaretModel();
-    final PsiElement atCaret = psiElement.getContainingFile().findElementAt(caretModel.getOffset());
-      PyStatementPart statementPart = PsiTreeUtil.getParentOfType(atCaret, PyStatementPart.class);
+    }
+    else if (psiElement instanceof PyWithStatement) {
+      return PsiTreeUtil.getChildOfType(psiElement, PyStatementList.class);
+    }
+    else {
+      final CaretModel caretModel = editor.getCaretModel();
+      final PsiElement atCaret = psiElement.getContainingFile().findElementAt(caretModel.getOffset());
+      final PyStatementPart statementPart = PsiTreeUtil.getParentOfType(atCaret, PyStatementPart.class);
       if (statementPart != null) {
         return statementPart.getStatementList();
       }
@@ -55,7 +56,7 @@ public class PyPlainEnterProcessor implements EnterProcessor {
   }
 
   public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {
-    PyStatementList statementList = getStatementList(psiElement, editor);
+    final PyStatementList statementList = getStatementList(psiElement, editor);
     if (statementList != null && statementList.getStatements().length == 0) {
       SmartEnterUtil.plainEnter(editor);
       //editor.getCaretModel().moveToOffset(statementList.getTextRange().getEndOffset());
