@@ -48,17 +48,18 @@ public class SvnExcludingIgnoredOperation {
     public Filter(final Project project) {
       myProject = project;
 
-      if (! project.isDefault()) {
+      if (!project.isDefault()) {
         myIndex = PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class);
         myClManager = ChangeListManager.getInstance(project);
-      } else {
+      }
+      else {
         myIndex = null;
         myClManager = null;
       }
     }
 
     public boolean accept(final VirtualFile file) {
-      if (! myProject.isDefault()) {
+      if (!myProject.isDefault()) {
         if (isExcluded(file)) {
           return false;
         }
@@ -80,7 +81,7 @@ public class SvnExcludingIgnoredOperation {
   }
 
   private boolean operation(final VirtualFile file) throws VcsException {
-    if (! myFilter.accept(file)) return false;
+    if (!myFilter.accept(file)) return false;
 
     myImportAction.doOperation(file);
     return true;
@@ -106,7 +107,7 @@ public class SvnExcludingIgnoredOperation {
       return;
     }
 
-    if (! operation(file)) {
+    if (!operation(file)) {
       return;
     }
 

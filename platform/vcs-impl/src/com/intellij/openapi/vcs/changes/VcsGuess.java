@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ public class VcsGuess {
 
   VcsGuess(final Project project) {
     myProject = project;
-    myVcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManagerImpl.getInstance(myProject);
+    myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
     myExcludedFileIndex = PeriodicalTasksCloser.getInstance().safeGetService(myProject, FileIndexFacade.class);
   }
 
@@ -72,14 +73,14 @@ public class VcsGuess {
         final boolean inContent = myVcsManager.isFileInContent(validParent);
         if (inContent) return true;
         if (filePath != null) {
-          return isFileInBaseDir(filePath, myProject.getBaseDir()) && ! myExcludedFileIndex.isExcludedFile(validParent);
+          return isFileInBaseDir(filePath, myProject.getBaseDir()) && !myExcludedFileIndex.isExcludedFile(validParent);
         }
         return false;
       }
     });
   }
 
-  private boolean isFileInBaseDir(final FilePath filePath, final VirtualFile baseDir) {
+  private static boolean isFileInBaseDir(final FilePath filePath, final VirtualFile baseDir) {
     final VirtualFile parent = filePath.getVirtualFileParent();
     return !filePath.isDirectory() && parent != null && parent.equals(baseDir);
   }

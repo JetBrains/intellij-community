@@ -54,7 +54,7 @@ public class VcsRootIterator {
   public boolean acceptFolderUnderVcs(final VirtualFile vcsRoot, final VirtualFile file) {
     final String vcsUrl = vcsRoot.getUrl();
     final MyRootFilter rootFilter = myOtherVcsFolders.get(vcsUrl);
-    if ((rootFilter != null) && (! rootFilter.accept(file))) {
+    if ((rootFilter != null) && (!rootFilter.accept(file))) {
       return false;
     }
     return !isExcluded(myExcludedFileIndex, file);
@@ -126,9 +126,9 @@ public class VcsRootIterator {
   }
 
   public static void iterateVcsRoot(final Project project,
-                                       final VirtualFile root,
-                                       final Processor<FilePath> processor,
-                                       @Nullable VirtualFileFilter directoryFilter) {
+                                    final VirtualFile root,
+                                    final Processor<FilePath> processor,
+                                    @Nullable VirtualFileFilter directoryFilter) {
     final MyRootIterator rootIterator = new MyRootIterator(project, root, processor, null, directoryFilter);
     rootIterator.iterate();
   }
@@ -175,9 +175,9 @@ public class VcsRootIterator {
         @Override
         public Result visitFileEx(@NotNull VirtualFile file) {
           if (isExcluded(myExcludedFileIndex, file)) return SKIP_CHILDREN;
-          if (myRootPresentFilter != null && ! myRootPresentFilter.accept(file)) return SKIP_CHILDREN;
-          if (myProject.isDisposed() || ! process(file)) return skipTo(myRoot);
-          if (myDirectoryFilter != null && file.isDirectory() && ! myDirectoryFilter.shouldGoIntoDirectory(file)) return SKIP_CHILDREN;
+          if (myRootPresentFilter != null && !myRootPresentFilter.accept(file)) return SKIP_CHILDREN;
+          if (myProject.isDisposed() || !process(file)) return skipTo(myRoot);
+          if (myDirectoryFilter != null && file.isDirectory() && !myDirectoryFilter.shouldGoIntoDirectory(file)) return SKIP_CHILDREN;
           return CONTINUE;
         }
       });

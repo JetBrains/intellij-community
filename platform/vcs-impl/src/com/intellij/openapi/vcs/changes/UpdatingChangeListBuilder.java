@@ -66,14 +66,14 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   public void processChange(final Change change, VcsKey vcsKey) {
-    processChangeInList( change, (ChangeList) null, vcsKey);
+    processChangeInList(change, (ChangeList)null, vcsKey);
   }
 
   public void processChangeInList(final Change change, @Nullable final ChangeList changeList, final VcsKey vcsKey) {
     checkIfDisposed();
 
     LOG.debug("[processChangeInList-1] entering, cl name: " + ((changeList == null) ? null: changeList.getName()) +
-      " change: " + ChangesUtil.getFilePath(change).getPath());
+              " change: " + ChangesUtil.getFilePath(change).getPath());
     final String fileName = ChangesUtil.getFilePath(change).getName();
     if (FileTypeManager.getInstance().isFileIgnored(fileName)) {
       LOG.debug("[processChangeInList-1] file type ignored");
@@ -86,11 +86,13 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
           if (changeList != null) {
             LOG.debug("[processChangeInList-1] to add change to cl");
             myChangeListWorker.addChangeToList(changeList.getName(), change, vcsKey);
-          } else {
+          }
+          else {
             LOG.debug("[processChangeInList-1] to add to corresponding list");
             myChangeListWorker.addChangeToCorrespondingList(change, vcsKey);
           }
-        } else {
+        }
+        else {
           LOG.debug("[processChangeInList-1] not under scope");
         }
       }
@@ -203,7 +205,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     if (file == null) return;
     checkIfDisposed();
     if (myScope.belongsTo(new FilePathImpl(file))) {
-      ((LogicallyLockedHolder) myComposite.get(FileHolder.HolderType.LOGICALLY_LOCKED)).add(file, logicalLock);
+      ((LogicallyLockedHolder)myComposite.get(FileHolder.HolderType.LOGICALLY_LOCKED)).add(file, logicalLock);
     }
   }
 
@@ -220,7 +222,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     if (file == null) return;
     checkIfDisposed();
     if (myScope.belongsTo(new FilePathImpl(file))) {
-      ((SwitchedFileHolder) myComposite.get(FileHolder.HolderType.ROOT_SWITCH)).addFile(file, branch, false);
+      ((SwitchedFileHolder)myComposite.get(FileHolder.HolderType.ROOT_SWITCH)).addFile(file, branch, false);
     }
   }
 

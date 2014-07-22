@@ -135,7 +135,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myMappings = new NewMappings(myProject, myMessageBus, this, manager, excludedFileIndex);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
 
-    if (! myProject.isDefault()) {
+    if (!myProject.isDefault()) {
       myVcsEventListenerManager = new VcsEventsListenerManagerImpl();
     }
 
@@ -203,7 +203,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public boolean haveVcses() {
-    return ! AllVcses.getInstance(myProject).isEmpty();
+    return !AllVcses.getInstance(myProject).isEmpty();
   }
 
   @Override
@@ -356,7 +356,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public void unregisterVcs(AbstractVcs vcs) {
-    if (! ApplicationManager.getApplication().isUnitTestMode() && myMappings.haveActiveVcs(vcs.getName())) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && myMappings.haveActiveVcs(vcs.getName())) {
       // unlikely
       LOG.warn("Active vcs '" + vcs.getName() + "' is being unregistered. Remove from mappings first.");
     }
@@ -391,7 +391,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public boolean hasAnyMappings() {
-    return ! myMappings.isEmpty();
+    return !myMappings.isEmpty();
   }
 
   @Override
@@ -452,7 +452,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private void releaseEditor() {
     if (myEditorAdapter != null) {
       final Editor editor = myEditorAdapter.getEditor();
-      if (! editor.isDisposed()) {
+      if (!editor.isDisposed()) {
         EditorFactory.getInstance().releaseEditor(editor);
       }
     }
@@ -472,7 +472,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Override
   @NotNull
   public VcsShowSettingOption getStandardOption(@NotNull VcsConfiguration.StandardOption option, @NotNull AbstractVcs vcs) {
-    final VcsShowOptionsSettingImpl options = (VcsShowOptionsSettingImpl) getOptions(option);
+    final VcsShowOptionsSettingImpl options = (VcsShowOptionsSettingImpl)getOptions(option);
     options.addApplicableVcs(vcs);
     return options;
   }
@@ -490,7 +490,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles, String displayActionName, ActionInfo actionInfo, boolean canceled) {
-    if (! myProject.isOpen() || myProject.isDisposed()) return null;
+    if (!myProject.isOpen() || myProject.isDisposed()) return null;
     ContentManager contentManager = getContentManager();
     if (contentManager == null) {
       return null;  // content manager is made null during dispose; flag is set later
@@ -537,7 +537,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public boolean hasExplicitMapping(final VirtualFile vFile) {
     final VcsDirectoryMapping mapping = myMappings.getMappingFor(vFile);
-    return mapping != null && ! mapping.isDefaultMapping();
+    return mapping != null && !mapping.isDefaultMapping();
   }
 
   @Override
@@ -687,7 +687,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     final AbstractVcs[] vcses = myMappings.getActiveVcses();
     for (AbstractVcs vcs : vcses) {
       final VirtualFile[] roots = getRootsUnderVcs(vcs);
-      for(VirtualFile root: roots) {
+      for (VirtualFile root : roots) {
         vcsRoots.add(new VcsRoot(vcs, root));
       }
     }
@@ -708,10 +708,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myMappings.clear();
 
     final List<VcsDirectoryMapping> mappingsList = new ArrayList<VcsDirectoryMapping>();
-    final List list = element.getChildren(ELEMENT_MAPPING);
     boolean haveNonEmptyMappings = false;
-    for(Object childObj: list) {
-      Element child = (Element) childObj;
+    for (Element child : element.getChildren(ELEMENT_MAPPING)) {
       final String vcs = child.getAttributeValue(ATTRIBUTE_VCS);
       if (vcs != null && !vcs.isEmpty()) {
         haveNonEmptyMappings = true;
@@ -729,8 +727,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
             try {
               rootSettings.readExternal(rootSettingsElement);
               mapping.setRootSettings(rootSettings);
-            } catch (InvalidDataException e) {
-              LOG.error("Failed to load VCS root settings class "+ className + " for VCS " + vcsInstance.getClass().getName(), e);
+            }
+            catch (InvalidDataException e) {
+              LOG.error("Failed to load VCS root settings class " + className + " for VCS " + vcsInstance.getClass().getName(), e);
             }
           }
         }
@@ -748,7 +747,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     if (myProject.isDefault()) {
       element.setAttribute(ATTRIBUTE_DEFAULT_PROJECT, Boolean.TRUE.toString());
     }
-    for(VcsDirectoryMapping mapping: getDirectoryMappings()) {
+    for (VcsDirectoryMapping mapping : getDirectoryMappings()) {
       Element child = new Element(ELEMENT_MAPPING);
       child.setAttribute(ATTRIBUTE_DIRECTORY, mapping.getDirectory());
       child.setAttribute(ATTRIBUTE_VCS, mapping.getVcs());
@@ -803,7 +802,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public void fireDirectoryMappingsChanged() {
-    if (myProject.isOpen() && ! myProject.isDisposed()) {
+    if (myProject.isOpen() && !myProject.isDisposed()) {
       myMappings.mappingsChanged();
     }
   }
@@ -844,7 +843,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       @Override
       public Boolean compute() {
         return vf != null && (myExcludedIndex.isInContent(vf) || isFileInBaseDir(vf) || vf.equals(myProject.getBaseDir()) ||
-                              hasExplicitMapping(vf) || isInDirectoryBasedRoot(vf)) && ! myExcludedIndex.isExcludedFile(vf);
+                              hasExplicitMapping(vf) || isInDirectoryBasedRoot(vf)) && !myExcludedIndex.isExcludedFile(vf);
       }
     });
   }
@@ -862,7 +861,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private boolean isInDirectoryBasedRoot(final VirtualFile file) {
     if (file == null) return false;
-    final StorageScheme storageScheme = ((ProjectEx) myProject).getStateStore().getStorageScheme();
+    final StorageScheme storageScheme = ((ProjectEx)myProject).getStateStore().getStorageScheme();
     if (StorageScheme.DIRECTORY_BASED.equals(storageScheme)) {
       final VirtualFile baseDir = myProject.getBaseDir();
       if (baseDir == null) return false;
