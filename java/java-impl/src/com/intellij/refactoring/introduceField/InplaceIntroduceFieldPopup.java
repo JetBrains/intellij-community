@@ -208,6 +208,8 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
 
     protected void performIntroduce() {
       ourLastInitializerPlace = myIntroduceFieldPanel.getInitializerPlace();
+      final PsiType forcedType = getType();
+      LOG.assertTrue(forcedType == null || forcedType.isValid(), forcedType);
       final BaseExpressionToFieldHandler.Settings settings =
         new BaseExpressionToFieldHandler.Settings(getInputName(),
                                                   getExpr(),
@@ -216,7 +218,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
                                                   myIntroduceFieldPanel.isDeclareFinal(),
                                                   myIntroduceFieldPanel.getInitializerPlace(),
                                                   myIntroduceFieldPanel.getFieldVisibility(), (PsiLocalVariable)getLocalVariable(),
-                                                  getType(),
+                                                  forcedType,
                                                   myIntroduceFieldPanel.isDeleteVariable(),
                                                   myParentClass, false, false);
       new WriteCommandAction(myProject, getCommandName(), getCommandName()){

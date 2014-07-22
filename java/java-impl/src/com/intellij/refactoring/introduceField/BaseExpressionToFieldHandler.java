@@ -405,7 +405,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
     try {
       PsiField field = factory.createFieldFromText(pattern.toString(), null);
-      field.getTypeElement().replace(factory.createTypeElement(type));
+      final PsiTypeElement typeElement = factory.createTypeElement(type);
+      field.getTypeElement().replace(typeElement);
       field = (PsiField)CodeStyleManager.getInstance(psiManager.getProject()).reformat(field);
       if (includeInitializer) {
         field.getInitializer().replace(initializerExpr);
