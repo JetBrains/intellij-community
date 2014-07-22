@@ -41,7 +41,6 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerSettings;
 
 import java.io.File;
 import java.io.IOException;

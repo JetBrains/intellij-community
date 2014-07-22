@@ -16,7 +16,6 @@
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -102,9 +101,10 @@ public class XDebuggerSettingsManager extends com.intellij.xdebugger.settings.XD
 
   private void initSettings() {
     if (mySettingsById == null) {
-      mySettingsById = new HashMap<String, XDebuggerSettings<?>>();
-      mySettingsByClass = new HashMap<Class<? extends XDebuggerSettings>, XDebuggerSettings<?>>();
-      for (XDebuggerSettings settings : Extensions.getExtensions(XDebuggerSettings.EXTENSION_POINT)) {
+      XDebuggerSettings[] extensions = XDebuggerSettings.EXTENSION_POINT.getExtensions();
+      mySettingsById = new LinkedHashMap<String, XDebuggerSettings<?>>(extensions.length);
+      mySettingsByClass = new LinkedHashMap<Class<? extends XDebuggerSettings>, XDebuggerSettings<?>>(extensions.length);
+      for (XDebuggerSettings settings : extensions) {
         mySettingsById.put(settings.getId(), settings);
         mySettingsByClass.put(settings.getClass(), settings);
       }

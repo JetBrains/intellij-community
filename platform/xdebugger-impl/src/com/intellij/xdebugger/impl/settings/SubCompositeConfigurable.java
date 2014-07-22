@@ -35,7 +35,7 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
 
   @Override
   public boolean hasOwnContent() {
-    return getCategory() != XDebuggerSettings.Category.STEPPING;
+    return true;
   }
 
   @Override
@@ -80,7 +80,7 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
   protected abstract XDebuggerSettings.Category getCategory();
 
   private boolean isChildrenMerged() {
-    return children != null && (!getCategory().isSeparatePage() || children.length == 1);
+    return children != null && children.length == 1;
   }
 
   @Override

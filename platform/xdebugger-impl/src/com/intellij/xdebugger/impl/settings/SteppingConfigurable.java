@@ -17,16 +17,14 @@ package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-class SteppingConfigurable extends SubCompositeConfigurable implements Configurable.NoScroll {
+class SteppingConfigurable extends MergedCompositeConfigurable {
   public SteppingConfigurable(@NotNull List<Configurable> configurables) {
-    assert !configurables.isEmpty();
-    children = configurables.toArray(new Configurable[configurables.size()]);
+    super(configurables.toArray(new Configurable[configurables.size()]));
   }
 
   @NotNull
@@ -39,16 +37,5 @@ class SteppingConfigurable extends SubCompositeConfigurable implements Configura
   @Override
   public String getDisplayName() {
     return XDebuggerBundle.message("debugger.stepping.display.name");
-  }
-
-  @Override
-  protected DataViewsConfigurableUi createRootUi() {
-    return null;
-  }
-
-  @NotNull
-  @Override
-  protected XDebuggerSettings.Category getCategory() {
-    return XDebuggerSettings.Category.STEPPING;
   }
 }

@@ -35,20 +35,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class XDebuggerSettings<T> implements PersistentStateComponent<T> {
   public enum Category {
-    DATA_VIEWS(true), STEPPING(true);
-
-    private final boolean separatePage;
-
-    Category(boolean separatePage) {
-      this.separatePage = separatePage;
-    }
-
-    public boolean isSeparatePage() {
-      return separatePage;
-    }
+    ROOT, DATA_VIEWS, STEPPING;
   }
 
   public static final ExtensionPointName<XDebuggerSettings> EXTENSION_POINT = ExtensionPointName.create("com.intellij.xdebugger.settings");
+
   private final String myId;
 
   protected XDebuggerSettings(final @NotNull @NonNls String id) {

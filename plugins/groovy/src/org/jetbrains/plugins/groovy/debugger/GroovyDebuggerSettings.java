@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.debugger.filters;
+package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -23,6 +23,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ilyas
@@ -35,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
     )}
 )
 public class GroovyDebuggerSettings extends XDebuggerSettings<GroovyDebuggerSettings> {
-
   public Boolean DEBUG_DISABLE_SPECIFIC_GROOVY_METHODS = true;
   public boolean ENABLE_GROOVY_HOTSWAP = Registry.is("enable.groovy.hotswap");
 
@@ -47,6 +47,15 @@ public class GroovyDebuggerSettings extends XDebuggerSettings<GroovyDebuggerSett
   @NotNull
   public Configurable createConfigurable() {
     return new GroovyDebuggerSettingsConfigurable(this);
+  }
+
+  @Nullable
+  @Override
+  public Configurable createConfigurable(@NotNull Category category) {
+    if (category == Category.STEPPING) {
+      return new GroovySteppingConfigurable();
+    }
+    return null;
   }
 
   @Override
@@ -62,5 +71,4 @@ public class GroovyDebuggerSettings extends XDebuggerSettings<GroovyDebuggerSett
   public static GroovyDebuggerSettings getInstance() {
     return getInstance(GroovyDebuggerSettings.class);
   }
-
 }
