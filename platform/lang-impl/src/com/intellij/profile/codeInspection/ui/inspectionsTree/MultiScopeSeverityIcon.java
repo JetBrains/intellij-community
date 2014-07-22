@@ -46,7 +46,6 @@ public class MultiScopeSeverityIcon implements Icon {
   @Override
   public void paintIcon(final Component c, final Graphics g, final int i, final int j) {
     final int iconWidth = getIconWidth();
-    final int iconHeightCoordinate = j + getIconHeight();
 
     final int partWidth = iconWidth / myScopeToAverageSeverityMap.size();
 
@@ -57,9 +56,10 @@ public class MultiScopeSeverityIcon implements Icon {
       g.setColor(icon instanceof HighlightDisplayLevel.SingleColorIconWithMask ?
                  ((HighlightDisplayLevel.SingleColorIconWithMask)icon).getColor() : MIXED_SEVERITY_COLOR);
       final int x = i + partWidth * idx;
-      g.fillRect(x, j, partWidth, iconHeightCoordinate);
+      g.fillRect(x, j, partWidth, getIconHeight());
       idx++;
     }
+    g.drawImage(HighlightDisplayLevel.ImageHolder.ourErrorMaskImage, i, j, null);
   }
 
   @Override
