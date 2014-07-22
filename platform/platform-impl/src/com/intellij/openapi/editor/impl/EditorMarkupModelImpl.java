@@ -230,6 +230,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(RangeHighlighterEx highlighter) {
+        if (!highlighter.getEditorFilter().avaliableIn(myEditor)) return true;
+
         if (highlighter.getErrorStripeMarkColor() != null) {
           if (highlighter.getStartOffset() < endOffset && highlighter.getEndOffset() > startOffset) {
             highlighters.add(highlighter);
@@ -267,6 +269,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(RangeHighlighterEx highlighter) {
+        if (!highlighter.getEditorFilter().avaliableIn(myEditor)) return true;
+
         if (highlighter.getErrorStripeMarkColor() != null) {
           ProperTextRange range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset());
           if (scrollBarY >= range.getStartOffset() - myMinMarkHeight * 2 &&
@@ -662,6 +666,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       markup.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
         @Override
         public boolean process(RangeHighlighterEx highlighter) {
+          if (!highlighter.getEditorFilter().avaliableIn(myEditor)) return true;
+
           Color color = highlighter.getErrorStripeMarkColor();
           if (color == null) return true;
           boolean isThin = highlighter.isThinErrorStripeMark();

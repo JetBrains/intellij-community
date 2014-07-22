@@ -1981,6 +1981,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myMarkupModel.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(@NotNull RangeHighlighterEx highlighter) {
+        if (!highlighter.getEditorFilter().avaliableIn(EditorImpl.this)) return true;
+
         final CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
         if (customRenderer != null && clipStartOffset < highlighter.getEndOffset() && highlighter.getStartOffset() < clipEndOffset) {
           customRenderer.paint(EditorImpl.this, highlighter, g);
@@ -2126,6 +2128,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Processor<RangeHighlighterEx> paintProcessor = new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(@NotNull RangeHighlighterEx highlighter) {
+        if (!highlighter.getEditorFilter().avaliableIn(EditorImpl.this)) return true;
+
         paintSegmentHighlighterAfterEndOfLine(g, highlighter, startLine, endLine);
         return true;
       }
@@ -2980,6 +2984,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     markupModel.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(@NotNull RangeHighlighterEx lineMarker) {
+        if (!lineMarker.getEditorFilter().avaliableIn(EditorImpl.this)) return true;
+
         paintLineMarkerSeparator(lineMarker, clip, g);
         return true;
       }

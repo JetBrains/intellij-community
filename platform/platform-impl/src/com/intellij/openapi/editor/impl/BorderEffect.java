@@ -86,6 +86,8 @@ public class BorderEffect {
     markupModel.processRangeHighlightersOverlappingWith(myStartOffset, myEndOffset, new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(RangeHighlighterEx rangeHighlighter) {
+        if (!rangeHighlighter.getEditorFilter().avaliableIn(myEditor)) return true;
+
         TextAttributes textAttributes = rangeHighlighter.getTextAttributes();
         if (isBorder(textAttributes) && intersectsRange(rangeHighlighter)) {
           paintBorder(rangeHighlighter, textAttributes);
