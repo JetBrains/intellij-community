@@ -57,9 +57,7 @@ public class VcsRootIterator {
     if ((rootFilter != null) && (! rootFilter.accept(file))) {
       return false;
     }
-    final Boolean excluded = isExcluded(myExcludedFileIndex, file);
-    if (excluded) return false;
-    return true;
+    return !isExcluded(myExcludedFileIndex, file);
   }
 
   private static boolean isExcluded(final FileIndexFacade indexFacade, final VirtualFile file) {
