@@ -227,8 +227,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
           Presentation presentation = new Presentation();
           presentation.setDescription(action.getTemplatePresentation().getDescription());
           final String actualActionPlace = actionPlace == null ? ActionPlaces.UNKNOWN : actionPlace;
-          action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(myComponent), actualActionPlace, presentation,
-                                          ActionManager.getInstance(), 0));
+          final AnActionEvent actionEvent =
+            new AnActionEvent(null, DataManager.getInstance().getDataContext(myComponent), actualActionPlace, presentation,
+                              ActionManager.getInstance(), 0);
+          actionEvent.setInjectedContext(action.isInInjectedContext());
+          action.update(actionEvent);
           ActionMenu.showDescriptionInStatusBar(true, myComponent, presentation.getDescription());
         }
       });
@@ -730,7 +733,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
         myFinalRunnable = new Runnable() {
           @Override
           public void run() {
-            action.actionPerformed(new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(), ActionManager.getInstance(), eventModifiers));
+            final AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
+                                                          ActionManager.getInstance(), eventModifiers);
+            event.setInjectedContext(action.isInInjectedContext());
+            action.actionPerformed(event);
           }
         };
         return FINAL_CHOICE;
@@ -879,7 +885,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     @NotNull
     private AnActionEvent createActionEvent(@NotNull AnAction actionGroup) {
-      return new AnActionEvent(null, myDataContext, myActionPlace, getPresentation(actionGroup), ActionManager.getInstance(), 0);
+      final AnActionEvent actionEvent =
+        new AnActionEvent(null, myDataContext, myActionPlace, getPresentation(actionGroup), ActionManager.getInstance(), 0);
+      actionEvent.setInjectedContext(actionGroup.isInInjectedContext());
+      return actionEvent;
     }
 
     private void appendActionsFromGroup(@NotNull ActionGroup actionGroup) {
