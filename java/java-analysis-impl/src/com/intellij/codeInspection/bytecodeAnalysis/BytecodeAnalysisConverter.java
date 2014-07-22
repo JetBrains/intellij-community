@@ -15,38 +15,32 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.io.*;
-import gnu.trove.*;
+import gnu.trove.TLongArrayList;
+import gnu.trove.TLongHashSet;
+import gnu.trove.TLongObjectHashMap;
+import gnu.trove.TLongObjectIterator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Type;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
 /**
  * @author lambdamix
  */
-public class BytecodeAnalysisConverter implements ApplicationComponent {
-
-  private static final String LOGIC_VERSION_KEY = "BytecodeAnalysisConverter.Logic";
-  private static final int LOGIC_VERSION = 1;
-  private static final String ENUMERATORS_VERSION_KEY = "BytecodeAnalysisConverter.Enumerators";
+public abstract class BytecodeAnalysisConverter implements ApplicationComponent {
 
   public static final int SHIFT = 4096;
 
@@ -54,65 +48,17 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     return ApplicationManager.getApplication().getComponent(BytecodeAnalysisConverter.class);
   }
 
-  private PersistentStringEnumerator myNamesEnumerator;
-  private PersistentEnumeratorDelegate<int[]> myCompoundKeyEnumerator;
-  private int version;
-
-  @Override
-  public void initComponent() {
-
-    final File keysDir = new File(PathManager.getIndexRoot(), "bytecodekeys");
-    final File namesFile = new File(keysDir, "names");
-    final File compoundKeysFile = new File(keysDir, "compound");
-
-    final int previousLogicVersion = PropertiesComponent.getInstance().getOrInitInt(LOGIC_VERSION_KEY, 0);
-    version = PropertiesComponent.getInstance().getOrInitInt(ENUMERATORS_VERSION_KEY, 0);
-
-    if (previousLogicVersion != LOGIC_VERSION) {
-      IOUtil.deleteAllFilesStartingWith(keysDir);
-      version++;
-    }
-
-    try {
-      IOUtil.openCleanOrResetBroken(new ThrowableComputable<Void, IOException>() {
-        @Override
-        public Void compute() throws IOException {
-          myNamesEnumerator = new PersistentStringEnumerator(namesFile, true);
-          myCompoundKeyEnumerator = new IntArrayPersistentEnumerator(compoundKeysFile, new IntArrayKeyDescriptor());
-          return null;
-        }
-      }, new Runnable() {
-        @Override
-        public void run() {
-          LOG.info("Error during initialization of enumerators in bytecode analysis. Re-initializing.");
-          IOUtil.deleteAllFilesStartingWith(keysDir);
-          version++;
-        }
-      });
-    }
-    catch (IOException e) {
-      LOG.error("Re-initialization of enumerators in bytecode analysis failed.", e);
-    }
-    PropertiesComponent.getInstance().setValue(ENUMERATORS_VERSION_KEY, String.valueOf(version));
-    PropertiesComponent.getInstance().setValue(LOGIC_VERSION_KEY, String.valueOf(LOGIC_VERSION));
-  }
-
-  @Override
-  public void disposeComponent() {
-    try {
-      myNamesEnumerator.close();
-      myCompoundKeyEnumerator.close();
-    }
-    catch (IOException e) {
-      LOG.debug(e);
-    }
-  }
-
   @NotNull
   @Override
   public String getComponentName() {
     return "BytecodeAnalysisConverter";
   }
+
+  public abstract int getVersion();
+
+  protected abstract int enumerateString(@NotNull String s) throws IOException;
+
+  protected abstract int enumerateCompoundKey(@NotNull int[] key) throws IOException;
 
   IdEquation convert(Equation<Key, Value> equation) throws IOException {
     ProgressManager.checkCanceled();
@@ -193,7 +139,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     int[] sigKey = new int[2];
     sigKey[0] = mkAsmTypeKey(Type.getObjectType(method.internalClassName));
     sigKey[1] = mkAsmShortSignatureKey(method);
-    return myCompoundKeyEnumerator.enumerate(sigKey);
+    return enumerateCompoundKey(sigKey);
   }
 
   private int mkAsmShortSignatureKey(@NotNull Method method) throws IOException {
@@ -201,11 +147,11 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     int arity = argTypes.length;
     int[] sigKey = new int[2 + arity];
     sigKey[0] = mkAsmTypeKey(Type.getReturnType(method.methodDesc));
-    sigKey[1] = myNamesEnumerator.enumerate(method.methodName);
+    sigKey[1] = enumerateString(method.methodName);
     for (int i = 0; i < argTypes.length; i++) {
       sigKey[2 + i] = mkAsmTypeKey(argTypes[i]);
     }
-    return myCompoundKeyEnumerator.enumerate(sigKey);
+    return enumerateCompoundKey(sigKey);
   }
 
   private int mkAsmTypeKey(Type type) throws IOException {
@@ -220,8 +166,8 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       packageName = "";
       simpleName = className;
     }
-    int[] classKey = new int[]{myNamesEnumerator.enumerate(packageName), myNamesEnumerator.enumerate(simpleName)};
-    return myCompoundKeyEnumerator.enumerate(classKey);
+    int[] classKey = new int[]{enumerateString(packageName), enumerateString(simpleName)};
+    return enumerateCompoundKey(classKey);
   }
 
   public long mkPsiKey(@NotNull PsiMethod psiMethod, Direction direction) throws IOException {
@@ -254,10 +200,10 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     int[] shortSigKey = new int[2 + arity];
     if (returnType == null) {
       shortSigKey[0] = mkPsiTypeKey(PsiType.VOID);
-      shortSigKey[1] = myNamesEnumerator.enumerate("<init>");
+      shortSigKey[1] = enumerateString("<init>");
     } else {
       shortSigKey[0] = mkPsiTypeKey(returnType);
-      shortSigKey[1] = myNamesEnumerator.enumerate(psiMethod.getName());
+      shortSigKey[1] = enumerateString(psiMethod.getName());
     }
     if (isInnerClassConstructor) {
       shortSigKey[2] = mkPsiClassKey(outerClass, 0);
@@ -278,9 +224,9 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       return -1;
     }
     sigKey[0] = classKey;
-    sigKey[1] = myCompoundKeyEnumerator.enumerate(shortSigKey);
+    sigKey[1] = enumerateCompoundKey(shortSigKey);
 
-    return myCompoundKeyEnumerator.enumerate(sigKey);
+    return enumerateCompoundKey(sigKey);
   }
 
   public TLongArrayList mkInOutKeys(@NotNull PsiMethod psiMethod, long primaryKey) throws IOException {
@@ -320,17 +266,17 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       className = qname.substring(packageName.length() + 1).replace('.', '$');
     }
     int[] classKey = new int[2];
-    classKey[0] = myNamesEnumerator.enumerate(packageName);
+    classKey[0] = enumerateString(packageName);
     if (dimensions == 0) {
-      classKey[1] = myNamesEnumerator.enumerate(className);
+      classKey[1] = enumerateString(className);
     } else {
       StringBuilder sb = new StringBuilder(className);
       for (int j = 0; j < dimensions; j++) {
         sb.append("[]");
       }
-      classKey[1] = myNamesEnumerator.enumerate(sb.toString());
+      classKey[1] = enumerateString(sb.toString());
     }
-    return myCompoundKeyEnumerator.enumerate(classKey);
+    return enumerateCompoundKey(classKey);
   }
 
   private int mkPsiTypeKey(PsiType psiType) throws IOException {
@@ -357,17 +303,17 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       String packageName = "";
       String className = psiType.getPresentableText();
       int[] classKey = new int[2];
-      classKey[0] = myNamesEnumerator.enumerate(packageName);
+      classKey[0] = enumerateString(packageName);
       if (dimensions == 0) {
-        classKey[1] = myNamesEnumerator.enumerate(className);
+        classKey[1] = enumerateString(className);
       } else {
         StringBuilder sb = new StringBuilder(className);
         for (int j = 0; j < dimensions; j++) {
           sb.append("[]");
         }
-        classKey[1] = myNamesEnumerator.enumerate(sb.toString());
+        classKey[1] = enumerateString(sb.toString());
       }
-      return myCompoundKeyEnumerator.enumerate(classKey);
+      return enumerateCompoundKey(classKey);
     }
     return -1;
   }
@@ -451,68 +397,4 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     return sb.toString();
   }
 
-  public int getVersion() {
-    return version;
-  }
-
-  private static class IntArrayKeyDescriptor implements KeyDescriptor<int[]>, DifferentSerializableBytesImplyNonEqualityPolicy {
-
-    @Override
-    public void save(@NotNull DataOutput out, int[] value) throws IOException {
-      DataInputOutputUtil.writeINT(out, value.length);
-      for (int i : value) {
-        DataInputOutputUtil.writeINT(out, i);
-      }
-    }
-
-    @Override
-    public int[] read(@NotNull DataInput in) throws IOException {
-      int[] value = new int[DataInputOutputUtil.readINT(in)];
-      for (int i = 0; i < value.length; i++) {
-        value[i] = DataInputOutputUtil.readINT(in);
-      }
-      return value;
-    }
-
-    @Override
-    public int getHashCode(int[] value) {
-      return Arrays.hashCode(value);
-    }
-
-    @Override
-    public boolean isEqual(int[] val1, int[] val2) {
-      return Arrays.equals(val1, val2);
-    }
-  }
-
-  private static class IntArrayPersistentEnumerator extends PersistentEnumeratorDelegate<int[]> {
-    private final CachingEnumerator<int[]> myCache;
-
-    public IntArrayPersistentEnumerator(File compoundKeysFile, IntArrayKeyDescriptor descriptor) throws IOException {
-      super(compoundKeysFile, descriptor, 1024 * 4);
-      myCache = new CachingEnumerator<int[]>(new DataEnumerator<int[]>() {
-        @Override
-        public int enumerate(@Nullable int[] value) throws IOException {
-          return IntArrayPersistentEnumerator.super.enumerate(value);
-        }
-
-        @Nullable
-        @Override
-        public int[] valueOf(int idx) throws IOException {
-          return IntArrayPersistentEnumerator.super.valueOf(idx);
-        }
-      }, descriptor);
-    }
-
-    @Override
-    public int enumerate(@Nullable int[] value) throws IOException {
-      return myCache.enumerate(value);
-    }
-
-    @Nullable
-    @Override
-    public int[] valueOf(int idx) throws IOException {
-      return myCache.valueOf(idx);
-    }
-  }
 }
