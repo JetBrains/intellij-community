@@ -101,7 +101,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
 
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(element);
-    final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(new CodeFormatterFacade(getSettings()).processElement(treeElement));
+    final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(new CodeFormatterFacade(getSettings(), element.getLanguage()).processElement(treeElement));
     if (!canChangeWhiteSpacesOnly) {
       return postProcessElement(formatted);
     }
@@ -180,7 +180,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(file);
     transformAllChildren(treeElement);
 
-    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings());
+    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), file.getLanguage());
     LOG.assertTrue(file.isValid());
 
     if (editor == null) {
@@ -274,7 +274,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
 
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(element);
-    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings());
+    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), element.getLanguage());
     final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(codeFormatter.processRange(treeElement, startOffset, endOffset));
 
     return canChangeWhiteSpacesOnly ? formatted : postProcessElement(formatted);

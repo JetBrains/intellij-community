@@ -19,6 +19,7 @@
  */
 package com.intellij.codeStyle;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
@@ -53,7 +54,7 @@ public abstract class CodeStyleFacade {
 
   public abstract boolean isSmartTabs(final FileType fileType);
 
-  public abstract int getRightMargin();
+  public abstract int getRightMargin(Language language);
 
   public abstract boolean isWrapWhenTypingReachesRightMargin();
 

@@ -161,7 +161,13 @@ public class CommonCodeStyleSettings {
   void copyNonDefaultValuesFrom(CommonCodeStyleSettings from) {
     CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(null);
     PARENT_SETTINGS_INSTALLED =
-      copyFields(getClass().getFields(), from, this, new SupportedFieldsDiffFilter(from, getSupportedFields(), defaultSettings));
+      copyFields(getClass().getFields(), from, this, new SupportedFieldsDiffFilter(from, getSupportedFields(), defaultSettings) {
+        @Override
+        public boolean isAccept(@NotNull Field field) {
+          if ("RIGHT_MARGIN".equals(field.getName())) return false; // Never copy RIGHT_MARGIN, it is inherited automatically if -1
+          return super.isAccept(field);
+        }
+      });
   }
 
   private static void copyFields(Field[] fields, Object from, Object to) {
@@ -280,6 +286,8 @@ public class CommonCodeStyleSettings {
   }
 
 //----------------- GENERAL --------------------
+  public int RIGHT_MARGIN = -1;
+  public final static int DEFAULT_RIGHT_MARGIN = 120;
 
   public boolean LINE_COMMENT_AT_FIRST_COLUMN = true;
   public boolean BLOCK_COMMENT_AT_FIRST_COLUMN = true;

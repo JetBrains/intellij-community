@@ -25,6 +25,8 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.lang.Language;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -32,10 +34,14 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SettingsImpl implements EditorSettings {
   @Nullable private final EditorEx myEditor;
+  @Nullable private final Language myLanguage;
   private Boolean myIsCamelWords;
 
   // This group of settings does not have UI
@@ -78,9 +84,14 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myRenamePreselect                       = null;
   private Boolean myWrapWhenTypingReachesRightMargin      = null;
   private Boolean myShowIntentionBulb                     = null;
+  
+  public SettingsImpl() {
+    this(null, null);
+  }
 
-  public SettingsImpl(@Nullable EditorEx editor) {
+  public SettingsImpl(@Nullable EditorEx editor, @Nullable Project project) {
     myEditor = editor;
+    myLanguage = editor != null && project != null ? getDocumentLanguage(project, editor.getDocument()) : null;
   }
   
   @Override
@@ -144,7 +155,17 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public int getRightMargin(Project project) {
     return myRightMargin != null ? myRightMargin.intValue() :
-           CodeStyleFacade.getInstance(project).getRightMargin();
+           CodeStyleFacade.getInstance(project).getRightMargin(myLanguage);
+  }
+  
+  @Nullable
+  private static Language getDocumentLanguage(@Nullable Project project, @NotNull Document document) {
+     if (project != null) {
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      PsiFile file = documentManager.getPsiFile(document);
+      if (file != null) return file.getLanguage();
+    }
+    return null;
   }
 
   @Override

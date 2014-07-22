@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -469,20 +470,21 @@ public class JDParser {
                                                  boolean firstLineShorter,
                                                  int firstLinePrefixLength)
   {
+    int rightMargin = mySettings.getRightMargin(JavaLanguage.INSTANCE);
     StringBuilder sb = new StringBuilder();
     List<String> list;
 
     //If wrap comments selected, comments should be wrapped by the right margin
     if (mySettings.WRAP_COMMENTS) {
-      list = toArrayWrapping(str, mySettings.RIGHT_MARGIN - prefix.length());
+      list = toArrayWrapping(str, rightMargin - prefix.length());
 
       if (firstLineShorter
           && list != null && !list.isEmpty()
-          && list.get(0).length() > mySettings.RIGHT_MARGIN - firstLinePrefixLength)
+          && list.get(0).length() > rightMargin - firstLinePrefixLength)
       {
         list = new ArrayList<String>();
         //want the first line to be shorter, according to it's prefix
-        String firstLine = toArrayWrapping(str, mySettings.RIGHT_MARGIN - firstLinePrefixLength).get(0);
+        String firstLine = toArrayWrapping(str, rightMargin - firstLinePrefixLength).get(0);
         //so now first line is exactly same width we need
         list.add(firstLine);
         str = str.substring(firstLine.length());
@@ -493,7 +495,7 @@ public class JDParser {
         }
 
         //getting all another lines according to their prefix
-        List<String> subList = toArrayWrapping(str, mySettings.RIGHT_MARGIN - prefix.length());
+        List<String> subList = toArrayWrapping(str, rightMargin - prefix.length());
 
         //removing pre tag
         if (unclosedPreTag && subList != null && !subList.isEmpty()) {

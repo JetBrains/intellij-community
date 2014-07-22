@@ -322,7 +322,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScheme = createBoundColorSchemeDelegate(null);
     initTabPainter();
     myIsViewer = viewer;
-    mySettings = new SettingsImpl(this);
+    mySettings = new SettingsImpl(this, project);
 
     mySelectionModel = new SelectionModelImpl(this);
     myMarkupModel = new EditorMarkupModelImpl(this);
