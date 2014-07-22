@@ -40,7 +40,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
       return fromBytecode;
     }
 
-    if (listOwner instanceof PsiMethod && ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN) && !PsiUtil.canBeOverriden((PsiMethod)listOwner)) {
+    if (ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN) && canHaveContract(listOwner)) {
       List<MethodContract> contracts = ContractInference.inferContracts((PsiMethod)listOwner);
       if (!contracts.isEmpty()) {
         return ProjectBytecodeAnalysis.getInstance(listOwner.getProject()).createContractAnnotation("\"" + StringUtil.join(contracts, "; ") + "\"");
@@ -50,20 +50,22 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
     return null;
   }
 
+  private static boolean canHaveContract(PsiModifierListOwner listOwner) {
+    return listOwner instanceof PsiMethod && !PsiUtil.canBeOverriden((PsiMethod)listOwner);
+  }
+
   @NotNull
   @Override
   public PsiAnnotation[] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
     List<PsiAnnotation> result = ContainerUtil.newArrayList();
     PsiAnnotation[] fromBytecode = ProjectBytecodeAnalysis.getInstance(listOwner.getProject()).findInferredAnnotations(listOwner);
     for (PsiAnnotation annotation : fromBytecode) {
-      if (!ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotation.getQualifiedName()) ||
-          !(listOwner instanceof PsiMethod) ||
-          !PsiUtil.canBeOverriden((PsiMethod)listOwner)) {
+      if (!ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotation.getQualifiedName()) || canHaveContract(listOwner)) {
         result.add(annotation);
       }
     }
 
-    if (listOwner instanceof PsiMethod && !PsiUtil.canBeOverriden((PsiMethod)listOwner)) {
+    if (canHaveContract(listOwner)) {
       List<MethodContract> contracts = ContractInference.inferContracts((PsiMethod)listOwner);
       if (!contracts.isEmpty()) {
         result.add(ProjectBytecodeAnalysis.getInstance(listOwner.getProject())
