@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 package git4idea.branch
-import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.FilePathImpl
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.CurrentContentRevision
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Function
 import com.intellij.util.LineSeparator
@@ -38,9 +35,7 @@ import org.jetbrains.annotations.NotNull
 
 import java.util.regex.Matcher
 
-import static com.intellij.openapi.vcs.Executor.*
-import static git4idea.test.GitExecutor.cd
-import static git4idea.test.GitExecutor.git
+import static git4idea.test.GitExecutor.*
 import static git4idea.test.GitScenarios.*
 
 class GitBranchWorkerTest extends GitPlatformTest {
@@ -598,6 +593,39 @@ class GitBranchWorkerTest extends GitPlatformTest {
     ]
 
     assertEquals "Merge in ultimate should have been reset", ultimateTipAfterMerge, tip(myUltimate)
+  }
+
+  public void test_checkout_in_detached_head() {
+    cd(myCommunity);
+    touch("file.txt", "some content");
+    add("file.txt");
+    commit("msg");
+    git(myCommunity, "checkout HEAD^");
+
+    checkoutBranch("master", []);
+    assertCurrentBranch("master");
+  }
+
+  // inspired by IDEA-127472
+  public void test_checkout_to_common_branch_when_branches_have_diverged() {
+    branchWithCommit(myUltimate, "feature", "feature-file.txt", "feature_content", false);
+    branchWithCommit(myCommunity, "newbranch", "newbranch-file.txt", "newbranch_content", false);
+    checkoutBranch("master", [])
+    assertCurrentBranch("master");
+  }
+
+  public void test_rollback_checkout_from_diverged_branches_should_return_to_proper_branches() {
+    branchWithCommit(myUltimate, "feature", "feature-file.txt", "feature_content", false);
+    branchWithCommit(myCommunity, "newbranch", "newbranch-file.txt", "newbranch_content", false);
+    unmergedFiles(myContrib)
+
+    checkoutBranch "master", [
+            showUnmergedFilesMessageWithRollback: { String s1, String s2 -> true },
+    ]
+
+    assertCurrentBranch(myUltimate, "feature");
+    assertCurrentBranch(myCommunity, "newbranch");
+    assertCurrentBranch(myContrib, "master");
   }
 
   static def assertCurrentBranch(GitRepository repository, String name) {
