@@ -38,6 +38,7 @@ public class DebuggerSteppingConfigurable implements SearchableConfigurable, Con
   private JCheckBox myCbSkipSimpleGetters;
   private Project myProject;
 
+  @Override
   public void reset() {
     final DebuggerSettings settings = DebuggerSettings.getInstance();
     myCbSkipSimpleGetters.setSelected(settings.SKIP_GETTERS);
@@ -53,6 +54,7 @@ public class DebuggerSteppingConfigurable implements SearchableConfigurable, Con
 
   }
 
+  @Override
   public void apply() {
     getSettingsTo(DebuggerSettings.getInstance());
   }
@@ -68,6 +70,7 @@ public class DebuggerSteppingConfigurable implements SearchableConfigurable, Con
     settings.setSteppingFilters(mySteppingFilterEditor.getFilters());
   }
 
+  @Override
   public boolean isModified() {
     final DebuggerSettings currentSettings = DebuggerSettings.getInstance();
     final DebuggerSettings debuggerSettings = currentSettings.clone();
@@ -75,30 +78,35 @@ public class DebuggerSteppingConfigurable implements SearchableConfigurable, Con
     return !debuggerSettings.equals(currentSettings);
   }
 
+  @Override
   public String getDisplayName() {
     return OptionsBundle.message("options.java.display.name");
   }
 
+  @Override
   @NotNull
   public String getHelpTopic() {
     return "reference.idesettings.debugger.stepping";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   public Runnable enableSearch(String option) {
     return null;
   }
 
+  @Override
   public JComponent createComponent() {
     final JPanel panel = new JPanel(new GridBagLayout());
     myProject = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
     myCbSkipSyntheticMethods = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.synthetic.methods"));
     myCbSkipConstructors = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.constructors"));
-    myCbSkipClassLoaders = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.classloaders"));
+    myCbSkipClassLoaders = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.classLoaders"));
     myCbSkipSimpleGetters = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.simple.getters"));
     myCbStepInfoFiltersEnabled = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.step.filters.list.header"));
     panel.add(myCbSkipSyntheticMethods, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),0, 0));
@@ -111,6 +119,7 @@ public class DebuggerSteppingConfigurable implements SearchableConfigurable, Con
     panel.add(mySteppingFilterEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 5, 0, 0),0, 0));
 
     myCbStepInfoFiltersEnabled.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         mySteppingFilterEditor.setEnabled(myCbStepInfoFiltersEnabled.isSelected());
       }
@@ -118,6 +127,7 @@ public class DebuggerSteppingConfigurable implements SearchableConfigurable, Con
     return panel;
   }
 
+  @Override
   public void disposeUIResources() {
     mySteppingFilterEditor = null;
     myProject = null;
