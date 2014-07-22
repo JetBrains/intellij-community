@@ -17,6 +17,7 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.folding.NamedFoldingDescriptor;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -32,12 +33,14 @@ public class ParameterNameFoldingManager {
   private static final int MIN_NAME_LENGTH_THRESHOLD = 3;
   private static final int MIN_ARGS_TO_FOLD = 2;
 
-  private static final String[] RANGE_START_WORDS = {
-    "begin", "start", "from", "first"
-  };
-  private static final String[] RANGE_END_WORDS = {
-    "end", "to", "last"
-  };
+  private static final List<Couple<String>> COMMONLY_USED_PARAMETER_PAIR = ContainerUtil.newArrayList(
+    Couple.of("begin", "end"),
+    Couple.of("start", "end"),
+    Couple.of("first", "last"),
+    Couple.of("first", "second"),
+    Couple.of("from", "to"),
+    Couple.of("key", "value")
+  );
 
   private final PsiCallExpression myCallExpression;
 
@@ -119,17 +122,13 @@ public class ParameterNameFoldingManager {
     String secondParamName = myParameters[second].getName();
     if (firstParamName == null || secondParamName == null) return false;
 
-    if (containsAnyWord(firstParamName, RANGE_START_WORDS) && containsAnyWord(secondParamName, RANGE_END_WORDS)) {
+    for (Couple<String> knownPair : COMMONLY_USED_PARAMETER_PAIR) {
+      if (StringUtil.containsIgnoreCase(firstParamName, knownPair.first)
+          && StringUtil.containsIgnoreCase(secondParamName, knownPair.second)) {
         return true;
+      }
     }
 
-    return false;
-  }
-
-  private static boolean containsAnyWord(@NotNull String str, @NotNull String[] words) {
-    for (String word : words) {
-      if (StringUtil.containsIgnoreCase(str, word)) return true;
-    }
     return false;
   }
 

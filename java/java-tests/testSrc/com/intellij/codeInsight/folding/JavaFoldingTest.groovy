@@ -692,6 +692,37 @@ public class CharSymbol {
     assert regions.size() == 2
   }
 
+  public void "test do not inline known subsequent parameter names"() {
+    def text = """
+public class Test {
+  public void main() {
+    test1(1, 2);
+    test2(1, 2);
+    test3(1, 2);
+    doTest("first", "second");
+  }
+
+  public void test1(int first, int second) {
+    int start = first;
+    int end = second;
+  }
+
+  public void test2(int key, int value) {
+    int start = key;
+    int end = value;
+  }
+
+  public void test3(int key, int value) {
+    int start = key;
+    int end = value;
+  }
+}
+"""
+    configure text
+    def regions = myFixture.editor.foldingModel.allFoldRegions
+    assert regions.size() == 4
+  }
+
   public void "test do not inline paired ranged names"() {
     def text = """
 public class CharSymbol {
@@ -712,18 +743,18 @@ public class CharSymbol {
   }
 
   public void substring2(int startIndex, int endIndex) {
-    int start = beginIndex;
+    int start = startIndex;
     int end = endIndex;
   }
 
   public void substring3(int from, int to) {
-    int start = beginIndex;
-    int end = endIndex;
+    int start = from;
+    int end = to;
   }
 
   public void substring4(int first, int last) {
-    int start = beginIndex;
-    int end = endIndex;
+    int start = first;
+    int end = last;
   }
 }
 """
