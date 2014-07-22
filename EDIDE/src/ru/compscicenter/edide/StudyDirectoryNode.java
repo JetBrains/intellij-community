@@ -48,6 +48,9 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
         if (file.getTask().isSolved()) {
           data.setIcon(StudyIcons.CheckedTask);
         }
+        if (file.getTask().isFailed()) {
+          data.setIcon(StudyIcons.FailedTask);
+        }
       }
     }
 

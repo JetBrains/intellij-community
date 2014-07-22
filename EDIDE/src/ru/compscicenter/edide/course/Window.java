@@ -210,4 +210,8 @@ public class Window implements Comparable {
   public String getHint() {
     return hint;
   }
+
+  public String getPossibleAnswer() {
+    return possibleAnswer;
+  }
 }

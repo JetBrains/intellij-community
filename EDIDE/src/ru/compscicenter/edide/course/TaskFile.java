@@ -212,7 +212,8 @@ public class TaskFile {
    */
   public void updateLine(int lineChange, int line, int newEndOffsetInLine, int oldEndOffsetInLine) {
     for (Window w : windows) {
-      if ((w.getLine() == line) && (w.getStart() > newEndOffsetInLine)) {
+      //if ((w.getLine() == line) && (w.getStart() > newEndOffsetInLine)) {
+      if ((w.getLine() == line) && (w.getStart() > oldEndOffsetInLine)) {
         int distance = w.getStart() - oldEndOffsetInLine;
         w.setStart(distance + newEndOffsetInLine);
         w.setLine(line + lineChange);

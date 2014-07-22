@@ -28,15 +28,23 @@ public class Task {
   private static final String SOLVED_ATTRIBUTE_NAME = "mySolved";
   private static final String INPUT_ATTRIBUTE_NAME = "input";
   private static final String OUTPUT_ATTRIBUTE_NAME = "output";
+  private static final String TEST_NUM_ATTRIBUTE_NAME = "testNum";
+  public static final String FAILED_ATTRIBUTE_NAME = "myFailed";
   private String testFile;
+  private int testNum;
   private String name;
   private String text;
   private List<TaskFile> taskFiles;
   private Lesson myLesson;
   private boolean mySolved = false;
+  private boolean myFailed = false;
   private int myIndex;
   private String input = null;
   private String output = null;
+
+  public int getTestNum() {
+    return testNum;
+  }
 
   /**
    * Saves task state for serialization
@@ -50,6 +58,8 @@ public class Task {
     taskElement.setAttribute(TEXT_ATTRIBUTE_NAME, text);
     taskElement.setAttribute(INDEX_ATTRIBUTE_NAME, String.valueOf(myIndex));
     taskElement.setAttribute(SOLVED_ATTRIBUTE_NAME, String.valueOf(mySolved));
+    taskElement.setAttribute(FAILED_ATTRIBUTE_NAME, String.valueOf(myFailed));
+    taskElement.setAttribute(TEST_NUM_ATTRIBUTE_NAME, String.valueOf(testNum));
     if (input != null) {
       taskElement.setAttribute(INPUT_ATTRIBUTE_NAME, input);
     }
@@ -75,7 +85,9 @@ public class Task {
     output = taskElement.getAttributeValue(OUTPUT_ATTRIBUTE_NAME);
     try {
       mySolved = taskElement.getAttribute(SOLVED_ATTRIBUTE_NAME).getBooleanValue();
+      myFailed = taskElement.getAttribute(FAILED_ATTRIBUTE_NAME).getBooleanValue();
       myIndex = taskElement.getAttribute(INDEX_ATTRIBUTE_NAME).getIntValue();
+      testNum = taskElement.getAttribute(TEST_NUM_ATTRIBUTE_NAME).getIntValue();
       List<Element> taskFileElements = taskElement.getChildren();
       taskFiles = new ArrayList<TaskFile>(taskFileElements.size());
       for (Element taskFileElement : taskFileElements) {
@@ -87,6 +99,14 @@ public class Task {
     catch (DataConversionException e) {
       e.printStackTrace();
     }
+  }
+
+  public boolean isFailed() {
+    return myFailed;
+  }
+
+  public void setFailed(boolean failed) {
+    myFailed = failed;
   }
 
   public boolean isSolved() {

@@ -76,6 +76,7 @@ public class RefreshTaskAction extends AnAction {
                       window.reset();
                     }
                     selectedTaskFile.getTask().setSolved(false);
+                    selectedTaskFile.getTask().setFailed(false);
                     ProjectView.getInstance(project).refresh();
                     if (listener!=null) {
                       document.addDocumentListener(listener);
