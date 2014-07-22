@@ -16,6 +16,7 @@
 package com.intellij.execution.application;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.execution.ui.ClassBrowser;
@@ -71,7 +72,9 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   public void applyEditorTo(final ApplicationConfiguration configuration) throws ConfigurationException {
     myCommonProgramParameters.applyTo(configuration);
     myModuleSelector.applyTo(configuration);
-    configuration.MAIN_CLASS_NAME = getMainClassField().getText();
+    final String className = getMainClassField().getText();
+    final PsiClass aClass = myModuleSelector.findClass(className);
+    configuration.MAIN_CLASS_NAME = aClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(aClass) : className;
     configuration.ALTERNATIVE_JRE_PATH = myAlternativeJREPanel.getPath();
     configuration.ALTERNATIVE_JRE_PATH_ENABLED = myAlternativeJREPanel.isPathEnabled();
     configuration.ENABLE_SWING_INSPECTOR = (myVersionDetector.isJre50Configured(configuration) || myVersionDetector.isModuleJre50Configured(configuration)) && myShowSwingInspectorCheckbox.isSelected();
@@ -82,7 +85,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   public void resetEditorFrom(final ApplicationConfiguration configuration) {
     myCommonProgramParameters.reset(configuration);
     myModuleSelector.reset(configuration);
-    getMainClassField().setText(configuration.MAIN_CLASS_NAME);
+    getMainClassField().setText(configuration.MAIN_CLASS_NAME.replaceAll("\\$", "\\."));
     myAlternativeJREPanel.init(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
 
     updateShowSwingInspector(configuration);
@@ -121,7 +124,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
       public Visibility isDeclarationVisible(PsiElement declaration, PsiElement place) {
         if (declaration instanceof PsiClass) {
           final PsiClass aClass = (PsiClass)declaration;
-          if (ConfigurationUtil.MAIN_CLASS.value(aClass) && PsiMethodUtil.findMainMethod(aClass) != null) {
+          if (ConfigurationUtil.MAIN_CLASS.value(aClass) && PsiMethodUtil.findMainMethod(aClass) != null || place.getParent() != null && myModuleSelector.findClass(((PsiClass)declaration).getQualifiedName()) != null) {
             return Visibility.VISIBLE;
           }
         }

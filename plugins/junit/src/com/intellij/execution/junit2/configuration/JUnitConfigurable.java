@@ -394,7 +394,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       @Override
       public Visibility isDeclarationVisible(PsiElement declaration, PsiElement place) {
         try {
-          if (declaration instanceof PsiClass && classBrowser.getFilter().isAccepted(((PsiClass)declaration))) {
+          if (declaration instanceof PsiClass && (classBrowser.getFilter().isAccepted(((PsiClass)declaration)) || classBrowser.findClass(((PsiClass)declaration).getQualifiedName()) != null && place.getParent() != null)) {
             return Visibility.VISIBLE;
           }
         }
