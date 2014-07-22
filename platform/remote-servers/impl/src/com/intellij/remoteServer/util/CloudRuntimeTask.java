@@ -109,6 +109,11 @@ public abstract class CloudRuntimeTask<
         public void run(@NotNull ProgressIndicator indicator) {
           progressive.run(indicator);
         }
+
+        @Override
+        public boolean shouldStartInBackground() {
+          return CloudRuntimeTask.this.shouldStartInBackground();
+        }
       };
     }
 
@@ -120,6 +125,10 @@ public abstract class CloudRuntimeTask<
     task.queue();
 
     return result.get();
+  }
+
+  protected boolean shouldStartInBackground() {
+    return true;
   }
 
   protected void postPerform(T result) {

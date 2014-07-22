@@ -16,6 +16,7 @@
 package com.intellij.remoteServer.util.importProject;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.remoteServer.ServerType;
@@ -25,11 +26,12 @@ import com.intellij.remoteServer.util.CloudDeploymentNameConfiguration;
 import com.intellij.remoteServer.util.CloudGitDeploymentDetector;
 
 import javax.swing.*;
+import java.util.Collections;
 
 /**
  * @author michael.golubev
  */
-public abstract class CloudGitChooseAccountStepBase extends ModuleWizardStep {
+public class CloudGitChooseAccountStepBase extends ModuleWizardStep {
 
   private JPanel myAccountSelectionPanelPlaceHolder;
   private JPanel myMainPanel;
@@ -38,14 +40,15 @@ public abstract class CloudGitChooseAccountStepBase extends ModuleWizardStep {
   private CloudAccountSelectionEditor myEditor;
 
   private final CloudGitDeploymentDetector myDeploymentDetector;
+  private final WizardContext myContext;
 
-  public CloudGitChooseAccountStepBase(CloudGitDeploymentDetector deploymentDetector) {
+  public CloudGitChooseAccountStepBase(CloudGitDeploymentDetector deploymentDetector, WizardContext context) {
     myDeploymentDetector = deploymentDetector;
+    myContext = context;
     ServerType cloudType = deploymentDetector.getCloudType();
     myTitleLabel.setText(CloudBundle.getText("choose.account.title", cloudType.getPresentableName()));
-    myEditor = new CloudAccountSelectionEditor(cloudType);
+    myEditor = new CloudAccountSelectionEditor(Collections.<ServerType<?>>singletonList(cloudType));
     myAccountSelectionPanelPlaceHolder.add(myEditor.getMainPanel());
-    myEditor.initUI();
   }
 
   protected CloudGitDeploymentDetector getDeploymentDetector() {
@@ -63,6 +66,11 @@ public abstract class CloudGitChooseAccountStepBase extends ModuleWizardStep {
     return super.validate();
   }
 
+  @Override
+  public void updateDataModel() {
+    myEditor.setAccountOnContext(myContext);
+  }
+
   public void createRunConfiguration(Module module, String applicationName) {
     CloudDeploymentNameConfiguration deploymentConfiguration = myDeploymentDetector.createDeploymentConfiguration();
 
@@ -72,6 +80,6 @@ public abstract class CloudGitChooseAccountStepBase extends ModuleWizardStep {
       deploymentConfiguration.setDeploymentName(applicationName);
     }
 
-    myEditor.createRunConfiguration(module, deploymentConfiguration);
+    CloudAccountSelectionEditor.createRunConfiguration(myContext, myDeploymentDetector.getCloudType(), module, deploymentConfiguration);
   }
 }

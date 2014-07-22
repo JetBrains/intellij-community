@@ -18,133 +18,164 @@ package com.intellij.remoteServer.util;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
+import com.intellij.remoteServer.configuration.ServerConfiguration;
+import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.impl.configuration.RemoteServerConfigurable;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationType;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfiguration;
 import com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceImpl;
+import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.text.UniqueNameGenerator;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
+import java.util.Map;
 
-/**
- * @author michael.golubev
- */
-public class CloudAccountSelectionEditor<SC extends CloudConfigurationBase,
-  DC extends CloudDeploymentNameConfiguration,
-  ST extends ServerType<SC>> implements Disposable {
 
-  private static final Logger LOG = Logger.getInstance("#" + CloudAccountSelectionEditor.class.getName());
+public class CloudAccountSelectionEditor {
 
-  private JComboBox myServerComboBox;
-  private JPanel myServerConfigurablePanel;
+  private static final Map<ServerType<?>, Key<RemoteServer<?>>> ourCloudType2AccountKey
+    = new HashMap<ServerType<?>, Key<RemoteServer<?>>>();
+
+
+  private JButton myNewButton;
+  private ComboBox myAccountComboBox;
   private JPanel myMainPanel;
 
-  private final ST myCloudType;
+  private final List<ServerType<?>> myCloudTypes;
 
-  private RemoteServer<SC> myNewServer;
-  private RemoteServerConfigurable myServerConfigurable;
+  private Runnable myServerSelectionListener;
 
+  public CloudAccountSelectionEditor(List<ServerType<?>> cloudTypes) {
+    myCloudTypes = cloudTypes;
 
-  private DelayedRunner myRunner;
+    for (ServerType<?> cloudType : cloudTypes) {
+      for (RemoteServer<?> account : RemoteServersManager.getInstance().getServers(cloudType)) {
+        myAccountComboBox.addItem(new AccountItem(account));
+      }
+    }
 
-  private CloudDataLoader myDataLoader = CloudDataLoader.NULL;
-
-  public CloudAccountSelectionEditor(ST cloudType) {
-    myCloudType = cloudType;
-  }
-
-  private void createUIComponents() {
-    myServerConfigurablePanel = createServerConfigurablePanel();
-    myServerConfigurablePanel.setVisible(false);
-  }
-
-  public void initUI() {
-    myServerComboBox.addActionListener(new ActionListener() {
+    myNewButton.addActionListener(new ActionListener() {
 
       @Override
       public void actionPerformed(ActionEvent e) {
-        onAccountSelectionChanged();
+        onNewButton();
       }
     });
 
-    for (RemoteServer<SC> server : RemoteServersManager.getInstance().getServers(myCloudType)) {
-      myServerComboBox.addItem(new ServerItem(server));
-    }
-    myServerComboBox.addItem(new ServerItem(myNewServer));
-
-    myRunner= new DelayedRunner(myMainPanel) {
-
-      private ServerItem myPreviousServerItem;
+    myAccountComboBox.addActionListener(new ActionListener() {
 
       @Override
-      protected boolean wasChanged() {
-        ServerItem currentServerItem = getSelectedServerItem();
-        boolean result = myPreviousServerItem != currentServerItem;
-        if (result) {
-          myPreviousServerItem = currentServerItem;
-          myDataLoader.clearCloudData();
+      public void actionPerformed(ActionEvent e) {
+        if (myServerSelectionListener != null) {
+          myServerSelectionListener.run();
         }
-        return result;
       }
+    });
+  }
+
+  public void setAccountSelectionListener(Runnable listener) {
+    myServerSelectionListener = listener;
+  }
+
+  private void onNewButton() {
+    if (myCloudTypes.size() == 1) {
+      createAccount(ContainerUtil.getFirstItem(myCloudTypes));
+      return;
+    }
+
+    DefaultActionGroup group = new DefaultActionGroup();
+    for (final ServerType<?> cloudType : myCloudTypes) {
+      group.add(new AnAction(cloudType.getPresentableName(), cloudType.getPresentableName(), cloudType.getIcon()) {
+
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          createAccount(cloudType);
+        }
+      });
+    }
+    JBPopupFactory.getInstance().createActionGroupPopup("New Account", group, DataManager.getInstance().getDataContext(myMainPanel),
+                                                        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
+      .showUnderneathOf(myNewButton);
+  }
+
+  private void createAccount(ServerType<?> cloudType) {
+    RemoteServer<?> newAccount = RemoteServersManager.getInstance().createServer(cloudType, generateServerName(cloudType));
+
+    final Ref<Consumer<String>> errorConsumerRef = new Ref<Consumer<String>>();
+
+    RemoteServerConfigurable configurable = new RemoteServerConfigurable(newAccount, null, true) {
 
       @Override
-      protected void run() {
-        if (getSelectedServerItem().isNew()) {
-          myServerConfigurable.setDataLoader(new CloudDataLoader() {
-
-            @Override
-            public void clearCloudData() {
-              if (getSelectedServerItem().isNew()) {
-                myDataLoader.clearCloudData();
-              }
-            }
-
-            @Override
-            public void loadCloudData() {
-              if (getSelectedServerItem().isNew()) {
-                myDataLoader.loadCloudData();
-              }
-            }
-          });
-        }
-        else {
-          myDataLoader.loadCloudData();
-        }
+      protected void setConnectionStatusText(boolean error, String text) {
+        super.setConnectionStatusText(error, error ? "" : text);
+        errorConsumerRef.get().consume(error ? text : null);
       }
     };
+
+    final SingleConfigurableEditor configurableEditor
+      = new SingleConfigurableEditor(myMainPanel, configurable, ShowSettingsUtilImpl.createDimensionKey(configurable), false) {
+
+      {
+        errorConsumerRef.set(new Consumer<String>() {
+
+          @Override
+          public void consume(String s) {
+            setErrorText(s);
+          }
+        });
+      }
+    };
+
+    if (!configurableEditor.showAndGet()) {
+      return;
+    }
+
+    newAccount.setName(configurable.getDisplayName());
+
+    RemoteServersManager.getInstance().addServer(newAccount);
+    AccountItem newAccountItem = new AccountItem(newAccount);
+    myAccountComboBox.addItem(newAccountItem);
+    myAccountComboBox.setSelectedItem(newAccountItem);
   }
 
-  public void setDataLoader(CloudDataLoader dataLoader) {
-    myDataLoader = dataLoader;
+  public JComponent getMainPanel() {
+    return myMainPanel;
   }
 
-  private void onAccountSelectionChanged() {
-    myServerConfigurablePanel.setVisible(getSelectedServerItem().isNew());
+  @Nullable
+  public RemoteServer<?> getSelectedAccount() {
+    AccountItem selectedItem = (AccountItem)myAccountComboBox.getSelectedItem();
+    return selectedItem == null ? null : selectedItem.getAccount();
   }
 
-  protected JPanel createServerConfigurablePanel() {
-    myNewServer = RemoteServersManager.getInstance().createServer(myCloudType, generateServerName());
-    myServerConfigurable = new RemoteServerConfigurable(myNewServer, null, true);
-    myServerConfigurablePanel = (JPanel)myServerConfigurable.createComponent();
-    return myServerConfigurablePanel;
-  }
-
-  private String generateServerName() {
-    return UniqueNameGenerator.generateUniqueName(myCloudType.getPresentableName(), new Condition<String>() {
+  private static String generateServerName(ServerType<?> cloudType) {
+    return UniqueNameGenerator.generateUniqueName(cloudType.getPresentableName(), new Condition<String>() {
 
       @Override
       public boolean value(String s) {
@@ -158,30 +189,60 @@ public class CloudAccountSelectionEditor<SC extends CloudConfigurationBase,
     });
   }
 
-  public DeployToServerRunConfiguration<SC, DC> createRunConfiguration(Module module, DC deploymentConfiguration) {
+  public void validate() throws ConfigurationException {
+    if (getSelectedAccount() == null) {
+      throw new ConfigurationException("Account required");
+    }
+  }
+
+  public void setAccountOnContext(WizardContext context) {
+    RemoteServer<?> account = getSelectedAccount();
+    if (account == null) {
+      return;
+    }
+    context.putUserData(getKey(account.getType()), account);
+  }
+
+  public static void unsetAccountOnContext(WizardContext context, ServerType<?> cloudType) {
+    context.putUserData(getKey(cloudType), null);
+  }
+
+  private static Key<RemoteServer<?>> getKey(ServerType<?> cloudType) {
+    Key<RemoteServer<?>> result = ourCloudType2AccountKey.get(cloudType);
+    if (result == null) {
+      result = new Key<RemoteServer<?>>("cloud-account-" + cloudType.getId());
+      ourCloudType2AccountKey.put(cloudType, result);
+    }
+    return result;
+  }
+
+  public static void createRunConfiguration(WizardContext context,
+                                            ServerType<?> cloudType,
+                                            Module module,
+                                            CloudDeploymentNameConfiguration configuration) {
+    RemoteServer<?> account = context.getUserData(getKey(cloudType));
+    if (account == null) {
+      return;
+    }
+    createRunConfiguration(account, module, configuration);
+  }
+
+  public static <SC extends ServerConfiguration, DC extends DeploymentConfiguration>
+  DeployToServerRunConfiguration<SC, DC> createRunConfiguration(RemoteServer<SC> account, Module module, DC deploymentConfiguration) {
+
     Project project = module.getProject();
 
-    RemoteServer<SC> server = getServer();
-    if (server == null) {
-      return null;
-    }
+    String accountName = account.getName();
 
-    if (getSelectedServerItem().isNew()) {
-      RemoteServersManager.getInstance().addServer(server);
-      myNewServer = null;
-    }
-
-    String serverName = server.getName();
-
-    String name = generateRunConfigurationName(serverName, module.getName());
+    String name = generateRunConfigurationName(accountName, module.getName());
 
     final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
     final RunnerAndConfigurationSettings runSettings
-      = runManager.createRunConfiguration(name, getRunConfigurationType().getConfigurationFactories()[0]);
+      = runManager.createRunConfiguration(name, getRunConfigurationType(account.getType()).getConfigurationFactories()[0]);
 
     final DeployToServerRunConfiguration<SC, DC> result = (DeployToServerRunConfiguration<SC, DC>)runSettings.getConfiguration();
 
-    result.setServerName(serverName);
+    result.setServerName(accountName);
 
     final ModulePointer modulePointer = ModulePointerManager.getInstance(project).create(module);
     result.setDeploymentSource(new ModuleDeploymentSourceImpl(modulePointer));
@@ -194,43 +255,8 @@ public class CloudAccountSelectionEditor<SC extends CloudConfigurationBase,
     return result;
   }
 
-  protected String generateRunConfigurationName(String serverName, String moduleName) {
-    return CloudBundle.getText("run.configuration.name", serverName, moduleName);
-  }
-
-  protected void handleError(ConfigurationException e) {
-    LOG.info(e);
-  }
-
-  public RemoteServer<SC> getServer() {
-    try {
-      return doGetServer();
-    }
-    catch (ConfigurationException e) {
-      handleError(e);
-      return null;
-    }
-  }
-
-  private RemoteServer<SC> doGetServer() throws ConfigurationException {
-    ServerItem serverItem = getSelectedServerItem();
-    if (serverItem.isNew()) {
-      myServerConfigurable.apply();
-      myNewServer.setName(myServerConfigurable.getDisplayName());
-    }
-    return serverItem.getServer();
-  }
-
-  public void validate() throws ConfigurationException {
-    doGetServer();
-  }
-
-  private ServerItem getSelectedServerItem() {
-    return (ServerItem)myServerComboBox.getSelectedItem();
-  }
-
-  private DeployToServerConfigurationType getRunConfigurationType() {
-    String id = DeployToServerConfigurationType.getId(myCloudType);
+  private static DeployToServerConfigurationType getRunConfigurationType(ServerType<?> cloudType) {
+    String id = DeployToServerConfigurationType.getId(cloudType);
     for (ConfigurationType configurationType : ConfigurationType.CONFIGURATION_TYPE_EP.getExtensions()) {
       if (configurationType instanceof DeployToServerConfigurationType) {
         DeployToServerConfigurationType deployConfigurationType = (DeployToServerConfigurationType)configurationType;
@@ -242,35 +268,25 @@ public class CloudAccountSelectionEditor<SC extends CloudConfigurationBase,
     return null;
   }
 
-  public JPanel getMainPanel() {
-    return myMainPanel;
+  private static String generateRunConfigurationName(String serverName, String moduleName) {
+    return CloudBundle.getText("run.configuration.name", serverName, moduleName);
   }
 
-  @Override
-  public void dispose() {
-    myServerConfigurable.disposeUIResources();
-    Disposer.dispose(myRunner);
-  }
+  private static class AccountItem {
 
-  private class ServerItem {
+    private final RemoteServer<?> myAccount;
 
-    private final RemoteServer<SC> myServer;
-
-    public ServerItem(RemoteServer<SC> server) {
-      myServer = server;
+    public AccountItem(RemoteServer<?> account) {
+      myAccount = account;
     }
 
-    public boolean isNew() {
-      return myServer == myNewServer;
-    }
-
-    public RemoteServer<SC> getServer() {
-      return myServer;
+    public RemoteServer<?> getAccount() {
+      return myAccount;
     }
 
     @Override
     public String toString() {
-      return isNew() ? "New account..." : myServer.getName();
+      return myAccount.getName();
     }
   }
 }
