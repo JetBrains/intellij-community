@@ -139,6 +139,10 @@ public class CmdlineProtoUtil {
       .setType(CmdlineRemoteProto.Message.ControllerMessage.Type.CANCEL_BUILD_COMMAND).build();
   }
 
+  public static BuilderMessage createCompileProgressMessageResponse(String text) {
+    return createCompileMessage(BuildMessage.Kind.PROGRESS, text, null, -1L, -1L, -1L, -1, -1, -1.0f);
+  }
+
   public static BuilderMessage createCompileProgressMessageResponse(String text, float done) {
     return createCompileMessage(BuildMessage.Kind.PROGRESS, text, null, -1L, -1L, -1L, -1, -1, done);
   }
