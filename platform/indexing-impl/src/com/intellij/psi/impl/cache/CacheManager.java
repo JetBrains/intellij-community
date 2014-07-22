@@ -20,7 +20,9 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.Processor;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
 public interface CacheManager {
@@ -33,7 +35,13 @@ public interface CacheManager {
     }
   }
 
-  @NotNull PsiFile[] getFilesWithWord(@NotNull String word, short occurenceMask, @NotNull GlobalSearchScope scope, final boolean caseSensitively);
-  boolean processFilesWithWord(@NotNull Processor<PsiFile> processor,@NotNull String word, short occurenceMask, @NotNull GlobalSearchScope scope, final boolean caseSensitively);
+  @NotNull
+  PsiFile[] getFilesWithWord(@NotNull String word, short occurenceMask, @NotNull GlobalSearchScope scope, final boolean caseSensitively);
+
+  boolean processFilesWithWord(@NotNull Processor<PsiFile> processor,
+                               @NotNull String word,
+                               @MagicConstant(flagsFromClass = UsageSearchContext.class) short occurenceMask,
+                               @NotNull GlobalSearchScope scope,
+                               final boolean caseSensitively);
 }
 

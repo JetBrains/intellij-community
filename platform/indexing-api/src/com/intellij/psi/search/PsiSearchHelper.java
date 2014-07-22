@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.Processor;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -166,13 +167,13 @@ public interface PsiSearchHelper {
   boolean processElementsWithWord(@NotNull TextOccurenceProcessor processor,
                                   @NotNull SearchScope searchScope,
                                   @NotNull String text,
-                                  short searchContext,
+                                  @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext,
                                   boolean caseSensitive);
 
   boolean processElementsWithWord(@NotNull TextOccurenceProcessor processor,
                                   @NotNull SearchScope searchScope,
                                   @NotNull String text,
-                                  short searchContext,
+                                  @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext,
                                   boolean caseSensitive,
                                   boolean processInjectedPsi);
 
