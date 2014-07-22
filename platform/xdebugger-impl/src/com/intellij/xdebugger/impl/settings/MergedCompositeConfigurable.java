@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
 abstract class MergedCompositeConfigurable implements SearchableConfigurable {
   protected final Configurable[] children;
@@ -43,7 +44,7 @@ abstract class MergedCompositeConfigurable implements SearchableConfigurable {
         rootComponent = children[0].createComponent();
       }
       else {
-        JPanel panel = new JPanel(new VerticalFlowLayout(0, isUseTitledBorder() ? 0 : TitledSeparator.TOP_INSET));
+        JPanel panel = createPanel(isUseTitledBorder());
         for (Configurable child : children) {
           JComponent component = child.createComponent();
           assert component != null;
@@ -56,6 +57,16 @@ abstract class MergedCompositeConfigurable implements SearchableConfigurable {
       }
     }
     return rootComponent;
+  }
+
+  @NotNull
+  static JPanel createPanel(boolean isUseTitledBorder) {
+    int verticalGap = TitledSeparator.TOP_INSET;
+    JPanel panel = new JPanel(new VerticalFlowLayout(0, isUseTitledBorder ? 0 : verticalGap));
+    // 1) VerticalFlowLayout incorrectly use vertical gap as top inset
+    // 2) if isUseTitledBorder, created titled border will add gap before component
+    panel.setBorder(new EmptyBorder(-verticalGap, 0, 0, 0));
+    return panel;
   }
 
   @Override

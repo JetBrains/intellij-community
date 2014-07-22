@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.util.List;
 
 abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent {
@@ -109,9 +110,11 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
           rootComponent = children[0].createComponent();
         }
         else {
-          JPanel panel = new JPanel(new VerticalFlowLayout(0, IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET));
+          JPanel panel = new JPanel(new VerticalFlowLayout(0, 0));
           if (root != null) {
-            panel.add(root.getComponent());
+            JComponent c = root.getComponent();
+            c.setBorder(new EmptyBorder(0, 0, IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET, 0));
+            panel.add(c);
           }
           for (Configurable child : children) {
             JComponent component = child.createComponent();
