@@ -260,15 +260,16 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
 
   private boolean areGeneralSettingsModified() {
     ViewsGeneralSettings generalSettings = ViewsGeneralSettings.getInstance();
-    return
-    (generalSettings.AUTOSCROLL_TO_NEW_LOCALS  != myCbAutoscroll.isSelected()) ||
-    (generalSettings.HIDE_NULL_ARRAY_ELEMENTS  != myCbHideNullArrayElements.isSelected()) || myAutoTooltip.isChanged();
+    return generalSettings.AUTOSCROLL_TO_NEW_LOCALS != myCbAutoscroll.isSelected() ||
+           generalSettings.HIDE_NULL_ARRAY_ELEMENTS != myCbHideNullArrayElements.isSelected() ||
+           myAutoTooltip.isChanged();
   }
 
   private boolean areDefaultRenderersModified() {
     if (myArrayRendererConfigurable.isModified()) {
       return true;
     }
+
     final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
 
     final ClassRenderer classRenderer = rendererSettings.getClassRenderer();

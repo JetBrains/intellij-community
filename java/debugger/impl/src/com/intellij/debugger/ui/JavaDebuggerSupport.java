@@ -363,11 +363,11 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     @NotNull
     @Override
     public Collection<? extends Configurable> getConfigurable(@NotNull XDebuggerSettings.Category category) {
-      switch (category) {
-        case DATA_VIEWS:
-          return Collections.singletonList(new DebuggerDataViewsConfigurable(null));
-        case STEPPING:
-          return Collections.singletonList(new DebuggerSteppingConfigurable());
+      if (category == XDebuggerSettings.Category.DATA_VIEWS) {
+        return Collections.singletonList(new DebuggerDataViewsConfigurable(null));
+      }
+      else if (category == XDebuggerSettings.Category.STEPPING) {
+        return Collections.singletonList(new DebuggerSteppingConfigurable());
       }
       return Collections.emptyList();
     }
