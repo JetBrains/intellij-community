@@ -16,16 +16,16 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.io.DataOutputStream;
 import java.util.Arrays;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
@@ -34,10 +34,10 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
  * @author lambdamix
  */
 public class BytecodeAnalysisConverterImpl extends BytecodeAnalysisConverter {
-  private static final String LOGIC_VERSION_KEY = "BytecodeAnalysisConverter.Logic";
   private static final int LOGIC_VERSION = 1;
   private static final String ENUMERATORS_VERSION_KEY = "BytecodeAnalysisConverter.Enumerators";
 
+  private File myVersionFile;
   private PersistentStringEnumerator myNamesEnumerator;
   private PersistentEnumeratorDelegate<int[]> myCompoundKeyEnumerator;
   private int version;
@@ -45,14 +45,19 @@ public class BytecodeAnalysisConverterImpl extends BytecodeAnalysisConverter {
   @Override
   public void initComponent() {
 
+    // suffix as an indicator of version
     final File keysDir = new File(PathManager.getIndexRoot(), "bytecodekeys");
-    final File namesFile = new File(keysDir, "names");
-    final File compoundKeysFile = new File(keysDir, "compound");
+    final File namesFile = new File(keysDir, "names" + LOGIC_VERSION);
+    final File compoundKeysFile = new File(keysDir, "compound" + LOGIC_VERSION);
+    myVersionFile = new File(keysDir, "version" + LOGIC_VERSION);
 
-    final int previousLogicVersion = PropertiesComponent.getInstance().getOrInitInt(LOGIC_VERSION_KEY, 0);
     version = PropertiesComponent.getInstance().getOrInitInt(ENUMERATORS_VERSION_KEY, 0);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      version = _readVersion();
+    }
 
-    if (previousLogicVersion != LOGIC_VERSION) {
+    if (!namesFile.exists() || !compoundKeysFile.exists() || !myVersionFile.exists()) {
+      LOG.info("No enumerators detected, re-initialization of enumerators.");
       IOUtil.deleteAllFilesStartingWith(keysDir);
       version++;
     }
@@ -78,7 +83,7 @@ public class BytecodeAnalysisConverterImpl extends BytecodeAnalysisConverter {
       LOG.error("Re-initialization of enumerators in bytecode analysis failed.", e);
     }
     PropertiesComponent.getInstance().setValue(ENUMERATORS_VERSION_KEY, String.valueOf(version));
-    PropertiesComponent.getInstance().setValue(LOGIC_VERSION_KEY, String.valueOf(LOGIC_VERSION));
+    _saveVersion();
   }
 
   @Override
@@ -89,6 +94,38 @@ public class BytecodeAnalysisConverterImpl extends BytecodeAnalysisConverter {
     }
     catch (IOException e) {
       LOG.debug(e);
+    }
+  }
+
+  public int _readVersion() {
+    try {
+      final DataInputStream is = new DataInputStream(new FileInputStream(myVersionFile));
+      try {
+        return is.readInt();
+      }
+      finally {
+        is.close();
+      }
+    }
+    catch (FileNotFoundException ignored) {
+    }
+    catch (IOException ignored) {
+    }
+    return 0;
+  }
+
+  private void _saveVersion() {
+    try {
+      FileUtil.createIfDoesntExist(myVersionFile);
+      final DataOutputStream os = new DataOutputStream(new FileOutputStream(myVersionFile));
+      try {
+        os.writeInt(version);
+      }
+      finally {
+        os.close();
+      }
+    }
+    catch (IOException ignored) {
     }
   }
 
