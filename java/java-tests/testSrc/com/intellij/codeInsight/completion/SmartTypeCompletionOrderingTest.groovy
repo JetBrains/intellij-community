@@ -52,12 +52,12 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testNewListAlwaysFirst() {
     def lookup = invokeCompletion(getTestName(false) + ".java")
-    assertPreferredItems 1, 'List', 'AbstractList', 'AbstractSequentialList', 'ArrayList'
+    assertPreferredItems 1, 'List', 'ArrayList', 'AbstractList', 'AbstractSequentialList'
     for (int i = 0; i < StatisticsManager.OBLIVION_THRESHOLD + 10; i++) {
-      imitateItemSelection(lookup, 3) //ArrayList
+      imitateItemSelection(lookup, 3) //AbstractSequentialList
     }
     refreshSorting(lookup)
-    assertPreferredItems 1, 'List', 'ArrayList', 'AbstractList', 'AbstractSequentialList'
+    assertPreferredItems 1, 'List', 'AbstractSequentialList', 'ArrayList', 'AbstractList'
   }
   
   public void testNoStatsOnUnsuccessfulAttempt() {
@@ -170,11 +170,11 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testStatisticsAffectsNonPreferableExpectedItems() throws Throwable {
     final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java");
-    assertPreferredItems(1, "List", "AbstractList", "AbstractSequentialList", "ArrayList");
+    assertPreferredItems(1, "List", "ArrayList", "AbstractList", "AbstractSequentialList");
     incUseCount(lookup, 0);
-    assertPreferredItems(1, "List", "AbstractList", "AbstractSequentialList", "ArrayList");
+    assertPreferredItems(1, "List", "ArrayList", "AbstractList", "AbstractSequentialList");
     incUseCount(lookup, 0);
-    assertPreferredItems(0, "List", "AbstractList", "AbstractSequentialList", "ArrayList");
+    assertPreferredItems(0, "List", "ArrayList", "AbstractList", "AbstractSequentialList");
   }
 
   public void testPreferNonRecursiveMethodParams() throws Throwable {
