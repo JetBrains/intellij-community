@@ -224,7 +224,7 @@ public class RootIndex extends DirectoryIndex {
     }
 
     OrderEntry[] array = orderEntries.toArray(new OrderEntry[orderEntries.size()]);
-    Arrays.sort(array, DirectoryInfo.BY_OWNER_MODULE);
+    Arrays.sort(array, DirectoryInfoImpl.BY_OWNER_MODULE);
     return array;
   }
 
@@ -246,7 +246,7 @@ public class RootIndex extends DirectoryIndex {
     }
 
     int id = myRootTypes.size();
-    if (id > DirectoryInfo.MAX_ROOT_TYPE_ID) {
+    if (id > DirectoryInfoImpl.MAX_ROOT_TYPE_ID) {
       LOG.error("Too many different types of module source roots (" + id  + ") registered: " + myRootTypes);
     }
     myRootTypes.add(rootType);
@@ -590,8 +590,8 @@ public class RootIndex extends DirectoryIndex {
     int typeId = moduleSourceRoot != null ? info.rootTypeId.get(moduleSourceRoot) : 0;
 
     Module module = parentModuleForExcluded != null ? parentModuleForExcluded : info.contentRootOf.get(moduleContentRoot);
-    DirectoryInfo directoryInfo = new DirectoryInfo(module, moduleContentRoot, sourceRoot, libraryClassRoot, inModuleSources, inLibrarySource,
-                                                    parentModuleForExcluded != null, typeId) {
+    DirectoryInfo directoryInfo = new DirectoryInfoImpl(module, moduleContentRoot, sourceRoot, libraryClassRoot, inModuleSources, inLibrarySource,
+                                                       parentModuleForExcluded != null, typeId) {
       @NotNull
       @Override
       public OrderEntry[] getOrderEntries() {
