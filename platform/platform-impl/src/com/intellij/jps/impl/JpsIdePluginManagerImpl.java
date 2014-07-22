@@ -37,16 +37,19 @@ public class JpsIdePluginManagerImpl extends JpsPluginManager {
 
   public JpsIdePluginManagerImpl() {
     ExtensionsArea rootArea = Extensions.getRootArea();
-    rootArea.getExtensionPoint(JpsPluginBean.EP_NAME).addExtensionPointListener(new ExtensionPointListener<JpsPluginBean>() {
-      @Override
-      public void extensionAdded(@NotNull JpsPluginBean extension, @Nullable PluginDescriptor pluginDescriptor) {
-        ContainerUtil.addIfNotNull(pluginDescriptor, myExternalBuildPlugins);
-      }
+    //todo[nik] get rid of this check: currently this class is used in jps-builders tests instead of JpsPluginManagerImpl because platform-impl module is added to classpath via testFramework
+    if (rootArea.hasExtensionPoint(JpsPluginBean.EP_NAME.getName())) {
+      rootArea.getExtensionPoint(JpsPluginBean.EP_NAME).addExtensionPointListener(new ExtensionPointListener<JpsPluginBean>() {
+        @Override
+        public void extensionAdded(@NotNull JpsPluginBean extension, @Nullable PluginDescriptor pluginDescriptor) {
+          ContainerUtil.addIfNotNull(pluginDescriptor, myExternalBuildPlugins);
+        }
 
-      @Override
-      public void extensionRemoved(@NotNull JpsPluginBean extension, @Nullable PluginDescriptor pluginDescriptor) {
-      }
-    });
+        @Override
+        public void extensionRemoved(@NotNull JpsPluginBean extension, @Nullable PluginDescriptor pluginDescriptor) {
+        }
+      });
+    }
     if (rootArea.hasExtensionPoint("com.intellij.compileServer.plugin")) {
       ExtensionPoint extensionPoint = rootArea.getExtensionPoint("com.intellij.compileServer.plugin");
       //noinspection unchecked
