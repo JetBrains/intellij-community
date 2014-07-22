@@ -53,17 +53,17 @@ public class NewMappings {
   private final DefaultVcsRootPolicy myDefaultVcsRootPolicy;
   private final MessageBus myMessageBus;
   private final FileStatusManager myFileStatusManager;
-  private final FileIndexFacade myExcludedFileIndex;
+  private final FileIndexFacade myFileIndexFacade;
   private final Project myProject;
 
   private boolean myActivated;
 
   public NewMappings(final Project project, final MessageBus messageBus,
-                     final ProjectLevelVcsManagerImpl vcsManager, FileStatusManager fileStatusManager, FileIndexFacade excludedFileIndex) {
+                     final ProjectLevelVcsManagerImpl vcsManager, FileStatusManager fileStatusManager, FileIndexFacade fileIndexFacade) {
     myProject = project;
     myMessageBus = messageBus;
     myFileStatusManager = fileStatusManager;
-    myExcludedFileIndex = excludedFileIndex;
+    myFileIndexFacade = fileIndexFacade;
     myLock = new Object();
     myVcsToPaths = new HashMap<String, List<VcsDirectoryMapping>>();
     myFileWatchRequestsManager = new FileWatchRequestsManager(myProject, this, LocalFileSystem.getInstance());
@@ -232,7 +232,12 @@ public class NewMappings {
   }
 
   @Nullable
-  public VcsDirectoryMapping getMappingFor(final VirtualFile file, final Object matchContext) {
+  public VcsDirectoryMapping getMappingFor(final VirtualFile file, final Object parentModule) {
+    // if parentModule is not null it means that file belongs to the module so it isn't excluded
+    if (parentModule == null && myFileIndexFacade.isExcludedFile(file)) {
+      return null;
+    }
+
     // performance: calculate file path just once, rather than once per mapping
     String path = file.getPath();
     final String systemIndependentPath = FileUtil.toSystemIndependentName((file.isDirectory() && (! path.endsWith("/"))) ? (path + "/") : path);
@@ -242,7 +247,7 @@ public class NewMappings {
     }
     for (int i = mappings.length - 1; i >= 0; -- i) {
       final VcsDirectoryMapping mapping = mappings[i];
-      if (fileMatchesMapping(file, matchContext, systemIndependentPath, mapping)) {
+      if (fileMatchesMapping(file, parentModule, systemIndependentPath, mapping)) {
         return mapping;
       }
     }
@@ -262,8 +267,7 @@ public class NewMappings {
     if (mapping.getDirectory().length() == 0) {
       return myDefaultVcsRootPolicy.matchesDefaultMapping(file, matchContext);
     }
-    return FileUtil.startsWith(systemIndependentPath, mapping.systemIndependentPath()) &&
-           ! myExcludedFileIndex.isExcludedFile(file);
+    return FileUtil.startsWith(systemIndependentPath, mapping.systemIndependentPath());
   }
 
   public List<VirtualFile> getMappingsAsFilesUnderVcs(final AbstractVcs vcs) {
