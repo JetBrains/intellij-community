@@ -247,7 +247,13 @@ public class BuildManager implements ApplicationComponent{
 
         for (VFileEvent event : events) {
           final VirtualFile eventFile = event.getFile();
-          if (eventFile == null || ProjectCoreUtil.isProjectOrWorkspaceFile(eventFile)) {
+          if (eventFile == null) {
+            continue;
+          }
+          if (!eventFile.isValid()) {
+            return true; // should be deleted
+          }
+          if (ProjectCoreUtil.isProjectOrWorkspaceFile(eventFile)) {
             continue;
           }
 
