@@ -18,14 +18,16 @@ package com.intellij.xdebugger.impl.settings;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.util.SmartList;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -68,7 +70,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
 
     List<DebuggerSettingsPanelProvider> providers = DebuggerConfigurableProvider.getSortedProviders();
 
-    List<Configurable> configurables = new ArrayList<Configurable>();
+    List<Configurable> configurables = new SmartList<Configurable>();
     configurables.add(new DataViewsConfigurable());
 
     List<Configurable> steppingConfigurables = DebuggerConfigurableProvider.getConfigurables(XDebuggerSettings.Category.STEPPING, providers);
@@ -76,19 +78,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       configurables.add(new SteppingConfigurable(steppingConfigurables));
     }
 
-    Configurable rootConfigurable = null;
-    for (DebuggerSettingsPanelProvider provider : providers) {
-      configurables.addAll(provider.getConfigurables());
-      Configurable aRootConfigurable = provider.getRootConfigurable();
-      if (aRootConfigurable != null) {
-        if (rootConfigurable != null) {
-          configurables.add(aRootConfigurable);
-        }
-        else {
-          rootConfigurable = aRootConfigurable;
-        }
-      }
-    }
+    Configurable rootConfigurable = computeRootConfigurable(providers, configurables);
 
     if (configurables.isEmpty() && rootConfigurable == null) {
       myChildren = EMPTY_CONFIGURABLES;
@@ -100,6 +90,54 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     else {
       myChildren = configurables.toArray(new Configurable[configurables.size()]);
       myRootConfigurable = rootConfigurable;
+    }
+  }
+
+  @Nullable
+  private static Configurable computeRootConfigurable(@NotNull List<DebuggerSettingsPanelProvider> providers, @NotNull List<Configurable> configurables) {
+    Configurable deprecatedRootConfigurable = null;
+    for (DebuggerSettingsPanelProvider provider : providers) {
+      configurables.addAll(provider.getConfigurables());
+      Configurable providerRootConfigurable = provider.getRootConfigurable();
+      if (providerRootConfigurable != null) {
+        if (deprecatedRootConfigurable == null) {
+          deprecatedRootConfigurable = providerRootConfigurable;
+        }
+        else {
+          configurables.add(providerRootConfigurable);
+        }
+      }
+    }
+
+    List<Configurable> rootConfigurables = DebuggerConfigurableProvider.getConfigurables(XDebuggerSettings.Category.ROOT, providers);
+    if (rootConfigurables.isEmpty()) {
+      return deprecatedRootConfigurable;
+    }
+    else {
+      Configurable[] mergedRootConfigurables = new Configurable[rootConfigurables.size() + (deprecatedRootConfigurable == null ? 0 : 1)];
+      rootConfigurables.toArray(mergedRootConfigurables);
+      if (deprecatedRootConfigurable != null) {
+        System.arraycopy(mergedRootConfigurables, 0, mergedRootConfigurables, 1, mergedRootConfigurables.length - 1);
+        mergedRootConfigurables[0] = deprecatedRootConfigurable;
+      }
+      return new MergedCompositeConfigurable(mergedRootConfigurables) {
+        @Override
+        protected boolean isUseTitledBorder() {
+          return false;
+        }
+
+        @NotNull
+        @Override
+        public String getId() {
+          throw new UnsupportedOperationException();
+        }
+
+        @Nls
+        @Override
+        public String getDisplayName() {
+          throw new UnsupportedOperationException();
+        }
+      };
     }
   }
 

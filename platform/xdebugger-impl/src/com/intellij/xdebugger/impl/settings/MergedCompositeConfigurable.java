@@ -5,6 +5,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.TitledSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,10 @@ abstract class MergedCompositeConfigurable implements SearchableConfigurable {
 
   protected MergedCompositeConfigurable(@NotNull Configurable[] children) {
     this.children = children;
+  }
+
+  protected boolean isUseTitledBorder() {
+    return true;
   }
 
   @Nullable
@@ -38,11 +43,13 @@ abstract class MergedCompositeConfigurable implements SearchableConfigurable {
         rootComponent = children[0].createComponent();
       }
       else {
-        JPanel panel = new JPanel(new VerticalFlowLayout(0, 0));
+        JPanel panel = new JPanel(new VerticalFlowLayout(0, isUseTitledBorder() ? 0 : TitledSeparator.TOP_INSET));
         for (Configurable child : children) {
           JComponent component = child.createComponent();
           assert component != null;
-          component.setBorder(IdeBorderFactory.createTitledBorder(child.getDisplayName(), false));
+          if (isUseTitledBorder()) {
+            component.setBorder(IdeBorderFactory.createTitledBorder(child.getDisplayName(), false));
+          }
           panel.add(component);
         }
         rootComponent = panel;

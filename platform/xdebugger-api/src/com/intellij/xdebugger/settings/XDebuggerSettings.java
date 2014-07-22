@@ -30,12 +30,12 @@ import org.jetbrains.annotations.Nullable;
  * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
  * &nbsp;&nbsp;&lt;xdebugger.settings implementation="qualified-class-name"/&gt;<br>
  * &lt;/extensions&gt;
- * 
+ *
  * @author nik
  */
 public abstract class XDebuggerSettings<T> implements PersistentStateComponent<T> {
   public enum Category {
-    ROOT, DATA_VIEWS, STEPPING;
+    ROOT, DATA_VIEWS, STEPPING
   }
 
   public static final ExtensionPointName<XDebuggerSettings> EXTENSION_POINT = ExtensionPointName.create("com.intellij.xdebugger.settings");
@@ -55,7 +55,9 @@ public abstract class XDebuggerSettings<T> implements PersistentStateComponent<T
   }
 
   @Nullable
-  public abstract Configurable createConfigurable();
+  public Configurable createConfigurable() {
+    return null;
+  }
 
   @Nullable
   public Configurable createConfigurable(@NotNull Category category) {
