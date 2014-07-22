@@ -570,7 +570,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       if (UISettings.getInstance().PRESENTATION_MODE || SystemInfo.isMac) {
         g.setColor(getEditor().getColorsScheme().getDefaultBackground());
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
-        return;
+        //return;
       }
       Rectangle clip = g.getClipBounds().intersection(bounds);
       if (clip.height == 0) return;
