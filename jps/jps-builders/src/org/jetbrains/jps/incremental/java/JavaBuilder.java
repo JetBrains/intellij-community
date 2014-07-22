@@ -896,10 +896,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
           break;
         case MANDATORY_WARNING:
         case WARNING:
-        case NOTE:
           kind = BuildMessage.Kind.WARNING;
           myWarningCount++;
           break;
+        case NOTE:
         default:
           kind = BuildMessage.Kind.INFO;
       }
