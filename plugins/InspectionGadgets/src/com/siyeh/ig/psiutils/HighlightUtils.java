@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
@@ -41,6 +42,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,7 +70,12 @@ public class HighlightUtils {
         final PsiElement[] elements =
           PsiUtilCore.toPsiElementArray(elementCollection);
         final PsiElement firstElement = elements[0];
-        if (!firstElement.isValid()) {
+        if (ContainerUtil.exists(elements, new Condition<PsiElement>() {
+          @Override
+          public boolean value(PsiElement element) {
+            return !element.isValid();
+          }
+        })) {
           return;
         }
         final Project project = firstElement.getProject();
