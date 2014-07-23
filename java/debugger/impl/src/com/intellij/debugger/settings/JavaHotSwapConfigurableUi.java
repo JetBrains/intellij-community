@@ -23,7 +23,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
-class DebuggerHotswapConfigurable implements ConfigurableUi<DebuggerSettings> {
+class JavaHotSwapConfigurableUi implements ConfigurableUi<DebuggerSettings> {
   private JCheckBox myHotswapInBackground;
   private JCheckBox myCbCompileBeforeHotswap;
   private JCheckBox myCbHangWarningEnabled;

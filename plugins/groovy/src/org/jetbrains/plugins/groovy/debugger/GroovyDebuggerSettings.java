@@ -54,7 +54,7 @@ public class GroovyDebuggerSettings extends XDebuggerSettings<GroovyDebuggerSett
       case STEPPING:
         return SimpleConfigurable.create("reference.idesettings.debugger.groovy", GroovyBundle.message("groovy.debug.caption"), GroovySteppingConfigurableUi.class, this);
       case HOTSWAP:
-        return SimpleConfigurable.create("reference.idesettings.debugger.groovy", GroovyBundle.message("groovy.debug.caption"), GroovyDebuggerSettingsConfigurable.class, this);
+        return SimpleConfigurable.create("reference.idesettings.debugger.groovy", GroovyBundle.message("groovy.debug.caption"), GroovyHotSwapConfigurableUi.class, this);
     }
     return null;
   }

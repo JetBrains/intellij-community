@@ -55,7 +55,7 @@ class JavaDebuggerSettings extends XDebuggerSettings<Element> {
       case STEPPING:
         return SimpleConfigurable.create("reference.idesettings.debugger.stepping", OptionsBundle.message("options.java.display.name"), DebuggerSteppingConfigurable.class, debuggerSettingsGetter);
       case HOTSWAP:
-        return SimpleConfigurable.create("reference.idesettings.debugger.hotswap", OptionsBundle.message("options.java.display.name"), DebuggerHotswapConfigurable.class, debuggerSettingsGetter);
+        return SimpleConfigurable.create("reference.idesettings.debugger.hotswap", OptionsBundle.message("options.java.display.name"), JavaHotSwapConfigurableUi.class, debuggerSettingsGetter);
     }
     return null;
   }
