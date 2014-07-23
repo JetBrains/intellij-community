@@ -146,7 +146,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private final TempDirTestFixture myTempDirFixture;
   protected final IdeaProjectTestFixture myProjectFixture;
-  @NonNls private static final String XXX = "XXX";
   private final FileTreeAccessFilter myJavaFilesFilter = new FileTreeAccessFilter();
   private boolean myAllowDirt;
   private boolean myCaresAboutInjection = true;
@@ -1465,7 +1464,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (file.getFileType().isBinary()) {
       return null;
     }
-    return instance.openTextEditor(new OpenFileDescriptor(project, file, 0), false);
+    return instance.openTextEditor(new OpenFileDescriptor(project, file), false);
   }
 
   private long collectAndCheckHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) throws Exception {
@@ -1487,14 +1486,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     //to initialize caches
     if (!DumbService.isDumb(project)) {
-      CacheManager.SERVICE.getInstance(project).getFilesWithWord(XXX, UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(project), true);
+      CacheManager.SERVICE.getInstance(project).getFilesWithWord("XXX", UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(project), true);
     }
 
-    List<HighlightInfo> infos;
     final long start = System.currentTimeMillis();
     ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(myJavaFilesFilter, myTestRootDisposable);
 
     //    ProfilingUtil.startCPUProfiling();
+    List<HighlightInfo> infos;
     try {
       infos = doHighlighting();
       removeDuplicatedRangesForInjected(infos);
