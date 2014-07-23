@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
@@ -68,10 +69,9 @@ public class TaskFile {
     List<Element> windowElements = taskFileElement.getChildren();
     windows = new ArrayList<Window>(windowElements.size());
     for (Element windowElement : windowElements) {
-      Window window = new Window();
-      window.loadState(windowElement);
+      Window window = XmlSerializer.deserialize(windowElement, Window.class);
       windows.add(window);
-    }
+   }
   }
 
   /**
