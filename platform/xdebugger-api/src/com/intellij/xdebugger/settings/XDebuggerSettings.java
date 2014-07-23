@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class XDebuggerSettings<T> implements PersistentStateComponent<T> {
   public enum Category {
-    ROOT, DATA_VIEWS, STEPPING, HOTSWAP
+    GENERAL, DATA_VIEWS, STEPPING, HOTSWAP
   }
 
   public static final ExtensionPointName<XDebuggerSettings> EXTENSION_POINT = ExtensionPointName.create("com.intellij.xdebugger.settings");

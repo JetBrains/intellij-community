@@ -47,7 +47,7 @@ class JavaDebuggerSettings extends XDebuggerSettings<Element> {
     };
 
     switch (category) {
-      case ROOT:
+      case GENERAL:
         return SimpleConfigurable.create("reference.idesettings.debugger.launching", OptionsBundle.message("options.java.display.name"),
                                          DebuggerLaunchingConfigurable.class, debuggerSettingsGetter);
       case DATA_VIEWS:

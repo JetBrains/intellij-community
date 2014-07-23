@@ -78,17 +78,38 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
 
     computeMergedConfigurables(providers, configurables);
 
-    Configurable rootConfigurable = computeRootConfigurable(providers, configurables);
-    if (configurables.isEmpty() && rootConfigurable == null) {
+    for (DebuggerSettingsPanelProvider provider : providers) {
+      configurables.addAll(provider.getConfigurables());
+      @SuppressWarnings("deprecation")
+      Configurable providerRootConfigurable = provider.getRootConfigurable();
+      if (providerRootConfigurable != null) {
+        configurables.add(providerRootConfigurable);
+      }
+    }
+
+    MergedCompositeConfigurable mergedGeneralConfigurable = computeGeneralConfigurables(providers);
+    if (configurables.isEmpty() && mergedGeneralConfigurable == null) {
+      myRootConfigurable = null;
       myChildren = EMPTY_CONFIGURABLES;
     }
-    else if (rootConfigurable == null && configurables.size() == 1) {
-      myRootConfigurable = configurables.get(0);
-      myChildren = EMPTY_CONFIGURABLES;
+    else if (configurables.size() == 1) {
+      Configurable firstConfigurable = configurables.get(0);
+      if (mergedGeneralConfigurable == null) {
+        myRootConfigurable = firstConfigurable;
+        myChildren = EMPTY_CONFIGURABLES;
+      }
+      else {
+        Configurable[] generalConfigurables = mergedGeneralConfigurable.children;
+        Configurable[] mergedArray = new Configurable[generalConfigurables.length + 1];
+        System.arraycopy(generalConfigurables, 0, mergedArray, 0, generalConfigurables.length);
+        mergedArray[generalConfigurables.length] = firstConfigurable;
+        myRootConfigurable = new MergedCompositeConfigurable("", "", mergedArray);
+        myChildren = firstConfigurable instanceof SearchableConfigurable.Parent ? ((Parent)firstConfigurable).getConfigurables() : EMPTY_CONFIGURABLES;
+      }
     }
     else {
       myChildren = configurables.toArray(new Configurable[configurables.size()]);
-      myRootConfigurable = rootConfigurable;
+      myRootConfigurable = mergedGeneralConfigurable;
     }
   }
 
@@ -104,44 +125,22 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   }
 
   @Nullable
-  private static Configurable computeRootConfigurable(@NotNull List<DebuggerSettingsPanelProvider> providers, @NotNull List<Configurable> configurables) {
-    Configurable deprecatedRootConfigurable = null;
-    for (DebuggerSettingsPanelProvider provider : providers) {
-      configurables.addAll(provider.getConfigurables());
-      @SuppressWarnings("deprecation")
-      Configurable providerRootConfigurable = provider.getRootConfigurable();
-      if (providerRootConfigurable != null) {
-        if (deprecatedRootConfigurable == null) {
-          deprecatedRootConfigurable = providerRootConfigurable;
-        }
-        else {
-          configurables.add(providerRootConfigurable);
-        }
-      }
-    }
-
-    List<Configurable> rootConfigurables = getConfigurables(Category.ROOT, providers);
+  private static MergedCompositeConfigurable computeGeneralConfigurables(@NotNull List<DebuggerSettingsPanelProvider> providers) {
+    List<Configurable> rootConfigurables = getConfigurables(Category.GENERAL, providers);
     if (rootConfigurables.isEmpty()) {
-      return deprecatedRootConfigurable;
+      return null;
     }
-    else {
-      Configurable[] mergedRootConfigurables = new Configurable[rootConfigurables.size() + (deprecatedRootConfigurable == null ? 0 : 1)];
-      rootConfigurables.toArray(mergedRootConfigurables);
-      if (deprecatedRootConfigurable != null) {
-        mergedRootConfigurables[rootConfigurables.size()] = deprecatedRootConfigurable;
+
+    Configurable[] mergedRootConfigurables = rootConfigurables.toArray(new Configurable[rootConfigurables.size()]);
+    // move unnamed to top
+    Arrays.sort(mergedRootConfigurables, new Comparator<Configurable>() {
+      @Override
+      public int compare(Configurable o1, Configurable o2) {
+        boolean c1e = StringUtil.isEmpty(o1.getDisplayName());
+        return c1e == StringUtil.isEmpty(o2.getDisplayName()) ? 0 : (c1e ? -1 : 1);
       }
-
-      // move unnamed to top
-      Arrays.sort(mergedRootConfigurables, new Comparator<Configurable>() {
-        @Override
-        public int compare(Configurable o1, Configurable o2) {
-          boolean c1e = StringUtil.isEmpty(o1.getDisplayName());
-          return c1e == StringUtil.isEmpty(o2.getDisplayName()) ? 0 : (c1e ? -1 : 1);
-        }
-      });
-
-      return new MergedCompositeConfigurable("", "", mergedRootConfigurables);
-    }
+    });
+    return new MergedCompositeConfigurable("", "", mergedRootConfigurables);
   }
 
   @Override
