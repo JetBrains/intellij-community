@@ -160,11 +160,16 @@ public class LineStatusTrackerDrawing {
     localShowPrevAction.copyFrom(globalShowPrevAction);
 
     final RollbackLineStatusRangeAction rollback = new RollbackLineStatusRangeAction(tracker, range, editor);
-    EmptyAction.setupAction(rollback, IdeActions.SELECTED_CHANGES_ROLLBACK, editorComponent);
-    group.add(rollback);
+    final ShowLineStatusRangeDiffAction showDiff = new ShowLineStatusRangeDiffAction(tracker, range, editor);
+    final CopyLineStatusRangeAction copyRange = new CopyLineStatusRangeAction(tracker, range);
 
-    group.add(new ShowLineStatusRangeDiffAction(tracker, range, editor));
-    group.add(new CopyLineStatusRangeAction(tracker, range));
+    group.add(rollback);
+    group.add(showDiff);
+    group.add(copyRange);
+
+    EmptyAction.setupAction(rollback, IdeActions.SELECTED_CHANGES_ROLLBACK, editorComponent);
+    EmptyAction.setupAction(showDiff, "ChangesView.Diff", editorComponent);
+    EmptyAction.setupAction(copyRange, IdeActions.ACTION_COPY, editorComponent);
 
     final JComponent toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, group, true).getComponent();
 
@@ -221,6 +226,8 @@ public class LineStatusTrackerDrawing {
     HintListener closeListener = new HintListener() {
       public void hintHidden(final EventObject event) {
         actionList.remove(rollback);
+        actionList.remove(showDiff);
+        actionList.remove(copyRange);
         actionList.remove(localShowPrevAction);
         actionList.remove(localShowNextAction);
       }
