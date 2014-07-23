@@ -189,10 +189,10 @@ public class GlobalSearchScopesCore {
     private final VirtualFile myDirectory;
     private final boolean myWithSubdirectories;
 
-    private DirectoryScope(@NotNull PsiDirectory directory, final boolean withSubdirectories) {
-      super(directory.getProject());
+    private DirectoryScope(@NotNull PsiDirectory psiDirectory, final boolean withSubdirectories) {
+      super(psiDirectory.getProject());
       myWithSubdirectories = withSubdirectories;
-      myDirectory = directory.getVirtualFile();
+      myDirectory = psiDirectory.getVirtualFile();
     }
 
     private DirectoryScope(@NotNull Project project, @NotNull VirtualFile directory, final boolean withSubdirectories) {
@@ -221,6 +221,7 @@ public class GlobalSearchScopesCore {
       return false;
     }
 
+    @Override
     public String toString() {
       //noinspection HardCodedStringLiteral
       return "directory scope: " + myDirectory + "; withSubdirs:"+myWithSubdirectories;
@@ -296,6 +297,7 @@ public class GlobalSearchScopesCore {
       return false;
     }
 
+    @Override
     public String toString() {
       //noinspection HardCodedStringLiteral
       return "Directories scope: " + Arrays.asList(myDirectories);
