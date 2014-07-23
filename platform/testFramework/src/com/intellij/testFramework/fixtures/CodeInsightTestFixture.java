@@ -463,7 +463,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void type(final char c);
 
-  void type(final String s);
+  void type(@NotNull String s);
 
   void performEditorAction(@NotNull String actionId);
 
