@@ -119,6 +119,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
   @NotNull
   private ContentRevision createRevision(@NotNull FilePath path,
                                          @NotNull FilePath localPath,
+                                         @NotNull SVNRevision revision,
                                          @NotNull FileStatus status) {
     ContentRevision result;
 
@@ -126,8 +127,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     // explicitly use local path for deleted items - so these items will be correctly displayed as deleted under local working copy node
     // and not as deleted under remote branch node (in ChangesBrowser)
     // NOTE, that content is still retrieved using remotePath.
-      result =
-        SvnRepositoryContentRevision.create(myVcs, path, status == FileStatus.DELETED ? localPath : null, SVNRevision.HEAD.getNumber());
+      result = SvnRepositoryContentRevision.create(myVcs, path, status == FileStatus.DELETED ? localPath : null, revision.getNumber());
     }
     else {
       result = CurrentContentRevision.create(path);
@@ -167,11 +167,10 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     // statuses determine changes needs to be done to "target1" to get "target2" state
     ContentRevision beforeRevision = status == FileStatus.ADDED
                                      ? null
-                                     : createRevision(target1Path, target2Path, status);
+                                     : createRevision(target1Path, target2Path, target1.getPegRevision(), status);
     ContentRevision afterRevision = status == FileStatus.DELETED
                                     ? null
-                                    : createRevision(target2Path, target1Path, status);
-
+                                    : createRevision(target2Path, target1Path, target2.getPegRevision(), status);
 
     return createChange(status, beforeRevision, afterRevision);
   }
