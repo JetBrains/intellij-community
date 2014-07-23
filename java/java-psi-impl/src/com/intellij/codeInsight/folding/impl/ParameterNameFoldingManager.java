@@ -58,7 +58,8 @@ public class ParameterNameFoldingManager {
     if (callArgument instanceof PsiPrefixExpression) {
       PsiPrefixExpression expr = (PsiPrefixExpression)callArgument;
       IElementType tokenType = expr.getOperationTokenType();
-      return JavaTokenType.MINUS.equals(tokenType) && expr.getOperand() instanceof PsiLiteralExpression;
+      return (JavaTokenType.MINUS.equals(tokenType)
+              || JavaTokenType.PLUS.equals(tokenType)) && expr.getOperand() instanceof PsiLiteralExpression;
     }
 
     return false;
