@@ -141,7 +141,19 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
             .inferTypeArguments(method.getTypeParameters(), parameters, expressions,
                                 ((MethodCandidateInfo)result).getSiteSubstitutor(), callExpr.getParent(),
                                 DefaultParameterTypeInferencePolicy.INSTANCE);
-          return substitutor.substitute(parameters[i].getType());
+          PsiType paramType;
+          if (i < parameters.length) {
+            paramType = parameters[i].getType();
+          }
+          else {
+            paramType = parameters[parameters.length - 1].getType();
+            if (!(paramType instanceof PsiEllipsisType)) {
+              return null;
+            }
+            paramType = ((PsiEllipsisType)paramType).getComponentType();
+          }
+
+          return substitutor.substitute(paramType);
         }
       }
     }
