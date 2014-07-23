@@ -4,6 +4,7 @@ from jinja2_frame import Jinja2TemplateFrame, get_jinja2_template_filename, get_
 from pydevd_constants import JINJA2_SUSPEND, GetThreadId
 from pydevd_comm import  CMD_SET_BREAK
 import pydevd_vars
+from runfiles import DictContains
 
 class Jinja2LineBreakpoint(LineBreakpoint):
 
@@ -53,5 +54,12 @@ def suspend_jinja2(py_db_frame, mainDebugger, thread, frame, cmd=CMD_SET_BREAK):
 
 def is_jinja2_suspended(thread):
     return thread.additionalInfo.suspend_type == JINJA2_SUSPEND
+
+def is_jinja2_context_call(frame):
+    return DictContains(frame.f_locals, "_Context__obj")
+
+def is_jinja2_internal_function(frame):
+    return DictContains(frame.f_locals, 'self') and frame.f_locals['self'].__class__.__name__ in \
+        ('LoopContext', 'TemplateReference', 'Macro', 'Markup', 'BlockReference')
 
 

@@ -3,7 +3,7 @@ from django_debug import find_django_render_frame
 from django_frame import just_raised
 from django_frame import is_django_exception_break_context
 from django_frame import DjangoTemplateFrame
-from jinja2_debug import Jinja2LineBreakpoint, is_jinja2_render_call, suspend_jinja2, is_jinja2_suspended
+from jinja2_debug import Jinja2LineBreakpoint, is_jinja2_render_call, suspend_jinja2, is_jinja2_suspended, is_jinja2_context_call, is_jinja2_internal_function
 from jinja2_frame import Jinja2TemplateFrame, get_jinja2_template_filename, get_jinja2_template_line
 from pydevd_comm import * #@UnusedWildImport
 from pydevd_breakpoints import * #@UnusedWildImport
@@ -222,31 +222,65 @@ class PyDBFrame:
             #step handling. We stop when we hit the right frame
             try:
                 django_stop = False
+                jinja2_stop = False
+
                 if info.pydev_step_cmd == CMD_STEP_INTO:
                     stop = event in ('line', 'return')
+
                     if is_django_suspended(thread):
                         #django_stop = event == 'call' and is_django_render_call(frame)
                         stop = stop and is_django_resolve_call(frame.f_back) and not is_django_context_get_call(frame)
                         if stop:
                             info.pydev_django_resolve_frame = 1 #we remember that we've go into python code from django rendering frame
-                    elif is_jinja2_suspended(thread):
+
+                    if is_jinja2_suspended(thread):
+                        jinja2_stop = event in ('call', 'line') and is_jinja2_render_call(frame)
+                        stop = False
+                        if info.pydev_call_from_jinja2 is not None:
+                            if is_jinja2_internal_function(frame):
+                                info.pydev_call_from_jinja2 = None
+                            else:
+                                stop = True
+
+                        if event == 'call' and is_jinja2_context_call(frame.f_back):
+                            info.pydev_call_from_jinja2 = 1
+
+                    if event == 'return' and is_jinja2_context_call(frame.f_back):
+                        info.pydev_step_stop = info.pydev_call_from_jinja2
+                        info.pydev_call_from_jinja2 = None
+                        thread.additionalInfo.suspend_type = JINJA2_SUSPEND
                         stop = False
 
-                    print "django stop", django_stop, "stop", stop
+                    #print "info.pydev_call_from_jinja2", info.pydev_call_from_jinja2, "stop", stop, "jinja_stop", jinja2_stop,\
+                    #    "thread.additionalInfo.suspend_type", thread.additionalInfo.suspend_type
+                    #print "event", event, "farme.locals", frame.f_locals
 
                 elif info.pydev_step_cmd == CMD_STEP_OVER:
                     if is_django_suspended(thread):
                         django_stop = event == 'call' and is_django_render_call(frame)
-
                         stop = False
                     else:
                         if event == 'return' and info.pydev_django_resolve_frame is not None and is_django_resolve_call(frame.f_back):
-                            #we return to Django suspend mode and should not stop before django rendering frame
+                            #we return to Jinja2 suspend mode and should not stop before django rendering frame
                             info.pydev_step_stop = info.pydev_django_resolve_frame
                             info.pydev_django_resolve_frame = None
                             thread.additionalInfo.suspend_type = DJANGO_SUSPEND
 
                         stop = info.pydev_step_stop is frame and event in ('line', 'return')
+
+                    if is_jinja2_suspended(thread):
+                        jinja2_stop = event in ('call', 'line') and is_jinja2_render_call(frame)
+                        stop = False
+                    else:
+                        if event == 'return' and info.pydev_call_from_jinja2 is not None:
+                            if is_jinja2_context_call(frame.f_back):
+                                info.pydev_call_from_jinja2 = None
+                                thread.additionalInfo.suspend_type = JINJA2_SUSPEND
+                                stop = False
+
+                    #print "info.pydev_call_from_jinja2", info.pydev_call_from_jinja2, "stop", stop, "jinja_stop", jinja2_stop, \
+                    #    "thread.additionalInfo.suspend_type", thread.additionalInfo.suspend_type
+                    #print "event", event, "farme.locals", frame.f_locals, "frame.f_back.f_locals", frame.f_back.f_locals
 
                 elif info.pydev_step_cmd == CMD_SMART_STEP_INTO:
                     stop = False
@@ -296,6 +330,10 @@ class PyDBFrame:
 
                 if django_stop:
                     frame = suspend_django(self, mainDebugger, thread, frame)
+                    if frame:
+                        self.doWaitSuspend(thread, frame, event, arg)
+                elif jinja2_stop:
+                    frame = suspend_jinja2(self, mainDebugger, thread, frame)
                     if frame:
                         self.doWaitSuspend(thread, frame, event, arg)
                 elif stop:
@@ -402,12 +440,30 @@ class PyDBFrame:
             template_lineno = get_jinja2_template_line(frame)
 
             if template_lineno is not None and DictContains(jinja2_breakpoints_for_file, template_lineno):
-                #print "breakpoint!"
                 jinja2_breakpoint = jinja2_breakpoints_for_file[template_lineno]
 
                 if jinja2_breakpoint.is_triggered(frame):
                     flag = True
-                    # TODO: check condition and expression
+                    new_frame = Jinja2TemplateFrame(frame)
+
+                    if jinja2_breakpoint.condition is not None:
+                        try:
+                            val = eval(jinja2_breakpoint.condition, new_frame.f_globals, new_frame.f_locals)
+                            if not val:
+                                flag = False
+                        except:
+                            pydev_log.info(
+                                'Error while evaluating condition \'%s\': %s\n' % (jinja2_breakpoint.condition, sys.exc_info()[1]))
+
+                    if jinja2_breakpoint.expression is not None:
+                        try:
+                            try:
+                                val = eval(jinja2_breakpoint.expression, new_frame.f_globals, new_frame.f_locals)
+                            except:
+                                val = sys.exc_info()[1]
+                        finally:
+                            if val is not None:
+                                thread.additionalInfo.message = val
 
                     if flag:
                         frame = suspend_jinja2(self, mainDebugger, thread, frame)

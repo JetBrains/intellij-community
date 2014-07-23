@@ -33,16 +33,22 @@ class Jinja2TemplateFrame:
 
 def get_jinja2_template_line(frame):
     debug_info = frame.f_globals['__jinja_template__'].debug_info
+
     if debug_info is None:
         return None
+
     lineno = frame.f_lineno
+
     for pair in debug_info:
         if pair[1] == lineno:
             return pair[0]
     return None
 
 def get_jinja2_template_filename(frame):
-    fname = frame.f_globals['__jinja_template__'].filename
-    filename, base = GetFileNameAndBaseFromFile(fname)
-    return filename
+    if DictContains(frame.f_globals, '__jinja_template__'):
+        fname = frame.f_globals['__jinja_template__'].filename
+        filename, base = GetFileNameAndBaseFromFile(fname)
+        return filename
+    return None
+
 
