@@ -24,13 +24,11 @@ import javax.swing.tree.DefaultTreeModel;
 import java.util.List;
 
 public class FilePathChangesTreeList extends ChangesTreeList<FilePath> {
-  private final Project myProject;
 
   public FilePathChangesTreeList(@NotNull Project project, @NotNull List<FilePath> originalFiles,
                                  boolean showCheckboxes, boolean highlightProblems,
                                  @Nullable Runnable inclusionListener, @Nullable ChangeNodeDecorator nodeDecorator) {
     super(project, originalFiles, showCheckboxes, highlightProblems, inclusionListener, nodeDecorator);
-    myProject = project;
   }
 
   protected DefaultTreeModel buildTreeModel(final List<FilePath> changes, ChangeNodeDecorator changeNodeDecorator) {
