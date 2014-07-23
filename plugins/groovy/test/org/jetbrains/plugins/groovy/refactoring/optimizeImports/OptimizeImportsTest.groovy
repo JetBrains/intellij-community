@@ -15,11 +15,9 @@
  */
 
 package org.jetbrains.plugins.groovy.refactoring.optimizeImports
-
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
@@ -195,7 +193,6 @@ class Fooxx <caret>{
 
       doOptimizeImports();
       PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
-      TrailingSpacesStripper.stripIfNotCurrentLine(myFixture.getEditor().getDocument(), false);
       myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
     }
     finally {
