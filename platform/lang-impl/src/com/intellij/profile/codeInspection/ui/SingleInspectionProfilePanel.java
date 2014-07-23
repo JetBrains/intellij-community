@@ -887,7 +887,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private static void setConfigPanel(final JPanel configPanelAnchor, final ScopeToolState state) {
     configPanelAnchor.removeAll();
-    configPanelAnchor.add(state.getAdditionalConfigPanel());
+    configPanelAnchor.add(ScrollPaneFactory.createScrollPane(state.getAdditionalConfigPanel(), SideBorder.NONE));
   }
 
   private static InspectionConfigTreeNode getGroupNode(InspectionConfigTreeNode root, String[] groupPath) {
