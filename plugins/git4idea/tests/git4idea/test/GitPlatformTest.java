@@ -131,12 +131,11 @@ public abstract class GitPlatformTest extends UsefulTestCase {
       myDialogManager.cleanup();
       myVcsNotifier.cleanup();
       myProjectFixture.tearDown();
-
+    }
+    finally {
       String tempTestIndicator = myTestStartedIndicator;
       clearFields(this);
       myTestStartedIndicator = tempTestIndicator;
-    }
-    finally {
       super.tearDown();
     }
   }
