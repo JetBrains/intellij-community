@@ -524,6 +524,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTreeTable);
+    myTreeTable.getTree().setShowsRootHandles(true);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     TreeUtil.collapseAll(myTreeTable.getTree(), 1);
 
@@ -831,6 +832,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
         final ToolbarDecorator wrappedTable = ToolbarDecorator.createDecorator(scopesAndScopesAndSeveritiesTable);
         final JPanel panel = wrappedTable.createPanel();
+        panel.setMinimumSize(new Dimension(getMinimumSize().width, 3 * scopesAndScopesAndSeveritiesTable.getRowHeight()));
         severityPanel.add(new JBLabel("Scopes & Severities"),
                           new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                                  new Insets(5, 0, 2, 10), 0, 0));
