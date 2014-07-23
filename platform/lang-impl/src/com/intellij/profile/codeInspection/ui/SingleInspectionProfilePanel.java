@@ -684,7 +684,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private void updateOptionsAndDescriptionPanel(final TreePath... paths) {
-    if (paths == null || paths.length == 0) {
+    if (mySelectedProfile == null || paths == null || paths.length == 0) {
       return;
     }
     final TreePath path = paths[0];
