@@ -1465,7 +1465,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (file.getFileType().isBinary()) {
       return null;
     }
-    return instance.openTextEditor(new OpenFileDescriptor(project, file), false);
+    Editor editor = instance.openTextEditor(new OpenFileDescriptor(project, file), false);
+    if (editor != null) {
+      editor.getCaretModel().moveToOffset(0);
+    }
+    return editor;
   }
 
   private long collectAndCheckHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) throws Exception {
