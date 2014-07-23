@@ -33,6 +33,7 @@ public interface DiffClient extends SvnClient {
    * @param target1 Should always be url.
    * @param target2 Could be either url or file. And should be directory if file.
    */
+  @NotNull
   List<Change> compare(@NotNull SvnTarget target1, @NotNull SvnTarget target2) throws VcsException;
 
   void unifiedDiff(@NotNull SvnTarget target1, @NotNull SvnTarget target2, @NotNull OutputStream output) throws VcsException;

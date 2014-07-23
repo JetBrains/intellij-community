@@ -52,6 +52,7 @@ import java.util.List;
  */
 public class CmdDiffClient extends BaseSvnClient implements DiffClient {
 
+  @NotNull
   @Override
   public List<Change> compare(@NotNull SvnTarget target1, @NotNull SvnTarget target2) throws VcsException {
     assertUrl(target1);
@@ -95,6 +96,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     }
   }
 
+  @NotNull
   private List<Change> parseOutput(@NotNull SvnTarget target1, @NotNull SvnTarget target2, @NotNull CommandExecutor executor)
     throws SvnBindException {
     try {

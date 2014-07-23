@@ -54,6 +54,7 @@ import java.util.List;
  */
 public class SvnKitDiffClient extends BaseSvnClient implements DiffClient {
 
+  @NotNull
   @Override
   public List<Change> compare(@NotNull SvnTarget target1, @NotNull SvnTarget target2) throws VcsException {
     DiffExecutor executor = new DiffExecutor(target1, target2);
