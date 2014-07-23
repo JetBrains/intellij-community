@@ -20,18 +20,17 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.settings.XDebuggerSettings;
 import com.intellij.xdebugger.settings.XDebuggerSettings.Category;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 /**
  * @author Eugene Belyaev & Eugene Zhuravlev
@@ -72,7 +71,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       return;
     }
 
-    List<DebuggerSettingsPanelProvider> providers = DebuggerConfigurableProvider.getSortedProviders();
+    List<DebuggerSettingsPanelProvider> providers = getSortedProviders();
 
     List<Configurable> configurables = new SmartList<Configurable>();
     configurables.add(new DataViewsConfigurable());
@@ -95,7 +94,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
 
   private static void computeMergedConfigurables(@NotNull List<DebuggerSettingsPanelProvider> providers, @NotNull List<Configurable> result) {
     for (Category category : MERGED_CATEGORIES) {
-      List<Configurable> configurables = DebuggerConfigurableProvider.getConfigurables(category, providers);
+      List<Configurable> configurables = getConfigurables(category, providers);
       if (!configurables.isEmpty()) {
         String id = category.name().toLowerCase(Locale.ENGLISH);
         result.add(new MergedCompositeConfigurable("debugger." + id, XDebuggerBundle.message("debugger." + id + ".display.name"),
@@ -121,7 +120,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       }
     }
 
-    List<Configurable> rootConfigurables = DebuggerConfigurableProvider.getConfigurables(Category.ROOT, providers);
+    List<Configurable> rootConfigurables = getConfigurables(Category.ROOT, providers);
     if (rootConfigurables.isEmpty()) {
       return deprecatedRootConfigurable;
     }
@@ -201,5 +200,52 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   @NonNls
   public String getId() {
     return "project.propDebugger";
+  }
+
+  @NotNull
+  private static List<DebuggerSettingsPanelProvider> getSortedProviders() {
+    List<DebuggerSettingsPanelProvider> providers = null;
+    for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
+      DebuggerSettingsPanelProvider provider = support.getSettingsPanelProvider();
+      if (providers == null) {
+        providers = new SmartList<DebuggerSettingsPanelProvider>();
+      }
+      providers.add(provider);
+    }
+
+    if (ContainerUtil.isEmpty(providers)) {
+      return Collections.emptyList();
+    }
+
+    if (providers.size() > 1) {
+      Collections.sort(providers, new Comparator<DebuggerSettingsPanelProvider>() {
+        @Override
+        public int compare(DebuggerSettingsPanelProvider o1, DebuggerSettingsPanelProvider o2) {
+          return o2.getPriority() - o1.getPriority();
+        }
+      });
+    }
+    return providers;
+  }
+
+  @NotNull
+  static List<Configurable> getConfigurables(@NotNull XDebuggerSettings.Category category) {
+    List<DebuggerSettingsPanelProvider> providers = getSortedProviders();
+    return providers.isEmpty() ? Collections.<Configurable>emptyList() : getConfigurables(category, providers);
+  }
+
+  @NotNull
+  private static List<Configurable> getConfigurables(@NotNull XDebuggerSettings.Category category, @NotNull List<DebuggerSettingsPanelProvider> providers) {
+    List<Configurable> configurables = null;
+    for (DebuggerSettingsPanelProvider provider : providers) {
+      Collection<? extends Configurable> providerConfigurables = provider.getConfigurable(category);
+      if (!providerConfigurables.isEmpty()) {
+        if (configurables == null) {
+          configurables = new SmartList<Configurable>();
+        }
+        configurables.addAll(providerConfigurables);
+      }
+    }
+    return ContainerUtil.notNullize(configurables);
   }
 }

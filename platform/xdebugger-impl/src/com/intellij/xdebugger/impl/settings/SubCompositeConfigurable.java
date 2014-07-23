@@ -86,7 +86,7 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
   @Override
   public final Configurable[] getConfigurables() {
     if (children == null) {
-      List<Configurable> configurables = DebuggerConfigurableProvider.getConfigurables(getCategory());
+      List<Configurable> configurables = DebuggerConfigurable.getConfigurables(getCategory());
       children = configurables.toArray(new Configurable[configurables.size()]);
     }
     return isChildrenMerged() ? DebuggerConfigurable.EMPTY_CONFIGURABLES : children;
