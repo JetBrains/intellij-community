@@ -50,85 +50,87 @@ public class LambdaProcessor {
 		}
 		
 		StructBootstrapMethodsAttribute bootstrap = (StructBootstrapMethodsAttribute)cl.getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_BOOTSTRAP_METHODS);
-		if(bootstrap != null && bootstrap.getMethodsNumber() > 0) {
+		if(bootstrap == null || bootstrap.getMethodsNumber() == 0) {
+			return false; // no bootstrap constants in pool
+		}
+
+		Set<Integer> lambda_methods = new HashSet<Integer>();
+		
+		// find lambda bootstrap constants
+		for(int i = 0; i < bootstrap.getMethodsNumber(); ++i) {
+			LinkConstant method_ref = bootstrap.getMethodReference(i); // method handle
 			
-			Set<Integer> lambda_methods = new HashSet<Integer>();
-			
-			// find lambda bootstrap constants
-			for(int i = 0; i < bootstrap.getMethodsNumber(); ++i) {
-				LinkConstant method_ref = bootstrap.getMethodReference(i); // method handle
-				
-				if(JAVAC_LAMBDA_CLASS.equals(method_ref.classname) && 
-						JAVAC_LAMBDA_METHOD.equals(method_ref.elementname) &&
-						JAVAC_LAMBDA_METHOD_DESCRIPTOR.equals(method_ref.descriptor)) {  // check for javac lambda structure. FIXME: extend for Eclipse etc. at some point
-					lambda_methods.add(i);
-				}
+			if(JAVAC_LAMBDA_CLASS.equals(method_ref.classname) && 
+					JAVAC_LAMBDA_METHOD.equals(method_ref.elementname) &&
+					JAVAC_LAMBDA_METHOD_DESCRIPTOR.equals(method_ref.descriptor)) {  // check for javac lambda structure. FIXME: extend for Eclipse etc. at some point
+				lambda_methods.add(i);
 			}
+		}
+		
+		if(lambda_methods.isEmpty()) {
+			return false; // no lambda bootstrap constant found 
+		}
+		
+		Map<String, String> mapMethodsLambda = new HashMap<String, String>(); 
+		
+		// iterate over code and find invocations of bootstrap methods. Replace them with anonymous classes.
+		for(StructMethod mt: cl.getMethods()) {
+			mt.expandData();
 			
-			if(lambda_methods.isEmpty()) {
-				return false;
-			}
-			
-			Map<String, String> mapMethodsLambda = new HashMap<String, String>(); 
-			
-			// iterate over code and find invocations of bootstrap methods. Replace them with anonymous classes.
-			for(StructMethod mt: cl.getMethods()) {
-				mt.expandData();
+			InstructionSequence seq = mt.getInstructionSequence();
+			if(seq != null && seq.length() > 0) {
+				int len = seq.length();
 				
-				InstructionSequence seq = mt.getInstructionSequence();
-				if(seq != null && seq.length() > 0) {
-					int len = seq.length();
+				for(int i = 0; i < len; ++i) {
+					Instruction instr = seq.getInstr(i);
 					
-					for(int i = 0; i < len; ++i) {
-						Instruction instr = seq.getInstr(i);
+					if(instr.opcode == CodeConstants.opc_invokedynamic) {
+						LinkConstant invoke_dynamic = cl.getPool().getLinkConstant(instr.getOperand(0));
 						
-						if(instr.opcode == CodeConstants.opc_invokedynamic) {
-							LinkConstant invoke_dynamic = cl.getPool().getLinkConstant(instr.getOperand(0));
+						if(lambda_methods.contains(invoke_dynamic.index1)) { // lambda invocation found
 							
-							if(lambda_methods.contains(invoke_dynamic.index1)) { // lambda invocation found
-								
-								List<PooledConstant> bootstrap_arguments = bootstrap.getMethodArguments(invoke_dynamic.index1);
-								MethodDescriptor md = MethodDescriptor.parseDescriptor(invoke_dynamic.descriptor);
+							List<PooledConstant> bootstrap_arguments = bootstrap.getMethodArguments(invoke_dynamic.index1);
+							MethodDescriptor md = MethodDescriptor.parseDescriptor(invoke_dynamic.descriptor);
 
-								String lambda_class_name = md.ret.value;
-								String lambda_method_name = invoke_dynamic.elementname; 
-								String lambda_method_descriptor = ((PrimitiveConstant)bootstrap_arguments.get(2)).getString(); // method type
-								
-								LinkConstant content_method_handle = (LinkConstant)bootstrap_arguments.get(1);
+							String lambda_class_name = md.ret.value;
+							String lambda_method_name = invoke_dynamic.elementname; 
+							String lambda_method_descriptor = ((PrimitiveConstant)bootstrap_arguments.get(2)).getString(); // method type
+							
+							LinkConstant content_method_handle = (LinkConstant)bootstrap_arguments.get(1);
 
-								ClassNode node_lambda = clprocessor.new ClassNode(content_method_handle.elementname, content_method_handle.descriptor, lambda_class_name, 
-																																	lambda_method_name, lambda_method_descriptor, cl);
-								node_lambda.simpleName = cl.qualifiedName + "##Lambda_" + invoke_dynamic.index1 + "_" + invoke_dynamic.index2;
-								node_lambda.enclosingMethod = InterpreterUtil.makeUniqueKey(mt.getName(), mt.getDescriptor());
+							ClassNode node_lambda = clprocessor.new ClassNode(content_method_handle.classname, content_method_handle.elementname, content_method_handle.descriptor, 
+									                                          lambda_class_name, lambda_method_name, lambda_method_descriptor, cl);
+							node_lambda.simpleName = cl.qualifiedName + "##Lambda_" + invoke_dynamic.index1 + "_" + invoke_dynamic.index2;
+							node_lambda.enclosingMethod = InterpreterUtil.makeUniqueKey(mt.getName(), mt.getDescriptor());
 
-								node.nested.add(node_lambda);
-								node_lambda.parent = node;
-								
-								clprocessor.getMapRootClasses().put(node_lambda.simpleName, node_lambda);
-								mapMethodsLambda.put(node_lambda.lambda_information.content_method_key, node_lambda.simpleName);
-							}
+							node.nested.add(node_lambda);
+							node_lambda.parent = node;
+							
+							clprocessor.getMapRootClasses().put(node_lambda.simpleName, node_lambda);
+							mapMethodsLambda.put(node_lambda.lambda_information.content_method_key, node_lambda.simpleName);
 						}
 					}
 				}
 			}
 			
-			// build class hierarchy on lambda 
-			for(ClassNode nd : node.nested) {
-				if(nd.type == ClassNode.CLASS_LAMBDA) {
-					String parent_class_name = mapMethodsLambda.get(nd.enclosingMethod);
-					if(parent_class_name != null) {
-						ClassNode parent_class = clprocessor.getMapRootClasses().get(parent_class_name);
-						
-						parent_class.nested.add(nd);
-						nd.parent = parent_class;
-					}
-				}
-			}
-			
-			// FIXME: mixed hierarchy? 
-			
+			mt.releaseResources();
 		}
 		
+		// build class hierarchy on lambda 
+		for(ClassNode nd : node.nested) {
+			if(nd.type == ClassNode.CLASS_LAMBDA) {
+				String parent_class_name = mapMethodsLambda.get(nd.enclosingMethod);
+				if(parent_class_name != null) {
+					ClassNode parent_class = clprocessor.getMapRootClasses().get(parent_class_name);
+					
+					parent_class.nested.add(nd);
+					nd.parent = parent_class;
+				}
+			}
+		}
+		
+		// FIXME: mixed hierarchy? 
+			
 		return false;
 	}
 	

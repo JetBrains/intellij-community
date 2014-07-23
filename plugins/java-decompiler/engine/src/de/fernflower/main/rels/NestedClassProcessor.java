@@ -76,19 +76,19 @@ public class NestedClassProcessor {
 			checkNotFoundClasses(root, node);
 		}
 
-    int nameless = 0, synthetics = 0;
-    for(ClassNode child : node.nested) {
-      // ensure not-empty class name
-      if((child.type == ClassNode.CLASS_LOCAL || child.type == ClassNode.CLASS_MEMBER) && child.simpleName == null) {
-        StructClass cl = child.classStruct;
-        if(((child.access | cl.access_flags) & CodeConstants.ACC_SYNTHETIC) != 0 || cl.getAttributes().containsKey("Synthetic")) {
-          child.simpleName = "SyntheticClass_" + (++synthetics);
-        } else {
-          DecompilerContext.getLogger().writeMessage("Nameless local or member class " + cl.qualifiedName + "!", IFernflowerLogger.WARNING);
-          child.simpleName = "NamelessClass_" + (++nameless);
-        }
-      }
-    }
+		int nameless = 0, synthetics = 0;
+		for(ClassNode child : node.nested) {
+			// ensure not-empty class name
+			if ((child.type == ClassNode.CLASS_LOCAL || child.type == ClassNode.CLASS_MEMBER) && child.simpleName == null) {
+				StructClass cl = child.classStruct;
+				if (((child.access | cl.access_flags) & CodeConstants.ACC_SYNTHETIC) != 0 || cl.getAttributes().containsKey("Synthetic")) {
+					child.simpleName = "SyntheticClass_" + (++synthetics);
+				} else {
+					DecompilerContext.getLogger().writeMessage("Nameless local or member class " + cl.qualifiedName + "!", IFernflowerLogger.WARNING);
+					child.simpleName = "NamelessClass_" + (++nameless);
+				}
+			}
+		}
 
 		for(ClassNode child : node.nested) {
 			if(child.type == ClassNode.CLASS_LAMBDA) {
@@ -112,6 +112,10 @@ public class NestedClassProcessor {
 	
 	private void setLambdaVars(ClassNode parent, ClassNode child) {
 
+		if(child.lambda_information.is_method_reference) { // method reference, no code and no parameters
+			return;
+		}
+		
 		final MethodWrapper meth = parent.wrapper.getMethods().getWithKey(child.lambda_information.content_method_key);
 		final MethodWrapper encmeth = parent.wrapper.getMethods().getWithKey(child.enclosingMethod);
 

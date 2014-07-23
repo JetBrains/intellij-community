@@ -41,6 +41,7 @@ import de.fernflower.modules.decompiler.exps.InvocationExprent;
 import de.fernflower.modules.decompiler.vars.VarVersionPaar;
 import de.fernflower.struct.StructClass;
 import de.fernflower.struct.StructContext;
+import de.fernflower.struct.StructMethod;
 import de.fernflower.struct.attr.StructInnerClassesAttribute;
 import de.fernflower.struct.gen.VarType;
 import de.fernflower.util.InterpreterUtil;
@@ -378,7 +379,7 @@ public class ClassesProcessor {
 		
 		public LambdaInformation lambda_information;
 		
-		public ClassNode(String content_method_name, String content_method_descriptor, String lambda_class_name, String lambda_method_name, 
+		public ClassNode(String content_class_name, String content_method_name, String content_method_descriptor, String lambda_class_name, String lambda_method_name, 
 												String lambda_method_descriptor, StructClass classStruct) { // lambda class constructor
 			this.type = CLASS_LAMBDA;
 			this.classStruct = classStruct; // 'parent' class containing the static function 
@@ -389,13 +390,22 @@ public class ClassesProcessor {
 			lambda_information.method_name = lambda_method_name;
 			lambda_information.method_descriptor = lambda_method_descriptor;
 			
+			lambda_information.content_class_name = content_class_name;
 			lambda_information.content_method_name = content_method_name;
 			lambda_information.content_method_descriptor = content_method_descriptor;
 			lambda_information.content_method_key = InterpreterUtil.makeUniqueKey(lambda_information.content_method_name, lambda_information.content_method_descriptor);
 
 			anonimousClassType = new VarType(lambda_class_name, true);
 			
-			lambda_information.is_content_method_static = ((classStruct.getMethod(content_method_name, content_method_descriptor).getAccessFlags() & CodeConstants.ACC_STATIC) != 0);
+			if(content_class_name != classStruct.qualifiedName) { // method reference. FIXME: class name alone doesn't cover it. Synthetic flag seems to be the only 'reliable' difference.
+				lambda_information.is_method_reference = true;
+				lambda_information.is_content_method_static = true; // FIXME: consider argument flag
+			} else {
+				StructMethod mt = classStruct.getMethod(content_method_name, content_method_descriptor);
+
+				lambda_information.is_method_reference = false;
+				lambda_information.is_content_method_static = ((mt.getAccessFlags() & CodeConstants.ACC_STATIC) != 0);
+			}
 		}
 		
 		public ClassNode(int type, StructClass classStruct) {
@@ -419,10 +429,13 @@ public class ClassesProcessor {
 			public String method_name;
 			public String method_descriptor;
 			
+			public String content_class_name;
 			public String content_method_name;
 			public String content_method_descriptor;
+			
 			public String content_method_key;
 			
+			public boolean is_method_reference;
 			public boolean is_content_method_static; 
 		}
 	}
