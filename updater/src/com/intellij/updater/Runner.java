@@ -40,7 +40,7 @@ public class Runner {
     else if (args.length >= 2 && "install".equals(args[0])) {
       String destFolder = args[1];
       initLogger();
-      logger.info("destFolder: " + destFolder);
+      logger.info("destDir: " + destFolder);
 
       install(destFolder);
     }
