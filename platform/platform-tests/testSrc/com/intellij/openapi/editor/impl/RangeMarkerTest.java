@@ -34,6 +34,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
@@ -44,6 +45,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -1077,13 +1079,13 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
   public void testRangeHighlighterLinesInRangeForLongLinePerformance() throws Exception {
     final int N = 50000;
-    Document document = EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol('x', 2*N));
+    Document document = EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol('x', 2 * N));
 
     final MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, ourProject, true);
     for (int i=0; i<N-1;i++) {
       markupModel.addRangeHighlighter(2*i, 2*i+1, 0, null, HighlighterTargetArea.EXACT_RANGE);
     }
-    markupModel.addRangeHighlighter(N/2, N/2+1, 0, null, HighlighterTargetArea.LINES_IN_RANGE);
+    markupModel.addRangeHighlighter(N / 2, N / 2 + 1, 0, null, HighlighterTargetArea.LINES_IN_RANGE);
 
     PlatformTestUtil.startPerformanceTest("slow highlighters lookup", (int)(N*Math.log(N)/1000), new ThrowableRunnable() {
       @Override
@@ -1107,6 +1109,42 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     RangeHighlighter line = markupModel.addRangeHighlighter(4, 5, 0, null, HighlighterTargetArea.LINES_IN_RANGE);
     List<RangeHighlighter> list = new ArrayList<RangeHighlighter>();
     markupModel.processRangeHighlightersOverlappingWith(2, 9, new CommonProcessors.CollectProcessor<RangeHighlighter>(list));
-    assertEquals(Arrays.asList(line,exact), list);
+    assertEquals(Arrays.asList(line, exact), list);
+  }
+
+  public void testLazyRangeMarkers() {
+    psiFile = createFile("x.txt", "xxx");
+
+    LazyRangeMarkerFactoryImpl factory = (LazyRangeMarkerFactoryImpl)LazyRangeMarkerFactory.getInstance(getProject());
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    LazyRangeMarkerFactoryImpl.LazyMarker marker = (LazyRangeMarkerFactoryImpl.LazyMarker)factory.createRangeMarker(virtualFile, 0);
+    WeakList<LazyRangeMarkerFactoryImpl.LazyMarker> markers = LazyRangeMarkerFactoryImpl.getMarkers(virtualFile);
+    assertSame(marker, assertOneElement(markers));
+
+    assertFalse(marker.isDelegated());
+    assertTrue(marker.isValid());
+    assertEquals(0, marker.getStartOffset());
+    assertFalse(marker.isDelegated());
+
+    marker.dispose();
+    assertFalse(marker.isValid());
+    assertEmpty(LazyRangeMarkerFactoryImpl.getMarkers(virtualFile));
+
+
+    marker = (LazyRangeMarkerFactoryImpl.LazyMarker)factory.createRangeMarker(virtualFile, 0);
+    assertFalse(marker.isDelegated());
+    assertTrue(marker.isValid());
+    assertEquals(0, marker.getStartOffset());
+    assertFalse(marker.isDelegated());
+
+    Document document = marker.getDocument();
+    document.insertString(2, "yyy");
+    assertTrue(marker.isDelegated());
+    assertTrue(marker.isValid());
+    assertEquals(0, marker.getStartOffset());
+
+    assertEmpty(LazyRangeMarkerFactoryImpl.getMarkers(virtualFile));
+    marker.dispose();
+    assertEmpty(LazyRangeMarkerFactoryImpl.getMarkers(virtualFile));
   }
 }

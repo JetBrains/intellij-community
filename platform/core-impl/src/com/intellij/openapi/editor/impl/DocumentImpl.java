@@ -174,7 +174,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
    * @deprecated should be replaced with {@link #stripTrailingSpaces(com.intellij.openapi.project.Project, boolean, boolean, java.util.List)}
    * once multicaret logic will become unconditional (not controlled by configuration flag)
    */
-  public boolean stripTrailingSpaces(@Nullable final Project project,
+  boolean stripTrailingSpaces(@Nullable final Project project,
                                      boolean inChangedLinesOnly,
                                      boolean virtualSpaceEnabled,
                                      int caretLine,
@@ -230,7 +230,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   /**
    * @return true if stripping was completed successfully, false if the document prevented stripping by e.g. caret(s) being in the way
    */
-  public boolean stripTrailingSpaces(@Nullable final Project project,
+  boolean stripTrailingSpaces(@Nullable final Project project,
                                      boolean inChangedLinesOnly,
                                      boolean virtualSpaceEnabled,
                                      @NotNull List<Integer> caretOffsets) {

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.fileEditor.impl;
+package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.project.Project;
@@ -37,11 +36,12 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
-
   public static final Key<String> OVERRIDE_STRIP_TRAILING_SPACES_KEY = Key.create("OVERRIDE_TRIM_TRAILING_SPACES_KEY");
   public static final Key<Boolean> OVERRIDE_ENSURE_NEWLINE_KEY = Key.create("OVERRIDE_ENSURE_NEWLINE_KEY");
 
@@ -61,7 +61,7 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     strip(document);
   }
 
-  private void strip(final Document document) {
+  private void strip(@NotNull final Document document) {
     if (!document.isWritable()) return;
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     VirtualFile file = fileDocumentManager.getFile(document);
@@ -149,7 +149,7 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     ((DocumentImpl)document).clearLineModificationFlagsExcept(caretLines);
   }
 
-  public static boolean stripIfNotCurrentLine(Document document, boolean inChangedLinesOnly) {
+  public static boolean stripIfNotCurrentLine(@NotNull Document document, boolean inChangedLinesOnly) {
     if (document instanceof DocumentWindow) {
       document = ((DocumentWindow)document).getDelegate();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,23 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.components.panels.VerticalBox;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class DebuggerLaunchingConfigurable implements Configurable {
+class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> {
   private JRadioButton myRbSocket;
   private JRadioButton myRbShmem;
   private StateRestoringCheckBox myCbForceClassicVM;
   private JCheckBox myCbDisableJIT;
 
   @Override
-  public void reset() {
-    final DebuggerSettings settings = DebuggerSettings.getInstance();
+  public void reset(@NotNull DebuggerSettings settings) {
     if (!SystemInfo.isWindows) {
       myRbSocket.setSelected(true);
       myRbShmem.setEnabled(false);
@@ -52,8 +51,8 @@ public class DebuggerLaunchingConfigurable implements Configurable {
   }
 
   @Override
-  public void apply() {
-    getSettingsTo(DebuggerSettings.getInstance());
+  public void apply(@NotNull DebuggerSettings settings) {
+    getSettingsTo(settings);
   }
 
   private void getSettingsTo(DebuggerSettings settings) {
@@ -68,25 +67,15 @@ public class DebuggerLaunchingConfigurable implements Configurable {
   }
 
   @Override
-  public boolean isModified() {
-    final DebuggerSettings currentSettings = DebuggerSettings.getInstance();
-    final DebuggerSettings debuggerSettings = currentSettings.clone();
+  public boolean isModified(@NotNull DebuggerSettings currentSettings) {
+    DebuggerSettings debuggerSettings = currentSettings.clone();
     getSettingsTo(debuggerSettings);
     return !debuggerSettings.equals(currentSettings);
   }
 
+  @NotNull
   @Override
-  public String getDisplayName() {
-    return OptionsBundle.message("options.java.display.name");
-  }
-
-  @Override
-  public String getHelpTopic() {
-    return "reference.idesettings.debugger.launching";
-  }
-
-  @Override
-  public JComponent createComponent() {
+  public JComponent getComponent() {
     myCbForceClassicVM = new StateRestoringCheckBox(DebuggerBundle.message("label.debugger.launching.configurable.force.classic.vm"));
     myCbDisableJIT = new JCheckBox(DebuggerBundle.message("label.debugger.launching.configurable.disable.jit"));
     myRbSocket = new JRadioButton(DebuggerBundle.message("label.debugger.launching.configurable.socket"));
@@ -110,12 +99,6 @@ public class DebuggerLaunchingConfigurable implements Configurable {
 
     JPanel result = new JPanel(new BorderLayout());
     result.add(panel, BorderLayout.NORTH);
-
     return result;
-  }
-
-
-  @Override
-  public void disposeUIResources() {
   }
 }

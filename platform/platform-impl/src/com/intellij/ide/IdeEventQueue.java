@@ -952,25 +952,18 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private static class WindowsAltSupressor implements EventDispatcher {
-
-    private boolean myPureAltWasPressed;
     private boolean myWaitingForAltRelease;
-    private boolean myWaiterScheduled;
-
     private Robot myRobot;
 
     @Override
     public boolean dispatch(AWTEvent e) {
       boolean dispatch = true;
-      if (!Registry.is("actionSystem.win.suppressAlt.new") && e instanceof KeyEvent) {
+      if (e instanceof KeyEvent) {
         KeyEvent ke = (KeyEvent)e;
         final Component component = ke.getComponent();
-        final Window window = component == null ? null : SwingUtilities.windowForComponent(component);
         boolean pureAlt = ke.getKeyCode() == KeyEvent.VK_ALT && (ke.getModifiers() | InputEvent.ALT_MASK) == InputEvent.ALT_MASK;
         if (!pureAlt) {
-          myPureAltWasPressed = false;
           myWaitingForAltRelease = false;
-          myWaiterScheduled = false;
         }
         else {
           if (ApplicationManager.getApplication() == null ||
@@ -978,28 +971,25 @@ public class IdeEventQueue extends EventQueue {
               !SystemInfo.isWindows ||
               !Registry.is("actionSystem.win.suppressAlt") ||
               !(UISettings.getInstance().HIDE_TOOL_STRIPES || UISettings.getInstance().PRESENTATION_MODE)) {
-            return !dispatch;
+            return true;
           }
 
           if (ke.getID() == KeyEvent.KEY_PRESSED) {
-            myPureAltWasPressed = true;
             dispatch = !myWaitingForAltRelease;
           }
           else if (ke.getID() == KeyEvent.KEY_RELEASED) {
             if (myWaitingForAltRelease) {
-              myPureAltWasPressed = false;
               myWaitingForAltRelease = false;
-              myWaiterScheduled = false;
               dispatch = false;
             }
-            else {
-              myWaiterScheduled = true;
+            else if (component != null) {
               //noinspection SSBasedInspection
               SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
                   try {
-                    if (SystemInfo.isWindows || window == null || !window.isActive()) {
+                    final Window window = component instanceof Window ? (Window)component : SwingUtilities.windowForComponent(component);
+                    if (window == null || !window.isActive()) {
                       return;
                     }
                     myWaitingForAltRelease = true;
