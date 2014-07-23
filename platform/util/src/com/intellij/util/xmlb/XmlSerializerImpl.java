@@ -16,13 +16,13 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.ReflectionUtil;
 import org.jdom.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.ref.SoftReference;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -184,16 +184,9 @@ class XmlSerializerImpl {
   /**
    * {@link Class#newInstance()} cannot instantiate private classes
    */
-  static <T> T newInstance(Class<T> aClass) {
+  static <T> T newInstance(@NotNull Class<T> aClass) {
     try {
-      Constructor<T> constructor = aClass.getDeclaredConstructor();
-      try {
-        constructor.setAccessible(true);
-      }
-      catch (SecurityException e) {
-        return aClass.newInstance();
-      }
-      return constructor.newInstance();
+      return ReflectionUtil.newInstance(aClass);
     }
     catch (Exception e) {
       throw new XmlSerializationException(e);

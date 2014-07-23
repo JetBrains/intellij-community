@@ -16,6 +16,9 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.options.SimpleConfigurable;
+import com.intellij.openapi.util.Getter;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -36,13 +39,21 @@ class JavaDebuggerSettings extends XDebuggerSettings<Element> {
   @Nullable
   @Override
   public Configurable createConfigurable(@NotNull Category category) {
+    final Getter<DebuggerSettings> debuggerSettingsGetter = new Getter<DebuggerSettings>() {
+      @Override
+      public DebuggerSettings get() {
+        return DebuggerSettings.getInstance();
+      }
+    };
+
     switch (category) {
       case ROOT:
-        return new DebuggerLaunchingConfigurable();
+        return SimpleConfigurable.create("reference.idesettings.debugger.launching", OptionsBundle.message("options.java.display.name"),
+                                         DebuggerLaunchingConfigurable.class, debuggerSettingsGetter);
       case DATA_VIEWS:
         return new DebuggerDataViewsConfigurable(null);
       case STEPPING:
-        return new DebuggerSteppingConfigurable();
+        return SimpleConfigurable.create("reference.idesettings.debugger.stepping", OptionsBundle.message("options.java.display.name"), DebuggerSteppingConfigurable.class, debuggerSettingsGetter);
     }
     return null;
   }
