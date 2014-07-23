@@ -524,6 +524,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTreeTable);
+    myTreeTable.getTree().setShowsRootHandles(true);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     TreeUtil.collapseAll(myTreeTable.getTree(), 1);
 
