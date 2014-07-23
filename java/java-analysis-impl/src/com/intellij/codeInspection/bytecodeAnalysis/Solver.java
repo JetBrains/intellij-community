@@ -266,7 +266,7 @@ final class IdPending implements IdResult {
     if (this == o) return true;
     if (!(o instanceof IdPending)) return false;
     IdPending pending = (IdPending)o;
-    return !Arrays.equals(delta, pending.delta);
+    return Arrays.equals(delta, pending.delta);
   }
 
   @Override
