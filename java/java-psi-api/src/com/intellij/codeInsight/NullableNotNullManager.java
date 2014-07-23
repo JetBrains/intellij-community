@@ -27,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,8 @@ import java.util.*;
  */
 public class NullableNotNullManager implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#" + NullableNotNullManager.class.getName());
+  @NonNls private static final String NULLABLE_CONTAINER_ANNOTATION = "javax.annotation.ParametersAreNullableByDefault";
+  @NonNls private static final String NONNULL_CONTAINER_ANNOTATION  = "javax.annotation.ParametersAreNonnullByDefault";
 
   public String myDefaultNullable = AnnotationUtil.NULLABLE;
   public String myDefaultNotNull = AnnotationUtil.NOT_NULL;
@@ -103,6 +106,10 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
     return findNullabilityAnnotation(owner, checkBases, true);
   }
 
+  public boolean isContainerAnnotation(String anno) {
+    return NULLABLE_CONTAINER_ANNOTATION.equals(anno) || NONNULL_CONTAINER_ANNOTATION.equals(anno);
+  }
+      
   public void setDefaultNullable(@NotNull String defaultNullable) {
     LOG.assertTrue(getNullables().contains(defaultNullable));
     myDefaultNullable = defaultNullable;
@@ -144,8 +151,8 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
         return null;
       }
       return findContainerAnnotation(owner, nullable
-                                            ? "javax.annotation.ParametersAreNullableByDefault"
-                                            : "javax.annotation.ParametersAreNonnullByDefault");
+                                            ? NULLABLE_CONTAINER_ANNOTATION
+                                            : NONNULL_CONTAINER_ANNOTATION);
     }
     return null;
   }

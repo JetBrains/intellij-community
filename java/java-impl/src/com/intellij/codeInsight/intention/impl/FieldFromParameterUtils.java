@@ -188,12 +188,12 @@ public final class FieldFromParameterUtils {
 
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
     final String nullable = manager.getNullable(parameter);
-    if (nullable != null) {
+    if (nullable != null && !manager.isContainerAnnotation(nullable)) {
       modifierList.addAfter(factory.createAnnotationFromText("@" + nullable, field), null);
     }
     else if (isFinal) {
       final String notNull = manager.getNotNull(parameter);
-      if (notNull != null) {
+      if (notNull != null && !manager.isContainerAnnotation(notNull)) {
         modifierList.addAfter(factory.createAnnotationFromText("@" + notNull, field), null);
       }
     }
