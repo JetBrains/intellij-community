@@ -19,6 +19,7 @@
         </constraints>
         <properties>
           <componentStyle value="SMALL"/>
+          <fontColor value="BRIGHTER"/>
           <text value="May cause serialization issues in the debugged application"/>
         </properties>
       </component>
