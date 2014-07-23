@@ -112,6 +112,7 @@ public abstract class ApplicationStarterBase implements ApplicationStarterEx {
   }
 
   public static VirtualFile findOrCreateFile(String path) throws IOException {
+    System.out.println("findOrCreateFile. path: " +  path);
     final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
     if (file == null) {
       boolean result = new File(path).createNewFile();
