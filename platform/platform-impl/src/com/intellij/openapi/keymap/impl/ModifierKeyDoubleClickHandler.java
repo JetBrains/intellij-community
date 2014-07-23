@@ -121,7 +121,7 @@ public class ModifierKeyDoubleClickHandler {
           return false;
         } else if (ourPressed.first.get() && ourReleased.first.get() && ourPressed.second.get() && myActionKeyCode != -1) {
           if (keyCode == myActionKeyCode) {
-            if (event.getID() == KeyEvent.KEY_RELEASED) {
+            if (event.getID() == KeyEvent.KEY_PRESSED) {
               run(keyEvent);
             }
             return true;

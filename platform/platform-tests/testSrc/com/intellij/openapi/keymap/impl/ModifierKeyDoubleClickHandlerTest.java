@@ -118,6 +118,16 @@ public class ModifierKeyDoubleClickHandlerTest extends LightPlatformTestCase {
     release();
   }
 
+  public void testRepeatedInvocationOnKeyHold() {
+    press();
+    release();
+    press();
+    key(2);
+    assertInvocationCounts(0, 0, 2);
+    release();
+    assertInvocationCounts(0, 0, 2);
+  }
+
   public void assertInvocationCounts(int shiftKeyCount, int shiftShiftCount, int shiftShiftKeyCount) {
     assertEquals(shiftKeyCount, myShiftKeyActionInvocationCount);
     assertEquals(shiftShiftCount, myShiftShiftActionInvocationCount);
@@ -143,18 +153,24 @@ public class ModifierKeyDoubleClickHandlerTest extends LightPlatformTestCase {
   }
 
   private void key() {
-    IdeEventQueue.getInstance().dispatchEvent(new KeyEvent(myComponent,
-                                                           KeyEvent.KEY_PRESSED,
-                                                           Clock.getTime(),
-                                                           InputEvent.SHIFT_MASK,
-                                                           KeyEvent.VK_BACK_SPACE,
-                                                           '\b'));
-    IdeEventQueue.getInstance().dispatchEvent(new KeyEvent(myComponent,
-                                                           KeyEvent.KEY_TYPED,
-                                                           Clock.getTime(),
-                                                           InputEvent.SHIFT_MASK,
-                                                           0,
-                                                           '\b'));
+    key(1);
+  }
+
+  private void key(int repeat) {
+    for (int i = 0; i < repeat; i++) {
+      IdeEventQueue.getInstance().dispatchEvent(new KeyEvent(myComponent,
+                                                             KeyEvent.KEY_PRESSED,
+                                                             Clock.getTime(),
+                                                             InputEvent.SHIFT_MASK,
+                                                             KeyEvent.VK_BACK_SPACE,
+                                                             '\b'));
+      IdeEventQueue.getInstance().dispatchEvent(new KeyEvent(myComponent,
+                                                             KeyEvent.KEY_TYPED,
+                                                             Clock.getTime(),
+                                                             InputEvent.SHIFT_MASK,
+                                                             0,
+                                                             '\b'));
+    }
     IdeEventQueue.getInstance().dispatchEvent(new KeyEvent(myComponent,
                                                            KeyEvent.KEY_RELEASED,
                                                            Clock.getTime(),
