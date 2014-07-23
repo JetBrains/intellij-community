@@ -85,7 +85,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   public void resetEditorFrom(final ApplicationConfiguration configuration) {
     myCommonProgramParameters.reset(configuration);
     myModuleSelector.reset(configuration);
-    getMainClassField().setText(configuration.MAIN_CLASS_NAME.replaceAll("\\$", "\\."));
+    getMainClassField().setText(configuration.MAIN_CLASS_NAME != null ? configuration.MAIN_CLASS_NAME.replaceAll("\\$", "\\.") : "");
     myAlternativeJREPanel.init(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
 
     updateShowSwingInspector(configuration);
