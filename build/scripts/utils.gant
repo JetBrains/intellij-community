@@ -919,3 +919,12 @@ binding.setVariable("analysisApiModules", [
     "xml-psi-api",
     "xml-structure-view-api",
 ])
+binding.setVariable("analysisImplModules", [
+    "analysis-impl",
+    "core-impl",
+    "indexing-impl",
+    "java-analysis-impl",
+    "java-indexing-impl",
+    "java-psi-impl",
+    "projectModel-impl",
+])

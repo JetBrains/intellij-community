@@ -189,7 +189,8 @@ class GitMergeOperation extends GitBranchOperation {
   private boolean proposeSmartMergePerformAndNotify(@NotNull GitRepository repository,
                                           @NotNull GitMessageWithFilesDetector localChangesOverwrittenByMerge) {
     Pair<List<GitRepository>, List<Change>> conflictingRepositoriesAndAffectedChanges =
-      getConflictingRepositoriesAndAffectedChanges(repository, localChangesOverwrittenByMerge, myCurrentBranchOrRev, myBranchToMerge);
+      getConflictingRepositoriesAndAffectedChanges(repository, localChangesOverwrittenByMerge, myCurrentHeads.get(repository),
+                                                   myBranchToMerge);
     List<GitRepository> allConflictingRepositories = conflictingRepositoriesAndAffectedChanges.getFirst();
     List<Change> affectedChanges = conflictingRepositoriesAndAffectedChanges.getSecond();
 
@@ -339,7 +340,8 @@ class GitMergeOperation extends GitBranchOperation {
   @NotNull
   @Override
   public String getSuccessMessage() {
-    return String.format("Merged <b><code>%s</code></b> to <b><code>%s</code></b>", myBranchToMerge, myCurrentBranchOrRev);
+    return String.format("Merged <b><code>%s</code></b> to <b><code>%s</code></b>",
+                         myBranchToMerge, stringifyBranchesByRepos(myCurrentHeads));
   }
 
   @NotNull

@@ -423,7 +423,7 @@ public abstract class GitHandler {
       }
       else {
         LOG.debug("cd " + myWorkingDirectory);
-        LOG.debug(printableCommandLine());
+        LOG.debug("[" + myWorkingDirectory.getName() + "] " + printableCommandLine());
       }
 
       // setup environment

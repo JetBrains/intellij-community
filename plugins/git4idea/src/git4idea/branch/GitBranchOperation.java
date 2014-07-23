@@ -25,6 +25,9 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
@@ -32,6 +35,7 @@ import git4idea.commands.GitMessageWithFilesDetector;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -50,7 +54,7 @@ abstract class GitBranchOperation {
   @NotNull protected final Git myGit;
   @NotNull protected final GitBranchUiHandler myUiHandler;
   @NotNull private final Collection<GitRepository> myRepositories;
-  @NotNull protected final String myCurrentBranchOrRev;
+  @NotNull protected final Map<GitRepository, String> myCurrentHeads;
   private final GitVcsSettings mySettings;
 
   @NotNull private final Collection<GitRepository> mySuccessfulRepositories;
@@ -63,7 +67,13 @@ abstract class GitBranchOperation {
     myGit = git;
     myUiHandler = uiHandler;
     myRepositories = repositories;
-    myCurrentBranchOrRev = GitBranchUtil.getCurrentBranchOrRev(repositories);
+    myCurrentHeads = ContainerUtil.map2Map(repositories, new Function<GitRepository, Pair<GitRepository, String>>() {
+      @Override
+      public Pair<GitRepository, String> fun(GitRepository repository) {
+        GitLocalBranch currentBranch = repository.getCurrentBranch();
+        return Pair.create(repository, currentBranch == null ? repository.getCurrentRevision() : currentBranch.getName());
+      }
+    });
     mySuccessfulRepositories = new ArrayList<GitRepository>();
     myRemainingRepositories = new ArrayList<GitRepository>(myRepositories);
     mySettings = myFacade.getSettings(myProject);
@@ -220,11 +230,28 @@ abstract class GitBranchOperation {
   protected void updateRecentBranch() {
     if (getRepositories().size() == 1) {
       GitRepository repository = myRepositories.iterator().next();
-      mySettings.setRecentBranchOfRepository(repository.getRoot().getPath(), myCurrentBranchOrRev);
+      mySettings.setRecentBranchOfRepository(repository.getRoot().getPath(), myCurrentHeads.get(repository));
     }
     else {
-      mySettings.setRecentCommonBranch(myCurrentBranchOrRev);
+      String recentCommonBranch = getRecentCommonBranch();
+      if (recentCommonBranch != null) {
+        mySettings.setRecentCommonBranch(recentCommonBranch);
+      }
     }
+  }
+
+  @Nullable
+  private String getRecentCommonBranch() {
+    String recentCommonBranch = null;
+    for (String branch : myCurrentHeads.values()) {
+      if (recentCommonBranch == null) {
+        recentCommonBranch = branch;
+      }
+      else if (!recentCommonBranch.equals(branch)) {
+        return null;
+      }
+    }
+    return recentCommonBranch;
   }
 
   private void showUnmergedFilesDialogWithRollback() {
@@ -340,4 +367,34 @@ abstract class GitBranchOperation {
 
     return Pair.create(allConflictingRepositories, affectedChanges);
   }
+
+  @NotNull
+  protected static String stringifyBranchesByRepos(@NotNull Map<GitRepository, String> heads) {
+    MultiMap<String, VirtualFile> grouped = groupByBranches(heads);
+    if (grouped.size() == 1) {
+      return grouped.keySet().iterator().next();
+    }
+    return StringUtil.join(grouped.entrySet(), new Function<Map.Entry<String, Collection<VirtualFile>>, String>() {
+      @Override
+      public String fun(Map.Entry<String, Collection<VirtualFile>> entry) {
+        String roots = StringUtil.join(entry.getValue(), new Function<VirtualFile, String>() {
+          @Override
+          public String fun(VirtualFile file) {
+            return file.getName();
+          }
+        }, ", ");
+        return entry.getKey() + " (in " + roots + ")";
+      }
+    }, "<br/>");
+  }
+
+  @NotNull
+  private static MultiMap<String, VirtualFile> groupByBranches(@NotNull Map<GitRepository, String> heads) {
+    MultiMap<String, VirtualFile> result = MultiMap.create();
+    for (Map.Entry<GitRepository, String> entry : heads.entrySet()) {
+      result.putValue(entry.getValue(), entry.getKey().getRoot());
+    }
+    return result;
+  }
+
 }

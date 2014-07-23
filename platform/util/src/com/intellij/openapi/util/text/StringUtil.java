@@ -2513,10 +2513,9 @@ public class StringUtil extends StringUtilRt {
   public static String shortenTextWithEllipsis(@NotNull final String text,
                                                final int maxLength,
                                                final int suffixLength,
-                                               boolean useEllipsisSymbol) {
+                                               @NotNull String symbol) {
     final int textLength = text.length();
     if (textLength > maxLength) {
-      String symbol = useEllipsisSymbol ? "\u2026" : "...";
       final int prefixLength = maxLength - suffixLength - symbol.length();
       assert prefixLength > 0;
       return text.substring(0, prefixLength) + symbol + text.substring(textLength - suffixLength);
@@ -2524,6 +2523,15 @@ public class StringUtil extends StringUtilRt {
     else {
       return text;
     }
+  }
+
+  @NotNull
+  public static String shortenTextWithEllipsis(@NotNull final String text,
+                                               final int maxLength,
+                                               final int suffixLength,
+                                               boolean useEllipsisSymbol) {
+    String symbol = useEllipsisSymbol ? "\u2026" : "...";
+    return shortenTextWithEllipsis(text, maxLength, suffixLength, symbol);
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,21 +41,21 @@ public class ProjectRootsUtil {
     return directoryFile.equals(fileIndex.getSourceRootForFile(directoryFile));
   }
 
-  public static boolean isInSource(final PsiDirectory directory) {
+  public static boolean isInSource(@NotNull PsiDirectory directory) {
     return isInSource(directory.getVirtualFile(), directory.getProject());
   }
 
-  public static boolean isInSource(final VirtualFile directoryFile, final Project project) {
+  public static boolean isInSource(@NotNull VirtualFile directoryFile, @NotNull Project project) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     return projectFileIndex.isInSourceContent(directoryFile);
   }
 
-  public static boolean isInTestSource(final VirtualFile directoryFile, final Project project) {
+  public static boolean isInTestSource(@NotNull VirtualFile directoryFile, @NotNull Project project) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     return projectFileIndex.isInTestSourceContent(directoryFile);
   }
 
-  public static boolean isModuleSourceRoot(@NotNull VirtualFile virtualFile, final @NotNull Project project) {
+  public static boolean isModuleSourceRoot(@NotNull VirtualFile virtualFile, @NotNull final Project project) {
     return getModuleSourceRoot(virtualFile, project) != null;
   }
 
@@ -66,7 +66,7 @@ public class ProjectRootsUtil {
     return module != null && !module.isDisposed() ? findSourceFolder(module, root) : null;
   }
 
-  public static boolean isLibraryRoot(final VirtualFile directoryFile, final Project project) {
+  public static boolean isLibraryRoot(@NotNull VirtualFile directoryFile, @NotNull Project project) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (projectFileIndex.isInLibraryClasses(directoryFile)) {
       final VirtualFile parent = directoryFile.getParent();

@@ -58,7 +58,7 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
     if (isEmptyRefs(refs, headCommit)) {
       return DEFAULT_COLOR;
     }
-    VcsRef firstRef = ContainerUtil.sorted(refs, getRefManager(refs).getComparator()).get(0);
+    VcsRef firstRef = Collections.min(refs, getRefManager(refs).getComparator());
     // TODO dark variant
     return firstRef.getName().hashCode();
   }

@@ -80,7 +80,7 @@ class SearchForUsagesRunnable implements Runnable {
   private final UsageTarget[] mySearchFor;
   private final Factory<UsageSearcher> mySearcherFactory;
   private final FindUsagesProcessPresentation myProcessPresentation;
-  @NotNull private final SearchScope mySearchScope;
+  @NotNull private final SearchScope mySearchScopeToWarnOfFallingOutOf;
   private final UsageViewManager.UsageViewStateListener myListener;
   private final UsageViewManagerImpl myUsageViewManager;
   private final AtomicInteger myOutOfScopeUsages = new AtomicInteger();
@@ -92,7 +92,7 @@ class SearchForUsagesRunnable implements Runnable {
                           @NotNull UsageTarget[] searchFor,
                           @NotNull Factory<UsageSearcher> searcherFactory,
                           @NotNull FindUsagesProcessPresentation processPresentation,
-                          @NotNull SearchScope scope,
+                          @NotNull SearchScope searchScopeToWarnOfFallingOutOf,
                           @Nullable UsageViewManager.UsageViewStateListener listener) {
     myProject = project;
     myUsageViewRef = usageViewRef;
@@ -100,7 +100,7 @@ class SearchForUsagesRunnable implements Runnable {
     mySearchFor = searchFor;
     mySearcherFactory = searcherFactory;
     myProcessPresentation = processPresentation;
-    mySearchScope = scope;
+    mySearchScopeToWarnOfFallingOutOf = searchScopeToWarnOfFallingOutOf;
     myListener = listener;
     myUsageViewManager = usageViewManager;
   }
@@ -319,7 +319,7 @@ class SearchForUsagesRunnable implements Runnable {
         ProgressIndicator indicator = ProgressWrapper.unwrap(ProgressManager.getInstance().getProgressIndicator());
         if (indicator != null && indicator.isCanceled()) return false;
 
-        if (!UsageViewManagerImpl.isInScope(usage, mySearchScope)) {
+        if (!UsageViewManagerImpl.isInScope(usage, mySearchScopeToWarnOfFallingOutOf)) {
           myOutOfScopeUsages.incrementAndGet();
           return true;
         }
@@ -389,7 +389,7 @@ class SearchForUsagesRunnable implements Runnable {
               List<String> lines = new ArrayList<String>();
               lines.add(StringUtil.escapeXml(message));
               if (myOutOfScopeUsages.get() != 0) {
-                lines.add(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScope));
+                lines.add(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScopeToWarnOfFallingOutOf));
               }
               if (myProcessPresentation.isShowFindOptionsPrompt()) {
                 lines.add(createOptionsHtml(mySearchFor));
@@ -432,7 +432,7 @@ class SearchForUsagesRunnable implements Runnable {
 
           lines.add("Only one usage found.");
           if (myOutOfScopeUsages.get() != 0) {
-            lines.add(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScope));
+            lines.add(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScopeToWarnOfFallingOutOf));
           }
           lines.add(createOptionsHtml(mySearchFor));
           MessageType type = myOutOfScopeUsages.get() == 0 ? MessageType.INFO : MessageType.WARNING;
@@ -456,7 +456,7 @@ class SearchForUsagesRunnable implements Runnable {
         hyperlinkListener = null;
       }
       else {
-        lines = Arrays.asList(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScope), createSearchInProjectHtml());
+        lines = Arrays.asList(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScopeToWarnOfFallingOutOf), createSearchInProjectHtml());
         hyperlinkListener = createSearchInProjectListener();
       }
 

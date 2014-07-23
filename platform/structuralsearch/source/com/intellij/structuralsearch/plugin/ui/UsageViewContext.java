@@ -1,13 +1,13 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand;
 import com.intellij.usages.*;
@@ -81,7 +81,7 @@ public class UsageViewContext {
 
   protected void configureActions() {}
 
-  private class MyUsageTarget implements ConfigurableUsageTarget,ItemPresentation, TypeSafeDataProvider {
+  private class MyUsageTarget implements ConfigurableUsageTarget,ItemPresentation {
     private final String myPresentableText;
 
     MyUsageTarget(String str) {
@@ -178,13 +178,6 @@ public class UsageViewContext {
     @Override
     public String getLongDescriptiveName() {
       return _getPresentableText();
-    }
-
-    @Override
-    public void calcData(DataKey key, DataSink sink) {
-      if (key == UsageView.USAGE_SCOPE) {
-        sink.put(UsageView.USAGE_SCOPE, GlobalSearchScope.allScope(mySearchContext.getProject()));
-      }
     }
   }
 }
