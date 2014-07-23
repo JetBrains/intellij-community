@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TitledSeparator;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,14 +15,31 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
-abstract class MergedCompositeConfigurable implements SearchableConfigurable {
+class MergedCompositeConfigurable implements SearchableConfigurable {
   static final EmptyBorder BOTTOM_INSETS = new EmptyBorder(0, 0, IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET, 0);
 
   protected final Configurable[] children;
   protected JComponent rootComponent;
 
-  protected MergedCompositeConfigurable(@NotNull Configurable[] children) {
+  private final String id;
+  private final String displayName;
+
+  public MergedCompositeConfigurable(@NotNull String id, @NotNull String displayName, @NotNull Configurable[] children) {
     this.children = children;
+    this.id = id;
+    this.displayName = displayName;
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return id;
+  }
+
+  @Nls
+  @Override
+  public String getDisplayName() {
+    return displayName;
   }
 
   protected boolean isUseTitledBorder() {

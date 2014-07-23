@@ -15,83 +15,36 @@
  */
 package org.jetbrains.plugins.groovy.debugger;
 
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.options.ConfigurableUi;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * @author ilyas
  */
-public class GroovyDebuggerSettingsConfigurable implements SearchableConfigurable {
+class GroovyDebuggerSettingsConfigurable implements ConfigurableUi<GroovyDebuggerSettings> {
   private JPanel myPanel;
   private JCheckBox myEnableHotSwap;
-  private boolean isModified = false;
-  private final GroovyDebuggerSettings mySettings;
 
-  public GroovyDebuggerSettingsConfigurable(final GroovyDebuggerSettings settings) {
-    mySettings = settings;
-
-    myEnableHotSwap.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        isModified = mySettings.ENABLE_GROOVY_HOTSWAP != myEnableHotSwap.isSelected();
-      }
-    });
-  }
-
-  @Override
-  @Nls
-  public String getDisplayName() {
-    return GroovyBundle.message("groovy.debug.caption");
-  }
-
-  @Override
   @NotNull
-  public String getHelpTopic() {
-    return "reference.idesettings.debugger.groovy";
-  }
-
   @Override
-  @NotNull
-  public String getId() {
-    return getHelpTopic();
-  }
-
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
-  @Override
-  public JComponent createComponent() {
+  public JComponent getComponent() {
     return myPanel;
   }
 
   @Override
-  public boolean isModified() {
-    return isModified;
+  public boolean isModified(@NotNull GroovyDebuggerSettings settings) {
+    return settings.ENABLE_GROOVY_HOTSWAP != myEnableHotSwap.isSelected();
   }
 
   @Override
-  public void apply() throws ConfigurationException {
-    if (isModified) {
-      mySettings.ENABLE_GROOVY_HOTSWAP = myEnableHotSwap.isSelected();
-    }
-    isModified = false;
+  public void apply(@NotNull GroovyDebuggerSettings settings) {
+    settings.ENABLE_GROOVY_HOTSWAP = myEnableHotSwap.isSelected();
   }
 
   @Override
-  public void reset() {
-    myEnableHotSwap.setSelected(mySettings.ENABLE_GROOVY_HOTSWAP);
-  }
-
-  @Override
-  public void disposeUIResources() {
+  public void reset(@NotNull GroovyDebuggerSettings settings) {
+    myEnableHotSwap.setSelected(settings.ENABLE_GROOVY_HOTSWAP);
   }
 }

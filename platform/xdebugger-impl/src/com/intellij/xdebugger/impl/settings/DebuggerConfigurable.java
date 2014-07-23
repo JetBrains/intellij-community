@@ -22,8 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.DebuggerSupport;
-import com.intellij.xdebugger.settings.XDebuggerSettings;
-import org.jetbrains.annotations.Nls;
+import com.intellij.xdebugger.settings.XDebuggerSettings.Category;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +31,7 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @author Eugene Belyaev & Eugene Zhuravlev
@@ -40,6 +40,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   public static final String DISPLAY_NAME = XDebuggerBundle.message("debugger.configurable.display.name");
 
   static final Configurable[] EMPTY_CONFIGURABLES = new Configurable[0];
+  private static final Category[] MERGED_CATEGORIES = {Category.STEPPING, Category.HOTSWAP};
 
   private Configurable myRootConfigurable;
   private Configurable[] myChildren;
@@ -76,13 +77,9 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     List<Configurable> configurables = new SmartList<Configurable>();
     configurables.add(new DataViewsConfigurable());
 
-    List<Configurable> steppingConfigurables = DebuggerConfigurableProvider.getConfigurables(XDebuggerSettings.Category.STEPPING, providers);
-    if (!steppingConfigurables.isEmpty()) {
-      configurables.add(new SteppingConfigurable(steppingConfigurables));
-    }
+    computeMergedConfigurables(providers, configurables);
 
     Configurable rootConfigurable = computeRootConfigurable(providers, configurables);
-
     if (configurables.isEmpty() && rootConfigurable == null) {
       myChildren = EMPTY_CONFIGURABLES;
     }
@@ -93,6 +90,17 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     else {
       myChildren = configurables.toArray(new Configurable[configurables.size()]);
       myRootConfigurable = rootConfigurable;
+    }
+  }
+
+  private static void computeMergedConfigurables(@NotNull List<DebuggerSettingsPanelProvider> providers, @NotNull List<Configurable> result) {
+    for (Category category : MERGED_CATEGORIES) {
+      List<Configurable> configurables = DebuggerConfigurableProvider.getConfigurables(category, providers);
+      if (!configurables.isEmpty()) {
+        String id = category.name().toLowerCase(Locale.ENGLISH);
+        result.add(new MergedCompositeConfigurable("debugger." + id, XDebuggerBundle.message("debugger." + id + ".display.name"),
+                                                   configurables.toArray(new Configurable[configurables.size()])));
+      }
     }
   }
 
@@ -113,7 +121,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       }
     }
 
-    List<Configurable> rootConfigurables = DebuggerConfigurableProvider.getConfigurables(XDebuggerSettings.Category.ROOT, providers);
+    List<Configurable> rootConfigurables = DebuggerConfigurableProvider.getConfigurables(Category.ROOT, providers);
     if (rootConfigurables.isEmpty()) {
       return deprecatedRootConfigurable;
     }
@@ -133,19 +141,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
         }
       });
 
-      return new MergedCompositeConfigurable(mergedRootConfigurables) {
-        @NotNull
-        @Override
-        public String getId() {
-          throw new UnsupportedOperationException();
-        }
-
-        @Nls
-        @Override
-        public String getDisplayName() {
-          throw new UnsupportedOperationException();
-        }
-      };
+      return new MergedCompositeConfigurable("", "", mergedRootConfigurables);
     }
   }
 

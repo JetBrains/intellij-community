@@ -46,17 +46,15 @@ public class GroovyDebuggerSettings extends XDebuggerSettings<GroovyDebuggerSett
     super("groovy_debugger");
   }
 
-  @Override
-  @NotNull
-  public Configurable createConfigurable() {
-    return new GroovyDebuggerSettingsConfigurable(this);
-  }
-
+  @SuppressWarnings("EnumSwitchStatementWhichMissesCases")
   @Nullable
   @Override
   public Configurable createConfigurable(@NotNull Category category) {
-    if (category == Category.STEPPING) {
-      return SimpleConfigurable.create("reference.idesettings.debugger.groovy", GroovyBundle.message("groovy.debug.caption"), GroovySteppingConfigurableUi.class, this);
+    switch (category) {
+      case STEPPING:
+        return SimpleConfigurable.create("reference.idesettings.debugger.groovy", GroovyBundle.message("groovy.debug.caption"), GroovySteppingConfigurableUi.class, this);
+      case HOTSWAP:
+        return SimpleConfigurable.create("reference.idesettings.debugger.groovy", GroovyBundle.message("groovy.debug.caption"), GroovyDebuggerSettingsConfigurable.class, this);
     }
     return null;
   }

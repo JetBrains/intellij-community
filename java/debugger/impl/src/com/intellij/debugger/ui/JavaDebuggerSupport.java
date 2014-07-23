@@ -18,7 +18,6 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.actions.*;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.settings.DebuggerHotswapConfigurable;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.UserRenderersConfigurable;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -48,8 +47,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author nik
@@ -344,10 +343,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     @NotNull
     @Override
     public Collection<? extends Configurable> getConfigurables() {
-      final ArrayList<Configurable> configurables = new ArrayList<Configurable>();
-      configurables.add(new UserRenderersConfigurable(null));
-      configurables.add(new DebuggerHotswapConfigurable());
-      return configurables;
+      return Collections.singletonList(new UserRenderersConfigurable(null));
     }
 
     @Override
