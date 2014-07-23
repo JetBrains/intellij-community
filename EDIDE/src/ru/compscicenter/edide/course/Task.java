@@ -107,6 +107,7 @@ public class Task {
 
   public void setFailed(boolean failed) {
     myFailed = failed;
+    mySolved = false;
   }
 
   public boolean isSolved() {
@@ -115,6 +116,10 @@ public class Task {
 
   public void setSolved(boolean solved) {
     mySolved = solved;
+    myFailed = false;
+    for (TaskFile taskFile : taskFiles) {
+      taskFile.setSolved();
+    }
   }
 
   public List<TaskFile> getTaskFiles() {

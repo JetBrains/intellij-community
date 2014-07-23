@@ -154,7 +154,7 @@ public class TaskFile {
     int offset = document.getLineStartOffset(line) + column;
     for (Window tw : windows) {
       if (line == tw.getLine()) {
-        int twStartOffset = tw.getRealStartOffset(editor);
+        int twStartOffset = tw.getRealStartOffset(document);
         int twEndOffset = twStartOffset + tw.getLength();
         if (twStartOffset <= offset && offset <= twEndOffset) {
           return tw;
@@ -212,12 +212,37 @@ public class TaskFile {
    */
   public void updateLine(int lineChange, int line, int newEndOffsetInLine, int oldEndOffsetInLine) {
     for (Window w : windows) {
-      //if ((w.getLine() == line) && (w.getStart() > newEndOffsetInLine)) {
       if ((w.getLine() == line) && (w.getStart() > oldEndOffsetInLine)) {
         int distance = w.getStart() - oldEndOffsetInLine;
         w.setStart(distance + newEndOffsetInLine);
         w.setLine(line + lineChange);
       }
     }
+  }
+
+  public void setSolved() {
+    for (Window window : windows) {
+      window.setResolveStatus(true);
+      window.setFailed(false);
+    }
+  }
+
+  public static void copy(TaskFile source, TaskFile target) {
+    List<Window> sourceWindows = source.getWindows();
+    List<Window> windowsCopy = new ArrayList<Window>(sourceWindows.size());
+    for (Window window : sourceWindows) {
+      Window windowCopy = new Window();
+      windowCopy.setLine(window.getLine());
+      windowCopy.setStart(window.getStart());
+      windowCopy.setLength(window.getLength());
+      windowCopy.setPossibleAnswer(window.getPossibleAnswer());
+      windowCopy.setIndex(window.getIndex());
+      windowsCopy.add(windowCopy);
+    }
+    target.setWindows(windowsCopy);
+  }
+
+  public void setWindows(List<Window> windows) {
+    this.windows = windows;
   }
 }

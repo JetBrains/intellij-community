@@ -1,5 +1,6 @@
 package ru.compscicenter.edide.course;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -39,12 +40,22 @@ public class Window implements Comparable {
   private String hint = "";
   private String possibleAnswer = "";
   private boolean myResolveStatus = false;
+  private boolean myFailed = false;
   private int myLength = text.length();
   private TaskFile myTaskFile;
   private int myIndex = -1;
   private int myInitialLine = -1;
   private int myInitialStart = -1;
   private int myInitialLength = -1;
+
+  public boolean isFailed() {
+    return myFailed;
+  }
+
+  public void setFailed(boolean failed) {
+    myFailed = failed;
+    myResolveStatus = !failed;
+  }
 
   public void setIndex(int index) {
     myIndex = index;
@@ -135,6 +146,7 @@ public class Window implements Comparable {
     TextAttributes defaultTestAttributes =
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.LIVE_TEMPLATE_ATTRIBUTES);
     JBColor color = myResolveStatus ? JBColor.GREEN : JBColor.BLUE;
+    color = myFailed ? JBColor.RED : color;
     int startOffset = editor.getDocument().getLineStartOffset(line) + start;
     RangeHighlighter
       rh = editor.getMarkupModel().addRangeHighlighter(startOffset, startOffset + myLength, HighlighterLayer.LAST + 1,
@@ -153,8 +165,8 @@ public class Window implements Comparable {
     rh.setGreedyToRight(true);
   }
 
-  public int getRealStartOffset(Editor editor) {
-    return editor.getDocument().getLineStartOffset(line) + start;
+  public int getRealStartOffset(Document document) {
+    return document.getLineStartOffset(line) + start;
   }
 
   /**
@@ -213,5 +225,13 @@ public class Window implements Comparable {
 
   public String getPossibleAnswer() {
     return possibleAnswer;
+  }
+
+  public void setPossibleAnswer(String possibleAnswer) {
+    this.possibleAnswer = possibleAnswer;
+  }
+
+  public int getIndex() {
+    return myIndex;
   }
 }
