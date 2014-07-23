@@ -30,6 +30,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.*;
@@ -284,6 +285,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @Override
     public void addContent(@NotNull final Content content) {
+      myContents.add(content);
     }
 
     @Override
@@ -293,6 +295,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @Override
     public void addContent(@NotNull final Content content, final Object constraints) {
+      myContents.add(content);
     }
 
     @Override
@@ -359,18 +362,24 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @Override
     public Content getContent(final JComponent component) {
+      Content[] contents = getContents();
+      for (Content content : contents) {
+        if (Comparing.equal(component, content.getComponent())) {
+          return content;
+        }
+      }
       return null;
     }
 
     @Override
     @Nullable
     public Content getContent(final int index) {
-      return null;
+      return myContents.get(index);
     }
 
     @Override
     public int getContentCount() {
-      return 0;
+      return myContents.size();
     }
 
     @Override
@@ -381,7 +390,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @Override
     public int getIndexOfContent(final Content content) {
-      return -1;
+      return myContents.indexOf(content);
     }
 
     @Override
@@ -398,7 +407,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @Override
     public boolean isSelected(@NotNull final Content content) {
-      return false;
+      return content == mySelected;
     }
 
     @Override
@@ -422,6 +431,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     @NotNull
     @Override
     public ActionCallback removeContent(@NotNull Content content, boolean dispose, boolean trackFocus, boolean implicitFocus) {
+      removeContent(content, dispose);
       return new ActionCallback.Done();
     }
 
