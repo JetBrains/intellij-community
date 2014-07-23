@@ -53,8 +53,8 @@ public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
     titleBuilder.append(SvnBundle.message("repository.browser.compare.title", myElementUrl,
                                           FileUtil.toSystemDependentName(myVirtualFile.getPresentableUrl())));
 
-    SvnTarget target1 = SvnTarget.fromFile(new File(myVirtualFile.getPath()));
-    SvnTarget target2 = SvnTarget.fromURL(myElementUrl);
+    SvnTarget target1 = SvnTarget.fromURL(myElementUrl);
+    SvnTarget target2 = SvnTarget.fromFile(new File(myVirtualFile.getPath()));
 
     changes.addAll(getClientFactory().createDiffClient().compare(target1, target2));
   }
