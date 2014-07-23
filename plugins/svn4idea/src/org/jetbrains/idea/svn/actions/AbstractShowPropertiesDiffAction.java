@@ -179,7 +179,7 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
           }
           if (myBeforeContent != null && myAfterContent != null && myBeforeRevisionValue != null && myAfterRevision != null) {
             final SimpleDiffRequest diffRequest = new SimpleDiffRequest(myProject, getDiffWindowTitle(myChange));
-            if (compareRevisions(myBeforeRevisionValue, myAfterRevision) >= 0) {
+            if (compareRevisions(myBeforeRevisionValue, myAfterRevision) > 0) {
               // before ahead
               diffRequest.setContents(new SimpleContent(myAfterContent), new SimpleContent(myBeforeContent));
               diffRequest.setContentTitles(revisionToString(myAfterRevision), revisionToString(myBeforeRevisionValue));
