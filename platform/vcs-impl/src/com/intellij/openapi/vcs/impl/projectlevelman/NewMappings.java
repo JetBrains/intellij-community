@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
@@ -52,18 +51,18 @@ public class NewMappings {
 
   private final DefaultVcsRootPolicy myDefaultVcsRootPolicy;
   private final MessageBus myMessageBus;
+  private final ProjectLevelVcsManager myVcsManager;
   private final FileStatusManager myFileStatusManager;
-  private final FileIndexFacade myFileIndexFacade;
   private final Project myProject;
 
   private boolean myActivated;
 
-  public NewMappings(final Project project, final MessageBus messageBus,
-                     final ProjectLevelVcsManagerImpl vcsManager, FileStatusManager fileStatusManager, FileIndexFacade fileIndexFacade) {
+  public NewMappings(final Project project, final MessageBus messageBus, final ProjectLevelVcsManagerImpl vcsManager,
+                     FileStatusManager fileStatusManager) {
     myProject = project;
     myMessageBus = messageBus;
+    myVcsManager = vcsManager;
     myFileStatusManager = fileStatusManager;
-    myFileIndexFacade = fileIndexFacade;
     myLock = new Object();
     myVcsToPaths = new HashMap<String, List<VcsDirectoryMapping>>();
     myFileWatchRequestsManager = new FileWatchRequestsManager(myProject, this, LocalFileSystem.getInstance());
@@ -235,7 +234,7 @@ public class NewMappings {
   @Nullable
   public VcsDirectoryMapping getMappingFor(final VirtualFile file, final Object parentModule) {
     // if parentModule is not null it means that file belongs to the module so it isn't excluded
-    if (parentModule == null && myFileIndexFacade.isExcludedFile(file)) {
+    if (parentModule == null && myVcsManager.isIgnoredByVcs(file)) {
       return null;
     }
 

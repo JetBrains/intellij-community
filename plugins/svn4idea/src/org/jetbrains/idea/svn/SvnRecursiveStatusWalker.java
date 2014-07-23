@@ -103,7 +103,7 @@ public class SvnRecursiveStatusWalker {
     if (e.contains(SVNErrorCode.WC_NOT_DIRECTORY) || e.contains(SVNErrorCode.WC_NOT_FILE)) {
       final VirtualFile virtualFile = path.getVirtualFile();
       if (virtualFile != null) {
-        if (! myPartner.isExcluded(virtualFile)) {
+        if (! myPartner.isIgnoredByVcs(virtualFile)) {
           // self is unversioned
           myReceiver.processUnversioned(virtualFile);
 
@@ -278,7 +278,7 @@ public class SvnRecursiveStatusWalker {
           @Override
           public Boolean compute() {
             if (myProject.isDisposed()) return null;
-            return myPartner.isExcluded(vFile);
+            return myPartner.isIgnoredByVcs(vFile);
           }
         });
         if (Boolean.TRUE.equals(excluded)) return;

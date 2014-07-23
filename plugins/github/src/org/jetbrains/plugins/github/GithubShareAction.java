@@ -23,10 +23,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -54,7 +54,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubRepo;
 import org.jetbrains.plugins.github.api.GithubUserDetailed;
-import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
 import org.jetbrains.plugins.github.util.*;
 
@@ -351,11 +350,11 @@ public class GithubShareAction extends DumbAwareAction {
   @NotNull
   private static Collection<VirtualFile> filterOutIgnored(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    final FileIndexFacade fileIndex = FileIndexFacade.getInstance(project);
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     return ContainerUtil.filter(files, new Condition<VirtualFile>() {
       @Override
       public boolean value(VirtualFile file) {
-        return !changeListManager.isIgnoredFile(file) && !fileIndex.isExcludedFile(file);
+        return !changeListManager.isIgnoredFile(file) && !vcsManager.isIgnoredByVcs(file);
       }
     });
   }

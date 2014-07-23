@@ -132,7 +132,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
     myBackgroundableActionHandlerMap = new EnumMap<VcsBackgroundableActions, BackgroundableActionEnabledHandler>(VcsBackgroundableActions.class);
     myInitialization = new VcsInitialization(myProject);
-    myMappings = new NewMappings(myProject, myMessageBus, this, manager, excludedFileIndex);
+    myMappings = new NewMappings(myProject, myMessageBus, this, manager);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
 
     if (!myProject.isDefault()) {
@@ -843,9 +843,14 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       @Override
       public Boolean compute() {
         return vf != null && (myExcludedIndex.isInContent(vf) || isFileInBaseDir(vf) || vf.equals(myProject.getBaseDir()) ||
-                              hasExplicitMapping(vf) || isInDirectoryBasedRoot(vf)) && !myExcludedIndex.isExcludedFile(vf);
+                              hasExplicitMapping(vf) || isInDirectoryBasedRoot(vf)) && !isIgnoredByVcs(vf);
       }
     });
+  }
+
+  @Override
+  public boolean isIgnoredByVcs(VirtualFile vf) {
+    return myExcludedIndex.isExcludedFile(vf);
   }
 
   @Override

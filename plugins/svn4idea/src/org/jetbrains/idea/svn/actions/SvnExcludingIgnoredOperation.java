@@ -15,11 +15,10 @@
  */
 package org.jetbrains.idea.svn.actions;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -42,39 +41,36 @@ public class SvnExcludingIgnoredOperation {
 
   public static class Filter {
     private final Project myProject;
-    private final FileIndexFacade myIndex;
+    private final ProjectLevelVcsManager myVcsManager;
     private final ChangeListManager myClManager;
 
     public Filter(final Project project) {
       myProject = project;
 
       if (!project.isDefault()) {
-        myIndex = PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class);
+        myVcsManager = ProjectLevelVcsManager.getInstance(project);
         myClManager = ChangeListManager.getInstance(project);
       }
       else {
-        myIndex = null;
+        myVcsManager = null;
         myClManager = null;
       }
     }
 
     public boolean accept(final VirtualFile file) {
       if (!myProject.isDefault()) {
-        if (isExcluded(file)) {
-          return false;
-        }
-        if (myClManager.isIgnoredFile(file)) {
+        if (isIgnoredByVcs(file) || myClManager.isIgnoredFile(file)) {
           return false;
         }
       }
       return true;
     }
 
-    private boolean isExcluded(final VirtualFile file) {
+    private boolean isIgnoredByVcs(final VirtualFile file) {
       return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         @Override
         public Boolean compute() {
-          return myIndex.isExcludedFile(file);
+          return myVcsManager.isIgnoredByVcs(file);
         }
       });
     }
