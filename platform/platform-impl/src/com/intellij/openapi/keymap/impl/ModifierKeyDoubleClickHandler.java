@@ -39,6 +39,10 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Support for keyboard shortcuts like Control-double-click or Control-double-click+A
+ *
+ * Timings that are used in the implementation to detect double click were tuned for SearchEverywhere
+ * functionality (invoked on double Shift), so if you need to change them, please make sure
+ * SearchEverywhere behaviour remains intact.
  */
 public class ModifierKeyDoubleClickHandler {
   private static final ModifierKeyDoubleClickHandler INSTANCE = new ModifierKeyDoubleClickHandler();
