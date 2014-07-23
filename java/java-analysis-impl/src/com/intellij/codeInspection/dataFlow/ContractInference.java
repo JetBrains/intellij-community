@@ -71,7 +71,21 @@ class ContractInferenceInterpreter {
     if (statements.length == 1) {
       if (statements[0] instanceof PsiReturnStatement) {
         List<MethodContract> result = handleDelegation(((PsiReturnStatement)statements[0]).getReturnValue(), false);
-        if (result != null) return result;
+        if (result != null) {
+          return ContainerUtil.findAll(result, new Condition<MethodContract>() {
+            @Override
+            public boolean value(MethodContract contract) {
+              if (contract.returnValue == NULL_VALUE || contract.returnValue == NOT_NULL_VALUE) {
+                PsiTypeElement typeElement = myMethod.getReturnTypeElement();
+                if (typeElement == null || !(typeElement.getType() instanceof PsiClassType)) {
+                  return false;
+                }
+              }
+
+              return true;
+            }
+          });
+        }
       }
       else if (statements[0] instanceof PsiExpressionStatement && ((PsiExpressionStatement)statements[0]).getExpression() instanceof PsiMethodCallExpression) {
         List<MethodContract> result = handleDelegation(((PsiExpressionStatement)statements[0]).getExpression(), false);
