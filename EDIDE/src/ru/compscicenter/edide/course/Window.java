@@ -34,6 +34,7 @@ public class Window implements Comparable {
   private static final String INITIAL_START_ATTRIBUTE_NAME = "myInitialStart";
   private static final String INITIAL_LENGTH_ATTRIBUTE_NAME = "myInitialLength";
   private static final String INDEX_ATTRIBUTE_NAME = "myIndex";
+  public static final String FAILED_ATTRIBUTE_NAME = "myFailed";
   private int line = 0;
   private int start = 0;
   private String text = "";
@@ -79,6 +80,7 @@ public class Window implements Comparable {
     windowElement.setAttribute(INITIAL_START_ATTRIBUTE_NAME, String.valueOf(myInitialStart));
     windowElement.setAttribute(INITIAL_LENGTH_ATTRIBUTE_NAME, String.valueOf(myInitialLength));
     windowElement.setAttribute(INDEX_ATTRIBUTE_NAME, String.valueOf(myIndex));
+    windowElement.setAttribute(FAILED_ATTRIBUTE_NAME, String.valueOf(myFailed));
     return windowElement;
   }
 
@@ -100,6 +102,7 @@ public class Window implements Comparable {
       myInitialStart = windowElement.getAttribute(INITIAL_START_ATTRIBUTE_NAME).getIntValue();
       myInitialLength = windowElement.getAttribute(INITIAL_LENGTH_ATTRIBUTE_NAME).getIntValue();
       myIndex = windowElement.getAttribute(INDEX_ATTRIBUTE_NAME).getIntValue();
+      myFailed = windowElement.getAttribute(FAILED_ATTRIBUTE_NAME).getBooleanValue();
     }
     catch (DataConversionException e) {
       e.printStackTrace();
