@@ -31,6 +31,7 @@ public class DebuggerHotswapConfigurable implements SearchableConfigurable {
   private JRadioButton myRbNever;
   private JRadioButton myRbAsk;
 
+  @Override
   public void reset() {
     final DebuggerSettings settings = DebuggerSettings.getInstance();
     myHotswapInBackground.setSelected(settings.HOTSWAP_IN_BACKGROUND);
@@ -48,6 +49,7 @@ public class DebuggerHotswapConfigurable implements SearchableConfigurable {
     }
   }
 
+  @Override
   public void apply() {
     getSettingsTo(DebuggerSettings.getInstance());
   }
@@ -68,6 +70,7 @@ public class DebuggerHotswapConfigurable implements SearchableConfigurable {
     }
   }
 
+  @Override
   public boolean isModified() {
     final DebuggerSettings currentSettings = DebuggerSettings.getInstance();
     final DebuggerSettings debuggerSettings = currentSettings.clone();
@@ -75,23 +78,28 @@ public class DebuggerHotswapConfigurable implements SearchableConfigurable {
     return !debuggerSettings.equals(currentSettings);
   }
 
+  @Override
   public String getDisplayName() {
     return DebuggerBundle.message("debugger.hotswap.configurable.display.name");
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.idesettings.debugger.hotswap";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   public Runnable enableSearch(String option) {
     return null;
   }
 
+  @Override
   public JComponent createComponent() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
@@ -132,6 +140,7 @@ public class DebuggerHotswapConfigurable implements SearchableConfigurable {
   }
 
 
+  @Override
   public void disposeUIResources() {
   }
 
