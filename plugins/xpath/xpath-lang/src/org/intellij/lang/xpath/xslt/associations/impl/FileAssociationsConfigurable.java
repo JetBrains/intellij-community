@@ -20,14 +20,17 @@ import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class FileAssociationsConfigurable implements SearchableConfigurable, NonDefaultProjectConfigurable, Configurable.NoScroll {
+public class FileAssociationsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
     private final Project myProject;
     private final UIState myState;
     private AssociationsEditor myEditor;
@@ -37,17 +40,21 @@ public class FileAssociationsConfigurable implements SearchableConfigurable, Non
         myState = ServiceManager.getService(project, UIState.class);
     }
 
+    @Override
     public String getDisplayName() {
         return "XSLT File Associations";
     }
 
+  @Override
   @NotNull
     public String getHelpTopic() {
         return "xslt.associations";
     }
 
+    @Override
     public JComponent createComponent() {
         myEditor = new ReadAction<AssociationsEditor>() {
+            @Override
             protected void run(Result<AssociationsEditor> result) throws Throwable {
                 result.setResult(new AssociationsEditor(myProject, myState.state));
             }
@@ -55,19 +62,23 @@ public class FileAssociationsConfigurable implements SearchableConfigurable, Non
         return myEditor.getComponent();
     }
 
+    @Override
     public synchronized boolean isModified() {
         return myEditor != null && myEditor.isModified();
     }
 
+    @Override
     public void apply() throws ConfigurationException {
         myEditor.apply();
         DaemonCodeAnalyzer.getInstance(myProject).restart();
     }
 
+    @Override
     public void reset() {
         myEditor.reset();
     }
 
+    @Override
     public synchronized void disposeUIResources() {
         if (myEditor != null) {
             myState.state = myEditor.getState();
@@ -84,6 +95,7 @@ public class FileAssociationsConfigurable implements SearchableConfigurable, Non
         final FileAssociationsConfigurable instance = new FileAssociationsConfigurable(project);
 
         ShowSettingsUtil.getInstance().editConfigurable(project, instance, new Runnable() {
+            @Override
             public void run() {
                 final AssociationsEditor editor = instance.getEditor();
                 if (file != null) {
@@ -99,20 +111,24 @@ public class FileAssociationsConfigurable implements SearchableConfigurable, Non
     public static class UIState implements PersistentStateComponent<TreeState> {
         private TreeState state;
 
+        @Override
         public TreeState getState() {
             return state != null ? state : new TreeState();
         }
 
+        @Override
         public void loadState(TreeState state) {
             this.state = state;
         }
     }
 
+    @Override
     @NotNull
     public String getId() {
         return getHelpTopic();
     }
 
+    @Override
     public Runnable enableSearch(final String option) {
         return null;
     }
