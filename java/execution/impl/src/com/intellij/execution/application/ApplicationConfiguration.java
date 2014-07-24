@@ -21,7 +21,6 @@ import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.junit.RefactoringListeners;
-import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -286,7 +285,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     @NotNull
     @Override
     protected OSProcessHandler startProcess() throws ExecutionException {
-      final OSProcessHandler handler = KillableColoredProcessHandler.create(createCommandLine());
+      final OSProcessHandler handler = super.startProcess();
       RunnerSettings runnerSettings = getRunnerSettings();
       JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(myConfiguration, handler, runnerSettings);
       return handler;
