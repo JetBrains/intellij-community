@@ -30,10 +30,4 @@ public final class UnsplitAllAction extends SplitterActionBase {
     //VirtualFile file = fileEditorManager.getSelectedFiles()[0];
     fileEditorManager.unsplitAllWindow();
   }
-
-  @Override
-  protected boolean isActionEnabled(Project project) {
-    final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
-    return fileEditorManager.getWindowSplitCount() > 2;
-  }
 }
