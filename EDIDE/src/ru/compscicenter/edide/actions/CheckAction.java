@@ -156,27 +156,26 @@ public class CheckAction extends AnAction {
                 return;
               }
               if (testPassed == 0) {
+                final TaskFile taskFileCopy = new TaskFile();
+                final VirtualFile copyWithAnswers = getCopyWithAnswers(taskDir, openedFile, selectedTaskFile, taskFileCopy);
+                for (final Window window : taskFileCopy.getWindows()) {
+                  check(project, window, copyWithAnswers, taskFileCopy, selectedTaskFile, selectedEditor.getDocument(), testRunner);
+                }
+                try {
+                  copyWithAnswers.delete(this);
+                }
+                catch (IOException e) {
+                  LOG.error(e);
+                }
                 String message = testRunner.getRunFailedMessage(testProcess);
                 if (message.length() != 0) {
                   Messages.showErrorDialog(project, message, "Failed to Run");
-                  currentTask.setStatus(StudyStatus.Failed);
                   selectedTaskFile.drawAllWindows(selectedEditor);
                   ProjectView.getInstance(project).refresh();
                   return;
                 }
               }
-              final TaskFile taskFileCopy = new TaskFile();
-              final VirtualFile copyWithAnswers = getCopyWithAnswers(taskDir, openedFile, selectedTaskFile, taskFileCopy);
-              for (final Window window : taskFileCopy.getWindows()) {
-                check(project, window, copyWithAnswers, taskFileCopy, selectedTaskFile, selectedEditor.getDocument(), testRunner);
-              }
-              System.out.println();
-              try {
-                copyWithAnswers.delete(this);
-              }
-              catch (IOException e) {
-                LOG.error(e);
-              }
+
               selectedTaskFile.drawAllWindows(selectedEditor);
               String result = String.format("%d from %d tests failed", testNum - testPassed, testNum);
               createTestResultPopUp(result, JBColor.RED, project);
