@@ -46,8 +46,8 @@ public class CheckAction extends AnAction {
 
   class StudyTestRunner {
     private static final String TEST_OK = "#study_plugin test OK";
-    private Task myTask;
-    private VirtualFile myTaskDir;
+    private final Task myTask;
+    private final VirtualFile myTaskDir;
 
     StudyTestRunner(Task task, VirtualFile taskDir) {
       myTask = task;
@@ -166,16 +166,16 @@ public class CheckAction extends AnAction {
                 }
               }
               final TaskFile taskFileCopy = new TaskFile();
-              final VirtualFile copyWithAnswers = getCopyWithAnswers(taskDir, openedFile, selectedTaskFile, taskFileCopy, project);
+              final VirtualFile copyWithAnswers = getCopyWithAnswers(taskDir, openedFile, selectedTaskFile, taskFileCopy);
               for (final Window window : taskFileCopy.getWindows()) {
-                    check(project, window, copyWithAnswers, taskFileCopy, selectedTaskFile, selectedEditor.getDocument(), testRunner);
+                check(project, window, copyWithAnswers, taskFileCopy, selectedTaskFile, selectedEditor.getDocument(), testRunner);
               }
               System.out.println();
               try {
                 copyWithAnswers.delete(this);
               }
               catch (IOException e) {
-               LOG.error(e);
+                LOG.error(e);
               }
               selectedTaskFile.drawAllWindows(selectedEditor);
               String result = String.format("%d from %d tests failed", testNum - testPassed, testNum);
@@ -187,7 +187,12 @@ public class CheckAction extends AnAction {
     });
   }
 
-  private void check(Project project, Window window, VirtualFile answerFile, TaskFile answerTaskFile, TaskFile usersTaskFile, Document usersDocument,
+  private void check(Project project,
+                     Window window,
+                     VirtualFile answerFile,
+                     TaskFile answerTaskFile,
+                     TaskFile usersTaskFile,
+                     Document usersDocument,
                      StudyTestRunner testRunner) {
 
     try {
@@ -197,7 +202,7 @@ public class CheckAction extends AnAction {
       if (windowDocument != null) {
         TaskFile windowTaskFile = new TaskFile();
         TaskFile.copy(answerTaskFile, windowTaskFile);
-        StudyDocumentListener listener = new StudyDocumentListener(project, windowTaskFile);
+        StudyDocumentListener listener = new StudyDocumentListener(windowTaskFile);
         windowDocument.addDocumentListener(listener);
         int start = window.getRealStartOffset(windowDocument);
         int end = start + window.getLength();
@@ -217,7 +222,6 @@ public class CheckAction extends AnAction {
         userWindow.setStatus(res ? StudyStatus.Solved : StudyStatus.Failed);
         windowCopy.delete(this);
       }
-
     }
     catch (IOException e) {
       LOG.error(e);
@@ -231,8 +235,7 @@ public class CheckAction extends AnAction {
   private VirtualFile getCopyWithAnswers(final VirtualFile taskDir,
                                          final VirtualFile file,
                                          final TaskFile source,
-                                         TaskFile target,
-                                         final Project project) {
+                                         TaskFile target) {
     VirtualFile copy = null;
     try {
 
@@ -241,14 +244,13 @@ public class CheckAction extends AnAction {
       final Document document = documentManager.getDocument(copy);
       if (document != null) {
         TaskFile.copy(source, target);
-        StudyDocumentListener listener = new StudyDocumentListener(project, target);
+        StudyDocumentListener listener = new StudyDocumentListener(target);
         document.addDocumentListener(listener);
         for (Window window : target.getWindows()) {
           final int start = window.getRealStartOffset(document);
           final int end = start + window.getLength();
           final String text = window.getPossibleAnswer();
           document.replaceString(start, end, text);
-
         }
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
@@ -256,7 +258,6 @@ public class CheckAction extends AnAction {
             documentManager.saveDocument(document);
           }
         });
-
       }
     }
     catch (IOException e) {

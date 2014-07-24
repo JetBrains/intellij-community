@@ -5,9 +5,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.xmlb.XmlSerializer;
-import org.jdom.DataConversionException;
-import org.jdom.Element;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -24,55 +22,12 @@ import java.util.List;
  * which is visible to student in project view
  */
 public class TaskFile {
-  private static final String FILE_ELEMENT_NAME = "taskFile";
-  private static final String NAME_ATTRIBUTE_NAME = "name";
-  private static final String LINE_ATTRIBUTE_NAME = "myLineNum";
-  private static final String INDEX_ATTRIBUTE_NAME = "myIndex";
-  private String name;
-  private List<Window> windows;
-  private int myLineNum = -1;
+  public String name;
+  public List<Window> windows = new ArrayList<Window>();
   private Task myTask;
+  @Transient
   private Window mySelectedWindow = null;
-  private int myIndex = -1;
-
-
-  /**
-   * Saves task file state for serialization
-   *
-   * @return xml element with attributes and content typical for task file
-   */
-  public Element saveState() {
-    Element taskFileElement = new Element(FILE_ELEMENT_NAME);
-    taskFileElement.setAttribute(NAME_ATTRIBUTE_NAME, name);
-    taskFileElement.setAttribute(LINE_ATTRIBUTE_NAME, String.valueOf(myLineNum));
-    taskFileElement.setAttribute(INDEX_ATTRIBUTE_NAME, String.valueOf(myIndex));
-    for (Window window : windows) {
-      taskFileElement.addContent(window.saveState());
-    }
-    return taskFileElement;
-  }
-
-  /**
-   * initializes task file after reopening of project or IDE restart
-   *
-   * @param taskFileElement xml element which contains information about task file
-   */
-  public void loadState(Element taskFileElement) {
-    name = taskFileElement.getAttributeValue(NAME_ATTRIBUTE_NAME);
-    try {
-      myLineNum = taskFileElement.getAttribute(LINE_ATTRIBUTE_NAME).getIntValue();
-      myIndex = taskFileElement.getAttribute(INDEX_ATTRIBUTE_NAME).getIntValue();
-    }
-    catch (DataConversionException e) {
-      e.printStackTrace();
-    }
-    List<Element> windowElements = taskFileElement.getChildren();
-    windows = new ArrayList<Window>(windowElements.size());
-    for (Element windowElement : windowElements) {
-      Window window = XmlSerializer.deserialize(windowElement, Window.class);
-      windows.add(window);
-   }
-  }
+  public int myIndex = -1;
 
   /**
    * @return if all the windows in task file are marked as resolved
@@ -94,6 +49,7 @@ public class TaskFile {
     return myTask;
   }
 
+  @Transient
   public Window getSelectedWindow() {
     return mySelectedWindow;
   }

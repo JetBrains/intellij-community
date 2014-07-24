@@ -26,7 +26,7 @@ import javax.swing.*;
  * data: 7/21/14.
  */
 abstract public class TaskNavigationAction extends AnAction {
-  public void navigateTask (Project project) {
+  public void navigateTask(Project project) {
     Editor selectedEditor = StudyEditor.getSelectedEditor(project);
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());

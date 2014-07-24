@@ -49,7 +49,7 @@ public class ShowHintAction extends AnAction {
             File resourceFile = new File(taskManager.getCourse().getResourcePath());
             File resourceRoot = resourceFile.getParentFile();
             if (resourceRoot != null && resourceRoot.exists()) {
-              File hintsDir = new File (resourceRoot, Course.HINTS_DIR);
+              File hintsDir = new File(resourceRoot, Course.HINTS_DIR);
               if (hintsDir.exists()) {
                 String hintText = StudyUtils.getFileText(hintsDir.getAbsolutePath(), hint, true);
                 if (hintText != null) {

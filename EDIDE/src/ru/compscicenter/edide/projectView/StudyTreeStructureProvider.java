@@ -19,26 +19,27 @@ import java.util.Collection;
  * author: liana
  * data: 6/25/14.
  */
-public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAware{
+public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAware {
   @NotNull
   @Override
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,
                                              @NotNull Collection<AbstractTreeNode> children,
                                              ViewSettings settings) {
     if (!needModify(parent)) {
-      return  children;
+      return children;
     }
     Collection<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
-    for (AbstractTreeNode node:children) {
+    for (AbstractTreeNode node : children) {
       Project project = node.getProject();
       if (node.getValue() instanceof PsiDirectory) {
         PsiDirectory nodeValue = (PsiDirectory)node.getValue();
         StudyDirectoryNode newNode = new StudyDirectoryNode(project, nodeValue, settings);
         nodes.add(newNode);
-      }  else {
+      }
+      else {
         if (parent instanceof StudyDirectoryNode) {
           if (node instanceof PsiFileNode) {
-            PsiFileNode psiFileNode = (PsiFileNode) node;
+            PsiFileNode psiFileNode = (PsiFileNode)node;
             TaskFile taskFile = StudyTaskManager.getInstance(project).getTaskFile(psiFileNode.getVirtualFile());
             if (taskFile != null) {
               nodes.add(node);

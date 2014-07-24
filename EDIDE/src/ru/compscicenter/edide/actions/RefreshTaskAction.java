@@ -76,7 +76,7 @@ public class RefreshTaskAction extends AnAction {
                       window.reset();
                     }
                     ProjectView.getInstance(project).refresh();
-                    if (listener!=null) {
+                    if (listener != null) {
                       document.addDocumentListener(listener);
                     }
                     selectedTaskFile.drawAllWindows(editor);
@@ -85,7 +85,6 @@ public class RefreshTaskAction extends AnAction {
                     Balloon balloon = balloonBuilder.createBalloon();
                     StudyEditor selectedStudyEditor = StudyEditor.getSelectedStudyEditor(project);
                     balloon.showInCenterOf(selectedStudyEditor.getRefreshButton());
-
                   }
                   catch (FileNotFoundException e1) {
                     e1.printStackTrace();

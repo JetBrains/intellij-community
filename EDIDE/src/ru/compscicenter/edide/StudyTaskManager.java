@@ -4,6 +4,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,7 @@ import java.util.Map;
     )}
 )
 public class StudyTaskManager implements ProjectComponent, PersistentStateComponent<Element> {
+  public static final String COURSE_ELEMENT = "courseElement";
   private static Map<String, StudyTaskManager> myTaskManagers = new HashMap<String, StudyTaskManager>();
   private final Project myProject;
   private Course myCourse;
@@ -41,7 +43,6 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
   private StudyTaskManager(Project project) {
     myTaskManagers.put(project.getBasePath(), this);
     myProject = project;
-    myCourse = null;
   }
 
 
@@ -49,34 +50,22 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     return myCourse;
   }
 
-  public Element saveState(String projectName) {
-    Element taskManagerElement = new Element(projectName);
-    if (myCourse == null) {
-      return taskManagerElement;
-    }
-    taskManagerElement.addContent(myCourse.saveState());
-    return taskManagerElement;
-  }
-
-
-
   @Nullable
   @Override
   public Element getState() {
-    return saveState(myProject.getName());
+    Element el = new Element("taskManager");
+    Element courseElement = new Element(COURSE_ELEMENT);
+    XmlSerializer.serializeInto(myCourse, courseElement);
+    el.addContent(courseElement);
+    return el;
   }
 
   @Override
   public void loadState(Element el) {
-    Element courseElement = el.getChild("courseElement");
-    if (courseElement == null) {
-      return;
+    myCourse = XmlSerializer.deserialize(el.getChild(COURSE_ELEMENT), Course.class);
+    if (myCourse != null) {
+      myCourse.init(true);
     }
-    Course course =  new Course();
-    course.loadState(courseElement);
-    myCourse = course;
-    myCourse.init(true);
-    System.out.println();
   }
 
   @Override

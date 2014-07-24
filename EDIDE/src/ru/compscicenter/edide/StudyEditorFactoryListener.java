@@ -68,14 +68,14 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
               VirtualFile openedFile = FileDocumentManager.getInstance().getFile(document);
               if (openedFile != null) {
                 StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-                  TaskFile taskFile = taskManager.getTaskFile(openedFile);
-                  if (taskFile != null) {
-                    editor.addEditorMouseListener(new WindowSelectionListener(taskFile));
-                    StudyDocumentListener listener = new StudyDocumentListener(project, taskFile);
-                    StudyEditor.addDocumentListener(document, listener);
-                    document.addDocumentListener(listener);
-                    taskFile.drawAllWindows(editor);
-                  }
+                TaskFile taskFile = taskManager.getTaskFile(openedFile);
+                if (taskFile != null) {
+                  editor.addEditorMouseListener(new WindowSelectionListener(taskFile));
+                  StudyDocumentListener listener = new StudyDocumentListener(taskFile);
+                  StudyEditor.addDocumentListener(document, listener);
+                  document.addDocumentListener(listener);
+                  taskFile.drawAllWindows(editor);
+                }
               }
             }
           });

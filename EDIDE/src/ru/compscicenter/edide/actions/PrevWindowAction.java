@@ -37,12 +37,9 @@ public class PrevWindowAction extends AnAction {
           }
 
           if (prev != null) {
-            //selectedEditor.getMarkupModel().removeAllHighlighters();
             selectedTaskFile.setSelectedWindow(prev);
             prev.draw(selectedEditor, prev.getStatus() != StudyStatus.Solved, true);
-            return;
           }
-          //TODO:propose user to do next action
         }
       }
     }

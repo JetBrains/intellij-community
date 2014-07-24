@@ -1,8 +1,6 @@
 package ru.compscicenter.edide.course;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jdom.DataConversionException;
-import org.jdom.Element;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,51 +13,11 @@ import java.util.List;
  * Time: 18:40
  */
 public class Lesson {
-  private static final String LESSON_ELEMENT_NAME = "lessonElement";
-  private static final String NAME_ATTRIBUTE_NAME = "name";
-  private static final String INDEX_ATTRIBUTE_NAME = "myIndex";
-  private String name;
-  private List<Task> taskList;
+  public String name;
+  public List<Task> taskList = new ArrayList<Task>();
   private Course myCourse = null;
-  private int myIndex = -1;
+  public int myIndex = -1;
   public static final String LESSON_DIR = "lesson";
-
-  /**
-   * Saves lesson state for serialization
-   *
-   * @return xml element with attributes and content typical for lesson
-   */
-  public Element saveState() {
-    Element lessonElement = new Element(LESSON_ELEMENT_NAME);
-    lessonElement.setAttribute(NAME_ATTRIBUTE_NAME, name);
-    lessonElement.setAttribute(INDEX_ATTRIBUTE_NAME, String.valueOf(myIndex));
-    for (Task task : taskList) {
-      lessonElement.addContent(task.saveState());
-    }
-    return lessonElement;
-  }
-
-  /**
-   * initializes lesson after reopening of project or IDE restart
-   *
-   * @param lessonElement xml element which contains information about lesson
-   */
-  public void loadState(Element lessonElement) {
-    name = lessonElement.getAttributeValue(NAME_ATTRIBUTE_NAME);
-    try {
-      myIndex = lessonElement.getAttribute(INDEX_ATTRIBUTE_NAME).getIntValue();
-      List<Element> taskElements = lessonElement.getChildren();
-      taskList = new ArrayList<Task>(taskElements.size());
-      for (Element taskElement : taskElements) {
-        Task task = new Task();
-        task.loadState(taskElement);
-        taskList.add(task);
-      }
-    }
-    catch (DataConversionException e) {
-      e.printStackTrace();
-    }
-  }
 
   public StudyStatus getStatus() {
     for (Task task : taskList) {
@@ -68,7 +26,7 @@ public class Lesson {
         return StudyStatus.Unchecked;
       }
     }
-    return  StudyStatus.Solved;
+    return StudyStatus.Solved;
   }
 
   public List<Task> getTaskList() {

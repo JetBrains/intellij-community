@@ -70,11 +70,12 @@ public class StudyNewCourseDialog extends DialogWrapper {
         return;
       }
       String courseName = myGenerator.addLocalCourse(fileName);
-      if (courseName !=null) {
+      if (courseName != null) {
         myDefaultCoursesComboBox.addItem(courseName);
         myDefaultCoursesComboBox.setSelectedItem(courseName);
         setOK();
-      } else {
+      }
+      else {
         setError(INVALID_COURSE);
       }
     }
@@ -110,21 +111,21 @@ public class StudyNewCourseDialog extends DialogWrapper {
       }
       Map<String, File> oldCourses = myGenerator.getLoadedCourses();
       Map<String, File> newCourses = new HashMap<String, File>();
-        for (Map.Entry<String, File> course : oldCourses.entrySet()) {
-          File courseFile = course.getValue();
-          if (courseFile.exists()) {
-            newCourses.put(course.getKey(), courseFile);
-          }
+      for (Map.Entry<String, File> course : oldCourses.entrySet()) {
+        File courseFile = course.getValue();
+        if (courseFile.exists()) {
+          newCourses.put(course.getKey(), courseFile);
         }
-        for (Map.Entry<String, File> course : downloadedCourses.entrySet()) {
-          String courseName = course.getKey();
-          if (newCourses.get(courseName) == null) {
-            newCourses.put(courseName, course.getValue());
-            myDefaultCoursesComboBox.addItem(courseName);
-          }
+      }
+      for (Map.Entry<String, File> course : downloadedCourses.entrySet()) {
+        String courseName = course.getKey();
+        if (newCourses.get(courseName) == null) {
+          newCourses.put(courseName, course.getValue());
+          myDefaultCoursesComboBox.addItem(courseName);
         }
-        myGenerator.setCourses(newCourses);
-        myGenerator.flushCache();
+      }
+      myGenerator.setCourses(newCourses);
+      myGenerator.flushCache();
     }
   }
 

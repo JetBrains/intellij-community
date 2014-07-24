@@ -26,7 +26,7 @@ public class StudyRunAction extends AnAction {
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
     StudyTaskManager taskManager = StudyTaskManager.getInstance(selectedEditor.getProject());
-    if (openedFile != null && openedFile.getCanonicalPath()!=null) {
+    if (openedFile != null && openedFile.getCanonicalPath() != null) {
       String filePath = openedFile.getCanonicalPath();
       GeneralCommandLine cmd = new GeneralCommandLine();
       cmd.setWorkDirectory(openedFile.getParent().getCanonicalPath());
@@ -40,15 +40,15 @@ public class StudyRunAction extends AnAction {
       try {
         Process p = cmd.createProcess();
         ProcessHandler handler = new OSProcessHandler(p);
-        RunContentExecutor executor =  new RunContentExecutor(project, handler);
+        RunContentExecutor executor = new RunContentExecutor(project, handler);
         executor.run();
       }
       catch (ExecutionException e) {
         e.printStackTrace();
       }
     }
-
   }
+
   public void actionPerformed(AnActionEvent e) {
     // TODO: insert action logic here
   }

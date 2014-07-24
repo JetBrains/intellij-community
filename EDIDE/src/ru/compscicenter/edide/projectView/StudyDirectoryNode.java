@@ -23,13 +23,13 @@ import ru.compscicenter.edide.course.TaskFile;
 public class StudyDirectoryNode extends PsiDirectoryNode {
   private PsiDirectory myValue;
   private Project myProject;
+
   public StudyDirectoryNode(Project project,
                             PsiDirectory value,
                             ViewSettings viewSettings) {
     super(project, value, viewSettings);
     myValue = value;
     myProject = project;
-
   }
 
   //TODO:improve
@@ -66,7 +66,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     }
 
     if (valueName.contains("zPlayground")) {
-      if (myValue.getParent()!=null) {
+      if (myValue.getParent() != null) {
         if (!myValue.getParent().getName().contains("zPlayground")) {
           data.setPresentableText("Playground");
           data.setIcon(StudyIcons.Playground);
@@ -82,7 +82,5 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
       }
     }
     data.setPresentableText(valueName);
-
-
   }
 }

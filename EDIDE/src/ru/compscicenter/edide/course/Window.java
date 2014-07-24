@@ -9,11 +9,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.JBColor;
-import com.intellij.util.xmlb.XmlSerializer;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * User: lia
@@ -21,7 +17,6 @@ import java.util.List;
  * Time: 18:54
  * Implementation of windows which user should type in
  */
-
 
 
 public class Window implements Comparable {
@@ -49,15 +44,6 @@ public class Window implements Comparable {
 
   public void setIndex(int index) {
     myIndex = index;
-  }
-
-  /**
-   * Saves window state for serialization
-   *
-   * @return xml element with attributes typical for window
-   */
-  public Element saveState() {
-   return XmlSerializer.serialize(this);
   }
 
   public int getLength() {
@@ -154,14 +140,6 @@ public class Window implements Comparable {
       return start - window.start;
     }
     return lineDiff;
-  }
-
-  public Window getNext() {
-    List<Window> windows = myTaskFile.getWindows();
-    if (myIndex + 1 < windows.size()) {
-      return windows.get(myIndex + 1);
-    }
-    return null;
   }
 
   /**

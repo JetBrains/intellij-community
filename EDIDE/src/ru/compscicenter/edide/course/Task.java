@@ -3,12 +3,11 @@ package ru.compscicenter.edide.course;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jdom.DataConversionException;
-import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 import ru.compscicenter.edide.StudyUtils;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,78 +18,19 @@ import java.util.List;
  * Implementation of task which contains task files, tests, input file for tests
  */
 public class Task {
-  private static final String INDEX_ATTRIBUTE_NAME = "myIndex";
   public static final String TASK_DIR = "task";
-  private static final String TASK_ELEMENT_NAME = "task";
-  private static final String TEST_FILE_ATTRIBUTE_NAME = "testFile";
-  private static final String NAME_ATTRIBUTE_NAME = "name";
-  private static final String TEXT_ATTRIBUTE_NAME = "text";
-  private static final String INPUT_ATTRIBUTE_NAME = "input";
-  private static final String OUTPUT_ATTRIBUTE_NAME = "output";
-  private static final String TEST_NUM_ATTRIBUTE_NAME = "testNum";
-  private String testFile;
-  private int testNum;
-  private String name;
-  private String text;
-  private List<TaskFile> taskFiles;
+  public String testFile;
+  public int testNum;
+  public String name;
+  public String text;
+  public List<TaskFile> taskFiles = new ArrayList<TaskFile>();
   private Lesson myLesson;
-  private int myIndex;
-  private String input = null;
-  private String output = null;
+  public int myIndex;
+  public String input = null;
+  public String output = null;
 
   public int getTestNum() {
     return testNum;
-  }
-
-  /**
-   * Saves task state for serialization
-   *
-   * @return xml element with attributes and content typical for task
-   */
-  public Element saveState() {
-    Element taskElement = new Element(TASK_ELEMENT_NAME);
-    taskElement.setAttribute(TEST_FILE_ATTRIBUTE_NAME, testFile);
-    taskElement.setAttribute(NAME_ATTRIBUTE_NAME, name);
-    taskElement.setAttribute(TEXT_ATTRIBUTE_NAME, text);
-    taskElement.setAttribute(INDEX_ATTRIBUTE_NAME, String.valueOf(myIndex));
-    taskElement.setAttribute(TEST_NUM_ATTRIBUTE_NAME, String.valueOf(testNum));
-    if (input != null) {
-      taskElement.setAttribute(INPUT_ATTRIBUTE_NAME, input);
-    }
-    if (output != null) {
-      taskElement.setAttribute(OUTPUT_ATTRIBUTE_NAME, output);
-    }
-    for (TaskFile file : taskFiles) {
-      taskElement.addContent(file.saveState());
-    }
-    return taskElement;
-  }
-
-  /**
-   * initializes task after reopening of project or IDE restart
-   *
-   * @param taskElement xml element which contains information about task
-   */
-  public void loadState(Element taskElement) {
-    testFile = taskElement.getAttributeValue(TEST_FILE_ATTRIBUTE_NAME);
-    name = taskElement.getAttributeValue(NAME_ATTRIBUTE_NAME);
-    text = taskElement.getAttributeValue(TEXT_ATTRIBUTE_NAME);
-    input = taskElement.getAttributeValue(INPUT_ATTRIBUTE_NAME);
-    output = taskElement.getAttributeValue(OUTPUT_ATTRIBUTE_NAME);
-    try {
-      myIndex = taskElement.getAttribute(INDEX_ATTRIBUTE_NAME).getIntValue();
-      testNum = taskElement.getAttribute(TEST_NUM_ATTRIBUTE_NAME).getIntValue();
-      List<Element> taskFileElements = taskElement.getChildren();
-      taskFiles = new ArrayList<TaskFile>(taskFileElements.size());
-      for (Element taskFileElement : taskFileElements) {
-        TaskFile taskFile = new TaskFile();
-        taskFile.loadState(taskFileElement);
-        taskFiles.add(taskFile);
-      }
-    }
-    catch (DataConversionException e) {
-      e.printStackTrace();
-    }
   }
 
   public List<TaskFile> getTaskFiles() {
@@ -111,7 +51,7 @@ public class Task {
   }
 
   public void setStatus(StudyStatus status) {
-    for (TaskFile  taskFile : taskFiles) {
+    for (TaskFile taskFile : taskFiles) {
       taskFile.setStatus(status);
     }
   }

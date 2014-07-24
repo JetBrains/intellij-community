@@ -14,10 +14,10 @@ import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.course.TaskFile;
 
 /**
-* User: lia
-* Date: 10.05.14
-* Time: 12:45
-*/
+ * User: lia
+ * Date: 10.05.14
+ * Time: 12:45
+ */
 class StudyFileEditorProvider implements FileEditorProvider, DumbAware {
   static final private String EDITOR_TYPE_ID = "StudyEditor";
   final private FileEditorProvider defaultTextEditorProvider = TextEditorProvider.getInstance();

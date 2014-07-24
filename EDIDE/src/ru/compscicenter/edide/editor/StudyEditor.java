@@ -76,10 +76,6 @@ public class StudyEditor implements FileEditor {
     return myDocumentListeners.get(document);
   }
 
-  public  static void removeListener(Document document) {
-    myDocumentListeners.remove(document);
-  }
-
   public StudyEditor(final Project project, VirtualFile file) {
     myDefaultEditor = TextEditorProvider.getInstance().createEditor(project, file);
     myComponent = myDefaultEditor.getComponent();
@@ -108,7 +104,7 @@ public class StudyEditor implements FileEditor {
     myNextTaskButton = addButton(taskActionsPanel, "Next Task", StudyIcons.Next);
     myRefreshButton = addButton(taskActionsPanel, "Start task again", StudyIcons.Refresh24);
     addButton(taskActionsPanel, "Remind shortcuts", StudyIcons.ShortcutReminder);
-    if (taskFile.getTask().getInput()!=null) {
+    if (taskFile.getTask().getInput() != null) {
       myWatchInputButton = addButton(taskActionsPanel, "Watch test input", StudyIcons.WatchInput);
       myWatchInputButton.addActionListener(new ActionListener() {
         @Override
@@ -270,7 +266,7 @@ public class StudyEditor implements FileEditor {
       FileEditorManagerImpl.getInstanceEx(project).getSplitters().getCurrentWindow().getSelectedEditor().getSelectedEditorWithProvider()
         .getFirst();
     if (fileEditor instanceof StudyEditor) {
-      return (StudyEditor) fileEditor;
+      return (StudyEditor)fileEditor;
     }
     return null;
   }

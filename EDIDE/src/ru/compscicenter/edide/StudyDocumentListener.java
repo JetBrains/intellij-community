@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
-import com.intellij.openapi.project.Project;
 import ru.compscicenter.edide.course.TaskFile;
 import ru.compscicenter.edide.course.Window;
 
@@ -19,11 +18,9 @@ import ru.compscicenter.edide.course.Window;
 public class StudyDocumentListener extends DocumentAdapter {
   private final TaskFile myTaskFile;
   private int oldLine;
-  private final Project myProject;
 
-  public StudyDocumentListener(Project project, TaskFile taskFile) {
+  public StudyDocumentListener(TaskFile taskFile) {
     myTaskFile = taskFile;
-    myProject = project;
   }
 
 

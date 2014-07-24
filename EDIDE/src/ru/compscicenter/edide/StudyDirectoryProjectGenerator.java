@@ -41,16 +41,11 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
   private static final String COURSE_NAME_ATTRIBUTE = "name";
   private static final Pattern CACHE_PATTERN = Pattern.compile("(name=(.*)) (path=(.*course.json))");
   private static final String REPOSITORY_NAME = "initial-python-course";
-  private final File myCoursesDir;
+  private final File myCoursesDir = new File(PathManager.getLibPath(), "courses");
   private static final String CACHE_NAME = "courseNames.txt";
   private Map<String, File> myCourses = new HashMap<String, File>();
   private File mySelectedCourseFile;
   private Project myProject;
-
-
-  public StudyDirectoryProjectGenerator() {
-    myCoursesDir = new File(PathManager.getLibPath(), "courses");
-  }
 
   @Nls
   @NotNull
@@ -130,7 +125,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
       ZipUtil.unzip(null, courseDir, file, null, null, true);
       String courseName = addCourse(myCourses, courseDir);
       flushCache();
-      return  courseName;
+      return courseName;
     }
     catch (IOException e) {
       LOG.error("Failed to unzip course archive");
@@ -184,18 +179,18 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
   /**
    * Downloads courses from {@link ru.compscicenter.edide.StudyDirectoryProjectGenerator#REPO_URL}
    * and unzips them into {@link ru.compscicenter.edide.StudyDirectoryProjectGenerator#myCoursesDir}
-   *
-   * @return true if download succeed
    */
 
-  public boolean downloadAndUnzip(boolean needProgressBar) {
+  public void downloadAndUnzip(boolean needProgressBar) {
     File outputFile = new File(PathManager.getLibPath(), "courses.zip");
     try {
       if (!needProgressBar) {
         GithubDownloadUtil.downloadAtomically(null, REPO_URL,
                                               outputFile, USER_NAME, REPOSITORY_NAME);
-      } else {
-        GithubDownloadUtil.downloadContentToFileWithProgressSynchronously(myProject, REPO_URL, "downloading courses", outputFile, USER_NAME, REPOSITORY_NAME, false);
+      }
+      else {
+        GithubDownloadUtil.downloadContentToFileWithProgressSynchronously(myProject, REPO_URL, "downloading courses", outputFile, USER_NAME,
+                                                                          REPOSITORY_NAME, false);
       }
       if (outputFile.exists()) {
         ZipUtil.unzip(null, myCoursesDir, outputFile, null, null, true);
@@ -215,7 +210,6 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
           }
         }
       }
-      return true;
     }
     catch (IOException e) {
       e.printStackTrace();
@@ -223,7 +217,6 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
     catch (GeneratorException e) {
       e.printStackTrace();
     }
-    return false;
   }
 
   public Map<String, File> getLoadedCourses() {
@@ -237,7 +230,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
    * @return map with course names and course files location
    */
   public Map<String, File> loadCourses() {
-    Map<String, File> courses =  new HashMap<String, File>();
+    Map<String, File> courses = new HashMap<String, File>();
     if (myCoursesDir.exists()) {
       File[] courseDirs = myCoursesDir.listFiles(new FileFilter() {
         @Override
@@ -286,9 +279,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
   }
 
   /**
-   *
    * @return courses from memory or from cash file or parses course directory
-   *
    */
   public Map<String, File> getCourses() {
     if (!myCourses.isEmpty()) {
@@ -315,11 +306,10 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
 
   /**
    * Writes courses to cash file {@link ru.compscicenter.edide.StudyDirectoryProjectGenerator#CACHE_NAME}
-   *
    */
   public void flushCache() {
     File cashFile = new File(myCoursesDir, CACHE_NAME);
-    PrintWriter writer =  null;
+    PrintWriter writer = null;
     try {
       writer = new PrintWriter(cashFile);
       for (Map.Entry<String, File> course : myCourses.entrySet()) {
