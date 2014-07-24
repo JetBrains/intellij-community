@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@ package com.intellij.lang.ant;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Alarm;
+import com.intellij.util.ReflectionUtil;
 import org.apache.tools.ant.IntrospectionHelper;
 import org.apache.tools.ant.TaskContainer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -231,8 +231,7 @@ public final class AntIntrospector {
     catch (Throwable e) {
       try {
         // assume it is older version of ant
-        final Field helpersField = helperClass.getDeclaredField("helpers");
-        final Map helpersCollection = (Map)helpersField.get(null);
+        Map helpersCollection = ReflectionUtil.getField(helperClass, null, null, "helpers");
         helpersCollection.clear();
       }
       catch (Throwable _e) {

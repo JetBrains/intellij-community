@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,7 +172,7 @@ public interface PopupComponent {
       myJBPopup = jbPopup;
 
       if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) {
-        final Component c = (Component)ReflectionUtil.getField(Popup.class, myPopup, Component.class, "component");
+        final Component c = ReflectionUtil.getField(Popup.class, myPopup, Component.class, "component");
         c.setBackground(UIUtil.getPanelBackground());
       }
     }
@@ -220,7 +220,7 @@ public interface PopupComponent {
     }
 
     public Window getWindow() {
-      final Component c = (Component)ReflectionUtil.getField(Popup.class, myPopup, Component.class, "component");
+      final Component c = ReflectionUtil.getField(Popup.class, myPopup, Component.class, "component");
       return c instanceof JWindow ? (JWindow)c : null;
     }
 

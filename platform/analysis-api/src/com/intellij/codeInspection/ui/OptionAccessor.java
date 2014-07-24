@@ -43,15 +43,7 @@ public interface OptionAccessor {
 
     @Override
     public void setOption(final String optionName, boolean optionValue) {
-      try {
-        ReflectionUtil.findField(myInspection.getClass(), boolean.class, optionName).setBoolean(myInspection, optionValue);
-      }
-      catch (IllegalAccessException e) {
-        LOG.warn(e);
-      }
-      catch (NoSuchFieldException e) {
-        LOG.warn(e);
-      }
+      ReflectionUtil.setField(myInspection.getClass(), myInspection, boolean.class, optionName, optionValue);
     }
   }
 }

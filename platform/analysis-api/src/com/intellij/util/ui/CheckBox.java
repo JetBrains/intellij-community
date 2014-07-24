@@ -16,14 +16,13 @@
 package com.intellij.util.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.ButtonModel;
-import javax.swing.JCheckBox;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.lang.reflect.Field;
 
 public class CheckBox extends JCheckBox {
 
@@ -39,30 +38,8 @@ public class CheckBox extends JCheckBox {
 
     private static boolean getPropertyValue(InspectionProfileEntry owner,
                                             String property) {
-        try {
-            final Class<? extends InspectionProfileEntry> aClass = owner.getClass();
-            final Field field = getField(aClass, property);
-            field.setAccessible(true);
-            return field.getBoolean(owner);
-        } catch (IllegalAccessException ignore) {
-            return false;
-        } catch (NoSuchFieldException ignore) {
-            return false;
-        }
+      return ReflectionUtil.getField(owner.getClass(), owner, boolean.class, property);
     }
-
-  static Field getField(Class clazz, String fieldName) throws NoSuchFieldException {
-    try {
-      return clazz.getDeclaredField(fieldName);
-    } catch (NoSuchFieldException e) {
-      final Class superClass = clazz.getSuperclass();
-      if (superClass == null) {
-        throw e;
-      } else {
-        return getField(superClass, fieldName);
-      }
-    }
-  }
 
     private static class SingleCheckboxChangeListener
             implements ChangeListener {
@@ -85,16 +62,7 @@ public class CheckBox extends JCheckBox {
         private static void setPropertyValue(InspectionProfileEntry owner,
                                              String property,
                                              boolean selected) {
-            try {
-                final Class<? extends InspectionProfileEntry> aClass = owner.getClass();
-                final Field field = getField(aClass, property);
-                field.setAccessible(true);
-                field.setBoolean(owner, selected);
-            } catch (IllegalAccessException ignore) {
-                // do nothing
-            } catch (NoSuchFieldException ignore) {
-                // do nothing
-            }
+          ReflectionUtil.setField(owner.getClass(), owner, boolean.class, property, selected);
         }
     }
 }
