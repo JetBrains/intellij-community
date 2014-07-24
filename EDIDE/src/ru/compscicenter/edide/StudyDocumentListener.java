@@ -2,7 +2,6 @@ package ru.compscicenter.edide;
 
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -40,14 +39,13 @@ public class StudyDocumentListener extends DocumentAdapter {
   public void documentChanged(DocumentEvent e) {
     if (e instanceof DocumentEventImpl) {
       DocumentEventImpl event = (DocumentEventImpl)e;
-      Editor selectedEditor = StudyEditor.getSelectedEditor(myProject);
       Document document = e.getDocument();
       int offset = e.getOffset();
       int change = event.getNewLength() - event.getOldLength();
       int line = document.getLineNumber(offset);
       int offsetInLine = offset - document.getLineStartOffset(line);
       LogicalPosition pos = new LogicalPosition(line, offsetInLine);
-      Window window = myTaskFile.getTaskWindow(selectedEditor, pos);
+      Window window = myTaskFile.getTaskWindow(document, pos);
       if (window != null) {
         int newLength = window.getLength() + change;
         window.setLength(newLength);

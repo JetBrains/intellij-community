@@ -36,10 +36,10 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
       Editor editor = e.getEditor();
       Point point = e.getMouseEvent().getPoint();
       LogicalPosition pos = editor.xyToLogicalPosition(point);
-      Window window = myTaskFile.getTaskWindow(editor, pos);
+      Window window = myTaskFile.getTaskWindow(editor.getDocument(), pos);
       if (window != null) {
         myTaskFile.setSelectedWindow(window);
-        editor.getMarkupModel().removeAllHighlighters();
+        //editor.getMarkupModel().removeAllHighlighters();
         window.draw(editor, !window.isResolveStatus(), true);
       }
       else {
@@ -51,6 +51,7 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
   @Override
   public void editorCreated(@NotNull final EditorFactoryEvent event) {
     final Editor editor = event.getEditor();
+
     final Project project = editor.getProject();
     if (project == null) {
       return;
@@ -66,17 +67,15 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
               VirtualFile openedFile = FileDocumentManager.getInstance().getFile(document);
               if (openedFile != null) {
                 StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-                if (taskManager != null) {
                   TaskFile taskFile = taskManager.getTaskFile(openedFile);
                   if (taskFile != null) {
                     editor.addEditorMouseListener(new WindowSelectionListener(taskFile));
                     StudyDocumentListener listener = new StudyDocumentListener(project, taskFile);
                     StudyEditor.addDocumentListener(document, listener);
                     document.addDocumentListener(listener);
-                    editor.getMarkupModel().removeAllHighlighters();
+                    //editor.getMarkupModel().removeAllHighlighters();
                     taskFile.drawAllWindows(editor);
                   }
-                }
               }
             }
           });

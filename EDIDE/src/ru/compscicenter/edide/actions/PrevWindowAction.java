@@ -36,7 +36,7 @@ public class PrevWindowAction extends AnAction {
           }
 
           if (prev != null) {
-            selectedEditor.getMarkupModel().removeAllHighlighters();
+            //selectedEditor.getMarkupModel().removeAllHighlighters();
             selectedTaskFile.setSelectedWindow(prev);
             prev.draw(selectedEditor, !prev.isResolveStatus(), true);
             return;

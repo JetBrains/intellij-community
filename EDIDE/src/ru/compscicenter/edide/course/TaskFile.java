@@ -144,9 +144,8 @@ public class TaskFile {
    * @return task window located in specified position or null if there is no task window in this position
    */
   @Nullable
-  public Window getTaskWindow(Editor editor, LogicalPosition pos) {
+  public Window getTaskWindow(Document document, LogicalPosition pos) {
     int line = pos.line;
-    Document document = editor.getDocument();
     if (line >= document.getLineCount()) {
       return null;
     }

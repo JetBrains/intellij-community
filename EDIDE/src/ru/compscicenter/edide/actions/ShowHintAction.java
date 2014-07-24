@@ -43,7 +43,7 @@ public class ShowHintAction extends AnAction {
         PsiFile file = PsiManager.getInstance(project).findFile(openedFile);
         if (file != null) {
           LogicalPosition pos = selectedEditor.getCaretModel().getLogicalPosition();
-          Window window = taskFile.getTaskWindow(selectedEditor, pos);
+          Window window = taskFile.getTaskWindow(selectedEditor.getDocument(), pos);
           if (window != null) {
             String hint = window.getHint();
             File resourceFile = new File(taskManager.getCourse().getResourcePath());

@@ -273,7 +273,7 @@ public class StudyEditor implements FileEditor {
     return null;
   }
 
-  public static Editor getSelectedEditor(Project project) {
+  public static Editor getSelectedEditor(final Project project) {
     StudyEditor studyEditor = getSelectedStudyEditor(project);
     if (studyEditor != null) {
       FileEditor defaultEditor = studyEditor.getDefaultEditor();

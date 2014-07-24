@@ -31,7 +31,7 @@ public class NextWindowAction extends AnAction {
           boolean ifDraw = false;
           for (Window window : selectedTaskFile.getWindows()) {
             if (ifDraw) {
-              selectedEditor.getMarkupModel().removeAllHighlighters();
+              //selectedEditor.getMarkupModel().removeAllHighlighters();
               selectedTaskFile.setSelectedWindow(window);
               window.draw(selectedEditor, !window.isResolveStatus(), true);
               return;
