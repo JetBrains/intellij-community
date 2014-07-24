@@ -5,6 +5,7 @@ import com.intellij.openapi.fileEditor.FileEditorPolicy;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
@@ -17,7 +18,7 @@ import ru.compscicenter.edide.course.TaskFile;
 * Date: 10.05.14
 * Time: 12:45
 */
-class StudyFileEditorProvider implements FileEditorProvider {
+class StudyFileEditorProvider implements FileEditorProvider, DumbAware {
   static final private String EDITOR_TYPE_ID = "StudyEditor";
   final private FileEditorProvider defaultTextEditorProvider = TextEditorProvider.getInstance();
 

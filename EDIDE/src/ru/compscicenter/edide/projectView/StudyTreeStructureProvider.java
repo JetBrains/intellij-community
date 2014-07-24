@@ -4,6 +4,7 @@ import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +19,7 @@ import java.util.Collection;
  * author: liana
  * data: 6/25/14.
  */
-public class StudyTreeStructureProvider implements TreeStructureProvider{
+public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAware{
   @NotNull
   @Override
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,

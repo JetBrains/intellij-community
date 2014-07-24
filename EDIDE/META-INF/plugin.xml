@@ -27,9 +27,6 @@
   <depends>com.intellij.modules.lang</depends>
 
   <application-components>
-    <component>
-      <implementation-class>ru.compscicenter.edide.StudyPluginApplicationComponent</implementation-class>
-    </component>
   </application-components>
 
   <project-components>
