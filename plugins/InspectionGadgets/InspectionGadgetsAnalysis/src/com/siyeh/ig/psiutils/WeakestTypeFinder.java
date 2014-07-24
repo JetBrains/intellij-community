@@ -251,7 +251,7 @@ public class WeakestTypeFinder {
     if (!hasUsages) {
       return Collections.emptyList();
     }
-    weakestTypeClasses = filterAccessibleClasses(weakestTypeClasses, variableOrMethod);
+    weakestTypeClasses = filterAccessibleClasses(weakestTypeClasses, variableOrMethodClass, variableOrMethod);
     return weakestTypeClasses;
   }
 
@@ -546,14 +546,14 @@ public class WeakestTypeFinder {
     return true;
   }
 
-  public static Set<PsiClass> filterAccessibleClasses(Set<PsiClass> weakestTypeClasses, PsiElement context) {
+  public static Set<PsiClass> filterAccessibleClasses(Set<PsiClass> weakestTypeClasses, PsiClass upperBound, PsiElement context) {
     final Set<PsiClass> result = new HashSet<PsiClass>();
     for (PsiClass weakestTypeClass : weakestTypeClasses) {
       if (PsiUtil.isAccessible(weakestTypeClass, context, null) && !weakestTypeClass.isDeprecated()) {
         result.add(weakestTypeClass);
         continue;
       }
-      final PsiClass visibleInheritor = getVisibleInheritor(weakestTypeClass, context);
+      final PsiClass visibleInheritor = getVisibleInheritor(weakestTypeClass, upperBound, context);
       if (visibleInheritor != null) {
         result.add(visibleInheritor);
       }
@@ -562,16 +562,16 @@ public class WeakestTypeFinder {
   }
 
   @Nullable
-  private static PsiClass getVisibleInheritor(@NotNull PsiClass superClass, PsiElement context) {
+  private static PsiClass getVisibleInheritor(@NotNull PsiClass superClass, PsiClass upperBound, PsiElement context) {
     final Query<PsiClass> search = DirectClassInheritorsSearch.search(superClass, context.getResolveScope());
     final Project project = superClass.getProject();
     for (PsiClass aClass : search) {
-      if (superClass.isInheritor(aClass, true)) {
+      if (aClass.isInheritor(superClass, true) && upperBound.isInheritor(aClass, true)) {
         if (PsiUtil.isAccessible(project, aClass, context, null)) {
           return aClass;
         }
         else {
-          return getVisibleInheritor(aClass, context);
+          return getVisibleInheritor(aClass, upperBound, context);
         }
       }
     }

@@ -151,8 +151,8 @@ abstract class ObjectInputStream implements DataInput {
     return null;
   }
 }
-class Test implements Foo {
-  void test(Test t) {
+class Test implements Foo2 {
+  void test(Test <warning descr="Type of parameter 't' may be weakened to 'com.siyeh.igtest.abstraction.weaken_type.Foo2'">t</warning>) {
     t.bar();
   }
   public void bar() {
@@ -162,3 +162,4 @@ class Test implements Foo {
 interface Foo {
   void bar();
 }
+interface Foo2 extends Foo {}
