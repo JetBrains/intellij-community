@@ -82,11 +82,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
    */
   private boolean myReportCaretMoves;
   /**
-   * There is a possible case that user defined non-monospaced font for editor. That means that various symbols have different
-   * visual widths. That means that if we move caret vertically it may deviate to the left/right. However, we can try to preserve
-   * its initial visual position when possible.
+   * This field holds initial horizontal caret position during vertical navigation. It's used to determine target position when
+   * moving to the new line. It is stored in pixels, not in columns, to account for non-monospaced fonts as well.
    * <p/>
-   * This field holds desired value for visual <code>'x'</code> caret coordinate (negative value if no coordinate should be preserved).
+   * Negative value means no coordinate should be preserved.
    */
   private int myDesiredX = -1;
 
@@ -272,10 +271,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
         }
 
         Document document = myEditor.getDocument();
-        if (!editorSettings.isVirtualSpace() && columnShift == 0 && getLogicalPosition().softWrapLinesOnCurrentLogicalLine <= 0) {
-          newColumnNumber = supportsMultipleCarets() ? myLastColumnNumber : myEditor.getLastColumnNumber();
-        }
-        else if (!editorSettings.isVirtualSpace() && lineShift == 0 && columnShift == 1) {
+        if (!editorSettings.isVirtualSpace() && lineShift == 0 && columnShift == 1) {
           int lastLine = document.getLineCount() - 1;
           if (lastLine < 0) lastLine = 0;
           if (EditorModificationUtil.calcAfterLineEnd(myEditor) >= 0 &&
@@ -313,8 +309,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
           if (offset >= document.getTextLength()) {
             int lastOffsetColumn = myEditor.offsetToVisualPosition(document.getTextLength()).column;
             // We want to move caret to the last column if if it's located at the last line and 'Down' is pressed.
+            if (lastOffsetColumn > newColumnNumber) {
+              desiredX = -1;
+            }
             newColumnNumber = lastColumnNumber = Math.max(lastOffsetColumn, newColumnNumber);
-            desiredX = -1;
           }
           if (!editorSettings.isCaretInsideTabs()) {
             CharSequence text = document.getCharsSequence();
