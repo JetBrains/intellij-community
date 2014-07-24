@@ -356,6 +356,7 @@ public class GitUnstashDialog extends DialogWrapper {
       final Ref<GitCommandResult> result = Ref.create();
       ProgressManager.getInstance().run(new Task.Modal(h.project(), GitBundle.getString("unstash.unstashing"), false) {
         public void run(@NotNull final ProgressIndicator indicator) {
+          indicator.setIndeterminate(true);
           h.addLineListener(new GitHandlerUtil.GitLineHandlerListenerProgress(indicator, h, "stash", false));
           Git git = ServiceManager.getService(Git.class);
           result.set(git.runCommand(new Computable.PredefinedValueComputable<GitLineHandler>(h)));
