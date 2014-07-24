@@ -56,7 +56,7 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
   private final List<Pattern> myTestGroupPatterns;
   private boolean myContainsAllExcludeDefinedGroup;
 
-  private GroupBasedTestClassFilter(Map<String, List<String>> filters, List<String> testGroupNames) {
+  public GroupBasedTestClassFilter(Map<String, List<String>> filters, List<String> testGroupNames) {
     //empty group means all patterns from each defined group should be excluded
     myContainsAllExcludeDefinedGroup = containsAllExcludeDefinedGroup(testGroupNames);
 
@@ -120,6 +120,10 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
    */
   @NotNull
   public static TestClassesFilter createOn(@NotNull Reader reader, @NotNull List<String> testGroupNames) throws IOException {
+    return new GroupBasedTestClassFilter(readGroups(reader), testGroupNames);
+  }
+
+  public static Map<String, List<String>> readGroups(Reader reader) throws IOException {
     Map<String, List<String>> groupNameToPatternsMap = new HashMap<String, List<String>>();
     String currentGroupName = "";
 
@@ -137,8 +141,7 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
         groupNameToPatternsMap.get(currentGroupName).add(line);
       }
     }
-
-    return new GroupBasedTestClassFilter(groupNameToPatternsMap, testGroupNames);
+    return groupNameToPatternsMap;
   }
 
   /**
