@@ -69,6 +69,17 @@ class BddRunner(object):
         """
         return "file:///{}/{}:{}".format(self.__base_dir, location.file, location.line)
 
+    def _test_undefined(self, test_name, location):
+        """
+        Mark test as undefined
+        :param test_name: name of test
+        :type test_name str
+        :param location its location
+
+        """
+        self._test_started(test_name, location)
+        self._test_failed(test_name, message="Test undefined", details="Please define test")
+
     def _test_failed(self, name, message, details):
         """
         Report test failure
