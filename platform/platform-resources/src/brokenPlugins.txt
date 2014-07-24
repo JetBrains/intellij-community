@@ -6,7 +6,7 @@ com.jetbrains.php    138.826 136.1768 136.1672 134.1456 133.982 133.679 133.51 1
 com.jetbrains.lang.ejs    131.17  131.12
 com.jetbrains.twig    133.51  130.1639
 org.jetbrains.plugins.ruby 6.0.0.20140207 6.5.2.20140512 7.0.0.20140704 7.0.0.20140707
-Pythonid  3.1
+Pythonid  3.1 4.0.25
 Karma    138.21 134.1163 134.1039 134.686  134.31
 org.intellij.scala 0.40.20 0.40.18 0.40.16 0.32.593 0.32.562 0.32.558 0.32.550 0.32.520 0.32.512
 org.jetbrains.kannotator  0.2.420
