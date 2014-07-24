@@ -62,6 +62,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
   private int myVisualLineEnd;
   private RangeMarker savedBeforeBulkCaretMarker;
   private boolean mySkipChangeRequests;
+  /**
+   * Initial horizontal caret position during vertical navigation.
+   * Similar to {@link #myDesiredX}, but represents logical caret position (<code>getLogicalPosition().column</code>) rather than visual.
+   */
   private int myLastColumnNumber = 0;
   /**
    * We check that caret is located at the target offset at the end of {@link #moveToOffset(int, boolean)} method. However,
@@ -254,10 +258,11 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
         EditorSettings editorSettings = myEditor.getSettings();
         VisualPosition visualCaret = getVisualPosition();
 
+        int lastColumnNumber = myLastColumnNumber;
         int desiredX = myDesiredX;
         if (columnShift == 0) {
           if (myDesiredX < 0) {
-            desiredX = myEditor.visualPositionToXY(visualCaret).x;
+            desiredX = getCurrentX();
           }
         }
         else {
@@ -266,7 +271,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
 
         int newLineNumber = visualCaret.line + lineShift;
         int newColumnNumber = visualCaret.column + columnShift;
-        if (desiredX >= 0 && !ApplicationManager.getApplication().isUnitTestMode()) {
+        if (desiredX >= 0) {
           newColumnNumber = myEditor.xyToVisualPosition(new Point(desiredX, Math.max(0, newLineNumber) * myEditor.getLineHeight())).column;
         }
 
@@ -299,10 +304,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
           // We want to move caret to the first column if it's already located at the first line and 'Up' is pressed.
           newColumnNumber = 0;
           desiredX = -1;
+          lastColumnNumber = -1;
         }
 
         VisualPosition pos = new VisualPosition(newLineNumber, newColumnNumber);
-        int lastColumnNumber = newColumnNumber;
         if (!myEditor.getSoftWrapModel().isInsideSoftWrap(pos)) {
           LogicalPosition log = myEditor.visualToLogicalPosition(new VisualPosition(newLineNumber, newColumnNumber));
           int offset = myEditor.logicalPositionToOffset(log);
@@ -310,9 +315,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
             int lastOffsetColumn = myEditor.offsetToVisualPosition(document.getTextLength()).column;
             // We want to move caret to the last column if if it's located at the last line and 'Down' is pressed.
             if (lastOffsetColumn > newColumnNumber) {
+              newColumnNumber = lastOffsetColumn;
               desiredX = -1;
+              lastColumnNumber = -1;
             }
-            newColumnNumber = lastColumnNumber = Math.max(lastOffsetColumn, newColumnNumber);
           }
           if (!editorSettings.isCaretInsideTabs()) {
             CharSequence text = document.getCharsSequence();
@@ -351,7 +357,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
         }
         else {
           moveToVisualPosition(pos);
-          if (!editorSettings.isVirtualSpace() && columnShift == 0) {
+          if (!editorSettings.isVirtualSpace() && columnShift == 0 && lastColumnNumber >=0) {
             setLastColumnNumber(lastColumnNumber);
           }
         }
@@ -703,7 +709,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
 
     myEditor.getFoldingModel().flushCaretPosition();
 
-    setLastColumnNumber(column);
+    setLastColumnNumber(myLogicalCaret.column);
     myEditor.updateCaretCursor();
     requestRepaint(oldInfo);
 
@@ -1001,7 +1007,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
       Disposer.dispose(clone);
       return null;
     }
-    clone.moveToLogicalPosition(new LogicalPosition(newLine, oldPosition.column), false, null, false);
+    clone.moveToLogicalPosition(new LogicalPosition(newLine, myLastColumnNumber), false, null, false);
+    clone.myLastColumnNumber = myLastColumnNumber;
+    clone.myDesiredX = myDesiredX >= 0 ? myDesiredX : getCurrentX();
     if (myEditor.getCaretModel().addCaret(clone)) {
       if (hasNewSelection) {
         myEditor.getCaretModel().doWithCaretMerging(new Runnable() {
@@ -1449,6 +1457,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     validateContext(false);
     MyRangeMarker marker = mySelectionMarker;
     return marker != null && marker.isValid() && isVirtualSelectionEnabled() && myEndVirtualOffset > myStartVirtualOffset;
+  }
+
+  private int getCurrentX() {
+    return myEditor.visualPositionToXY(myVisibleCaret).x;
   }
 
   @Override
