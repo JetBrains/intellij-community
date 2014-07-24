@@ -549,7 +549,7 @@ public class WeakestTypeFinder {
   public static Set<PsiClass> filterAccessibleClasses(Set<PsiClass> weakestTypeClasses, PsiElement context) {
     final Set<PsiClass> result = new HashSet<PsiClass>();
     for (PsiClass weakestTypeClass : weakestTypeClasses) {
-      if (PsiUtil.isAccessible(weakestTypeClass, context, null)) {
+      if (PsiUtil.isAccessible(weakestTypeClass, context, null) && !weakestTypeClass.isDeprecated()) {
         result.add(weakestTypeClass);
         continue;
       }

@@ -151,3 +151,14 @@ abstract class ObjectInputStream implements DataInput {
     return null;
   }
 }
+class Test implements Foo {
+  void test(Test t) {
+    t.bar();
+  }
+  public void bar() {
+  }
+}
+@Deprecated
+interface Foo {
+  void bar();
+}
