@@ -33,6 +33,8 @@ public abstract class AbstractCommand<T> {
   public static final int SMART_STEP_INTO = 128;
   public static final int EXIT = 129;
   public static final int CALL_SIGNATURE_TRACE = 130;
+  public static final int ADD_JINJA2_EXCEPTION_BREAKPOINT = 131;
+  public static final int REMOVE_JINJA2_EXCEPTION_BREAKPOINT = 132;
 
   public static final int VERSION = 501;
   public static final String NEW_LINE_CHAR = "@_@NEW_LINE_CHAR@_@";
