@@ -49,7 +49,7 @@ import static java.util.Collections.singletonList;
 public class DirectoryIndexTest extends IdeaTestCase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.DirectoryIndexTest");
 
-  private DirectoryIndex myIndex;
+  private DirectoryIndexImpl myIndex;
 
   private Module myModule2, myModule3;
   private VirtualFile myRootVFile;
@@ -176,7 +176,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
       }
     });
 
-    myIndex = DirectoryIndex.getInstance(myProject);
+    myIndex = (DirectoryIndexImpl)DirectoryIndex.getInstance(myProject);
     // to not interfere with previous test firing vfs events
     VirtualFileManager.getInstance().syncRefresh();
   }
@@ -481,12 +481,12 @@ public class DirectoryIndexTest extends IdeaTestCase {
     ModuleRootModificationUtil.addModuleLibrary(myModule, "someLib", Collections.<String>emptyList(), Arrays.asList(mySrcDir1.getUrl()));
     
     checkInfo(mySrcDir1, myModule, false, true, "", JavaSourceRootType.SOURCE, myModule, myModule);
-    OrderEntry[] entries = myIndex.getInfoForFile(mySrcDir1).getOrderEntries();
+    OrderEntry[] entries = myIndex.getOrderEntries(myIndex.getInfoForFile(mySrcDir1));
     assertInstanceOf(entries[0], LibraryOrderEntry.class);
     assertInstanceOf(entries[1], ModuleSourceOrderEntry.class);
 
     checkInfo(myTestSrc1, myModule, false, true, "testSrc", JavaSourceRootType.TEST_SOURCE, myModule, myModule);
-    entries = myIndex.getInfoForFile(myTestSrc1).getOrderEntries();
+    entries = myIndex.getOrderEntries(myIndex.getInfoForFile(myTestSrc1));
     assertInstanceOf(entries[0], LibraryOrderEntry.class);
     assertInstanceOf(entries[1], ModuleSourceOrderEntry.class);
   }
@@ -494,7 +494,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
   public void testModuleSourceAsLibraryClasses() throws Exception {
     ModuleRootModificationUtil.addModuleLibrary(myModule, "someLib", Arrays.asList(mySrcDir1.getUrl()), Collections.<String>emptyList());
     checkInfo(mySrcDir1, myModule, true, false, "", JavaSourceRootType.SOURCE, myModule);
-    assertInstanceOf(assertOneElement(assertInProject(mySrcDir1).getOrderEntries()), ModuleSourceOrderEntry.class);
+    assertInstanceOf(assertOneElement(myIndex.getOrderEntries(assertInProject(mySrcDir1))), ModuleSourceOrderEntry.class);
   }
 
   public void testModulesWithSameSourceContentRoot() {
@@ -657,7 +657,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfo(myLibSrcDir, myModule, true, true, "", null, myModule, myModule3);
     
     checkInfo(myResDir, myModule, true, false, "", JavaResourceRootType.RESOURCE, myModule);
-    assertInstanceOf(assertOneElement(assertInProject(myResDir).getOrderEntries()), ModuleSourceOrderEntry.class);
+    assertInstanceOf(assertOneElement(myIndex.getOrderEntries(assertInProject(myResDir))), ModuleSourceOrderEntry.class);
 
     checkInfo(myExcludedLibSrcDir, null, true, false, "lib.src.exc", null, myModule3, myModule);
     checkInfo(myExcludedLibClsDir, null, true, false, "lib.cls.exc", null, myModule3);
@@ -931,10 +931,10 @@ public class DirectoryIndexTest extends IdeaTestCase {
       assertEquals(packageName, fileIndex.getPackageNameByDirectory(file));
     }
 
-    assertEquals(Arrays.toString(info.getOrderEntries()), modulesOfOrderEntries.length, info.getOrderEntries().length);
+    assertEquals(Arrays.toString(myIndex.getOrderEntries(info)), modulesOfOrderEntries.length, myIndex.getOrderEntries(info).length);
     for (Module aModule : modulesOfOrderEntries) {
-      OrderEntry found = info.findOrderEntryWithOwnerModule(aModule);
-      assertNotNull("not found: " + aModule + " in " + Arrays.toString(info.getOrderEntries()), found);
+      OrderEntry found = myIndex.findOrderEntryWithOwnerModule(info, aModule);
+      assertNotNull("not found: " + aModule + " in " + Arrays.toString(myIndex.getOrderEntries(info)), found);
     }
   }
 
@@ -953,7 +953,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
   private DirectoryInfo assertInProject(VirtualFile file) {
     DirectoryInfo info = myIndex.getInfoForFile(file);
     assertTrue(file.toString(), info.isInProject());
-    info.assertConsistency();
+    myIndex.assertConsistency(info);
     return info;
   }
 

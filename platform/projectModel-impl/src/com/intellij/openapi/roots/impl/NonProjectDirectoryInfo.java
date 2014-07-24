@@ -16,13 +16,8 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author nik
@@ -51,22 +46,6 @@ class NonProjectDirectoryInfo extends DirectoryInfo {
 
   public boolean isInProject() {
     return false;
-  }
-
-  @NotNull
-  @Override
-  public OrderEntry[] getOrderEntries() {
-    return OrderEntry.EMPTY_ARRAY;
-  }
-
-  @Nullable
-  OrderEntry findOrderEntryWithOwnerModule(@NotNull Module ownerModule) {
-    return null;
-  }
-
-  @NotNull
-  List<OrderEntry> findAllOrderEntriesWithOwnerModule(@NotNull Module ownerModule) {
-    return Collections.emptyList();
   }
 
   @Override
@@ -116,9 +95,6 @@ class NonProjectDirectoryInfo extends DirectoryInfo {
 
   public Module getModule() {
     return null;
-  }
-
-  void assertConsistency() {
   }
 
   public int getSourceRootTypeId() {

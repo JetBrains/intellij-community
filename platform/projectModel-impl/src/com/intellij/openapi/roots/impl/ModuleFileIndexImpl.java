@@ -79,12 +79,12 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   @Override
   @NotNull
   public List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile fileOrDir) {
-    return getInfoForFileOrDirectory(fileOrDir).findAllOrderEntriesWithOwnerModule(myModule);
+    return myDirectoryIndex.findAllOrderEntriesWithOwnerModule(getInfoForFileOrDirectory(fileOrDir), myModule);
   }
 
   @Override
   public OrderEntry getOrderEntryForFile(@NotNull VirtualFile fileOrDir) {
-    return getInfoForFileOrDirectory(fileOrDir).findOrderEntryWithOwnerModule(myModule);
+    return myDirectoryIndex.findOrderEntryWithOwnerModule(getInfoForFileOrDirectory(fileOrDir), myModule);
   }
 
   @Override
