@@ -17,10 +17,10 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Couple;
@@ -196,7 +196,7 @@ public class ModifierKeyDoubleClickHandler {
     }
 
     private void run(KeyEvent event) {
-      final ActionManager actionManager = ActionManager.getInstance();
+      final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
       final AnAction action = actionManager.getAction(myActionId);
       final AnActionEvent anActionEvent = new AnActionEvent(event,
                                                             DataManager.getInstance().getDataContext(IdeFocusManager.findInstance().getFocusOwner()),
@@ -204,7 +204,9 @@ public class ModifierKeyDoubleClickHandler {
                                                             action.getTemplatePresentation(),
                                                             actionManager,
                                                             0);
+      actionManager.fireBeforeActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
       action.actionPerformed(anActionEvent);
+      actionManager.fireAfterActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
     }
 
     private boolean isActionBound() {

@@ -16,52 +16,83 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.impl.AbstractEditorTest;
-import com.intellij.testFramework.TestFileType;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 import java.io.IOException;
 
-public class EditorCloneCaretAboveBelowTest extends AbstractEditorTest {
+public class EditorCloneCaretAboveBelowTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testStoringDesiredXPosition() throws IOException {
     init("long line<caret>\n" +
          "line\n" +
          "long line\n" +
-         "very long line",
-         TestFileType.TEXT);
+         "very long line");
     cloneCaretBelow();
-    checkResultByText("long line<caret>\n" +
-                      "line<caret>\n" +
-                      "long line\n" +
-                      "very long line");
+    checkResult("long line<caret>\n" +
+                "line<caret>\n" +
+                "long line\n" +
+                "very long line");
     cloneCaretBelow();
-    checkResultByText("long line<caret>\n" +
-                      "line<caret>\n" +
-                      "long line<caret>\n" +
-                      "very long line");
+    checkResult("long line<caret>\n" +
+                "line<caret>\n" +
+                "long line<caret>\n" +
+                "very long line");
     cloneCaretBelow();
-    checkResultByText("long line<caret>\n" +
-                      "line<caret>\n" +
-                      "long line<caret>\n" +
-                      "very long<caret> line");
+    checkResult("long line<caret>\n" +
+                "line<caret>\n" +
+                "long line<caret>\n" +
+                "very long<caret> line");
   }
 
   public void testCloneAndMove() throws IOException {
     init("long line<caret>\n" +
          "line\n" +
-         "long line",
-         TestFileType.TEXT);
+         "long line");
     cloneCaretBelow();
     moveCaretDown();
-    checkResultByText("long line\n" +
-                      "line<caret>\n" +
-                      "long line<caret>");
+    checkResult("long line\n" +
+                "line<caret>\n" +
+                "long line<caret>");
   }
 
-  private static void cloneCaretBelow() {
-    executeAction(IdeActions.ACTION_EDITOR_CLONE_CARET_BELOW);
+  public void testCloneBelowAndAbove() throws IOException {
+    init("line\n" +
+         "<caret>li<caret>ne\n" +
+         "line");
+    cloneCaretBelow();
+    checkResult("line\n" +
+                "<caret>li<caret>ne\n" +
+                "<caret>li<caret>ne");
+    cloneCaretAbove();
+    checkResult("line\n" +
+                "<caret>li<caret>ne\n" +
+                "line");
+    cloneCaretAbove();
+    checkResult("<caret>li<caret>ne\n" +
+                "<caret>li<caret>ne\n" +
+                "line");
+    cloneCaretBelow();
+    checkResult("line\n" +
+                "<caret>li<caret>ne\n" +
+                "line");
   }
 
-  private static void moveCaretDown() {
-    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
+  private void cloneCaretBelow() {
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_CLONE_CARET_BELOW);
+  }
+
+  private void cloneCaretAbove() {
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_CLONE_CARET_ABOVE);
+  }
+
+  private void moveCaretDown() {
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
+  }
+
+  private void init(String text) {
+    myFixture.configureByText(getTestName(false) + ".txt", text);
+  }
+
+  private void checkResult(String text) {
+    myFixture.checkResult(text);
   }
 }
