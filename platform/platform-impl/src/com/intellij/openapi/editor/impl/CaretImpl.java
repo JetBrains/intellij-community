@@ -1402,9 +1402,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
         }
 
         try {
-          EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(
-            IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
-          handler.execute(myEditor, myEditor.getDataContext());
+          EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
+          handler.execute(myEditor, CaretImpl.this, myEditor.getDataContext());
         }
         finally {
           if (needOverrideSetting) {
