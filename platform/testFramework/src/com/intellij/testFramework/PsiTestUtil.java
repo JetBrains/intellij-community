@@ -220,11 +220,11 @@ public class PsiTestUtil {
     return entry;
   }
 
-  public static void removeContentEntry(Module module, final ContentEntry e) {
+  public static void removeContentEntry(Module module, final VirtualFile contentRoot) {
     ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
-        model.removeContentEntry(e);
+        model.removeContentEntry(findContentEntryWithAssertion(model, contentRoot));
       }
     });
   }

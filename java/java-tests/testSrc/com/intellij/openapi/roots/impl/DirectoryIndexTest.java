@@ -753,7 +753,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertIteratedContent(fileIndex, Arrays.asList(fileRoot, fileSourceRoot, fileTestSourceRoot), null);
  
     // removing file content root
-    PsiTestUtil.removeContentEntry(myModule, contentEntry);
+    PsiTestUtil.removeContentEntry(myModule, contentEntry.getFile());
     assertNotInProject(fileRoot);
     assertFalse(fileIndex.isInContent(fileRoot));
     assertFalse(fileIndex.isInSource(fileRoot));
