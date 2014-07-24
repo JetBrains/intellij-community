@@ -73,7 +73,6 @@ import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.CacheOneStepIterator;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.ui.PlatformColors;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -160,8 +159,8 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myOwnerWindow = owner;
     myIsSyncScroll = true;
     final boolean v = !horizontal;
-    myLeftSide =  new DiffSideView(this, new CustomLineBorder(UIUtil.getBorderColor(), 1, 0, v ? 0 : 1, v ? 0 : 1));
-    myRightSide = new DiffSideView(this, new CustomLineBorder(UIUtil.getBorderColor(), v ? 0 : 1, v ? 0 : 1, 1, 0));
+    myLeftSide =  new DiffSideView(this, new CustomLineBorder(1, 0, v ? 0 : 1, v ? 0 : 1));
+    myRightSide = new DiffSideView(this, new CustomLineBorder(v ? 0 : 1, v ? 0 : 1, 1, 0));
     myLeftSide.becomeMaster();
     myDiffUpdater = new Rediffers(this);
 

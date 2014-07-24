@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -86,7 +85,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiVariable)) {
@@ -290,6 +289,9 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           methodCallExpression = (PsiMethodCallExpression)grandParent;
           parent = methodCallExpression.getParent();
           grandParent = parent.getParent();
+          if ("toString".equals(methodCallExpression.getMethodExpression().getReferenceName())) {
+            break;
+          }
         }
         if (buildStringExpression(methodCallExpression, myBuilder) == null) {
           myProblem = true;
