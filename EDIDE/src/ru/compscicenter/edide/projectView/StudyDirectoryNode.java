@@ -1,4 +1,4 @@
-package ru.compscicenter.edide;
+package ru.compscicenter.edide.projectView;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
@@ -8,6 +8,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import icons.StudyIcons;
+import ru.compscicenter.edide.course.StudyStatus;
+import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.course.Course;
 import ru.compscicenter.edide.course.Lesson;
 import ru.compscicenter.edide.course.Task;
@@ -45,18 +47,20 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
         }
       }
       if (file != null) {
-        if (file.getTask().isSolved()) {
-          data.setIcon(StudyIcons.CheckedTask);
-        }
-        if (file.getTask().isFailed()) {
+        StudyStatus taskStatus = file.getTask().getStatus();
+        if (taskStatus == StudyStatus.Failed) {
           data.setIcon(StudyIcons.FailedTask);
+        }
+        if (taskStatus == StudyStatus.Solved) {
+          data.setIcon(StudyIcons.CheckedTask);
         }
       }
     }
 
     if (valueName.contains(Lesson.LESSON_DIR)) {
       int lessonIndex = Integer.parseInt(valueName.substring(Lesson.LESSON_DIR.length())) - 1;
-      if (StudyTaskManager.getInstance(myProject).getCourse().getLessons().get(lessonIndex).isSolved()) {
+      Lesson lesson = StudyTaskManager.getInstance(myProject).getCourse().getLessons().get(lessonIndex);
+      if (lesson.getStatus() == StudyStatus.Solved) {
         data.setIcon(StudyIcons.CheckedTask);
       }
     }

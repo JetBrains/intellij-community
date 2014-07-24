@@ -21,6 +21,9 @@ import java.util.List;
  * Time: 18:54
  * Implementation of windows which user should type in
  */
+
+
+
 public class Window implements Comparable {
 
   public int line = 0;
@@ -28,22 +31,20 @@ public class Window implements Comparable {
   public String text = "";
   public String hint = "";
   public String possibleAnswer = "";
-  public boolean myResolveStatus = false;
-  public boolean myFailed = false;
   public int myLength = text.length();
   private TaskFile myTaskFile;
   public int myIndex = -1;
   public int myInitialLine = -1;
   public int myInitialStart = -1;
   public int myInitialLength = -1;
+  private StudyStatus myStatus = StudyStatus.Unchecked;
 
-  public boolean isFailed() {
-    return myFailed;
+  public StudyStatus getStatus() {
+    return myStatus;
   }
 
-  public void setFailed(boolean failed) {
-    myFailed = failed;
-    myResolveStatus = !failed;
+  public void setStatus(StudyStatus status) {
+    myStatus = status;
   }
 
   public void setIndex(int index) {
@@ -57,14 +58,6 @@ public class Window implements Comparable {
    */
   public Element saveState() {
    return XmlSerializer.serialize(this);
-  }
-
-  public boolean isResolveStatus() {
-    return myResolveStatus;
-  }
-
-  public void setResolveStatus(boolean resolveStatus) {
-    myResolveStatus = resolveStatus;
   }
 
   public int getLength() {
@@ -98,8 +91,7 @@ public class Window implements Comparable {
   public void draw(Editor editor, boolean drawSelection, boolean moveCaret) {
     TextAttributes defaultTestAttributes =
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.LIVE_TEMPLATE_ATTRIBUTES);
-    JBColor color = myResolveStatus ? JBColor.GREEN : JBColor.BLUE;
-    color = myFailed ? JBColor.RED : color;
+    JBColor color = getColor();
     int startOffset = editor.getDocument().getLineStartOffset(line) + start;
     RangeHighlighter
       rh = editor.getMarkupModel().addRangeHighlighter(startOffset, startOffset + myLength, HighlighterLayer.LAST + 1,
@@ -116,6 +108,16 @@ public class Window implements Comparable {
     }
     rh.setGreedyToLeft(true);
     rh.setGreedyToRight(true);
+  }
+
+  private JBColor getColor() {
+    if (myStatus == StudyStatus.Solved) {
+      return JBColor.GREEN;
+    }
+    if (myStatus == StudyStatus.Failed) {
+      return JBColor.RED;
+    }
+    return JBColor.BLUE;
   }
 
   public int getRealStartOffset(Document document) {
@@ -166,7 +168,7 @@ public class Window implements Comparable {
    * Returns window to its initial state
    */
   public void reset() {
-    myResolveStatus = false;
+    myStatus = StudyStatus.Unchecked;
     line = myInitialLine;
     start = myInitialStart;
     myLength = myInitialLength;

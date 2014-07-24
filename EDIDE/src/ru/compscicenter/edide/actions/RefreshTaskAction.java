@@ -15,7 +15,7 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import ru.compscicenter.edide.StudyDocumentListener;
-import ru.compscicenter.edide.StudyEditor;
+import ru.compscicenter.edide.editor.StudyEditor;
 import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.course.Lesson;
 import ru.compscicenter.edide.course.Task;
@@ -75,8 +75,6 @@ public class RefreshTaskAction extends AnAction {
                     for (Window window : selectedTaskFile.getWindows()) {
                       window.reset();
                     }
-                    selectedTaskFile.getTask().setSolved(false);
-                    selectedTaskFile.getTask().setFailed(false);
                     ProjectView.getInstance(project).refresh();
                     if (listener!=null) {
                       document.addDocumentListener(listener);

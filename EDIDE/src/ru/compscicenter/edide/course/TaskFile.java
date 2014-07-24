@@ -77,13 +77,17 @@ public class TaskFile {
   /**
    * @return if all the windows in task file are marked as resolved
    */
-  public boolean isResolved() {
+  public StudyStatus getStatus() {
     for (Window window : windows) {
-      if (!window.isResolveStatus()) {
-        return false;
+      StudyStatus windowStatus = window.getStatus();
+      if (windowStatus == StudyStatus.Failed) {
+        return StudyStatus.Failed;
+      }
+      if (windowStatus == StudyStatus.Unchecked) {
+        return StudyStatus.Unchecked;
       }
     }
-    return true;
+    return StudyStatus.Solved;
   }
 
   public Task getTask() {
@@ -219,13 +223,6 @@ public class TaskFile {
     }
   }
 
-  public void setSolved() {
-    for (Window window : windows) {
-      window.setResolveStatus(true);
-      window.setFailed(false);
-    }
-  }
-
   public static void copy(TaskFile source, TaskFile target) {
     List<Window> sourceWindows = source.getWindows();
     List<Window> windowsCopy = new ArrayList<Window>(sourceWindows.size());
@@ -243,5 +240,11 @@ public class TaskFile {
 
   public void setWindows(List<Window> windows) {
     this.windows = windows;
+  }
+
+  public void setStatus(StudyStatus status) {
+    for (Window window : windows) {
+      window.setStatus(status);
+    }
   }
 }

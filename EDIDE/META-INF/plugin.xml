@@ -71,9 +71,9 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileEditorProvider implementation="ru.compscicenter.edide.StudyFileEditorProvider"/>
+    <fileEditorProvider implementation="ru.compscicenter.edide.editor.StudyFileEditorProvider"/>
     <directoryProjectGenerator implementation="ru.compscicenter.edide.StudyDirectoryProjectGenerator"/>
-    <treeStructureProvider implementation="ru.compscicenter.edide.StudyTreeStructureProvider"/>
+    <treeStructureProvider implementation="ru.compscicenter.edide.projectView.StudyTreeStructureProvider"/>
     <highlightErrorFilter implementation="ru.compscicenter.edide.StudyHighlightErrorFilter"/>
   </extensions>
 </idea-plugin>

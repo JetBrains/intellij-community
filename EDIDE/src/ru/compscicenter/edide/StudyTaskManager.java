@@ -117,13 +117,18 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
   public TaskFile getTaskFile(VirtualFile file) {
     VirtualFile fileParent = file.getParent();
     if (fileParent != null) {
-      if (!fileParent.getName().contains(Task.TASK_DIR)) {
-        return null;
-      }
       String taskDirName = fileParent.getName();
-      String lessonDirName = fileParent.getParent().getName();
-      Task task = myCourse.getLessons().get(getIndex(lessonDirName, Lesson.LESSON_DIR)).getTaskList().get(getIndex(taskDirName, Task.TASK_DIR));
-      return task.getFile(file.getName());
+      if (taskDirName.contains(Task.TASK_DIR)) {
+        VirtualFile lessonDir = fileParent.getParent();
+        if (lessonDir != null) {
+          String lessonDirName = lessonDir.getName();
+          int lessonIndex = getIndex(lessonDirName, Lesson.LESSON_DIR);
+          Lesson lesson = myCourse.getLessons().get(lessonIndex);
+          int taskIndex = getIndex(taskDirName, Task.TASK_DIR);
+          Task task = lesson.getTaskList().get(taskIndex);
+          return task.getFile(file.getName());
+        }
+      }
     }
     return null;
   }

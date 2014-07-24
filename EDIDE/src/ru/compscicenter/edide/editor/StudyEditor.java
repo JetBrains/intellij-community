@@ -1,4 +1,4 @@
-package ru.compscicenter.edide;
+package ru.compscicenter.edide.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -17,6 +17,8 @@ import com.intellij.ui.HideableTitledPanel;
 import icons.StudyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.compscicenter.edide.StudyDocumentListener;
+import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.actions.*;
 import ru.compscicenter.edide.course.*;
 

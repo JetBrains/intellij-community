@@ -10,8 +10,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import ru.compscicenter.edide.course.StudyStatus;
 import ru.compscicenter.edide.course.TaskFile;
 import ru.compscicenter.edide.course.Window;
+import ru.compscicenter.edide.editor.StudyEditor;
 
 import java.awt.*;
 
@@ -39,8 +41,7 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
       Window window = myTaskFile.getTaskWindow(editor.getDocument(), pos);
       if (window != null) {
         myTaskFile.setSelectedWindow(window);
-        //editor.getMarkupModel().removeAllHighlighters();
-        window.draw(editor, !window.isResolveStatus(), true);
+        window.draw(editor, window.getStatus() != StudyStatus.Solved, true);
       }
       else {
         myTaskFile.drawAllWindows(editor);
@@ -73,7 +74,6 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
                     StudyDocumentListener listener = new StudyDocumentListener(project, taskFile);
                     StudyEditor.addDocumentListener(document, listener);
                     document.addDocumentListener(listener);
-                    //editor.getMarkupModel().removeAllHighlighters();
                     taskFile.drawAllWindows(editor);
                   }
               }

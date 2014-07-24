@@ -25,19 +25,15 @@ public class Task {
   private static final String TEST_FILE_ATTRIBUTE_NAME = "testFile";
   private static final String NAME_ATTRIBUTE_NAME = "name";
   private static final String TEXT_ATTRIBUTE_NAME = "text";
-  private static final String SOLVED_ATTRIBUTE_NAME = "mySolved";
   private static final String INPUT_ATTRIBUTE_NAME = "input";
   private static final String OUTPUT_ATTRIBUTE_NAME = "output";
   private static final String TEST_NUM_ATTRIBUTE_NAME = "testNum";
-  public static final String FAILED_ATTRIBUTE_NAME = "myFailed";
   private String testFile;
   private int testNum;
   private String name;
   private String text;
   private List<TaskFile> taskFiles;
   private Lesson myLesson;
-  private boolean mySolved = false;
-  private boolean myFailed = false;
   private int myIndex;
   private String input = null;
   private String output = null;
@@ -57,8 +53,6 @@ public class Task {
     taskElement.setAttribute(NAME_ATTRIBUTE_NAME, name);
     taskElement.setAttribute(TEXT_ATTRIBUTE_NAME, text);
     taskElement.setAttribute(INDEX_ATTRIBUTE_NAME, String.valueOf(myIndex));
-    taskElement.setAttribute(SOLVED_ATTRIBUTE_NAME, String.valueOf(mySolved));
-    taskElement.setAttribute(FAILED_ATTRIBUTE_NAME, String.valueOf(myFailed));
     taskElement.setAttribute(TEST_NUM_ATTRIBUTE_NAME, String.valueOf(testNum));
     if (input != null) {
       taskElement.setAttribute(INPUT_ATTRIBUTE_NAME, input);
@@ -84,8 +78,6 @@ public class Task {
     input = taskElement.getAttributeValue(INPUT_ATTRIBUTE_NAME);
     output = taskElement.getAttributeValue(OUTPUT_ATTRIBUTE_NAME);
     try {
-      mySolved = taskElement.getAttribute(SOLVED_ATTRIBUTE_NAME).getBooleanValue();
-      myFailed = taskElement.getAttribute(FAILED_ATTRIBUTE_NAME).getBooleanValue();
       myIndex = taskElement.getAttribute(INDEX_ATTRIBUTE_NAME).getIntValue();
       testNum = taskElement.getAttribute(TEST_NUM_ATTRIBUTE_NAME).getIntValue();
       List<Element> taskFileElements = taskElement.getChildren();
@@ -101,38 +93,27 @@ public class Task {
     }
   }
 
-  public boolean isFailed() {
-    return myFailed;
-  }
-
-  public void setFailed(boolean failed) {
-    myFailed = failed;
-    mySolved = false;
-  }
-
-  public boolean isSolved() {
-    return mySolved;
-  }
-
-  public void setSolved(boolean solved) {
-    mySolved = solved;
-    myFailed = false;
-    for (TaskFile taskFile : taskFiles) {
-      taskFile.setSolved();
-    }
-  }
-
   public List<TaskFile> getTaskFiles() {
     return taskFiles;
   }
 
-  public boolean isResolved() {
+  public StudyStatus getStatus() {
     for (TaskFile taskFile : taskFiles) {
-      if (!taskFile.isResolved()) {
-        return false;
+      StudyStatus taskFileStatus = taskFile.getStatus();
+      if (taskFileStatus == StudyStatus.Unchecked) {
+        return StudyStatus.Unchecked;
+      }
+      if (taskFileStatus == StudyStatus.Failed) {
+        return StudyStatus.Failed;
       }
     }
-    return true;
+    return StudyStatus.Solved;
+  }
+
+  public void setStatus(StudyStatus status) {
+    for (TaskFile  taskFile : taskFiles) {
+      taskFile.setStatus(status);
+    }
   }
 
   public String getTestFile() {

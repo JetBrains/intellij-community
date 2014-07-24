@@ -61,13 +61,14 @@ public class Lesson {
     }
   }
 
-  public boolean isSolved() {
+  public StudyStatus getStatus() {
     for (Task task : taskList) {
-      if (!task.isSolved()) {
-        return false;
+      StudyStatus taskStatus = task.getStatus();
+      if (taskStatus == StudyStatus.Unchecked || taskStatus == StudyStatus.Failed) {
+        return StudyStatus.Unchecked;
       }
     }
-    return true;
+    return  StudyStatus.Solved;
   }
 
   public List<Task> getTaskList() {

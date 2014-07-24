@@ -6,7 +6,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import ru.compscicenter.edide.StudyEditor;
+import ru.compscicenter.edide.course.StudyStatus;
+import ru.compscicenter.edide.editor.StudyEditor;
 import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.course.TaskFile;
 import ru.compscicenter.edide.course.Window;
@@ -38,7 +39,7 @@ public class PrevWindowAction extends AnAction {
           if (prev != null) {
             //selectedEditor.getMarkupModel().removeAllHighlighters();
             selectedTaskFile.setSelectedWindow(prev);
-            prev.draw(selectedEditor, !prev.isResolveStatus(), true);
+            prev.draw(selectedEditor, prev.getStatus() != StudyStatus.Solved, true);
             return;
           }
           //TODO:propose user to do next action

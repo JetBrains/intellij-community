@@ -23,7 +23,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.jetbrains.python.sdk.PythonSdkType;
 import ru.compscicenter.edide.StudyDocumentListener;
-import ru.compscicenter.edide.StudyEditor;
+import ru.compscicenter.edide.course.StudyStatus;
+import ru.compscicenter.edide.editor.StudyEditor;
 import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.StudyUtils;
 import ru.compscicenter.edide.course.Task;
@@ -148,7 +149,7 @@ public class CheckAction extends AnAction {
               final int testNum = currentTask.getTestNum();
               final int testPassed = testRunner.getPassedTests(testProcess);
               if (testPassed == testNum) {
-                currentTask.setSolved(true);
+                currentTask.setStatus(StudyStatus.Solved);
                 selectedTaskFile.drawAllWindows(selectedEditor);
                 ProjectView.getInstance(project).refresh();
                 createTestResultPopUp("Congratulations!", JBColor.GREEN, project);
@@ -158,7 +159,8 @@ public class CheckAction extends AnAction {
                 String message = testRunner.getRunFailedMessage(testProcess);
                 if (message.length() != 0) {
                   Messages.showErrorDialog(project, message, "Failed to Run");
-                  currentTask.setFailed(true);
+                  currentTask.setStatus(StudyStatus.Failed);
+                  selectedTaskFile.drawAllWindows(selectedEditor);
                   ProjectView.getInstance(project).refresh();
                   return;
                 }
@@ -212,8 +214,7 @@ public class CheckAction extends AnAction {
         });
         Process smartTestProcess = testRunner.launchTests(project, windowCopy.getNameWithoutExtension());
         boolean res = testRunner.testsPassed(smartTestProcess);
-        userWindow.setResolveStatus(res);
-        userWindow.setFailed(!res);
+        userWindow.setStatus(res ? StudyStatus.Solved : StudyStatus.Failed);
         windowCopy.delete(this);
       }
 

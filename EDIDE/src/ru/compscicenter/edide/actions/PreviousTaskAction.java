@@ -1,7 +1,7 @@
 package ru.compscicenter.edide.actions;
 
 
-import ru.compscicenter.edide.StudyEditor;
+import ru.compscicenter.edide.editor.StudyEditor;
 import ru.compscicenter.edide.course.Task;
 
 import javax.swing.*;
