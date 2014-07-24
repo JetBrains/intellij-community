@@ -20,8 +20,8 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.xdebugger.impl.DebuggerSupport;
-import com.intellij.xdebugger.settings.XDebuggerSettings;
+import com.intellij.xdebugger.settings.DebuggerConfigurableProvider;
+import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +77,7 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
   protected abstract DataViewsConfigurableUi createRootUi();
 
   @NotNull
-  protected abstract XDebuggerSettings.Category getCategory();
+  protected abstract DebuggerSettingsCategory getCategory();
 
   private boolean isChildrenMerged() {
     return children != null && children.length == 1;
@@ -164,8 +164,8 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
   public final void apply() throws ConfigurationException {
     if (root != null) {
       root.apply(getSettings());
-      for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
-        support.getSettingsPanelProvider().generalApplied(getCategory());
+      for (DebuggerConfigurableProvider provider : DebuggerConfigurableProvider.EXTENSION_POINT.getExtensions()) {
+        provider.generalApplied(getCategory());
       }
     }
 

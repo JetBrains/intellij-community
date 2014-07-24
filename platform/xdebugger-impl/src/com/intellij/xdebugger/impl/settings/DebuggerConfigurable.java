@@ -23,8 +23,8 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.DebuggerSupport;
-import com.intellij.xdebugger.settings.XDebuggerSettings;
-import com.intellij.xdebugger.settings.XDebuggerSettings.Category;
+import com.intellij.xdebugger.settings.DebuggerConfigurableProvider;
+import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,14 +32,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * @author Eugene Belyaev & Eugene Zhuravlev
- */
 public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   public static final String DISPLAY_NAME = XDebuggerBundle.message("debugger.configurable.display.name");
 
   static final Configurable[] EMPTY_CONFIGURABLES = new Configurable[0];
-  private static final Category[] MERGED_CATEGORIES = {Category.STEPPING, Category.HOTSWAP};
+  private static final DebuggerSettingsCategory[] MERGED_CATEGORIES = {DebuggerSettingsCategory.STEPPING, DebuggerSettingsCategory.HOTSWAP};
 
   private Configurable myRootConfigurable;
   private Configurable[] myChildren;
@@ -71,14 +68,14 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       return;
     }
 
-    List<DebuggerSettingsPanelProvider> providers = getSortedProviders();
-
     List<Configurable> configurables = new SmartList<Configurable>();
     configurables.add(new DataViewsConfigurable());
 
+    DebuggerConfigurableProvider[] providers = DebuggerConfigurableProvider.EXTENSION_POINT.getExtensions();
     computeMergedConfigurables(providers, configurables);
 
-    for (DebuggerSettingsPanelProvider provider : providers) {
+    //noinspection deprecation
+    for (DebuggerSettingsPanelProvider provider : getSortedProviders()) {
       configurables.addAll(provider.getConfigurables());
       @SuppressWarnings("deprecation")
       Configurable providerRootConfigurable = provider.getRootConfigurable();
@@ -113,8 +110,8 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     }
   }
 
-  private static void computeMergedConfigurables(@NotNull List<DebuggerSettingsPanelProvider> providers, @NotNull List<Configurable> result) {
-    for (Category category : MERGED_CATEGORIES) {
+  private static void computeMergedConfigurables(@NotNull DebuggerConfigurableProvider[] providers, @NotNull List<Configurable> result) {
+    for (DebuggerSettingsCategory category : MERGED_CATEGORIES) {
       List<Configurable> configurables = getConfigurables(category, providers);
       if (!configurables.isEmpty()) {
         String id = category.name().toLowerCase(Locale.ENGLISH);
@@ -125,8 +122,8 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   }
 
   @Nullable
-  private static MergedCompositeConfigurable computeGeneralConfigurables(@NotNull List<DebuggerSettingsPanelProvider> providers) {
-    List<Configurable> rootConfigurables = getConfigurables(Category.GENERAL, providers);
+  private static MergedCompositeConfigurable computeGeneralConfigurables(@NotNull DebuggerConfigurableProvider[] providers) {
+    List<Configurable> rootConfigurables = getConfigurables(DebuggerSettingsCategory.GENERAL, providers);
     if (rootConfigurables.isEmpty()) {
       return null;
     }
@@ -198,6 +195,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     return "project.propDebugger";
   }
 
+  @SuppressWarnings("deprecation")
   @NotNull
   private static List<DebuggerSettingsPanelProvider> getSortedProviders() {
     List<DebuggerSettingsPanelProvider> providers = null;
@@ -225,15 +223,14 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   }
 
   @NotNull
-  static List<Configurable> getConfigurables(@NotNull XDebuggerSettings.Category category) {
-    List<DebuggerSettingsPanelProvider> providers = getSortedProviders();
-    return providers.isEmpty() ? Collections.<Configurable>emptyList() : getConfigurables(category, providers);
+  static List<Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category) {
+    return getConfigurables(category, DebuggerConfigurableProvider.EXTENSION_POINT.getExtensions());
   }
 
   @NotNull
-  private static List<Configurable> getConfigurables(@NotNull XDebuggerSettings.Category category, @NotNull List<DebuggerSettingsPanelProvider> providers) {
+  private static List<Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category, @NotNull DebuggerConfigurableProvider[] providers) {
     List<Configurable> configurables = null;
-    for (DebuggerSettingsPanelProvider provider : providers) {
+    for (DebuggerConfigurableProvider provider : providers) {
       Collection<? extends Configurable> providerConfigurables = provider.getConfigurables(category);
       if (!providerConfigurables.isEmpty()) {
         if (configurables == null) {

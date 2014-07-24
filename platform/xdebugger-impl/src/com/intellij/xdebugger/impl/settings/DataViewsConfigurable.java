@@ -17,7 +17,7 @@ package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.settings.XDebuggerSettings;
+import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,8 +41,8 @@ class DataViewsConfigurable extends SubCompositeConfigurable implements Configur
 
   @NotNull
   @Override
-  protected XDebuggerSettings.Category getCategory() {
-    return XDebuggerSettings.Category.DATA_VIEWS;
+  protected DebuggerSettingsCategory getCategory() {
+    return DebuggerSettingsCategory.DATA_VIEWS;
   }
 
   @NotNull
