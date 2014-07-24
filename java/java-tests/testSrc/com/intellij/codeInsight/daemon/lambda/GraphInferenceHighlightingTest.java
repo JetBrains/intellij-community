@@ -188,6 +188,14 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testInferFromConditionalExpressionCondition() throws Exception {
+    doTest();
+  }
+
+  public void testPrimitiveWrapperConditionInReturnConstraint() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }

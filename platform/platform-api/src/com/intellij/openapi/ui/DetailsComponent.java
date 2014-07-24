@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -174,6 +175,9 @@ public class DetailsComponent {
     }
   }
 
+  public void forProject(Project project) {
+    myBannerLabel.forProject(project);
+  }
 
   public void setPrefix(@Nullable String... prefix) {
     myPrefix = prefix;

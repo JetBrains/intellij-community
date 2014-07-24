@@ -765,7 +765,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         x = isMirrored() ? width + 2 : 0;
       }
       if (color == null) return;
-      Color darker = ColorUtil.shift(color, 0.75);
+      Color darker = UIUtil.isUnderDarcula()? color : ColorUtil.shift(color, 0.75);
 
       if (flatStyle) {
         g.setColor(darker);

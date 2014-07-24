@@ -56,7 +56,10 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
   private final ScheduledFuture<?> myCheckCancelledFuture;
 
   public ProgressManagerImpl(Application application) {
-    if (/*!application.isUnitTestMode() && */!DISABLED) {
+    if (DISABLED) {
+      myCheckCancelledFuture = null;
+    }
+    else {
       myCheckCancelledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
         @Override
         public void run() {
@@ -64,9 +67,6 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
           ProgressIndicatorProvider.ourNeedToCheckCancel = true;
         }
       }, 0, 10, TimeUnit.MILLISECONDS);
-    }
-    else {
-      myCheckCancelledFuture = null;
     }
   }
 
@@ -105,8 +105,8 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
   private static class NonCancelableIndicator extends EmptyProgressIndicator implements NonCancelableSection {
     private final ProgressIndicator myOld;
 
-    private NonCancelableIndicator(ProgressIndicator old) {
-      myOld = old;
+    private NonCancelableIndicator() {
+      myOld = myThreadIndicator.get();
     }
 
     @Override
@@ -124,16 +124,17 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
     }
   }
 
+  @NotNull
   @Override
   public final NonCancelableSection startNonCancelableSection() {
-    NonCancelableIndicator nonCancelor = new NonCancelableIndicator(myThreadIndicator.get());
+    NonCancelableIndicator nonCancelor = new NonCancelableIndicator();
     myThreadIndicator.set(nonCancelor);
     return nonCancelor;
   }
 
   @Override
   public void executeNonCancelableSection(@NotNull Runnable runnable) {
-    executeProcessUnderProgress(runnable, new NonCancelableIndicator(getProgressIndicator()));
+    executeProcessUnderProgress(runnable, new NonCancelableIndicator());
   }
 
   @Override

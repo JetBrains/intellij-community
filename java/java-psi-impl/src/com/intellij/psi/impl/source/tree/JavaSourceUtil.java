@@ -22,6 +22,7 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -141,5 +142,42 @@ public class JavaSourceUtil {
     // TODO remove explicit caches drop since this should be ok if we will use ChangeUtil for the modification
     TreeUtil.clearCaches(TreeUtil.getFileElement(parenthExpr));
     return parenthExpr;
+  }
+
+  public static void deleteSeparatingComma(@NotNull CompositeElement element, @NotNull ASTNode child) {
+    assert child.getElementType() != JavaTokenType.COMMA : child;
+
+    ASTNode next = PsiImplUtil.skipWhitespaceAndComments(child.getTreeNext());
+    if (next != null && next.getElementType() == JavaTokenType.COMMA) {
+      element.deleteChildInternal(next);
+    }
+    else {
+      ASTNode prev = PsiImplUtil.skipWhitespaceAndCommentsBack(child.getTreePrev());
+      if (prev != null && prev.getElementType() == JavaTokenType.COMMA) {
+        element.deleteChildInternal(prev);
+      }
+    }
+  }
+
+  public static void addSeparatingComma(@NotNull CompositeElement element, @NotNull ASTNode child, @NotNull TokenSet listTypes) {
+    assert child.getElementType() != JavaTokenType.COMMA : child;
+
+    scanChildren(element, child, listTypes, true);
+    scanChildren(element, child, listTypes, false);
+  }
+
+  private static void scanChildren(CompositeElement element, ASTNode node, TokenSet listTypes, boolean forward) {
+    ASTNode child = node;
+    while (true) {
+      child = (forward ? child.getTreeNext() : child.getTreePrev());
+      if (child == null || child.getElementType() == JavaTokenType.COMMA) break;
+      if (listTypes.contains(child.getElementType())) {
+        CharTable charTable = SharedImplUtil.findCharTableByTree(element);
+        PsiManager manager = element.getPsi().getManager();
+        TreeElement comma = Factory.createSingleLeafElement(JavaTokenType.COMMA, ",", 0, 1, charTable, manager);
+        element.addInternal(comma, comma, (forward ? node : child), Boolean.FALSE);
+        break;
+      }
+    }
   }
 }

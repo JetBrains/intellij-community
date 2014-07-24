@@ -74,10 +74,8 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     final PsiFile psiFile = event.getFile();
     if (psiFile == null || psiFile.getNode() == null) return;
 
-    final Document document = getCachedDocument(psiFile, force);
-    if (document == null) return;
-
-    if (myPsiDocumentManager.isUncommited(document)) {
+    final Document document = myPsiDocumentManager.getCachedDocument(psiFile);
+    if (document != null && myPsiDocumentManager.isUncommited(document)) {
       throw new IllegalStateException("Attempt to modify PSI for non-committed Document!");
     }
   }
@@ -207,7 +205,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     return myIgnorePsiEvents;
   }
 
-  private boolean toProcessPsiEvent() {
+  public boolean toProcessPsiEvent() {
     return !myIgnorePsiEvents && !ApplicationManager.getApplication().hasWriteAction(IgnorePsiEventsMarker.class);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@ package com.intellij.codeInsight.javadoc;
 
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.lang.reflect.Field;
 
 /**
  * @author spleaner
@@ -98,14 +98,12 @@ public class ColorUtil {
           if (reference != null) {
             final PsiElement psiElement = reference.resolve();
             if (psiElement instanceof PsiField) {
-              final PsiClass psiClass = ((PsiField) psiElement).getContainingClass();
+              PsiField psiField = (PsiField)psiElement;
+              final PsiClass psiClass = psiField.getContainingClass();
               if (psiClass != null && "java.awt.Color".equals(psiClass.getQualifiedName())) {
-                try {
-                  Field field = Class.forName("java.awt.Color").getField(((PsiField)psiElement).getName());
-                  final Color c = (Color) field.get(null);
+                Color c = ReflectionUtil.getField(Color.class, null, Color.class, psiField.getName());
+                if (c != null) {
                   buffer.append(generatePreviewHtml(c));
-                } catch (Exception e) {
-                  // nothing
                 }
               }
             }

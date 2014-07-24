@@ -29,7 +29,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -41,7 +40,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.Function;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -70,7 +69,6 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
   private DebuggerExpressionTextField myChildrenEditor;
   private DebuggerExpressionTextField myChildrenExpandedEditor;
   private DebuggerExpressionTextField myListChildrenEditor;
-  private JComponent myChildrenListEditor;
   private JLabel myExpandedLabel;
   private JPanel myMainPanel;
   private JBTable myTable;
@@ -78,10 +76,6 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
   @NonNls private static final String DATA_PANEL_ID = "DATA";
   private static final int NAME_TABLE_COLUMN = 0;
   private static final int EXPRESSION_TABLE_COLUMN = 1;
-
-  public CompoundRendererConfigurable(@Nullable Project project) {
-    myProject = project;
-  }
 
   public void setRenderer(NodeRenderer renderer) {
     if (renderer instanceof CompoundReferenceRenderer) {
@@ -98,6 +92,8 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
     return myRenderer;
   }
 
+  @Override
+  @NotNull
   public JComponent createComponent() {
     if (myProject == null) {
       myProject = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
@@ -121,10 +117,11 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
     myLabelEditor = new DebuggerExpressionTextField(myProject, null, "ClassLabelExpression");
     myChildrenEditor = new DebuggerExpressionTextField(myProject, null, "ClassChildrenExpression");
     myChildrenExpandedEditor = new DebuggerExpressionTextField(myProject, null, "ClassChildrenExpression");
-    myChildrenListEditor = createChildrenListEditor();
+    JComponent myChildrenListEditor = createChildrenListEditor();
 
     final ItemListener updateListener = new ItemListener() {
-      public void itemStateChanged(ItemEvent e) {
+      @Override
+      public void itemStateChanged(@NotNull ItemEvent e) {
         updateEnabledState();
       }
     };
@@ -133,7 +130,8 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
     myRbExpressionChildrenRenderer.addItemListener(updateListener);
 
     myClassNameField = new ClassNameEditorWithBrowseButton(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
+      @Override
+      public void actionPerformed(@NotNull ActionEvent e) {
         PsiClass psiClass = DebuggerUtils.getInstance()
           .chooseClassDialog(DebuggerBundle.message("title.compound.renderer.configurable.choose.renderer.reference.type"), myProject);
         if (psiClass != null) {
@@ -145,7 +143,8 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
     }, myProject);
     final EditorTextField textField = myClassNameField.getEditorTextField();
     final FocusAdapter updateContextListener = new FocusAdapter() {
-      public void focusLost(FocusEvent e) {
+      @Override
+      public void focusLost(@NotNull FocusEvent e) {
         updateContext(myClassNameField.getText());
       }
     };
@@ -206,6 +205,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
 
   private void updateContext(final String qName) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         final Project project = myProject;
         final PsiClass psiClass = project != null ? DebuggerUtils.findClass(qName, project, GlobalSearchScope.allScope(project)) : null;
@@ -214,6 +214,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
         myChildrenExpandedEditor.setContext(psiClass);
         myListChildrenEditor.setContext(psiClass);
 
+        assert project != null;
         PsiType type = DebuggerUtils.getType(qName, project);
         myLabelEditor.setThisType(type);
         myChildrenEditor.setThisType(type);
@@ -251,17 +252,21 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
 
     final TableColumn exprColumn = myTable.getColumnModel().getColumn(EXPRESSION_TABLE_COLUMN);
     exprColumn.setCellEditor(new AbstractTableCellEditor() {
+      @Override
       public Object getCellEditorValue() {
         return myListChildrenEditor.getText();
       }
 
+      @Override
       public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
         myListChildrenEditor.setText((TextWithImports)value);
         return myListChildrenEditor;
       }
     });
     exprColumn.setCellRenderer(new DefaultTableCellRenderer() {
-      public Component getTableCellRendererComponent(JTable table,
+      @NotNull
+      @Override
+      public Component getTableCellRendererComponent(@NotNull JTable table,
                                                      Object value,
                                                      boolean isSelected,
                                                      boolean hasFocus,
@@ -300,6 +305,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
       }).createPanel();
   }
 
+  @Override
   public boolean isModified() {
     if (myRenderer == null) {
       return false;
@@ -309,7 +315,8 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
     return !DebuggerUtilsEx.externalizableEqual(cloned, myOriginalRenderer);
   }
 
-  public void apply() throws ConfigurationException {
+  @Override
+  public void apply() {
     if (myRenderer == null) {
       return;
     }
@@ -340,6 +347,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
     renderer.setClassName(myClassNameField.getText());
   }
 
+  @Override
   public void reset() {
     final TextWithImports emptyExpressionFragment = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "");
     ((CardLayout)myMainPanel.getLayout()).show(myMainPanel, myRenderer == null ? EMPTY_PANEL_ID : DATA_PANEL_ID);
@@ -390,6 +398,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
     updateContext(className);
   }
 
+  @Override
   public void disposeUIResources() {
     myRenderer = null;
     myOriginalRenderer = null;
@@ -410,7 +419,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
     return (MyTableModel)myTable.getModel();
   }
 
-  private final class MyTableModel extends AbstractTableModel {
+  private static final class MyTableModel extends AbstractTableModel {
     private final List<Row> myData = new ArrayList<Row>();
 
     public MyTableModel() {
@@ -423,18 +432,23 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
       }
     }
 
+    @Override
     public int getColumnCount() {
       return 2;
     }
 
+    @Override
     public int getRowCount() {
       return myData.size();
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       return true;
     }
 
+    @NotNull
+    @Override
     public Class getColumnClass(int columnIndex) {
       switch (columnIndex) {
         case NAME_TABLE_COLUMN:
@@ -446,6 +460,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
       }
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       if (rowIndex >= getRowCount()) {
         return null;
@@ -461,6 +476,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
       }
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       if (rowIndex >= getRowCount()) {
         return;
@@ -476,6 +492,8 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
       }
     }
 
+    @NotNull
+    @Override
     public String getColumnName(int columnIndex) {
       switch (columnIndex) {
         case NAME_TABLE_COLUMN:
@@ -513,7 +531,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
       return pairs;
     }
 
-    private final class Row {
+    private static final class Row {
       public String name;
       public TextWithImports value;
 

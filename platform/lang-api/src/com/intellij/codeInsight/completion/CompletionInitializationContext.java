@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
@@ -45,26 +45,24 @@ public class CompletionInitializationContext {
   private final OffsetMap myOffsetMap;
   private String myDummyIdentifier = DUMMY_IDENTIFIER;
 
-  public CompletionInitializationContext(final Editor editor, final PsiFile file, final CompletionType completionType, int invocationCount) {
+  public CompletionInitializationContext(final Editor editor, final Caret caret, final PsiFile file, final CompletionType completionType, int invocationCount) {
     myEditor = editor;
     myFile = file;
     myCompletionType = completionType;
     myInvocationCount = invocationCount;
     myOffsetMap = new OffsetMap(editor.getDocument());
 
-    myOffsetMap.addOffset(START_OFFSET, calcStartOffset(editor));
-    myOffsetMap.addOffset(SELECTION_END_OFFSET, calcSelectionEnd(editor));
-    myOffsetMap.addOffset(IDENTIFIER_END_OFFSET, calcDefaultIdentifierEnd(editor, calcSelectionEnd(editor)));
+    myOffsetMap.addOffset(START_OFFSET, calcStartOffset(caret));
+    myOffsetMap.addOffset(SELECTION_END_OFFSET, calcSelectionEnd(caret));
+    myOffsetMap.addOffset(IDENTIFIER_END_OFFSET, calcDefaultIdentifierEnd(editor, calcSelectionEnd(caret)));
   }
 
-  private static int calcSelectionEnd(Editor editor) {
-    final SelectionModel selectionModel = editor.getSelectionModel();
-    return selectionModel.hasSelection() ? selectionModel.getSelectionEnd() : editor.getCaretModel().getOffset();
+  private static int calcSelectionEnd(Caret caret) {
+    return caret.hasSelection() ? caret.getSelectionEnd() : caret.getOffset();
   }
 
-  public static int calcStartOffset(Editor editor) {
-    final SelectionModel selectionModel = editor.getSelectionModel();
-    return selectionModel.hasSelection() ? selectionModel.getSelectionStart() : editor.getCaretModel().getOffset();
+  public static int calcStartOffset(Caret caret) {
+    return caret.hasSelection() ? caret.getSelectionStart() : caret.getOffset();
   }
 
   static int calcDefaultIdentifierEnd(Editor editor, int startFrom) {

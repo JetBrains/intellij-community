@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,68 +17,84 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiAnnotationMemberValue;
-import com.intellij.psi.PsiArrayInitializerMemberValue;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
  */
-public class PsiArrayInitializerMemberValueImpl extends PsiCommaSeparatedListImpl implements PsiArrayInitializerMemberValue {
-  private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.source.tree.java.PsiArrayInitializerMemberValueImpl");
+public class PsiArrayInitializerMemberValueImpl extends CompositePsiElement implements PsiArrayInitializerMemberValue {
+  private static final Logger LOG = Logger.getInstance(PsiArrayInitializerMemberValueImpl.class);
+  private static final TokenSet MEMBER_SET = ElementType.ANNOTATION_MEMBER_VALUE_BIT_SET;
+
   public PsiArrayInitializerMemberValueImpl() {
-    super(ANNOTATION_ARRAY_INITIALIZER, ANNOTATION_MEMBER_VALUE_BIT_SET);
+    super(JavaElementType.ANNOTATION_ARRAY_INITIALIZER);
   }
 
   @Override
   @NotNull
   public PsiAnnotationMemberValue[] getInitializers() {
-    return getChildrenAsPsiElements(ANNOTATION_MEMBER_VALUE_BIT_SET, PsiAnnotationMemberValue.ARRAY_FACTORY);
+    return getChildrenAsPsiElements(MEMBER_SET, PsiAnnotationMemberValue.ARRAY_FACTORY);
   }
 
   @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
-    switch(role){
+
+    switch (role) {
       default:
         return null;
 
       case ChildRole.LBRACE:
-        return findChildByType(LBRACE);
+        return findChildByType(JavaTokenType.LBRACE);
 
       case ChildRole.RBRACE:
-        return findChildByType(RBRACE);
+        return findChildByType(JavaTokenType.RBRACE);
     }
   }
 
   @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
+
     IElementType i = child.getElementType();
-    if (i == COMMA) {
+    if (i == JavaTokenType.COMMA) {
       return ChildRole.COMMA;
     }
-    else if (i == LBRACE) {
+    else if (i == JavaTokenType.LBRACE) {
       return ChildRole.LBRACE;
     }
-    else if (i == RBRACE) {
+    else if (i == JavaTokenType.RBRACE) {
       return ChildRole.RBRACE;
     }
-    else {
-      if (ANNOTATION_MEMBER_VALUE_BIT_SET.contains(child.getElementType())) {
-        return ChildRole.ANNOTATION_VALUE;
-      }
-      return ChildRoleBase.NONE;
+    else if (MEMBER_SET.contains(child.getElementType())) {
+      return ChildRole.ANNOTATION_VALUE;
     }
+    return ChildRoleBase.NONE;
   }
 
-  public String toString(){
-    return "PsiArrayInitializerMemberValue:" + getText();
+  @Override
+  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
+    if (MEMBER_SET.contains(first.getElementType()) && MEMBER_SET.contains(last.getElementType())) {
+      TreeElement firstAdded = super.addInternal(first, last, anchor, before);
+      JavaSourceUtil.addSeparatingComma(this, first, MEMBER_SET);
+      return firstAdded;
+    }
+
+    return super.addInternal(first, last, anchor, before);
+  }
+
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    if (MEMBER_SET.contains(child.getElementType())) {
+      JavaSourceUtil.deleteSeparatingComma(this, child);
+    }
+
+    super.deleteChildInternal(child);
   }
 
   @Override
@@ -89,5 +105,10 @@ public class PsiArrayInitializerMemberValueImpl extends PsiCommaSeparatedListImp
     else {
       visitor.visitElement(this);
     }
+  }
+
+  @Override
+  public String toString() {
+    return "PsiArrayInitializerMemberValue:" + getText();
   }
 }

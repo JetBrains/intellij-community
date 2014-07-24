@@ -300,6 +300,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   @NotNull 
   public JComponent createComponent() {
+    myTree.updateUI();
     reInitWholePanelIfNeeded();
 
     updateSelectionFromTree();

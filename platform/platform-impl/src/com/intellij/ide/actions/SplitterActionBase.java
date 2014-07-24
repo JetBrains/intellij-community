@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,9 @@ public abstract class SplitterActionBase extends AnAction implements DumbAware {
   public void update(final AnActionEvent event) {
     final Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
     final Presentation presentation = event.getPresentation();
-    boolean enabled;
-    if (project == null) {
-      enabled = false;
-    }
-    else {
-      enabled = isActionEnabled(project);
-    }
-    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+    boolean context = ActionPlaces.isPopupPlace(event.getPlace());
+    boolean enabled = project != null && isActionEnabled(project, context);
+    if (context) {
       presentation.setVisible(enabled);
     }
     else {
@@ -42,7 +37,7 @@ public abstract class SplitterActionBase extends AnAction implements DumbAware {
     }
   }
 
-  protected boolean isActionEnabled(Project project) {
+  protected boolean isActionEnabled(Project project, boolean context) {
     final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     return fileEditorManager.isInSplitter();
   }

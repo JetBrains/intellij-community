@@ -18,6 +18,7 @@ package com.intellij.execution.testframework.sm.runner.states;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -42,7 +43,7 @@ public class SuiteInProgressState extends TestInProgressState {
     }
 
      //Test suit fails if any of its tests fails
-    final List<? extends SMTestProxy> children = mySuiteProxy.getChildren();
+    final List<? extends SMTestProxy> children = new ArrayList<SMTestProxy>(mySuiteProxy.getChildren());
     for (SMTestProxy child : children) {
       if (child.isDefect()) {
         myDefectFound = true;

@@ -28,7 +28,6 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -287,8 +286,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
           final DebugProcessImpl debugProcess = getDebugProcess(event.getProcessHandler());
           if (debugProcess != null) {
             // if current thread is a "debugger manager thread", stop will execute synchronously
-            // it is KillableColoredProcessHandler responsibility to terminate VM
-            debugProcess.stop(willBeDestroyed && !(event.getProcessHandler() instanceof KillableColoredProcessHandler));
+            debugProcess.stop(willBeDestroyed);
 
             // wait at most 10 seconds: the problem is that debugProcess.stop() can hang if there are troubles in the debuggee
             // if processWillTerminate() is called from AWT thread debugProcess.waitFor() will block it and the whole app will hang

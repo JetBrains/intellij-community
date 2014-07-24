@@ -39,7 +39,8 @@ public class ParameterNameFoldingManager {
     Couple.of("first", "last"),
     Couple.of("first", "second"),
     Couple.of("from", "to"),
-    Couple.of("key", "value")
+    Couple.of("key", "value"),
+    Couple.of("min", "max")
   );
 
   private final PsiCallExpression myCallExpression;

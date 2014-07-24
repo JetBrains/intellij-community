@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,14 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ConfigurableUi;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
-public class DebuggerHotswapConfigurable implements SearchableConfigurable {
+class JavaHotSwapConfigurableUi implements ConfigurableUi<DebuggerSettings> {
   private JCheckBox myHotswapInBackground;
   private JCheckBox myCbCompileBeforeHotswap;
   private JCheckBox myCbHangWarningEnabled;
@@ -31,8 +31,8 @@ public class DebuggerHotswapConfigurable implements SearchableConfigurable {
   private JRadioButton myRbNever;
   private JRadioButton myRbAsk;
 
-  public void reset() {
-    final DebuggerSettings settings = DebuggerSettings.getInstance();
+  @Override
+  public void reset(@NotNull DebuggerSettings settings) {
     myHotswapInBackground.setSelected(settings.HOTSWAP_IN_BACKGROUND);
     myCbCompileBeforeHotswap.setSelected(settings.COMPILE_BEFORE_HOTSWAP);
     myCbHangWarningEnabled.setSelected(settings.HOTSWAP_HANG_WARNING_ENABLED);
@@ -48,8 +48,9 @@ public class DebuggerHotswapConfigurable implements SearchableConfigurable {
     }
   }
 
-  public void apply() {
-    getSettingsTo(DebuggerSettings.getInstance());
+  @Override
+  public void apply(@NotNull DebuggerSettings settings) {
+    getSettingsTo(settings);
   }
 
   private void getSettingsTo(DebuggerSettings settings) {
@@ -68,31 +69,16 @@ public class DebuggerHotswapConfigurable implements SearchableConfigurable {
     }
   }
 
-  public boolean isModified() {
-    final DebuggerSettings currentSettings = DebuggerSettings.getInstance();
+  @Override
+  public boolean isModified(@NotNull DebuggerSettings currentSettings) {
     final DebuggerSettings debuggerSettings = currentSettings.clone();
     getSettingsTo(debuggerSettings);
     return !debuggerSettings.equals(currentSettings);
   }
 
-  public String getDisplayName() {
-    return DebuggerBundle.message("debugger.hotswap.configurable.display.name");
-  }
-
-  public String getHelpTopic() {
-    return "reference.idesettings.debugger.hotswap";
-  }
-
   @NotNull
-  public String getId() {
-    return getHelpTopic();
-  }
-
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
-  public JComponent createComponent() {
+  @Override
+  public JComponent getComponent() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
     myCbCompileBeforeHotswap = new JCheckBox(DebuggerBundle.message("label.debugger.hotswap.configurable.compile.before.hotswap"));
@@ -130,9 +116,4 @@ public class DebuggerHotswapConfigurable implements SearchableConfigurable {
 
     return panel;
   }
-
-
-  public void disposeUIResources() {
-  }
-
 }

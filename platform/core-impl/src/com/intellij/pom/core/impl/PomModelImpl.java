@@ -301,13 +301,28 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     final PsiElement changeScope = transaction.getChangeScope();
     LOG.assertTrue(changeScope != null);
-    BlockSupportImpl.sendBeforeChildrenChangeEvent((PsiManagerImpl)PsiManager.getInstance(myProject), changeScope, true);
-    final PsiFile containingFileByTree = getContainingFileByTree(changeScope);
 
+    final PsiFile containingFileByTree = getContainingFileByTree(changeScope);
+    if (changeScope.isPhysical() && synchronizer.toProcessPsiEvent() && isDocumentUncommitted(containingFileByTree)) {
+      // fail-fast to prevent any psi modifications that would cause psi/document text mismatch
+      // PsiToDocumentSynchronizer assertions happen inside event processing and are logged by PsiManagerImpl.fireEvent instead of being rethrown
+      // so it's important to throw something outside event processing
+      throw new IllegalStateException("Attempt to modify PSI for non-committed Document!");
+    }
+
+    BlockSupportImpl.sendBeforeChildrenChangeEvent((PsiManagerImpl)PsiManager.getInstance(myProject), changeScope, true);
     Document document = containingFileByTree == null ? null : manager.getCachedDocument(containingFileByTree);
     if(document != null) {
       synchronizer.startTransaction(myProject, document, changeScope);
     }
+  }
+
+  private boolean isDocumentUncommitted(@Nullable PsiFile file) {
+    if (file == null) return false;
+
+    PsiDocumentManager manager = PsiDocumentManager.getInstance(myProject);
+    Document cachedDocument = manager.getCachedDocument(file);
+    return cachedDocument != null && manager.isUncommited(cachedDocument);
   }
 
   @Nullable

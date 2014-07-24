@@ -161,7 +161,7 @@ public abstract class PluginManagerMain implements Disposable {
         g.fillRect(0,0, getWidth(), getHeight());
       }
     };
-    header.setBorder(new CustomLineBorder(UIUtil.getBorderColor(), 1, 1, 0, 1));
+    header.setBorder(new CustomLineBorder(1, 1, 0, 1));
     final JLabel mySortLabel = new JLabel();
     mySortLabel.setForeground(UIUtil.getLabelDisabledForeground());
     mySortLabel.setBorder(new EmptyBorder(1, 1, 1, 5));

@@ -79,7 +79,7 @@ public abstract class ProgressManager {
     }
   }
 
-  public static void progress(final String text) throws ProcessCanceledException {
+  public static void progress(@NotNull String text) throws ProcessCanceledException {
     progress(text, "");
   }
 
@@ -91,7 +91,7 @@ public abstract class ProgressManager {
     }
   }
 
-  public static void progress(final String text, @Nullable String text2) throws ProcessCanceledException {
+  public static void progress(@NotNull String text, @Nullable String text2) throws ProcessCanceledException {
     final ProgressIndicator pi = getInstance().getProgressIndicator();
     if (pi != null) {
       pi.checkCanceled();
@@ -103,6 +103,7 @@ public abstract class ProgressManager {
   protected abstract void doCheckCanceled() throws ProcessCanceledException;
 
   public abstract void executeNonCancelableSection(@NotNull Runnable runnable);
+  @NotNull
   public abstract NonCancelableSection startNonCancelableSection();
 
   public abstract void setCancelButtonText(String cancelButtonText);
@@ -135,9 +136,9 @@ public abstract class ProgressManager {
    * @throws E exception thrown by process
    */
   public abstract <T, E extends Exception> T runProcessWithProgressSynchronously(@NotNull ThrowableComputable<T, E> process,
-                                                              @NotNull @Nls String progressTitle,
-                                                              boolean canBeCanceled,
-                                                              @Nullable Project project) throws E;
+                                                                                 @NotNull @Nls String progressTitle,
+                                                                                 boolean canBeCanceled,
+                                                                                 @Nullable Project project) throws E;
 
   /**
    * Runs the specified operation in a background thread and shows a modal progress dialog in the
@@ -206,7 +207,10 @@ public abstract class ProgressManager {
   public abstract void runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task, @NotNull ProgressIndicator progressIndicator);
 
   protected static final ThreadLocal<ProgressIndicator> myThreadIndicator = new ThreadLocal<ProgressIndicator>();
-  public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
+
+  public void executeProcessUnderProgress(@NotNull Runnable process,
+                                          @Nullable("null means reuse current progress") ProgressIndicator progress)
+    throws ProcessCanceledException {
     ProgressIndicator oldIndicator = null;
 
     boolean set = progress != null && progress != (oldIndicator = myThreadIndicator.get());

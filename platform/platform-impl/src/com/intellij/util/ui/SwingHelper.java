@@ -413,10 +413,12 @@ public class SwingHelper {
     return textPane;
   }
 
-  public static void setHtml(@NotNull JEditorPane editorPane, @NotNull String bodyInnerHtml) {
+  public static void setHtml(@NotNull JEditorPane editorPane,
+                             @NotNull String bodyInnerHtml,
+                             @Nullable Color foregroundColor) {
     String html = String.format(
       "<html><head>%s</head><body>%s</body></html>",
-      UIUtil.getCssFontDeclaration(editorPane.getFont(), null, null, null),
+      UIUtil.getCssFontDeclaration(editorPane.getFont(), foregroundColor, null, null),
       bodyInnerHtml
     );
     editorPane.setText(html);

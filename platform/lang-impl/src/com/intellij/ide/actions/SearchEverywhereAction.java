@@ -108,11 +108,9 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Konstantin Bulenkov
@@ -2120,13 +2118,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     private SearchListModel() {
       super();
-      try {
-        final Field field = DefaultListModel.class.getDeclaredField("delegate");
-        field.setAccessible(true);
-        myDelegate = (Vector)field.get(this);
-      }
-      catch (NoSuchFieldException ignore) {}
-      catch (IllegalAccessException ignore) {}
+      myDelegate = ReflectionUtil.getField(DefaultListModel.class, this, Vector.class, "delegate");
     }
 
     int next(int index) {

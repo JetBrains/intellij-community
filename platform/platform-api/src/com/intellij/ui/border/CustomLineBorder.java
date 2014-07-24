@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ui.border;
 
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.border.Border;
 import java.awt.*;
@@ -28,17 +29,17 @@ public class CustomLineBorder implements Border {
   private final Color myColor;
   private final Insets myInsets;
 
-  public CustomLineBorder(@NotNull Color color, @NotNull Insets insets) {
+  public CustomLineBorder(@Nullable Color color, @NotNull Insets insets) {
     myColor = color;
     myInsets = insets;
   }
 
-  public CustomLineBorder(@NotNull Color color, int top, int left, int bottom, int right) {
+  public CustomLineBorder(@Nullable Color color, int top, int left, int bottom, int right) {
     this(color, new Insets(top, left, bottom, right));
   }
 
   public CustomLineBorder(@NotNull Insets insets) {
-    this(UIUtil.getBorderColor(), insets);
+    this(null, insets);
   }
 
   public CustomLineBorder(int top, int left, int bottom, int right) {
@@ -59,7 +60,7 @@ public class CustomLineBorder implements Border {
   }
 
   protected Color getColor() {
-    return myColor;
+    return myColor == null ? UIUtil.getBorderColor() : myColor;
   }
 
   @Override

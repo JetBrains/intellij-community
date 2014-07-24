@@ -23,19 +23,24 @@ import com.intellij.openapi.options.SimpleConfigurable;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+
+import java.util.Collection;
+import java.util.Collections;
+
+import static java.util.Collections.singletonList;
 
 /**
  * @author ilyas
  */
 @State(
-    name = "GroovyDebuggerSettings",
-    storages = {
+  name = "GroovyDebuggerSettings",
+  storages = {
     @Storage(
-        file = StoragePathMacros.APP_CONFIG + "/groovy_debug.xml"
+      file = StoragePathMacros.APP_CONFIG + "/groovy_debug.xml"
     )}
 )
 public class GroovyDebuggerSettings extends XDebuggerSettings<GroovyDebuggerSettings> implements Getter<GroovyDebuggerSettings> {
@@ -46,19 +51,19 @@ public class GroovyDebuggerSettings extends XDebuggerSettings<GroovyDebuggerSett
     super("groovy_debugger");
   }
 
-  @Override
   @NotNull
-  public Configurable createConfigurable() {
-    return new GroovyDebuggerSettingsConfigurable(this);
-  }
-
-  @Nullable
+  @SuppressWarnings("EnumSwitchStatementWhichMissesCases")
   @Override
-  public Configurable createConfigurable(@NotNull Category category) {
-    if (category == Category.STEPPING) {
-      return SimpleConfigurable.create("reference.idesettings.debugger.groovy", GroovyBundle.message("groovy.debug.caption"), GroovySteppingConfigurableUi.class, this);
+  public Collection<? extends Configurable> createConfigurables(@NotNull DebuggerSettingsCategory category) {
+    switch (category) {
+      case STEPPING:
+        return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.groovy", GroovyBundle.message("groovy.debug.caption"),
+                                                       "reference.idesettings.debugger.groovy", GroovySteppingConfigurableUi.class, this));
+      case HOTSWAP:
+        return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.groovy", GroovyBundle.message("groovy.debug.caption"),
+                                                       "reference.idesettings.debugger.groovy", GroovyHotSwapConfigurableUi.class, this));
     }
-    return null;
+    return Collections.emptyList();
   }
 
   @Override

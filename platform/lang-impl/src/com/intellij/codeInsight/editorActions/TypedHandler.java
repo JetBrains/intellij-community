@@ -148,14 +148,17 @@ public class TypedHandler extends TypedActionHandlerBase {
        return;
     }
 
+    final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+    final Document originalDocument = originalEditor.getDocument();
     originalEditor.getCaretModel().runForEachCaret(new CaretAction() {
       @Override
       public void perform(Caret caret) {
-        PsiDocumentManager.getInstance(project)
-          .doPostponedOperationsAndUnblockDocument(originalEditor.getDocument()); // to clean up after previous caret processing
+        if (psiDocumentManager.isDocumentBlockedByPsi(originalDocument)) {
+          psiDocumentManager.doPostponedOperationsAndUnblockDocument(originalDocument); // to clean up after previous caret processing
+        }
 
         Editor editor = injectedEditorIfCharTypedIsSignificant(charTyped, originalEditor, originalFile);
-        PsiFile file = editor == originalEditor ? originalFile : PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+        PsiFile file = editor == originalEditor ? originalFile : psiDocumentManager.getPsiFile(editor.getDocument());
 
 
         final TypedHandlerDelegate[] delegates = Extensions.getExtensions(TypedHandlerDelegate.EP_NAME);

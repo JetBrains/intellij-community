@@ -16,6 +16,8 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -35,7 +37,7 @@ import java.util.Set;
 class Banner extends NonOpaquePanel implements PropertyChangeListener{
   private int myBannerMinHeight;
   private final JComponent myText = new MyText();
-
+  private final JLabel myProjectIcon = new JLabel(AllIcons.General.ProjectConfigurableBanner, SwingConstants.LEFT);
   private final NonOpaquePanel myActionsPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT, 2, 2));
 
   private final Map<Action, LinkLabel> myActions = new HashMap<Action, LinkLabel>();
@@ -45,7 +47,10 @@ class Banner extends NonOpaquePanel implements PropertyChangeListener{
 
     setBorder(new EmptyBorder(2, 6, 2, 4));
 
-    add(myText, BorderLayout.CENTER);
+    myProjectIcon.setVisible(false);
+    myProjectIcon.setBorder(new EmptyBorder(0, 12, 0, 4));
+    add(myText, BorderLayout.WEST);
+    add(myProjectIcon, BorderLayout.CENTER);
     add(myActionsPanel, BorderLayout.EAST);
   }
 
@@ -110,6 +115,17 @@ class Banner extends NonOpaquePanel implements PropertyChangeListener{
     myBannerMinHeight = height;
     revalidate();
     repaint();
+  }
+
+  public void forProject(Project project) {
+    if (project != null) {
+      myProjectIcon.setVisible(true);
+      myProjectIcon.setText(OptionsBundle.message(project.isDefault()
+                                                  ? "configurable.default.project.tooltip"
+                                                  : "configurable.current.project.tooltip"));
+    } else {
+      myProjectIcon.setVisible(false);
+    }
   }
 
   public void setText(@NotNull final String... text) {

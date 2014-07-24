@@ -26,6 +26,8 @@ import java.util.List;
 public interface JpsAppEngineModuleExtension extends JpsElement {
   JpsModule getModule();
 
+  String getOrmLibPath();
+
   String getSdkHomePath();
 
   boolean isRunEnhancerOnMake();

@@ -225,8 +225,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
   }
 
   public void testDirsByPackageName() throws IOException {
-    checkPackage("", true, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myFileLibSrc, myFileLibCls, mySrcDir2, myLibSrcDir, myLibClsDir);
-    checkPackage("", false, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myFileLibCls, mySrcDir2, myLibClsDir);
+    checkPackage("", true, mySrcDir1, myTestSrc1, myResDir, myTestResDir, mySrcDir2, myLibSrcDir, myLibClsDir);
+    checkPackage("", false, mySrcDir1, myTestSrc1, myResDir, myTestResDir, mySrcDir2, myLibClsDir);
     
     checkPackage("pack1", true, myPack1Dir);
     checkPackage("pack1", false, myPack1Dir);
@@ -255,6 +255,18 @@ public class DirectoryIndexTest extends IdeaTestCase {
       }
     });
     checkPackage("pack1", true, myPack1Dir, myModule3Dir);
+  }
+
+  public void testPackageDirectoriesWithDots() throws IOException {
+    VirtualFile fooBar = mySrcDir1.createChildDirectory(this, "foo.bar");
+    VirtualFile goo1 = fooBar.createChildDirectory(this, "goo");
+    VirtualFile foo = mySrcDir2.createChildDirectory(this, "foo");
+    VirtualFile bar = foo.createChildDirectory(this, "bar");
+    VirtualFile goo2 = bar.createChildDirectory(this, "goo");
+
+    checkPackage("foo", false, foo);
+    checkPackage("foo.bar", false, bar, fooBar);
+    checkPackage("foo.bar.goo", false, goo2, goo1);
   }
 
   public void testCreateDir() throws Exception {
@@ -957,6 +969,11 @@ public class DirectoryIndexTest extends IdeaTestCase {
     VirtualFile[] actualDirs = myIndex.getDirectoriesByPackageName(packageName, includeLibrarySources).toArray(VirtualFile.EMPTY_ARRAY);
     assertNotNull(actualDirs);
     assertOrderedEquals(actualDirs, expectedDirs);
+
+    for (VirtualFile dir : expectedDirs) {
+      String actualName = myIndex.getPackageName(dir);
+      assertEquals("Invalid package name for dir " + dir + ": " + packageName, packageName, actualName);
+    }
   }
 
 }

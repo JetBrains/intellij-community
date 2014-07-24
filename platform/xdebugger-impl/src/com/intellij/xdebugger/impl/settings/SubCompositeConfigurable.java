@@ -20,8 +20,8 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.xdebugger.impl.DebuggerSupport;
-import com.intellij.xdebugger.settings.XDebuggerSettings;
+import com.intellij.xdebugger.settings.DebuggerConfigurableProvider;
+import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +77,7 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
   protected abstract DataViewsConfigurableUi createRootUi();
 
   @NotNull
-  protected abstract XDebuggerSettings.Category getCategory();
+  protected abstract DebuggerSettingsCategory getCategory();
 
   private boolean isChildrenMerged() {
     return children != null && children.length == 1;
@@ -86,7 +86,7 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
   @Override
   public final Configurable[] getConfigurables() {
     if (children == null) {
-      List<Configurable> configurables = DebuggerConfigurableProvider.getConfigurables(getCategory());
+      List<Configurable> configurables = DebuggerConfigurable.getConfigurables(getCategory());
       children = configurables.toArray(new Configurable[configurables.size()]);
     }
     return isChildrenMerged() ? DebuggerConfigurable.EMPTY_CONFIGURABLES : children;
@@ -115,10 +115,12 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
             c.setBorder(MergedCompositeConfigurable.BOTTOM_INSETS);
             panel.add(c);
           }
-          for (Configurable child : children) {
-            JComponent component = child.createComponent();
+          for (Configurable configurable : children) {
+            JComponent component = configurable.createComponent();
             if (component != null) {
-              component.setBorder(IdeBorderFactory.createTitledBorder(child.getDisplayName(), false));
+              if (children[0] != configurable || !MergedCompositeConfigurable.isTargetedToProduct(configurable)) {
+                component.setBorder(IdeBorderFactory.createTitledBorder(configurable.getDisplayName(), false));
+              }
               panel.add(component);
             }
           }
@@ -164,8 +166,8 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
   public final void apply() throws ConfigurationException {
     if (root != null) {
       root.apply(getSettings());
-      for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
-        support.getSettingsPanelProvider().generalApplied(getCategory());
+      for (DebuggerConfigurableProvider provider : DebuggerConfigurableProvider.EXTENSION_POINT.getExtensions()) {
+        provider.generalApplied(getCategory());
       }
     }
 

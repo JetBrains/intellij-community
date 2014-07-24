@@ -322,17 +322,27 @@ public class RootIndex extends DirectoryIndex {
       result = ContainerUtil.newSmartList();
       
       if (StringUtil.isNotEmpty(packageName) && !StringUtil.startsWithChar(packageName, '.')) {
-        String shortName = StringUtil.getShortName(packageName);
-        for (VirtualFile parentDir : getDirectoriesByPackageName(StringUtil.getPackageName(packageName), true)) {
-          VirtualFile child = parentDir.findChild(shortName);
-          if (child != null && child.isDirectory() && getInfoForFile(child).isInProject()
-              && packageName.equals(getPackageName(child))) {
-            result.add(child);
+        int i = packageName.lastIndexOf('.');
+        while (true) {
+          String shortName = packageName.substring(i + 1);
+          String parentPackage = i > 0 ? packageName.substring(0, i) : "";
+          for (VirtualFile parentDir : getDirectoriesByPackageName(parentPackage, true)) {
+            VirtualFile child = parentDir.findChild(shortName);
+            if (child != null && child.isDirectory() && getInfoForFile(child).isInProject()
+                && packageName.equals(getPackageName(child))) {
+              result.add(child);
+            }
           }
+          if (i < 0) break;
+          i = packageName.lastIndexOf('.', i - 1);
         }
       }
 
-      result.addAll(myPackagePrefixRoots.get(packageName));
+      for (VirtualFile file : myPackagePrefixRoots.get(packageName)) {
+        if (file.isDirectory()) {
+          result.add(file);
+        }
+      }
 
       if (!result.isEmpty()) {
         myDirectoriesByPackageNameCache.put(packageName, result);
