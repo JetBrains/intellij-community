@@ -238,14 +238,18 @@ class PyDBFrame:
                         stop = False
                         if info.pydev_call_from_jinja2 is not None:
                             if is_jinja2_internal_function(frame):
+                                #if internal Jinja2 function was called, we sould continue debugging inside template
                                 info.pydev_call_from_jinja2 = None
                             else:
+                                #we go into python code from Jinja2 rendering frame
                                 stop = True
 
                         if event == 'call' and is_jinja2_context_call(frame.f_back):
+                            #we called function from context, the next step will be in function
                             info.pydev_call_from_jinja2 = 1
 
-                    if event == 'return' and is_jinja2_context_call(frame.f_back):
+                    if event == 'return' and is_jinja2_context_call(frame.f_back) and info.pydev_call_from_jinja2 is not None:
+                        #we return from python code to Jinja2 rendering frame
                         info.pydev_step_stop = info.pydev_call_from_jinja2
                         info.pydev_call_from_jinja2 = None
                         thread.additionalInfo.suspend_type = JINJA2_SUSPEND
@@ -259,24 +263,23 @@ class PyDBFrame:
                     if is_django_suspended(thread):
                         django_stop = event == 'call' and is_django_render_call(frame)
                         stop = False
+                    elif is_jinja2_suspended(thread):
+                        jinja2_stop = event in ('call', 'line') and is_jinja2_render_call(frame)
+                        stop = False
                     else:
                         if event == 'return' and info.pydev_django_resolve_frame is not None and is_django_resolve_call(frame.f_back):
-                            #we return to Jinja2 suspend mode and should not stop before django rendering frame
+                            #we return to Django suspend mode and should not stop before django rendering frame
                             info.pydev_step_stop = info.pydev_django_resolve_frame
                             info.pydev_django_resolve_frame = None
                             thread.additionalInfo.suspend_type = DJANGO_SUSPEND
 
                         stop = info.pydev_step_stop is frame and event in ('line', 'return')
 
-                    if is_jinja2_suspended(thread):
-                        jinja2_stop = event in ('call', 'line') and is_jinja2_render_call(frame)
-                        stop = False
-                    else:
-                        if event == 'return' and info.pydev_call_from_jinja2 is not None:
-                            if is_jinja2_context_call(frame.f_back):
-                                info.pydev_call_from_jinja2 = None
-                                thread.additionalInfo.suspend_type = JINJA2_SUSPEND
-                                stop = False
+                        if event == 'return' and is_jinja2_context_call(frame.f_back) and info.pydev_call_from_jinja2 is not None:
+                            #we return from python code to Jinja2 rendering frame
+                            info.pydev_call_from_jinja2 = None
+                            thread.additionalInfo.suspend_type = JINJA2_SUSPEND
+                            stop = False
 
                     #print "info.pydev_call_from_jinja2", info.pydev_call_from_jinja2, "stop", stop, "jinja_stop", jinja2_stop, \
                     #    "thread.additionalInfo.suspend_type", thread.additionalInfo.suspend_type

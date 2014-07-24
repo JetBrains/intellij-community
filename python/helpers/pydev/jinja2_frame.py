@@ -9,6 +9,7 @@ class Jinja2TemplateFrame:
         file_name = get_jinja2_template_filename(frame)
         self.back_context = None
         if 'context' in frame.f_locals:
+            #sometimes we don't have 'context', e.g. in macros
             self.back_context = frame.f_locals['context']
         self.f_code = FCode('Jinja2 Template', file_name)
         self.f_lineno = get_jinja2_template_line(frame)
@@ -25,6 +26,7 @@ class Jinja2TemplateFrame:
         for k, v in frame.f_locals.iteritems():
             if not k.startswith('l_'):
                 if not k in res:
+                    #local variables should shadow globals from context
                     res[k] = v
             else:
                 key = k[2:]
@@ -33,7 +35,8 @@ class Jinja2TemplateFrame:
 
 
 def get_jinja2_template_line(frame):
-    debug_info = frame.f_globals['__jinja_template__'].debug_info
+    if DictContains(frame.f_globals,'__jinja_template__'):
+        debug_info = frame.f_globals['__jinja_template__'].debug_info
 
     if debug_info is None:
         return None
@@ -43,6 +46,7 @@ def get_jinja2_template_line(frame):
     for pair in debug_info:
         if pair[1] == lineno:
             return pair[0]
+
     return None
 
 def get_jinja2_template_filename(frame):
