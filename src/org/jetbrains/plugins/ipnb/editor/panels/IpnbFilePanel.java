@@ -30,6 +30,7 @@ import org.jetbrains.plugins.ipnb.format.cells.MarkdownCell;
 import org.jetbrains.plugins.ipnb.format.cells.output.CellOutput;
 import org.jetbrains.plugins.ipnb.format.cells.output.HtmlCellOutput;
 import org.jetbrains.plugins.ipnb.format.cells.output.ImageCellOutput;
+import org.jetbrains.plugins.ipnb.format.cells.output.LatexCellOutput;
 
 import javax.swing.*;
 import java.awt.*;
@@ -137,6 +138,10 @@ public class IpnbFilePanel extends JPanel {
         else if (cellOutput instanceof HtmlCellOutput) {
           addPromptPanel(codeCell.getPromptNumber(), "Out",
                          new HtmlPanel(myProject, (HtmlCellOutput)cellOutput), c);
+        }
+        else if (cellOutput instanceof LatexCellOutput) {
+          addPromptPanel(codeCell.getPromptNumber(), "Out",
+                         new LatexPanel(myProject, (LatexCellOutput)cellOutput), c);
         }
         else if (cellOutput.getSourceAsString() != null) {
           addPromptPanel(codeCell.getPromptNumber(), "Out",
