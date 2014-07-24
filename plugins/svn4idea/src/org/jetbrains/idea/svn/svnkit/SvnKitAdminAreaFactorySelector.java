@@ -30,7 +30,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -84,8 +83,8 @@ public class SvnKitAdminAreaFactorySelector implements ISVNAdminAreaFactorySelec
   }
 
   private static Collection<SVNAdminAreaFactory> factoriesFor13(final Collection factories) {
-    for (Iterator iterator = factories.iterator(); iterator.hasNext(); ) {
-      final SVNAdminAreaFactory factory = (SVNAdminAreaFactory)iterator.next();
+    for (Object item : factories) {
+      final SVNAdminAreaFactory factory = (SVNAdminAreaFactory)item;
       final int supportedVersion = factory.getSupportedVersion();
       if (WorkingCopyFormat.ONE_DOT_THREE.getFormat() == supportedVersion) {
         return Collections.singletonList(factory);
@@ -96,8 +95,8 @@ public class SvnKitAdminAreaFactorySelector implements ISVNAdminAreaFactorySelec
 
   private static Collection<SVNAdminAreaFactory> factoriesFor14(final Collection factories) {
     final Collection<SVNAdminAreaFactory> result = new ArrayList<SVNAdminAreaFactory>(2);
-    for (Iterator iterator = factories.iterator(); iterator.hasNext(); ) {
-      final SVNAdminAreaFactory factory = (SVNAdminAreaFactory)iterator.next();
+    for (Object item : factories) {
+      final SVNAdminAreaFactory factory = (SVNAdminAreaFactory)item;
       final int supportedVersion = factory.getSupportedVersion();
       if ((WorkingCopyFormat.ONE_DOT_FOUR.getFormat() == supportedVersion) ||
           (WorkingCopyFormat.ONE_DOT_THREE.getFormat() == supportedVersion)) {
@@ -109,8 +108,8 @@ public class SvnKitAdminAreaFactorySelector implements ISVNAdminAreaFactorySelec
 
   private static Collection<SVNAdminAreaFactory> factoriesFor15(final Collection factories) {
     final Collection<SVNAdminAreaFactory> result = new ArrayList<SVNAdminAreaFactory>(2);
-    for (Iterator iterator = factories.iterator(); iterator.hasNext(); ) {
-      final SVNAdminAreaFactory factory = (SVNAdminAreaFactory)iterator.next();
+    for (Object item : factories) {
+      final SVNAdminAreaFactory factory = (SVNAdminAreaFactory)item;
       final int supportedVersion = factory.getSupportedVersion();
       if ((WorkingCopyFormat.ONE_DOT_FOUR.getFormat() == supportedVersion) ||
           (WorkingCopyFormat.ONE_DOT_THREE.getFormat() == supportedVersion) ||
@@ -123,8 +122,8 @@ public class SvnKitAdminAreaFactorySelector implements ISVNAdminAreaFactorySelec
 
   private static Collection<SVNAdminAreaFactory> factoriesFor16(final Collection factories) {
     final Collection<SVNAdminAreaFactory> result = new ArrayList<SVNAdminAreaFactory>(2);
-    for (Iterator iterator = factories.iterator(); iterator.hasNext(); ) {
-      final SVNAdminAreaFactory factory = (SVNAdminAreaFactory)iterator.next();
+    for (Object item : factories) {
+      final SVNAdminAreaFactory factory = (SVNAdminAreaFactory)item;
       final int supportedVersion = factory.getSupportedVersion();
       if ((WorkingCopyFormat.ONE_DOT_FOUR.getFormat() == supportedVersion) ||
           (WorkingCopyFormat.ONE_DOT_THREE.getFormat() == supportedVersion) ||
