@@ -69,4 +69,8 @@ public abstract class XDebuggerSettings<T> implements PersistentStateComponent<T
 
   public void generalApplied(@NotNull DebuggerSettingsCategory category) {
   }
+
+  public boolean isTargetedToProduct(@NotNull Configurable configurable) {
+    return false;
+  }
 }

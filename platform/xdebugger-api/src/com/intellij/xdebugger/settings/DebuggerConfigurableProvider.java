@@ -35,4 +35,8 @@ public abstract class DebuggerConfigurableProvider {
    */
   public void generalApplied(@NotNull DebuggerSettingsCategory category) {
   }
+
+  public boolean isTargetedToProduct(@NotNull Configurable configurable) {
+    return false;
+  }
 }

@@ -115,10 +115,12 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
             c.setBorder(MergedCompositeConfigurable.BOTTOM_INSETS);
             panel.add(c);
           }
-          for (Configurable child : children) {
-            JComponent component = child.createComponent();
+          for (Configurable configurable : children) {
+            JComponent component = configurable.createComponent();
             if (component != null) {
-              component.setBorder(IdeBorderFactory.createTitledBorder(child.getDisplayName(), false));
+              if (children[0] != configurable || !MergedCompositeConfigurable.isTargetedToProduct(configurable)) {
+                component.setBorder(IdeBorderFactory.createTitledBorder(configurable.getDisplayName(), false));
+              }
               panel.add(component);
             }
           }

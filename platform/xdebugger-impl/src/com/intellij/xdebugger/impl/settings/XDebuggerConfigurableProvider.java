@@ -61,4 +61,14 @@ class XDebuggerConfigurableProvider extends DebuggerConfigurableProvider {
       settings.generalApplied(category);
     }
   }
+
+  @Override
+  public boolean isTargetedToProduct(@NotNull Configurable configurable) {
+    for (XDebuggerSettings<?> settings : XDebuggerSettingsManager.getInstanceImpl().getSettingsList()) {
+      if (settings.isTargetedToProduct(configurable)) {
+        return true;
+      }
+    }
+    return super.isTargetedToProduct(configurable);
+  }
 }
