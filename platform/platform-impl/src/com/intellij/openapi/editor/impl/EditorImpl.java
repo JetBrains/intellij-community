@@ -33,7 +33,6 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -168,6 +167,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final CaretCursor myCaretCursor;
   private final ScrollingTimer myScrollingTimer = new ScrollingTimer();
 
+  @SuppressWarnings("RedundantStringConstructorCall")
   private final Object MOUSE_DRAGGED_GROUP = new String("MouseDraggedGroup");
 
   @NotNull private final SettingsImpl mySettings;
@@ -1505,7 +1505,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final int[] myLastXOffsets = new int[myLastStartOffsets.length];
   private final int[] myLastXs = new int[myLastStartOffsets.length];
   private int myCurrentCachePosition;
-  private int myLastCacheHits, myTotalRequests; // todo remove
+  private int myLastCacheHits;
+  private int myTotalRequests; // todo remove
 
   private int getTabbedTextWidth(int startOffset, int targetColumn, int xOffset) {
     int x = xOffset;
@@ -3677,19 +3678,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return logicalToVisualPosition(logicalPos, true);
   }
 
-  // TODO den remove as soon as the problem is fixed.
-  private final ThreadLocal<Integer> stackDepth = new ThreadLocal<Integer>();
-
-  // TODO den remove as soon as the problem is fixed.
   @Override
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware) {
-    stackDepth.set(0);
-    return doLogicalToVisualPosition(logicalPos, softWrapAware);
+    return doLogicalToVisualPosition(logicalPos, softWrapAware,0);
   }
 
   @NotNull
-  private VisualPosition doLogicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware) {
+  private VisualPosition doLogicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware,
+                                                   // TODO den remove as soon as the problem is fixed.
+                                                   int stackDepth) {
     assertReadAccess();
     if (!myFoldingModel.isFoldingEnabled() && !mySoftWrapModel.isSoftWrappingEnabled()) {
       return new VisualPosition(logicalPos.line, logicalPos.column);
@@ -3703,25 +3701,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         offset = outermostCollapsed.getStartOffset();
         LogicalPosition foldStart = offsetToLogicalPosition(offset);
         // TODO den remove as soon as the problem is fixed.
-        Integer depth = stackDepth.get();
-        if (depth >= 0) {
-          stackDepth.set(depth + 1);
-          if (depth > 15) {
-            LOG.error("Detected potential StackOverflowError at logical->visual position mapping. Given logical position: '" +
-                      logicalPos + "'. State: " + dumpState());
-            stackDepth.set(-1);
-          }
+        if (stackDepth > 15) {
+          LOG.error("Detected potential StackOverflowError at logical->visual position mapping. Given logical position: '" +
+                    logicalPos + "'. State: " + dumpState());
+          stackDepth = -1;
         }
-        // TODO den remove as soon as the problem is fixed.
-        try {
-          return doLogicalToVisualPosition(foldStart, true);
-        }
-        finally {
-          depth = stackDepth.get();
-          if (depth > 0) {
-            stackDepth.set(depth - 1);
-          }
-        }
+        return doLogicalToVisualPosition(foldStart, true, stackDepth+1);
       }
       else {
         offset = outermostCollapsed.getEndOffset() + 3;  // WTF?
@@ -5002,7 +4987,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   void assertIsDispatchThread() {
-    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
   }
 
   private static void assertReadAccess() {
@@ -6769,7 +6754,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public Insets getBorderInsets(Component c) {
       Container splitters = SwingUtilities.getAncestorOfClass(EditorsSplitters.class, c);
       boolean thereIsSomethingAbove = !SystemInfo.isMac || UISettings.getInstance().SHOW_MAIN_TOOLBAR || UISettings.getInstance().SHOW_NAVIGATION_BAR ||
-                                      EditorImpl.this.myProject != null && !ToolWindowManagerEx.getInstanceEx(EditorImpl.this.myProject).getIdsOn(ToolWindowAnchor.TOP).isEmpty();
+                                      myProject != null && !ToolWindowManagerEx.getInstanceEx(myProject).getIdsOn(ToolWindowAnchor.TOP).isEmpty();
       return splitters == null ? super.getBorderInsets(c) : new Insets(thereIsSomethingAbove ? 1 : 0, 0, 0, 0);
     }
 

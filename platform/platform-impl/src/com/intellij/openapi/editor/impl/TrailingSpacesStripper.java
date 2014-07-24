@@ -168,10 +168,11 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     if (activeEditor != null && activeEditor.getCaretModel().supportsMultipleCarets()) {
       List<Caret> carets = activeEditor.getCaretModel().getAllCarets();
       List<VisualPosition> visualCarets = new ArrayList<VisualPosition>(carets.size());
-      List<Integer> caretOffsets = new ArrayList<Integer>(carets.size());
-      for (Caret caret : carets) {
+      int[] caretOffsets = new int[carets.size()];
+      for (int i = 0; i < carets.size(); i++) {
+        Caret caret = carets.get(i);
         visualCarets.add(caret.getVisualPosition());
-        caretOffsets.add(caret.getOffset());
+        caretOffsets[i] = caret.getOffset();
       }
 
       markAsNeedsStrippingLater = ((DocumentImpl)document).stripTrailingSpaces(activeEditor.getProject(), inChangedLinesOnly, isVirtualSpaceEnabled, caretOffsets);
