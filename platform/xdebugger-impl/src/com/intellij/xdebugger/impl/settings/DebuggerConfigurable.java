@@ -135,7 +135,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     // move unnamed to top
     Arrays.sort(mergedRootConfigurables, new Comparator<Configurable>() {
       @Override
-      public int compare(Configurable o1, Configurable o2) {
+      public int compare(@NotNull Configurable o1, @NotNull Configurable o2) {
         boolean c1e = StringUtil.isEmpty(o1.getDisplayName());
         return c1e == StringUtil.isEmpty(o2.getDisplayName()) ? 0 : (c1e ? -1 : 1);
       }
@@ -145,9 +145,6 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
 
   @Override
   public void apply() throws ConfigurationException {
-    for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
-      support.getSettingsPanelProvider().apply();
-    }
     if (myRootConfigurable != null) {
       myRootConfigurable.apply();
     }
@@ -219,7 +216,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     if (providers.size() > 1) {
       Collections.sort(providers, new Comparator<DebuggerSettingsPanelProvider>() {
         @Override
-        public int compare(DebuggerSettingsPanelProvider o1, DebuggerSettingsPanelProvider o2) {
+        public int compare(@NotNull DebuggerSettingsPanelProvider o1, @NotNull DebuggerSettingsPanelProvider o2) {
           return o2.getPriority() - o1.getPriority();
         }
       });
@@ -237,7 +234,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   private static List<Configurable> getConfigurables(@NotNull XDebuggerSettings.Category category, @NotNull List<DebuggerSettingsPanelProvider> providers) {
     List<Configurable> configurables = null;
     for (DebuggerSettingsPanelProvider provider : providers) {
-      Collection<? extends Configurable> providerConfigurables = provider.getConfigurable(category);
+      Collection<? extends Configurable> providerConfigurables = provider.getConfigurables(category);
       if (!providerConfigurables.isEmpty()) {
         if (configurables == null) {
           configurables = new SmartList<Configurable>();

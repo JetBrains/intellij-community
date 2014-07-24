@@ -55,6 +55,10 @@ public abstract class XDebuggerSettings<T> implements PersistentStateComponent<T
   }
 
   @Nullable
+  @Deprecated
+  /**
+   * @deprecated Please use {@link #createConfigurable(com.intellij.xdebugger.settings.XDebuggerSettings.Category)}
+   */
   public Configurable createConfigurable() {
     return null;
   }

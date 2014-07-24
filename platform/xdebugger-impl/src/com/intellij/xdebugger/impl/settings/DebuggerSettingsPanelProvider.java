@@ -16,7 +16,7 @@
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
-import com.intellij.xdebugger.settings.XDebuggerSettings;
+import com.intellij.xdebugger.settings.XDebuggerSettings.Category;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,23 +36,31 @@ public abstract class DebuggerSettingsPanelProvider {
     return Collections.emptyList();
   }
 
+  @Deprecated
+  /**
+   * @deprecated Please use {@link #generalApplied(Category)}
+   */
   public void apply() {
   }
 
   @Nullable
   @Deprecated
+  /**
+   * @deprecated Please use {@link #getConfigurables(Category)} and
+   * check {@link Category#GENERAL}
+   */
   public Configurable getRootConfigurable() {
     return null;
   }
 
   @NotNull
-  public Collection<? extends Configurable> getConfigurable(@NotNull XDebuggerSettings.Category category) {
+  public Collection<? extends Configurable> getConfigurables(@NotNull Category category) {
     return Collections.emptyList();
   }
 
   /**
    * General settings of category were applied
    */
-  public void generalApplied(@NotNull XDebuggerSettings.Category category) {
+  public void generalApplied(@NotNull Category category) {
   }
 }

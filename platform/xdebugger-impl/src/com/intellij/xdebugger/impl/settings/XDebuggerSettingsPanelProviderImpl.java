@@ -42,7 +42,7 @@ public class XDebuggerSettingsPanelProviderImpl extends DebuggerSettingsPanelPro
 
   @NotNull
   @Override
-  public Collection<? extends Configurable> getConfigurable(@NotNull XDebuggerSettings.Category category) {
+  public Collection<? extends Configurable> getConfigurables(@NotNull XDebuggerSettings.Category category) {
     List<Configurable> list;
     if (category == XDebuggerSettings.Category.GENERAL) {
       list = new SmartList<Configurable>(SimpleConfigurable.create("debugger.general", "", GeneralConfigurableUi.class, new Getter<XDebuggerGeneralSettings>() {

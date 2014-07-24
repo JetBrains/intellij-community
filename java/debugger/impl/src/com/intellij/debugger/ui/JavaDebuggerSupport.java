@@ -18,7 +18,6 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.actions.*;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.UserRenderersConfigurable;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.ide.DataManager;
@@ -344,11 +343,6 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     @Override
     public Collection<? extends Configurable> getConfigurables() {
       return Collections.singletonList(new UserRenderersConfigurable(null));
-    }
-
-    @Override
-    public void apply() {
-      NodeRendererSettings.getInstance().fireRenderersChanged();
     }
   }
 
