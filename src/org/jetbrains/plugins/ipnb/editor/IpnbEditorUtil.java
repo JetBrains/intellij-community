@@ -47,6 +47,15 @@ public class IpnbEditorUtil {
     return editor;
   }
 
+  public static Editor createPlainCodeEditor(@NotNull Project project, @NotNull String text) {
+    final EditorFactory editorFactory = EditorFactory.getInstance();
+    final Document document = editorFactory.createDocument(text);
+    EditorEx editor = (EditorEx)editorFactory.createEditor(document, project);
+    noScrolling(editor);
+    ConsoleViewUtil.setupConsoleEditor(editor, false, false);
+    return editor;
+  }
+
   private static void noScrolling(EditorEx editor) {
     editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
     editor.getScrollPane().setWheelScrollingEnabled(false);

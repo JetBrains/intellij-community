@@ -33,7 +33,10 @@ public class CodeSourcePanel extends JPanel implements EditorPanel {
 
   public CodeSourcePanel(Project project, Disposable parent, String source) {
     super(new BorderLayout());
-    myEditor = IpnbEditorUtil.createPythonCodeEditor(project, source);
+    if (source.startsWith("%%"))
+      myEditor = IpnbEditorUtil.createPlainCodeEditor(project, source);
+    else
+      myEditor = IpnbEditorUtil.createPythonCodeEditor(project, source);
     add(myEditor.getComponent(), BorderLayout.CENTER);
     Disposer.register(parent, new Disposable() {
       @Override
