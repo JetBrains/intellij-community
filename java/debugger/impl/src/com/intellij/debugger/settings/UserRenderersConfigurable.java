@@ -62,23 +62,28 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
     myRendererDataConfigurable = new CompoundRendererConfigurable(project);
   }
 
+  @Override
   public String getDisplayName() {
     return DebuggerBundle.message("user.renderers.configurable.display.name");
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.idesettings.debugger.typerenderers"; 
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   public Runnable enableSearch(String option) {
     return null;
   }
 
+  @Override
   public JComponent createComponent() {
     final JPanel panel = new JPanel(new BorderLayout(4, 0));
 
@@ -103,6 +108,7 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
     center.add(rendererDataPanel, BorderLayout.CENTER);
 
     myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         if (myCurrentRenderer != null) {
           myCurrentRenderer.setName(myNameField.getText());
@@ -122,12 +128,14 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
     myRendererChooser.getEmptyText().setText(DebuggerBundle.message("text.user.renderers.configurable.no.renderers"));
 
     myRendererChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<NodeRenderer>() {
+      @Override
       public void elementMarkChanged(final NodeRenderer element, final boolean isMarked) {
         element.setEnabled(isMarked);
       }
     });
     myRendererChooser.addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
+      @Override
+      public void valueChanged(@NotNull ListSelectionEvent e) {
         if (!e.getValueIsAdjusting()) {
           updateCurrentRenderer(myRendererChooser.getSelectedElements());
         }
@@ -181,6 +189,7 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
     return toolbar.getComponent();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myRendererDataConfigurable.apply();
     flushTo(NodeRendererSettings.getInstance().getCustomRenderers());
@@ -197,6 +206,7 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
     rendererConfiguration.setRenderers(renderers);
   }
 
+  @Override
   public boolean isModified() {
     if (myRendererDataConfigurable.isModified()) {
       return true;
@@ -211,11 +221,13 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
     return !uiConfiguration.equals(rendererConfiguration);
   }
 
+  @Override
   public void reset() {
     myRendererChooser.removeAllElements();
     final RendererConfiguration rendererConfiguration = NodeRendererSettings.getInstance().getCustomRenderers();
     final ArrayList<NodeRenderer> elementsToSelect = new ArrayList<NodeRenderer>(1);
     rendererConfiguration.iterateRenderers(new InternalIterator<NodeRenderer>() {
+      @Override
       public boolean visit(final NodeRenderer renderer) {
         final NodeRenderer clonedRenderer = (NodeRenderer)renderer.clone();
         myRendererChooser.addElement(clonedRenderer, clonedRenderer.isEnabled());
@@ -230,6 +242,7 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
     myRendererDataConfigurable.reset();
   }
 
+  @Override
   public void disposeUIResources() {
     myRendererChooser.removeAllElements();
     myRendererDataConfigurable.disposeUIResources();
@@ -240,11 +253,13 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
       super(DebuggerBundle.message("button.add"), DebuggerBundle.message("user.renderers.configurable.button.description.add"), ADD_ICON);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       final NodeRenderer renderer = (NodeRenderer)NodeRendererSettings.getInstance().createRenderer(CompoundNodeRenderer.UNIQUE_ID);
       renderer.setEnabled(true);
       myRendererChooser.addElement(renderer, renderer.isEnabled());
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           myNameField.requestFocus();
         }
@@ -257,12 +272,14 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
       super(DebuggerBundle.message("button.remove"), DebuggerBundle.message("user.renderers.configurable.button.description.remove"), REMOVE_ICON);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       for (NodeRenderer selectedElement : myRendererChooser.getSelectedElements()) {
         myRendererChooser.removeElement(selectedElement);
       }
     }
 
+    @Override
     public void update(AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
@@ -275,6 +292,7 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
       super(DebuggerBundle.message("button.copy"), DebuggerBundle.message("user.renderers.configurable.button.description.copy"), COPY_ICON);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       final NodeRenderer selectedElement = myRendererChooser.getSelectedElement();
       if (selectedElement != null) {
@@ -283,6 +301,7 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
       }
     }
 
+    @Override
     public void update(AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
@@ -300,6 +319,7 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
       myMoveUp = up;
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       final int selectedRow = myRendererChooser.getSelectedElementRow();
       if (selectedRow < 0) {
@@ -315,6 +335,7 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
       myRendererChooser.moveElement(myRendererChooser.getElementAt(selectedRow), newRow);
     }
 
+    @Override
     public void update(AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
