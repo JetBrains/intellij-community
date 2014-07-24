@@ -22,7 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedListsZipper;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedViewAuxiliary;
@@ -199,13 +199,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     final Collection<Change> changes = commit.getChanges();
     if (changes.size() == 1) {
       Change change = changes.iterator().next();
-      ContentRevision revision = change.getAfterRevision();
-      if (revision == null) {
-        revision = change.getBeforeRevision();
-      }
-      assert revision != null : "Revision can't be null in " + change;
-      FilePath filePathInRevision = revision.getFile();
-      return Pair.create(commit, filePathInRevision);
+      return Pair.create(commit, ChangesUtil.getFilePath(change));
     }
     for (Change change : changes) {
       if (change.getAfterRevision() != null && FileUtil.filesEqual(filePath.getIOFile(), change.getAfterRevision().getFile().getIOFile())) {
