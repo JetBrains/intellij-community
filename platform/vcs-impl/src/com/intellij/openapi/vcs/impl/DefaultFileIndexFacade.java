@@ -66,6 +66,11 @@ public class DefaultFileIndexFacade extends FileIndexFacade {
   }
 
   @Override
+  public boolean isUnderIgnored(@NotNull VirtualFile file) {
+    return false;
+  }
+
+  @Override
   public Module getModuleForFile(@NotNull VirtualFile file) {
     return null;
   }
