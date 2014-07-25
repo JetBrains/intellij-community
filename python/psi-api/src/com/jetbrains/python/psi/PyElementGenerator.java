@@ -126,4 +126,10 @@ public abstract class PyElementGenerator {
 
   @NotNull
   public abstract PyDecoratorList createDecoratorList(@NotNull final String... decoratorTexts);
+
+  /**
+   * Creates new line whitespace
+   */
+  @NotNull
+  public abstract PsiElement createNewLine();
 }

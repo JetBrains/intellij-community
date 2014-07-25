@@ -120,15 +120,6 @@ class _BehaveRunner(_bdd_utils.BddRunner):
     BddRunner for behave
     """
 
-    @staticmethod
-    def __fix_location(element):
-        """
-         Adds "filename" alias to "file" to preserve _bdd_utils contract
-        :param element: location
-        :return: fixed location
-        """
-        element.location.file = element.location.filename
-        return element
 
     def __process_hook(self, is_started, context, element):
         """
@@ -139,7 +130,7 @@ class _BehaveRunner(_bdd_utils.BddRunner):
         :type context behave.runner.Context
         :param element feature/suite/step
         """
-        _BehaveRunner.__fix_location(element)  # To preserve _bdd_utils contract
+        element.location.file = element.location.filename  # To preserve _bdd_utils contract
         if isinstance(element, Step):
             # Process step
             if is_started:
@@ -148,14 +139,16 @@ class _BehaveRunner(_bdd_utils.BddRunner):
                 self._test_passed(element.name, element.duration)
             elif element.status == 'failed':
                 self._test_failed(element.name, element.error_message, traceback.format_exc())
+            elif element.status == 'undefined':
+                self._test_undefined(element.name, element.location)
             else:
-                self.tc_messages.testIgnored(element.name, "Skipped with status: {}".format(element.status))
+                self._test_skipped(element.name, element.status, element.location)
         elif not is_started and isinstance(element, Scenario) and element.status == 'failed':
-            # To process scenarios with undefined tests
-            # TODO: refactor
-            for step in [s for s in element.steps if s.status == 'undefined']:
+            # To process scenarios with undefined/skipped tests
+            for step in element.steps:
                 assert isinstance(step, Step), step
-                self._test_undefined(step.name, _BehaveRunner.__fix_location(step).location)
+                if step.status != 'passed':
+                    self.__process_hook(False, context, step)
             self._feature_or_scenario(is_started, element.name, element.location)
         elif isinstance(element, ScenarioOutline):
             self._feature_or_scenario(is_started, str(element.examples), element.location)
@@ -210,6 +203,8 @@ if __name__ == "__main__":
     formatters.register_as(_Null, "com.intellij.python.null")
     my_config.format = ["com.intellij.python.null"]  # To prevent output to stdout
     my_config.reporters = []  # To prevent summary to stdout
+    my_config.stdout_capture = False  # For test output
+    my_config.stderr_capture = False  # For test output
     base_dir = _bdd_utils.get_path_by_args(sys.argv)
     my_config.paths = _get_dirs_to_run(base_dir)
     _BehaveRunner(my_config, base_dir).run()

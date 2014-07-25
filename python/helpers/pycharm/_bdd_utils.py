@@ -52,6 +52,7 @@ class BddRunner(object):
         """
         self.__base_dir = base_dir
         self.__last_test_start_time = None  # TODO: Doc when use
+        self.__last_test_name = None
 
     def run(self):
         """"
@@ -77,8 +78,25 @@ class BddRunner(object):
         :param location its location
 
         """
-        self._test_started(test_name, location)
+        if test_name != self.__last_test_name:
+            self._test_started(test_name, location)
         self._test_failed(test_name, message="Test undefined", details="Please define test")
+
+    def _test_skipped(self, test_name, reason, location):
+        """
+        Mark test as skipped
+        :param test_name: name of test
+        :param reason: why test was skipped
+        :type reason str
+        :type test_name str
+        :param location its location
+
+        """
+        if test_name != self.__last_test_name:
+            self._test_started(test_name, location)
+        self.tc_messages.testIgnored(test_name, "Skipped: {}".format(reason))
+        self.__last_test_name = None
+        pass
 
     def _test_failed(self, name, message, details):
         """
@@ -91,6 +109,7 @@ class BddRunner(object):
         :type details str
         """
         self.tc_messages.testFailed(name, message=message, details=details)
+        self.__last_test_name = None
 
     def _test_passed(self, name, duration=None):
         """
@@ -106,6 +125,7 @@ class BddRunner(object):
             duration_to_report = int(time.time() - self.__last_test_start_time)
         self.tc_messages.testFinished(name, duration=int(duration_to_report))
         self.__last_test_start_time = None
+        self.__last_test_name = None
 
     def _test_started(self, name, location):
         """
@@ -115,6 +135,7 @@ class BddRunner(object):
         :type name str
         """
         self.__last_test_start_time = time.time()
+        self.__last_test_name = name
         self.tc_messages.testStarted(name, self.__gen_location(location))
 
     def _feature_or_scenario(self, is_started, name, location):
