@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class DebuggerSupport {
   private static final ExtensionPointName<DebuggerSupport> EXTENSION_POINT = ExtensionPointName.create("com.intellij.xdebugger.debuggerSupport");
 
+  @SuppressWarnings("deprecation")
   private static final DebuggerSettingsPanelProvider EMPTY_SETTINGS_PANEL_PROVIDER = new DebuggerSettingsPanelProvider() {
   };
 
@@ -60,6 +61,11 @@ public abstract class DebuggerSupport {
   @NotNull
   public abstract BreakpointPanelProvider<?> getBreakpointPanelProvider();
 
+  /**
+   * @deprecated Use {@link com.intellij.xdebugger.settings.DebuggerConfigurableProvider}
+   */
+  @Deprecated
+  @SuppressWarnings("deprecation")
   @NotNull
   public DebuggerSettingsPanelProvider getSettingsPanelProvider() {
     return EMPTY_SETTINGS_PANEL_PROVIDER;

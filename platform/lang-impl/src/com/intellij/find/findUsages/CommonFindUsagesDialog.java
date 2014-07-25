@@ -16,8 +16,8 @@
 
 package com.intellij.find.findUsages;
 
+import com.intellij.lang.HelpID;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -26,7 +26,9 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -35,6 +37,7 @@ import javax.swing.*;
  */
 public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
   @NotNull protected final PsiElement myPsiElement;
+  @Nullable private final String myHelpId;
 
   public CommonFindUsagesDialog(@NotNull PsiElement element,
                                 @NotNull Project project,
@@ -46,6 +49,7 @@ public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
     super(project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, isTextSearch(element, isSingleFile, handler),
           !isSingleFile && !element.getManager().isInProject(element));
     myPsiElement = element;
+    myHelpId = ObjectUtils.chooseNotNull(handler.getHelpId(), HelpID.FIND_OTHER_USAGES);
     init();
   }
 
@@ -71,8 +75,9 @@ public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
     coloredComponent.append(DescriptiveNameUtil.getDescriptiveName(myPsiElement), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
   }
 
+  @Nullable
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(FindUsagesManager.getHelpID(myPsiElement));
+  protected String getHelpId() {
+    return myHelpId;
   }
 }

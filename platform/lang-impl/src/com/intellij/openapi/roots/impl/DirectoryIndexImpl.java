@@ -25,15 +25,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootAdapter;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
@@ -43,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class DirectoryIndexImpl extends DirectoryIndex {
@@ -68,7 +69,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     });
   }
 
-  private void subscribeToFileChanges() {
+  protected void subscribeToFileChanges() {
     myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener.Adapter() {
       @Override
       public void fileTypesChanged(@NotNull FileTypeEvent event) {
@@ -98,7 +99,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     });
   }
 
-  private void markContentRootsForRefresh() {
+  protected void markContentRootsForRefresh() {
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
       VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
@@ -110,7 +111,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
   }
 
-  private void dispatchPendingEvents() {
+  protected void dispatchPendingEvents() {
     myConnection.deliverImmediately();
   }
 
@@ -124,24 +125,27 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   private RootIndex getRootIndex() {
     RootIndex rootIndex = myRootIndex;
     if (rootIndex == null) {
-      myRootIndex = rootIndex = new RootIndex(myProject, new RootIndex.InfoCache() {
-        // Upsource can't use int-mapping because different files may have the same id there
-        private final ConcurrentIntObjectMap<DirectoryInfo> myInfoCache = new StripedLockIntObjectConcurrentHashMap<DirectoryInfo>();
-        @Override
-        public void cacheInfo(@NotNull VirtualFile dir, @NotNull DirectoryInfo info) {
-          myInfoCache.put(((NewVirtualFile)dir).getId(), info);
-        }
-
-        @Override
-        public DirectoryInfo getCachedInfo(@NotNull VirtualFile dir) {
-          return myInfoCache.get(((NewVirtualFile)dir).getId());
-        }
-      });
+      myRootIndex = rootIndex = new RootIndex(myProject, createRootInfoCache());
     }
     return rootIndex;
   }
 
-  @Override
+  protected RootIndex.InfoCache createRootInfoCache() {
+    return new RootIndex.InfoCache() {
+      // Upsource can't use int-mapping because different files may have the same id there
+      private final ConcurrentIntObjectMap<DirectoryInfo> myInfoCache = new StripedLockIntObjectConcurrentHashMap<DirectoryInfo>();
+      @Override
+      public void cacheInfo(@NotNull VirtualFile dir, @NotNull DirectoryInfo info) {
+        myInfoCache.put(((NewVirtualFile)dir).getId(), info);
+      }
+
+      @Override
+      public DirectoryInfo getCachedInfo(@NotNull VirtualFile dir) {
+        return myInfoCache.get(((NewVirtualFile)dir).getId());
+      }
+    };
+  }
+
   @TestOnly
   public void checkConsistency() {
     getRootIndex().checkConsistency();
@@ -181,6 +185,21 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     return getRootIndex().getPackageName(dir);
   }
 
+  @NotNull
+  @Override
+  public OrderEntry[] getOrderEntries(@NotNull DirectoryInfo info) {
+    checkAvailability();
+    return getRootIndex().getOrderEntries(info);
+  }
+
+  @TestOnly
+  void assertConsistency(DirectoryInfo info) {
+    OrderEntry[] entries = getOrderEntries(info);
+    for (int i = 1; i < entries.length; i++) {
+      assert RootIndex.BY_OWNER_MODULE.compare(entries[i - 1], entries[i]) <= 0;
+    }
+  }
+
   private void checkAvailability() {
     if (myDisposed) {
       ProgressManager.checkCanceled();
@@ -188,4 +207,95 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
   }
 
+  @NotNull
+  private static OrderEntry createFakeOrderEntry(@NotNull final Module ownerModule) {
+    return new OrderEntry() {
+      @NotNull
+      @Override
+      public VirtualFile[] getFiles(OrderRootType type) {
+        throw new IncorrectOperationException();
+      }
+
+      @NotNull
+      @Override
+      public String[] getUrls(OrderRootType rootType) {
+        throw new IncorrectOperationException();
+      }
+
+      @NotNull
+      @Override
+      public String getPresentableName() {
+        throw new IncorrectOperationException();
+      }
+
+      @Override
+      public boolean isValid() {
+        throw new IncorrectOperationException();
+      }
+
+      @NotNull
+      @Override
+      public Module getOwnerModule() {
+        return ownerModule;
+      }
+
+      @Override
+      public <R> R accept(RootPolicy<R> policy, @Nullable R initialValue) {
+        throw new IncorrectOperationException();
+      }
+
+      @Override
+      public int compareTo(@NotNull OrderEntry o) {
+        throw new IncorrectOperationException();
+      }
+
+      @Override
+      public boolean isSynthetic() {
+        throw new IncorrectOperationException();
+      }
+    };
+  }
+
+  @Override
+  @Nullable
+  OrderEntry findOrderEntryWithOwnerModule(@NotNull DirectoryInfo info, @NotNull Module ownerModule) {
+    OrderEntry[] entries = getOrderEntries(info);
+    if (entries.length < 10) {
+      for (OrderEntry entry : entries) {
+        if (entry.getOwnerModule() == ownerModule) return entry;
+      }
+      return null;
+    }
+    int index = Arrays.binarySearch(entries, createFakeOrderEntry(ownerModule), RootIndex.BY_OWNER_MODULE);
+    return index < 0 ? null : entries[index];
+  }
+
+  @Override
+  @NotNull
+  List<OrderEntry> findAllOrderEntriesWithOwnerModule(@NotNull DirectoryInfo info, @NotNull Module ownerModule) {
+    OrderEntry[] entries = getOrderEntries(info);
+    if (entries.length == 0) return Collections.emptyList();
+
+    if (entries.length == 1) {
+      OrderEntry entry = entries[0];
+      return entry.getOwnerModule() == ownerModule ? Arrays.asList(entries) : Collections.<OrderEntry>emptyList();
+    }
+    int index = Arrays.binarySearch(entries, createFakeOrderEntry(ownerModule), RootIndex.BY_OWNER_MODULE);
+    if (index < 0) {
+      return Collections.emptyList();
+    }
+    int firstIndex = index;
+    while (firstIndex - 1 >= 0 && entries[firstIndex - 1].getOwnerModule() == ownerModule) {
+      firstIndex--;
+    }
+    int lastIndex = index + 1;
+    while (lastIndex < entries.length && entries[lastIndex].getOwnerModule() == ownerModule) {
+      lastIndex++;
+    }
+
+    OrderEntry[] subArray = new OrderEntry[lastIndex - firstIndex];
+    System.arraycopy(entries, firstIndex, subArray, 0, lastIndex - firstIndex);
+
+    return Arrays.asList(subArray);
+  }
 }

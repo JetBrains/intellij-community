@@ -11,7 +11,7 @@ import os
 import traceback
 
 from behave.formatter.base import Formatter
-from behave.model import Step, ScenarioOutline, Feature
+from behave.model import Step, ScenarioOutline, Feature, Scenario
 
 import _bdd_utils
 
@@ -120,6 +120,16 @@ class _BehaveRunner(_bdd_utils.BddRunner):
     BddRunner for behave
     """
 
+    @staticmethod
+    def __fix_location(element):
+        """
+         Adds "filename" alias to "file" to preserve _bdd_utils contract
+        :param element: location
+        :return: fixed location
+        """
+        element.location.file = element.location.filename
+        return element
+
     def __process_hook(self, is_started, context, element):
         """
         Hook to be installed. Reports steps, features etc.
@@ -129,7 +139,7 @@ class _BehaveRunner(_bdd_utils.BddRunner):
         :type context behave.runner.Context
         :param element feature/suite/step
         """
-        element.location.file = element.location.filename  # To preserve _bdd_utils contract
+        _BehaveRunner.__fix_location(element)  # To preserve _bdd_utils contract
         if isinstance(element, Step):
             # Process step
             if is_started:
@@ -140,6 +150,13 @@ class _BehaveRunner(_bdd_utils.BddRunner):
                 self._test_failed(element.name, element.error_message, traceback.format_exc())
             else:
                 self.tc_messages.testIgnored(element.name, "Skipped with status: {}".format(element.status))
+        elif not is_started and isinstance(element, Scenario) and element.status == 'failed':
+            # To process scenarios with undefined tests
+            # TODO: refactor
+            for step in [s for s in element.steps if s.status == 'undefined']:
+                assert isinstance(step, Step), step
+                self._test_undefined(step.name, _BehaveRunner.__fix_location(step).location)
+            self._feature_or_scenario(is_started, element.name, element.location)
         elif isinstance(element, ScenarioOutline):
             self._feature_or_scenario(is_started, str(element.examples), element.location)
         else:

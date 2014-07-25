@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
@@ -123,7 +122,8 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
     }
     TreeElement firstAdded = super.addInternal(first, last, anchor, before);
     if (ElementType.EXPRESSION_BIT_SET.contains(first.getElementType())) {
-      ASTNode element = first;
+      JavaSourceUtil.addSeparatingComma(this, first, ElementType.EXPRESSION_BIT_SET);
+      /*ASTNode element = first;
       for (ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()) {
         if (child.getElementType() == JavaTokenType.COMMA) break;
         if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
@@ -140,7 +140,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
           super.addInternal(comma, comma, child, Boolean.FALSE);
           break;
         }
-      }
+      }*/
     }
     return firstAdded;
   }
@@ -148,17 +148,9 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
   @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
-      ASTNode next = PsiImplUtil.skipWhitespaceAndComments(child.getTreeNext());
-      if (next != null && next.getElementType() == JavaTokenType.COMMA) {
-        deleteChildInternal(next);
-      }
-      else {
-        ASTNode prev = PsiImplUtil.skipWhitespaceAndCommentsBack(child.getTreePrev());
-        if (prev != null && prev.getElementType() == JavaTokenType.COMMA) {
-          deleteChildInternal(prev);
-        }
-      }
+      JavaSourceUtil.deleteSeparatingComma(this, child);
     }
+
     super.deleteChildInternal(child);
   }
 
@@ -172,6 +164,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
     }
   }
 
+  @Override
   public String toString() {
     return "PsiExpressionList";
   }

@@ -17,9 +17,9 @@ package org.jetbrains.jps.builders.rebuild
 /**
  * @author nik
  */
-public class ModuleRebuildTest extends JpsRebuildTestCase {
-  public void testModuleCycle() {
-    doTest("moduleCycle/moduleCycle.ipr", {
+public class ModuleRebuildTest: JpsRebuildTestCase() {
+  fun testModuleCycle() {
+    doTest("moduleCycle/moduleCycle.ipr", fs {
         dir("production") {
           dir("module1") {
             file("Bar1.class")
@@ -34,8 +34,8 @@ public class ModuleRebuildTest extends JpsRebuildTestCase {
     })
   }
 
-  public void testOverlappingSourceRoots() {
-    doTest("overlappingSourceRoots/overlappingSourceRoots.ipr", {
+  fun testOverlappingSourceRoots() {
+    doTest("overlappingSourceRoots/overlappingSourceRoots.ipr", fs {
         dir("production") {
           dir("inner") {
             dir("y") {
@@ -52,8 +52,8 @@ public class ModuleRebuildTest extends JpsRebuildTestCase {
     })
   }
 
-  public void testResourceCopying() {
-    doTest("resourceCopying/resourceCopying.ipr", {
+  fun testResourceCopying() {
+    doTest("resourceCopying/resourceCopying.ipr", fs {
       dir("production") {
         dir("resourceCopying") {
           dir("copy") {

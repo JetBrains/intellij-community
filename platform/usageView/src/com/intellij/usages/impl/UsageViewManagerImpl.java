@@ -33,9 +33,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageViewBundle;
@@ -262,10 +261,25 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   public static boolean isInScope(@NotNull Usage usage, @NotNull SearchScope searchScope) {
-    VirtualFile file = usage instanceof UsageInFile ? ((UsageInFile)usage).getFile() : usage instanceof PsiElementUsage ? PsiUtilCore
-      .getVirtualFile(((PsiElementUsage)usage).getElement()) : null;
-    return file != null && (searchScope instanceof LocalSearchScope
-                         ? ((LocalSearchScope)searchScope).isInScope(file) : ((GlobalSearchScope)searchScope).contains(file));
+    PsiElement element = null;
+    VirtualFile file = usage instanceof UsageInFile ? ((UsageInFile)usage).getFile() :
+                       usage instanceof PsiElementUsage ? PsiUtilCore.getVirtualFile(element = ((PsiElementUsage)usage).getElement()) : null;
+    if (file != null) {
+      return isFileInScope(file, searchScope);
+    }
+    else if(element != null) {
+      return searchScope instanceof ProjectScopeImpl || searchScope instanceof ProjectAndLibrariesScope;
+    }
+    return false;
+  }
+
+  private static boolean isFileInScope(@NotNull VirtualFile file, @NotNull SearchScope searchScope) {
+    if (searchScope instanceof LocalSearchScope) {
+      return ((LocalSearchScope)searchScope).isInScope(file);
+    }
+    else {
+      return ((GlobalSearchScope)searchScope).contains(file);
+    }
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PsiReferenceParameterListImpl extends CompositePsiElement implements PsiReferenceParameterList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReferenceParameterListImpl");
+  private static final TokenSet TYPE_SET = TokenSet.create(JavaElementType.TYPE);
 
   public PsiReferenceParameterListImpl() {
     super(JavaElementType.REFERENCE_PARAMETER_LIST);
@@ -124,23 +126,8 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
 
     final TreeElement firstAdded = super.addInternal(first, last, anchor, before);
 
-    if (first == last && first.getElementType() == JavaElementType.TYPE){
-      for(ASTNode child = first.getTreeNext(); child != null; child = child.getTreeNext()){
-        if (child.getElementType() == JavaTokenType.COMMA) break;
-        if (child.getElementType() == JavaElementType.TYPE){
-          TreeElement comma = Factory.createSingleLeafElement(JavaTokenType.COMMA, ",", 0, 1, treeCharTab, getManager());
-          super.addInternal(comma, comma, first, Boolean.FALSE);
-          break;
-        }
-      }
-      for(ASTNode child = first.getTreePrev(); child != null; child = child.getTreePrev()){
-        if (child.getElementType() == JavaTokenType.COMMA) break;
-        if (child.getElementType() == JavaElementType.TYPE){
-          TreeElement comma = Factory.createSingleLeafElement(JavaTokenType.COMMA, ",", 0, 1, treeCharTab, getManager());
-          super.addInternal(comma, comma, child, Boolean.FALSE);
-          break;
-        }
-      }
+    if (first == last && first.getElementType() == JavaElementType.TYPE) {
+      JavaSourceUtil.addSeparatingComma(this, first, TYPE_SET);
     }
 
     return firstAdded;
@@ -148,17 +135,8 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
 
   @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
-    if (child.getElementType() == JavaElementType.TYPE){
-      ASTNode next = PsiImplUtil.skipWhitespaceAndComments(child.getTreeNext());
-      if (next != null && next.getElementType() == JavaTokenType.COMMA){
-        deleteChildInternal(next);
-      }
-      else{
-        ASTNode prev = PsiImplUtil.skipWhitespaceAndCommentsBack(child.getTreePrev());
-        if (prev != null && prev.getElementType() == JavaTokenType.COMMA){
-          deleteChildInternal(prev);
-        }
-      }
+    if (child.getElementType() == JavaElementType.TYPE) {
+      JavaSourceUtil.deleteSeparatingComma(this, child);
     }
 
     super.deleteChildInternal(child);
@@ -186,6 +164,7 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
     }
   }
 
+  @Override
   public String toString() {
     return "PsiReferenceParameterList";
   }

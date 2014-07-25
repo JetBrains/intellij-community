@@ -15,6 +15,7 @@
  */
 package com.intellij.dvcs.repo;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +50,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Nadya Zabrodina
  */
-public interface Repository {
+public interface Repository extends Disposable {
 
 
   /**

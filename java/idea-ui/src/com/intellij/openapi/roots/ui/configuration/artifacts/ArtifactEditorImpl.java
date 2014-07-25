@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,7 +213,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     leftPanel.add(treePanel, BorderLayout.CENTER);
     if (UIUtil.isUnderDarcula()) {
       CompoundBorder border =
-        new CompoundBorder(new CustomLineBorder(UIUtil.getBorderColor(), 0, 0, 0, 1), BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        new CompoundBorder(new CustomLineBorder(0, 0, 0, 1), BorderFactory.createEmptyBorder(0, 0, 0, 0));
       leftPanel.setBorder(border);
     } else {
       leftPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 0));

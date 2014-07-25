@@ -83,6 +83,11 @@ public abstract class FindUsagesHandler {
     return PsiElement.EMPTY_ARRAY;
   }
 
+  @Nullable
+  protected String getHelpId() {
+    return FindUsagesManager.getHelpID(myPsiElement);
+  }
+
   @NotNull
   public static FindUsagesOptions createFindUsagesOptions(@NotNull Project project, @Nullable final DataContext dataContext) {
     FindUsagesOptions findUsagesOptions = new FindUsagesOptions(project, dataContext);

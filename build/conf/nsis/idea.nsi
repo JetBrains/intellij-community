@@ -367,7 +367,7 @@ Page custom ConfirmDesktopShortcut
 !insertmacro MUI_PAGE_FINISH
 
 !define MUI_UNINSTALLER
-!insertmacro MUI_UNPAGE_CONFIRM
+;!insertmacro MUI_UNPAGE_CONFIRM
 UninstPage custom un.ConfirmDeleteSettings
 !insertmacro MUI_UNPAGE_INSTFILES
 
@@ -1054,8 +1054,10 @@ FunctionEnd
 Function un.ConfirmDeleteSettings
   !insertmacro MUI_HEADER_TEXT "$(uninstall_options)" "$(uninstall_options_prompt)"
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 1" "Text" "$(prompt_delete_settings)"
-  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 2" "Text" "$(confirm_delete_caches)"
-  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 3" "Text" "$(confirm_delete_settings)"
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 2" "Text" $INSTDIR
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 3" "Text" "$(text_delete_settings)"
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 4" "Text" "$(confirm_delete_caches)"
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 5" "Text" "$(confirm_delete_settings)"
   !insertmacro INSTALLOPTIONS_DISPLAY "DeleteSettings.ini"
 FunctionEnd
 
@@ -1133,7 +1135,7 @@ Section "Uninstall"
   ; Uninstaller is in the \bin directory, we need upper level dir
   StrCpy $INSTDIR $INSTDIR\..
 
-  !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 2" "State"
+  !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 4" "State"
   DetailPrint "Data: $DOCUMENTS\..\${PRODUCT_SETTINGS_DIR}\"
   StrCmp $R2 1 "" skip_delete_caches
    ;find the path to caches (system) folder
@@ -1147,7 +1149,7 @@ Section "Uninstall"
 ;   RmDir /r $DOCUMENTS\..\${PRODUCT_SETTINGS_DIR}\system
 skip_delete_caches:
 
-  !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 3" "State"
+  !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 5" "State"
   StrCmp $R3 1 "" skip_delete_settings
     ;find the path to settings (config) folder
     StrCpy $0 "config"

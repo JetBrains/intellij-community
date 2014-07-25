@@ -1904,6 +1904,10 @@ public class UIUtil {
     return INACTIVE_HEADER_COLOR;
   }
 
+  /**
+   * @deprecated
+   * @use JBColor.border()
+   */
   public static Color getBorderColor() {
     return isUnderDarcula() ? Gray._50 : BORDER_COLOR;
   }

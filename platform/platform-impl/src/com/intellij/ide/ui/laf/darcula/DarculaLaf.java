@@ -79,7 +79,7 @@ public class DarculaLaf extends BasicLookAndFeel {
   @SuppressWarnings("UnusedParameters")
   private static void log(Exception e) {
 //    everything is gonna be alright
-    e.printStackTrace();
+//    e.printStackTrace();
   }
 
   @Override

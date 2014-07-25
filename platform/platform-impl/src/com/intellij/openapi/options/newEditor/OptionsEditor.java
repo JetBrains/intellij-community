@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EdtRunnable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.DocumentAdapter;
@@ -366,6 +367,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
           myOwnDetails.setContent(myContentWrapper);
           myOwnDetails.setBannerMinHeight(mySearchWrapper.getHeight());
           myOwnDetails.setText(getBannerText(configurable));
+          if (Registry.is("ide.file.settings.order.new")) {
+            myOwnDetails.forProject(myTree.getConfigurableProject(configurable));
+          }
 
           final ConfigurableContent content = myConfigurable2Content.get(current);
 

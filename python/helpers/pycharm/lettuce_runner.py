@@ -59,6 +59,8 @@ class _LettuceRunner(_bdd_utils.BddRunner):
             reason = step.why
             assert isinstance(reason, ReasonToFail), reason
             self._test_failed(test_name, message=reason.exception, details=reason.traceback)
+        else:
+            self._test_undefined(test_name, step.described_at)
 
     def __install_hooks(self):
         """

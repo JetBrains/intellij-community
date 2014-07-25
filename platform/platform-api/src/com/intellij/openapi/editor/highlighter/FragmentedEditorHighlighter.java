@@ -71,36 +71,42 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
       if (range.getEndOffset() >= iterator.getStart()) {
         int relativeStart = Math.max(iterator.getStart() - range.getStartOffset(), 0);
         int relativeEnd = Math.min(iterator.getEnd() - range.getStartOffset(), range.getLength() + 1);
-        boolean merged = false;
-        if (myMergeByTextAttributes && !myPieces.isEmpty()) {
-          Element element = myPieces.get(myPieces.size() - 1);
-          if (element.getEnd() >= offset + relativeStart &&
-              Comparing.equal(element.getAttributes(), iterator.getTextAttributes()) &&
-              Comparing.equal(element.getElementType(), iterator.getTokenType())) {
-            merged = true;
-            myPieces.add(new Element(element.getStart(),
-                                     offset + relativeEnd,
-                                     iterator.getTokenType(),
-                                     iterator.getTextAttributes()));
-          }
-        }
-        if (!merged) {
-          myPieces.add(new Element(offset + relativeStart,
-                                   offset + relativeEnd,
-                                   iterator.getTokenType(),
-                                   iterator.getTextAttributes()));
-        }
+
+        addElement(new Element(offset + relativeStart,
+                               offset + relativeEnd,
+                               iterator.getTokenType(),
+                               iterator.getTextAttributes()));
       }
 
       if (range.getEndOffset() < iterator.getEnd()) {
         offset += range.getLength() + 1 + myAdditionalOffset;  // myAdditionalOffset because of extra line - for shoene separators
         int lastEnd = myPieces.isEmpty() ? -1 : myPieces.get(myPieces.size() - 1).getEnd();
-        myPieces.add(new Element(Math.max(offset - 1 - myAdditionalOffset, lastEnd), offset, null, TextAttributes.ERASE_MARKER));
+        addElement(new Element(Math.max(offset - 1 - myAdditionalOffset, lastEnd), offset, null, TextAttributes.ERASE_MARKER));
         index++;
         continue;
       }
 
       iterator.advance();
+    }
+  }
+
+  private void addElement(@NotNull Element element) {
+    boolean merged = false;
+    if (myMergeByTextAttributes && !myPieces.isEmpty()) {
+      Element oldElement = myPieces.get(myPieces.size() - 1);
+      if (oldElement.getEnd() >= element.getStart() &&
+          Comparing.equal(oldElement.getAttributes(), element.getAttributes()) &&
+          Comparing.equal(oldElement.getElementType(), element.getElementType())) {
+        merged = true;
+        myPieces.remove(myPieces.size() - 1);
+        myPieces.add(new Element(oldElement.getStart(),
+                                 element.getEnd(),
+                                 element.getElementType(),
+                                 element.getAttributes()));
+      }
+    }
+    if (!merged) {
+      myPieces.add(element);
     }
   }
 

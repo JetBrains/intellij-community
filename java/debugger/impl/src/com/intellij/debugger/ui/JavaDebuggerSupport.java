@@ -18,7 +18,6 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.actions.*;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.settings.UserRenderersConfigurable;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
@@ -26,7 +25,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.xdebugger.AbstractDebuggerSession;
@@ -40,14 +38,12 @@ import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
-import com.intellij.xdebugger.impl.settings.DebuggerSettingsPanelProvider;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
-import java.util.Collections;
 
 /**
  * @author nik
@@ -66,7 +62,6 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   private final ShowExecutionPointActionHandler myShowExecutionPointActionHandler = new ShowExecutionPointActionHandler();
   //private final EvaluateActionHandler myEvaluateActionHandler = new EvaluateActionHandler();
   private final QuickEvaluateActionHandler myQuickEvaluateHandler = new QuickEvaluateActionHandler();
-  private final JavaDebuggerSettingsPanelProvider myDebuggerSettingsPanelProvider = new JavaDebuggerSettingsPanelProvider();
   private final DebuggerActionHandler mySmartStepIntoHandler = new JvmSmartStepIntoActionHandler();
   private final DebuggerActionHandler myAddToWatchedActionHandler = new AddToWatchActionHandler();
   private final JavaMarkObjectActionHandler myMarkObjectActionHandler = new JavaMarkObjectActionHandler();
@@ -214,12 +209,6 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     return X_EDIT;
   }
 
-  @Override
-  @NotNull
-  public DebuggerSettingsPanelProvider getSettingsPanelProvider() {
-    return myDebuggerSettingsPanelProvider;
-  }
-
   private static class JavaBreakpointPanelProvider extends BreakpointPanelProvider<Breakpoint> {
     //private final List<MyBreakpointManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -331,19 +320,6 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     //    myListener.breakpointsChanged();
     //  }
     //}
-  }
-
-  final static class JavaDebuggerSettingsPanelProvider extends DebuggerSettingsPanelProvider {
-    @Override
-    public int getPriority() {
-      return 1;
-    }
-
-    @NotNull
-    @Override
-    public Collection<? extends Configurable> getConfigurables() {
-      return Collections.singletonList(new UserRenderersConfigurable(null));
-    }
   }
 
   public static Project getContextProjectForEditorFieldsInDebuggerConfigurables() {

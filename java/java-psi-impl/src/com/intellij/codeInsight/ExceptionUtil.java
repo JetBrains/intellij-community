@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -674,6 +675,10 @@ public class ExceptionUtil {
       if (aClass != null && !(aClass instanceof PsiAnonymousClass) && !((PsiField)parent).hasModifierProperty(PsiModifier.STATIC)) {
         // exceptions thrown in field initializers should be thrown in all class constructors
         return areAllConstructorsThrow(aClass, exceptionType);
+      }
+    } else {
+      for (CustomExceptionHandler exceptionHandler : Extensions.getExtensions(CustomExceptionHandler.KEY)) {
+        if (exceptionHandler.isHandled(element, exceptionType, topElement)) return true;
       }
     }
     return isHandled(parent, exceptionType, topElement);

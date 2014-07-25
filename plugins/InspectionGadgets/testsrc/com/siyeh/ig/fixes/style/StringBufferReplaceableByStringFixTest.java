@@ -32,4 +32,5 @@ public class StringBufferReplaceableByStringFixTest extends IGQuickFixesTestCase
   public void testCharLiteral() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
   public void testEscape() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
   public void testUnescape() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
+  public void testMethodCallOnString() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
 }
