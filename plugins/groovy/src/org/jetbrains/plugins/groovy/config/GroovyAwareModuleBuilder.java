@@ -96,11 +96,6 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
   }
 
   @Override
-  public boolean isTemplateBased() {
-    return true;
-  }
-
-  @Override
   public int getWeight() {
     return 60;
   }
