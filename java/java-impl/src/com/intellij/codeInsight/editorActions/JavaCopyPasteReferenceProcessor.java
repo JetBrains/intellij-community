@@ -88,7 +88,8 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
           }
           else {
             if (reference instanceof PsiReferenceExpression) {
-              PsiElement referent = reference.resolve();
+              PsiElement referent = resolveReferenceIgnoreOverriding(reference);
+
               if (!(referent instanceof PsiNamedElement)
                   || !data.staticMemberName.equals(((PsiNamedElement)referent).getName())
                   || !(referent instanceof PsiMember)
