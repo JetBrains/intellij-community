@@ -2,6 +2,7 @@
 from django_frame import FCode
 from pydevd_file_utils import GetFileNameAndBaseFromFile
 from runfiles import DictContains
+from jinja2.utils import missing
 
 class Jinja2TemplateFrame:
 
@@ -28,7 +29,7 @@ class Jinja2TemplateFrame:
                 if not k in res:
                     #local variables should shadow globals from context
                     res[k] = v
-            else:
+            elif k is not missing:
                 key = k[2:]
                 res[key] = v
         return res
