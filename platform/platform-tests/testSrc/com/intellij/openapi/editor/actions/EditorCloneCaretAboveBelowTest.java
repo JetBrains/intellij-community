@@ -18,10 +18,8 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
-import java.io.IOException;
-
 public class EditorCloneCaretAboveBelowTest extends LightPlatformCodeInsightFixtureTestCase {
-  public void testStoringDesiredXPosition() throws IOException {
+  public void testStoringDesiredXPosition() {
     init("long line<caret>\n" +
          "line\n" +
          "long line\n" +
@@ -43,7 +41,7 @@ public class EditorCloneCaretAboveBelowTest extends LightPlatformCodeInsightFixt
                 "very long<caret> line");
   }
 
-  public void testCloneAndMove() throws IOException {
+  public void testCloneAndMove() {
     init("long line<caret>\n" +
          "line\n" +
          "long line");
@@ -54,7 +52,7 @@ public class EditorCloneCaretAboveBelowTest extends LightPlatformCodeInsightFixt
                 "long line<caret>");
   }
 
-  public void testCloneBelowAndAbove() throws IOException {
+  public void testCloneBelowAndAbove() {
     init("line\n" +
          "<caret>li<caret>ne\n" +
          "line");
@@ -74,6 +72,16 @@ public class EditorCloneCaretAboveBelowTest extends LightPlatformCodeInsightFixt
     checkResult("line\n" +
                 "<caret>li<caret>ne\n" +
                 "line");
+  }
+
+  public void testCloneWithSelection() {
+    init("long <selection>line<caret></selection>\n" +
+         "line\n" +
+         "long line");
+    cloneCaretBelow();
+    checkResult("long <selection>line<caret></selection>\n" +
+                "line\n" +
+                "long <selection>line<caret></selection>");
   }
 
   private void cloneCaretBelow() {

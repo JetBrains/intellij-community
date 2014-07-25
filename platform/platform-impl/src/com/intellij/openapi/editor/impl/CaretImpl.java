@@ -67,6 +67,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
    * Similar to {@link #myDesiredX}, but represents logical caret position (<code>getLogicalPosition().column</code>) rather than visual.
    */
   private int myLastColumnNumber = 0;
+  private int myDesiredSelectionStartColumn = -1;
+  private int myDesiredSelectionEndColumn = -1;
   /**
    * We check that caret is located at the target offset at the end of {@link #moveToOffset(int, boolean)} method. However,
    * it's possible that the following situation occurs:
@@ -554,6 +556,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     }
 
     setLastColumnNumber(myLogicalCaret.column);
+    myDesiredSelectionStartColumn = myDesiredSelectionEndColumn = -1;
     myVisibleCaret = myEditor.logicalToVisualPosition(myLogicalCaret);
 
     updateOffsetsFromLogicalPosition();
@@ -710,6 +713,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     myEditor.getFoldingModel().flushCaretPosition();
 
     setLastColumnNumber(myLogicalCaret.column);
+    myDesiredSelectionStartColumn = myDesiredSelectionEndColumn = -1;
     myEditor.updateCaretCursor();
     requestRepaint(oldInfo);
 
@@ -966,6 +970,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     clone.myLastColumnNumber = this.myLastColumnNumber;
     clone.myReportCaretMoves = this.myReportCaretMoves;
     clone.myDesiredX = this.myDesiredX;
+    clone.myDesiredSelectionStartColumn = -1;
+    clone.myDesiredSelectionEndColumn = -1;
     return clone;
   }
 
@@ -975,10 +981,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     assertIsDispatchThread();
     int lineShift = above ? -1 : 1;
     final CaretImpl clone = cloneWithoutSelection();
-    final int newSelectionStartOffset, newSelectionEndOffset;
+    final int newSelectionStartOffset, newSelectionEndOffset, newSelectionStartColumn, newSelectionEndColumn;
     final VisualPosition newSelectionStartPosition, newSelectionEndPosition;
     final boolean hasNewSelection;
-    if (hasSelection()) {
+    if (hasSelection() || myDesiredSelectionStartColumn >=0 || myDesiredSelectionEndColumn >= 0) {
       VisualPosition startPosition = getSelectionStartPosition();
       VisualPosition endPosition = getSelectionEndPosition();
       VisualPosition leadPosition = getLeadSelectionPosition();
@@ -986,8 +992,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
       boolean leadIsEnd = leadPosition.equals(endPosition);
       LogicalPosition selectionStart = myEditor.visualToLogicalPosition(leadIsStart || leadIsEnd ? leadPosition : startPosition);
       LogicalPosition selectionEnd = myEditor.visualToLogicalPosition(leadIsEnd ? startPosition : endPosition);
-      LogicalPosition newSelectionStart = truncate(new LogicalPosition(selectionStart.line + lineShift, selectionStart.column));
-      LogicalPosition newSelectionEnd = truncate(new LogicalPosition(selectionEnd.line + lineShift, selectionEnd.column));
+      newSelectionStartColumn = myDesiredSelectionStartColumn < 0 ? selectionStart.column : myDesiredSelectionStartColumn;
+      newSelectionEndColumn = myDesiredSelectionEndColumn < 0 ? selectionEnd.column : myDesiredSelectionEndColumn;
+      LogicalPosition newSelectionStart = truncate(new LogicalPosition(selectionStart.line + lineShift, newSelectionStartColumn));
+      LogicalPosition newSelectionEnd = truncate(new LogicalPosition(selectionEnd.line + lineShift, newSelectionEndColumn));
       newSelectionStartOffset = myEditor.logicalPositionToOffset(newSelectionStart);
       newSelectionEndOffset = myEditor.logicalPositionToOffset(newSelectionEnd);
       newSelectionStartPosition = myEditor.logicalToVisualPosition(newSelectionStart);
@@ -1000,6 +1008,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
       newSelectionStartPosition = null;
       newSelectionEndPosition = null;
       hasNewSelection = false;
+      newSelectionStartColumn = -1;
+      newSelectionEndColumn = -1;
     }
     LogicalPosition oldPosition = getLogicalPosition();
     int newLine = oldPosition.line + lineShift;
@@ -1010,6 +1020,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     clone.moveToLogicalPosition(new LogicalPosition(newLine, myLastColumnNumber), false, null, false);
     clone.myLastColumnNumber = myLastColumnNumber;
     clone.myDesiredX = myDesiredX >= 0 ? myDesiredX : getCurrentX();
+    clone.myDesiredSelectionStartColumn = newSelectionStartColumn;
+    clone.myDesiredSelectionEndColumn = newSelectionEndColumn;
+
     if (myEditor.getCaretModel().addCaret(clone)) {
       if (hasNewSelection) {
         myEditor.getCaretModel().doWithCaretMerging(new Runnable() {

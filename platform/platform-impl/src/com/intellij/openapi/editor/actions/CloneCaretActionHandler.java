@@ -37,8 +37,8 @@ public class CloneCaretActionHandler extends EditorActionHandler {
   private static final Set<String> OUR_ACTIONS = new HashSet<String>(Arrays.asList(
     IdeActions.ACTION_EDITOR_CLONE_CARET_ABOVE,
     IdeActions.ACTION_EDITOR_CLONE_CARET_BELOW,
-    IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT,
-    IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT
+    IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION,
+    IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION
   ));
 
   private final boolean myCloneAbove;
@@ -77,7 +77,14 @@ public class CloneCaretActionHandler extends EditorActionHandler {
         editor.getCaretModel().removeCaret(caret);
       }
       else {
-        Caret clone = caret.clone(myCloneAbove);
+        Caret clone = caret;
+        do {
+          Caret original = clone;
+          clone = clone.clone(myCloneAbove);
+          if (original != caret) {
+            editor.getCaretModel().removeCaret(original);
+          }
+        } while (clone != null && caret.hasSelection() && !clone.hasSelection());
         if (clone != null) {
           clone.putUserData(LEVEL, newLevel);
         }
@@ -94,7 +101,7 @@ public class CloneCaretActionHandler extends EditorActionHandler {
       return value == null ? 0 : value;
     }
     else {
-      caret.putUserData(LEVEL, 0);
+      caret.putUserData(LEVEL, null);
       return 0;
     }
   }
