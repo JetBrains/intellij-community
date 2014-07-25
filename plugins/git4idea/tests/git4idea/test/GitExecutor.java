@@ -98,7 +98,7 @@ public class GitExecutor extends Executor {
   }
 
   public static void add(@NotNull String path) {
-    git("add " + path);
+    git("add --verbose " + path);
   }
 
   public static void addCommit(@NotNull String message) {
