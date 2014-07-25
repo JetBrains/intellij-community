@@ -40,6 +40,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
@@ -83,6 +84,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   private JPanel myErrorPanelPlace;
   private ThreeStateCheckBox myShowContentCheckBox;
   private FixedSizeButton myShowSpecificContentOptionsButton;
+  private JPanel myTopPanel;
   private final ActionGroup myShowSpecificContentOptionsGroup;
   private final Project myProject;
   private final ComplexElementSubstitutionParameters mySubstitutionParameters = new ComplexElementSubstitutionParameters();
@@ -106,6 +108,9 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myPropertiesEditors = new ArtifactPropertiesEditors(myContext, myOriginalArtifact, myOriginalArtifact);
     Disposer.register(this, mySourceItemsTree);
     Disposer.register(this, myLayoutTreeComponent);
+    if (Registry.is("ide.new.project.settings")) {
+      myTopPanel.setBorder(new EmptyBorder(0, 10, 0, 10));
+    }
     myBuildOnMakeCheckBox.setSelected(artifact.isBuildOnMake());
     final String outputPath = artifact.getOutputPath();
     myOutputDirectoryField.addBrowseFolderListener(CompilerBundle.message("dialog.title.output.directory.for.artifact"),
