@@ -450,16 +450,22 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       final PsiJavaCodeReferenceElement element = annotation.getNameReferenceElement();
       if (element != null) {
         final PsiElement resolved = element.resolve();
-        if (resolved instanceof PsiClass && !AnnotationUtil.isAnnotated((PsiClass)resolved, "java.lang.annotation.Documented", false)) continue;
+        if (resolved instanceof PsiClass && !AnnotationUtil.isAnnotated((PsiClass)resolved, "java.lang.annotation.Documented", false, true)) {
+          continue;
+        }
 
         String referenceName = element.getReferenceName();
-        if (!shownAnnotations.add(referenceName)) continue;
-
-        if (lastSize != buffer.length()) buffer.append(" ");
-        buffer.append("@").append(referenceName);
+        if (shownAnnotations.add(referenceName) || isRepeatableAnnotation(resolved)) {
+          if (lastSize != buffer.length()) buffer.append(" ");
+          buffer.append("@").append(referenceName);
+        }
       }
     }
     if (lastSize != buffer.length()) buffer.append(" ");
+  }
+
+  private static boolean isRepeatableAnnotation(PsiElement resolved) {
+    return resolved instanceof PsiClass && !AnnotationUtil.isAnnotated((PsiModifierListOwner)resolved, CommonClassNames.JAVA_LANG_ANNOTATION_REPEATABLE, false, true);
   }
 
   @Override
