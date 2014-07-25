@@ -34,7 +34,6 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.Library
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.ModuleOutputSourceItem;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
 import com.intellij.openapi.ui.FixedSizeButton;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -207,7 +206,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
     myErrorPanelPlace.add(myValidationManager.getMainErrorPanel(), BorderLayout.CENTER);
 
-    Splitter splitter = new Splitter(false);
+    JBSplitter splitter = new JBSplitter(false);
     final JPanel leftPanel = new JPanel(new BorderLayout());
     JPanel treePanel = myLayoutTreeComponent.getTreePanel();
     if (UIUtil.isUnderDarcula()) {
@@ -246,7 +245,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     labelPanel.add(link);
     rightTopPanel.add(labelPanel, BorderLayout.CENTER);
     rightPanel.add(rightTopPanel, BorderLayout.NORTH);
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(mySourceItemsTree, UIUtil.isUnderDarcula());
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(mySourceItemsTree, UIUtil.isUnderDarcula() || Registry.is("ide.new.project.settings"));
     JPanel scrollPaneWrap = new JPanel(new BorderLayout());
     scrollPaneWrap.add(scrollPane, BorderLayout.CENTER);
     if (UIUtil.isUnderDarcula()) {
@@ -262,6 +261,14 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
       rightPanel.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 3));
     }
     splitter.setSecondComponent(rightPanel);
+    if (Registry.is("ide.new.project.settings")) {
+      splitter.setOnePixelMode();
+      splitter.getDivider().setBackground(UIUtil.getPanelBackground());
+      treePanel.setBorder(new EmptyBorder(0, 0, 0, 0));
+      rightPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
+      scrollPaneWrap.setBorder(new EmptyBorder(0,0,0,0));
+      leftPanel.setBorder(new EmptyBorder(0,0,0,0));
+    }
 
 
     myShowContentCheckBox.addActionListener(new ActionListener() {
