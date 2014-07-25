@@ -84,6 +84,10 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       }
     }
 
+    for (DebuggerConfigurableProvider provider : providers) {
+      configurables.addAll(provider.getConfigurables(DebuggerSettingsCategory.ROOT));
+    }
+
     MergedCompositeConfigurable mergedGeneralConfigurable = computeGeneralConfigurables(providers);
     if (configurables.isEmpty() && mergedGeneralConfigurable == null) {
       myRootConfigurable = null;
