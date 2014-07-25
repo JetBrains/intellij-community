@@ -274,6 +274,7 @@ public class JBColor extends Color {
       @NotNull
       @Override
       public Color produce() {
+        //noinspection deprecation
         return UIUtil.getBorderColor();
       }
     });
