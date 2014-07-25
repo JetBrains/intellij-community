@@ -1156,8 +1156,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     RelativeTokenTextView tokenTextGetter = new RelativeTokenTextView();
 
     for (int i = 1, size = myProduction.size() - 1; i < size; i++) {
-      final ProductionMarker item = myProduction.get(i);
-
+      ProductionMarker item = myProduction.get(i);
       if (item instanceof StartMarker && ((StartMarker)item).myDoneMarker == null) {
         LOG.error(UNBALANCED_MESSAGE);
       }
@@ -1168,11 +1167,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       int wsEndIndex = item.myLexemeIndex;
       while (wsEndIndex < myLexemeCount && whitespaceOrComment(myLexTypes[wsEndIndex])) wsEndIndex++;
 
-      wsTokens.configure(wsStartIndex, wsEndIndex);
-      tokenTextGetter.configure(wsStartIndex);
-      boolean atEnd = wsStartIndex == 0 || wsEndIndex == myLexemeCount;
-
-      item.myLexemeIndex = wsStartIndex + item.myEdgeTokenBinder.getEdgePosition(wsTokens, atEnd, tokenTextGetter);
+      if (wsStartIndex != wsEndIndex) {
+        wsTokens.configure(wsStartIndex, wsEndIndex);
+        tokenTextGetter.configure(wsStartIndex);
+        boolean atEnd = wsStartIndex == 0 || wsEndIndex == myLexemeCount;
+        item.myLexemeIndex = wsStartIndex + item.myEdgeTokenBinder.getEdgePosition(wsTokens, atEnd, tokenTextGetter);
+      }
     }
   }
 
