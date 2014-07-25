@@ -35,7 +35,7 @@ class GitCommitAuthorCorrector {
       if (at < 0) {
         return author;
       }
-      int email = author.substring(0, at).lastIndexOf(' ');
+      int email = author.lastIndexOf(' ', at - 1);
       if (email < 0) {
         return author;
       }

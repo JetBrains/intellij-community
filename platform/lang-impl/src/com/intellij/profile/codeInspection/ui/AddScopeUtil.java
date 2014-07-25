@@ -40,7 +40,7 @@ import javax.swing.tree.TreePath;
 import java.util.*;
 
 public class AddScopeUtil {
-  public static ScopeToolState performAddScope(final TreeTable treeTable,
+  public static void performAddScope(final TreeTable treeTable,
                                                final Project project,
                                                final InspectionProfileImpl inspectionProfile,
                                                final Collection<InspectionConfigTreeNode> selectedNodes) {
@@ -52,10 +52,10 @@ public class AddScopeUtil {
 
     final List<String> availableScopes = getAvailableScopes(descriptors, project, inspectionProfile);
     final int idx = Messages.showChooseDialog(treeTable, "Scope:", "Choose Scope", ArrayUtil.toStringArray(availableScopes), availableScopes.get(0), Messages.getQuestionIcon());
-    if (idx == -1) return null;
-    final NamedScope chosenScope = NamedScopesHolder.getScope(project, availableScopes.get(idx));
+    if (idx == -1) return;
+    final String scopeName = availableScopes.get(idx);
+    final NamedScope chosenScope = NamedScopesHolder.getScope(project, scopeName);
 
-    ScopeToolState scopeToolState = null;
     final Tree tree = treeTable.getTree();
 
     for (final InspectionConfigTreeNode node : nodes) {
@@ -63,13 +63,12 @@ public class AddScopeUtil {
       final InspectionToolWrapper toolWrapper = descriptor.getToolWrapper().createCopy(); //copy
       final HighlightDisplayLevel level = inspectionProfile.getErrorLevel(descriptor.getKey(), chosenScope, project);
       final boolean enabled = inspectionProfile.isToolEnabled(descriptor.getKey());
-      scopeToolState = inspectionProfile.addScope(toolWrapper, chosenScope, level, enabled, project);
+      inspectionProfile.addScope(toolWrapper, chosenScope, level, enabled, project);
       node.dropCache();
       ((DefaultTreeModel)tree.getModel()).reload(node);
       tree.expandPath(new TreePath(node.getPath()));
     }
     tree.revalidate();
-    return scopeToolState;
   }
 
   private static void collect(final List<Descriptor> descriptors,

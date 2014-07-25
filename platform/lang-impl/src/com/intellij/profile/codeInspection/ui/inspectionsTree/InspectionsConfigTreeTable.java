@@ -154,7 +154,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
                      mySettings.getInspectionProfile().getNonDefaultTools(toolId, mySettings.getProject()));
           }
         }
-        return sink.constructIcon();
+        return sink.constructIcon(mySettings.getInspectionProfile());
       } else if (column == IS_ENABLED_COLUMN) {
         return isEnabled(inspectionsKeys);
       }
@@ -204,17 +204,17 @@ public class InspectionsConfigTreeTable extends TreeTable {
 
   private static class MultiColoredHighlightSeverityIconSink {
 
-    private final LinkedHashMap<String, HighlightSeverity> myScopeToAverageSeverityMap = new LinkedHashMap<String, HighlightSeverity>();
+    private final Map<String, HighlightSeverity> myScopeToAverageSeverityMap = new HashMap<String, HighlightSeverity>();
 
+    private String myDefaultScopeName;
     private boolean myIsFirst = true;
 
-    public Icon constructIcon() {
+    public Icon constructIcon(final InspectionProfileImpl inspectionProfile) {
       if (myScopeToAverageSeverityMap.isEmpty()) {
         return null;
       }
-      //TODO order scopes
       return !allScopesHasMixedSeverity()
-             ? new MultiScopeSeverityIcon(myScopeToAverageSeverityMap)
+             ? new MultiScopeSeverityIcon(myScopeToAverageSeverityMap, myDefaultScopeName, inspectionProfile)
              : ScopesAndSeveritiesTable.MIXED_FAKE_LEVEL.getIcon();
     }
 
@@ -229,6 +229,9 @@ public class InspectionsConfigTreeTable extends TreeTable {
 
     public void put(final ScopeToolState defaultState, final Collection<ScopeToolState> nonDefault) {
       putOne(defaultState);
+      if (myDefaultScopeName == null) {
+        myDefaultScopeName = defaultState.getScopeName();
+      }
       for (final ScopeToolState scopeToolState : nonDefault) {
         putOne(scopeToolState);
       }
@@ -237,7 +240,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
       }
     }
 
-    public void putOne(final ScopeToolState state) {
+    private void putOne(final ScopeToolState state) {
       final Icon icon = state.getLevel().getIcon();
       final String scopeName = state.getScopeName();
       if (icon instanceof HighlightDisplayLevel.SingleColorIconWithMask) {

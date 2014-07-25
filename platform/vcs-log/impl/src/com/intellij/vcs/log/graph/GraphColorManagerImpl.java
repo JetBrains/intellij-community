@@ -67,7 +67,7 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
     if (refs.isEmpty()) {
       if (!myErrorWasReported.containsKey(head)) {
         myErrorWasReported.put(head, head);
-        LOG.error("No references found at head " + head + " which corresponds to hash " + myHashGetter.fun(head));
+        LOG.warn("No references found at head " + head + " which corresponds to hash " + myHashGetter.fun(head));
       }
       return true;
     }

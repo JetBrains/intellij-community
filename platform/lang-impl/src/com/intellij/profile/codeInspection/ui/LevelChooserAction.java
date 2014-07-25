@@ -43,7 +43,11 @@ public abstract class LevelChooserAction extends ComboBoxAction {
   private HighlightSeverity myChosen = null;
 
   public LevelChooserAction(final InspectionProfileImpl profile) {
-    mySeverityRegistrar = ((SeverityProvider)profile.getProfileManager()).getOwnSeverityRegistrar();
+    this(((SeverityProvider)profile.getProfileManager()).getOwnSeverityRegistrar());
+  }
+
+  public LevelChooserAction(final SeverityRegistrar severityRegistrar) {
+    mySeverityRegistrar = severityRegistrar;
   }
 
   @NotNull

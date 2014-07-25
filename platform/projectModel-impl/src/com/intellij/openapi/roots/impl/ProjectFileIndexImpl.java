@@ -85,6 +85,11 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   @Override
+  public boolean isUnderIgnored(@NotNull VirtualFile file) {
+    return getInfoForFileOrDirectory(file).isIgnored();
+  }
+
+  @Override
   public Module getModuleForFile(@NotNull VirtualFile file) {
     if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
     DirectoryInfo info = getInfoForFileOrDirectory(file);
@@ -95,7 +100,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   @NotNull
   public List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file) {
-    return Arrays.asList(getInfoForFileOrDirectory(file).getOrderEntries());
+    return Arrays.asList(myDirectoryIndex.getOrderEntries(getInfoForFileOrDirectory(file)));
   }
 
   @Override

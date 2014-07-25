@@ -39,9 +39,13 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.graph.CachingSemiGraph;
+import com.intellij.util.graph.DFSTBuilder;
+import com.intellij.util.graph.GraphGenerator;
 import gnu.trove.THashMap;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -85,7 +89,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private final ExternalInfo myExternalInfo = new ExternalInfo();
   @TestOnly
   public static boolean INIT_INSPECTIONS = false;
-  private List<NamedScope> myScopes = Collections.emptyList();
+  private String[] myScopesOrder = null;
 
   @Override
   public void setModified(final boolean modified) {
@@ -509,6 +513,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     catch (ProcessCanceledException e) {
       return false;
     }
+    final Map<String, List<String>> dependencies = new HashMap<String, List<String>>();
     for (InspectionToolWrapper toolWrapper : tools) {
       final String shortName = toolWrapper.getShortName();
       HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
@@ -536,7 +541,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       final Element element = myDeinstalledInspectionsSettings.remove(toolWrapper.getShortName());
       if (element != null) {
         try {
-          toolsList.readExternal(element, this);
+          toolsList.readExternal(element, this, dependencies);
         }
         catch (InvalidDataException e) {
           LOG.error("Can't read settings for " + toolWrapper, e);
@@ -544,10 +549,37 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       }
       myTools.put(toolWrapper.getShortName(), toolsList);
     }
+    final GraphGenerator<String> graphGenerator = GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<String>() {
+      @Override
+      public Collection<String> getNodes() {
+        return dependencies.keySet();
+      }
+
+      @Override
+      public Iterator<String> getIn(String n) {
+        return dependencies.get(n).iterator();
+      }
+    }));
+
+    DFSTBuilder<String> builder = new DFSTBuilder<String>(graphGenerator);
+    if (builder.isAcyclic()) {
+      final List<String> scopes = builder.getSortedNodes();
+      myScopesOrder = ArrayUtil.toStringArray(scopes);
+    }
+
     if (mySource != null) {
       copyToolsConfigurations(mySource, project);
     }
     return true;
+  }
+
+  @Nullable
+  public String[] getScopesOrder() {
+    return myScopesOrder;
+  }
+
+  public void setScopesOrder(String[] scopesOrder) {
+    myScopesOrder = scopesOrder;
   }
 
   @NotNull
@@ -907,13 +939,13 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return getTools(toolWrapper.getShortName(), project).prependTool(scope, toolWrapper, enabled, level);
   }
 
-  public void setErrorLevel(@NotNull HighlightDisplayKey key, @NotNull HighlightDisplayLevel level, int scopeIdx, Project project) {
-    getTools(key.toString(), project).setLevel(level, scopeIdx, project);
+  public void setErrorLevel(@NotNull HighlightDisplayKey key, @NotNull HighlightDisplayLevel level, String scopeName, Project project) {
+    getTools(key.toString(), project).setLevel(level, scopeName, project);
   }
 
-  public void setErrorLevel(@NotNull List<HighlightDisplayKey> keys, @NotNull HighlightDisplayLevel level, int scopeIdx, Project project) {
+  public void setErrorLevel(@NotNull List<HighlightDisplayKey> keys, @NotNull HighlightDisplayLevel level, String scopeName, Project project) {
     for (HighlightDisplayKey key : keys) {
-      getTools(key.toString(), project).setLevel(level, scopeIdx, project);
+      setErrorLevel(key, level, scopeName, project);
     }
   }
 
@@ -944,10 +976,4 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return super.equals(o) && ((InspectionProfileImpl)o).getProfileManager() == getProfileManager();
   }
 
-  /**
-   * @return list of used scopes for all inspections
-   */
-  public List<NamedScope> getUsedScopes() {
-    return myScopes;
-  }
 }

@@ -16,15 +16,15 @@
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
-import com.intellij.xdebugger.settings.XDebuggerSettings.Category;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
 
+@Deprecated
 /**
- * @author nik
+ * @deprecated Use {@link com.intellij.xdebugger.settings.DebuggerConfigurableProvider}
  */
 public abstract class DebuggerSettingsPanelProvider {
   public int getPriority() {
@@ -38,7 +38,7 @@ public abstract class DebuggerSettingsPanelProvider {
 
   @Deprecated
   /**
-   * @deprecated Please use {@link #generalApplied(Category)}
+   * @deprecated Please use {@link com.intellij.xdebugger.settings.DebuggerConfigurableProvider#generalApplied(com.intellij.xdebugger.settings.DebuggerSettingsCategory)}
    */
   public void apply() {
   }
@@ -46,21 +46,10 @@ public abstract class DebuggerSettingsPanelProvider {
   @Nullable
   @Deprecated
   /**
-   * @deprecated Please use {@link #getConfigurables(Category)} and
-   * check {@link Category#GENERAL}
+   * @deprecated Please use {@link com.intellij.xdebugger.settings.DebuggerConfigurableProvider#getConfigurables(com.intellij.xdebugger.settings.DebuggerSettingsCategory)} and
+   * check {@link com.intellij.xdebugger.settings.DebuggerSettingsCategory#GENERAL}
    */
   public Configurable getRootConfigurable() {
     return null;
-  }
-
-  @NotNull
-  public Collection<? extends Configurable> getConfigurables(@NotNull Category category) {
-    return Collections.emptyList();
-  }
-
-  /**
-   * General settings of category were applied
-   */
-  public void generalApplied(@NotNull Category category) {
   }
 }

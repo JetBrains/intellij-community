@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,6 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointPanelProvider;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.evaluate.quick.XQuickEvaluateHandler;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
-import com.intellij.xdebugger.impl.settings.DebuggerSettingsPanelProvider;
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingsPanelProviderImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -49,7 +47,6 @@ public class XDebuggerSupport extends DebuggerSupport {
   private final XDebuggerSuspendedActionHandler myShowExecutionPointHandler;
   private final XDebuggerEvaluateActionHandler myEvaluateHandler;
   private final XQuickEvaluateHandler myQuickEvaluateHandler;
-  private final XDebuggerSettingsPanelProviderImpl mySettingsPanelProvider;
 
   private final XAddToWatchesFromEditorActionHandler myAddToWatchesActionHandler;
   private final DebuggerActionHandler myEvaluateInConsoleActionHandler = new XEvaluateInConsoleFromEditorActionHandler();
@@ -118,7 +115,6 @@ public class XDebuggerSupport extends DebuggerSupport {
     myMuteBreakpointsHandler = new XDebuggerMuteBreakpointsHandler();
     myEvaluateHandler = new XDebuggerEvaluateActionHandler();
     myQuickEvaluateHandler = new XQuickEvaluateHandler();
-    mySettingsPanelProvider = new XDebuggerSettingsPanelProviderImpl();
     myMarkObjectActionHandler = new XMarkObjectActionHandler();
     myEditBreakpointActionHandler = new XDebuggerEditBreakpointActionHandler();
   }
@@ -252,11 +248,5 @@ public class XDebuggerSupport extends DebuggerSupport {
   @Override
   public EditBreakpointActionHandler getEditBreakpointAction() {
     return myEditBreakpointActionHandler;
-  }
-
-  @Override
-  @NotNull
-  public DebuggerSettingsPanelProvider getSettingsPanelProvider() {
-    return mySettingsPanelProvider;
   }
 }

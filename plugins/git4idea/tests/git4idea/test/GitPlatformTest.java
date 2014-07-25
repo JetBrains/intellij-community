@@ -52,19 +52,19 @@ public abstract class GitPlatformTest extends UsefulTestCase {
 
   private static final Logger LOG = Logger.getInstance(GitPlatformTest.class);
 
-  @NotNull protected Project myProject;
-  @NotNull protected VirtualFile myProjectRoot;
-  @NotNull protected String myProjectPath;
-  @NotNull protected GitRepositoryManager myGitRepositoryManager;
-  @NotNull protected GitVcsSettings myGitSettings;
-  @NotNull protected GitPlatformFacade myPlatformFacade;
-  @NotNull protected Git myGit;
-  @NotNull protected GitVcs myVcs;
+  protected Project myProject;
+  protected VirtualFile myProjectRoot;
+  protected String myProjectPath;
+  protected GitRepositoryManager myGitRepositoryManager;
+  protected GitVcsSettings myGitSettings;
+  protected GitPlatformFacade myPlatformFacade;
+  protected Git myGit;
+  protected GitVcs myVcs;
 
-  @NotNull protected TestDialogManager myDialogManager;
-  @NotNull protected TestVcsNotifier myVcsNotifier;
+  protected TestDialogManager myDialogManager;
+  protected TestVcsNotifier myVcsNotifier;
 
-  @NotNull private IdeaProjectTestFixture myProjectFixture;
+  private IdeaProjectTestFixture myProjectFixture;
   private String myTestStartedIndicator;
 
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors", "UnusedDeclaration"})
@@ -81,32 +81,32 @@ public abstract class GitPlatformTest extends UsefulTestCase {
     try {
       myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).getFixture();
       myProjectFixture.setUp();
+
+      myProject = myProjectFixture.getProject();
+      myProjectRoot = myProject.getBaseDir();
+      myProjectPath = myProjectRoot.getPath();
+
+      myGitSettings = GitVcsSettings.getInstance(myProject);
+      myGitSettings.getAppSettings().setPathToGit(GitExecutor.PathHolder.GIT_EXECUTABLE);
+
+      myDialogManager = (TestDialogManager)ServiceManager.getService(DialogManager.class);
+      myVcsNotifier = (TestVcsNotifier)ServiceManager.getService(myProject, VcsNotifier.class);
+
+      myGitRepositoryManager = GitUtil.getRepositoryManager(myProject);
+      myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
+      myGit = ServiceManager.getService(myProject, Git.class);
+      myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(myProject));
+      myVcs.doActivate();
+
+      GitTestUtil.assumeSupportedGitVersion(myVcs);
+      initChangeListManager();
+      addSilently();
+      removeSilently();
     }
     catch (Exception e) {
-      super.tearDown();
+      tearDown();
       throw e;
     }
-
-    myProject = myProjectFixture.getProject();
-    myProjectRoot = myProject.getBaseDir();
-    myProjectPath = myProjectRoot.getPath();
-
-    myGitSettings = GitVcsSettings.getInstance(myProject);
-    myGitSettings.getAppSettings().setPathToGit(GitExecutor.PathHolder.GIT_EXECUTABLE);
-
-    myDialogManager = (TestDialogManager)ServiceManager.getService(DialogManager.class);
-    myVcsNotifier = (TestVcsNotifier)ServiceManager.getService(myProject, VcsNotifier.class);
-
-    myGitRepositoryManager = GitUtil.getRepositoryManager(myProject);
-    myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
-    myGit = ServiceManager.getService(myProject, Git.class);
-    myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(myProject));
-    myVcs.doActivate();
-
-    GitTestUtil.assumeSupportedGitVersion(myVcs);
-    initChangeListManager();
-    addSilently();
-    removeSilently();
   }
 
   @Override
@@ -128,15 +128,25 @@ public abstract class GitPlatformTest extends UsefulTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      myDialogManager.cleanup();
-      myVcsNotifier.cleanup();
-      myProjectFixture.tearDown();
+      if (myDialogManager != null) {
+        myDialogManager.cleanup();
+      }
+      if (myVcsNotifier != null) {
+        myVcsNotifier.cleanup();
+      }
+      if (myProjectFixture != null) {
+        myProjectFixture.tearDown();
+      }
     }
     finally {
-      String tempTestIndicator = myTestStartedIndicator;
-      clearFields(this);
-      myTestStartedIndicator = tempTestIndicator;
-      super.tearDown();
+      try {
+        String tempTestIndicator = myTestStartedIndicator;
+        clearFields(this);
+        myTestStartedIndicator = tempTestIndicator;
+      }
+      finally {
+        super.tearDown();
+      }
     }
   }
 

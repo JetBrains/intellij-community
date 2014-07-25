@@ -34,7 +34,7 @@ public class TypeMayBeWeakenedInspectionTest extends LightInspectionTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/community/plugins/InspectionGadgets/test/com/siyeh/igtest/abstraction/weaken_type";
+    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/abstraction/weaken_type";
   }
 
   @Nullable

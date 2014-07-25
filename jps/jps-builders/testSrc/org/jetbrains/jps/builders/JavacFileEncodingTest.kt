@@ -16,13 +16,14 @@
 package org.jetbrains.jps.builders
 
 import org.jetbrains.jps.builders.rebuild.JpsRebuildTestCase
+import org.jetbrains.jps.builders.rebuild.fs
 
 /**
  * @author nik
  */
-class JavacFileEncodingTest extends JpsRebuildTestCase {
-  public void test() {
-    doTest("javacFileEncoding/javacFileEncoding.ipr", {
+class JavacFileEncodingTest: JpsRebuildTestCase() {
+  fun test() {
+    doTest("javacFileEncoding/javacFileEncoding.ipr", fs {
       dir("production") {
         dir("javacFileEncoding") {
           file("MyClass.class")
