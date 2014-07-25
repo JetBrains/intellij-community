@@ -598,9 +598,15 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
 
     Document document = method.getContainingFile().getViewProvider().getDocument();
     PsiCodeBlock body = method.getBody();
-    if (body == null || document == null) {
+    PsiIdentifier nameIdentifier = method.getNameIdentifier();
+    if (body == null || document == null || nameIdentifier == null) {
       return false;
     }
+    if (document.getLineNumber(nameIdentifier.getTextRange().getStartOffset()) !=
+        document.getLineNumber(method.getParameterList().getTextRange().getEndOffset())) {
+      return false;
+    }
+
     PsiJavaToken lBrace = body.getLBrace();
     PsiJavaToken rBrace = body.getRBrace();
     PsiStatement[] statements = body.getStatements();

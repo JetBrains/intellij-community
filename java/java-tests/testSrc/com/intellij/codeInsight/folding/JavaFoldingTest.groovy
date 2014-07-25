@@ -568,14 +568,20 @@ class Test {
 
   public void "test fold one-line methods"() {
     configure """class Foo {
+ @Override
  int someMethod() {
+   return 0;
+ }
+
+ int someOtherMethod(
+   int param) {
    return 0;
  }
 
 }"""
     PsiClass fooClass = JavaPsiFacade.getInstance(project).findClass('Foo', GlobalSearchScope.allScope(project))
     def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
-    assert regions.size() == 2
+    assert regions.size() == 3
     checkAccessorFolding(regions[0], regions[1], fooClass.methods[0])
   }
 
