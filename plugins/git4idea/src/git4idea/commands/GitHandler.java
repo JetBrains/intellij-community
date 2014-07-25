@@ -474,7 +474,9 @@ public abstract class GitHandler {
       startHandlingStreams();
     }
     catch (Throwable t) {
-      LOG.error(t);
+      if (!ApplicationManager.getApplication().isUnitTestMode() || !myProject.isDisposed()) {
+        LOG.error(t); // will surely happen if called during unit test disposal, because the working dir is simply removed then
+      }
       cleanupEnv();
       myListeners.getMulticaster().startFailed(t);
     }
