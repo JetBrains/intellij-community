@@ -303,14 +303,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     if (!isSoftWrappingEnabled()) {
       return 0;
     }
-    int result = 0;
-    FoldingModel foldingModel = myEditor.getFoldingModel();
-    for (SoftWrap softWrap : myStorage.getSoftWraps()) {
-      if (!foldingModel.isOffsetCollapsed(softWrap.getStart())) {
-        result++; // Assuming that soft wrap has single line feed all the time
-      }
-    }
-    return result;
+    return myStorage.getSoftWraps().size(); // Assuming that soft wrap has single line feed all the time
   }
 
   /**
