@@ -994,8 +994,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
       LogicalPosition selectionEnd = myEditor.visualToLogicalPosition(leadIsEnd ? startPosition : endPosition);
       newSelectionStartColumn = myDesiredSelectionStartColumn < 0 ? selectionStart.column : myDesiredSelectionStartColumn;
       newSelectionEndColumn = myDesiredSelectionEndColumn < 0 ? selectionEnd.column : myDesiredSelectionEndColumn;
-      LogicalPosition newSelectionStart = truncate(new LogicalPosition(selectionStart.line + lineShift, newSelectionStartColumn));
-      LogicalPosition newSelectionEnd = truncate(new LogicalPosition(selectionEnd.line + lineShift, newSelectionEndColumn));
+      LogicalPosition newSelectionStart = truncate(selectionStart.line + lineShift, newSelectionStartColumn);
+      LogicalPosition newSelectionEnd = truncate(selectionEnd.line + lineShift, newSelectionEndColumn);
       newSelectionStartOffset = myEditor.logicalPositionToOffset(newSelectionStart);
       newSelectionEndOffset = myEditor.logicalPositionToOffset(newSelectionEnd);
       newSelectionStartPosition = myEditor.logicalToVisualPosition(newSelectionStart);
@@ -1044,15 +1044,15 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     }
   }
 
-  private LogicalPosition truncate(LogicalPosition position) {
-    if (position.line < 0) {
+  private LogicalPosition truncate(int line, int column) {
+    if (line < 0) {
       return new LogicalPosition(0, 0);
     }
-    else if (position.line >= myEditor.getDocument().getLineCount()) {
+    else if (line >= myEditor.getDocument().getLineCount()) {
       return myEditor.offsetToLogicalPosition(myEditor.getDocument().getTextLength());
     }
     else {
-      return position;
+      return new LogicalPosition(line, column);
     }
   }
 
