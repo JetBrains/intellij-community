@@ -1200,33 +1200,12 @@ public abstract class ChooseByNameBase {
   }
 
   protected List<Object> getChosenElements() {
-
-    List<Object> values = new ArrayList<Object>(Arrays.asList(myList.getSelectedValues()));
-    values.remove(EXTRA_ELEM);
-    values.remove(NON_PREFIX_SEPARATOR);
-
-    if (myCalcElementsThread == null || !values.isEmpty()) {
-      return values;
-    }
-
-    final String text = myTextField.getText();
-    if (text.length() == 0) return Collections.emptyList();
-    final boolean checkBoxState = myCheckBox.isSelected();
-    final String[] names = ourLoadNamesEachTime ? ensureNamesLoaded(checkBoxState) : getNamesSync(checkBoxState);
-    if (names == null) return Collections.emptyList();
-
-    Object uniqueElement = null;
-
-    for (final String name : names) {
-      if (text.equalsIgnoreCase(name)) {
-        final Object[] elements = myModel.getElementsByName(name, checkBoxState, text);
-        if (elements.length > 1) return Collections.emptyList();
-        if (elements.length == 0) continue;
-        if (uniqueElement != null) return Collections.emptyList();
-        uniqueElement = elements[0];
+    return ContainerUtil.filter(myList.getSelectedValues(), new Condition<Object>() {
+      @Override
+      public boolean value(Object o) {
+        return o != EXTRA_ELEM && o != NON_PREFIX_SEPARATOR;
       }
-    }
-    return uniqueElement == null ? Collections.emptyList() : Collections.singletonList(uniqueElement);
+    });
   }
 
   protected void chosenElementMightChange() {
