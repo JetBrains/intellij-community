@@ -214,7 +214,14 @@ public class ScopesAndSeveritiesTable extends JBTable {
 
     @Override
     public boolean isCellEditable(final int rowIndex, final int columnIndex) {
-      return columnIndex != SCOPE_NAME_COLUMN;
+      if (columnIndex == SCOPE_NAME_COLUMN) {
+        return false;
+      } else if (columnIndex == SCOPE_ENABLED_COLUMN) {
+        return true;
+      }
+      assert columnIndex == SEVERITY_COLUMN;
+      final ExistedScopesStatesAndNonExistNames scopeToolState = getScopeToolState(rowIndex);
+      return scopeToolState.getNonExistNames().isEmpty();
     }
 
     @Override
@@ -242,7 +249,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
         return String.class;
       }
       if (SEVERITY_COLUMN == columnIndex) {
-        return HighlightSeverity.class;
+        return SeverityState.class;
       }
       throw new IllegalArgumentException();
     }
@@ -258,7 +265,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
         case SCOPE_NAME_COLUMN:
           return rowIndex == lastRowIndex() ? "Everywhere else" : getScope(rowIndex).getName();
         case SEVERITY_COLUMN:
-          return getSeverity(rowIndex);
+          return getSeverityState(rowIndex);
         default:
           throw new IllegalArgumentException("Invalid column index " + columnIndex);
       }
@@ -269,12 +276,12 @@ public class ScopesAndSeveritiesTable extends JBTable {
     }
 
     @NotNull
-    private HighlightSeverity getSeverity(final int rowIndex) {
+    private SeverityState getSeverityState(final int rowIndex) {
       final ExistedScopesStatesAndNonExistNames existedScopesStatesAndNonExistNames = getScopeToolState(rowIndex);
       if (!existedScopesStatesAndNonExistNames.getNonExistNames().isEmpty()) {
-        return MIXED_FAKE_SEVERITY;
+        return new SeverityState(MIXED_FAKE_SEVERITY, false);
       }
-      return ScopesAndSeveritiesTable.getSeverity(existedScopesStatesAndNonExistNames.getExistedStates());
+      return new SeverityState(ScopesAndSeveritiesTable.getSeverity(existedScopesStatesAndNonExistNames.getExistedStates()), true);
     }
 
     @Nullable
@@ -348,9 +355,10 @@ public class ScopesAndSeveritiesTable extends JBTable {
         return;
       }
       if (columnIndex == SEVERITY_COLUMN) {
-        final HighlightDisplayLevel level = HighlightDisplayLevel.find(((HighlightSeverity)value).getName());
+        final SeverityState severityState = (SeverityState)value;
+        final HighlightDisplayLevel level = HighlightDisplayLevel.find(severityState.getSeverity().getName());
         if (level == null) {
-          LOG.error("no display level found for name " + ((HighlightSeverity)value).getName());
+          LOG.error("no display level found for name " + severityState.getSeverity().getName());
           return;
         }
         final String scopeName = rowIndex == lastRowIndex() ? null : getScope(rowIndex).getName();

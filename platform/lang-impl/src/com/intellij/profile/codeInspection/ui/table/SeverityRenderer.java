@@ -22,6 +22,8 @@ import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.profile.codeInspection.ui.LevelChooserAction;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,33 +34,40 @@ import java.util.SortedSet;
 /**
  * @author Dmitry Batkovich
  */
-public class SeverityRenderer extends ComboBoxTableRenderer<HighlightSeverity> {
-  public SeverityRenderer(final HighlightSeverity[] values) {
+public class SeverityRenderer extends ComboBoxTableRenderer<SeverityState> {
+  public SeverityRenderer(final SeverityState[] values) {
     super(values);
   }
 
   public static SeverityRenderer create(final InspectionProfileImpl inspectionProfile) {
     final SortedSet<HighlightSeverity> severities =
       LevelChooserAction.getSeverities(((SeverityProvider)inspectionProfile.getProfileManager()).getOwnSeverityRegistrar());
-    return new SeverityRenderer(severities.toArray(new HighlightSeverity[severities.size()]));
+    return new SeverityRenderer(ContainerUtil.map2Array(severities, new SeverityState[severities.size()], new Function<HighlightSeverity, SeverityState>() {
+      @Override
+      public SeverityState fun(HighlightSeverity severity) {
+        return new SeverityState(severity, true);
+      }
+    }));
   }
 
-
   @Override
-  protected String getTextFor(@NotNull final HighlightSeverity value) {
-    return SingleInspectionProfilePanel.renderSeverity(value);
+  protected void customizeComponent(SeverityState value, JTable table, boolean isSelected) {
+    super.customizeComponent(value, table, isSelected);
+    setPaintArrow(value.isEnabledForEditing());
   }
 
   @Override
-  protected Icon getIconFor(@NotNull final HighlightSeverity value) {
-    return HighlightDisplayLevel.find(value).getIcon();
+  protected String getTextFor(@NotNull final SeverityState value) {
+    return SingleInspectionProfilePanel.renderSeverity(value.getSeverity());
+  }
+
+  @Override
+  protected Icon getIconFor(@NotNull final SeverityState value) {
+    return HighlightDisplayLevel.find(value.getSeverity()).getIcon();
   }
 
   @Override
   public boolean isCellEditable(final EventObject event) {
-    if (event instanceof MouseEvent) {
-      return ((MouseEvent)event).getClickCount() >= 1;
-    }
-    return true;
+    return !(event instanceof MouseEvent) || ((MouseEvent)event).getClickCount() >= 1;
   }
 }
