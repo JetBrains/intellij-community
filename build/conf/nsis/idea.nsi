@@ -367,7 +367,7 @@ Page custom ConfirmDesktopShortcut
 !insertmacro MUI_PAGE_FINISH
 
 !define MUI_UNINSTALLER
-!insertmacro MUI_UNPAGE_CONFIRM
+;!insertmacro MUI_UNPAGE_CONFIRM
 UninstPage custom un.ConfirmDeleteSettings
 !insertmacro MUI_UNPAGE_INSTFILES
 
