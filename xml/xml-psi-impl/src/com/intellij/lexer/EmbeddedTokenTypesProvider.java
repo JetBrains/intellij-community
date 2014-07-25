@@ -15,7 +15,6 @@
  */
 package com.intellij.lexer;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.tree.IElementType;
 
@@ -28,5 +27,4 @@ public interface EmbeddedTokenTypesProvider {
 
   String getName();
   IElementType getElementType();
-  Language getLanguage();
 }
