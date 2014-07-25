@@ -928,4 +928,7 @@ binding.setVariable("analysisImplModules", [
     "java-psi-impl",
     "projectModel-impl",
     "structure-view-impl",
+    "xml-analysis-impl",
+    "xml-psi-impl",
+    "xml-structure-view-impl",
 ])
