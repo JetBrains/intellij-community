@@ -96,7 +96,7 @@ public class ScopesAndSeveritiesHintTable extends JBTable {
     @Override
     public Object getValueAt(final int rowIndex, final int columnIndex) {
       switch (columnIndex) {
-        case SCOPE_COLUMN: return myScopes.get(rowIndex);
+        case SCOPE_COLUMN: return rowIndex < getRowCount() - 1 ? myScopes.get(rowIndex) : "Everywhere else";
         case SEVERITY_COLUMN: return myScopeToAverageSeverityMap.get(myScopes.get(rowIndex));
         default: throw new IllegalArgumentException();
       }
