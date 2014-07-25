@@ -268,4 +268,14 @@ public class JBColor extends Color {
       }
     });
   }
+
+  public static Color border() {
+    return new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        return UIUtil.getBorderColor();
+      }
+    });
+  }
 }
