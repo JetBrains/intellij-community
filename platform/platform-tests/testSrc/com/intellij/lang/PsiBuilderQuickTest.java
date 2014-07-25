@@ -418,15 +418,8 @@ public class PsiBuilderQuickTest extends LightPlatformLangTestCase {
            "  PsiElement(OTHER)('}')\n");
   }
 
-  private abstract static class MyLazyElementType extends ILazyParseableElementType implements ILightLazyParseableElementType {
-    protected MyLazyElementType(@NonNls String debugName) {
-      super(debugName, Language.ANY);
-    }
-  }
-
   public void testLightChameleon() {
     final IElementType CHAMELEON_2 = new MyChameleon2Type();
-
     final IElementType CHAMELEON_1 = new MyChameleon1Type(CHAMELEON_2);
 
     doTest("ab{12[.?]}cd{x}",
@@ -468,28 +461,6 @@ public class PsiBuilderQuickTest extends LightPlatformLangTestCase {
            "    PsiElement(OTHER)('}')\n");
   }
 
-  private static PsiBuilderImpl createBuilder(CharSequence text) {
-    ParserDefinition parserDefinition = new PlainTextParserDefinition() {
-      @NotNull
-      @Override
-      public Lexer createLexer(Project project) {
-        return new MyTestLexer();
-      }
-
-      @NotNull
-      @Override
-      public TokenSet getWhitespaceTokens() {
-        return WHITESPACE_SET;
-      }
-
-      @NotNull
-      @Override
-      public TokenSet getCommentTokens() {
-        return COMMENT_SET;
-      }
-    };
-    return new PsiBuilderImpl(getProject(), null, parserDefinition, parserDefinition.createLexer(getProject()), null, text, null, null);
-  }
 
   private interface Parser {
     void parse(PsiBuilder builder);
@@ -568,6 +539,29 @@ public class PsiBuilderQuickTest extends LightPlatformLangTestCase {
     });
   }
 
+  private static PsiBuilderImpl createBuilder(CharSequence text) {
+    ParserDefinition parserDefinition = new PlainTextParserDefinition() {
+      @NotNull
+      @Override
+      public Lexer createLexer(Project project) {
+        return new MyTestLexer();
+      }
+
+      @NotNull
+      @Override
+      public TokenSet getWhitespaceTokens() {
+        return WHITESPACE_SET;
+      }
+
+      @NotNull
+      @Override
+      public TokenSet getCommentTokens() {
+        return COMMENT_SET;
+      }
+    };
+    return new PsiBuilderImpl(getProject(), null, parserDefinition, parserDefinition.createLexer(getProject()), null, text, null, null);
+  }
+
   private static class MyTestLexer extends LexerBase {
     private CharSequence myBuffer = "";
     private int myIndex = 0;
@@ -619,6 +613,12 @@ public class PsiBuilderQuickTest extends LightPlatformLangTestCase {
     @Override
     public int getBufferEnd() {
       return myBufferEnd;
+    }
+  }
+
+  private abstract static class MyLazyElementType extends ILazyParseableElementType implements ILightLazyParseableElementType {
+    protected MyLazyElementType(@NonNls String debugName) {
+      super(debugName, Language.ANY);
     }
   }
 
