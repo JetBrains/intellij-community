@@ -17,9 +17,12 @@ package com.intellij.application.options;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 /**
  * @author Rustam Vishnyakov
@@ -34,6 +37,14 @@ public class HtmlLanguageCodeStyleSettings extends LanguageCodeStyleSettingsProv
   @Override
   public String getCodeSample(@NotNull SettingsType settingsType) {
     return CodeStyleAbstractPanel.readFromFile(this.getClass(), "preview.html.template");
+  }
+
+  @Override
+  public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer,
+                                @NotNull SettingsType settingsType) {
+    if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
+      consumer.showStandardOptions("RIGHT_MARGIN");
+    }
   }
 
   @Override
