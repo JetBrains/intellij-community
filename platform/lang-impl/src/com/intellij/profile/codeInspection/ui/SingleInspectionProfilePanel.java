@@ -678,7 +678,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (path == null) return;
     final List<InspectionConfigTreeNode> nodes = InspectionsAggregationUtil.getInspectionsNodes(paths);
     if (!nodes.isEmpty()) {
-      final InspectionConfigTreeNode singleNode = nodes.size() == 1 ? ContainerUtil.getFirstItem(nodes) : null;
+      final InspectionConfigTreeNode singleNode = paths.length == 1 && ((InspectionConfigTreeNode)paths[0].getLastPathComponent()).getDefaultDescriptor() != null
+                                                  ? ContainerUtil.getFirstItem(nodes) : null;
       if (singleNode != null && singleNode.getDefaultDescriptor().loadDescription() != null) {
         // need this in order to correctly load plugin-supplied descriptions
         final Descriptor defaultDescriptor = singleNode.getDefaultDescriptor();
