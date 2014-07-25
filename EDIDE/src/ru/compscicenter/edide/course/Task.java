@@ -3,6 +3,7 @@ package ru.compscicenter.edide.course;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.Nullable;
 import ru.compscicenter.edide.StudyUtils;
 
@@ -37,6 +38,7 @@ public class Task {
     return taskFiles;
   }
 
+  @Transient
   public StudyStatus getStatus() {
     for (TaskFile taskFile : taskFiles) {
       StudyStatus taskFileStatus = taskFile.getStatus();

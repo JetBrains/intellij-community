@@ -32,6 +32,7 @@ public class TaskFile {
   /**
    * @return if all the windows in task file are marked as resolved
    */
+  @Transient
   public StudyStatus getStatus() {
     for (Window window : windows) {
       StudyStatus windowStatus = window.getStatus();
