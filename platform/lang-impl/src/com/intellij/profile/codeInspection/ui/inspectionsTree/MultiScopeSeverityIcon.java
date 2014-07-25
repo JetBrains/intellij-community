@@ -17,13 +17,15 @@ package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.profile.codeInspection.ui.ScopeOrderComparator;
 import com.intellij.ui.JBColor;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Dmitry Batkovich
@@ -35,8 +37,17 @@ public class MultiScopeSeverityIcon implements Icon {
 
   private final LinkedHashMap<String, HighlightSeverity> myScopeToAverageSeverityMap;
 
-  public MultiScopeSeverityIcon(final LinkedHashMap<String, HighlightSeverity> scopeToAverageSeverityMap) {
-    myScopeToAverageSeverityMap = scopeToAverageSeverityMap;
+  public MultiScopeSeverityIcon(final Map<String, HighlightSeverity> scopeToAverageSeverityMap,
+                                final String defaultScopeName,
+                                final InspectionProfileImpl inspectionProfile) {
+    final List<String> sortedScopeNames = new ArrayList<String>(scopeToAverageSeverityMap.keySet());
+    myScopeToAverageSeverityMap = new LinkedHashMap<String, HighlightSeverity>();
+    Collections.sort(sortedScopeNames, new ScopeOrderComparator(inspectionProfile));
+    sortedScopeNames.remove(defaultScopeName);
+    sortedScopeNames.add(defaultScopeName);
+    for (final String scopeName : sortedScopeNames) {
+      myScopeToAverageSeverityMap.put(scopeName, scopeToAverageSeverityMap.get(scopeName));
+    }
   }
 
   public LinkedHashMap<String, HighlightSeverity> getScopeToAverageSeverityMap() {

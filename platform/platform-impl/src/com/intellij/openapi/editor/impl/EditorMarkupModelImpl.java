@@ -36,6 +36,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
@@ -611,6 +612,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     private void paintTrackBasement(Graphics g, Rectangle bounds) {
       if (UISettings.getInstance().PRESENTATION_MODE || SystemInfo.isMac) {
+        g.setColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
         return;
       }
 

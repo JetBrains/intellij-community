@@ -461,21 +461,35 @@ public class ToolsImpl implements Tools {
 
   }
 
-  public void setLevel(@NotNull HighlightDisplayLevel level, int idx, Project project) {
-    if (myTools != null && myTools.size() > idx && idx >= 0) {
-      final ScopeToolState scopeToolState = myTools.get(idx);
-      myTools.remove(idx);
+  public void setLevel(@NotNull HighlightDisplayLevel level, @Nullable String scopeName, Project project) {
+    if (scopeName == null) {
+      myDefaultState.setLevel(level);
+    } else {
+      if (myTools == null) {
+        return;
+      }
+      ScopeToolState scopeToolState = null;
+      int index = -1;
+      for (int i = 0; i < myTools.size(); i++) {
+        ScopeToolState tool = myTools.get(i);
+        if (scopeName.equals(tool.getScopeName())) {
+          scopeToolState = tool;
+          myTools.remove(tool);
+          index = i;
+          break;
+        }
+      }
+      if (index < 0) {
+        throw new IllegalStateException("Scope " + scopeName + " not found");
+      }
+      final InspectionToolWrapper toolWrapper = scopeToolState.getTool();
       final NamedScope scope = scopeToolState.getScope(project);
-      InspectionToolWrapper toolWrapper = scopeToolState.getTool();
       if (scope != null) {
-        myTools.add(idx, new ScopeToolState(scope, toolWrapper, scopeToolState.isEnabled(), level));
+        myTools.add(index, new ScopeToolState(scope, toolWrapper, scopeToolState.isEnabled(), level));
       }
       else {
-        myTools.add(idx, new ScopeToolState(scopeToolState.getScopeName(), toolWrapper, scopeToolState.isEnabled(), level));
+        myTools.add(index, new ScopeToolState(scopeToolState.getScopeName(), toolWrapper, scopeToolState.isEnabled(), level));
       }
-    }
-    else if (idx == -1) {
-      myDefaultState.setLevel(level);
     }
   }
 

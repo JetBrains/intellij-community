@@ -939,13 +939,13 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return getTools(toolWrapper.getShortName(), project).prependTool(scope, toolWrapper, enabled, level);
   }
 
-  public void setErrorLevel(@NotNull HighlightDisplayKey key, @NotNull HighlightDisplayLevel level, int scopeIdx, Project project) {
-    getTools(key.toString(), project).setLevel(level, scopeIdx, project);
+  public void setErrorLevel(@NotNull HighlightDisplayKey key, @NotNull HighlightDisplayLevel level, String scopeName, Project project) {
+    getTools(key.toString(), project).setLevel(level, scopeName, project);
   }
 
-  public void setErrorLevel(@NotNull List<HighlightDisplayKey> keys, @NotNull HighlightDisplayLevel level, int scopeIdx, Project project) {
+  public void setErrorLevel(@NotNull List<HighlightDisplayKey> keys, @NotNull HighlightDisplayLevel level, String scopeName, Project project) {
     for (HighlightDisplayKey key : keys) {
-      getTools(key.toString(), project).setLevel(level, scopeIdx, project);
+      setErrorLevel(key, level, scopeName, project);
     }
   }
 

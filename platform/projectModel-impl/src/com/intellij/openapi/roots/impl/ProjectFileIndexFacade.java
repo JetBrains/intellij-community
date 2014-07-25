@@ -69,6 +69,11 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
     return myFileIndex.isExcluded(file);
   }
 
+  @Override
+  public boolean isUnderIgnored(@NotNull VirtualFile file) {
+    return myFileIndex.isUnderIgnored(file);
+  }
+
   @Nullable
   @Override
   public Module getModuleForFile(@NotNull VirtualFile file) {
