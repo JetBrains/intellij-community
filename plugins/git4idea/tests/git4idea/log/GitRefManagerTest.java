@@ -201,6 +201,11 @@ public class GitRefManagerTest extends UsefulTestCase {
         }
         return infos;
       }
+
+      @Override
+      public void dispose() {
+      }
+
     });
     return ContainerUtil.sorted(refs, new GitRefManager(manager).getComparator());
   }
@@ -303,6 +308,10 @@ public class GitRefManagerTest extends UsefulTestCase {
     @Override
     public String toLogString() {
       throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void dispose() {
     }
   }
 }
