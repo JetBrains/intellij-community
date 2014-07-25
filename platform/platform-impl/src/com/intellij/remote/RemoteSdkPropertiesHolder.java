@@ -15,12 +15,16 @@
  */
 package com.intellij.remote;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author traff
@@ -41,7 +45,7 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
 
   private boolean myHelpersVersionChecked = false;
 
-  private List<String> myRemoteRoots = new ArrayList<String>();
+  private Set<String> myRemoteRoots = Sets.newTreeSet();
 
   private boolean myInitialized = false;
 
@@ -85,12 +89,12 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
 
   @Override
   public List<String> getRemoteRoots() {
-    return myRemoteRoots;
+    return Lists.newArrayList(myRemoteRoots);
   }
 
   @Override
   public void setRemoteRoots(List<String> remoteRoots) {
-    myRemoteRoots = remoteRoots;
+    myRemoteRoots = Sets.newTreeSet(remoteRoots);
   }
 
   @Override

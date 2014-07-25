@@ -26,7 +26,6 @@
     <psi.referenceContributor implementation="com.intellij.lang.properties.PropertiesReferenceContributor"/>
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInspection.i18n.folding.PropertyFoldingBuilder" />
     <gotoDeclarationHandler implementation="com.intellij.codeInspection.i18n.folding.I18nMessageGotoDeclarationHandler" order="FIRST"/>
-    <spellchecker.support language="JAVA" implementationClass="com.intellij.spellchecker.JavaSpellcheckingStrategy"/>
 
     <localInspection shortName="HardCodedStringLiteral" bundle="messages.CodeInsightBundle" key="inspection.i18n.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues" enabledByDefault="false" level="WARNING"

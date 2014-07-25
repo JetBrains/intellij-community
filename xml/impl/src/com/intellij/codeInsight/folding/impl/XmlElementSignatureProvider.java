@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class XmlElementSignatureProvider extends AbstractElementSignatureProvide
       StringBuilder buffer = new StringBuilder();
       buffer.append("tag").append(ELEMENT_TOKENS_SEPARATOR);
       String name = tag.getName();
-      buffer.append(name.length() == 0 ? "<unnamed>" : name);
+      buffer.append(name.length() == 0 ? "<unnamed>" : escape(name));
 
       buffer.append(ELEMENT_TOKENS_SEPARATOR);
       buffer.append(getChildIndex(tag, parent, name, XmlTag.class));
@@ -77,14 +77,15 @@ public class XmlElementSignatureProvider extends AbstractElementSignatureProvide
 
       try {
         int index = Integer.parseInt(tokenizer.nextToken());
-        PsiElement result = restoreElementInternal(parent, name, index, XmlTag.class);
+        String unescapedName = unescape(name);
+        PsiElement result = restoreElementInternal(parent, unescapedName, index, XmlTag.class);
 
         if (result == null &&
             file.getFileType() == StdFileTypes.JSP) {
           //TODO: FoldingBuilder API, psi roots, etc?
           if (parent instanceof XmlDocument) {
             // html tag, not found in jsp tree
-            result = restoreElementInternal(HtmlUtil.getRealXmlDocument((XmlDocument)parent), name, index, XmlTag.class);
+            result = restoreElementInternal(HtmlUtil.getRealXmlDocument((XmlDocument)parent), unescapedName, index, XmlTag.class);
           }
           else if (name.equals("<unnamed>") && parent != null) {
             // scriplet/declaration missed because null name

@@ -39,7 +39,7 @@ public abstract class MacMessages {
                                             @Nullable DialogWrapper.DoNotAskOption doNotAskOption);
 
   public static MacMessages getInstance() {
-    return Registry.is("ide.mac.message.sheets.java.emulation.dialogs") && SystemInfo.isJavaVersionAtLeast("1.7")
+    return Registry.is("ide.mac.message.sheets.java.emulation.dialogs")
                   ? ServiceManager.getService(MacMessagesEmulation.class)
                   : ServiceManager.getService(MacMessages.class);
   }

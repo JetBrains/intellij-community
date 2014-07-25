@@ -53,7 +53,7 @@ public abstract class AbstractFileProcessor {
   private final String message;
   private final String title;
 
-  protected abstract Runnable preprocessFile(PsiFile psifile) throws IncorrectOperationException;
+  protected abstract Runnable preprocessFile(PsiFile file, boolean allowReplacement) throws IncorrectOperationException;
 
   protected AbstractFileProcessor(Project project, String title, String message) {
     myProject = project;
@@ -124,7 +124,7 @@ public abstract class AbstractFileProcessor {
       @Override
       public void run() {
         try {
-          resultRunnable[0] = preprocessFile(file);
+          resultRunnable[0] = preprocessFile(file, true);
         }
         catch (IncorrectOperationException incorrectoperationexception) {
           logger.error(incorrectoperationexception);
@@ -168,7 +168,7 @@ public abstract class AbstractFileProcessor {
 
       if (pfile.isWritable()) {
         try {
-          runnables[i] = preprocessFile(pfile);
+          runnables[i] = preprocessFile(pfile, true);
         }
         catch (IncorrectOperationException incorrectoperationexception) {
           logger.error(incorrectoperationexception);

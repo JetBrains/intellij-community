@@ -70,6 +70,15 @@ public class TestIntegrationUtils {
         }
         return null;
       }
+    },
+    TEST_CLASS("testClass") {
+      @Override
+      public FileTemplateDescriptor getFileTemplateDescriptor(@NotNull TestFramework framework) {
+        if (framework instanceof JavaTestFramework) {
+          return ((JavaTestFramework)framework).getTestClassFileTemplateDescriptor();
+        }
+        return null;
+      }
     };
     private String myDefaultName;
 

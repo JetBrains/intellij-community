@@ -35,6 +35,8 @@ import java.util.*;
  * @author nik
  */
 public class AnalyzeDependenciesOnSpecifiedTargetHandler extends DependenciesHandlerBase {
+  private static final NotificationGroup NOTIFICATION_GROUP =
+    NotificationGroup.toolWindowGroup("Dependencies", ToolWindowId.DEPENDENCIES, true);
   private final GlobalSearchScope myTargetScope;
 
   public AnalyzeDependenciesOnSpecifiedTargetHandler(@NotNull Project project, @NotNull AnalysisScope scope, @NotNull GlobalSearchScope targetScope) {
@@ -64,7 +66,7 @@ public class AnalyzeDependenciesOnSpecifiedTargetHandler extends DependenciesHan
     final String source = StringUtil.decapitalize(builders.get(0).getScope().getDisplayName());
     final String target = StringUtil.decapitalize(myTargetScope.getDisplayName());
     final String message = AnalysisScopeBundle.message("no.dependencies.found.message", source, target);
-    NotificationGroup.toolWindowGroup("Dependencies", ToolWindowId.DEPENDENCIES, true).createNotification(message, MessageType.INFO).notify(myProject);
+    NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(myProject);
     return false;
   }
 

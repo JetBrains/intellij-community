@@ -833,8 +833,20 @@ public class IdeEventQueue extends EventQueue {
     return myKeyEventDispatcher;
   }
 
+  /**
+   * Same as {@link #blockNextEvents(java.awt.event.MouseEvent, com.intellij.ide.IdeEventQueue.BlockMode)} with <code>blockMode</code> equal
+   * to <code>COMPLETE</code>.
+   */
   public void blockNextEvents(final MouseEvent e) {
-    myMouseEventDispatcher.blockNextEvents(e);
+    blockNextEvents(e, BlockMode.COMPLETE);
+  }
+
+  /**
+   * When <code>blockMode</code> is <code>COMPLETE</code>, blocks following related mouse events completely, when <code>blockMode</code> is
+   * <code>ACTIONS</code> only blocks performing actions bound to corresponding mouse shortcuts.
+   */
+  public void blockNextEvents(final MouseEvent e, BlockMode blockMode) {
+    myMouseEventDispatcher.blockNextEvents(e, blockMode);
   }
 
   public boolean isSuspendMode() {
@@ -975,5 +987,12 @@ public class IdeEventQueue extends EventQueue {
   public void postEvent(AWTEvent theEvent) {
     myFrequentEventDetector.eventHappened();
     super.postEvent(theEvent);
+  }
+
+  /**
+   * @see com.intellij.ide.IdeEventQueue#blockNextEvents(java.awt.event.MouseEvent, com.intellij.ide.IdeEventQueue.BlockMode)
+   */
+  public enum BlockMode {
+    COMPLETE, ACTIONS
   }
 }

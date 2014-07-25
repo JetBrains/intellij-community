@@ -80,7 +80,6 @@ public class AddGlobalQuickFix implements LocalQuickFix {
         statementList = ((PyFunction)owner).getStatementList();
         if (((PyFunction)owner).getDocStringExpression() != null) hasDocString = true;
       }
-      assert statementList != null;
       PyStatement first = statementList.getStatements()[0];
       if (hasDocString)
         first = statementList.getStatements()[1];

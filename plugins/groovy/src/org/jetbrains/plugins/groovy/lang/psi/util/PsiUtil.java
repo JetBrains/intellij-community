@@ -308,7 +308,8 @@ public class PsiUtil {
     List<PsiType> result = new ArrayList<PsiType>();
 
     if (namedArgs.length > 0) {
-      result.add(new GrMapType(namedArgs[0], byShape ? new GrNamedArgument[0] : namedArgs));
+      GrNamedArgument context = namedArgs[0];
+      result.add(GrMapType.createFromNamedArgs(context, byShape ? new GrNamedArgument[0] : namedArgs));
     }
 
     for (GrExpression expression : expressions) {

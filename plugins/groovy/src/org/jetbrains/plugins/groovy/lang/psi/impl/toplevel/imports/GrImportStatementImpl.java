@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.NameHint;
@@ -42,9 +43,13 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrImportStatementStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GrDelegatingScopeProcessorWithHints;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.shouldProcessMethods;
 
 /**
  * @author ilyas
@@ -86,7 +91,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
       if (!processDeclarationsForMultipleElements(processor, lastParent, place, state)) return false;
     }
     else {
-      if (!processDeclarationsForSingleElement(processor, state)) return false;
+      if (!processDeclarationsForSingleElement(processor, state, lastParent, place)) return false;
     }
 
     return true;
@@ -101,7 +106,10 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     return false;
   }
 
-  private boolean processDeclarationsForSingleElement(PsiScopeProcessor processor, ResolveState state) {
+  private boolean processDeclarationsForSingleElement(PsiScopeProcessor processor,
+                                                      ResolveState state,
+                                                      PsiElement lastParent,
+                                                      PsiElement place) {
     String name = getImportedName();
     if (name == null) return true;
 
@@ -109,7 +117,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
 
     if (isStatic()) {
       GrCodeReferenceElement ref = getImportReference();
-      return ref == null || processSingleStaticImport(processor, state, name, nameHint, ref);
+      return ref == null || processSingleStaticImport(processor, state, name, nameHint, ref, lastParent, place);
     }
     if (nameHint == null || name.equals(nameHint.getName(state))) {
       GrCodeReferenceElement ref = getImportReference();
@@ -163,7 +171,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
                                             ResolveState state,
                                             String importedName,
                                             NameHint nameHint,
-                                            GrCodeReferenceElement ref) {
+                                            GrCodeReferenceElement ref, PsiElement lastParent, PsiElement place) {
     PsiClass clazz = resolveQualifier();
     if (clazz == null) return true;
 
@@ -172,32 +180,20 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
 
     final String refName = ref.getReferenceName();
     if (hintName == null || importedName.equals(hintName)) {
-      final PsiField field = clazz.findFieldByName(refName, true);
-      if (field != null && field.hasModifierProperty(PsiModifier.STATIC)) {
-        if (!processor.execute(field, state)) return false;
+      if (!clazz.processDeclarations(new GrDelegatingScopeProcessorWithHints(processor, refName, null), state, lastParent, place)) {
+        return false;
       }
+    }
 
-      for (PsiMethod method : clazz.findMethodsByName(refName, true)) {
-        if (method.hasModifierProperty(PsiModifier.STATIC)) {
-          if (!processor.execute(method, state)) return false;
+    if (shouldProcessMethods(processor.getHint(ClassHint.KEY))) {
+      if (hintName == null || importedName.equals(GroovyPropertyUtils.getPropertyNameByGetterName(hintName, true))) {
+        if (!clazz.processDeclarations(new StaticGetterProcessor(refName, processor), state, lastParent, place)) {
+          return false;
         }
       }
 
-      final PsiClass innerClass = clazz.findInnerClassByName(refName, true);
-      if (innerClass != null && innerClass.hasModifierProperty(PsiModifier.STATIC) && !processor.execute(innerClass, state)) return false;
-    }
-
-    String propByGetter = hintName == null ? null : GroovyPropertyUtils.getPropertyNameByGetterName(hintName, true);
-    String propBySetter = hintName == null ? null : GroovyPropertyUtils.getPropertyNameBySetterName(hintName);
-    for (PsiMember member : getAllStaticMembers(clazz)) {
-      if (!(member instanceof PsiMethod)) {
-        continue;
-      }
-
-      PsiMethod method = (PsiMethod)member;
-      if ((nameHint == null || importedName.equals(propByGetter)) && GroovyPropertyUtils.isSimplePropertyGetter(method, refName) ||
-          (nameHint == null || importedName.equals(propBySetter)) && GroovyPropertyUtils.isSimplePropertySetter(method, refName)) {
-        if (method.hasModifierProperty(PsiModifier.STATIC) && !processor.execute(method, state)) {
+      if (hintName == null || importedName.equals(GroovyPropertyUtils.getPropertyNameBySetterName(hintName))) {
+        if (!clazz.processDeclarations(new StaticSetterProcessor(refName, processor), state, lastParent, place)) {
           return false;
         }
       }
@@ -366,5 +362,65 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     }
 
     return findChildByType(GroovyTokenTypes.mIDENT);
+  }
+
+  private static class StaticSetterProcessor extends StaticAccessorProcessor {
+
+    public StaticSetterProcessor(String refName, PsiScopeProcessor processor) {
+      super(refName, processor);
+    }
+
+    protected boolean isAccessor(@NotNull PsiMethod method) {
+      return GroovyPropertyUtils.isSimplePropertySetter(method, getPropertyName());
+    }
+  }
+
+  private static class StaticGetterProcessor extends StaticAccessorProcessor {
+
+    public StaticGetterProcessor(String refName, PsiScopeProcessor processor) {
+      super(refName, processor);
+    }
+
+    @Override
+    protected boolean isAccessor(@NotNull PsiMethod method) {
+      return GroovyPropertyUtils.isSimplePropertyGetter(method, getPropertyName());
+    }
+  }
+
+  /**
+   * Created by Max Medvedev on 26/03/14
+   */
+  private static abstract class StaticAccessorProcessor extends GrDelegatingScopeProcessorWithHints {
+    private final String myPropertyName;
+
+    public StaticAccessorProcessor(@NotNull String propertyName, @NotNull PsiScopeProcessor processor) {
+      super(processor, null, ResolverProcessor.RESOLVE_KINDS_METHOD);
+      myPropertyName = propertyName;
+    }
+
+    @Override
+    public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
+      if (element instanceof PsiMethod) {
+        PsiMethod method = (PsiMethod)element;
+        if (method.hasModifierProperty(PsiModifier.STATIC) && isAccessor(method)) {
+          return super.execute(method, state);
+        }
+      }
+
+      return true;
+    }
+
+    protected abstract boolean isAccessor(@NotNull PsiMethod method);
+
+    public String getPropertyName() {
+      return myPropertyName;
+    }
+
+    @Override
+    public <T> T getHint(@NotNull Key<T> hintKey) {
+      if (hintKey == NameHint.KEY) return null;
+
+      return super.getHint(hintKey);
+    }
   }
 }

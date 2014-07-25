@@ -61,7 +61,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     "idea.schedule.cache.update.in.dumb.mode", ApplicationManager.getApplication().isInternal() || ApplicationManager.getApplication().isEAP());
   private boolean myPointerChangesDetected = false;
   private int myInsideRefresh = 0;
-  private boolean myLargeVfsUpdateDetected;
   private final BatchUpdateListener myHandler;
   private final MessageBusConnection myConnection;
 
@@ -88,22 +87,11 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
       }
     });
 
-    myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
-      @Override
-      public void before(@NotNull List<? extends VFileEvent> events) {
-        myLargeVfsUpdateDetected |= DirectoryIndexImpl.isLargeVfsChange(events);
-      }
-    });
-
     VirtualFileManager.getInstance().addVirtualFileManagerListener(new VirtualFileManagerAdapter() {
-      @Override
-      public void beforeRefreshStart(boolean asynchronous) {
-        myLargeVfsUpdateDetected = false;
-      }
 
       @Override
       public void afterRefreshFinish(boolean asynchronous) {
-        doUpdateOnRefresh(myLargeVfsUpdateDetected);
+        doUpdateOnRefresh();
       }
     }, project);
 
@@ -185,7 +173,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     getBatchSession(fileTypes).rootsChanged();
   }
 
-  private void doUpdateOnRefresh(boolean largeChange) {
+  private void doUpdateOnRefresh() {
     if (ApplicationManager.getApplication().isUnitTestMode() && (!myStartupActivityPerformed || myProject.isDisposed())) {
       return; // in test mode suppress addition to a queue unless project is properly initialized
     }
@@ -193,7 +181,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
       return; // default project
     }
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
-    if (largeChange && ourScheduleCacheUpdateInDumbMode) {
+    if (ourScheduleCacheUpdateInDumbMode) {
       dumbService.queueCacheUpdateInDumbMode(myRefreshCacheUpdaters);
     }
     else {

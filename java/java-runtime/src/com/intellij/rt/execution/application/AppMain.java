@@ -33,6 +33,9 @@ public class AppMain {
   private static final String PROPERTY_PORT_NUMBER = "idea.launcher.port";
   private static final String PROPERTY_BINPATH = "idea.launcher.bin.path";
 
+  private static final String JAVAFX_LAUNCHER = "com.sun.javafx.application.LauncherImpl";
+  private static final String LAUNCH_APPLICATION_METHOD_NAME = "launchApplication";
+
   private static native void triggerControlBreak();
 
   static {
@@ -110,7 +113,18 @@ public class AppMain {
     for (int j = 1; j < args.length; j++) {
       parms[j - 1] = args[j];
     }
-    Method m = Class.forName(mainClass).getMethod("main", new Class[]{parms.getClass()});
+    final Class appClass = Class.forName(mainClass);
+    Method m;
+    try {
+      m = appClass.getMethod("main", new Class[]{parms.getClass()});
+    }
+    catch (NoSuchMethodException e) {
+      if (!startJavaFXApplication(parms, appClass)) {
+        throw e;
+      }
+      return;
+    }
+
     if (!Modifier.isStatic(m.getModifiers())) {
       System.err.println("main method should be static");
       return;
@@ -120,6 +134,19 @@ public class AppMain {
       m.invoke(null, new Object[]{parms});
     } catch (InvocationTargetException ite) {
       throw ite.getTargetException();
+    }
+  }
+
+  private static boolean startJavaFXApplication(String[] parms, Class appClass) throws NoSuchMethodException {
+    try {
+      //check in launch method for application class in the stack trace leads to this hack here
+      final Method launchApplication = Class.forName(JAVAFX_LAUNCHER).getMethod(LAUNCH_APPLICATION_METHOD_NAME,
+                                                                                new Class[]{appClass.getClass(), parms.getClass()});
+      launchApplication.invoke(null, new Object[] {appClass, parms});
+      return true;
+    }
+    catch (Throwable e) {
+      return false;
     }
   }
 

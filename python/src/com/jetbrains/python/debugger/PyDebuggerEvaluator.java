@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.debugger;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -42,32 +43,40 @@ public class PyDebuggerEvaluator extends XDebuggerEvaluator {
     doEvaluate(expression, callback, true);
   }
 
-  private void doEvaluate(String expression, XEvaluationCallback callback, boolean doTrunc) {
-    expression = expression.trim();
-    if (expression.isEmpty()) {
-      callback.evaluated(NONE);
-      return;
-    }
+  private void doEvaluate(final String expr, final XEvaluationCallback callback, final boolean doTrunc) {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        String expression = expr.trim();
+        if (expression.isEmpty()) {
+          callback.evaluated(NONE);
+          return;
+        }
 
-    final boolean isExpression = PyDebugSupportUtils.isExpression(myProject, expression);
-    try {
-      // todo: think on getting results from EXEC
-      final PyDebugValue value = myDebugProcess.evaluate(expression, !isExpression, doTrunc);
-      if (value.isErrorOnEval()) {
-        callback.errorOccurred("{" + value.getType() + "}" + value.getValue());
+        final boolean isExpression = PyDebugSupportUtils.isExpression(myProject, expression);
+        try {
+          // todo: think on getting results from EXEC
+          final PyDebugValue value = myDebugProcess.evaluate(expression, !isExpression, doTrunc);
+          if (value.isErrorOnEval()) {
+            callback.errorOccurred("{" + value.getType() + "}" + value.getValue());
+          }
+          else {
+            callback.evaluated(value);
+          }
+        }
+        catch (PyDebuggerException e) {
+          callback.errorOccurred(e.getTracebackError());
+        }
       }
-      else {
-        callback.evaluated(value);
-      }
-    }
-    catch (PyDebuggerException e) {
-      callback.errorOccurred(e.getTracebackError());
-    }
+    });
   }
 
   @Nullable
   @Override
-  public TextRange getExpressionRangeAtOffset(final Project project, final Document document, final int offset, boolean sideEffectsAllowed) {
+  public TextRange getExpressionRangeAtOffset(final Project project,
+                                              final Document document,
+                                              final int offset,
+                                              boolean sideEffectsAllowed) {
     return PyDebugSupportUtils.getExpressionRangeAtOffset(project, document, offset);
   }
 

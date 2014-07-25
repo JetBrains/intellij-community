@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.CommonBundle;
+import com.intellij.debugger.ui.DebuggerView;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -50,6 +51,7 @@ import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.psi.PsiBundle;
+import com.intellij.ui.PlaceHolder;
 import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
@@ -58,6 +60,7 @@ import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.nio.charset.Charset;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -97,7 +100,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
 
       @Override
       protected RunProfileState getRunProfileState(Object o, String configuration, Executor executor) throws ExecutionException {
-        return createRunProfileState();
+        return createRunProfileState(configuration);
       }
     };
 
@@ -112,19 +115,22 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
     mySupport.stopAll(wait);
   }
 
-  private RunProfileState createRunProfileState() {
+  private RunProfileState createRunProfileState(final String configuration) {
     return new CommandLineState(null) {
       private SimpleJavaParameters createJavaParameters() throws ExecutionException {
 
         final SimpleJavaParameters params = new SimpleJavaParameters();
         params.setJdk(new SimpleJavaSdkType().createJdk("tmp", SystemProperties.getJavaHome()));
 
-        params.setWorkingDirectory(PathManager.getBinPath());
+        File myWorkingDirectory = new File(configuration);
+        params.setWorkingDirectory(myWorkingDirectory.isDirectory() ? myWorkingDirectory.getPath() : PathManager.getBinPath());
         final List<String> classPath = ContainerUtilRt.newArrayList();
 
         // IDE jars.
         classPath.addAll(PathManager.getUtilClassPath());
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(ProjectBundle.class), classPath);
+        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(PlaceHolder.class), classPath);
+        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(DebuggerView.class), classPath);
         ExternalSystemApiUtil.addBundle(params.getClassPath(), "messages.ProjectBundle", ProjectBundle.class);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(PsiBundle.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Alarm.class), classPath);

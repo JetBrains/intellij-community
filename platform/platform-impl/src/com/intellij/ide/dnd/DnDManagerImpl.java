@@ -556,7 +556,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
             myCurrentEvent = new DnDEventImpl(DnDManagerImpl.this, action, dnDDragStartBean.getAttachedObject(), dnDDragStartBean.getPoint());
             myCurrentEvent.setOrgPoint(dge.getDragOrigin());
 
-            Pair<Image, Point> pair = source.createDraggedImage(action, dge.getDragOrigin());
+            Pair<Image, Point> pair = dnDDragStartBean.isEmpty() ? null : source.createDraggedImage(action, dge.getDragOrigin());
             if (pair == null) {
               pair = new Pair<Image, Point>(EMPTY_IMAGE, new Point(0, 0));
             }

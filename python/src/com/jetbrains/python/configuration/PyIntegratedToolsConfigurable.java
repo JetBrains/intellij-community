@@ -31,7 +31,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -88,6 +87,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     myModule = module;
     myProject = myModule.getProject();
     myDocumentationSettings = PyDocumentationSettings.getInstance(myModule);
+    //noinspection unchecked
     myDocstringFormatComboBox.setModel(new CollectionComboBoxModel(DocStringFormat.ALL, myDocumentationSettings.myDocStringFormat));
 
     final FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
@@ -122,9 +122,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     facetErrorPanel.getValidatorsManager().registerValidator(new FacetEditorValidator() {
       @Override
       public ValidationResult check() {
-        Module[] modules = ModuleManager.getInstance(myProject).getModules();
-        if (modules.length == 0) return ValidationResult.OK;
-        final Sdk sdk = PythonSdkType.findPythonSdk(modules[0]);
+        final Sdk sdk = PythonSdkType.findPythonSdk(myModule);
         if (sdk != null) {
           final Object selectedItem = myTestRunnerComboBox.getSelectedItem();
           if (PythonTestConfigurationsModel.PY_TEST_NAME.equals(selectedItem)) {
@@ -198,6 +196,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
   }
 
   private void updateConfigurations() {
+    //noinspection unchecked
     myTestRunnerComboBox.setModel(myModel);
   }
 

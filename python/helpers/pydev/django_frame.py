@@ -30,7 +30,7 @@ def offset_to_line_number(text, offset):
 
 def get_source(frame):
     try:
-        node =  frame.f_locals['self']
+        node = frame.f_locals['self']
         if hasattr(node, 'source'):
             return node.source
         else:
@@ -49,9 +49,13 @@ def get_template_file_name(frame):
             pydev_log.debug("Source is None\n")
             return None
         fname = source[0].name
-        pydev_log.debug("Source name is %s\n" % fname)
-        filename, base = GetFileNameAndBaseFromFile(fname)
-        return filename
+
+        if fname == '<unknown source>':
+            pydev_log.debug("Source name is %s\n" % fname)
+            return None
+        else:
+            filename, base = GetFileNameAndBaseFromFile(fname)
+            return filename
     except:
         pydev_log.debug(traceback.format_exc())
         return None

@@ -72,10 +72,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PostHighlightingPass");
@@ -165,9 +162,11 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
+  @NotNull
   @Override
   public List<HighlightInfo> getInfos() {
-    return myHighlights == null ? null : new ArrayList<HighlightInfo>(myHighlights);
+    Collection<HighlightInfo> infos = myHighlights;
+    return infos == null ? Collections.<HighlightInfo>emptyList() : new ArrayList<HighlightInfo>(infos);
   }
 
   @Override
@@ -507,6 +506,12 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
                                              @NotNull PsiIdentifier identifier,
                                              @NotNull ProgressIndicator progress) {
     if (!myRefCountHolder.isReferenced(parameter) && !isImplicitUsage(myProject, parameter, progress)) {
+      //parameter is defined by functional interface
+      final PsiElement declarationScope = parameter.getDeclarationScope();
+      if (declarationScope instanceof PsiMethod && 
+          myRefCountHolder.isReferencedByMethodReference((PsiMethod)declarationScope)) {
+        return null;
+      }
       String message = JavaErrorMessages.message("parameter.is.not.used", identifier.getText());
       return createUnusedSymbolInfo(identifier, message, HighlightInfoType.UNUSED_SYMBOL);
     }

@@ -192,12 +192,12 @@ public class PsiMethodReferenceUtil {
     if (containingClass != null) {
       receiverType = getExpandedType(receiverType, containingClass);
     }
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(receiverType));
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(receiverType);
     final PsiClass receiverClass = resolveResult.getElement();
     if (receiverClass != null && isReceiverType(receiverClass, containingClass)) {
       LOG.assertTrue(containingClass != null);
       return emptyOrRaw(containingClass, psiSubstitutor) ||
-             TypeConversionUtil.isAssignable(JavaPsiFacade.getElementFactory(containingClass.getProject()).createType(containingClass, psiSubstitutor), GenericsUtil.eliminateWildcards(receiverType));
+             TypeConversionUtil.isAssignable(JavaPsiFacade.getElementFactory(containingClass.getProject()).createType(containingClass, psiSubstitutor), receiverType);
     }
     return false;
   }

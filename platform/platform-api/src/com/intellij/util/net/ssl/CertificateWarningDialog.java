@@ -50,7 +50,7 @@ public class CertificateWarningDialog extends DialogWrapper {
 
     myCertificate = certificate;
 
-    CertificatesManager manager = CertificatesManager.getInstance();
+    CertificateManager manager = CertificateManager.getInstance();
     setTitle(title);
     myMessagePane.setText(String.format("<html><body><p>%s</p></body></html>", message));
     myMessagePane.setBackground(UIUtil.getPanelBackground());

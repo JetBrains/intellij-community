@@ -61,7 +61,8 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell> {
     Collection<VcsRef> refs = myDataPack.getRefsModel().refsToCommit(head);
     if (refs.isEmpty()) {
       LOG.error("No references pointing to head " + head + " identified for commit at row " + rowIndex);
-      return FAKE_ROOT;
+      // take the first root: it is the right choice in one-repo case, though it will likely fail in multi-repo case
+      return myDataPack.getLogProviders().keySet().iterator().next();
     }
     return refs.iterator().next().getRoot();
   }

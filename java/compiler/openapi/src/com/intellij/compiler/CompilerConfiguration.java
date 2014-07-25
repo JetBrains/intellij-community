@@ -54,6 +54,8 @@ public abstract class CompilerConfiguration {
 
   public abstract boolean isResourceFile(String path);
 
+  public abstract boolean isCompilableResourceFile(Project project, VirtualFile file);
+
   public abstract void addResourceFilePattern(String namePattern) throws MalformedPatternException;
 
   public abstract boolean isAddNotNullAssertions();

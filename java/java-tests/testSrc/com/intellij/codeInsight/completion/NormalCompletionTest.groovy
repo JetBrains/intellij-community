@@ -1283,9 +1283,18 @@ class XInternalError {}
     lookup.currentItem = lookup.items[1]
     type '\n'
     checkResult()
-
   }
 
+  public void testMakeMultipleArgumentsFinalWhenInInner() {
+    configure()
+    def item = lookup.items.find { 'a, b' == it.lookupString }
+    assert item
+    lookup.currentItem = item
+    type '\n'
+    checkResult()
+  }
+
+  public void testNoFinalInAnonymousConstructor() { doTest() }
   public void testListArrayListCast() { doTest('\n') }
   public void testInterfaceImplementationNoCast() { doTest() }
   public void testStaticallyImportedMethodsBeforeExpression() { doTest() }

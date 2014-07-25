@@ -99,8 +99,7 @@ import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
-import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.refactoring.rename.RenamePsiElementProcessor;
+import com.intellij.refactoring.rename.*;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.*;
@@ -686,6 +685,23 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
+  public void renameElementAtCaretUsingHandler(@NotNull final String newName) {
+      final DataContext editorContext = ((EditorEx)myEditor).getDataContext();
+      final DataContext context = new DataContext() {
+        @Override
+        public Object getData(@NonNls final String dataId) {
+          return PsiElementRenameHandler.DEFAULT_NAME.getName().equals(dataId)
+                 ? newName
+                 : editorContext.getData(dataId);
+        }
+      };
+      final RenameHandler renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(context);
+      assert renameHandler != null: "No handler for this context";
+
+      renameHandler.invoke(getProject(), myEditor, getFile(), context);
+  }
+
+  @Override
   public void renameElement(final PsiElement element, final String newName) {
     final boolean searchInComments = false;
     final boolean searchTextOccurrences = false;
@@ -1001,8 +1017,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                 super.completionFinished(offset1, offset2, indicator, items, hasModifiers);
               }
             };
-            Editor editor = getCompletionEditor();
-            handler.invokeCompletion(getProject(), editor, invocationCount);
+            final Editor editor = getCompletionEditor();
+            assert editor != null: "Editor is null";
+            editor.getCaretModel().runForEachCaret(new CaretAction() {
+              @Override
+              public void perform(final Caret caret) {
+                handler.invokeCompletion(getProject(), editor, invocationCount);
+              }
+            });
             PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // to compare with file text
           }
         }, null, null);

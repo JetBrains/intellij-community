@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +50,8 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     }
   }
 
-  public void addMethod(final PsiMethod method, final PsiSubstitutor substitutor, final boolean staticProblem) {
-    final boolean isAccessible = JavaResolveUtil.isAccessible(method, method.getContainingClass(), method.getModifierList(),
+  public void addMethod(@NotNull PsiMethod method, final PsiSubstitutor substitutor, final boolean staticProblem) {
+    final boolean isAccessible = JavaResolveUtil.isAccessible(method, getContainingClass(method), method.getModifierList(),
                                                               myPlace, myAccessClass, myCurrentFileContext, myPlaceFile) &&
                                  !isShadowed(method);
     if (isAccepted(method)) {
@@ -63,6 +63,10 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     }
   }
 
+  protected PsiClass getContainingClass(PsiMethod method) {
+    return method.getContainingClass();
+  }
+
   protected boolean acceptVarargs() {
     return false;
   }
@@ -72,9 +76,19 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     final PsiExpressionList argumentList = getArgumentList();
     return new MethodCandidateInfo(method, substitutor, !accessible, staticProblem, argumentList, myCurrentFileContext,
                                    null, getTypeArguments(), getLanguageLevel()) {
+
+      private PsiType[] myExpressionTypes;
+
       @Override
       public PsiType[] getArgumentTypes() {
-        return getExpressionTypes(argumentList);
+        if (myExpressionTypes == null && argumentList != null) {
+          final PsiType[] expressionTypes = getExpressionTypes(argumentList);
+          if (!MethodCandidateInfo.ourOverloadGuard.currentStack().isEmpty()) {
+            return expressionTypes;
+          }
+          myExpressionTypes = expressionTypes;
+        }
+        return myExpressionTypes;
       }
 
       @Override
@@ -84,7 +98,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     };
   }
 
-  protected PsiType[] getExpressionTypes(PsiExpressionList argumentList) {
+  protected static PsiType[] getExpressionTypes(PsiExpressionList argumentList) {
     return argumentList != null ? argumentList.getExpressionTypes() : null;
   }
 
@@ -96,10 +110,10 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
       if (!candidate.isConstructor()) return false;
       if (myAccessClass == null) return true;
       if (myAccessClass instanceof PsiAnonymousClass) {
-        final PsiClass containingClass = candidate.getContainingClass();
+        final PsiClass containingClass = getContainingClass(candidate);
         return containingClass != null && containingClass.equals(myAccessClass.getSuperClass());
       }
-      return myAccessClass.isEquivalentTo(candidate.getContainingClass());
+      return myAccessClass.isEquivalentTo(getContainingClass(candidate));
     }
   }
 

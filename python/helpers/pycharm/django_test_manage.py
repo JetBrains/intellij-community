@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-import os, sys
+import os
+import sys
 
 from django.core.management import ManagementUtility
 
@@ -15,7 +16,6 @@ try:
 except:
     pass
 
-import django_test_runner
 project_directory = sys.argv.pop()
 
 from django.core import management
@@ -46,6 +46,9 @@ settings_file = os.getenv('DJANGO_SETTINGS_MODULE')
 if not settings_file:
   settings_file = 'settings'
 
+import django
+if django.VERSION[0:2] >= (1, 7):
+    django.setup()
 
 class PycharmTestCommand(Command):
   def get_runner(self):

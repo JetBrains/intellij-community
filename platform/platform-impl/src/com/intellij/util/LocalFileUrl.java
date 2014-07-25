@@ -1,5 +1,6 @@
 package com.intellij.util;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,10 +67,12 @@ public final class LocalFileUrl implements Url {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    return o instanceof LocalFileUrl && path.equals(((LocalFileUrl)o).path);
+    return this == o || ((o instanceof LocalFileUrl) && path.equals(((LocalFileUrl)o).path));
+  }
+
+  @Override
+  public boolean equalsIgnoreCase(@Nullable Url o) {
+    return this == o || ((o instanceof LocalFileUrl) && path.equalsIgnoreCase(((LocalFileUrl)o).path));
   }
 
   @Override
@@ -80,5 +83,10 @@ public final class LocalFileUrl implements Url {
   @Override
   public int hashCode() {
     return path.hashCode();
+  }
+
+  @Override
+  public int hashCodeCaseInsensitive() {
+    return StringUtil.stringHashCodeInsensitive(path);
   }
 }

@@ -17,19 +17,20 @@ package git4idea.actions;
 
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitStandardProgressAnalyzer;
-import git4idea.commands.GitTask;
-import git4idea.commands.GitTaskResultHandlerAdapter;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeUtil;
 import git4idea.merge.GitPullDialog;
@@ -68,7 +69,7 @@ public class GitPull extends GitRepositoryAction {
     new Task.Backgroundable(project, GitBundle.message("pulling.title", dialog.getRemote()), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        final GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(myProject);
+        final GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
 
         GitRepository repository = repositoryManager.getRepositoryForRoot(dialog.gitRoot());
         assert repository != null : "Repository can't be null for root " + dialog.gitRoot();
@@ -76,13 +77,18 @@ public class GitPull extends GitRepositoryAction {
         
         
         GitRemote remote = GitUtil.findRemoteByName(repository, remoteOrUrl);
-        String url = (remote == null) ? remoteOrUrl : remote.getFirstUrl();
+        final String url = (remote == null) ? remoteOrUrl : remote.getFirstUrl();
         if (url == null) {
           return;
         }
 
-        final GitLineHandler handler = dialog.makeHandler(url);
-
+        final Git git = ServiceManager.getService(Git.class);
+        GitCommandResult result = git.runRemoteCommand(new Computable<GitLineHandler>() {
+          @Override
+          public GitLineHandler compute() {
+            return dialog.makeHandler(url);
+          }
+        });
         final VirtualFile root = dialog.gitRoot();
         affectedRoots.add(root);
         String revision = repository.getCurrentRevision();
@@ -90,25 +96,16 @@ public class GitPull extends GitRepositoryAction {
           return;
         }
         final GitRevisionNumber currentRev = new GitRevisionNumber(revision);
-    
-        GitTask pullTask = new GitTask(project, handler, GitBundle.message("pulling.title", dialog.getRemote()));
-        pullTask.setProgressIndicator(indicator);
-        pullTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
-        pullTask.execute(true, false, new GitTaskResultHandlerAdapter() {
-          @Override
-          protected void onSuccess() {
-            root.refresh(false, true);
-            GitMergeUtil.showUpdates(GitPull.this, project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.UPDATE);
-            repositoryManager.updateRepository(root);
-            runFinalTasks(project, GitVcs.getInstance(project), affectedRoots, getActionName(), exceptions);
-          }
-    
-          @Override
-          protected void onFailure() {
-            GitUIUtil.notifyGitErrors(project, "Error pulling " + dialog.getRemote(), "", handler.errors());
-            repositoryManager.updateRepository(root);
-          }
-        });
+        if (result.success()) {
+          root.refresh(false, true);
+          GitMergeUtil.showUpdates(GitPull.this, project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.UPDATE);
+          repositoryManager.updateRepository(root);
+          runFinalTasks(project, GitVcs.getInstance(project), affectedRoots, getActionName(), exceptions);
+        }
+        else {
+          GitUIUtil.notifyError(project, "Error pulling " + dialog.getRemote(), result.getErrorOutputAsJoinedString(), true, null);
+          repositoryManager.updateRepository(root);
+        }
       }
     }.queue();
   }

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -46,10 +47,16 @@ public abstract class GrLiteralClassType extends PsiClassType {
   @Override
   @NotNull
   public ClassResolveResult resolveGenerics() {
-    final PsiClass myBaseClass = resolve();
-    final PsiSubstitutor substitutor = inferSubstitutor(myBaseClass);
-
     return new ClassResolveResult() {
+      private final PsiClass myBaseClass = resolve();
+
+      private final NotNullLazyValue<PsiSubstitutor> mySubstitutor = new NotNullLazyValue<PsiSubstitutor>() {
+        @NotNull
+        @Override
+        protected PsiSubstitutor compute() {
+          return inferSubstitutor(myBaseClass);
+        }
+      };
 
       @Override
       public PsiClass getElement() {
@@ -59,7 +66,7 @@ public abstract class GrLiteralClassType extends PsiClassType {
       @Override
       @NotNull
       public PsiSubstitutor getSubstitutor() {
-        return substitutor;
+        return mySubstitutor.getValue();
       }
 
       @Override
@@ -167,7 +174,7 @@ public abstract class GrLiteralClassType extends PsiClassType {
 
   @Override
   public boolean equalsToText(@NotNull @NonNls String text) {
-    return text != null && text.equals(getJavaClassName());
+    return text.equals(getJavaClassName());
   }
 
   @Override

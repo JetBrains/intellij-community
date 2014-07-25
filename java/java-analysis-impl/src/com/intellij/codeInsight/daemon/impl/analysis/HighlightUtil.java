@@ -684,10 +684,6 @@ public class HighlightUtil extends HighlightUtilBase {
         String message = JavaErrorMessages.message("underscore.lambda.identifier");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(message).create();
       }
-      else {
-        String message = JavaErrorMessages.message("underscore.identifier");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(identifier).descriptionAndTooltip(message).create();
-      }
     }
 
     return null;

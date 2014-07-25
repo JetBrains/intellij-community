@@ -6,7 +6,7 @@
   <name>Python Community Edition</name>
   <idea-version since-build="135.406" until-build="135.*"/>
   <description>Smart editing for Python scripts</description>
-  <version>3.4.Beta.135.@@BUILD_NUMBER@@</version>
+  <version>3.4.135.@@BUILD_NUMBER@@</version>
   <depends>com.intellij.modules.java</depends>
 
 

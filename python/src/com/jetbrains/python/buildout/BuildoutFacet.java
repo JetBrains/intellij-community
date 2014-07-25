@@ -365,10 +365,10 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
       return;
     }
     final List<String> paths = facet.getConfiguration().getPaths();
-    FacetLibraryConfigurator.attachLibrary(module, null, BUILDOUT_LIB_NAME, paths);
+    FacetLibraryConfigurator.attachPythonLibrary(module, null, BUILDOUT_LIB_NAME, paths);
   }
 
   public static void detachLibrary(final Module module) {
-    FacetLibraryConfigurator.detachLibrary(module, BUILDOUT_LIB_NAME);
+    FacetLibraryConfigurator.detachPythonLibrary(module, BUILDOUT_LIB_NAME);
   }
 }

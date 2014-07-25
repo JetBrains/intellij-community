@@ -171,6 +171,11 @@ public class TestNGFramework extends JavaTestFramework {
     return 'N';
   }
 
+  @Override
+  public FileTemplateDescriptor getTestClassFileTemplateDescriptor() {
+    return new FileTemplateDescriptor("TestNG Test Class.java");
+  }
+
   public FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("TestNG SetUp Method.java");
   }

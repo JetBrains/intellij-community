@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
+import java.util.Locale;
 import java.util.Map;
 
 public class EncodingEnvironmentUtil {
@@ -52,32 +53,65 @@ public class EncodingEnvironmentUtil {
    * LC_CTYPE value is taken from "Settings | File Encodings".
    *
    * @param commandLine GeneralCommandLine instance
-   * @param project     Project instance if any
    */
-  public static void fixDefaultEncodingIfMac(@NotNull GeneralCommandLine commandLine, @Nullable Project project) {
+  public static void setLocaleEnvironmentIfMac(@NotNull GeneralCommandLine commandLine) {
     if (SystemInfo.isMac) {
       if (!isLocaleDefined(commandLine)) {
-        fixLocale(commandLine.getEnvironment(), project);
+        setLocaleEnvironment(commandLine.getEnvironment(), commandLine.getCharset());
       }
     }
   }
 
-  private static void fixLocale(@NotNull Map<String, String> env, @Nullable Project project) {
-    Charset charset = getCharset(project);
-    env.put(LC_CTYPE, charset.name());
+  /**
+   * @deprecated Use {@link #setLocaleEnvironmentIfMac(GeneralCommandLine)} instead. To be removed in IDEA 15.
+   */
+  @Deprecated
+  public static void fixDefaultEncodingIfMac(@NotNull GeneralCommandLine commandLine, @Nullable Project project) {
+    if (SystemInfo.isMac) {
+      if (!isLocaleDefined(commandLine)) {
+        setLocaleEnvironment(commandLine.getEnvironment(), getCharset(project));
+      }
+    }
+  }
+
+  private static void setLocaleEnvironment(@NotNull Map<String, String> env, @NotNull Charset charset) {
+    env.put(LC_CTYPE, formatLocaleValue(charset));
     if (LOG.isDebugEnabled()) {
       LOG.debug("Fixed mac locale: " + charset.name());
     }
   }
 
+  @NotNull
+  private static String formatLocaleValue(@NotNull Charset charset) {
+    Locale locale = Locale.getDefault();
+    String language = locale.getLanguage();
+    String country = locale.getCountry();
+    if (language.isEmpty() || country.isEmpty()) {
+      return "en_US." + charset.name();
+    }
+    return language + "_" + country + "." + charset.name();
+  }
+
+  /**
+   * Sets default encoding on Mac if it's undefined. <br/>
+   * @deprecated Use {@link #setLocaleEnvironmentIfMac(java.util.Map, java.nio.charset.Charset)} instead. To be removed in IDEA 15.
+   */
+  @Deprecated
+  public static void fixDefaultEncodingIfMac(@NotNull Map<String, String> env, @Nullable Project project) {
+    if (SystemInfo.isMac) {
+      if (!isLocaleDefined(env)) {
+        setLocaleEnvironment(env, getCharset(project));
+      }
+    }
+  }
 
   /**
    * Sets default encoding on Mac if it's undefined. <br/>
    */
-  public static void fixDefaultEncodingIfMac(@NotNull Map<String, String> env, @Nullable Project project) {
+  public static void setLocaleEnvironmentIfMac(@NotNull Map<String, String> env, @NotNull Charset charset) {
     if (SystemInfo.isMac) {
       if (!isLocaleDefined(env)) {
-        fixLocale(env, project);
+        setLocaleEnvironment(env, charset);
       }
     }
   }

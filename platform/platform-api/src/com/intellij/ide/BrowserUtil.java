@@ -91,7 +91,8 @@ public class BrowserUtil {
   }
 
   private static BrowserLauncher getBrowserLauncher() {
-    return ApplicationManager.getApplication() == null ? new BrowserLauncherAppless() : BrowserLauncher.getInstance();
+    BrowserLauncher launcher = ApplicationManager.getApplication() == null ? null : BrowserLauncher.getInstance();
+    return launcher == null ? new BrowserLauncherAppless() : launcher;
   }
 
   public static void open(@NotNull @NonNls String url) {

@@ -127,7 +127,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
         if (!isFirstUnboundRead(node, owner)) {
           return;
         }
-        final PsiPolyVariantReference ref = node.getReference(resolveWithoutImplicits());
+        final PsiPolyVariantReference ref = node.getReference(getResolveContext());
         if (ref == null) {
           return;
         }

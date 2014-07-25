@@ -18,6 +18,8 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.FunctionParameter;
+import com.jetbrains.python.nameResolver.FQNamesProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
@@ -71,6 +73,12 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     return getArgument(index, argClass);
   }
 
+  @Nullable
+  @Override
+  public <T extends PsiElement> T getArgument(@NotNull final FunctionParameter parameter, @NotNull final Class<T> argClass) {
+    return PyCallExpressionHelper.getArgument(parameter, argClass, this);
+  }
+
   @Override
   public PyExpression getKeywordArgument(String keyword) {
     return PyCallExpressionHelper.getKeywordArgument(this, keyword);
@@ -93,8 +101,14 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     return PyCallExpressionHelper.resolveCallee(this, resolveContext, offset);
   }
 
+  @Override
   public boolean isCalleeText(@NotNull String... nameCandidates) {
     return PyCallExpressionHelper.isCalleeText(this, nameCandidates);
+  }
+
+  @Override
+  public boolean isCallee(@NotNull final FQNamesProvider... name) {
+    return PyCallExpressionHelper.isCallee(this, name);
   }
 
   @Override

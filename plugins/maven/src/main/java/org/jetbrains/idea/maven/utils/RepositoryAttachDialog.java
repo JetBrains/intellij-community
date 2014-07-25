@@ -42,7 +42,6 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.xml.util.XmlStringUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,29 +62,33 @@ import java.util.List;
 
 public class RepositoryAttachDialog extends DialogWrapper {
   @NonNls private static final String PROPERTY_DOWNLOAD_TO_PATH = "Downloaded.Files.Path";
+  @NonNls private static final String PROPERTY_DOWNLOAD_TO_PATH_ENABLED = "Downloaded.Files.Path.Enabled";
   @NonNls private static final String PROPERTY_ATTACH_JAVADOC = "Repository.Attach.JavaDocs";
   @NonNls private static final String PROPERTY_ATTACH_SOURCES = "Repository.Attach.Sources";
+
+  private final Project myProject;
 
   private JBLabel myInfoLabel;
   private JCheckBox myJavaDocCheckBox;
   private JCheckBox mySourcesCheckBox;
-  private final Project myProject;
   private AsyncProcessIcon myProgressIcon;
   private ComboboxWithBrowseButton myComboComponent;
   private JPanel myPanel;
-  private JBLabel myCaptionLabel;
-  private final THashMap<String, Pair<MavenArtifactInfo, MavenRepositoryInfo>> myCoordinates
-    = new THashMap<String, Pair<MavenArtifactInfo, MavenRepositoryInfo>>();
-  private final Map<String, MavenRepositoryInfo> myRepositories = new TreeMap<String, MavenRepositoryInfo>();
-  private final ArrayList<String> myShownItems = new ArrayList<String>();
-  private final JComboBox myCombobox;
-
   private TextFieldWithBrowseButton myDirectoryField;
   private JBCheckBox myDownloadToCheckBox;
+  private JBLabel myCaptionLabel;
+
+  private final JComboBox myCombobox;
+
+  private final Map<String, Pair<MavenArtifactInfo, MavenRepositoryInfo>> myCoordinates = ContainerUtil.newTroveMap();
+  private final Map<String, MavenRepositoryInfo> myRepositories = new TreeMap<String, MavenRepositoryInfo>();
+  private final List<String> myShownItems = ContainerUtil.newArrayList();
+  private final String myDefaultDownloadFolder;
+
   private String myFilterString;
   private boolean myInUpdate;
 
-  public RepositoryAttachDialog(Project project, final @Nullable String initialFilter) {
+  public RepositoryAttachDialog(@NotNull Project project, final @Nullable String initialFilter) {
     super(project, true);
     myProject = project;
     myProgressIcon.suspend();
@@ -137,29 +140,22 @@ public class RepositoryAttachDialog extends DialogWrapper {
         }
       }
     });
+    VirtualFile baseDir = !myProject.isDefault() ? myProject.getBaseDir() : null;
+    myDefaultDownloadFolder = baseDir != null ? FileUtil.toSystemDependentName(baseDir.getPath() + "/lib") : "";
+
     PropertiesComponent storage = PropertiesComponent.getInstance(myProject);
-    boolean pathValueSet = storage.isValueSet(PROPERTY_DOWNLOAD_TO_PATH);
-    if (pathValueSet) {
-      myDownloadToCheckBox.setSelected(true);
-      myDirectoryField.setText(storage.getValue(PROPERTY_DOWNLOAD_TO_PATH));
-    }
-    else {
-      myDownloadToCheckBox.setSelected(false);
-    }
+    myDownloadToCheckBox.setSelected(storage.isTrueValue(PROPERTY_DOWNLOAD_TO_PATH_ENABLED));
+    myDirectoryField.setText(StringUtil.notNullize(StringUtil.nullize(storage.getValue(PROPERTY_DOWNLOAD_TO_PATH)), myDefaultDownloadFolder));
+    myDirectoryField.setEnabled(myDownloadToCheckBox.isSelected());
     myDownloadToCheckBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         myDirectoryField.setEnabled(myDownloadToCheckBox.isSelected());
       }
     });
-    myJavaDocCheckBox.setSelected(storage.isValueSet(PROPERTY_ATTACH_JAVADOC) && storage.isTrueValue(PROPERTY_ATTACH_JAVADOC));
-    mySourcesCheckBox.setSelected(storage.isValueSet(PROPERTY_ATTACH_SOURCES) && storage.isTrueValue(PROPERTY_ATTACH_SOURCES));
-    if (!pathValueSet && myProject != null && !myProject.isDefault()) {
-      final VirtualFile baseDir = myProject.getBaseDir();
-      if (baseDir != null) {
-        myDirectoryField.setText(FileUtil.toSystemDependentName(baseDir.getPath() + "/lib"));
-      }
-    }
+    myJavaDocCheckBox.setSelected(storage.isTrueValue(PROPERTY_ATTACH_JAVADOC));
+    mySourcesCheckBox.setSelected(storage.isTrueValue(PROPERTY_ATTACH_SOURCES));
+
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     descriptor.putUserData(FileChooserDialog.PREFER_LAST_OVER_TO_SELECT, Boolean.TRUE);
     myDirectoryField.addBrowseFolderListener(ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.title"),
@@ -243,14 +239,15 @@ public class RepositoryAttachDialog extends DialogWrapper {
         myCombobox.setPopupVisible(false);
       }
       if (!myCombobox.isPopupVisible()) {
-        myCombobox.setPopupVisible(filtered);
+        myCombobox.setPopupVisible(true);
       }
     }
   }
 
   private boolean performSearch() {
     final String text = getCoordinateText();
-    if (myCoordinates.contains(text)) return false;
+    if (StringUtil.isEmptyOrSpaces(text)) return false;
+    if (myCoordinates.containsKey(text)) return false;
     if (myProgressIcon.isRunning()) return false;
     myProgressIcon.resume();
     RepositoryAttachHandler.searchArtifacts(myProject, text, new PairProcessor<Collection<Pair<MavenArtifactInfo, MavenRepositoryInfo>>, Boolean>() {
@@ -317,10 +314,11 @@ public class RepositoryAttachDialog extends DialogWrapper {
   @Override
   protected void dispose() {
     Disposer.dispose(myProgressIcon);
-    final PropertiesComponent storage = PropertiesComponent.getInstance(myProject);
-    if (myDownloadToCheckBox.isSelected()) {
-      storage.setValue(PROPERTY_DOWNLOAD_TO_PATH, myDirectoryField.getText());
-    }
+    PropertiesComponent storage = PropertiesComponent.getInstance(myProject);
+    storage.setValue(PROPERTY_DOWNLOAD_TO_PATH_ENABLED, String.valueOf(myDownloadToCheckBox.isSelected()));
+    String downloadPath = myDirectoryField.getText();
+    if (StringUtil.isEmptyOrSpaces(downloadPath)) downloadPath = myDefaultDownloadFolder;
+    storage.setValue(PROPERTY_DOWNLOAD_TO_PATH, downloadPath, myDefaultDownloadFolder);
     storage.setValue(PROPERTY_ATTACH_JAVADOC, String.valueOf(myJavaDocCheckBox.isSelected()));
     storage.setValue(PROPERTY_ATTACH_SOURCES, String.valueOf(mySourcesCheckBox.isSelected()));
     super.dispose();

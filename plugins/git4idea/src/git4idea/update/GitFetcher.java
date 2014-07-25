@@ -16,21 +16,24 @@
 package git4idea.update;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
-import git4idea.commands.*;
-import git4idea.config.GitVersionSpecialty;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitLineHandlerAdapter;
+import git4idea.commands.GitLineHandlerListener;
 import git4idea.jgit.GitHttpAdapter;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
@@ -40,11 +43,7 @@ import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -136,7 +135,7 @@ public class GitFetcher {
     if (GitHttpAdapter.shouldUseJGit(url)) {
       return GitHttpAdapter.fetch(repository, remote, url, branch);
     }
-    return fetchNatively(repository.getRoot(), remote, url, branch);
+    return fetchNatively(repository, remote, url, branch);
   }
 
   // leaving this unused method, because the wanted behavior can change again
@@ -154,7 +153,7 @@ public class GitFetcher {
     if (GitHttpAdapter.shouldUseJGit(url)) {
       return GitHttpAdapter.fetch(repository, remote, url, remoteBranch);
     }
-    return fetchNatively(repository.getRoot(), remote, url, remoteBranch);
+    return fetchNatively(repository, remote, url, remoteBranch);
   }
 
   @NotNull
@@ -202,7 +201,7 @@ public class GitFetcher {
         }
       }
       else {
-        GitFetchResult res = fetchNatively(repository.getRoot(), remote, url, null);
+        GitFetchResult res = fetchNatively(repository, remote, url, null);
         res.addPruneInfo(fetchResult.getPrunedRefs());
         fetchResult = res;
         if (!fetchResult.isSuccess()) {
@@ -213,54 +212,30 @@ public class GitFetcher {
     return fetchResult;
   }
 
-  private GitFetchResult fetchNatively(@NotNull VirtualFile root, @NotNull GitRemote remote, @NotNull String url, @Nullable String branch) {
-    final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(myProject, root, GitCommand.FETCH);
-    h.setUrl(url);
-    h.addProgressParameter();
-    if (GitVersionSpecialty.SUPPORTS_FETCH_PRUNE.existsIn(myVcs.getVersion())) {
-      h.addParameters("--prune");
-    }
-
-    String remoteName = remote.getName();
-    h.addParameters(remoteName);
-    if (branch != null) {
-      h.addParameters(getFetchSpecForBranch(branch, remoteName));
-    }
-
-    final GitTask fetchTask = new GitTask(myProject, h, "Fetching " + remote.getFirstUrl());
-    fetchTask.setProgressIndicator(myProgressIndicator);
-    fetchTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
+  @NotNull
+  private static GitFetchResult fetchNatively(@NotNull GitRepository repository, @NotNull GitRemote remote, @NotNull String url,
+                                              @Nullable String branch) {
+    Git git = ServiceManager.getService(Git.class);
+    String[] additionalParams = branch != null ?
+                                new String[]{ getFetchSpecForBranch(branch, remote.getName()) } :
+                                ArrayUtil.EMPTY_STRING_ARRAY;
 
     GitFetchPruneDetector pruneDetector = new GitFetchPruneDetector();
-    h.addLineListener(pruneDetector);
+    GitCommandResult result =
+      git.fetch(repository, url, remote.getName(), Collections.<GitLineHandlerListener>singletonList(pruneDetector), additionalParams);
 
-    final AtomicReference<GitFetchResult> result = new AtomicReference<GitFetchResult>();
-    fetchTask.execute(true, false, new GitTaskResultHandlerAdapter() {
-      @Override
-      protected void onSuccess() {
-        result.set(GitFetchResult.success());
-      }
-
-      @Override
-      protected void onCancel() {
-        LOG.info("Cancelled fetch.");
-        result.set(GitFetchResult.cancel());
-      }
-      
-      @Override
-      protected void onFailure() {
-        LOG.info("Error fetching: " + h.errors());
-        if (!h.hadAuthRequest()) {
-          myErrors.addAll(h.errors());
-        } else {
-          myErrors.add(new VcsException("Authentication failed"));
-        }
-        result.set(GitFetchResult.error(myErrors));
-      }
-    });
-
-    result.get().addPruneInfo(pruneDetector.getPrunedRefs());
-    return result.get();
+    GitFetchResult fetchResult;
+    if (result.success()) {
+      fetchResult = GitFetchResult.success();
+    }
+    else if (result.cancelled()) {
+      fetchResult = GitFetchResult.cancel();
+    }
+    else {
+      fetchResult = GitFetchResult.error(result.getErrorOutputAsJoinedString());
+    }
+    fetchResult.addPruneInfo(pruneDetector.getPrunedRefs());
+    return fetchResult;
   }
 
   private static String getRidOfPrefixIfExists(String branch) {

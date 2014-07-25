@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.NonClasspathDirectoryScope;
+import com.intellij.psi.search.NonClasspathDirectoriesScope;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -328,10 +328,7 @@ public class GradleScriptType extends GroovyScriptType {
 
       files = GradleBuildClasspathManager.getInstance(file.getProject()).getModuleClasspathEntries(modulePath);
 
-      for (final VirtualFile root : files) {
-        result = result.uniteWith(new NonClasspathDirectoryScope(root));
-      }
-      result = new ExternalModuleBuildGlobalSearchScope(result, modulePath);
+      result = new ExternalModuleBuildGlobalSearchScope(result.uniteWith(new NonClasspathDirectoriesScope(files)), modulePath);
     }
     return result;
   }

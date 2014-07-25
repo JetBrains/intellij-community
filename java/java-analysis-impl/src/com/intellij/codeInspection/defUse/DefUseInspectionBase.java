@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -99,10 +100,12 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
         }
         else if (context instanceof PsiAssignmentExpression) {
           final PsiAssignmentExpression assignment = (PsiAssignmentExpression)context;
+          List<LocalQuickFix> fixes = ContainerUtil.createMaybeSingletonList(isOnTheFly ? createRemoveAssignmentFix() : null);
           holder.registerProblem(assignment.getLExpression(),
                                  InspectionsBundle.message("inspection.unused.assignment.problem.descriptor3",
                                                            assignment.getRExpression().getText(), "<code>#ref</code>" + " #loc"), 
-                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, createRemoveAssignmentFix());
+                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, fixes.toArray(new LocalQuickFix[fixes.size()])
+          );
         }
         else {
           if (context instanceof PsiPrefixExpression && REPORT_PREFIX_EXPRESSIONS ||

@@ -38,35 +38,50 @@
           </scrollpane>
         </children>
       </grid>
-      <grid id="ad16" binding="myOptionsPanel" layout-manager="CardLayout" hgap="0" vgap="0">
+      <grid id="22e59" layout-manager="BorderLayout" hgap="0" vgap="0">
         <constraints>
-          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
-        <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
-        </clientProperties>
         <border type="none"/>
         <children>
-          <grid id="27a92" layout-manager="BorderLayout" hgap="0" vgap="0">
-            <constraints>
-              <card name="templates card"/>
-            </constraints>
+          <grid id="9b063" binding="myHeaderPanel" layout-manager="GridBagLayout">
+            <constraints border-constraint="North"/>
             <properties/>
+            <border type="empty">
+              <size top="5" left="5" bottom="5" right="5"/>
+            </border>
+            <children/>
+          </grid>
+          <grid id="ad16" binding="myOptionsPanel" layout-manager="CardLayout" hgap="0" vgap="0">
+            <constraints border-constraint="Center"/>
+            <properties/>
+            <clientProperties>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
+            </clientProperties>
             <border type="none"/>
             <children>
-              <nested-form id="b063c" form-file="com/intellij/ide/projectWizard/ProjectTemplateList.form" binding="myTemplatesList">
-                <constraints border-constraint="Center"/>
-              </nested-form>
+              <grid id="27a92" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints>
+                  <card name="templates card"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <nested-form id="b063c" form-file="com/intellij/ide/projectWizard/ProjectTemplateList.form" binding="myTemplatesList">
+                    <constraints border-constraint="Center"/>
+                  </nested-form>
+                </children>
+              </grid>
+              <grid id="b50ee" binding="myFrameworksPanelPlaceholder" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints>
+                  <card name="frameworks card"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children/>
+              </grid>
             </children>
-          </grid>
-          <grid id="b50ee" binding="myFrameworksPanelPlaceholder" layout-manager="BorderLayout" hgap="0" vgap="0">
-            <constraints>
-              <card name="frameworks card"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children/>
           </grid>
         </children>
       </grid>

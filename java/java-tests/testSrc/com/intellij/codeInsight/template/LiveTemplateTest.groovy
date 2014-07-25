@@ -602,7 +602,7 @@ class Foo {
 
     addTemplate(template, testRootDisposable)
     myFixture.type '\t'
-    myFixture.checkResult 'class A { void f() { Stri    "; } }'
+    myFixture.checkResult 'class A { void f() { Stri   "; } }'
   }
 
   static void addTemplate(Template template, Disposable parentDisposable) {

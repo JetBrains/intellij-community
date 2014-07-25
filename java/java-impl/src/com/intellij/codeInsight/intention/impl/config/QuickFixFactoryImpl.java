@@ -547,8 +547,8 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createVariableAccessFromInnerClassFix(@NotNull PsiVariable variable, @NotNull PsiClass aClass) {
-    return new VariableAccessFromInnerClassFix(variable, aClass);
+  public IntentionAction createVariableAccessFromInnerClassFix(@NotNull PsiVariable variable, @NotNull PsiElement scope) {
+    return new VariableAccessFromInnerClassFix(variable, scope);
   }
 
   @NotNull

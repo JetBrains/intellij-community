@@ -146,6 +146,22 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  public void testIDEA123074() {
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    String before = "final GeoZone geoZone1 = new GeoZone(APPROACHING, new Polygon(point(\"0.0\", \"0.0\"), point(\"10.0\", \"0.0\")," +
+                    "point(\"10.0\", \"10.0\"), point(\"0.0\", \"10.0\")));";
+    String after = "final GeoZone geoZone1 = new GeoZone(APPROACHING,\n" +
+                   "        new Polygon(point(\"0.0\",\n" +
+                   "                \"0.0\"),\n" +
+                   "                point(\"10.0\",\n" +
+                   "                        \"0.0\"),\n" +
+                   "                point(\"10.0\",\n" +
+                   "                        \"10.0\"),\n" +
+                   "                point(\"0.0\",\n" +
+                   "                        \"10.0\")));";
+    doMethodTest(before, after);
+  }
+
   public void testMethodAnnotationFollowedBySingleLineComment() {
     // Inspired by IDEA-22808
     getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;

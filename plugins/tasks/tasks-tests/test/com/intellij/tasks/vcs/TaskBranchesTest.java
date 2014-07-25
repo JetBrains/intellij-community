@@ -155,6 +155,48 @@ public class TaskBranchesTest extends PlatformTestCase {
     assertEquals("foo", branches.get(0).name);
   }
 
+  public void testBranchBloating() throws Exception {
+    initRepository("foo");
+    LocalTask defaultTask = myTaskManager.getActiveTask();
+    assertNotNull(defaultTask);
+    assertEquals(0, defaultTask.getBranches().size());
+    LocalTaskImpl foo = myTaskManager.createLocalTask("foo");
+    LocalTask localTask = myTaskManager.activateTask(foo, false);
+    myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask));
+    assertEquals(2, localTask.getBranches().size());
+    assertEquals(1, defaultTask.getBranches().size());
+
+    myTaskManager.activateTask(localTask, false);
+    LocalTaskImpl bar = myTaskManager.createLocalTask("bar");
+    LocalTask barTask = myTaskManager.activateTask(bar, false);
+    myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(barTask));
+    assertEquals(1, defaultTask.getBranches().size());
+  }
+
+  public void testCleanupRemovedBranch() {
+    GitRepository repository = initRepository("foo");
+    LocalTask defaultTask = myTaskManager.getActiveTask();
+    assertNotNull(defaultTask);
+    assertEquals(0, defaultTask.getBranches().size());
+    LocalTaskImpl foo = myTaskManager.createLocalTask("foo");
+    LocalTask localTask = myTaskManager.activateTask(foo, false);
+    myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask));
+    assertEquals(2, localTask.getBranches().size());
+    assertEquals(1, defaultTask.getBranches().size());
+
+    // let's add non-existing branch
+    BranchInfo info = new BranchInfo();
+    info.name = "non-existing";
+    info.repository = defaultTask.getBranches().get(0).repository;
+    defaultTask.addBranch(info);
+
+    assertEquals("foo", repository.getCurrentBranch().getName());
+    myTaskManager.activateTask(defaultTask, false);
+    assertEquals("master", repository.getCurrentBranch().getName());
+    // do not re-create "non-existing"
+    assertEquals(2, repository.getBranches().getLocalBranches().size());
+  }
+
   private List<GitRepository> initRepositories(String... names) {
     return ContainerUtil.map(names, new Function<String, GitRepository>() {
       @Override

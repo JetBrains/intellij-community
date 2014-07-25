@@ -60,6 +60,10 @@ public class FileChooserDescriptorBuilder {
   public static FileChooserDescriptorBuilder onlyFiles() {
     return new FileChooserDescriptorBuilder(true, false, false, false, false, false);
   }
+
+  public static FileChooserDescriptorBuilder onlyFolders() {
+    return new FileChooserDescriptorBuilder(false, true, false, false, false, false);
+  }
   
   public static FileChooserDescriptorBuilder filesAndFolders() {
     return new FileChooserDescriptorBuilder(true, true, false, false, false, false);

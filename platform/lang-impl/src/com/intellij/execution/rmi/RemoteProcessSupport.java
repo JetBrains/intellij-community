@@ -147,9 +147,9 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   public void release(@NotNull Target target, @Nullable Parameters configuration) {
     ArrayList<ProcessHandler> handlers = new ArrayList<ProcessHandler>();
     synchronized (myProcMap) {
-      for (Pair<Target, Parameters> pair : myProcMap.keySet()) {
-        if (pair.first == target && (configuration == null || pair.second == configuration)) {
-          ContainerUtil.addIfNotNull(myProcMap.get(pair).handler, handlers);
+      for (Pair<Target, Parameters> key : myProcMap.keySet()) {
+        if (key.first == target && (configuration == null || key.second == configuration)) {
+          ContainerUtil.addIfNotNull(myProcMap.get(key).handler, handlers);
         }
       }
     }
@@ -160,7 +160,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     fireModificationCountChanged();
   }
 
-  private void startProcess(Target target, Parameters configuration, Pair<Target, Parameters> key) {
+  private void startProcess(Target target, Parameters configuration, @NotNull Pair<Target, Parameters> key) {
     ProgramRunner runner = new DefaultProgramRunner() {
       @Override
       @NotNull
@@ -192,7 +192,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   protected abstract RunProfileState getRunProfileState(Target target, Parameters configuration, Executor executor)
     throws ExecutionException;
 
-  private boolean getExistingInfo(Ref<RunningInfo> ref, Pair<Target, Parameters> key) {
+  private boolean getExistingInfo(@NotNull Ref<RunningInfo> ref, @NotNull Pair<Target, Parameters> key) {
     Info info;
     synchronized (myProcMap) {
       info = myProcMap.get(key);
@@ -246,7 +246,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     return (T)(to.isInstance(remote) ? remote : PortableRemoteObject.narrow(remote, to));
   }
 
-  private ProcessListener getProcessListener(final Pair<Target, Parameters> key) {
+  private ProcessListener getProcessListener(@NotNull final Pair<Target, Parameters> key) {
     return new ProcessListener() {
       @Override
       public void startNotified(ProcessEvent event) {

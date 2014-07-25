@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Area;
 import java.util.Map;
 
 /**
@@ -74,6 +75,15 @@ public class ScreenUtil {
       applyInsets(result[i], getScreenInsets(configuration));
     }
     return result;
+  }
+
+  public static Shape getAllScreensShape() {
+    Rectangle[] rectangles = getAllScreenBounds();
+    Area area = new Area();
+    for (Rectangle rectangle : rectangles) {
+      area.add(new Area(rectangle));
+    }
+    return area;
   }
 
   public static Rectangle getScreenRectangle(@NotNull Point p) {

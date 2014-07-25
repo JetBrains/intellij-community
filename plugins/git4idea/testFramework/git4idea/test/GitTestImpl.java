@@ -19,15 +19,13 @@ import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitCommit;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommandResult;
-import git4idea.commands.GitImpl;
-import git4idea.commands.GitLineHandlerListener;
+import git4idea.commands.*;
 import git4idea.push.GitPushSpec;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -39,14 +37,19 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
-import static git4idea.test.GitExecutor.cd;
-import static git4idea.test.GitExecutor.git;
 import static java.lang.String.format;
+import static git4idea.test.GitExecutor.*;
 
 /**
  * @author Kirill Likhodedov
  */
 public class GitTestImpl implements Git {
+
+  @NotNull
+  @Override
+  public GitCommandResult runRemoteCommand(@NotNull Computable<GitLineHandler> handlerConstructor) {
+    throw new UnsupportedOperationException();
+  }
 
   @NotNull
   @Override
@@ -226,7 +229,8 @@ public class GitTestImpl implements Git {
 
   @NotNull
   @Override
-  public GitCommandResult fetch(@NotNull GitRepository repository, @NotNull String url, @NotNull String remote, String... params) {
+  public GitCommandResult fetch(@NotNull GitRepository repository, @NotNull String url, @NotNull String remote,
+                                @NotNull List<GitLineHandlerListener> listeners, String... params) {
     throw new UnsupportedOperationException();
   }
 

@@ -133,6 +133,11 @@ public class GroovyTestFramework extends JavaTestFramework {
   }
 
   @Override
+  public FileTemplateDescriptor getTestClassFileTemplateDescriptor() {
+    return new FileTemplateDescriptor(GroovyTemplates.GROOVY_JUNIT_TEST_CASE_GROOVY);
+  }
+
+  @Override
   public FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor(GroovyTemplates.GROOVY_JUNIT_SET_UP_METHOD_GROOVY);
   }

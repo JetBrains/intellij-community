@@ -39,8 +39,8 @@ import java.util.Map;
 public class MethodCandidateInfo extends CandidateInfo{
   public static final RecursionGuard ourOverloadGuard = RecursionManager.createGuard("overload.guard");
   public static final ThreadLocal<Map<PsiElement,  CurrentCandidateProperties>> CURRENT_CANDIDATE = new ThreadLocal<Map<PsiElement, CurrentCandidateProperties>>();
-  @ApplicabilityLevelConstant
-  private int myApplicabilityLevel; // benign race
+  @ApplicabilityLevelConstant private int myApplicabilityLevel; // benign race
+  @ApplicabilityLevelConstant private int myPertinentApplicabilityLevel;
   private final PsiElement myArgumentList;
   private final PsiType[] myArgumentTypes;
   private final PsiType[] myTypeArguments;
@@ -105,6 +105,13 @@ public class MethodCandidateInfo extends CandidateInfo{
 
   @ApplicabilityLevelConstant
   public int getPertinentApplicabilityLevel() {
+    if (myPertinentApplicabilityLevel == 0) {
+      myPertinentApplicabilityLevel = getPertinentApplicabilityLevelInner();
+    }
+    return myPertinentApplicabilityLevel;
+  }
+  
+  public int getPertinentApplicabilityLevelInner() {
     if (myArgumentList == null || !PsiUtil.isLanguageLevel8OrHigher(myArgumentList)) {
       return getApplicabilityLevel();
     }

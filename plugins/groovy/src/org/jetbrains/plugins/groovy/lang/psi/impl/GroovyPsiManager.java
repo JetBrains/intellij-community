@@ -209,9 +209,13 @@ public class GroovyPsiManager {
       }
     }
     if (!type.isValid()) {
-      LOG.error("Type is invalid: " + type + "; element: " + element + " of class " + element.getClass());
+      error(element, type);
     }
     return UNKNOWN_TYPE == type ? null : type;
+  }
+
+  private static void error(PsiElement element, PsiType type) {
+    LOG.error("Type is invalid: " + type + "; element: " + element + " of class " + element.getClass());
   }
 
   @Nullable

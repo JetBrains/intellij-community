@@ -16,16 +16,23 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
 import com.intellij.refactoring.listeners.MoveMemberListener;
+import com.intellij.refactoring.memberPullUp.PullUpConflictsUtil;
 import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
+import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
 
 /**
  * @author ven
@@ -84,6 +91,16 @@ public class PullUpTest extends LightRefactoringTestCase {
   public void testRemoveOverride() {
     setLanguageLevel(LanguageLevel.JDK_1_5);
     doTest(new RefactoringTestUtil.MemberDescriptor("get", PsiMethod.class));
+  }
+
+  public void testNotFunctionalAnymore() {
+    setLanguageLevel(LanguageLevel.JDK_1_8);
+    doTest(true, "Functional expression demands functional interface to have exact one method", new RefactoringTestUtil.MemberDescriptor("get", PsiMethod.class, true));
+  }
+
+  public void testStillFunctional() {
+    setLanguageLevel(LanguageLevel.JDK_1_8);
+    doTest(true, new RefactoringTestUtil.MemberDescriptor("get", PsiMethod.class, false));
   }
 
   public void testAsDefault() {
@@ -156,6 +173,13 @@ public class PullUpTest extends LightRefactoringTestCase {
   }
 
   private void doTest(final boolean checkMembersMovedCount, RefactoringTestUtil.MemberDescriptor... membersToFind) {
+    doTest(checkMembersMovedCount, null, membersToFind);
+  }
+
+  private void doTest(final boolean checkMembersMovedCount,
+                      String conflictMessage,
+                      RefactoringTestUtil.MemberDescriptor... membersToFind) {
+    final MultiMap<PsiElement, String> conflictsMap = new MultiMap<PsiElement, String>();
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement elementAt = getFile().findElementAt(getEditor().getCaretModel().getOffset());
     final PsiClass sourceClass = PsiTreeUtil.getParentOfType(elementAt, PsiClass.class);
@@ -169,7 +193,7 @@ public class PullUpTest extends LightRefactoringTestCase {
       assertTrue(interfaces[0].isWritable());
       targetClass = interfaces[0];
     }
-    MemberInfo[] infos = RefactoringTestUtil.findMembers(sourceClass, membersToFind);
+    final MemberInfo[] infos = RefactoringTestUtil.findMembers(sourceClass, membersToFind);
 
     final int[] countMoved = {0};
     final MoveMemberListener listener = new MoveMemberListener() {
@@ -180,10 +204,35 @@ public class PullUpTest extends LightRefactoringTestCase {
       }
     };
     JavaRefactoringListenerManager.getInstance(getProject()).addMoveMembersListener(listener);
+    final PsiDirectory targetDirectory = targetClass.getContainingFile().getContainingDirectory();
+    final PsiPackage targetPackage = targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;
+    conflictsMap.putAllValues(
+      PullUpConflictsUtil
+        .checkConflicts(infos, sourceClass, targetClass, targetPackage, targetDirectory, new InterfaceContainmentVerifier() {
+          @Override
+          public boolean checkedInterfacesContain(PsiMethod psiMethod) {
+            return PullUpProcessor.checkedInterfacesContain(Arrays.asList(infos), psiMethod);
+          }
+        })
+    );
     final PullUpProcessor helper = new PullUpProcessor(sourceClass, targetClass, infos, new DocCommentPolicy(DocCommentPolicy.ASIS));
     helper.run();
     UIUtil.dispatchAllInvocationEvents();
     JavaRefactoringListenerManager.getInstance(getProject()).removeMoveMembersListener(listener);
+
+    if (conflictMessage != null && conflictsMap.isEmpty()) {
+      fail("Conflict was not detected");
+    }
+
+    if (conflictMessage == null && !conflictsMap.isEmpty()) {
+      fail(conflictsMap.values().iterator().next());
+    }
+
+    if (conflictMessage != null) {
+      assertEquals(conflictMessage, conflictsMap.values().iterator().next());
+      return;
+    }
+
     if (checkMembersMovedCount) {
       assertEquals(countMoved[0], membersToFind.length);
     }
@@ -194,5 +243,10 @@ public class PullUpTest extends LightRefactoringTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk18();
   }
 }

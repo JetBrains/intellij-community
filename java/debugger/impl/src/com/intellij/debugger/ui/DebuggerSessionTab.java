@@ -323,6 +323,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     }
     settings.add(new WatchLastMethodReturnValueAction());
     settings.add(new AutoVarsSwitchAction());
+    settings.add(new UnmuteOnStopAction());
     settings.addSeparator();
     addActionToGroup(settings, XDebuggerActions.AUTO_TOOLTIP);
 
@@ -378,6 +379,12 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     final WatchDebuggerTree watchTree = getWatchPanel().getWatchTree();
     for (DebuggerTreeNodeImpl watch : watches) {
       watchTree.addWatch((WatchItemDescriptor)watch.getDescriptor());
+    }
+
+    DebugProcessImpl process = getDebugProcess();
+    DebugProcessImpl reuseProcess = reuseSession.getDebugProcess();
+    if (process != null && reuseProcess != null) {
+      process.setBreakpointsMuted(reuseProcess.areBreakpointsMuted());
     }
   }
 
@@ -591,4 +598,23 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     }
   }
 
+  private class UnmuteOnStopAction extends ToggleAction {
+    private volatile boolean myUnmuteOnStop;
+
+    private UnmuteOnStopAction() {
+      super(DebuggerBundle.message("action.unmute.on.stop.text"), DebuggerBundle.message("action.unmute.on.stop.text"), null);
+      myUnmuteOnStop = DebuggerSettings.getInstance().UNMUTE_ON_STOP;
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myUnmuteOnStop;
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      myUnmuteOnStop = state;
+      DebuggerSettings.getInstance().UNMUTE_ON_STOP = state;
+    }
+  }
 }

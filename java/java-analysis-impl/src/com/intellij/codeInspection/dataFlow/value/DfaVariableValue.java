@@ -25,6 +25,7 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.openapi.util.Comparing;
@@ -158,6 +159,16 @@ public class DfaVariableValue extends DfaValue {
     Nullness nullability = DfaPsiUtil.getElementNullability(getVariableType(), var);
     if (nullability != Nullness.UNKNOWN) {
       return nullability;
+    }
+
+    if (var instanceof PsiParameter && var.getParent() instanceof PsiForeachStatement) {
+      PsiExpression iteratedValue = ((PsiForeachStatement)var.getParent()).getIteratedValue();
+      if (iteratedValue != null) {
+        PsiType itemType = JavaGenericsUtil.getCollectionItemType(iteratedValue);
+        if (itemType != null) {
+          return DfaPsiUtil.getElementNullability(itemType, var);
+        }
+      }
     }
 
     if (var instanceof PsiField && DfaPsiUtil.isFinalField((PsiVariable)var) && myFactory.isHonorFieldInitializers()) {

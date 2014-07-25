@@ -490,10 +490,7 @@ public class JavaCompletionContributor extends CompletionContributor {
 
         PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)method).getDefaultValue();
         if (defaultValue != null) {
-          Object constant = JavaPsiFacade.getInstance(method.getProject()).getConstantEvaluationHelper().computeConstantExpression(defaultValue);
-          if (constant != null) {
-            element = element.withTailText(" default " + (constant instanceof String ? "\"" + constant + "\"" : constant), true);
-          }
+          element = element.withTailText(" default " + defaultValue.getText(), true);
         }
 
         result.addElement(element);

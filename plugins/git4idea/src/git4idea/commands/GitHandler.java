@@ -104,6 +104,7 @@ public abstract class GitHandler {
   private static final long LONG_TIME = 10 * 1000;
   @Nullable private ModalityState myState;
   @Nullable private String myUrl;
+  private boolean myHttpAuthFailed;
 
 
   /**
@@ -472,27 +473,33 @@ public abstract class GitHandler {
     // TODO this code should be located in GitLineHandler, and the other remote code should be move there as well
     if (this instanceof GitLineHandler) {
       ((GitLineHandler)this).addLineListener(new GitLineHandlerAdapter() {
-
-        private boolean myAuthFailed;
-
         @Override
         public void onLineAvailable(String line, Key outputType) {
           if (line.toLowerCase().contains("authentication failed")) {
-            myAuthFailed = true;
+            myHttpAuthFailed = true;
           }
         }
 
         @Override
         public void processTerminated(int exitCode) {
-          if (myAuthFailed) {
-            authenticator.forgetPassword();
+          if (!authenticator.wasCancelled()) {
+            if (myHttpAuthFailed) {
+              authenticator.forgetPassword();
+            }
+            else {
+              authenticator.saveAuthData();
+            }
           }
           else {
-            authenticator.saveAuthData();
+            myHttpAuthFailed = false;
           }
         }
       });
     }
+  }
+
+  public boolean hasHttpAuthFailed() {
+    return myHttpAuthFailed;
   }
 
   protected abstract Process startProcess() throws ExecutionException;

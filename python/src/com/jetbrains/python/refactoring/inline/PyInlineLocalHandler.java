@@ -42,6 +42,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.Query;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -95,7 +96,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
     invoke(project, editor, (PyTargetExpression)element, refExpr);
   }
 
-  public static void invoke(final Project project, final Editor editor, PyTargetExpression local, PyReferenceExpression refExpr) {
+  public static void invoke(final Project project, final Editor editor, final PyTargetExpression local, PyReferenceExpression refExpr) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, local)) return;
 
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
@@ -187,6 +188,12 @@ public class PyInlineLocalHandler extends InlineActionHandler {
             PsiElement[] exprs = new PsiElement[refsToInline.length];
             final PyExpression value = prepareValue(def, localName, project);
             final PyExpression withParent = PyElementGenerator.getInstance(project).createExpressionFromText("(" + value.getText() + ")");
+            final PsiElement lastChild = def.getLastChild();
+            if (lastChild != null && lastChild.getNode().getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
+              final PsiElement parent = def.getParent();
+              if (parent != null) parent.addBefore(lastChild, def);
+            }
+
             for (int i = 0, refsToInlineLength = refsToInline.length; i < refsToInlineLength; i++) {
               PsiElement element = refsToInline[i];
               if (PyReplaceExpressionUtil.isNeedParenthesis((PyExpression)element, value)) {

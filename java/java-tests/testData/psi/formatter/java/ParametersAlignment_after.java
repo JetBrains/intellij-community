@@ -7,7 +7,6 @@ class Foo {
                                                                                       settings,
                                                                                       indentOptions,
                                                                                       child2.getTextRange(),
-                                                                                      false
-        );
+                                                                                      false);
     }
 }

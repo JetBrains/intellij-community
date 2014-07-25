@@ -568,7 +568,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
       if (name != null) {
         MethodSignature signature = MethodSignatureUtil.createMethodSignature(name, prevBaseMethod.getParameterList(), prevBaseMethod.getTypeParameterList(), substitutor, prevBaseMethod.isConstructor());
         PsiMethod prevMethod = MethodSignatureUtil.findMethodBySignature(aClass, signature, false);
-        if (prevMethod != null){
+        if (prevMethod != null && prevMethod.isPhysical()){
           return prevMethod.getNextSibling();
         }
       }

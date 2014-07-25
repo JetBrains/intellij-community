@@ -19,8 +19,10 @@
 
 import urllib2
 from mercurial import  ui, util
-import  struct, socket
+import struct
+import socket
 from mercurial.i18n import _
+
 
 try:
     from mercurial.url import passwordmgr
@@ -80,9 +82,15 @@ def monkeypatch_method(cls):
 
 def sendchoicestoidea(ui, msg, choices, default):
     port = int(ui.config( 'hg4ideaprompt', 'port', None, True))
-  
+
     if not port:
         raise util.Abort("No port was specified")
+    if (type(choices) is int) and (type(msg) is str):
+        # since Mercurial 2.7 the promptchoice method doesn't accept 'choices' as parameter, so we need to parse them from msg
+        # see ui.py -> promptchoice(self, prompt, default=0)
+        parts = msg.split('$$')
+        msg = parts[0].rstrip(' ')
+        choices = [p.strip(' ') for p in parts[1:]]
 
     numOfChoices = len(choices)
     if not numOfChoices:

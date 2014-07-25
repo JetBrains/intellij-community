@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.inspections.quickfix.PyRemoveAssignmentQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.types.PyNoneType;
@@ -84,7 +85,7 @@ public class PyNoneFunctionAssignmentInspection extends PyInspection {
                 return;
               }
             }
-            registerProblem(node, PyBundle.message("INSP.none.function.assignment", callee.getName()));
+            registerProblem(node, PyBundle.message("INSP.none.function.assignment", callee.getName()), new PyRemoveAssignmentQuickFix());
           }
         }
       }

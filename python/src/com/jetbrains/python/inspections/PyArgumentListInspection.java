@@ -15,7 +15,9 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.google.common.collect.Lists;
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
@@ -24,6 +26,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.inspections.quickfix.PyRemoveArgumentQuickFix;
+import com.jetbrains.python.inspections.quickfix.PyRenameArgumentQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyABCUtil;
@@ -33,6 +37,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -71,7 +76,7 @@ public class PyArgumentListInspection extends PyInspection {
       PyDecorator[] decorators = node.getDecorators();
       for (PyDecorator deco : decorators) {
         if (deco.hasArgumentList()) continue;
-        final PyCallExpression.PyMarkedCallee markedCallee = deco.resolveCallee(resolveWithoutImplicits());
+        final PyCallExpression.PyMarkedCallee markedCallee = deco.resolveCallee(getResolveContext());
         if (markedCallee != null && !markedCallee.isImplicitlyResolved()) {
           final Callable callable = markedCallee.getCallable();
           int firstParamOffset =  markedCallee.getImplicitOffset();
@@ -127,19 +132,23 @@ public class PyArgumentListInspection extends PyInspection {
       if (!flags.isEmpty()) { // something's wrong
         PyExpression arg = argEntry.getKey();
         if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP)) {
-          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.argument"));
+          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.argument"), new PyRemoveArgumentQuickFix());
         }
         if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP_KWD)) {
-          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.doublestar.arg"));
+          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.doublestar.arg"), new PyRemoveArgumentQuickFix());
         }
         if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP_TUPLE)) {
-          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.star.arg"));
+          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.star.arg"), new PyRemoveArgumentQuickFix());
         }
         if (flags.contains(CallArgumentsMapping.ArgFlag.IS_POS_PAST_KWD)) {
-          holder.registerProblem(arg, PyBundle.message("INSP.cannot.appear.past.keyword.arg"), ProblemHighlightType.ERROR);
+          holder.registerProblem(arg, PyBundle.message("INSP.cannot.appear.past.keyword.arg"), ProblemHighlightType.ERROR, new PyRemoveArgumentQuickFix());
         }
         if (flags.contains(CallArgumentsMapping.ArgFlag.IS_UNMAPPED)) {
-          holder.registerProblem(arg, PyBundle.message("INSP.unexpected.arg"));
+          ArrayList<LocalQuickFix> quickFixes = Lists.<LocalQuickFix>newArrayList(new PyRemoveArgumentQuickFix());
+          if (arg instanceof PyKeywordArgument) {
+            quickFixes.add(new PyRenameArgumentQuickFix());
+          }
+          holder.registerProblem(arg, PyBundle.message("INSP.unexpected.arg"), quickFixes.toArray(new LocalQuickFix[quickFixes.size()-1]));
         }
         if (flags.contains(CallArgumentsMapping.ArgFlag.IS_TOO_LONG)) {
           final PyCallExpression.PyMarkedCallee markedCallee = result.getMarkedCallee();

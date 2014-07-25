@@ -51,23 +51,23 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
-                                        boolean isOnTheFly,
+                                        final boolean isOnTheFly,
                                         @NotNull final LocalInspectionToolSession session) {
     return new Visitor(holder, session);
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    private Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+    private Visitor(@Nullable final ProblemsHolder holder, @NotNull final LocalInspectionToolSession session) {
       super(holder, session);
     }
 
     @Override
-    public void visitPyWithStatement(PyWithStatement node) {
+    public void visitPyWithStatement(final PyWithStatement node) {
       checkNotReDeclaringUpperLoopOrStatement(node);
     }
 
     @Override
-    public void visitPyForStatement(PyForStatement node) {
+    public void visitPyForStatement(final PyForStatement node) {
       checkNotReDeclaringUpperLoopOrStatement(node);
     }
 
@@ -75,11 +75,15 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
      * Finds first parent of specific type (See {@link #isRequiredStatement(com.intellij.psi.PsiElement)})
      * that declares one of names, declared in this statement
      */
-    private void checkNotReDeclaringUpperLoopOrStatement(NameDefiner statement) {
-      for (PsiElement declaredVar : statement.iterateNames()) {
-        Filter filter = new Filter(handleSubscriptionsAndResolveSafely(declaredVar));
-        PsiElement firstParent = PsiTreeUtil.findFirstParent(statement, true, filter);
-        if (firstParent != null && isRequiredStatement(firstParent)) {
+    private void checkNotReDeclaringUpperLoopOrStatement(@NotNull final NameDefiner statement) {
+      for (final PsiElement declaredVar : statement.iterateNames()) {
+        final Filter filter = new Filter(handleSubscriptionsAndResolveSafely(declaredVar));
+        final PsiElement firstParent = PsiTreeUtil.findFirstParent(statement, true, filter);
+        if ((firstParent != null) && isRequiredStatement(firstParent)) {
+          // If parent is "for", we need to check that statement not declared in "else": PY-12367
+          if ((firstParent instanceof PyForStatement) && isDeclaredInElse(statement, (PyForStatement)firstParent)) {
+            continue;
+          }
           registerProblem(declaredVar,
                           PyBundle.message("INSP.NAME.assignment.to.loop.or.with.parameter.display.message", declaredVar.getText()));
         }
@@ -88,36 +92,52 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
   }
 
   /**
-   * Filters list of parents trying to find parent that declares var that refers to {@link #node}
+   * Checks that element is declared in "else" statement of "for" statement
+   *
+   * @param elementToCheck element to check
+   * @param forStatement   statement to obtain "else" part from
+   * @return true if declated in "Else" block
+   */
+  private static boolean isDeclaredInElse(@NotNull final PsiElement elementToCheck, @NotNull final PyForStatement forStatement) {
+    final PyElsePart elsePart = forStatement.getElsePart();
+    if (elsePart != null) {
+      if (PsiTreeUtil.isAncestor(elsePart, elementToCheck, false)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Filters list of parents trying to find parent that declares var that refers to {@link #myNode}
    * Returns {@link com.jetbrains.python.codeInsight.controlflow.ScopeOwner} if nothing found.
    * Returns parent otherwise.
    */
   private static class Filter implements Condition<PsiElement> {
-    private final PsiElement node;
+    private final PsiElement myNode;
 
-    private Filter(PsiElement node) {
-      this.node = node;
+    private Filter(final PsiElement node) {
+      this.myNode = node;
     }
 
     @Override
-    public boolean value(PsiElement psiElement) {
+    public boolean value(final PsiElement psiElement) {
       if (psiElement instanceof ScopeOwner) {
         return true; //Do not go any further
       }
-      if (!(isRequiredStatement(psiElement))) {
+      if (!isRequiredStatement(psiElement)) {
         return false; //Parent has wrong type, skip
       }
-      Iterable<PyElement> varsDeclaredInStatement = ((NameDefiner)psiElement).iterateNames();
-      for (PsiElement varDeclaredInStatement : varsDeclaredInStatement) {
+      final Iterable<PyElement> varsDeclaredInStatement = ((NameDefiner)psiElement).iterateNames();
+      for (final PsiElement varDeclaredInStatement : varsDeclaredInStatement) {
         //For each variable, declared by this parent take first declaration and open subscription list if any
-        PsiReference reference = handleSubscriptionsAndResolveSafely(varDeclaredInStatement).getReference();
-        if (reference != null && reference.isReferenceTo(node)) {
+        final PsiReference reference = handleSubscriptionsAndResolveSafely(varDeclaredInStatement).getReference();
+        if ((reference != null) && reference.isReferenceTo(myNode)) {
           return true; //One of variables declared by this parent refers to node
         }
       }
       return false;
     }
-
   }
 
   /**
@@ -142,8 +162,8 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
    * @param element to check
    * @return true if inspection should work with this element
    */
-  private static boolean isRequiredStatement(PsiElement element) {
+  private static boolean isRequiredStatement(final PsiElement element) {
     assert element != null;
-    return element instanceof PyWithStatement || element instanceof PyForStatement;
+    return (element instanceof PyWithStatement) || (element instanceof PyForStatement);
   }
 }

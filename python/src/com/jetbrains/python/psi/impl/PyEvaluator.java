@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import java.util.*;
 
 /**
+ * TODO: Merge PythonDataflowUtil, {@link com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator}  and {@link com.jetbrains.python.psi.impl.PyEvaluator} and all its inheritors and improve Abstract Interpretation
  * @author yole
  */
 public class PyEvaluator {
@@ -45,28 +46,10 @@ public class PyEvaluator {
     }
     myVisited.add(expr);
     if (expr instanceof PyParenthesizedExpression) {
-      return evaluate(((PyParenthesizedExpression) expr).getContainedExpression());
+      return evaluate(((PyParenthesizedExpression)expr).getContainedExpression());
     }
     if (expr instanceof PySequenceExpression) {
-      PyExpression[] elements = ((PySequenceExpression)expr).getElements();
-      if (expr instanceof PyDictLiteralExpression) {
-        Map<Object, Object> result = new HashMap<Object, Object>();
-        for (PyKeyValueExpression keyValueExpression : ((PyDictLiteralExpression)expr).getElements()) {
-          Object dictKey = evaluate(keyValueExpression.getKey());
-          if (dictKey != null) {
-            PyExpression value = keyValueExpression.getValue();
-            result.put(dictKey, myEvaluateCollectionItems ? evaluate(value) : value);
-          }
-        }
-        return result;
-      }
-      else {
-        List<Object> result = new ArrayList<Object>();
-        for (PyExpression element : elements) {
-          result.add(myEvaluateCollectionItems ? evaluate(element) : element);
-        }
-        return result;
-      }
+      return evaluateSequenceExpression((PySequenceExpression)expr);
     }
     if (expr instanceof PyCallExpression) {
       return evaluateCall((PyCallExpression)expr);
@@ -91,14 +74,41 @@ public class PyEvaluator {
     return null;
   }
 
-  public static Object concatenate(Object lhs, Object rhs) {
+  /**
+   * Evaluates some sequence (tuple, list)
+   * @param expr seq expression
+   * @return evaluated seq
+   */
+  protected Object evaluateSequenceExpression(PySequenceExpression expr) {
+    PyExpression[] elements = expr.getElements();
+    if (expr instanceof PyDictLiteralExpression) {
+      Map<Object, Object> result = new HashMap<Object, Object>();
+      for (PyKeyValueExpression keyValueExpression : ((PyDictLiteralExpression)expr).getElements()) {
+        Object dictKey = evaluate(keyValueExpression.getKey());
+        if (dictKey != null) {
+          PyExpression value = keyValueExpression.getValue();
+          result.put(dictKey, myEvaluateCollectionItems ? evaluate(value) : value);
+        }
+      }
+      return result;
+    }
+    else {
+      List<Object> result = new ArrayList<Object>();
+      for (PyExpression element : elements) {
+        result.add(myEvaluateCollectionItems ? evaluate(element) : element);
+      }
+      return result;
+    }
+  }
+
+  public Object concatenate(Object lhs, Object rhs) {
     if (lhs instanceof String && rhs instanceof String) {
-      return (String) lhs + (String) rhs;
+      return (String)lhs + (String)rhs;
     }
     if (lhs instanceof List && rhs instanceof List) {
       List<Object> result = new ArrayList<Object>();
-      result.addAll((List) lhs);
-      result.addAll((List) rhs);
+      result.addAll((List)lhs);
+      result.addAll((List)rhs);
       return result;
     }
     return null;
@@ -131,7 +141,7 @@ public class PyEvaluator {
         Object arg1 = evaluate(args[0]);
         Object arg2 = evaluate(args[1]);
         if (arg1 instanceof String && arg2 instanceof String) {
-          return ((String) result).replace((String) arg1, (String) arg2);
+          return ((String)result).replace((String)arg1, (String)arg2);
         }
       }
     }

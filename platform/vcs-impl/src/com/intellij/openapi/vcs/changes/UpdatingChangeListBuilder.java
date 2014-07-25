@@ -177,7 +177,15 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     checkIfDisposed();
     if (isExcluded(file)) return;
     if (myScope.belongsTo(new FilePathImpl(file))) {
-      myComposite.getIgnoredFileHolder().addFile(file);
+      IgnoredFilesHolder ignoredFilesHolder = myComposite.getIgnoredFileHolder();
+      if (ignoredFilesHolder instanceof IgnoredFilesCompositeHolder) {
+        IgnoredFilesHolder holder = ((IgnoredFilesCompositeHolder)ignoredFilesHolder).getAppropriateIgnoredHolder();
+        if (holder instanceof MapIgnoredFilesHolder) {
+          ((MapIgnoredFilesHolder)holder).addByVcsChangeProvider(file);
+          return;
+        }
+      }
+      ignoredFilesHolder.addFile(file);
     }
   }
 

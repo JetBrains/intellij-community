@@ -90,8 +90,8 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private AntBuildFileBase myBuildFile;
   private final String[] myTargets;
   private int myPriorityThreshold = PRIORITY_BRIEF;
-  private int myErrorCount;
-  private int myWarningCount;
+  private volatile int myErrorCount;
+  private volatile int myWarningCount;
   private volatile boolean myIsOutputPaused = false;
 
   @NotNull
@@ -109,7 +109,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private final Runnable myFlushLogRunnable = new Runnable() {
     @Override
     public void run() {
-      if (myTreeView != null && myCommandsProcessedCount < myLog.size()) {
+      if (myCommandsProcessedCount < myLog.size()) {
         if (!myIsOutputPaused) {
           new OutputFlusher().doFlush();
           myTreeView.scrollToLastMessage();
@@ -597,16 +597,21 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
         return true;
       }
 
-      AntBuildMessageView messageView = myContent.getUserData(KEY);
+      final AntBuildMessageView messageView = myContent.getUserData(KEY);
 
-      if (messageView.isStoppedOrTerminateRequested()) {
+      if (messageView == null || messageView.isStoppedOrTerminateRequested()) {
         return true;
       }
 
-      if (myCloseAllowed) return true;
+      if (myCloseAllowed) {
+        return true;
+      }
 
-      int result = Messages.showYesNoCancelDialog(AntBundle.message("ant.process.is.active.terminate.confirmation.text"),
-                                                  AntBundle.message("close.ant.build.messages.dialog.title"), Messages.getQuestionIcon());
+      final int result = Messages.showYesNoCancelDialog(
+        AntBundle.message("ant.process.is.active.terminate.confirmation.text"), 
+        AntBundle.message("close.ant.build.messages.dialog.title"), Messages.getQuestionIcon()
+      );
+      
       if (result == 0) { // yes
         messageView.stopProcess();
         myCloseAllowed = true;

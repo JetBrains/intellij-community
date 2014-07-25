@@ -114,6 +114,11 @@ public class EclipseCompilerDriver {
 
   private static IErrorHandlingPolicy getHandlingPolicy() {
     return new IErrorHandlingPolicy() {
+      @Override
+      public boolean ignoreAllErrors() {
+        return false;
+      }
+
       public boolean proceedOnErrors() {
         return false; // stop if there are some errors
       }

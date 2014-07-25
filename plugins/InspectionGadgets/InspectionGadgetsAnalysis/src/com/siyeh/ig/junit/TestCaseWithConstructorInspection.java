@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.junit;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -65,7 +66,7 @@ public class TestCaseWithConstructorInspection extends BaseInspection {
         return;
       }
       final PsiClass aClass = method.getContainingClass();
-      if (!TestUtils.isJUnitTestClass(aClass)) {
+      if (aClass == null || !TestUtils.isJUnitTestClass(aClass) || AnnotationUtil.isAnnotated(aClass, "org.junit.runner.RunWith", true)) {
         return;
       }
       final PsiCodeBlock body = method.getBody();

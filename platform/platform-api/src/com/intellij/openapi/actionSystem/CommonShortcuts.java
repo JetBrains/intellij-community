@@ -133,7 +133,7 @@ public class CommonShortcuts {
   }
 
   public static ShortcutSet getMoveEnd() {
-    return shortcutsById(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
+    return shortcutsById(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
   }
 
   public static ShortcutSet getRecentFiles() {

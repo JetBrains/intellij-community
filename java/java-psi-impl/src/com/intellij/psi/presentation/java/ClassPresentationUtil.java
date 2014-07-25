@@ -62,14 +62,19 @@ public class ClassPresentationUtil {
     }
   }
 
-  private static String getContextName(@NotNull PsiElement element, boolean qualified) {
-    PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiMember.class, PsiFile.class);
+  public static String getContextName(@NotNull PsiElement element, boolean qualified) {
+    PsiElement parent = PsiTreeUtil.getStubOrPsiParentOfType(element, PsiMember.class);
+    if (parent == null) parent = element.getContainingFile();
     while(true){
       if (parent == null) return null;
       String name = getNameForElement(parent, qualified);
       if (name != null) return name;
       if (parent instanceof PsiFile) return null;
-      parent = parent.getParent();
+      parent = PsiTreeUtil.getStubOrPsiParent(parent);
     }
+  }
+
+  public static String getFunctionalExpressionPresentation(PsiFunctionalExpression functionalExpression, boolean qualified) {
+    return "Functional expression in " + getContextName(functionalExpression, qualified);
   }
 }

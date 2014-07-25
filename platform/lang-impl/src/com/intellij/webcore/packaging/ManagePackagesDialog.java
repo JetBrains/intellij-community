@@ -393,23 +393,28 @@ public class ManagePackagesDialog extends DialogWrapper {
 
       final ArrayList<RepoPackage> filtered = new ArrayList<RepoPackage>();
 
+      RepoPackage toSelect = null;
       for (RepoPackage repoPackage : toProcess) {
-        if (StringUtil.containsIgnoreCase(repoPackage.getName(), filter)) {
+        final String packageName = repoPackage.getName();
+        if (StringUtil.containsIgnoreCase(packageName, filter)) {
           filtered.add(repoPackage);
         }
         else {
           myFilteredOut.add(repoPackage);
         }
+        if (StringUtil.equals(packageName, filter)) toSelect = repoPackage;
       }
-      filter(filtered);
+      filter(filtered, toSelect);
     }
 
-    public void filter(List<RepoPackage> filtered){
+    public void filter(List<RepoPackage> filtered, @Nullable final RepoPackage toSelect){
       myView.clear();
       myPackages.clearSelection();
       for (RepoPackage repoPackage : filtered) {
         myView.add(repoPackage);
       }
+      if (toSelect != null)
+        myPackages.setSelectedValue(toSelect, true);
       Collections.sort(myView);
       fireContentsChanged(this, 0, myView.size());
     }

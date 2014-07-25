@@ -15,9 +15,9 @@
  */
 package com.intellij.ide.favoritesTreeView;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
-import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
@@ -29,6 +29,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.Function;
+import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -48,6 +49,7 @@ public class FavoritesPanel {
   private final DnDAwareTree myTree;
   private final AbstractTreeBuilder myTreeBuilder;
   private final FavoritesTreeStructure myTreeStructure;
+  private final Image myFavoritesImage = IconUtil.toImage(AllIcons.Toolwindows.ToolWindowFavorites);
 
   public FavoritesPanel(Project project) {
     myProject = project;
@@ -71,10 +73,27 @@ public class FavoritesPanel {
         @Override
         public DnDDragStartBean fun(DnDActionInfo info) {
           final TreePath path = myTree.getPathForLocation(info.getPoint().x, info.getPoint().y);
-          if (path != null) {
-            return new DnDDragStartBean(path);
+          if (path != null && path.getPathCount() == 3) {
+            Object o = path.getLastPathComponent();
+            if (o instanceof DefaultMutableTreeNode) {
+              o = ((DefaultMutableTreeNode)o).getUserObject();
+              if (o instanceof FavoritesTreeNodeDescriptor) {
+                FavoritesTreeNodeDescriptor root = ((FavoritesTreeNodeDescriptor)o).getFavoritesRoot();
+                if (root != o) {
+                  o = root.getElement();
+                  if (o instanceof FavoritesListNode && ((FavoritesListNode)o).getProvider() == null) {
+                    return new DnDDragStartBean(path);
+                  }
+                }
+              }
+            }
           }
-          return new DnDDragStartBean("");
+          return new DnDDragStartBean("") {
+            @Override
+            public boolean isEmpty() {
+              return true;
+            }
+          };
         }
       })
         // todo process drag-and-drop here for tasks
@@ -91,6 +110,11 @@ public class FavoritesPanel {
             return true;
           }
           FavoritesListNode node = myViewPanel.findFavoritesListNode(event.getPoint());
+          if ((obj instanceof TreePath && myViewPanel.myTree.getPath(node).isDescendant((TreePath)obj)) ||
+              (node != null && node.getProvider() != null)) {
+            event.setDropPossible(false);
+            return false;
+          }
           highlight(node, event);
           if (node != null) {
             event.setDropPossible(true);
@@ -133,6 +157,12 @@ public class FavoritesPanel {
             myViewPanel.dropPsiElements(mgr, node,
                                         getPsiFiles(FileCopyPasteUtil.getFileList(((DnDNativeTarget.EventInfo)obj).getTransferable())));
           }
+        }
+      })
+      .setImageProvider(new Function<DnDActionInfo, DnDImage>() {
+        @Override
+        public DnDImage fun(DnDActionInfo info) {
+          return new DnDImage(myFavoritesImage, new Point(-myFavoritesImage.getWidth(null) / 2, -myFavoritesImage.getHeight(null) / 2));
         }
       })
       .enableAsNativeTarget()

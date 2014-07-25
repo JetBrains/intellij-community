@@ -1,9 +1,9 @@
 class B(object):
-  def __init__(self): # ierror only once
-                pass
+  def __init__(self): # error
+    pass
 
-    def __new__(cls, x, y):
-              pass
+  def __new__(cls, x, y): # error
+    pass
 
 class A1(B):
     pass

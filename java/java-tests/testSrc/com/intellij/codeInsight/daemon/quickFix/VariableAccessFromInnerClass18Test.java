@@ -15,8 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.openapi.command.WriteCommandAction;
-
 /**
  * User: anna
  */
@@ -28,22 +26,5 @@ public class VariableAccessFromInnerClass18Test extends LightQuickFixParameteriz
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/mustBeFinal18";
-  }
-
-  @Override
-  protected void beforeActionStarted(String testName, String contents) {
-    for (int i=0;i<10;i++) {
-      WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-        @Override
-        public void run() {
-          myEditor.getDocument().insertString(myEditor.getCaretModel().getOffset(), "//");
-        }
-      });
-
-      doHighlighting();
-      delete();
-      delete();
-      doHighlighting();
-    }
   }
 }

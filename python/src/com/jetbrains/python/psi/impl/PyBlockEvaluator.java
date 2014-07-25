@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
+ *
  * @author yole
  */
 public class PyBlockEvaluator {
@@ -97,7 +99,7 @@ public class PyBlockEvaluator {
           Object currentValue = myNamespace.get(name);
           if (currentValue != null) {
             Object rhs = prepareEvaluator().evaluate(node.getValue());
-            myNamespace.put(name, PyEvaluator.concatenate(currentValue, rhs));
+            myNamespace.put(name, prepareEvaluator().concatenate(currentValue, rhs));
           }
           if (myDeclarationsToTrack.contains(name)) {
             List<PyExpression> declarations = myDeclarations.get(name);
@@ -147,19 +149,21 @@ public class PyBlockEvaluator {
             myDeclarations.putAll(importEvaluator.myDeclarations);
           }
           else {
-            for (PyImportElement element : node.getImportElements()) {
-              Object value = importEvaluator.myNamespace.get(element.getName());
-              String name = element.getAsName();
-              if (name == null) {
-                name = element.getName();
+            for (final PyImportElement element : node.getImportElements()) {
+              final String nameOfVarInOurModule = element.getVisibleName();
+              final QualifiedName nameOfVarInExternalModule = element.getImportedQName();
+              if ((nameOfVarInOurModule == null) || (nameOfVarInExternalModule == null)) {
+                continue;
               }
-              myNamespace.put(name, value);
-              List<PyExpression> declarations = importEvaluator.getDeclarations(name);
-              if (myDeclarations.containsKey(name)) {
-                myDeclarations.get(name).addAll(declarations);
+
+              final Object value = importEvaluator.myNamespace.get(nameOfVarInExternalModule.toString());
+              myNamespace.put(nameOfVarInOurModule, value);
+              final List<PyExpression> declarations = importEvaluator.getDeclarations(nameOfVarInOurModule);
+              if (myDeclarations.containsKey(nameOfVarInOurModule)) {
+                myDeclarations.get(nameOfVarInOurModule).addAll(declarations);
               }
               else {
-                myDeclarations.put(name, declarations);
+                myDeclarations.put(nameOfVarInOurModule, declarations);
               }
             }
           }
@@ -187,7 +191,7 @@ public class PyBlockEvaluator {
     Object value = myNamespace.get(nameBeingExtended);
     if (value instanceof List) {
       Object argValue = prepareEvaluator().evaluate(arg);
-      myNamespace.put(nameBeingExtended, PyEvaluator.concatenate(value, argValue));
+      myNamespace.put(nameBeingExtended, prepareEvaluator().concatenate(value, argValue));
     }
 
     if (myDeclarationsToTrack.contains(nameBeingExtended)) {

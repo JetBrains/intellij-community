@@ -744,7 +744,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
         if (argumentList != null && argumentList.getExpressions().length == 0) {
           final PsiMethod[] methods = anonymousClass.getMethods();
           PsiClass baseClass = anonymousClass.getBaseClassType().resolve();
-          if (hasOnlyOneLambdaMethod(anonymousClass, !quick) && seemsLikeLambda(baseClass)) {
+          if (hasOnlyOneLambdaMethod(anonymousClass, !quick) && seemsLikeLambda(baseClass) && !PsiUtil.isLanguageLevel8OrHigher(anonymousClass)) {
             final PsiMethod method = methods[0];
             final PsiCodeBlock body = method.getBody();
             if (body != null) {

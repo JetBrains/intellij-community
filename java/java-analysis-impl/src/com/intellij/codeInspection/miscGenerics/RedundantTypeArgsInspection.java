@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -95,6 +96,12 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
         }
       }
 
+      @Override
+      public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+        super.visitMethodReferenceExpression(expression);
+        checkMethodReference(expression, inspectionManager, problems);
+      }
+
       private void checkCallExpression(final PsiJavaCodeReferenceElement reference,
                                        final PsiType[] typeArguments,
                                        PsiCallExpression expression,
@@ -145,6 +152,42 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
     return problems.toArray(new ProblemDescriptor[problems.size()]);
   }
 
+  private static void checkMethodReference(PsiMethodReferenceExpression expression,
+                                           InspectionManager inspectionManager,
+                                           List<ProblemDescriptor> problems) {
+    final PsiTypeElement qualifierTypeElement = expression.getQualifierType();
+    if (qualifierTypeElement != null) {
+      final PsiType psiType = qualifierTypeElement.getType();
+      if (psiType instanceof PsiClassType && !(((PsiClassType)psiType).isRaw())) {
+        final JavaResolveResult result = expression.advancedResolve(false);
+        final PsiElement element = result.getElement();
+        if (element instanceof PsiTypeParameterListOwner) {
+          final PsiMethodReferenceExpression copy = createMethodReference(expression, qualifierTypeElement);
+          final JavaResolveResult simplifiedResolve = copy.advancedResolve(false);
+          final PsiElement candidate = simplifiedResolve.getElement();
+          if (candidate == element) {
+            final PsiJavaCodeReferenceElement referenceElement = qualifierTypeElement.getInnermostComponentReferenceElement();
+            LOG.assertTrue(referenceElement != null, qualifierTypeElement);
+            final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
+            LOG.assertTrue(parameterList != null);
+            final ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(parameterList, InspectionsBundle
+              .message("inspection.redundant.type.problem.descriptor"), new MyMethodReferenceFixAction(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, false);
+            problems.add(descriptor);
+          }
+        }
+      }
+    }
+  }
+
+  private static PsiMethodReferenceExpression createMethodReference(PsiMethodReferenceExpression expression,
+                                                                    PsiTypeElement typeElement) {
+    final PsiType type = typeElement.getType();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
+    final PsiMethodReferenceExpression copy = (PsiMethodReferenceExpression)expression.copy();
+    copy.getQualifierType().replace(elementFactory.createTypeElement(((PsiClassType)type).rawType()));
+    return copy;
+  }
+
   private static class MyQuickFixAction implements LocalQuickFix {
     @Override
     @NotNull
@@ -163,6 +206,32 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
+      }
+    }
+
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
+  }
+
+  //separate quickfix is needed to invalidate initial method reference
+  //otherwise it would provide inconsistent substitutors to the next chained calls
+  private static class MyMethodReferenceFixAction implements LocalQuickFix {
+    @Override
+    @NotNull
+    public String getName() {
+      return InspectionsBundle.message("inspection.redundant.type.remove.quickfix");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiTypeElement.class);
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(typeElement)) return;
+      final PsiMethodReferenceExpression expression = PsiTreeUtil.getParentOfType(typeElement, PsiMethodReferenceExpression.class);
+      if (expression != null) {
+        expression.replace(createMethodReference(expression, typeElement));
       }
     }
 

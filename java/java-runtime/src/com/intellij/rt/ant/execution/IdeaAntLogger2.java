@@ -20,10 +20,12 @@ import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 import org.apache.tools.ant.BuildEvent;
 import org.apache.tools.ant.DefaultLogger;
 import org.apache.tools.ant.Project;
+import org.apache.tools.ant.Task;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Field;
 
 public final class IdeaAntLogger2 extends DefaultLogger {
   static SegmentedOutputStream ourErr;
@@ -82,7 +84,7 @@ public final class IdeaAntLogger2 extends DefaultLogger {
   }
 
   public synchronized void targetFinished(BuildEvent event) {
-    sendException(event);
+    sendException(event, true);
     myTargetPriority.sendMessage(TARGET_END, event.getPriority(), event.getException());
   }
 
@@ -91,25 +93,56 @@ public final class IdeaAntLogger2 extends DefaultLogger {
   }
 
   public synchronized void taskFinished(BuildEvent event) {
-    sendException(event);
+    sendException(event, true);
     myTaskPriority.sendMessage(TASK_END, event.getPriority(), event.getException());
   }
 
   public synchronized void messageLogged(BuildEvent event) {
-    if (sendException(event)) return;
+    final boolean failOnError = isFailOnError(event);
+    if (sendException(event, failOnError)) {
+      return;
+    }
+
     int priority = event.getPriority();
-    String message = event.getMessage();
-    if (priority == Project.MSG_ERR)
+    if (priority == Project.MSG_ERR && !failOnError) {
+      // some ant tasks (like Copy) with 'failOnError' attribute set to 'false'
+      // send warnings with priority level = Project.MSG_ERR
+      // this heuristic corrects the priority level, so that IDEA considers the message not as an error but as a warning
+      priority = Project.MSG_WARN;
+    }
+
+    final String message = event.getMessage();
+
+    if (priority == Project.MSG_ERR) {
       myMessagePriority.sendMessage(ERROR, priority, message);
-    else
+    }
+    else {
       myMessagePriority.sendMessage(MESSAGE, priority, message);
+    }
   }
 
-  private boolean sendException(BuildEvent event) {
+  private static boolean isFailOnError(BuildEvent event) {
+    final Task task = event.getTask();
+    if (task != null) {
+      try {
+        final Field field = task.getClass().getDeclaredField("failonerror");
+        field.setAccessible(true);
+        return !Boolean.FALSE.equals(field.get(task));
+      }
+      catch (Exception ignored) {
+      }
+    }
+    return true; // default value
+  }
+
+  private boolean sendException(BuildEvent event, boolean isFailOnError) {
     Throwable exception = event.getException();
     if (exception != null) {
-      myAlwaysSend.sendMessage(EXCEPTION, event.getPriority(), exception);
-      return true;
+      if (isFailOnError) {
+        myAlwaysSend.sendMessage(EXCEPTION, event.getPriority(), exception);
+        return true;
+      }
+      myMessagePriority.sendMessage(MESSAGE, Project.MSG_WARN, exception.getMessage());
     }
     return false;
   }

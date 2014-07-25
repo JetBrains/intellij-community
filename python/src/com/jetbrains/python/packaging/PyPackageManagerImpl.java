@@ -49,11 +49,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.remote.RemoteFile;
+import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.remote.RemoteSdkCredentials;
+import com.intellij.remote.VagrantNotStartedException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.PathMappingSettings;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
@@ -64,6 +66,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyListLiteralExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -96,6 +99,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public static final int ERROR_EXECUTION = -6;
   public static final int ERROR_INTERRUPTED = -7;
 
+  public static final int ERROR_VAGRANT_NOT_LAUNCHED = 101;
+  public static final int ERROR_REMOTE_ACCESS = 102;
+
   public static final String PACKAGE_PIP = "pip";
   public static final String PACKAGE_DISTRIBUTE = "distribute";
   public static final String PACKAGE_SETUPTOOLS = "setuptools";
@@ -119,6 +125,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   public static final String SETUPTOOLS = PACKAGE_SETUPTOOLS + "-" + SETUPTOOLS_VERSION;
   public static final String PIP = PACKAGE_PIP + "-" + PIP_VERSION;
+  private static final String LAUNCH_VAGRANT = "launchVagrant";
 
   private List<PyPackage> myPackagesCache = null;
   private Map<String, Set<PyPackage>> myDependenciesCache = null;
@@ -149,21 +156,22 @@ public class PyPackageManagerImpl extends PyPackageManager {
       progressTitle = "Installing package " + name;
       successTitle = "Packages installed successfully";
       run(new MultiExternalRunnable() {
-        @Override
-        public List<PyExternalProcessException> run(@NotNull ProgressIndicator indicator) {
-          final List<PyExternalProcessException> exceptions = new ArrayList<PyExternalProcessException>();
-          indicator.setText(String.format("Installing package '%s'...", name));
-          final PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManagers.getInstance().forSdk(mySdk);
-          try {
-            manager.installManagement(name);
-          }
-          catch (PyExternalProcessException e) {
-            exceptions.add(e);
-          }
-          return exceptions;
-        }
-      }, progressTitle, successTitle, "Installed package " + name,
-          "Install package failed");
+            @Override
+            public List<PyExternalProcessException> run(@NotNull ProgressIndicator indicator) {
+              final List<PyExternalProcessException> exceptions = new ArrayList<PyExternalProcessException>();
+              indicator.setText(String.format("Installing package '%s'...", name));
+              final PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManagers.getInstance().forSdk(mySdk);
+              try {
+                manager.installManagement(name);
+              }
+              catch (PyExternalProcessException e) {
+                exceptions.add(e);
+              }
+              return exceptions;
+            }
+          }, progressTitle, successTitle, "Installed package " + name,
+          "Install package failed"
+      );
     }
 
     public void install(@NotNull final List<PyRequirement> requirements, @NotNull final List<String> extraArgs) {
@@ -172,29 +180,30 @@ public class PyPackageManagerImpl extends PyPackageManager {
       progressTitle = "Installing packages";
       successTitle = "Packages installed successfully";
       run(new MultiExternalRunnable() {
-        @Override
-        public List<PyExternalProcessException> run(@NotNull ProgressIndicator indicator) {
-          final int size = requirements.size();
-          final List<PyExternalProcessException> exceptions = new ArrayList<PyExternalProcessException>();
-          final PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManagers.getInstance().forSdk(mySdk);
-          for (int i = 0; i < size; i++) {
-            final PyRequirement requirement = requirements.get(i);
-            if (myListener != null) {
-              indicator.setText(String.format("Installing package '%s'...", requirement));
-              indicator.setFraction((double)i / size);
+            @Override
+            public List<PyExternalProcessException> run(@NotNull ProgressIndicator indicator) {
+              final int size = requirements.size();
+              final List<PyExternalProcessException> exceptions = new ArrayList<PyExternalProcessException>();
+              final PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManagers.getInstance().forSdk(mySdk);
+              for (int i = 0; i < size; i++) {
+                final PyRequirement requirement = requirements.get(i);
+                if (myListener != null) {
+                  indicator.setText(String.format("Installing package '%s'...", requirement));
+                  indicator.setFraction((double)i / size);
+                }
+                try {
+                  manager.install(list(requirement), extraArgs);
+                }
+                catch (PyExternalProcessException e) {
+                  exceptions.add(e);
+                }
+              }
+              manager.refresh();
+              return exceptions;
             }
-            try {
-              manager.install(list(requirement), extraArgs);
-            }
-            catch (PyExternalProcessException e) {
-              exceptions.add(e);
-            }
-          }
-          manager.refresh();
-          return exceptions;
-        }
-      }, progressTitle, successTitle, "Installed packages: " + PyPackageUtil.requirementsToString(requirements),
-          "Install packages failed");
+          }, progressTitle, successTitle, "Installed packages: " + PyPackageUtil.requirementsToString(requirements),
+          "Install packages failed"
+      );
     }
 
     public void uninstall(@NotNull final List<PyPackage> packages) {
@@ -207,22 +216,23 @@ public class PyPackageManagerImpl extends PyPackageManager {
       if (checkDependents(packages)) return;
 
       run(new MultiExternalRunnable() {
-        @Override
-        public List<PyExternalProcessException> run(@NotNull ProgressIndicator indicator) {
-          final PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManagers.getInstance().forSdk(mySdk);
-          try {
-            manager.uninstall(packages);
-            return list();
-          }
-          catch (PyExternalProcessException e) {
-            return list(e);
-          }
-          finally {
-            manager.refresh();
-          }
-        }
-      }, "Uninstalling packages", "Packages uninstalled successfully", "Uninstalled packages: " + packagesString,
-          "Uninstall packages failed");
+            @Override
+            public List<PyExternalProcessException> run(@NotNull ProgressIndicator indicator) {
+              final PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManagers.getInstance().forSdk(mySdk);
+              try {
+                manager.uninstall(packages);
+                return list();
+              }
+              catch (PyExternalProcessException e) {
+                return list(e);
+              }
+              finally {
+                manager.refresh();
+              }
+            }
+          }, "Uninstalling packages", "Packages uninstalled successfully", "Uninstalled packages: " + packagesString,
+          "Uninstall packages failed"
+      );
     }
 
     private boolean checkDependents(@NotNull final List<PyPackage> packages) {
@@ -311,7 +321,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
                                                      assert myProject != null;
                                                      PackagesNotificationPanel.showError(myProject, failureTitle, description);
                                                    }
-                                                 }));
+                                                 }
+            ));
           }
           application.invokeLater(new Runnable() {
             @Override
@@ -460,8 +471,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
       for (PyPackage pkg : packages) {
         if (canModify) {
           final String location = pkg.getLocation();
-          if (location != null)
+          if (location != null) {
             canModify = FileUtil.ensureCanCreateFile(new File(location));
+          }
         }
         args.add(pkg.getName());
       }
@@ -472,17 +484,18 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
   }
 
-  private static Map<String, Set<PyPackage>> collectDependents(@NotNull final List<PyPackage> packages, Sdk sdk) throws PyExternalProcessException {
+  private static Map<String, Set<PyPackage>> collectDependents(@NotNull final List<PyPackage> packages, Sdk sdk)
+    throws PyExternalProcessException {
     Map<String, Set<PyPackage>> dependentPackages = new HashMap<String, Set<PyPackage>>();
     for (PyPackage pkg : packages) {
       final Set<PyPackage> dependents =
         ((PyPackageManagerImpl)PyPackageManager.getInstance(sdk)).getDependents(pkg.getName());
       if (dependents != null && !dependents.isEmpty()) {
         for (PyPackage dependent : dependents) {
-          if (!packages.contains(dependent))
+          if (!packages.contains(dependent)) {
             dependentPackages.put(pkg.getName(), dependents);
+          }
         }
-
       }
     }
     return dependentPackages;
@@ -709,7 +722,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       else {
         credentials = "";
       }
-      return credentials + String.format("%s:%d", settings.PROXY_HOST, settings.PROXY_PORT);
+      return "http://" + credentials + String.format("%s:%d", settings.PROXY_HOST, settings.PROXY_PORT);
     }
     return null;
   }
@@ -779,14 +792,39 @@ public class PyPackageManagerImpl extends PyPackageManager {
     if (homePath == null) {
       throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Cannot find interpreter for SDK");
     }
-    if (sdkData instanceof RemoteSdkAdditionalData) { //remote interpreter
+    if (sdkData instanceof PyRemoteSdkAdditionalDataBase) { //remote interpreter
       RemoteSdkCredentials remoteSdkCredentials;
       try {
-        remoteSdkCredentials = ((RemoteSdkAdditionalData)sdkData).getRemoteSdkCredentials();
+        remoteSdkCredentials = ((RemoteSdkAdditionalData)sdkData).getRemoteSdkCredentials(false);
       }
       catch (InterruptedException e) {
         LOG.error(e);
         remoteSdkCredentials = null;
+      }
+      catch (final ExecutionException e) {
+        if (e.getCause() instanceof VagrantNotStartedException) {
+          throw new PyExternalProcessException(ERROR_VAGRANT_NOT_LAUNCHED, helperPath, args, "Vagrant instance is down. <a href=\"" +
+                                                                      LAUNCH_VAGRANT +
+                                                                      "\">Launch vagrant</a>").withHandler(LAUNCH_VAGRANT, new Runnable() {
+            @Override
+            public void run() {
+              final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
+              if (manager != null) {
+
+                try {
+                  manager.runVagrant(((VagrantNotStartedException)e.getCause()).getVagrantFolder());
+                  clearCaches();
+
+                }
+                catch (ExecutionException e1) {
+                  throw new RuntimeException(e1);
+                }
+              }
+            }
+          });
+        } else {
+          throw new PyExternalProcessException(ERROR_REMOTE_ACCESS, helperPath, args, e.getMessage());
+        }
       }
       final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null && remoteSdkCredentials != null) {
@@ -805,7 +843,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
           }
           ProcessOutput processOutput;
           do {
-            processOutput = manager.runRemoteProcess(null, remoteSdkCredentials, ArrayUtil.toStringArray(cmdline), workingDir, askForSudo);
+            PathMappingSettings mappings = manager.setupMappings(null, (PyRemoteSdkAdditionalDataBase)sdkData, null);
+            processOutput =
+              manager.runRemoteProcess(null, remoteSdkCredentials, mappings, ArrayUtil.toStringArray(cmdline), workingDir, askForSudo);
             if (askForSudo && processOutput.getStderr().contains("sudo: 3 incorrect password attempts")) {
               continue;
             }
@@ -869,7 +909,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   private static String quoteIfNeeded(String arg) {
-    return arg.replace(" ", "\\ ").replace("<", "\\<").replace(">", "\\>");
+    return arg.replace("<", "\\<").replace(">", "\\>"); //TODO: move this logic to ParametersListUtil.encode
   }
 
   @NotNull

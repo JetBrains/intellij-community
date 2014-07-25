@@ -33,10 +33,15 @@ class PyDevFrontEnd:
         # Store certain global objects that IPython modifies
         _displayhook = sys.displayhook
         _excepthook = sys.excepthook
-    
+
+        class ClosablePyDevTerminalInteractiveShell(TerminalInteractiveShell):
+            '''Override ask_exit() method for correct exit, exit(), etc. handling.'''
+            def ask_exit(self):
+                sys.exit()
+
         # Create and initialize our IPython instance.
-        shell = TerminalInteractiveShell.instance()
-    
+        shell = ClosablePyDevTerminalInteractiveShell.instance()
+
         shell.showtraceback = _showtraceback
         # IPython is ready, now clean up some global state...
         
@@ -55,12 +60,12 @@ class PyDevFrontEnd:
             import builtins as __builtin__
         __builtin__._ip = shell
         __builtin__.get_ipython = get_ipython
-        
+
         # We want to print to stdout/err as usual.
         io.stdout = original_stdout
         io.stderr = original_stderr
-    
-        
+
+
         self._curr_exec_lines = []
         self.ipython = shell
 
@@ -79,13 +84,15 @@ class PyDevFrontEnd:
             self.ipython.history_manager.save_thread.pydev_do_not_trace = True #don't trace ipython history saving thread
 
     def complete(self, string):
-        if string:
-            return self.ipython.complete(string)
-        else:
-            return self.ipython.complete(string, string, 0)
-    
-    
-        
+        try:
+            if string:
+                return self.ipython.complete(None, line=string, cursor_pos=string.__len__())
+            else:
+                return self.ipython.complete(string, string, 0)
+        except:
+            # Silence completer exceptions
+            pass
+
     def is_complete(self, string):
         #Based on IPython 0.10.1
          
@@ -148,5 +155,5 @@ class PyDevFrontEnd:
         return self.ipython.automagic
 
     def get_greeting_msg(self):
-        return 'PyDev console: using IPython %s\n' % self.version
+        return 'PyDev console: using IPython %s' % self.version
 

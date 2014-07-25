@@ -78,6 +78,7 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
   static {
     ourGenerifiedClasses.add("javax.swing.JComboBox");
     ourGenerifiedClasses.add("javax.swing.ListModel");
+    ourGenerifiedClasses.add("javax.swing.JList");
   }
 
   protected LanguageLevel myEffectiveLanguageLevel = null;

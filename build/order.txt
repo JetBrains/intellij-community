@@ -4148,7 +4148,6 @@ com/intellij/psi/search/scope/packageSet/ParsingException.class:/lib/openapi.jar
 com/intellij/packageDependencies/DependencyValidationManagerImpl.class:/lib/idea.jar
 com/intellij/psi/search/scope/packageSet/NamedScope.class:/lib/openapi.jar
 com/intellij/psi/search/scope/packageSet/NamedScope$UnnamedScope.class:/lib/openapi.jar
-ide/sharedScope.png:/lib/icons.jar
 com/intellij/packageDependencies/DependencyValidationManagerImpl$1.class:/lib/idea.jar
 com/intellij/ide/startup/impl/StartupManagerImpl$4.class:/lib/idea.jar
 com/intellij/psi/search/scope/packageSet/PackageSetFactory.class:/lib/openapi.jar

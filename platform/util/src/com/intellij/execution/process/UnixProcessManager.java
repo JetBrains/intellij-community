@@ -49,7 +49,7 @@ public class UnixProcessManager {
         C_LIB = ((CLib)Native.loadLibrary("c", CLib.class));
       }
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       Logger log = Logger.getInstance(UnixProcessManager.class);
       log.warn("Can't load c library", e);
       C_LIB = null;

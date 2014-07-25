@@ -59,6 +59,15 @@ public class AutoCloseableResourceInspectionTest extends LightInspectionTestCase
            "}");
   }
 
+  public void testSystemOut() {
+    doTest("class X {" +
+           "  void m(String s) {" +
+           "    System.out.printf(\"asdf %s\", s);" +
+           "    System.err.format(\"asdf %s\", s);" +
+           "  }" +
+           "}");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     return new AutoCloseableResourceInspection();

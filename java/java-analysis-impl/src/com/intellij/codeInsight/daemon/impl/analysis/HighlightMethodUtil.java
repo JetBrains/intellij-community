@@ -1181,7 +1181,7 @@ public class HighlightMethodUtil {
             continue;
           }
         }
-        if (JavaGenericsUtil.isRawToGeneric(currentType, otherSuperReturnType)) continue;
+        if (currentMethod.getTypeParameters().length > 0 && JavaGenericsUtil.isRawToGeneric(currentType, otherSuperReturnType)) continue;
       }
       return createIncompatibleReturnTypeMessage(currentMethod, otherSuperMethod, otherSuperReturnType,
                                                  currentType, JavaErrorMessages.message("unrelated.overriding.methods.return.types"),

@@ -41,8 +41,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
@@ -754,14 +752,8 @@ public class XDebugSessionImpl implements XDebugSession {
     myDispatcher.getMulticaster().sessionPaused();
   }
 
-  @Nullable
-  private Editor getEditor(@NotNull XSourcePosition position) {
-    OpenFileDescriptor descriptor = XSourcePositionImpl.createOpenFileDescriptor(myProject, position);
-    return descriptor.canNavigate() ? FileEditorManager.getInstance(myProject).openTextEditor(descriptor, false) : null;
-  }
-
   private void adjustMouseTrackingCounter(@NotNull XSourcePosition position, int increment) {
-    final Editor editor = getEditor(position);
+    Editor editor = XDebuggerUtilImpl.createEditor(XSourcePositionImpl.createOpenFileDescriptor(myProject, position));
     if (editor != null) {
       JComponent component = editor.getComponent();
       Object o = component.getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING);

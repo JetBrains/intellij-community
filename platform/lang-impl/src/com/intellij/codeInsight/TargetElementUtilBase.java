@@ -295,6 +295,7 @@ public class TargetElementUtilBase {
         return parent;
       }
     }
+
     return null;
   }
 

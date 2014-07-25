@@ -53,9 +53,11 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.WaitFor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -282,6 +284,26 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
     findModel.setStringToFind("$foo");
     assertSize(2, findUsages(findModel));
+  }
+
+  public void testFindInOpenedFilesIncludesNoneProjectButOpenedFile() throws IOException {
+    File dir = createTempDirectory();
+    File file = new File(dir.getPath(), "A.test1234");
+    file.createNewFile();
+    FileUtil.writeToFile(file, "foo fo foo");
+    VirtualFile nonProjectFile = VfsUtil.findFileByIoFile(file, true);
+    assertNotNull(nonProjectFile);
+
+    FindModel findModel = new FindModel();
+    findModel.setStringToFind("fo");
+    findModel.setWholeWordsOnly(true);
+    findModel.setFromCursor(false);
+    findModel.setGlobal(true);
+    findModel.setMultipleFiles(true);
+    findModel.setCustomScope(true);
+    findModel.setCustomScope(new GlobalSearchScope.FilesScope(myProject, ContainerUtil.list(nonProjectFile)));
+
+    assertSize(1, findUsages(findModel));
   }
 
   public void testWholeWordsInNonIndexedFiles() throws Exception {

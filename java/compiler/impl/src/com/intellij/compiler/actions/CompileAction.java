@@ -26,14 +26,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder;
 import com.intellij.psi.*;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class CompileAction extends CompileActionBase {
@@ -108,7 +105,8 @@ public class CompileAction extends CompileActionBase {
       else if (files.length == 1) {
         final VirtualFile file = files[0];
         FileType fileType = file.getFileType();
-        if (CompilerManager.getInstance(project).isCompilableFileType(fileType) || isCompilableResourceFile(project, compilerConfiguration, file)) {
+        if (CompilerManager.getInstance(project).isCompilableFileType(fileType) || compilerConfiguration
+          .isCompilableResourceFile(project, file)) {
           elementDescription = "'" + file.getName() + "'";
         }
         else {
@@ -135,7 +133,7 @@ public class CompileAction extends CompileActionBase {
   }
 
   private static String createPresentationText(String elementDescription) {
-    StringBuffer buffer = new StringBuffer(40);
+    StringBuilder buffer = new StringBuilder(40);
     buffer.append(ActionsBundle.actionText(IdeActions.ACTION_COMPILE)).append(" ");
     int length = elementDescription.length();
     if (length > 23) {
@@ -175,20 +173,12 @@ public class CompileAction extends CompileActionBase {
       }
       else {
         FileType fileType = file.getFileType();
-        if (!(compilerManager.isCompilableFileType(fileType) || isCompilableResourceFile(project, compilerConfiguration, file))) {
+        if (!(compilerManager.isCompilableFileType(fileType) || compilerConfiguration.isCompilableResourceFile(project, file))) {
           continue;
         }
       }
       filesToCompile.add(file);
     }
-    return VfsUtil.toVirtualFileArray(filesToCompile);
-  }
-
-  private static boolean isCompilableResourceFile(final Project project, final CompilerConfiguration compilerConfiguration, final VirtualFile file) {
-    if (!compilerConfiguration.isResourceFile(file)) {
-      return false;
-    }
-    final Collection<? extends Artifact> artifacts = ArtifactBySourceFileFinder.getInstance(project).findArtifacts(file);
-    return artifacts.isEmpty();
+    return VfsUtilCore.toVirtualFileArray(filesToCompile);
   }
 }

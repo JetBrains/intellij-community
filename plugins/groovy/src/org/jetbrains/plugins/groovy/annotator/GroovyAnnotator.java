@@ -60,6 +60,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
@@ -846,7 +847,8 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitListOrMap(GrListOrMap listOrMap) {
     final PsiReference constructorReference = listOrMap.getReference();
-    if (constructorReference != null) {
+    if (constructorReference instanceof LiteralConstructorReference &&
+        ((LiteralConstructorReference)constructorReference).getConstructedClassType() != null) {
       final PsiElement startToken = listOrMap.getFirstChild();
       if (startToken != null && startToken.getNode().getElementType() == GroovyTokenTypes.mLBRACK) {
         myHolder.createInfoAnnotation(startToken, null).setTextAttributes(LITERAL_CONVERSION);

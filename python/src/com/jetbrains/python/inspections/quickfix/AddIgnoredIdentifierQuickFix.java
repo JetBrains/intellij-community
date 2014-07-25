@@ -59,7 +59,7 @@ public class AddIgnoredIdentifierQuickFix implements LocalQuickFix, LowPriorityA
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement context = descriptor.getPsiElement();
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile(context);
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     profile.modifyProfile(new Consumer<ModifiableModel>() {
       @Override
       public void consume(ModifiableModel model) {

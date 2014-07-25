@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.sdk;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -28,9 +30,12 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.NullableConsumer;
+import com.intellij.util.ui.EmptyIcon;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -38,6 +43,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   private DialogWrapper myMore;
@@ -50,22 +56,41 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   private static final String REMOTE = "Add Remote";
   private static final String VIRTUALENV = "Create VirtualEnv";
   private static final String MORE = "More...";
+  private boolean myNewProject;
 
   public static void show(final Project project,
                           final Sdk[] existingSdks,
-                          DialogWrapper moreDialog,
+                          @Nullable final DialogWrapper moreDialog,
                           JComponent ownerComponent, final Point popupPoint,
                           final NullableConsumer<Sdk> callback) {
+    show(project, existingSdks, moreDialog, ownerComponent, popupPoint, callback, false);
 
-    final ListPopupStep sdkHomesStep = new PythonSdkDetailsStep(project, moreDialog, ownerComponent, existingSdks, callback);
+  }
+
+  public static void show(final Project project,
+                          final Sdk[] existingSdks,
+                          @Nullable final DialogWrapper moreDialog,
+                          JComponent ownerComponent, final Point popupPoint,
+                          final NullableConsumer<Sdk> callback, boolean isNewProject) {
+    final PythonSdkDetailsStep sdkHomesStep = new PythonSdkDetailsStep(project, moreDialog, ownerComponent, existingSdks, callback);
+    sdkHomesStep.setNewProject(isNewProject);
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
+    Dimension size = new JLabel(VIRTUALENV, EmptyIcon.ICON_16, SwingConstants.LEFT).getMinimumSize();
+    int componentNum = getAvailableOptions(moreDialog != null).size() + 1;
+    int height = size.height * componentNum + 2*componentNum;
+    popup.setSize(new Dimension(size.width, height));
+    popup.setMinimumSize(new Dimension(size.width, height));
     popup.showInScreenCoordinates(ownerComponent, popupPoint);
   }
 
-  public PythonSdkDetailsStep(Project project,
-                              DialogWrapper moreDialog, Component ownerComponent,
-                              Sdk[] existingSdks,
-                              NullableConsumer<Sdk> callback) {
+  private void setNewProject(boolean isNewProject) {
+    myNewProject = isNewProject;
+  }
+
+  public PythonSdkDetailsStep(@Nullable final Project project,
+                              @Nullable final DialogWrapper moreDialog, @NotNull final Component ownerComponent,
+                              @NotNull final Sdk[] existingSdks,
+                              @NotNull final NullableConsumer<Sdk> callback) {
     super(null, getAvailableOptions(moreDialog != null));
     myProject = project;
     myMore = moreDialog;
@@ -141,7 +166,12 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
             additionalData = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk.getHomePath()));
             ((ProjectJdkImpl)sdk).setSdkAdditionalData(additionalData);
           }
-          ((PythonSdkAdditionalData)additionalData).associateWithProject(myProject);
+          if (myNewProject) {
+            ((PythonSdkAdditionalData)additionalData).associateWithNewProject();
+          }
+          else {
+            ((PythonSdkAdditionalData)additionalData).associateWithProject(myProject);
+          }
         }
         myCallback.consume(sdk);
       }
@@ -149,7 +179,12 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
 
     final CreateVirtualEnvDialog dialog;
     final List<Sdk> allSdks = Lists.newArrayList(myExistingSdks);
-
+    Iterables.removeIf(allSdks, new Predicate<Sdk>() {
+      @Override
+      public boolean apply(Sdk sdk) {
+        return !(sdk.getSdkType() instanceof PythonSdkType);
+      }
+    });
     final List<PythonSdkFlavor> flavors = PythonSdkFlavor.getApplicableFlavors(false);
     for (PythonSdkFlavor flavor : flavors) {
       final Collection<String> strings = flavor.suggestHomePaths();
@@ -157,7 +192,10 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
         allSdks.add(new PyDetectedSdk(string));
       }
     }
-
+    final Set<String> sdks = PySdkService.getInstance().getAddedSdks();
+    for (String string : SdkConfigurationUtil.filterExistingPaths(PythonSdkType.getInstance(), sdks, myExistingSdks)) {
+      allSdks.add(new PyDetectedSdk(string));
+    }
     if (myProject != null) {
       dialog = new CreateVirtualEnvDialog(myProject, allSdks, null);
     }
@@ -173,6 +211,12 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   @Override
   public boolean canBeHidden(String value) {
     return true;
+  }
+
+  @Override
+  public void canceled() {
+    if (getFinalRunnable() == null && myMore != null)
+      Disposer.dispose(myMore.getDisposable());
   }
 
   @Override

@@ -15,11 +15,13 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
  * User: ktisha
  */
+@TestDataPath("$CONTENT_ROOT/../testData/inspections/PyProtectedMemberInspection")
 public class PyProtectedMemberInspectionTest extends PyTestCase {
 
   public void testTruePositive() {
@@ -43,6 +45,18 @@ public class PyProtectedMemberInspectionTest extends PyTestCase {
   }
 
   public void testSelfField() {
+    doTest();
+  }
+
+  public void testTest() {
+    doTest();
+  }
+
+  public void testNamedTuple() {
+    doTest();
+  }
+
+  public void testFromImport() {
     doTest();
   }
 

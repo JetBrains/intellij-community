@@ -20,12 +20,16 @@ import com.intellij.codeInspection.AddAssertStatementFix;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.SurroundWithIfFix;
+import com.intellij.codeInspection.defUse.DefUseInspection;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.tree.IElementType;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -42,6 +46,17 @@ public class DataFlowInspection extends DataFlowInspectionBase {
       fixes.add(new SurroundWithIfFix(qualifier));
     }
   }
+
+  @Override
+  protected LocalQuickFix[] createConditionalAssignmentFixes(boolean evaluatesToTrue, PsiAssignmentExpression assignment, final boolean onTheFly) {
+    IElementType op = assignment.getOperationTokenType();
+    boolean toRemove = op == JavaTokenType.ANDEQ && !evaluatesToTrue || op == JavaTokenType.OREQ && evaluatesToTrue;
+    if (toRemove && !onTheFly) {
+      return LocalQuickFix.EMPTY_ARRAY;
+    }
+    return new LocalQuickFix[]{toRemove ? new DefUseInspection.RemoveAssignmentFix() : createSimplifyToAssignmentFix()};
+  }
+
   @Override
   public JComponent createOptionsPanel() {
     return new OptionsPanel();
@@ -86,7 +101,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
           DONT_REPORT_TRUE_ASSERT_STATEMENTS = myDontReportTrueAsserts.isSelected();
         }
       });
-      
+
       myIgnoreAssertions = new JCheckBox("Ignore assert statements");
       myIgnoreAssertions.setSelected(IGNORE_ASSERT_STATEMENTS);
       myIgnoreAssertions.getModel().addChangeListener(new ChangeListener() {

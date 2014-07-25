@@ -67,7 +67,7 @@ class ConfirmingHostnameVerifier implements X509HostnameVerifier {
 
   @Override
   public void verify(final String host, final X509Certificate cert) throws SSLException {
-    if (!CertificatesManager.getInstance().getState().checkHostname) {
+    if (!CertificateManager.getInstance().getState().CHECK_HOSTNAME) {
       return;
     }
     try {
@@ -84,7 +84,7 @@ class ConfirmingHostnameVerifier implements X509HostnameVerifier {
   }
 
   private static boolean accepted(final String host, final X509Certificate cert) {
-    return CertificatesManager.showAcceptDialog(new Callable<DialogWrapper>() {
+    return CertificateManager.showAcceptDialog(new Callable<DialogWrapper>() {
       @Override
       public DialogWrapper call() throws Exception {
         return CertificateWarningDialog.createHostnameMismatchWarning(cert, host);

@@ -307,6 +307,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private VisualPosition myTargetMultiSelectionPosition;
   private boolean myMultiSelectionInProgress;
   private boolean myLastPressCreatedCaret;
+  // Set when the selection (normal or block one) initiated by mouse drag becomes noticeable (at least one character is selected).
+  // Reset on mouse press event.
   private boolean myCurrentDragIsSubstantial;
 
   private CaretImpl myPrimaryCaret;
@@ -4203,8 +4205,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myScrollingTimer.stop();
 
       SelectionModel selectionModel = getSelectionModel();
-      int oldSelectionStart = selectionModel.getLeadSelectionOffset();
-      VisualPosition oldVisLeadSelectionStart = selectionModel.getLeadSelectionPosition();
+      Caret leadCaret = getLeadCaret();
+      int oldSelectionStart = leadCaret.getLeadSelectionOffset();
+      VisualPosition oldVisLeadSelectionStart = leadCaret.getLeadSelectionPosition();
       int oldCaretOffset = getCaretModel().getOffset();
       LogicalPosition oldLogicalCaret = getCaretModel().getLogicalPosition();
       boolean multiCaretSelection = myCaretModel.supportsMultipleCarets() && (isColumnMode() || e.isAltDown());
@@ -4230,13 +4233,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       else {
         if (isColumnMode() || e.isAltDown()) {
           if (myCaretModel.supportsMultipleCarets()) {
-            if (myCurrentDragIsSubstantial || !newLogicalCaret.equals(myLastMousePressedLocation)) {
-              selectionModel.setBlockSelection(myLastMousePressedLocation, newLogicalCaret);
-              myCurrentDragIsSubstantial = true;
+            if (myLastMousePressedLocation != null && (myCurrentDragIsSubstantial || !newLogicalCaret.equals(myLastMousePressedLocation))) {
+              setBlockSelectionAndBlockActions(e, myLastMousePressedLocation, newLogicalCaret);
             }
           } else {
             final LogicalPosition blockStart = selectionModel.hasBlockSelection() ? selectionModel.getBlockStart() : oldLogicalCaret;
-            selectionModel.setBlockSelection(blockStart, getCaretModel().getLogicalPosition());
+            setBlockSelectionAndBlockActions(e, blockStart, getCaretModel().getLogicalPosition());
           }
         }
         else {
@@ -4276,10 +4278,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
 
           if (!myMousePressedInsideSelection) {
-            if (myCaretModel.supportsMultipleCarets()) {
-              oldSelectionStart = logicalPositionToOffset(myLastMousePressedLocation);
-              oldVisLeadSelectionStart = logicalToVisualPosition(myLastMousePressedLocation);
-            }
             // There is a possible case that lead selection position should be adjusted in accordance with the mouse move direction.
             // E.g. consider situation when user selects the whole line by clicking at 'line numbers' area. 'Line end' is considered
             // to be lead selection point then. However, when mouse is dragged down we want to consider 'line start' to be
@@ -4297,10 +4295,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               }
             }
             if (oldVisLeadSelectionStart != null) {
-              selectionModel.setSelection(oldVisLeadSelectionStart, oldSelectionStart, newVisualCaret, newCaretOffset);
+              setSelectionAndBlockActions(e, oldVisLeadSelectionStart, oldSelectionStart, newVisualCaret, newCaretOffset);
             }
             else {
-              selectionModel.setSelection(oldSelectionStart, newCaretOffset);
+              setSelectionAndBlockActions(e, oldSelectionStart, newCaretOffset);
             }
             cancelAutoResetForMouseSelectionState();
           }
@@ -4324,7 +4322,45 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     else {
       myScrollingTimer.start(dx, dy);
+      onSubstantialDrag(e);
     }
+  }
+
+  private Caret getLeadCaret() {
+    List<Caret> allCarets = myCaretModel.getAllCarets();
+    Caret firstCaret = allCarets.get(0);
+    if (firstCaret == myCaretModel.getPrimaryCaret()) {
+      return allCarets.get(allCarets.size() - 1);
+    }
+    else {
+      return firstCaret;
+    }
+  }
+
+  private void setSelectionAndBlockActions(@NotNull MouseEvent mouseDragEvent, int startOffset, int endOffset) {
+    mySelectionModel.setSelection(startOffset, endOffset);
+    if (myCurrentDragIsSubstantial || startOffset != endOffset) {
+      onSubstantialDrag(mouseDragEvent);
+    }
+  }
+
+  private void setSelectionAndBlockActions(@NotNull MouseEvent mouseDragEvent, VisualPosition startPosition, int startOffset, VisualPosition endPosition, int endOffset) {
+    mySelectionModel.setSelection(startPosition, startOffset, endPosition, endOffset);
+    if (myCurrentDragIsSubstantial || startOffset != endOffset || !Comparing.equal(startPosition, endPosition)) {
+      onSubstantialDrag(mouseDragEvent);
+    }
+  }
+
+  private void setBlockSelectionAndBlockActions(@NotNull MouseEvent mouseDragEvent, @NotNull LogicalPosition startPosition, @NotNull LogicalPosition endPosition) {
+    mySelectionModel.setBlockSelection(startPosition, endPosition);
+    if (myCurrentDragIsSubstantial || !startPosition.equals(endPosition)) {
+      onSubstantialDrag(mouseDragEvent);
+    }
+  }
+
+  private void onSubstantialDrag(@NotNull MouseEvent mouseDragEvent) {
+    IdeEventQueue.getInstance().blockNextEvents(mouseDragEvent, IdeEventQueue.BlockMode.ACTIONS);
+    myCurrentDragIsSubstantial = true;
   }
 
   private static class RepaintCursorCommand implements Runnable {
@@ -4770,7 +4806,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 return;
               }
 
-              if (myMultiSelectionInProgress) {
+              if (myMultiSelectionInProgress && myLastMousePressedLocation != null) {
                 myTargetMultiSelectionPosition = pos;
                 LogicalPosition newLogicalPosition = visualToLogicalPosition(pos);
                 getScrollingModel().scrollTo(newLogicalPosition, ScrollType.RELATIVE);

@@ -24,23 +24,25 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFunctionalExpression;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.ui.LayeredIcon;
 
 import java.awt.*;
 
 public final class TypeHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
-  public TypeHierarchyNodeDescriptor(final Project project, final HierarchyNodeDescriptor parentDescriptor, final PsiClass psiClass, final boolean isBase) {
-    super(project, parentDescriptor, psiClass, isBase);
+  public TypeHierarchyNodeDescriptor(final Project project, final HierarchyNodeDescriptor parentDescriptor, final PsiElement classOrFunctionalExpression, final boolean isBase) {
+    super(project, parentDescriptor, classOrFunctionalExpression, isBase);
   }
 
-  public final PsiClass getPsiClass() {
-    return (PsiClass)myElement;
+  public final PsiElement getPsiClass() {
+    return myElement;
   }
 
   public final boolean isValid() {
-    final PsiClass aClass = getPsiClass();
-    return aClass != null && aClass.isValid();
+    final PsiElement psiElement = getPsiClass();
+    return psiElement != null && psiElement.isValid();
   }
 
   public final boolean update() {
@@ -61,7 +63,7 @@ public final class TypeHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
       setIcon(icon);
     }
 
-    final PsiClass psiClass = getPsiClass();
+    final PsiElement psiElement = getPsiClass();
 
     final CompositeAppearance oldText = myHighlightedText;
 
@@ -71,8 +73,12 @@ public final class TypeHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
     if (myColor != null) {
       classNameAttributes = new TextAttributes(myColor, null, null, null, Font.PLAIN);
     }
-    myHighlightedText.getEnding().addText(ClassPresentationUtil.getNameForClass(psiClass, false), classNameAttributes);
-    myHighlightedText.getEnding().addText(" (" + JavaHierarchyUtil.getPackageName(psiClass) + ")", HierarchyNodeDescriptor.getPackageNameAttributes());
+    if (psiElement instanceof PsiClass) {
+      myHighlightedText.getEnding().addText(ClassPresentationUtil.getNameForClass((PsiClass)psiElement, false), classNameAttributes);
+      myHighlightedText.getEnding().addText(" (" + JavaHierarchyUtil.getPackageName((PsiClass)psiElement) + ")", HierarchyNodeDescriptor.getPackageNameAttributes());
+    } else if (psiElement instanceof PsiFunctionalExpression) {
+      myHighlightedText.getEnding().addText(ClassPresentationUtil.getFunctionalExpressionPresentation(((PsiFunctionalExpression)psiElement), false));
+    }
     myName = myHighlightedText.getText();
 
     if (!Comparing.equal(myHighlightedText, oldText)) {

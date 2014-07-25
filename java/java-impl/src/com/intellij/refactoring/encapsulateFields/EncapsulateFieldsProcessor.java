@@ -235,9 +235,11 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
         if (element == null) continue;
 
         final EncapsulateFieldHelper helper = EncapsulateFieldHelper.getHelper(element.getLanguage());
-        EncapsulateFieldUsageInfo usageInfo = helper.createUsage(myDescriptor, fieldDescriptor, reference);
-        if (usageInfo != null) {
-          array.add(usageInfo);
+        if (helper != null) {
+          EncapsulateFieldUsageInfo usageInfo = helper.createUsage(myDescriptor, fieldDescriptor, reference);
+          if (usageInfo != null) {
+            array.add(usageInfo);
+          }
         }
       }
     }

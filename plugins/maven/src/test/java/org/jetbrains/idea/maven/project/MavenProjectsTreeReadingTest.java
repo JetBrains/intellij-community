@@ -2155,6 +2155,54 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertUnorderedElementsAreEqual(myTree.getExplicitProfiles(), "one", "two");
   }
 
+  public void testFindRootWithMultiLevelAggregator() throws Exception {
+    VirtualFile p1 = createModulePom("project1", "<groupId>test</groupId>" +
+                                                 "<artifactId>project1</artifactId>" +
+                                                 "<version>1</version>" +
+                                                 "<packaging>pom</packaging>" +
+
+                                                 "<modules>" +
+                                                 "  <module>../project2</module>" +
+                                                 "</modules>"
+    );
+
+    VirtualFile p2 = createModulePom("project2", "<groupId>test</groupId>" +
+                                                 "<artifactId>project2</artifactId>" +
+                                                 "<version>1</version>" +
+                                                 "<packaging>pom</packaging>" +
+
+                                                 "<modules>" +
+                                                 "  <module>../module</module>" +
+                                                 "</modules>"
+    );
+
+    VirtualFile m = createModulePom("module", "<groupId>test</groupId>" +
+                                              "<artifactId>module</artifactId>" +
+                                              "<version>1</version>"
+    );
+
+    updateAll(p1, p2, m);
+
+    List<MavenProject> roots = myTree.getRootProjects();
+
+    assertEquals(1, roots.size());
+    MavenProject p1Project = roots.get(0);
+    assertEquals(p1, p1Project.getFile());
+    assertEquals(p1Project, myTree.findRootProject(p1Project));
+
+    assertEquals(1, myTree.getModules(p1Project).size());
+    MavenProject p2Project = myTree.getModules(p1Project).get(0);
+    assertEquals(p2, p2Project.getFile());
+    assertEquals(p1Project, myTree.findRootProject(p2Project));
+
+    assertEquals(1, myTree.getModules(p2Project).size());
+    MavenProject mProject = myTree.getModules(p2Project).get(0);
+    assertEquals(m, mProject.getFile());
+    assertEquals(p1Project, myTree.findRootProject(mProject));
+
+    assertEquals(0, myTree.getModules(mProject).size());
+  }
+
   public void testOutputPathsAreBasedOnTargetPathWhenResolving() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

@@ -17,6 +17,7 @@ package git4idea.rebase;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,15 +51,15 @@ public class GitRebaseDialog extends DialogWrapper {
   /**
    * Git root selector
    */
-  protected JComboBox myGitRootComboBox;
+  protected ComboBox myGitRootComboBox;
   /**
    * The selector for branch to rebase
    */
-  protected JComboBox myBranchComboBox;
+  protected ComboBox myBranchComboBox;
   /**
    * The from branch combo box. This is used as base branch if different from onto branch
    */
-  protected JComboBox myFromComboBox;
+  protected ComboBox myFromComboBox;
   /**
    * The validation button for from branch
    */
@@ -66,7 +67,7 @@ public class GitRebaseDialog extends DialogWrapper {
   /**
    * The onto branch combobox.
    */
-  protected JComboBox myOntoComboBox;
+  protected ComboBox myOntoComboBox;
   /**
    * The validate button for onto branch
    */
@@ -78,7 +79,7 @@ public class GitRebaseDialog extends DialogWrapper {
   /**
    * Merge strategy drop down
    */
-  private JComboBox myMergeStrategyComboBox;
+  private ComboBox myMergeStrategyComboBox;
   /**
    * If selected, rebase is interactive
    */

@@ -427,7 +427,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         }
         else if (resolveResult instanceof PsiDirectory) {
           final PsiDirectory directory = (PsiDirectory)resolveResult;
-          if (PyUtil.isPackage(directory) && directory == element) {
+          if (PyUtil.isPackage(directory, null) && directory == element) {
             return true;
           }
         }

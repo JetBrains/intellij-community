@@ -15,9 +15,11 @@
  */
 package com.intellij.codeInspection.compiler;
 
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -61,6 +63,16 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
           }
         }
       });
+    }
+  }
+
+  @Override
+  public void visitIdentifier(PsiIdentifier identifier) {
+    super.visitIdentifier(identifier);
+    if (PsiUtil.getLanguageLevel(identifier).isAtLeast(LanguageLevel.JDK_1_8)) {
+      if ("_".equals(identifier.getText())) {
+        myHolder.registerProblem(identifier, JavaErrorMessages.message("underscore.identifier"));
+      }
     }
   }
 }

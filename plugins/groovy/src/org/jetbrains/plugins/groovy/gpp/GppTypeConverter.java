@@ -66,7 +66,9 @@ public class GppTypeConverter extends GrTypeConverter {
 
   @Override
   public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
-    if (context instanceof GrListOrMap && context.getReference() instanceof LiteralConstructorReference) return null;
+    if (context instanceof GrListOrMap &&
+        context.getReference() instanceof LiteralConstructorReference &&
+        ((LiteralConstructorReference)context.getReference()).getConstructedClassType() != null) return null;
 
     if (rType instanceof GrTupleType) {
       final GrTupleType tupleType = (GrTupleType)rType;

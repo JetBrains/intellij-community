@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -321,5 +322,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   @Override
   public void disableValueLookup(@NotNull Editor editor) {
     ValueLookupManager.DISABLE_VALUE_LOOKUP.set(editor, Boolean.TRUE);
+  }
+
+  @Nullable
+  public static Editor createEditor(@NotNull OpenFileDescriptor descriptor) {
+    return descriptor.canNavigate() ? FileEditorManager.getInstance(descriptor.getProject()).openTextEditor(descriptor, false) : null;
   }
 }

@@ -78,6 +78,7 @@ import java.util.Set;
 
 public class GlobalInspectionContextImpl extends GlobalInspectionContextBase implements GlobalInspectionContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
+  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Inspection Results", ToolWindowId.INSPECTION, true);
   private final NotNullLazyValue<ContentManager> myContentManager;
   private InspectionResultsView myView = null;
   private Content myContent = null;
@@ -296,8 +297,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
         if (myView != null) {
           if (!myView.update() && !getUIOptions().SHOW_ONLY_DIFF) {
-            NotificationGroup.toolWindowGroup("Inspection Results", ToolWindowId.INSPECTION, true)
-              .createNotification(InspectionsBundle.message("inspection.no.problems.message"), MessageType.INFO).notify(getProject());
+            NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message"), MessageType.INFO).notify(getProject());
             close(true);
           }
           else {

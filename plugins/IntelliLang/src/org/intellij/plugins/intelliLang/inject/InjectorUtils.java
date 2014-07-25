@@ -16,6 +16,7 @@
 
 package org.intellij.plugins.intelliLang.inject;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.extensions.Extensions;
@@ -25,12 +26,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl;
 import com.intellij.psi.impl.source.tree.injected.Place;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
+import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.StringSearcher;
+import gnu.trove.TIntArrayList;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
@@ -220,16 +225,115 @@ public class InjectorUtils {
     return true;
   }
 
+  @Nullable
   public static BaseInjection findCommentInjection(PsiElement context, final String supportId, final Ref<PsiElement> causeRef) {
-    return findNearestComment(context, new NullableFunction<PsiComment, BaseInjection>() {
+    PsiElement target = CompletionUtil.getOriginalOrSelf(context);
+    PsiFile file = target.getContainingFile();
+    TreeMap<TextRange, BaseInjection> map = getInjectionMap(file);
+    Map.Entry<TextRange, BaseInjection> entry = map == null ? null : map.lowerEntry(target.getTextRange());
+    if (entry == null) return null;
+
+    PsiComment psiComment = PsiTreeUtil.findElementOfClassAtOffset(file, entry.getKey().getStartOffset(), PsiComment.class, false);
+    if (psiComment == null) return null;
+    TextRange r0 = psiComment.getTextRange();
+
+    // calulate topmost siblings & heights
+    PsiElement commonParent = PsiTreeUtil.findCommonParent(psiComment, target);
+    int h1 = 0, h2 = 0;
+    PsiElement e1 = psiComment, e2 = target;
+    for (PsiElement e = e1; e != commonParent; e1 = e, e = e.getParent(), h1++);
+    for (PsiElement e = e2; e != commonParent; e2 = e, e = e.getParent(), h2++);
+
+    // make sure comment is close enough and ...
+    int off1 = r0.getEndOffset();
+    int off2 = e2.getTextRange().getStartOffset();
+    if (off2 - off1 > 120) return null;
+    if (off2 - off1 > 2) {
+      // ... there's nothing in between on the top level and ...
+      for (PsiElement e = e1; e != e2; e = e.getNextSibling()) {
+        if (!isWhitespaceCommentOrBlank(e)) return null;
+      }
+      // ... there's no non-empty host in the left (comment) subtree
+      Producer<PsiElement> producer = prevWalker(PsiTreeUtil.getDeepestLast(e1), e1);
+      PsiElement e;
+      while ( (e = producer.produce()) != null && e != psiComment) {
+        if (e instanceof PsiLanguageInjectionHost && !StringUtil.isEmptyOrSpaces(e.getText())) {
+          return null;
+        }
+      }
+    }
+    if (causeRef != null) {
+      causeRef.set(psiComment);
+    }
+    return new BaseInjection(supportId).copyFrom(entry.getValue());
+  }
+
+  protected static boolean isWhitespaceCommentOrBlank(PsiElement e) {
+    return e instanceof PsiWhiteSpace || e instanceof PsiComment ||
+           e instanceof PsiLanguageInjectionHost && StringUtil.isEmptyOrSpaces(e.getText());
+  }
+
+  protected static TreeMap<TextRange, BaseInjection> getInjectionMap(final PsiFile file) {
+    return CachedValuesManager.getCachedValue(file, new CachedValueProvider<TreeMap<TextRange, BaseInjection>>() {
       @Nullable
       @Override
-      public BaseInjection fun(PsiComment comment) {
-        if (causeRef != null) causeRef.set(comment);
-        String text = ElementManipulators.getValueText(comment).trim();
-        return detectInjectionFromText(supportId, text);
+      public Result<TreeMap<TextRange, BaseInjection>> compute() {
+        TreeMap<TextRange, BaseInjection> map = calcInjections(file);
+        return Result.create(map.isEmpty() ? null : map, file);
       }
     });
+  }
+
+  @NotNull
+  protected static TreeMap<TextRange, BaseInjection> calcInjections(PsiFile file) {
+    final TreeMap<TextRange, BaseInjection> injectionMap = new TreeMap<TextRange, BaseInjection>(RANGE_COMPARATOR);
+
+    TIntArrayList ints = new TIntArrayList();
+    StringSearcher searcher = new StringSearcher("language=", true, true, false);
+    CharSequence contents = file.getViewProvider().getContents();
+    final char[] contentsArray = CharArrayUtil.fromSequenceWithoutCopying(contents);
+
+    //long time = System.currentTimeMillis();
+
+    int s0 = 0, s1 = contents.length();
+    for (int idx = searcher.scan(contents, contentsArray, s0, s1);
+         idx != -1;
+         idx = searcher.scan(contents, contentsArray, idx + 1, s1)) {
+      ints.add(idx);
+      PsiComment element = PsiTreeUtil.findElementOfClassAtOffset(file, idx, PsiComment.class, false);
+      if (element != null) {
+        String str = ElementManipulators.getValueText(element).trim();
+        BaseInjection injection = detectInjectionFromText("", str);
+        if (injection != null) {
+          injectionMap.put(element.getTextRange(), injection);
+        }
+      }
+    }
+
+    //VirtualFile virtualFile = file.getVirtualFile();
+    //Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    //EditorHighlighter highlighter = EditorHighlighterCache.getEditorHighlighterForCachesBuilding(document);
+    //
+    //ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(file.getLanguage());
+    //TokenSet commentTokens = definition.getCommentTokens();
+    //HighlighterIterator it = highlighter != null && PlatformIdTableBuilding.checkCanUseCachedEditorHighlighter(contents, highlighter) ?
+    //                         highlighter.createIterator(0) : null;
+    //
+    //do {
+    //  if (it != null) {
+    //    while (!it.atEnd() && !commentTokens.contains(it.getTokenType())) it.advance();
+    //    if (it.atEnd()) break;
+    //  }
+    //  int s0 = it == null ? 0 : it.getStart();
+    //  int s1 = it == null ? contents.length() : it.getEnd();
+    //
+    //  for () { .. }
+    //
+    //  if (it != null && !it.atEnd()) it.advance();
+    //} while (it != null && !it.atEnd());
+
+    //System.out.println(Thread.currentThread().getName() + ": " + file.getName() + "@" + file.hashCode() + " indexed: " + (System.currentTimeMillis() - time));
+    return injectionMap;
   }
 
   private static final Pattern MAP_ENTRY_PATTERN = Pattern.compile("([\\S&&[^=]]+)=(\"(?:[^\"]|\\\\\")*\"|\\S*)");
@@ -259,68 +363,30 @@ public class InjectorUtils {
     return injection;
   }
 
-  @Nullable
-  public static <T> T findNearestComment(PsiElement element, NullableFunction<PsiComment, T> processor) {
-    if (element instanceof PsiComment) return null;
-    PsiFile containingFile = element.getContainingFile();
+  private static Producer<PsiElement> prevWalker(final PsiElement element, final PsiElement scope) {
+    return new Producer<PsiElement>() {
+      PsiElement e = element;
 
-    List<PsiLanguageInjectionHost> otherHosts = new SmartList<PsiLanguageInjectionHost>();
-
-    boolean commentOrSpaces = false;
-
-    PsiElement prev = element, e = prevOrParent(element, containingFile);
-    for (int counter = 0; e != null && counter < 100; prev = e, e = prevOrParent(e, containingFile), counter ++) {
-      if (e instanceof PsiComment) {
-        commentOrSpaces = true;
-        PsiComment comment = (PsiComment)e;
-        if (!checkDepth(otherHosts, element, comment)) continue;
-        T value = processor.fun(comment);
-        if (value != null) return value;
-      }
-      else if (e instanceof PsiWhiteSpace) {
-        commentOrSpaces = true;
-      }
-      else if (e instanceof PsiLanguageInjectionHost) {
-        commentOrSpaces = StringUtil.isEmptyOrSpaces(e.getText()); // check getText only for hosts (XmlText)
-        if (!commentOrSpaces) otherHosts.add((PsiLanguageInjectionHost)e);
-      }
-      else {
-        commentOrSpaces = false;
-      }
-    }
-    if (commentOrSpaces) { // allow several comments
-      for (e = prevOrParent(prev, containingFile); e != null; e = e.getPrevSibling()) {
-        if (e instanceof PsiComment) {
-          PsiComment comment = (PsiComment)e;
-          if (!checkDepth(otherHosts, element, comment)) continue;
-          T value = processor.fun(comment);
-          if (value != null) return value;
+      @Nullable
+      @Override
+      public PsiElement produce() {
+        if (e == null || e == scope) return null;
+        PsiElement prev = e.getPrevSibling();
+        if (prev != null) {
+          e = prev;
+          while (true) {
+            PsiElement lastChild = e.getLastChild();
+            if (lastChild == null) break;
+            e = lastChild;
+          }
+          return e;
         }
-        else if (!(e instanceof PsiWhiteSpace)) {
-          break;
+        else {
+          PsiElement parent = e.getParent();
+          e = parent == scope || parent instanceof PsiFile ? null : parent;
+          return e;
         }
       }
-    }
-    return null;
-  }
-
-  // allow java-like multi variable commenting: String s = "s", t = "t"
-  // a comment should cover all hosts in a subtree
-  private static boolean checkDepth(List<PsiLanguageInjectionHost> hosts, PsiElement element, PsiComment comment) {
-    if (hosts.isEmpty()) return true;
-    PsiElement parent = PsiTreeUtil.findCommonParent(comment, element);
-    for (PsiLanguageInjectionHost host : hosts) {
-      if (!PsiTreeUtil.isAncestor(parent, PsiTreeUtil.findCommonParent(host, element), true)) return false;
-    }
-    return true;
-  }
-
-  @Nullable
-  public static PsiElement prevOrParent(PsiElement e, PsiElement scope) {
-    if (e == null || e == scope) return null;
-    PsiElement prev = e.getPrevSibling();
-    if (prev != null) return PsiTreeUtil.getDeepestLast(prev);
-    PsiElement parent = e.getParent();
-    return parent == scope || parent instanceof PsiFile ? null : parent;
+    };
   }
 }

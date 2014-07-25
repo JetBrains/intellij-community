@@ -15,14 +15,11 @@
  */
 package com.intellij.compiler.classFilesIndex.chainsSearch.context;
 
-import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.asm4.Type;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Dmitry Batkovich

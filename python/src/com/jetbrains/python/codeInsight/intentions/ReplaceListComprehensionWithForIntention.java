@@ -53,7 +53,7 @@ public class ReplaceListComprehensionWithForIntention implements IntentionAction
     if (expression == null) {
       return false;
     }
-
+    if (expression.getComponents().isEmpty()) return false;
     PsiElement parent = expression.getParent();
     if (parent instanceof PyAssignmentStatement || parent instanceof PyPrintStatement) {
       return true;

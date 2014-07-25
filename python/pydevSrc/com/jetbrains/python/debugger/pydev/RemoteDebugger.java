@@ -481,13 +481,16 @@ public class RemoteDebugger implements ProcessDebugger {
         }
         case AbstractCommand.SUSPEND_THREAD: {
           final PyThreadInfo event = parseThreadEvent(frame);
-          final PyThreadInfo thread = myThreads.get(event.getId());
-          if (thread != null) {
-            thread.updateState(PyThreadInfo.State.SUSPENDED, event.getFrames());
-            thread.setStopReason(event.getStopReason());
-            thread.setMessage(event.getMessage());
-            myDebugProcess.threadSuspended(thread);
+          PyThreadInfo thread = myThreads.get(event.getId());
+          if (thread == null) {
+            LOG.error("Trying to stop on non-existent thread: " + event.getId() + ", " + event.getStopReason() + ", " + event.getMessage());
+            myThreads.put(event.getId(), event);
+            thread = event;
           }
+          thread.updateState(PyThreadInfo.State.SUSPENDED, event.getFrames());
+          thread.setStopReason(event.getStopReason());
+          thread.setMessage(event.getMessage());
+          myDebugProcess.threadSuspended(thread);
           break;
         }
         case AbstractCommand.RESUME_THREAD: {

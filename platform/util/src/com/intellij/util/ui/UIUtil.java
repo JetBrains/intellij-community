@@ -908,20 +908,24 @@ public class UIUtil {
     return UIManager.getBorder("Button.border");
   }
 
+  @NotNull
   public static Icon getErrorIcon() {
-    return UIManager.getIcon("OptionPane.errorIcon");
+    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.errorIcon"), AllIcons.General.ErrorDialog);
   }
 
+  @NotNull
   public static Icon getInformationIcon() {
-    return UIManager.getIcon("OptionPane.informationIcon");
+    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.informationIcon"), AllIcons.General.InformationDialog);
   }
 
+  @NotNull
   public static Icon getQuestionIcon() {
-    return UIManager.getIcon("OptionPane.questionIcon");
+    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.questionIcon"), AllIcons.General.QuestionDialog);
   }
 
+  @NotNull
   public static Icon getWarningIcon() {
-    return UIManager.getIcon("OptionPane.warningIcon");
+    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.warningIcon"), AllIcons.General.WarningDialog);
   }
 
   public static Icon getBalloonInformationIcon() {
@@ -2872,4 +2876,30 @@ public class UIUtil {
     }).start();
   }
 
+  private static Map<String, String> ourRealFontFamilies = null;
+
+  public static String getRealFontFamily(String genericFontFamily) {
+    if (ourRealFontFamilies != null && ourRealFontFamilies.get(genericFontFamily) != null) {
+      return ourRealFontFamilies.get(genericFontFamily);
+    }
+    String pattern = "Real Font Family";
+    List<String> GENERIC = Arrays.asList(Font.DIALOG, Font.DIALOG_INPUT, Font.MONOSPACED, Font.SANS_SERIF, Font.SERIF);
+    int patternSize = 50;
+    BufferedImage image = createImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+    Graphics graphics = image.getGraphics();
+    graphics.setFont(new Font(genericFontFamily, Font.PLAIN, patternSize));
+    Object patternBounds = graphics.getFontMetrics().getStringBounds(pattern, graphics);
+    for (String family: GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()) {
+      if (GENERIC.contains(family)) continue;
+      graphics.setFont(new Font(family, Font.PLAIN, patternSize));
+      if (graphics.getFontMetrics().getStringBounds(pattern, graphics).equals(patternBounds)) {
+        if (ourRealFontFamilies == null) {
+          ourRealFontFamilies = new HashMap<String, String>();
+        }
+        ourRealFontFamilies.put(genericFontFamily, family);
+        return family;
+      }
+    }
+    return genericFontFamily;
+  }
 }

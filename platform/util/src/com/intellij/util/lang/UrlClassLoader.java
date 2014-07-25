@@ -47,6 +47,7 @@ public class UrlClassLoader extends ClassLoader {
     private boolean myUseCache = false;
     private boolean myAcceptUnescaped = false;
     private boolean myPreload = true;
+    private boolean myAllowBootstrapResources = false;
 
     private Builder() { }
 
@@ -59,6 +60,8 @@ public class UrlClassLoader extends ClassLoader {
     public Builder useCache(boolean useCache) { myUseCache = useCache; return this; }
     public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
     public Builder noPreload() { myPreload = false; return this; }
+    public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
+
     public UrlClassLoader get() { return new UrlClassLoader(this); }
   }
 
@@ -68,6 +71,7 @@ public class UrlClassLoader extends ClassLoader {
 
   private final List<URL> myURLs;
   private final ClassPath myClassPath;
+  private final boolean myAllowBootstrapResources;
 
   /** @deprecated use {@link #build()} (to remove in IDEA 14) */
   public UrlClassLoader(@NotNull ClassLoader parent) {
@@ -99,6 +103,7 @@ public class UrlClassLoader extends ClassLoader {
       }
     });
     myClassPath = new ClassPath(myURLs, lockJars, useCache, allowUnescaped, preload);
+    myAllowBootstrapResources = false;
   }
 
   protected UrlClassLoader(@NotNull Builder builder) {
@@ -110,6 +115,7 @@ public class UrlClassLoader extends ClassLoader {
       }
     });
     myClassPath = new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload);
+    myAllowBootstrapResources = builder.myAllowBootstrapResources;
   }
 
   public static URL internProtocol(@NotNull URL url) {
@@ -210,6 +216,7 @@ public class UrlClassLoader extends ClassLoader {
   @Nullable
   @Override
   public InputStream getResourceAsStream(final String name) {
+    if (myAllowBootstrapResources) return super.getResourceAsStream(name);
     try {
       Resource res = _getResource(name);
       if (res == null) return null;

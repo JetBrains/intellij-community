@@ -70,7 +70,7 @@ public class PyMissingConstructorInspection extends PyInspection {
         }
         if (superClasses.length == 1 || node.isNewStyleClass())
           registerProblem(initMethod.getNameIdentifier(), PyBundle.message("INSP.missing.super.constructor.message"),
-                          new AddCallSuperQuickFix(node.getSuperClasses()[0], superClasses[0].getText()));
+                          new AddCallSuperQuickFix());
         else
           registerProblem(initMethod.getNameIdentifier(), PyBundle.message("INSP.missing.super.constructor.message"));
       }

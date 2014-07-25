@@ -18,10 +18,6 @@ package org.jetbrains.jps.uiDesigner.build;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.core.AbstractLayout;
-import org.jetbrains.asm4.ClassReader;
-import org.jetbrains.asm4.ClassVisitor;
-import org.jetbrains.asm4.MethodVisitor;
-import org.jetbrains.asm4.Opcodes;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -29,6 +25,10 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.uiDesigner.compiler.FormsInstrumenter;
 import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerExtensionService;
 import org.jetbrains.jps.util.JpsPathUtil;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.File;
 import java.io.IOException;
@@ -124,7 +124,7 @@ public class FormsBuilderTest extends JpsBuildTestCase {
     assertTrue(file.getAbsolutePath() + " not found", file.exists());
 
     final Ref<Boolean> instrumented = Ref.create(false);
-    ClassVisitor visitor = new ClassVisitor(Opcodes.ASM4) {
+    ClassVisitor visitor = new ClassVisitor(Opcodes.ASM5) {
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         if (name.equals("$$$setupUI$$$")) {

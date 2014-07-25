@@ -180,10 +180,11 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
         PsiMethod currentMethod = (PsiMethod) currentElement;
         for (Iterator<GroovyResolveResult> iterator = result.iterator(); iterator.hasNext();) {
           final GroovyResolveResult otherResolveResult = iterator.next();
-          PsiElement element = otherResolveResult.getElement();
-          if (element instanceof PsiMethod) {
-            PsiMethod method = (PsiMethod) element;
-            final int res = compareMethods(currentMethod, resolveResult.getSubstitutor(), method, otherResolveResult.getSubstitutor());
+          PsiElement other = otherResolveResult.getElement();
+          if (other instanceof PsiMethod) {
+            PsiMethod otherMethod = (PsiMethod) other;
+            int res = compareMethods(currentMethod, resolveResult.getSubstitutor(), resolveResult.getCurrentFileResolveContext(),
+                                     otherMethod, otherResolveResult.getSubstitutor(), otherResolveResult.getCurrentFileResolveContext());
             if (res > 0) {
               continue Outer;
             }
@@ -200,31 +201,29 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
     return result.toArray(new GroovyResolveResult[result.size()]);
   }
 
-  private int compareMethods(PsiMethod method1,
-                             PsiSubstitutor substitutor1,
-                             PsiMethod method2,
-                             PsiSubstitutor substitutor2) {
+  /**
+   *
+   * @return 1 if second is more preferable
+   *         0 if methods are equal
+   *        -1 if first is more preferable
+   */
+  private int compareMethods(@NotNull PsiMethod method1,
+                             @NotNull PsiSubstitutor substitutor1,
+                             @Nullable PsiElement resolveContext1,
+                             @NotNull PsiMethod method2,
+                             @NotNull PsiSubstitutor substitutor2,
+                             @Nullable PsiElement resolveContext2) {
     if (!method1.getName().equals(method2.getName())) return 0;
 
-    if (myTypedContext) {
-      if (isMoreConcreteThan(method2, substitutor2, method1, substitutor1, (GroovyPsiElement)myPlace)) {
-        return 1;
-      }
-
-      if (isMoreConcreteThan(method1, substitutor1, method2, substitutor2, (GroovyPsiElement)myPlace)) {
-        return -1;
-      }
-    }
-
-    if (dominated(method1, substitutor1, method2, substitutor2)) {
-      if (dominated(method2, substitutor2, method1, substitutor1)) {
+    if (secondMethodIsPreferable(method1, substitutor1, resolveContext1, method2, substitutor2, resolveContext2)) {
+      if (secondMethodIsPreferable(method2, substitutor2, resolveContext2, method1, substitutor1, resolveContext1)) {
         if (method2 instanceof GrGdkMethod && !(method1 instanceof GrGdkMethod)) {
           return -1;
         }
       }
       return 1;
     }
-    if (dominated(method2, substitutor2, method1, substitutor1)) {
+    if (secondMethodIsPreferable(method2, substitutor2, resolveContext2, method1, substitutor1, resolveContext1)) {
       return -1;
     }
 
@@ -266,10 +265,12 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
 
 
   //method1 has more general parameter types thn method2
-  private boolean dominated(PsiMethod method1,
-                            PsiSubstitutor substitutor1,
-                            PsiMethod method2,
-                            PsiSubstitutor substitutor2) {
+  private boolean secondMethodIsPreferable(@NotNull PsiMethod method1,
+                                           @NotNull PsiSubstitutor substitutor1,
+                                           @Nullable PsiElement resolveContext1,
+                                           @NotNull PsiMethod method2,
+                                           @NotNull PsiSubstitutor substitutor2,
+                                           @Nullable PsiElement resolveContext2) {
     if (!method1.getName().equals(method2.getName())) return false;
 
     final Boolean custom = GrMethodComparator.checkDominated(method1, substitutor1, method2, substitutor2, this);
@@ -326,6 +327,15 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
       }
 
       if (!typesAgree(TypeConversionUtil.erasure(ptype1), TypeConversionUtil.erasure(ptype2))) return false;
+
+      if (resolveContext1 != null && resolveContext2 == null) {
+        return !(TypesUtil.resolvesTo(type1, CommonClassNames.JAVA_LANG_OBJECT) &&
+                 TypesUtil.resolvesTo(type2, CommonClassNames.JAVA_LANG_OBJECT));
+      }
+
+      if (resolveContext1 == null && resolveContext2 != null) {
+        return true;
+      }
     }
 
     if (!(method1 instanceof SyntheticElement) && !(method2 instanceof SyntheticElement)) {

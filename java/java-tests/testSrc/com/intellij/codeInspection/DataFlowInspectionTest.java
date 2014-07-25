@@ -312,6 +312,8 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   
   public void testNotNullAfterDereference() { doTest(); }
 
+  public void testNullableBoolean() { doTest(); }
+
   public void testSameComparisonTwice() { doTest(); }
 
   public void testParametersAreNonnullByDefault() {
@@ -322,6 +324,12 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.addFileToProject("foo/package-info.java", "@javax.annotation.ParametersAreNonnullByDefault package foo;");
     
     doTest(); 
+  }
+
+  public void testTrueOrEqualsSomething() {
+    doTest();
+    myFixture.launchAction(myFixture.findSingleIntention("Remove redundant assignment"));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
   
   public void _testNullCheckBeforeInstanceof() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEA-113220

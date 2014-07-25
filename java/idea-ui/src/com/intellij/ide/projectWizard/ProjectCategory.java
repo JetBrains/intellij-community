@@ -73,6 +73,10 @@ public abstract class ProjectCategory {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  public int getWeight() {
+    return 0;
+  }
+
   @Override
   public String toString() {
     return getDisplayName();

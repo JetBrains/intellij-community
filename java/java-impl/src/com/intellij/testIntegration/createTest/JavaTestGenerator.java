@@ -17,6 +17,10 @@ package com.intellij.testIntegration.createTest;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
@@ -34,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 
 public class JavaTestGenerator implements TestGenerator {
@@ -48,7 +53,7 @@ public class JavaTestGenerator implements TestGenerator {
             try {
               IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
-              PsiClass targetClass = JavaDirectoryService.getInstance().createClass(d.getTargetDirectory(), d.getClassName());
+              PsiClass targetClass = createTestClass(d);
               addSuperClass(targetClass, project, d.getSuperClassName());
 
               Editor editor = CodeInsightUtil.positionCursor(project, targetClass.getContainingFile(), targetClass.getLBrace());
@@ -70,8 +75,44 @@ public class JavaTestGenerator implements TestGenerator {
     });
   }
 
+  private static PsiClass createTestClass(CreateTestDialog d) {
+    final TestFramework testFrameworkDescriptor = d.getSelectedTestFrameworkDescriptor();
+    final FileTemplateDescriptor fileTemplateDescriptor = TestIntegrationUtils.MethodKind.TEST_CLASS.getFileTemplateDescriptor(testFrameworkDescriptor);
+    final PsiDirectory targetDirectory = d.getTargetDirectory();
+    if (fileTemplateDescriptor != null) {
+      final PsiClass classFromTemplate = createTestClassFromCodeTemplate(d, fileTemplateDescriptor, targetDirectory);
+      if (classFromTemplate != null) {
+        return classFromTemplate;
+      }
+    }
+
+    return JavaDirectoryService.getInstance().createClass(targetDirectory, d.getClassName());
+  }
+
+  private static PsiClass createTestClassFromCodeTemplate(final CreateTestDialog d,
+                                                          final FileTemplateDescriptor fileTemplateDescriptor,
+                                                          final PsiDirectory targetDirectory) {
+    final String templateName = fileTemplateDescriptor.getFileName();
+    final FileTemplate fileTemplate = FileTemplateManager.getInstance().getCodeTemplate(templateName);
+    final Properties defaultProperties = FileTemplateManager.getInstance().getDefaultProperties(targetDirectory.getProject());
+    Properties properties = new Properties(defaultProperties);
+    properties.setProperty(FileTemplate.ATTRIBUTE_NAME, d.getClassName());
+    try {
+      final PsiElement psiElement = FileTemplateUtil.createFromTemplate(fileTemplate, templateName, properties, targetDirectory);
+      if (psiElement instanceof PsiClass) {
+        return (PsiClass)psiElement;
+      }
+      return null;
+    }
+    catch (Exception e) {
+      return null;
+    }
+  }
+
   private static void addSuperClass(PsiClass targetClass, Project project, String superClassName) throws IncorrectOperationException {
     if (superClassName == null) return;
+    final PsiReferenceList extendsList = targetClass.getExtendsList();
+    if (extendsList == null || extendsList.getReferencedTypes().length > 0) return;
 
     PsiElementFactory ef = JavaPsiFacade.getInstance(project).getElementFactory();
     PsiJavaCodeReferenceElement superClassRef;
@@ -83,7 +124,7 @@ public class JavaTestGenerator implements TestGenerator {
     else {
       superClassRef = ef.createFQClassNameReferenceElement(superClassName, GlobalSearchScope.allScope(project));
     }
-    targetClass.getExtendsList().add(superClassRef);
+    extendsList.add(superClassRef);
   }
 
   @Nullable

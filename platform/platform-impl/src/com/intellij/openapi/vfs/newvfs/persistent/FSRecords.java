@@ -1399,7 +1399,11 @@ public class FSRecords implements Forceable {
   }
 
   public static void writeContent(int fileId, ByteSequence bytes, boolean readOnly) throws IOException {
-    new ContentOutputStream(fileId, readOnly).writeBytes(bytes);
+    try {
+      new ContentOutputStream(fileId, readOnly).writeBytes(bytes);
+    } catch (Throwable e) {
+      throw DbConnection.handleError(e);
+    }
   }
 
   public static int storeUnlinkedContent(byte[] bytes) {

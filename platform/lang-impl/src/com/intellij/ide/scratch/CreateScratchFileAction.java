@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.scratch;
 
+import com.intellij.lang.DependentLanguage;
+import com.intellij.lang.InjectableLanguage;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -32,6 +34,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -44,7 +47,7 @@ import java.util.Set;
  * @author ignatov
  */
 public class CreateScratchFileAction extends AnAction implements DumbAware {
-  private static final Set<String> FORBIDDEN_LANGUAGES = ContainerUtil.newHashSet("<Generic>", "$XSLT", "JAVA_HOLDER_METHOD_TREE", "<Freemaker>", "PointcutExpression");
+  public static final int MAX_VISIBLE_SIZE = 20;
 
   public CreateScratchFileAction() {
     super("Create Scratch File...", "New Scratch File", null);
@@ -59,8 +62,8 @@ public class CreateScratchFileAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) return;
-
     List<Language> languages = getLanguages();
+    if (languages.isEmpty()) return;
     BaseListPopupStep<Language> step =
       new BaseListPopupStep<Language>("Specify the language", languages) {
         @NotNull
@@ -108,7 +111,15 @@ public class CreateScratchFileAction extends AnAction implements DumbAware {
     }
 
     ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
-    popup.setSize(new Dimension(190, 400));
+    int nameLen = 0;
+    for (Language language : languages) {
+      nameLen = Math.max(nameLen, language.getDisplayName().length());
+    }
+    if (languages.size() > MAX_VISIBLE_SIZE) {
+      Dimension size = new JLabel(StringUtil.repeatSymbol('a', nameLen), EmptyIcon.ICON_16, SwingConstants.LEFT).getMinimumSize();
+      size.height *= MAX_VISIBLE_SIZE;
+      popup.setSize(size);
+    }
     popup.showCenteredInCurrentWindow(project);
   }
 
@@ -133,11 +144,12 @@ public class CreateScratchFileAction extends AnAction implements DumbAware {
     return ContainerUtil.filter(result, new Condition<Language>() {
       @Override
       public boolean value(Language lang) {
-        String name = lang.getDisplayName();
+        if (lang instanceof DependentLanguage || lang instanceof InjectableLanguage) return false;
         LanguageFileType type = lang.getAssociatedFileType();
         if (type == null) return false;
-        String extension = type.getDefaultExtension();
-        return !StringUtil.isEmpty(extension) && !StringUtil.isEmpty(name) && !FORBIDDEN_LANGUAGES.contains(name);
+        String name = lang.getDisplayName();
+        if (StringUtil.startsWith(name, "<") || StringUtil.startsWith(name, "[") || StringUtil.isEmpty(name)) return false;
+        return !StringUtil.isEmpty(type.getDefaultExtension());
       }
     });
   }

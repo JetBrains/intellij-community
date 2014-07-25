@@ -6,6 +6,8 @@
   <module value="com.intellij.modules.python"/>
 
   <extensions defaultExtensionNs="com.intellij">
+    <library.type implementation="com.jetbrains.python.library.PythonLibraryType"/>
+    <renameHandler implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralRenameHandler"/>
     <nameSuggestionProvider implementation="com.jetbrains.python.refactoring.PyNameSuggestionProvider"/>
     <methodNavigationOffsetProvider implementation="com.jetbrains.python.codeInsight.PyMethodNavigationOffsetProvider"/>
     <copyPastePreProcessor implementation="com.jetbrains.python.editor.PythonCopyPasteProcessor"/>
@@ -322,7 +324,7 @@
     <localInspection language="Python" shortName="PyMandatoryEncodingInspection" displayName="No encoding specified for file" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyMandatoryEncodingInspection"/>
     <localInspection language="Python" shortName="PyPackageRequirementsInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.requirements" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyPackageRequirementsInspection"/>
     <localInspection language="Python" shortName="PyPep8Inspection" displayName="PEP 8 coding style violation" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyPep8Inspection"/>
-    <localInspection language="Python" shortName="PyAttributeOutsideInitInspection" displayName="Instance attribute defined outside _init_" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyAttributeOutsideInitInspection"/>
+    <localInspection language="Python" shortName="PyAttributeOutsideInitInspection" displayName="Instance attribute defined outside __init__" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyAttributeOutsideInitInspection"/>
     <localInspection language="Python" shortName="PyClassHasNoInitInspection" displayName="Class has no __init__ method" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyClassHasNoInitInspection"/>
     <localInspection language="Python" shortName="PyNoneFunctionAssignmentInspection" displayName="Assigning function call that doesn't return anything" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyNoneFunctionAssignmentInspection"/>
     <localInspection language="Python" shortName="PyGlobalUndefinedInspection" displayName="Global variable is undefined at the module level" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyGlobalUndefinedInspection"/>
@@ -331,7 +333,7 @@
     <localInspection language="Python" shortName="PyDocstringTypesInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.docstring.types" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyDocstringTypesInspection"/>
     <localInspection language="Python" shortName="PyShadowingBuiltinsInspection" displayName="Shadowing built-ins" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyShadowingBuiltinsInspection"/>
     <localInspection language="Python" shortName="PyShadowingNamesInspection" displayName="Shadowing names from outer scopes" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyShadowingNamesInspection"/>
-    <localInspection language="Python" shortName="PyAbstractClassInspection" displayName="Class must implement all abstract methods" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyAbstractClassInspection"/>
+    <localInspection language="Python" shortName="PyAbstractClassInspection" displayName="Class must implement all abstract methods" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyAbstractClassInspection"/>
     <localInspection language="Python" shortName="PyPep8NamingInspection" displayName="PEP 8 naming convention violation" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyPep8NamingInspection"/>
     <localInspection language="Python" shortName="PyAssignmentToLoopOrWithParameterInspection" displayName="Assignment to 'for' loop or 'with' statement parameter" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyAssignmentToLoopOrWithParameterInspection"/>
 
@@ -356,8 +358,10 @@
     <filePropertyPusher implementation="com.jetbrains.python.psi.impl.PythonLanguageLevelPusher"/>
 
     <elementDescriptionProvider implementation="com.jetbrains.python.findUsages.PyElementDescriptionProvider"/>
+    <elementDescriptionProvider implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralElementDescriptionProvider"/>
     <fileStructureGroupRuleProvider implementation="com.jetbrains.python.findUsages.PyFunctionGroupingRuleProvider" id="py-function"/>
     <usageTypeProvider implementation="com.jetbrains.python.findUsages.PyUsageTypeProvider"/>
+    <usageTargetProvider implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralUsageTargetProvider"/>
     <importFilteringRule implementation="com.jetbrains.python.findUsages.PyImportFilteringRule"/>
 
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.regexp.PythonRegexpInjector"/>
@@ -372,8 +376,8 @@
                         serviceImplementation="com.jetbrains.python.codeInsight.PyCodeInsightSettings"/>
     <applicationService serviceInterface="com.jetbrains.python.testing.PyTestFrameworkService"
                         serviceImplementation="com.jetbrains.python.testing.PyTestFrameworkService"/>
-    <applicationService serviceInterface="com.jetbrains.python.configuration.PyRemovedSdkService"
-                        serviceImplementation="com.jetbrains.python.configuration.PyRemovedSdkService"/>
+    <applicationService serviceInterface="com.jetbrains.python.sdk.PySdkService"
+                        serviceImplementation="com.jetbrains.python.sdk.PySdkService"/>
     <autoImportOptionsProvider instance="com.jetbrains.python.codeInsight.imports.PyAutoImportOptions"/>
 
     <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.liveTemplates.PyDefaultLiveTemplatesProvider"/>
@@ -388,15 +392,18 @@
                   order="first, before completionAutoPopup"/>
 
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyInitReferenceSearchExecutor"/>
+    <referencesSearch implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralReferenceSearcher"/>
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyKeywordArgumentSearchExecutor"/>
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyStringReferenceSearch"/>
     <findUsagesHandlerFactory implementation="com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory" id="Python"
                               order="last, before default"/>
     <readWriteAccessDetector implementation="com.jetbrains.python.findUsages.PyReadWriteAccessDetector"/>
+    <findUsagesHandlerFactory implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralFindUsagesHandlerFactory"/>
 
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyVariableProcessor" order="last" id="pyvar"/>
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyFunctionProcessor" order="before pyvar"/>
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyClassProcessor" order="before pyvar"/>
+    <renamePsiElementProcessor implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralRenameProcessor" order="before pyvar"/>
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyFileProcessor" order="first"/>
 
     <automaticRenamerFactory implementation="com.jetbrains.python.refactoring.rename.PyContainingFileRenamerFactory"/>
@@ -522,8 +529,9 @@
                    serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings"/>
   </extensions>
 
-  <extensionPoints>
+  <extensionPoints>    
     <extensionPoint qualifiedName="Pythonid.importResolver" interface="com.jetbrains.python.psi.impl.PyImportResolver"/>
+    <extensionPoint qualifiedName="Pythonid.magicLiteral" interface="com.jetbrains.python.magicLiteral.PyMagicLiteralExtensionPoint"/>
     <extensionPoint qualifiedName="Pythonid.resolveResultRater" interface="com.jetbrains.python.psi.impl.PyResolveResultRater"/>
     <extensionPoint qualifiedName="Pythonid.typeProvider" interface="com.jetbrains.python.psi.impl.PyTypeProvider"/>
     <extensionPoint qualifiedName="Pythonid.pySuperMethodsSearch" interface="com.intellij.util.QueryExecutor"/>

@@ -80,4 +80,8 @@ public class PyInlineLocalTest extends PyTestCase {
   public void testPy5832() {
     doTest();
   }
+
+  public void testComment() {
+    doTest();
+  }
 }

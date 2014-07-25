@@ -134,6 +134,35 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
   }
 
+  public void testParameterFromFunctionalInterface() throws Exception {
+    try {
+      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
+      doSingleFileTest();
+      fail("Conflict was not detected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      String message = e.getMessage();
+      assertEquals("class <b><code>SAM</code></b> has 1 usage that is not safe to delete.", message);
+    }
+  }
+
+  public void testFunctionalInterfaceMethod() throws Exception {
+    try {
+      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
+      doSingleFileTest();
+      fail("Conflict was not detected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      String message = e.getMessage();
+      assertEquals("class <b><code>SAM</code></b> has 1 usage that is not safe to delete.", message);
+    }
+  }
+
+  public void testFunctionalInterfaceDefaultMethod() throws Exception {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
+    doSingleFileTest();
+  }
+
   public void testMethodDeepHierarchy() throws Exception {
     doTest("Super");
   }

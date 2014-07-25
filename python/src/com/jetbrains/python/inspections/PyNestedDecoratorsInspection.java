@@ -22,6 +22,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.inspections.quickfix.RemoveDecoratorQuickFix;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyDecoratorList;
 import com.jetbrains.python.psi.PyFunction;
@@ -73,7 +74,7 @@ public class PyNestedDecoratorsInspection extends PyInspection {
               registerProblem(
                 decos[i-1],
                 PyBundle.message("INSP.decorator.receives.unexpected.builtin"),
-                ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, new RemoveDecoratorQuickFix()
               );
             }
           }

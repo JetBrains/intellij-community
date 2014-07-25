@@ -27,6 +27,7 @@ import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.NotNull;

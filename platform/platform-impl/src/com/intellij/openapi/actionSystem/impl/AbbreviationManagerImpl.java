@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,6 +106,12 @@ public class AbbreviationManagerImpl extends AbbreviationManager implements
               final String abbrValue = abbr.getAttributeValue("name");
               if (abbrValue != null) {
                 values.add(abbrValue);
+                List<String> actionIds = myAbbreviation2ActionId.get(abbrValue);
+                if (actionIds == null) {
+                  actionIds = new ArrayList<String>();
+                  myAbbreviation2ActionId.put(abbrValue, actionIds);
+                }
+                actionIds.add(actionId);
               }
             }
           }

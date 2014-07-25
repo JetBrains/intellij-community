@@ -98,7 +98,7 @@ public class JavaSdkImpl extends JavaSdk {
       return "http://docs.oracle.com/javase/7/docs/api/";
     }
     if (version == JavaSdkVersion.JDK_1_8) {
-      return "http://download.java.net/jdk8/docs/api/";
+      return "http://docs.oracle.com/javase/8/docs/api";
     }
     return null;
   }
@@ -365,6 +365,10 @@ public class JavaSdkImpl extends JavaSdk {
         if (url != null) {
           sdkModificator.addRoot(VirtualFileManager.getInstance().findFileByUrl(url), JavadocOrderRootType.getInstance());
         }
+      }
+    } else {
+      if (getVersion(sdk) == JavaSdkVersion.JDK_1_7) {
+        sdkModificator.addRoot(VirtualFileManager.getInstance().findFileByUrl("http://docs.oracle.com/javafx/2/api/"), JavadocOrderRootType.getInstance());
       }
     }
     attachJdkAnnotations(sdkModificator);

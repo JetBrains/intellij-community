@@ -17,15 +17,28 @@ package com.intellij.execution.testframework;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 
 public abstract class TestStatusListener {
   public static final ExtensionPointName<TestStatusListener> EP_NAME = ExtensionPointName.create("com.intellij.testStatusListener");
 
   public abstract void testSuiteFinished(AbstractTestProxy root);
 
+  public void testSuiteFinished(AbstractTestProxy root, Project project) {
+    testSuiteFinished(root);
+  }
+
+  @Deprecated
+  @SuppressWarnings("UnusedDeclaration")
   public static void notifySuiteFinished(AbstractTestProxy root) {
-      for (TestStatusListener statusListener : Extensions.getExtensions(EP_NAME)) {
-        statusListener.testSuiteFinished(root);
-      }
+    for (TestStatusListener statusListener : Extensions.getExtensions(EP_NAME)) {
+      statusListener.testSuiteFinished(root);
     }
+  }
+
+  public static void notifySuiteFinished(AbstractTestProxy root, Project project) {
+    for (TestStatusListener statusListener : Extensions.getExtensions(EP_NAME)) {
+      statusListener.testSuiteFinished(root, project);
+    }
+  }
 }

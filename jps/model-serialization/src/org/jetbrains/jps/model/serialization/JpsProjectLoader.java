@@ -20,7 +20,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import org.jdom.Element;
@@ -109,7 +108,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
       catch (IOException ignored) {
       }
     }
-    return StringUtil.replace(dir.getParentFile().getName(), ":", "");
+    return dir.getParentFile().getName();
   }
 
   private void loadFromDirectory(File dir) {

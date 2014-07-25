@@ -1450,19 +1450,17 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new DupInstruction(args.length, contracts.size() - 1));
     }
     for (int i = 0; i < contracts.size(); i++) {
-      handleContract(expression, contracts.get(i), contracts.size() - 1 - i);
+      handleContract(expression, contracts.get(i), contracts.size() - 1 - i, paramCount);
     }
     pushUnknownReturnValue(expression); // goto here if all contracts are false
     return true;
   }
   
-  private void handleContract(PsiMethodCallExpression expression, MethodContract contract, int remainingContracts) {
-    PsiExpression[] args = expression.getArgumentList().getExpressions();
-
+  private void handleContract(PsiMethodCallExpression expression, MethodContract contract, int remainingContracts, int paramCount) {
     final ControlFlow.ControlFlowOffset exitPoint = getEndOffset(expression);
 
     List<GotoInstruction> gotoContractFalse = new SmartList<GotoInstruction>();
-    for (int i = args.length - 1; i >= 0; i--) {
+    for (int i = paramCount - 1; i >= 0; i--) {
       ValueConstraint arg = contract.arguments[i];
       if (arg == ValueConstraint.NULL_VALUE || arg == ValueConstraint.NOT_NULL_VALUE) {
         addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
@@ -1483,7 +1481,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       continueCheckingContract.setOffset(myCurrentFlow.getInstructionCount());
     }
 
-    for (int j = 0; j < remainingContracts * args.length; j++) {
+    for (int j = 0; j < remainingContracts * paramCount; j++) {
       addInstruction(new PopInstruction());
     }
 

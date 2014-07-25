@@ -25,6 +25,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.*;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.UIUtil;
@@ -46,6 +47,7 @@ import java.util.*;
 )
 public class DependencyValidationManagerImpl extends DependencyValidationManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.DependencyValidationManagerImpl");
+  public static final Icon SHARED_SCOPE_ICON = new LayeredIcon(AllIcons.Ide.LocalScope, AllIcons.Nodes.Shared);
 
   private final List<DependencyRule> myRules = new ArrayList<DependencyRule>();
   private final NamedScopeManager myNamedScopeManager;
@@ -194,7 +196,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   @Override
   public Icon getIcon() {
-    return AllIcons.Ide.SharedScope;
+    return SHARED_SCOPE_ICON;
   }
 
   @Override

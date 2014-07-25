@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2013 JetBrains s.r.o.
  *
@@ -55,7 +54,7 @@ public class SupportForFrameworksStep extends ModuleWizardStep {
     myBuilder = builder;
     List<FrameworkSupportInModuleProvider> providers = FrameworkSupportUtil.getProviders(builder);
     myFrameworkSupportModel = new FrameworkSupportModelInWizard(librariesContainer, builder);
-    mySupportForFrameworksPanel = new AddSupportForFrameworksPanel(providers, myFrameworkSupportModel, false);
+    mySupportForFrameworksPanel = new AddSupportForFrameworksPanel(providers, myFrameworkSupportModel, false, null);
     myConfigurationUpdater = new ModuleBuilder.ModuleConfigurationUpdater() {
       public void update(@NotNull final Module module, @NotNull final ModifiableRootModel rootModel) {
         mySupportForFrameworksPanel.addSupport(module, rootModel);

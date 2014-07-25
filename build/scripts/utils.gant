@@ -295,6 +295,9 @@ binding.setVariable("platformImplementationModules", [
   "xml-analysis-impl",
   "xml-psi-impl",
   "xml-structure-view-impl",
+  "protocol-reader-runtime",
+  "script-debugger-backend",
+  "script-debugger-ui"
 ])
 
 binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
@@ -873,4 +876,13 @@ binding.setVariable("buildSearchableOptions", { String target, List licenses, Cl
 
   ant.available(file: targetFile, property: "searchable.options.exists");
   ant.fail(unless: "searchable.options.exists", message: "Searchable options were not built.")
+})
+
+binding.setVariable("reassignAltClickToMultipleCarets", {String communityHome ->
+  String defaultKeymapContent = new File("$communityHome/platform/platform-resources/src/idea/Keymap_Default.xml").text
+  defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt button1\"/>", "")
+  defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt shift button1\"/>",
+                                                      "<mouse-shortcut keystroke=\"alt button1\"/>")
+  patchedKeymapFile = new File("${paths.sandbox}/classes/production/platform-resources/idea/Keymap_Default.xml")
+  patchedKeymapFile.write(defaultKeymapContent)
 })

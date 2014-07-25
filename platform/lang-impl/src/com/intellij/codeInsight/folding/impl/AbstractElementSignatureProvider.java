@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -31,8 +32,12 @@ import java.util.StringTokenizer;
  */
 public abstract class AbstractElementSignatureProvider implements ElementSignatureProvider {
 
-  protected static final char ELEMENTS_SEPARATOR = ';';
+  protected static final String ELEMENTS_SEPARATOR = ";";
   protected static final String ELEMENT_TOKENS_SEPARATOR = "#";
+
+  private static final String ESCAPE_CHAR = "\\";
+  private static final String[] ESCAPE_FROM = {ESCAPE_CHAR, ELEMENT_TOKENS_SEPARATOR, ELEMENTS_SEPARATOR};
+  private static final String[] ESCAPE_TO = {ESCAPE_CHAR + ESCAPE_CHAR, ESCAPE_CHAR + "s", ESCAPE_CHAR + "h"};
 
   @Override
   @Nullable
@@ -120,5 +125,13 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
     }
 
     return null;
+  }
+
+  protected static String escape(String name) {
+    return StringUtil.replace(name, ESCAPE_FROM, ESCAPE_TO);
+  }
+
+  protected static String unescape(String name) {
+    return StringUtil.replace(name, ESCAPE_TO, ESCAPE_FROM);
   }
 }

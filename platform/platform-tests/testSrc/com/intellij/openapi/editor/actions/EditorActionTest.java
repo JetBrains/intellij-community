@@ -63,4 +63,10 @@ public class EditorActionTest extends AbstractEditorTest {
     checkResultByText("long long text\n" +
                       "long long t<caret>ext");
   }
+
+  public void testTabWithSelection() throws Exception {
+    init("some<selection> <caret></selection>text", TestFileType.TEXT);
+    executeAction("EditorTab");
+    checkResultByText("some    <caret>text");
+  }
 }

@@ -68,6 +68,7 @@ import javax.xml.parsers.SAXParserFactory;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
@@ -322,6 +323,9 @@ public abstract class PluginManagerMain implements Disposable {
             }
           }
           catch (ProcessCanceledException ignore) {
+          }
+          catch (FileNotFoundException e) {
+            LOG.info(e);
           }
           catch (Exception e) {
             LOG.info(e);

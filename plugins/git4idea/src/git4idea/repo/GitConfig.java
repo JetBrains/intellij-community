@@ -135,6 +135,13 @@ public class GitConfig {
    */
   @NotNull
   static GitConfig read(@NotNull GitPlatformFacade platformFacade, @NotNull File configFile) {
+    GitConfig emptyConfig = new GitConfig(Collections.<Remote>emptyList(), Collections.<Url>emptyList(),
+                                          Collections.<BranchConfig>emptyList());
+    if (!configFile.exists()) {
+      LOG.info("No .git/config file at " + configFile.getPath());
+      return emptyConfig;
+    }
+
     Ini ini = new Ini();
     ini.getConfig().setMultiOption(true);  // duplicate keys (e.g. url in [remote])
     ini.getConfig().setTree(false);        // don't need tree structure: it corrupts url in section name (e.g. [url "http://github.com/"]
@@ -143,7 +150,7 @@ public class GitConfig {
     }
     catch (IOException e) {
       LOG.error(new RepoStateException("Couldn't load .git/config file at " + configFile.getPath(), e));
-      return new GitConfig(Collections.<Remote>emptyList(), Collections.<Url>emptyList(), Collections.<BranchConfig>emptyList());
+      return emptyConfig;
     }
 
     IdeaPluginDescriptor plugin = platformFacade.getPluginByClassName(GitConfig.class.getName());

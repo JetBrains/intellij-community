@@ -57,12 +57,13 @@ public class AtomicFieldUpdater<T,V> {
   private final long offset;
 
   @NotNull
-  public static <T,V> AtomicFieldUpdater<T,V> forFieldOfType(@NotNull Class<T> ownerClass, @NotNull Class<V> fieldType) {
-    return new AtomicFieldUpdater<T,V>(ownerClass, fieldType);
+  public static <T, V> AtomicFieldUpdater<T, V> forFieldOfType(@NotNull Class<T> ownerClass, @NotNull Class<V> fieldType) {
+    return new AtomicFieldUpdater<T, V>(ownerClass, fieldType);
   }
+
   @NotNull
-  public static <T> AtomicFieldUpdater<T,Long> forLongField(@NotNull Class<T> ownerClass) {
-    return new AtomicFieldUpdater<T,Long>(ownerClass, long.class);
+  public static <T> AtomicFieldUpdater<T, Long> forLongField(@NotNull Class<T> ownerClass) {
+    return new AtomicFieldUpdater<T, Long>(ownerClass, long.class);
   }
 
   private AtomicFieldUpdater(@NotNull Class<T> ownerClass, @NotNull Class<V> fieldType) {
@@ -94,7 +95,17 @@ public class AtomicFieldUpdater<T,V> {
   public boolean compareAndSet(@NotNull T owner, V expected, V newValue) {
     return unsafe.compareAndSwapObject(owner, offset, expected, newValue);
   }
+
   public boolean compareAndSetLong(@NotNull T owner, long expected, long newValue) {
     return unsafe.compareAndSwapLong(owner, offset, expected, newValue);
+  }
+
+  public void set(@NotNull T owner, V newValue) {
+    unsafe.putObjectVolatile(owner, offset, newValue);
+  }
+
+  public V get(@NotNull T owner) {
+    //noinspection unchecked
+    return (V)unsafe.getObjectVolatile(owner, offset);
   }
 }

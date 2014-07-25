@@ -39,6 +39,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -281,6 +282,9 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
     for (final CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
       if (shortcutChar == customLiveTemplate.getShortcut()) {
+        if (editor.getCaretModel().getCaretCount() > 1 && !supportsMultiCaretMode(customLiveTemplate)) {
+          continue;
+        }
         if (isApplicable(customLiveTemplate, editor, file)) {
           PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file, false);
@@ -302,6 +306,10 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
       }
     }
     return startNonCustomTemplates(template2argument, editor, processor);
+  }
+
+  private static boolean supportsMultiCaretMode(CustomLiveTemplate customLiveTemplate) {
+    return !(customLiveTemplate instanceof CustomLiveTemplateBase) || ((CustomLiveTemplateBase)customLiveTemplate).supportsMultiCaret();
   }
 
   public static boolean isApplicable(CustomLiveTemplate customLiveTemplate, Editor editor, PsiFile file) {
@@ -557,6 +565,18 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
       }
     }
     return false;
+  }
+
+  public static List<TemplateImpl> listApplicableTemplates(PsiFile file, int offset) {
+    Set<TemplateContextType> contextTypes = getApplicableContextTypes(file, offset);
+
+    final ArrayList<TemplateImpl> result = ContainerUtil.newArrayList();
+    for (final TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
+      if (!template.isDeactivated() && isApplicable(template, contextTypes)) {
+        result.add(template);
+      }
+    }
+    return result;
   }
 
   public static Set<TemplateContextType> getApplicableContextTypes(PsiFile file, int offset) {

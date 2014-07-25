@@ -16,7 +16,7 @@
 
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.EmptyIterator;
@@ -41,28 +41,28 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   @Override
   public void addValue(int inputId, Value value) {
-    final Object input = getInput(value);
+    final Object fileSetObject = getFileSetObject(value);
 
-    if (input == null) {
+    if (fileSetObject == null) {
       attachFileSetForNewValue(value, inputId);
     }
     else {
       final TIntHashSet idSet;
-      if (input instanceof Integer) {
+      if (fileSetObject instanceof Integer) {
         idSet = new IdSet(3);
-        idSet.add(((Integer)input).intValue());
+        idSet.add(((Integer)fileSetObject).intValue());
         idSet.add(inputId);
         resetFileSetForValue(value, idSet);
       }
-      else if (input instanceof TIntHashSet) {
-        idSet = (TIntHashSet)input;
+      else if (fileSetObject instanceof TIntHashSet) {
+        idSet = (TIntHashSet)fileSetObject;
         idSet.add(inputId);
 
         if (idSet.size() > MAX_FILES) {
           resetFileSetForValue(value, new IdBitSet(idSet));
         }
-      } else if (input instanceof IdBitSet) {
-        ((IdBitSet)input).set(inputId);
+      } else if (fileSetObject instanceof IdBitSet) {
+        ((IdBitSet)fileSetObject).set(inputId);
       }
     }
   }
@@ -80,33 +80,40 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
   @Override
   public void removeAssociatedValue(int inputId) {
     if (myInputIdMapping == null) return;
-    List<Value> toRemove = null;
-    for (final Iterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
+
+    List<Object> fileSetObjects = null;
+    List<Value> valueObjects = null;
+
+    for (final ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
       final Value value = valueIterator.next();
-      if (isAssociated(value, inputId)) {
-        if (toRemove == null) toRemove = new SmartList<Value>();
-        else if (ApplicationInfoImpl.getShadowInstance().isEAP()) {
-          LOG.error("Expected only one value per-inputId", String.valueOf(toRemove.get(0)), String.valueOf(value));
+
+      if (valueIterator.getValueAssociationPredicate().contains(inputId)) {
+        if (fileSetObjects == null) {
+          fileSetObjects = new SmartList<Object>();
+          valueObjects = new SmartList<Value>();
         }
-        toRemove.add(value);
+        else if (ApplicationManager.getApplication().isEAP()) {
+          LOG.error("Expected only one value per-inputId", String.valueOf(fileSetObjects.get(0)), String.valueOf(value));
+        }
+        fileSetObjects.add(valueIterator.getFileSetObject());
+        valueObjects.add(value);
       }
     }
 
-    if (toRemove != null) {
-      for (Value value : toRemove) {
-        removeValue(inputId, value);
+    if (fileSetObjects != null) {
+      for (int i = 0, len = valueObjects.size(); i < len; ++i) {
+        removeValue(inputId, fileSetObjects.get(i), valueObjects.get(i));
       }
     }
   }
 
-  public boolean removeValue(int inputId, Value value) {
-    final Object input = getInput(value);
-    if (input == null) {
+  private boolean removeValue(int inputId, Object fileSetObject, Value value) {
+    if (fileSetObject == null) {
       return false;
     }
 
-    if (input instanceof TIntHashSet) {
-      final TIntHashSet idSet = (TIntHashSet)input;
+    if (fileSetObject instanceof TIntHashSet) {
+      final TIntHashSet idSet = (TIntHashSet)fileSetObject;
       final boolean reallyRemoved = idSet.remove(inputId);
       if (reallyRemoved) {
         idSet.compact();
@@ -115,12 +122,12 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
         return reallyRemoved;
       }
     }
-    else if (input instanceof Integer) {
-      if (((Integer)input).intValue() != inputId) {
+    else if (fileSetObject instanceof Integer) {
+      if (((Integer)fileSetObject).intValue() != inputId) {
         return false;
       }
-    } else if (input instanceof IdBitSet) {
-      IdBitSet bitSet = (IdBitSet)input;
+    } else if (fileSetObject instanceof IdBitSet) {
+      IdBitSet bitSet = (IdBitSet)fileSetObject;
       boolean removed = bitSet.remove(inputId);
       if (bitSet.numberOfBitsSet() > 0) return removed;
     }
@@ -142,10 +149,10 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   @NotNull
   @Override
-  public Iterator<Value> getValueIterator() {
+  public ValueIterator<Value> getValueIterator() {
     if (myInputIdMapping != null) {
       if (!(myInputIdMapping instanceof THashMap)) {
-        return new Iterator<Value>() {
+        return new ValueIterator<Value>() {
           private Value value = (Value)myInputIdMapping;
           @Override
           public boolean hasNext() {
@@ -164,10 +171,28 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
           public void remove() {
             throw new UnsupportedOperationException();
           }
+
+          @NotNull
+          @Override
+          public IntIterator getInputIdsIterator() {
+            return getInputIdsIteratorOutOfFileSetObject(getFileSetObject());
+          }
+
+          @NotNull
+          @Override
+          public IntPredicate getValueAssociationPredicate() {
+            return getValueAssociationPredicateOutOfFileSetObject(getFileSetObject());
+          }
+
+          @Override
+          public Object getFileSetObject() {
+            return myInputIdMappingValue;
+          }
         };
       } else {
-        return new Iterator<Value>() {
-          final Iterator<Value> iterator = ((THashMap<Value, Object>)myInputIdMapping).keySet().iterator();
+        return new ValueIterator<Value>() {
+          private Map.Entry<Value, Object> current;
+          private final Iterator<Map.Entry<Value, Object>> iterator = ((THashMap<Value, Object>)myInputIdMapping).entrySet().iterator();
 
           @Override
           public boolean hasNext() {
@@ -176,7 +201,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
           @Override
           public Value next() {
-            Value next = iterator.next();
+            Value next = (current = iterator.next()).getKey();
             if (next == myNullValue) next = null;
             return next;
           }
@@ -185,12 +210,52 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
           public void remove() {
             throw new UnsupportedOperationException();
           }
+
+          @NotNull
+          @Override
+          public IntIterator getInputIdsIterator() {
+            return getInputIdsIteratorOutOfFileSetObject(getFileSetObject());
+          }
+
+          @NotNull
+          @Override
+          public IntPredicate getValueAssociationPredicate() {
+            return getValueAssociationPredicateOutOfFileSetObject(getFileSetObject());
+          }
+
+          @Override
+          public Object getFileSetObject() {
+            if (current == null) throw new IllegalStateException();
+            return current.getValue();
+          }
         };
       }
     } else {
-      return EmptyIterator.getInstance();
+      return emptyIterator;
     }
   }
+
+  static class EmptyValueIterator<Value> extends EmptyIterator<Value> implements ValueIterator<Value> {
+
+    @NotNull
+    @Override
+    public IntIterator getInputIdsIterator() {
+      throw new IllegalStateException();
+    }
+
+    @NotNull
+    @Override
+    public IntPredicate getValueAssociationPredicate() {
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public Object getFileSetObject() {
+      throw new IllegalStateException();
+    }
+  }
+
+  private static final EmptyValueIterator emptyIterator = new EmptyValueIterator();
 
   @NotNull
   @Override
@@ -206,15 +271,15 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   @Override
   public boolean isAssociated(Value value, final int inputId) {
-    final Object input = getInput(value);
-    if (input instanceof TIntHashSet) {
-      return ((TIntHashSet)input).contains(inputId);
+    final Object fileSetObject = getFileSetObject(value);
+    if (fileSetObject instanceof TIntHashSet) {
+      return ((TIntHashSet)fileSetObject).contains(inputId);
     }
-    if (input instanceof Integer ){
-      return inputId == ((Integer)input).intValue();
+    if (fileSetObject instanceof Integer ){
+      return inputId == ((Integer)fileSetObject).intValue();
     }
-    if (input instanceof IdBitSet) {
-      return ((IdBitSet)input).get(inputId);
+    if (fileSetObject instanceof IdBitSet) {
+      return ((IdBitSet)fileSetObject).get(inputId);
     }
     return false;
   }
@@ -222,20 +287,23 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
   @NotNull
   @Override
   public IntPredicate getValueAssociationPredicate(Value value) {
-    final Object input = getInput(value);
-    if (input == null) return EMPTY_PREDICATE;
-    if (input instanceof Integer) {
+    return getValueAssociationPredicateOutOfFileSetObject(getFileSetObject(value));
+  }
+
+  private static IntPredicate getValueAssociationPredicateOutOfFileSetObject(final Object fileSetObject) {
+    if (fileSetObject == null) return EMPTY_PREDICATE;
+    if (fileSetObject instanceof Integer) {
       return new IntPredicate() {
-        final int myId = (Integer)input;
+        final int myId = (Integer)fileSetObject;
         @Override
         public boolean contains(int id) {
           return id == myId;
         }
       };
     }
-    if (input instanceof IdBitSet) {
+    if (fileSetObject instanceof IdBitSet) {
       return new IntPredicate() {
-        final IdBitSet myIdBitSet = (IdBitSet)input;
+        final IdBitSet myIdBitSet = (IdBitSet)fileSetObject;
         @Override
         boolean contains(int id) {
           return myIdBitSet.get(id);
@@ -243,7 +311,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       };
     }
     return new IntPredicate() {
-      final TIntHashSet mySet = (TIntHashSet)input;
+      final TIntHashSet mySet = (TIntHashSet)fileSetObject;
       @Override
       boolean contains(int id) {
         return mySet.contains(id);
@@ -254,16 +322,19 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
   @NotNull
   @Override
   public IntIterator getInputIdsIterator(Value value) {
-    final Object input = getInput(value);
+    return getInputIdsIteratorOutOfFileSetObject(getFileSetObject(value));
+  }
+
+  private static IntIterator getInputIdsIteratorOutOfFileSetObject(final Object fileSetObject) {
     final IntIterator it;
-    if (input instanceof TIntHashSet) {
-      it = new IntSetIterator((TIntHashSet)input);
+    if (fileSetObject instanceof TIntHashSet) {
+      it = new IntSetIterator((TIntHashSet)fileSetObject);
     }
-    else if (input instanceof Integer ){
-      it = new SingleValueIterator(((Integer)input).intValue());
-    } else if (input instanceof IdBitSet) {
+    else if (fileSetObject instanceof Integer ){
+      it = new SingleValueIterator(((Integer)fileSetObject).intValue());
+    } else if (fileSetObject instanceof IdBitSet) {
       it = new IntIterator() {
-        private final IdBitSet myIdBitSet = (IdBitSet)input;
+        private final IdBitSet myIdBitSet = (IdBitSet)fileSetObject;
         private int nextSetBit = myIdBitSet.nextSetBit(0);
 
         @Override
@@ -290,7 +361,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return it;
   }
 
-  private Object getInput(Value value) {
+  private Object getFileSetObject(Value value) {
     if (myInputIdMapping == null) return null;
 
     value = value != null ? value:(Value)myNullValue;
@@ -375,7 +446,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   void ensureFileSetCapacityForValue(Value value, int count) {
     if (count <= 1) return;
-    Object input = getInput(value);
+    Object input = getFileSetObject(value);
 
     if (input != null) {
       if (input instanceof Integer) {

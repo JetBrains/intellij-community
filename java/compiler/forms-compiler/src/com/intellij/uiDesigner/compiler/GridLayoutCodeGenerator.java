@@ -19,9 +19,9 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
-import org.jetbrains.asm4.Type;
-import org.jetbrains.asm4.commons.GeneratorAdapter;
-import org.jetbrains.asm4.commons.Method;
+import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
+import org.jetbrains.org.objectweb.asm.commons.Method;
 
 /**
  * @author yole

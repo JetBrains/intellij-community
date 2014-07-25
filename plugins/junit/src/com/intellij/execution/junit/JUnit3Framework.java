@@ -38,6 +38,11 @@ public class JUnit3Framework extends JavaTestFramework {
     return '3';
   }
 
+  @Override
+  public FileTemplateDescriptor getTestClassFileTemplateDescriptor() {
+    return new FileTemplateDescriptor("JUnit3 Test Class.java");
+  }
+
   @NotNull
   @Override
   public Icon getIcon() {

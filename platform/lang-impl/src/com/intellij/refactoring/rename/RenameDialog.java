@@ -17,6 +17,7 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -25,6 +26,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -93,6 +95,18 @@ public class RenameDialog extends RefactoringDialog {
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) validateButtons();
     myHelpID = RenamePsiElementProcessor.forElement(psiElement).getHelpID(psiElement);
+  }
+
+  public static void showRenameDialog(DataContext dataContext, RenameDialog dialog) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      final String name = PsiElementRenameHandler.DEFAULT_NAME.getData(dataContext);
+      //noinspection TestOnlyProblems
+      dialog.performRename(name);
+      dialog.close(OK_EXIT_CODE);
+    }
+    else {
+      dialog.show();
+    }
   }
 
   @NotNull

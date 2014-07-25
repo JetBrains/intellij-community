@@ -161,6 +161,38 @@ public class GeneralCommandLineTest {
   }
 
   @Test
+  public void winShellScriptQuoting() throws Exception {
+    assumeTrue(SystemInfo.isWindows);
+    String scriptPrefix = "my_script";
+    for (String cmdScriptExt : new String[] {".cmd", ".bat"}) {
+      File script = ExecUtil.createTempExecutableScript(
+        scriptPrefix, cmdScriptExt,
+        "@echo %1\n"
+      );
+      String param = "a&b";
+      GeneralCommandLine commandLine = new GeneralCommandLine(script.getAbsolutePath(), param);
+      String text = commandLine.getPreparedCommandLine(Platform.WINDOWS);
+      assertEquals(commandLine.getExePath() + "\n" + StringUtil.wrapWithDoubleQuote(param), text);
+      try {
+        String output = execAndGetOutput(commandLine, null);
+        assertEquals(StringUtil.wrapWithDoubleQuote(param), output.trim());
+      }
+      finally {
+        FileUtil.delete(script);
+      }
+    }
+  }
+
+  @Test
+  public void winShellQuotingWithExtraSwitch() throws Exception {
+    assumeTrue(SystemInfo.isWindows);
+    String param = "a&b";
+    GeneralCommandLine commandLine = new GeneralCommandLine("cmd", "/D", "/C", "echo", param);
+    String output = execAndGetOutput(commandLine, null);
+    assertEquals(StringUtil.wrapWithDoubleQuote(param), output.trim());
+  }
+
+  @Test
   public void hackyEnvMap () throws Exception {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     //noinspection ConstantConditions

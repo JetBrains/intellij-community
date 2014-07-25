@@ -159,6 +159,7 @@ public class FrameDiffTool implements DiffTool {
     return KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof JDialog;
   }
 
+  // TODO remove check?
   private boolean checkNoDifferenceAndNotify(DiffPanel diffPanel, DiffRequest data, final Window window, final boolean showMessage) {
     if (!diffPanel.hasDifferences() && !data.getHints().contains(HINT_ALLOW_NO_DIFFERENCES)) {
       DiffManagerImpl manager = (DiffManagerImpl) DiffManager.getInstance();
@@ -218,6 +219,6 @@ public class FrameDiffTool implements DiffTool {
 
   @Override
   public DiffViewer createComponent(String title, DiffRequest request, Window window, @NotNull Disposable parentDisposable) {
-    return createDiffPanelIfShouldShow(request, window, parentDisposable, false);
+    return createDiffPanelImpl(request, window, parentDisposable);
   }
 }

@@ -73,11 +73,11 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
       if (list == null) {
         return;
       }
-      Callable func = node.resolveCalleeFunction(resolveWithoutImplicits());
+      Callable func = node.resolveCalleeFunction(getResolveContext());
       if (func != null && hasSpecialCasedDefaults(func, node)) {
         return;
       }
-      CallArgumentsMapping result = list.analyzeCall(resolveWithoutImplicits());
+      CallArgumentsMapping result = list.analyzeCall(getResolveContext());
       checkArguments(result, node.getArguments());
     }
 
@@ -127,11 +127,8 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
     }
 
     private boolean isEqual(PyExpression key, PyExpression defaultValue) {
-      if (key instanceof PyNumericLiteralExpression && defaultValue instanceof PyNumericLiteralExpression) {
-        if (key.getText().equals(defaultValue.getText()))
-          return true;
-      }
-      if (key instanceof PyBinaryExpression && defaultValue instanceof PyBinaryExpression) {
+      if (isBothInstanceOf(key, defaultValue, PyNumericLiteralExpression.class) ||
+          isBothInstanceOf(key, defaultValue, PyPrefixExpression.class) || isBothInstanceOf(key, defaultValue, PyBinaryExpression.class)) {
         if (key.getText().equals(defaultValue.getText()))
           return true;
       }
@@ -141,10 +138,10 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
       }
       else {
         PsiReference keyRef = key instanceof PyReferenceExpression 
-                              ? ((PyReferenceExpression) key).getReference(resolveWithoutImplicits())
+                              ? ((PyReferenceExpression) key).getReference(getResolveContext())
                               : key.getReference();
         PsiReference defRef = defaultValue instanceof PyReferenceExpression
-                              ? ((PyReferenceExpression) defaultValue).getReference(resolveWithoutImplicits())
+                              ? ((PyReferenceExpression) defaultValue).getReference(getResolveContext())
                               : defaultValue.getReference();
         if (keyRef != null && defRef != null) {
           PsiElement keyResolve = keyRef.resolve();
@@ -154,6 +151,12 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
         }
       }
       return false;
+    }
+
+    private static boolean isBothInstanceOf(@NotNull final PyExpression key,
+                                            @NotNull final PyExpression defaultValue,
+                                            @NotNull final Class clazz) {
+      return clazz.isInstance(key) && clazz.isInstance(defaultValue);
     }
   }
 }

@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -46,6 +47,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,11 +119,32 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
   @NotNull
   protected UsageInfo[] findUsages() {
     final PsiClass[] inheritors = ClassInheritorsSearch.search(myClass, false).toArray(PsiClass.EMPTY_ARRAY);
-    UsageInfo[] usages = new UsageInfo[inheritors.length];
-    for (int i = 0; i < inheritors.length; i++) {
-      usages[i] = new UsageInfo(inheritors[i]);
+    final List<UsageInfo> usages = new ArrayList<UsageInfo>(inheritors.length);
+    for (PsiClass inheritor : inheritors) {
+      usages.add(new UsageInfo(inheritor));
     }
-    return usages;
+
+    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(myClass);
+    if (interfaceMethod != null && isMoved(interfaceMethod)) {
+      FunctionalExpressionSearch.search(myClass).forEach(new Processor<PsiFunctionalExpression>() {
+        @Override
+        public boolean process(PsiFunctionalExpression expression) {
+          usages.add(new UsageInfo(expression));
+          return true;
+        }
+      });
+    }
+
+    return usages.toArray(new UsageInfo[usages.size()]);
+  }
+
+  private boolean isMoved(PsiMember member) {
+    for (MemberInfo info : myMemberInfos) {
+      if (member == info.getMember()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
@@ -166,6 +189,17 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
 
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) {
       return false;
+    }
+
+    for (UsageInfo info : usagesIn) {
+      final PsiElement element = info.getElement();
+      if (element instanceof PsiFunctionalExpression) {
+        pushDownConflicts.getConflicts().putValue(element, RefactoringBundle.message("functional.interface.broken"));
+      }
+    }
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(myClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE);
+    if (annotation != null && isMoved(LambdaUtil.getFunctionalInterfaceMethod(myClass))) {
+      pushDownConflicts.getConflicts().putValue(annotation, RefactoringBundle.message("functional.interface.broken"));
     }
     return showConflicts(pushDownConflicts.getConflicts(), usagesIn);
   }
@@ -397,6 +431,11 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
       PsiMember newMember = null;
       if (member instanceof PsiField) {
         ((PsiField)member).normalizeDeclaration();
+        if (myClass.isInterface() && !targetClass.isInterface()) {
+          PsiUtil.setModifierProperty(member, PsiModifier.PUBLIC, true);
+          PsiUtil.setModifierProperty(member, PsiModifier.STATIC, true);
+          PsiUtil.setModifierProperty(member, PsiModifier.FINAL, true);
+        }
         newMember = (PsiMember)targetClass.add(member);
       }
       else if (member instanceof PsiMethod) {

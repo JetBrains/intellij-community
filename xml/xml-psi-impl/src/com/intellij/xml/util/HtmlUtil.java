@@ -17,7 +17,6 @@ package com.intellij.xml.util;
 
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
-import com.intellij.html.RelaxedHtmlNSDescriptor;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.javaee.ExternalResourceManagerEx;
@@ -420,9 +419,17 @@ public class HtmlUtil {
   }
 
   public static boolean isHtmlTag(@NotNull XmlTag tag) {
-    final XmlElementDescriptor descriptor = tag.getDescriptor();
-    return descriptor != null && descriptor.getNSDescriptor() instanceof RelaxedHtmlNSDescriptor &&
-           tag.getLanguage() != XHTMLLanguage.INSTANCE;
+    if (tag.getLanguage() != HTMLLanguage.INSTANCE) return false;
+
+    XmlDocument doc = PsiTreeUtil.getParentOfType(tag, XmlDocument.class);
+
+    String doctype = null;
+    if (doc != null) {
+       doctype = XmlUtil.getDtdUri(doc);
+    }
+    doctype = doctype == null ? ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(tag.getProject()) : doctype;
+    return XmlUtil.XHTML4_SCHEMA_LOCATION.equals(doctype) ||
+           !StringUtil.containsIgnoreCase(doctype, "xhtml");
   }
 
   public static boolean hasNonHtml5Doctype(XmlElement context) {

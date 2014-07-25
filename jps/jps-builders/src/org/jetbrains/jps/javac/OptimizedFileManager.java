@@ -15,11 +15,10 @@
  */
 package org.jetbrains.jps.javac;
 
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.sun.tools.javac.util.*;
+import com.sun.tools.javac.util.Context;
+import com.sun.tools.javac.util.JCDiagnostic;
 import com.sun.tools.javac.util.List;
-import org.jetbrains.jps.incremental.Utils;
+import com.sun.tools.javac.util.ListBuffer;
 
 import javax.lang.model.SourceVersion;
 import javax.tools.FileObject;
@@ -28,6 +27,7 @@ import java.io.*;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.*;
@@ -68,7 +68,7 @@ class OptimizedFileManager extends DefaultFileManager {
 
   @Override
   public FileObject getFileForInput(Location location, String packageName, String relativeName) throws IOException {
-    final String name = StringUtil.isEmpty(packageName) ? FileUtil.toSystemIndependentName(relativeName) : (packageName.replace('.', '/') + "/" + FileUtil.toSystemIndependentName(relativeName));
+    final String name = packageName == null || packageName.isEmpty() ? relativeName.replace('\\', '/') : (packageName.replace('.', '/') + "/" + relativeName.replace('\\', '/'));
     return getFileForInput(location, name);
   }
 
@@ -406,12 +406,23 @@ class OptimizedFileManager extends DefaultFileManager {
 
     public URI toUri() {
       try {
-        return Utils.toURI(f.getPath());
+        return convertToURI(f.getPath());
       }
       catch (Throwable ex) {
         return f.toURI().normalize();
       }
     }
+  }
+
+  private static URI convertToURI(String localPath) throws URISyntaxException {
+    String p = localPath.replace('\\', '/');
+    if (!p.startsWith("/")) {
+      p = "/" + p;
+    }
+    if (!p.startsWith("//")) {
+      p = "//" + p;
+    }
+    return new URI("file", null, p, null);
   }
 
   private ByteBuffer makeByteBuffer(InputStream in) throws IOException {

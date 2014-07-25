@@ -2,9 +2,12 @@
 import atexit
 import zipfile
 
+# TODO: Move all CLR-specific functions to clr_tools
+
 from pycharm_generator_utils.module_redeclarator import *
 from pycharm_generator_utils.util_methods import *
 from pycharm_generator_utils.constants import *
+from pycharm_generator_utils.clr_tools import *
 
 
 debug_mode = False
@@ -385,7 +388,7 @@ if __name__ == "__main__":
 
     if "-z" in opts:
         if len(args) != 1:
-            report("Expected 1 arg with -S, got %d args", len(args))
+            report("Expected 1 arg with -z, got %d args", len(args))
             sys.exit(1)
         zip_sources(args[0])
         sys.exit(0)
@@ -429,6 +432,9 @@ if __name__ == "__main__":
 
             if '-p' in opts:
                 atexit.register(print_profile)
+
+            # We take module name from import statement
+            name = get_namespace_by_name(name)
 
         if not process_one(name, mod_file_name, False, subdir):
             sys.exit(1)

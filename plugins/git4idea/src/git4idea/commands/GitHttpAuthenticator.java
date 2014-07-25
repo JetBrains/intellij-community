@@ -51,4 +51,11 @@ public interface GitHttpAuthenticator {
    * This is called when authentication fails.
    */
   void forgetPassword();
+
+  /**
+   * Checks if the authentication dialog was cancelled
+   * (in which case the behavior might be different than if a wrong password was provided).
+   */
+  boolean wasCancelled();
+
 }

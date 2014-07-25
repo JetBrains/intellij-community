@@ -17,9 +17,6 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ignatov
- */
 public class NotNullPostfixTemplateTest extends PostfixTemplateTestCase {
   @NotNull
   @Override
@@ -29,4 +26,5 @@ public class NotNullPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testPrimitive()         { doTest(); }
   public void testNn()                { doTest(); }
   public void testSecondStatement()   { doTest(); }
+  public void testElseStatement()     { doTest(); }
 }

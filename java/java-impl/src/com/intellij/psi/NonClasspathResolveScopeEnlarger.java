@@ -4,8 +4,9 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.NonClasspathDirectoryScope;
+import com.intellij.psi.search.NonClasspathDirectoriesScope;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,8 +25,8 @@ public class NonClasspathResolveScopeEnlarger extends ResolveScopeEnlarger {
         if (finder instanceof NonClasspathClassFinder) {
           final List<VirtualFile> roots = ((NonClasspathClassFinder)finder).getClassRoots();
           for (VirtualFile root : roots) {
-            if (VfsUtil.isAncestor(root, file, true)) {
-              return NonClasspathDirectoryScope.compose(roots);
+            if (VfsUtilCore.isAncestor(root, file, true)) {
+              return NonClasspathDirectoriesScope.compose(roots);
             }
           }
         }

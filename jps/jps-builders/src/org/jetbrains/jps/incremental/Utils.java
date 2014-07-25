@@ -17,7 +17,9 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -85,7 +87,7 @@ public class Utils {
       if (directoryBased == null) {
         return null;
       }
-      name = JpsProjectLoader.getDirectoryBaseProjectName(directoryBased);
+      name = PathUtilRt.suggestFileName(JpsProjectLoader.getDirectoryBaseProjectName(directoryBased));
       locationHash = directoryBased.getPath().hashCode();
     }
 
@@ -94,11 +96,11 @@ public class Utils {
 
   public static URI toURI(String localPath) {
     try {
-      String p = FileUtil.toSystemIndependentName(localPath);
+      String p = FileUtilRt.toSystemIndependentName(localPath);
       if (!p.startsWith("/")) {
         p = "/" + p;
       }
-      if (p.startsWith("//")) {
+      if (!p.startsWith("//")) {
         p = "//" + p;
       }
       return new URI("file", null, p, null);

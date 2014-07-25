@@ -397,12 +397,17 @@ public class CompilerManagerImpl extends CompilerManager {
 
   @NotNull
   public CompileScope createModuleCompileScope(@NotNull final Module module, final boolean includeDependentModules) {
-    return new ModuleCompileScope(module, includeDependentModules);
+    return createModulesCompileScope(new Module[] {module}, includeDependentModules);
   }
 
   @NotNull
   public CompileScope createModulesCompileScope(@NotNull final Module[] modules, final boolean includeDependentModules) {
-    return new ModuleCompileScope(myProject, modules, includeDependentModules);
+    return createModulesCompileScope(modules, includeDependentModules, false);
+  }
+
+  @NotNull 
+  public CompileScope createModulesCompileScope(@NotNull Module[] modules, boolean includeDependentModules, boolean includeRuntimeDependencies) {
+    return new ModuleCompileScope(myProject, modules, includeDependentModules, includeRuntimeDependencies);
   }
 
   @NotNull

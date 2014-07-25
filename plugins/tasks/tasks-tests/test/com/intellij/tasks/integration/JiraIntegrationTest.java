@@ -28,6 +28,8 @@ import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.tasks.jira.JiraRepositoryType;
 import com.intellij.tasks.jira.JiraVersion;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.jetbrains.annotations.NonNls;
 
@@ -99,6 +101,15 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
     catch (Exception e) {
       assertEquals("Request failed. Reason: \"Field 'foo' does not exist or you do not have permission to view it.\"", e.getMessage());
     }
+  }
+
+  public void testBasicAuthenticationDisabling() throws Exception {
+    assertTrue("Basic authentication should be enabled at first", myRepository.isUseHttpAuthentication());
+    myRepository.findTask("PRJONE-1");
+    assertFalse("Basic authentication should be disabled once JSESSIONID cookie was received", myRepository.isUseHttpAuthentication());
+    HttpClient client = myRepository.getHttpClient();
+    assertFalse(client.getParams().isAuthenticationPreemptive());
+    assertNull(client.getState().getCredentials(AuthScope.ANY));
   }
 
   public void testSetTaskState() throws Exception {

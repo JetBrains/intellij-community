@@ -82,13 +82,12 @@ public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, 
     }
 
     public SearchScope getScope() {
-      final SearchScope accessScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+      return ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
         @Override
         public SearchScope compute() {
-          return PsiSearchHelper.SERVICE.getInstance(myElement.getProject()).getUseScope(myElement);
+          return myScope.intersectWith(PsiSearchHelper.SERVICE.getInstance(myElement.getProject()).getUseScope(myElement));
         }
       });
-      return myScope.intersectWith(accessScope);
     }
   }
 

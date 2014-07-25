@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -55,9 +56,8 @@ import static java.awt.event.MouseEvent.*;
 public final class IdeMouseEventDispatcher {
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
   private final ArrayList<AnAction> myActions = new ArrayList<AnAction>(1);
-  private final Map<Container, Integer> myRootPane2BlockedId = new HashMap<Container, Integer>();
+  private final Map<Container, BlockState> myRootPane2BlockedId = new HashMap<Container, BlockState>();
   private int myLastHorScrolledComponentHash = 0;
-  private MouseEvent myPreviousMouseEvent;
 
   // Don't compare MouseEvent ids. Swing has wrong sequence of events: first is mouse_clicked(500)
   // then mouse_pressed(501), mouse_released(502) etc. Here, mouse events sorted so we can compare
@@ -122,9 +122,6 @@ public final class IdeMouseEventDispatcher {
    *         to normal event dispatching.
    */
   public boolean dispatchMouseEvent(MouseEvent e) {
-    MouseEvent previousEvent = myPreviousMouseEvent;
-    myPreviousMouseEvent = e;
-
     Component c = e.getComponent();
 
     //frame activation by mouse click
@@ -160,17 +157,18 @@ public final class IdeMouseEventDispatcher {
       ignore = true;
     }
 
-    if (e.getID() == MOUSE_RELEASED && previousEvent != null && previousEvent.getID() == MOUSE_DRAGGED) {
-      ignore = true; // we don't want to process action bindings on mouse release at the end of drag operation
-    }
-
-   final JRootPane root = findRoot(e);
+    final JRootPane root = findRoot(e);
     if (root != null) {
-      final Integer lastId = myRootPane2BlockedId.get(root);
-      if (lastId != null) {
-        if (SWING_EVENTS_PRIORITY.indexOf(lastId) < SWING_EVENTS_PRIORITY.indexOf(e.getID())) {
-          myRootPane2BlockedId.put(root, e.getID());
-          return true;
+      BlockState blockState = myRootPane2BlockedId.get(root);
+      if (blockState != null) {
+        if (SWING_EVENTS_PRIORITY.indexOf(blockState.currentEventId) < SWING_EVENTS_PRIORITY.indexOf(e.getID())) {
+          blockState.currentEventId = e.getID();
+          if (blockState.blockMode == IdeEventQueue.BlockMode.COMPLETE) {
+            return true;
+          }
+          else {
+            ignore = true;
+          }
         } else {
           myRootPane2BlockedId.remove(root);
         }
@@ -322,11 +320,11 @@ public final class IdeMouseEventDispatcher {
     return c != null && "y.view.Graph2DView".equals(c.getClass().getName());
   }
 
-  public void blockNextEvents(final MouseEvent e) {
+  public void blockNextEvents(final MouseEvent e, IdeEventQueue.BlockMode blockMode) {
     final JRootPane root = findRoot(e);
     if (root == null) return;
 
-    myRootPane2BlockedId.put(root, e.getID());
+    myRootPane2BlockedId.put(root, new BlockState(e.getID(), blockMode));
   }
 
   @Nullable
@@ -345,5 +343,15 @@ public final class IdeMouseEventDispatcher {
     }
 
     return root;
+  }
+
+  private static class BlockState {
+    private int currentEventId;
+    private final IdeEventQueue.BlockMode blockMode;
+
+    private BlockState(int id, IdeEventQueue.BlockMode mode) {
+      currentEventId = id;
+      blockMode = mode;
+    }
   }
 }

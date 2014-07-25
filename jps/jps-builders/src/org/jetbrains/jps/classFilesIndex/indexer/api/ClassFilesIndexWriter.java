@@ -15,15 +15,14 @@
  */
 package org.jetbrains.jps.classFilesIndex.indexer.api;
 
-import com.intellij.openapi.diagnostic.Log;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PersistentHashMap;
-import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.classFilesIndex.indexer.api.storage.ClassFilesIndexStorageBase;
 import org.jetbrains.jps.classFilesIndex.indexer.api.storage.ClassFilesIndexStorageWriter;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.File;
 import java.io.IOException;

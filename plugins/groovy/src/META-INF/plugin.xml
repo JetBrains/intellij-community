@@ -205,6 +205,7 @@
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.AnnotationCollectorChecker" order="first"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.DelegatesToAnnotationChecker"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.griffon.GriffonPropertyListenerAnnotationChecker"/>
+    <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.BaseScriptAnnotationChecker"/>
 
     <convertToJava.customMethodInvocator implementation="org.jetbrains.plugins.groovy.refactoring.convertToJava.invocators.MapGetterSetterInvocator"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.TypeCheckedAnnotationChecker"/>
@@ -307,6 +308,7 @@
                                             implementationClass="org.jetbrains.plugins.groovy.refactoring.rename.inplace.GroovyResolveSnapshotProvider"/>
 
     <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.inplace.GrVariableInplaceRenameHandler"/>
+    <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.inplace.GrMethodInplaceRenameHandler"/>
 
     <nameSuggestionProvider implementation="org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionProvider"/>
 
@@ -537,6 +539,9 @@
                     serviceImplementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerWorkspaceConfiguration"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration"
                     serviceImplementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration"/>
+
+    <applicationService serviceInterface="org.jetbrains.plugins.groovy.lang.resolve.KnownRecursionManager"
+                        serviceImplementation="org.jetbrains.plugins.groovy.lang.resolve.KnownRecursionManager"/>
 
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.providers.GroovyReferenceContributor"/>
 

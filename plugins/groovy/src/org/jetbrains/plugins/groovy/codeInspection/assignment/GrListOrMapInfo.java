@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
@@ -114,7 +115,10 @@ public class GrListOrMapInfo implements ConstructorCallInfo<GrListOrMap> {
 
   @Override
   public GroovyResolveResult[] multiResolveClass() {
-    return new GroovyResolveResult[]{new GroovyResolveResultImpl(myReference.getConstructedClassType().resolveGenerics())};
+    PsiClassType type = myReference.getConstructedClassType();
+    if (type == null) return GroovyResolveResult.EMPTY_ARRAY;
+
+    return new GroovyResolveResult[]{new GroovyResolveResultImpl(type.resolveGenerics())};
   }
 
   @NotNull

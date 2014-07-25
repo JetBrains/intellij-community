@@ -15,10 +15,13 @@
  */
 package com.intellij.codeInsight.daemon.lambda;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.JavaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-public class Interface8MethodsHighlightingTest extends LightDaemonAnalyzerTestCase {
+public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/interfaceMethods";
 
   public void testStaticMethod() { doTest(); }
@@ -35,15 +38,38 @@ public class Interface8MethodsHighlightingTest extends LightDaemonAnalyzerTestCa
   public void testStaticMethods() { doTest(false, false); }
   public void testFinalStaticDefaultMethods() { doTest(false, false); }
   public void testIDEA122720() { doTest(false, false); }
+  public void testIDEA123839() { doTest(false, false); }
   public void testDefaultSupersInStaticContext() {
     doTest(false, false);
   }
+
+  public void testSuperProtectedCalls() throws Exception {
+    myFixture.addClass("package p; public class Foo {" +
+                       "  protected void foo(){}" +
+                       "}");
+    doTest();
+  }
+
+  public void testIDEA120498() { doTest(false, false); }
 
   private void doTest() {
     doTest(false, false);
   }
 
   private void doTest(boolean checkWarnings, boolean checkInfos) {
-    doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
+    String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
+    myFixture.configureByFile(filePath);
+    myFixture.checkHighlighting(checkWarnings, checkInfos, false);
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 }

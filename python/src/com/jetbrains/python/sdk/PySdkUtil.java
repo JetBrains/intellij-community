@@ -17,9 +17,12 @@ package com.jetbrains.python.sdk;
 
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,6 +56,8 @@ public class PySdkUtil {
 
   // Windows EOF marker, Ctrl+Z
   public static final int SUBSTITUTE = 26;
+
+  private static final String REMOTE_SOURCES_DIR_NAME = "remote_sources";
 
   private PySdkUtil() {
     // explicitly none
@@ -106,12 +111,11 @@ public class PySdkUtil {
    * Executes a process and returns its stdout and stderr outputs as lists of lines.
    * Waits for process for possibly limited duration.
    *
-   *
-   * @param homePath process run directory
-   * @param command  command to execute and its arguments
-   * @param addEnv   items are prepended to same-named values of inherited process environment.
-   * @param timeout  how many milliseconds to wait until the process terminates; non-positive means infinity.
-   * @param stdin    the data to write to the process standard input stream
+   * @param homePath      process run directory
+   * @param command       command to execute and its arguments
+   * @param addEnv        items are prepended to same-named values of inherited process environment.
+   * @param timeout       how many milliseconds to wait until the process terminates; non-positive means infinity.
+   * @param stdin         the data to write to the process standard input stream
    * @param needEOFMarker
    * @return a tuple of (stdout lines, stderr lines, exit_code), lines in them have line terminators stripped, or may be null.
    */
@@ -223,7 +227,7 @@ public class PySdkUtil {
       if (virtualFile != null) {
         final Sdk sdk = PythonSdkType.getSdk(element);
         if (sdk != null) {
-          final VirtualFile skeletonsDir = PythonSdkType.findSkeletonsDir(sdk);
+          final VirtualFile skeletonsDir = findSkeletonsDir(sdk);
           if (skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, virtualFile, false)) {
             return true;
           }
@@ -231,5 +235,37 @@ public class PySdkUtil {
       }
     }
     return false;
+  }
+
+  public static String getRemoteSourcesLocalPath(String sdkHome) {
+    String sep = File.separator;
+
+    String basePath = PathManager.getSystemPath();
+    return basePath +
+           File.separator +
+           REMOTE_SOURCES_DIR_NAME +
+           sep +
+           FileUtil.toSystemIndependentName(sdkHome).hashCode() +
+           sep;
+  }
+
+  @Nullable
+  public static VirtualFile findSkeletonsDir(@NotNull final Sdk sdk) {
+    return findLibraryDir(sdk, PythonSdkType.SKELETON_DIR_NAME, PythonSdkType.BUILTIN_ROOT_TYPE);
+  }
+
+  @Nullable
+  public static VirtualFile findRemoteLibrariesDir(@NotNull final Sdk sdk) {
+    return findLibraryDir(sdk, REMOTE_SOURCES_DIR_NAME, OrderRootType.CLASSES);
+  }
+
+  private static VirtualFile findLibraryDir(Sdk sdk, String dirName, OrderRootType rootType) {
+    final VirtualFile[] virtualFiles = sdk.getRootProvider().getFiles(rootType);
+    for (VirtualFile virtualFile : virtualFiles) {
+      if (virtualFile.isValid() && virtualFile.getPath().contains(dirName)) {
+        return virtualFile;
+      }
+    }
+    return null;
   }
 }

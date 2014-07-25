@@ -17,6 +17,7 @@ package com.intellij.codeInsight.template.postfix.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
@@ -27,10 +28,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
+  private boolean shotTemplatesInTestsOldValue;
+
+  @Override
+  public void setUp() {
+    super.setUp();
+    shotTemplatesInTestsOldValue = LiveTemplateCompletionContributor.ourShowTemplatesInTests;
+    LiveTemplateCompletionContributor.ourShowTemplatesInTests = false;
+  }
 
   @Override
   public void tearDown() throws Exception {
-    LiveTemplateCompletionContributor.ourShowTemplatesInTests = false;
+    LiveTemplateCompletionContributor.ourShowTemplatesInTests = shotTemplatesInTestsOldValue;
 
     PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
     assertNotNull(settings);
@@ -95,6 +104,17 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
     doAutoPopupTest("instanceof", null);
   }
 
+  public void testDoNotShowTemplateInMultiCaretMode() {
+    doAutoPopupTest("instanceof", null);
+  }
+
+  public void testDoNotCompleteTemplateInMultiCaretMode() {
+    LiveTemplateCompletionContributor.ourShowTemplatesInTests = true;
+    configureByFile();
+    assertEmpty(myFixture.complete(CompletionType.BASIC));
+    checkResultByFile();
+  }
+
   public void testShowTemplateOnDoubleLiteral() {
     doAutoPopupTest("switch", SwitchStatementPostfixTemplate.class);
   }
@@ -146,7 +166,7 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
   
   public void testTabCompletionWithTemplatesInAutopopup() {
     LiveTemplateCompletionContributor.ourShowTemplatesInTests = true;
-    
+
     configureByFile();
     type(".");
     myFixture.assertPreferredCompletionItems(0, "parents");
@@ -156,6 +176,12 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
     checkResultByFile();
   }
 
+  public void testShouldNotExpandInMultiCaretMode() {
+    configureByFile();
+    type(".if\t");
+    checkResultByFile();
+  }
+  
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/postfix/completion";

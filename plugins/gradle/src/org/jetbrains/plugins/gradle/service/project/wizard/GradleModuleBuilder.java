@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.Disposable;
@@ -51,6 +52,7 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -93,7 +95,12 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     }
 
     modifiableRootModel.addContentEntry(modelContentRootDir);
-    modifiableRootModel.inheritSdk();
+    // todo this should be moved to generic ModuleBuilder
+    if (myJdk != null){
+      modifiableRootModel.setSdk(myJdk);
+    } else {
+      modifiableRootModel.inheritSdk();
+    }
 
     final Project project = modifiableRootModel.getProject();
 
@@ -122,7 +129,17 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   @Nullable
   @Override
   public ModuleWizardStep getCustomOptionsStep(WizardContext context, Disposable parentDisposable) {
-    if (!myWizardContext.isCreatingNewProject()) return null;
+    if (!myWizardContext.isCreatingNewProject()) return new ModuleWizardStep() {
+      @Override
+      public JComponent getComponent() {
+        return new JPanel();
+      }
+
+      @Override
+      public void updateDataModel() {
+
+      }
+    };
     final GradleProjectSettingsControl settingsControl = new GradleProjectSettingsControl(getExternalProjectSettings());
     return new ExternalModuleSettingsStep<GradleProjectSettings>(this, settingsControl);
   }
@@ -134,7 +151,12 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
 
   @Override
   public String getParentGroup() {
-    return JavaModuleType.JAVA_GROUP;
+    return JavaModuleType.BUILD_TOOLS_GROUP;
+  }
+
+  @Override
+  public int getWeight() {
+    return JavaModuleBuilder.BUILD_SYSTEM_WEIGHT;
   }
 
   @Override

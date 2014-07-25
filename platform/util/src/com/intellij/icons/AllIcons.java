@@ -625,7 +625,6 @@ public class AllIcons {
       public static final Icon Top = IconLoader.getIcon("/ide/shadow/top.png"); // 1x20
 
     }
-    public static final Icon SharedScope = IconLoader.getIcon("/ide/sharedScope.png"); // 16x16
     public static final Icon Statusbar_arrows = IconLoader.getIcon("/ide/statusbar_arrows.png"); // 7x10
     public static final Icon UpDown = IconLoader.getIcon("/ide/upDown.png"); // 16x16
     public static final Icon Warning_notifications = IconLoader.getIcon("/ide/warning_notifications.png"); // 16x16
@@ -716,7 +715,7 @@ public class AllIcons {
       public static final Icon JavaeeAppModule = IconLoader.getIcon("/modules/types/JavaeeAppModule.png"); // 24x24
       public static final Icon JavaModule = IconLoader.getIcon("/modules/types/javaModule.png"); // 24x24
       public static final Icon PluginModule = IconLoader.getIcon("/modules/types/pluginModule.png"); // 24x24
-      public static final Icon UserDefined = IconLoader.getIcon("/modules/types/userDefined.png"); // 24x24
+      public static final Icon UserDefined = IconLoader.getIcon("/modules/types/userDefined.png"); // 16x16
       public static final Icon WebModule = IconLoader.getIcon("/modules/types/webModule.png"); // 24x24
 
     }
@@ -844,6 +843,7 @@ public class AllIcons {
     public static final Icon Rw_access = IconLoader.getIcon("/nodes/rw-access.png"); // 13x9
     public static final Icon SecurityRole = IconLoader.getIcon("/nodes/SecurityRole.png"); // 16x16
     public static final Icon Servlet = IconLoader.getIcon("/nodes/servlet.png"); // 16x16
+    public static final Icon Shared = IconLoader.getIcon("/nodes/shared.png"); // 16x16
     public static final Icon SortBySeverity = IconLoader.getIcon("/nodes/sortBySeverity.png"); // 16x16
     public static final Icon SourceFolder = IconLoader.getIcon("/nodes/sourceFolder.png"); // 16x16
     public static final Icon Static = IconLoader.getIcon("/nodes/static.png"); // 16x16
@@ -1130,6 +1130,7 @@ public class AllIcons {
   
   public static class Welcome {
     public static final Icon CreateDesktopEntry = IconLoader.getIcon("/welcome/createDesktopEntry.png"); // 32x32
+    public static final Icon Register = IconLoader.getIcon("/welcome/register.png"); // 32x32
 
   }
   

@@ -19,16 +19,16 @@ import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.asm4.ClassReader;
-import org.jetbrains.asm4.ClassVisitor;
-import org.jetbrains.asm4.ClassWriter;
-import org.jetbrains.asm4.Opcodes;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.ClassWriter;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -140,7 +140,7 @@ public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
 
   public static int getClassFileVersion(ClassReader reader) {
     final Ref<Integer> result = new Ref<Integer>(0);
-    reader.accept(new ClassVisitor(Opcodes.ASM4) {
+    reader.accept(new ClassVisitor(Opcodes.ASM5) {
       public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         result.set(version);
       }

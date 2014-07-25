@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -48,6 +49,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -456,6 +458,8 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
             removeDeletedMethods(OverridingMethodsSearch.search(psiMethod, true).toArray(PsiMethod.EMPTY_ARRAY),
                                  allElementsToDelete);
 
+    findFunctionalExpressions(usages, ArrayUtil.prepend(psiMethod, overridingMethods));
+
     final HashMap<PsiMethod, Collection<PsiReference>> methodToReferences = new HashMap<PsiMethod, Collection<PsiReference>>();
     for (PsiMethod overridingMethod : overridingMethods) {
       final Collection<PsiReference> overridingReferences = ReferencesSearch.search(overridingMethod).findAll();
@@ -476,6 +480,19 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         return isInside(usage, allElementsToDelete) || isInside(usage,  validOverriding);
       }
     };
+  }
+
+  private static void findFunctionalExpressions(final List<UsageInfo> usages, PsiMethod... methods) {
+    for (PsiMethod method : methods) {
+      final PsiClass containingClass = method.getContainingClass();
+      FunctionalExpressionSearch.search(method).forEach(new Processor<PsiFunctionalExpression>() {
+        @Override
+        public boolean process(PsiFunctionalExpression expression) {
+          usages.add(new SafeDeleteFunctionalExpressionUsageInfo(expression, containingClass));
+          return true;
+        }
+      });
+    }
   }
 
   private static PsiMethod[] removeDeletedMethods(PsiMethod[] methods, final PsiElement[] allElementsToDelete) {
@@ -730,6 +747,8 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         return true;
       }
     });
+
+    findFunctionalExpressions(usages, method);
   }
 
 
@@ -759,5 +778,14 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     }
 
     return false;
+  }
+  
+  private static class SafeDeleteFunctionalExpressionUsageInfo extends SafeDeleteReferenceUsageInfo {
+    public SafeDeleteFunctionalExpressionUsageInfo(@NotNull PsiElement element, PsiElement referencedElement) {
+      super(element, referencedElement, false);
+    }
+
+    @Override
+    public void deleteElement() throws IncorrectOperationException {}
   }
 }

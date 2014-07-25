@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -105,8 +103,7 @@ class PrintManager {
       if (printSettings.getPrintScope() == PrintSettings.PRINT_SELECTED_TEXT &&
           editor != null &&
           editor.getSelectionModel().hasSelection()) {
-        int firstLine = editor.getDocument().getLineNumber(editor.getSelectionModel().getSelectionStart());
-        textPainter.setSegment(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd(), firstLine + 1);
+        textPainter.setSegment(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
       }
       painter = textPainter;
     }
@@ -166,6 +163,9 @@ class PrintManager {
           }
           catch (Exception e) {
             LOG.error(e);
+          }
+          finally {
+            painter.dispose();
           }
         }
       });

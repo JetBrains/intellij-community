@@ -590,7 +590,7 @@ public class HighlightControlFlowUtil {
                            JavaErrorMessages.message("assignment.to.final.variable", name);
       final HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(reference.getTextRange()).descriptionAndTooltip(description).create();
-      final PsiClass innerClass = getInnerClassVariableReferencedFrom(variable, expression);
+      final PsiElement innerClass = getInnerClassVariableReferencedFrom(variable, expression);
       if (innerClass == null || variable instanceof PsiField) {
         QuickFixAction.registerQuickFixAction(highlightInfo,
                                               QUICK_FIX_FACTORY.createModifierListFix(variable, PsiModifier.FINAL, false, false));
@@ -607,7 +607,7 @@ public class HighlightControlFlowUtil {
   private static boolean canWriteToFinal(PsiVariable variable, PsiExpression expression, final PsiReferenceExpression reference, @NotNull PsiFile containingFile) {
     if (variable.hasInitializer()) return false;
     if (variable instanceof PsiParameter) return false;
-    PsiClass innerClass = getInnerClassVariableReferencedFrom(variable, expression);
+    PsiElement innerClass = getInnerClassVariableReferencedFrom(variable, expression);
     if (variable instanceof PsiField) {
       // if inside some field initializer
       if (HighlightUtil.findEnclosingFieldInitializer(expression) != null) return true;
@@ -642,8 +642,8 @@ public class HighlightControlFlowUtil {
                                                 @NotNull PsiJavaCodeReferenceElement context,
                                                 @NotNull LanguageLevel languageLevel) {
     if (variable.hasModifierProperty(PsiModifier.FINAL)) return null;
-    final PsiClass innerClass = getInnerClassVariableReferencedFrom(variable, context);
-    if (innerClass != null) {
+    final PsiElement innerClass = getInnerClassVariableReferencedFrom(variable, context);
+    if (innerClass instanceof PsiClass) {
       if (variable instanceof PsiParameter) {
         final PsiElement parent = variable.getParent();
         if (parent instanceof PsiParameterList && parent.getParent() instanceof PsiLambdaExpression &&
@@ -672,8 +672,12 @@ public class HighlightControlFlowUtil {
         return null;
       }
       if (!isEffectivelyFinal(variable, lambdaExpression, context)) {
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(
-          "Variable used in lambda expression should be effectively final").create();
+        final HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .range(context)
+          .descriptionAndTooltip("Variable used in lambda expression should be effectively final")
+          .create();
+        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, lambdaExpression));
+        return highlightInfo;
       }
     }
     return null;
@@ -716,7 +720,7 @@ public class HighlightControlFlowUtil {
   }
 
   @Nullable
-  public static PsiClass getInnerClassVariableReferencedFrom(PsiVariable variable, PsiElement context) {
+  public static PsiElement getInnerClassVariableReferencedFrom(@NotNull PsiVariable variable, @NotNull PsiElement context) {
     final PsiElement[] scope;
     if (variable instanceof PsiResourceVariable) {
       scope = ((PsiResourceVariable)variable).getDeclarationScope();
@@ -741,7 +745,10 @@ public class HighlightControlFlowUtil {
         if (parent.equals(scopeElement)) break outer;
       }
       if (parent instanceof PsiClass && !(prevParent instanceof PsiExpressionList && parent instanceof PsiAnonymousClass)) {
-        return (PsiClass)parent;
+        return parent;
+      }
+      if (parent instanceof PsiLambdaExpression) {
+        return parent;
       }
       prevParent = parent;
       parent = parent.getParent();

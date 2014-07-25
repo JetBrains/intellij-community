@@ -1,15 +1,20 @@
 package com.intellij.openapi.util;
 
+import com.intellij.util.concurrency.AtomicFieldUpdater;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-
 public abstract class AsyncValueLoaderManager<HOST, VALUE> {
-  private final AtomicReferenceFieldUpdater<HOST, AsyncResult<VALUE>> fieldUpdater;
+  private final AtomicFieldUpdater<HOST, AsyncResult<VALUE>> fieldUpdater;
 
-  public AsyncValueLoaderManager(@NotNull AtomicReferenceFieldUpdater<HOST, AsyncResult<VALUE>> fieldUpdater) {
+  @SuppressWarnings("UnusedDeclaration")
+  public AsyncValueLoaderManager(@NotNull AtomicFieldUpdater<HOST, AsyncResult<VALUE>> fieldUpdater) {
     this.fieldUpdater = fieldUpdater;
+  }
+
+  public AsyncValueLoaderManager(@NotNull Class<HOST> ownerClass) {
+    //noinspection unchecked
+    fieldUpdater = ((AtomicFieldUpdater)AtomicFieldUpdater.forFieldOfType(ownerClass, AsyncResult.class));
   }
 
   public boolean isUpToDate(@NotNull HOST host, @NotNull VALUE value) {

@@ -11,12 +11,14 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +33,7 @@ import java.util.List;
  *
  * @author yole
  */
-public class RunContentExecutor {
+public class RunContentExecutor implements Disposable {
   private final Project myProject;
   private final ProcessHandler myProcess;
   private final List<Filter> myFilterList = new ArrayList<Filter>();
@@ -96,6 +98,7 @@ public class RunContentExecutor {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     ConsoleView view = createConsole(myProject, myProcess);
+
     if (myHelpId != null) {
       view.setHelpId(myHelpId);
     }
@@ -104,6 +107,8 @@ public class RunContentExecutor {
 
     final JComponent consolePanel = createConsolePanel(view, actions);
     RunContentDescriptor descriptor = new RunContentDescriptor(view, myProcess, consolePanel, myTitle);
+
+    Disposer.register(this, descriptor);
 
     actions.add(new RerunAction(consolePanel));
     actions.add(new StopAction());
@@ -147,6 +152,11 @@ public class RunContentExecutor {
   private static JComponent createToolbar(ActionGroup actions) {
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, false);
     return actionToolbar.getComponent();
+  }
+
+  @Override
+  public void dispose() {
+    Disposer.dispose(this);
   }
 
   private class RerunAction extends AnAction implements DumbAware {

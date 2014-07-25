@@ -35,8 +35,8 @@ import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.RetinaImage;
 import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.TextStyle;
-import com.jediterm.terminal.display.BackBuffer;
-import com.jediterm.terminal.display.StyleState;
+import com.jediterm.terminal.model.StyleState;
+import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.TerminalPanel;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -94,7 +94,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   private List<AnAction> myActionsToSkip;
 
   public JBTerminalPanel(@NotNull JBTerminalSystemSettingsProvider settingsProvider,
-                         @NotNull BackBuffer backBuffer,
+                         @NotNull TerminalTextBuffer backBuffer,
                          @NotNull StyleState styleState) {
     super(settingsProvider, backBuffer, styleState);
 

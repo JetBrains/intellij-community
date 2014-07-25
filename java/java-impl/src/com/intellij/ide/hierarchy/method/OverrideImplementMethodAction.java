@@ -68,7 +68,10 @@ abstract class OverrideImplementMethodAction extends AnAction {
                 final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(VfsUtil.toVirtualFileArray(files));
                 if (!status.hasReadonlyFiles()) {
                   for (HierarchyNodeDescriptor selectedDescriptor : selectedDescriptors) {
-                    OverrideImplementUtil.overrideOrImplement(((MethodHierarchyNodeDescriptor)selectedDescriptor).getPsiClass(), methodHierarchyBrowser.getBaseMethod());
+                    final PsiElement aClass = ((MethodHierarchyNodeDescriptor)selectedDescriptor).getPsiClass();
+                    if (aClass instanceof PsiClass) {
+                      OverrideImplementUtil.overrideOrImplement((PsiClass)aClass, methodHierarchyBrowser.getBaseMethod());
+                    }
                   }
                   ToolWindowManager.getInstance(project).activateEditorComponent();
                 }
@@ -146,8 +149,10 @@ abstract class OverrideImplementMethodAction extends AnAction {
   protected abstract void update(Presentation presentation, int toImplement, int toOverride);
 
   private static boolean canImplementOverride(final MethodHierarchyNodeDescriptor descriptor, final MethodHierarchyBrowser methodHierarchyBrowser, final boolean toImplement) {
-    final PsiClass psiClass = descriptor.getPsiClass();
-    if (psiClass == null || psiClass instanceof PsiSyntheticClass) return false;
+    final PsiElement psiElement = descriptor.getPsiClass();
+    if (!(psiElement instanceof PsiClass)) return false;
+    final PsiClass psiClass = (PsiClass)psiElement;
+    if (psiClass instanceof PsiSyntheticClass) return false;
     final PsiMethod baseMethod = methodHierarchyBrowser.getBaseMethod();
     if (baseMethod == null) return false;
     final MethodSignature signature = baseMethod.getSignature(PsiSubstitutor.EMPTY);

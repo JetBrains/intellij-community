@@ -23,10 +23,10 @@ import com.intellij.util.io.IntInlineKeyDescriptor;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.asm4.ClassReader;
-import org.jetbrains.asm4.Opcodes;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.storage.FileKeyDescriptor;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.File;
 import java.io.FileNotFoundException;

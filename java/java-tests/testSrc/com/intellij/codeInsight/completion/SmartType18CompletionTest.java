@@ -93,6 +93,10 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest(false);
   }
 
+  public void testNoQualifier() throws Exception {
+    doTest();
+  }
+
   public void testFilterAmbiguity() throws Exception {
     configureByFile("/" + getTestName(false) + ".java");
     assertNotNull(myItems);

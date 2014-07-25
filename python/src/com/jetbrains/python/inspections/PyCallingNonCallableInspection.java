@@ -19,6 +19,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.inspections.quickfix.PyRemoveCallQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
@@ -78,13 +79,13 @@ public class PyCallingNonCallableInspection extends PyInspection {
       if (!callable) {
         final PyType calleeType = callee != null ? myTypeEvalContext.getType(callee) : type;
         if (calleeType instanceof PyClassType) {
-          registerProblem(node, String.format("'%s' object is not callable", calleeType.getName()));
+          registerProblem(node, String.format("'%s' object is not callable", calleeType.getName()), new PyRemoveCallQuickFix());
         }
         else if (callee != null) {
-          registerProblem(node, String.format("'%s' is not callable", callee.getName()));
+          registerProblem(node, String.format("'%s' is not callable", callee.getName()), new PyRemoveCallQuickFix());
         }
         else {
-          registerProblem(node, "Expression is not callable");
+          registerProblem(node, "Expression is not callable", new PyRemoveCallQuickFix());
         }
       }
     }

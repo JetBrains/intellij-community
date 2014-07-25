@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -32,6 +33,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements PsiLambdaExpression {
 
@@ -217,5 +220,11 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
       return ((PsiEllipsisType)paramType).toArrayType();
     }
     return paramType;
+  }
+
+  @Nullable
+  @Override
+  public Icon getIcon(int flags) {
+    return AllIcons.Nodes.AnonymousClass;
   }
 }

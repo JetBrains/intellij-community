@@ -42,7 +42,8 @@ class InclusionProvider implements CachedValueProvider<PsiElement[]> {
 
   @NotNull
   public static PsiElement[] getIncludedTags(XmlTag xincludeTag) {
-    return CachedValuesManager.getManager(xincludeTag.getProject()).getCachedValue(xincludeTag, new InclusionProvider(xincludeTag));
+    if (XmlUtil.isStubBuilding()) return PsiElement.EMPTY_ARRAY;
+    return CachedValuesManager.getCachedValue(xincludeTag, new InclusionProvider(xincludeTag));
   }
 
   public Result<PsiElement[]> compute() {

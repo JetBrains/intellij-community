@@ -19,6 +19,7 @@ import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -72,8 +73,8 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
     }
   }
 
-  private static LookupElement createParametersLookupElement(PsiMethod takeParametersFrom, PsiElement call, PsiMethod invoked) {
-    PsiParameter[] parameters = takeParametersFrom.getParameterList().getParameters();
+  private static LookupElement createParametersLookupElement(final PsiMethod takeParametersFrom, PsiElement call, PsiMethod invoked) {
+    final PsiParameter[] parameters = takeParametersFrom.getParameterList().getParameters();
     final String lookupString = StringUtil.join(parameters, new Function<PsiParameter, String>() {
       @Override
       public String fun(PsiParameter psiParameter) {
@@ -86,7 +87,18 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
     icon.setIcon(PlatformIcons.PARAMETER_ICON, 0, 2*w/5, 0);
     icon.setIcon(PlatformIcons.PARAMETER_ICON, 1);
 
-    final LookupElement element = LookupElementBuilder.create(lookupString).withIcon(icon);
+    LookupElementBuilder element = LookupElementBuilder.create(lookupString).withIcon(icon);
+    if (PsiTreeUtil.isAncestor(takeParametersFrom, call, true)) {
+      element = element.withInsertHandler(new InsertHandler<LookupElement>() {
+        @Override
+        public void handleInsert(InsertionContext context, LookupElement item) {
+          context.commitDocument();
+          for (PsiParameter parameter : CompletionUtil.getOriginalOrSelf(takeParametersFrom).getParameterList().getParameters()) {
+            VariableLookupItem.makeFinalIfNeeded(context, parameter);
+          }
+        }
+      });
+    }
     element.putUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS, Boolean.TRUE);
 
     return TailTypeDecorator.withTail(element, ExpectedTypesProvider.getFinalCallParameterTailType(call, invoked.getReturnType(), invoked));

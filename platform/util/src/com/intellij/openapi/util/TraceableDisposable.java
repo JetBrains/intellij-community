@@ -60,7 +60,6 @@ public class TraceableDisposable {
     @SuppressWarnings("HardCodedStringLiteral")
     @Override
     public void printStackTrace(PrintWriter s) {
-      super.printStackTrace(s);
       if (CREATE_TRACE != null) {
         s.println("--------------Creation trace: ");
         CREATE_TRACE.printStackTrace(s);
@@ -69,6 +68,8 @@ public class TraceableDisposable {
         s.println("--------------Kill trace: ");
         KILL_TRACE.printStackTrace(s);
       }
+      s.println("-------------Own trace:");
+      super.printStackTrace(s);
     }
   }
 }

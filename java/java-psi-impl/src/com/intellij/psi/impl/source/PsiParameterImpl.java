@@ -99,7 +99,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
         if (parameterIndex < parameters.length) {
           final PsiType psiType = LambdaUtil.getSubstitutor(method, resolveResult).substitute(parameters[parameterIndex].getType());
           if (!LambdaUtil.dependsOnTypeParams(psiType, conjunct, lambdaExpression)) {
-            return GenericsUtil.eliminateWildcards(psiType);
+            return GenericsUtil.eliminateWildcards(psiType, false);
           }
         }
       }

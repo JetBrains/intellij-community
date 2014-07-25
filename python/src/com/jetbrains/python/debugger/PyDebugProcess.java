@@ -45,7 +45,6 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.pydev.*;
-import com.jetbrains.python.remote.RemoteDebuggableProcessHandler;
 import com.jetbrains.python.run.PythonProcessHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,8 +113,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if (myProcessHandler != null) {
       myProcessHandler.addProcessListener(this);
     }
-    if (processHandler instanceof RemoteDebuggableProcessHandler) {
-      myPositionConverter = ((RemoteDebuggableProcessHandler)processHandler).createPositionConverter(this);
+    if (processHandler instanceof PositionConverterProvider) {
+      myPositionConverter = ((PositionConverterProvider)processHandler).createPositionConverter(this);
     }
     else {
       myPositionConverter = new PyLocalPositionConverter();
@@ -263,18 +262,21 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Override
   public int handleDebugPort(int localPort) throws IOException {
     if (myProcessHandler instanceof RemoteProcessHandlerBase) {
-      RemoteProcessHandlerBase remoteProcessHandler = (RemoteProcessHandlerBase)myProcessHandler;
-      try {
-        Pair<String, Integer> remoteSocket = remoteProcessHandler.obtainRemoteSocket();
-        remoteProcessHandler.addRemoteForwarding(remoteSocket.getSecond(), localPort);
-        return remoteSocket.getSecond();
-      }
-      catch (Exception e) {
-        throw new IOException(e);
-      }
+      return getRemoteTunneledPort(localPort, (RemoteProcessHandlerBase)myProcessHandler);
     }
     else {
       return localPort;
+    }
+  }
+
+  protected static int getRemoteTunneledPort(int localPort, @NotNull RemoteProcessHandlerBase handler) throws IOException {
+    try {
+      Pair<String, Integer> remoteSocket = handler.obtainRemoteSocket();
+      handler.addRemoteForwarding(remoteSocket.getSecond(), localPort);
+      return remoteSocket.getSecond();
+    }
+    catch (Exception e) {
+      throw new IOException(e);
     }
   }
 

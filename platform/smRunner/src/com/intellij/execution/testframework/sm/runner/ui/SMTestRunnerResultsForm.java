@@ -102,7 +102,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                                  final ExecutionEnvironment environment,
                                  final String splitterPropertyName) {
     super(console, consoleActions, consoleProperties, environment,
-          splitterPropertyName != null ? DEFAULT_SM_RUNNER_SPLITTER_PROPERTY : splitterPropertyName, 0.5f);
+          splitterPropertyName != null ? splitterPropertyName : DEFAULT_SM_RUNNER_SPLITTER_PROPERTY, 0.5f);
     myConsoleProperties = consoleProperties;
 
     myProject = runConfiguration.getProject();

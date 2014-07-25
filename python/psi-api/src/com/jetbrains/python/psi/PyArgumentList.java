@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.lang.ASTNode;
+import com.jetbrains.python.FunctionParameter;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,4 +79,13 @@ public interface PyArgumentList extends PyElement {
 
   @Nullable
   ASTNode getClosingParen();
+
+  /**
+   * Searches parameter value and returns it if exists.
+   *
+   * @param parameter param to search
+   * @return function parameter value expression or null if does not exist
+   */
+  @Nullable
+  PyExpression getValueExpressionForParam(@NotNull FunctionParameter parameter);
 }

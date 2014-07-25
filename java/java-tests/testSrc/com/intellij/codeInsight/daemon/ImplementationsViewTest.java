@@ -2,12 +2,14 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
+import com.intellij.codeInsight.navigation.ClassImplementationsSearch;
+import com.intellij.codeInsight.navigation.MethodImplementationsSearch;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.util.CommonProcessors;
 import org.junit.Assert;
 
 import java.util.*;
@@ -80,6 +82,20 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
                  "    }", newText);
   }
 
+  private static Collection<PsiElement> getClassImplementations(final PsiClass psiClass) {
+    CommonProcessors.CollectProcessor<PsiElement> processor = new CommonProcessors.CollectProcessor<PsiElement>();
+    ClassImplementationsSearch.processImplementations(psiClass, processor, psiClass.getUseScope());
+
+    return processor.getResults();
+  }
+
+  private static Collection<PsiElement> getMethodImplementations(final PsiMethod psiMethod) {
+    CommonProcessors.CollectProcessor<PsiElement> processor = new CommonProcessors.CollectProcessor<PsiElement>();
+    MethodImplementationsSearch.processImplementations( psiMethod, processor, psiMethod.getUseScope());
+
+    return processor.getResults();
+  }
+
   public void testInnerClasses() {
     myFixture.configureByText("a.java", "abstract class AF<caret>oo{\n" +
                                         "    abstract boolean aaa();\n" +
@@ -107,20 +123,87 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
       (PsiClass)TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.getInstance().getAllAccepted());
 
     assert psiClass != null;
-    final Collection<PsiClass> classes = ClassInheritorsSearch.search(psiClass).findAll();
-    List<PsiClass> all = new ArrayList<PsiClass>();
+    final Collection<PsiElement> classes = getClassImplementations(psiClass);
+    List<PsiElement> all = new ArrayList<PsiElement>();
     all.add(psiClass);
     all.addAll(classes);
     final ImplementationViewComponent component =
       new ImplementationViewComponent(all.toArray(new PsiElement[all.size()]), 0);
     try {
       final String[] visibleFiles = component.getVisibleFiles();
+      assertTrue(visibleFiles.length > 0);
+      assertEquals(visibleFiles[0], "a.java (AFoo)");
+      Arrays.sort(visibleFiles);
       Assert.assertArrayEquals(Arrays.toString(visibleFiles),
                                new String[]{"a.java (AFoo)", "a.java (AFoo1 in AFoo)", "a.java (AFoo2 in AFoo)", "a.java (AFoo3 in AFoo)"}, visibleFiles);
     }
     finally {
       component.removeNotify();
     }
+  }
+
+  public void testFunctionalInterface() {
+    myFixture.configureByText("a.java", "interface AF<caret>oo{\n" +
+                                        "    boolean aaa();\n" +
+                                        "}\n" +
+                                        "class AFooImpl {\n" +
+                                        "        {\n" +
+                                        "             AFoo a = () -> {return false;};\n" +            
+                                        "        }\n" +
+                                        "}");
+    PsiClass psiClass =
+      (PsiClass)TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.getInstance().getAllAccepted());
+
+    assert psiClass != null;
+    final Collection<PsiElement> classes = getClassImplementations(psiClass);
+    List<PsiElement> all = new ArrayList<PsiElement>();
+    all.add(psiClass);
+    all.addAll(classes);
+    final ImplementationViewComponent component = new ImplementationViewComponent(all.toArray(new PsiElement[all.size()]), 0);
+    assertContent(component, new String[]{"a.java (AFoo)", "a.java"});
+  }
+
+  public void testInterfaceMethodOfFunctionalInterface() {
+    myFixture.configureByText("a.java", "interface AFoo{\n" +
+                                        "    boolean a<caret>aa();\n" +
+                                        "}\n" +
+                                        "class AFooImpl {\n" +
+                                        "        {\n" +
+                                        "             AFoo a = () -> {return false;};\n" +            
+                                        "        }\n" +
+                                        "}");
+    PsiMethod psiMethod =
+      (PsiMethod)TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.getInstance().getAllAccepted());
+
+    assert psiMethod != null;
+    final Collection<PsiElement> methods = getMethodImplementations(psiMethod);
+    List<PsiElement> all = new ArrayList<PsiElement>();
+    all.add(psiMethod);
+    all.addAll(methods);
+    final ImplementationViewComponent component = new ImplementationViewComponent(all.toArray(new PsiElement[all.size()]), 0);
+    assertContent(component, new String[]{"a.java (AFoo)", "a.java"});
+  }
+
+  public void testDefaultMethodOfFunctionalInterface() {
+    myFixture.configureByText("a.java", "interface AFoo{\n" +
+                                        "    default boolean a<caret>aa(){}\n" +
+                                        "    boolean bbb();" +
+                                        "}\n" +
+                                        "class AFooImpl {\n" +
+                                        "        {\n" +
+                                        "             AFoo a = () -> {return false;};\n" +            
+                                        "        }\n" +
+                                        "}");
+    PsiMethod psiMethod =
+      (PsiMethod)TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.getInstance().getAllAccepted());
+
+    assert psiMethod != null;
+    final Collection<PsiElement> methods = getMethodImplementations(psiMethod);
+    List<PsiElement> all = new ArrayList<PsiElement>();
+    all.add(psiMethod);
+    all.addAll(methods);
+    final ImplementationViewComponent component = new ImplementationViewComponent(all.toArray(new PsiElement[all.size()]), 0);
+    assertContent(component, new String[]{"a.java (AFoo)"});
   }
 
   public void testMethodsInInnerClasses() {
@@ -165,10 +248,13 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
     });
     final ImplementationViewComponent component =
       new ImplementationViewComponent(all.toArray(new PsiElement[all.size()]), 0);
+    assertContent(component, new String[]{"a.java (AFoo)", "a.java (AFoo1 in AFoo)", "a.java (AFoo2 in AFoo)", "a.java (AFoo3 in AFoo)"});
+  }
+
+  public static void assertContent(ImplementationViewComponent component, String[] expects) {
     try {
       final String[] visibleFiles = component.getVisibleFiles();
-      Assert.assertArrayEquals(Arrays.toString(visibleFiles),
-                               new String[]{"a.java (AFoo)", "a.java (AFoo1 in AFoo)", "a.java (AFoo2 in AFoo)", "a.java (AFoo3 in AFoo)"}, visibleFiles);
+      Assert.assertArrayEquals(Arrays.toString(visibleFiles), expects, visibleFiles);
     }
     finally {
       component.removeNotify();

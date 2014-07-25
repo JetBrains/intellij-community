@@ -15,6 +15,7 @@
  */
 package com.intellij.remote;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,14 +54,14 @@ public class WebDeploymentCredentialsHolder {
     return myWebServerConfigName;
   }
 
-  public void setWebServerConfigName(String name) {
+  public void setWebServerConfigName(@NotNull String name) {
     myWebServerConfigName = name;
   }
 
   public void load(Element element) {
     myRemoteCredentials.load(element);
     setWebServerConfigId(element.getAttributeValue(WEB_SERVER_CONFIG_ID));
-    setWebServerConfigName(element.getAttributeValue(WEB_SERVER_CONFIG_NAME));
+    setWebServerConfigName(StringUtil.notNullize(element.getAttributeValue(WEB_SERVER_CONFIG_NAME)));
   }
 
   public void save(Element element) {

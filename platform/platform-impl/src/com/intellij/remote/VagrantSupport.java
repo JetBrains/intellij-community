@@ -15,31 +15,36 @@
  */
 package com.intellij.remote;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Collection;
 
 /**
  * @author traff
  */
 public abstract class VagrantSupport {
+  @Nullable
   public static VagrantSupport getInstance() {
     return ServiceManager.getService(VagrantSupport.class);
   }
-  
-  @Nullable
-  public abstract Pair<String, String> getVagrantInstanceParameters(@NotNull Project project);
 
   @Nullable
   public abstract Pair<String, RemoteCredentials> getVagrantSettings(Project project);
 
-  public abstract RemoteCredentials getCredentials(@NotNull String folder);
+  @NotNull
+  public abstract RemoteCredentials getVagrantSettings(@NotNull Project project, String vagrantFolder);
+
+  @NotNull
+  public abstract RemoteCredentials getCredentials(@NotNull String folder) throws IOException;
 
   public static void showMissingVagrantSupportMessage(final @Nullable Project project) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -51,7 +56,11 @@ public abstract class VagrantSupport {
     });
   }
 
-  public abstract void checkVagrantAndRunIfDown(String folder);
+  public abstract boolean checkVagrantRunning(String folder, boolean runIfDown);
+
+  public abstract void runVagrant(String folder) throws ExecutionException;
 
   public abstract Collection<? extends RemoteConnector> getVagrantInstancesConnectors(@NotNull Project project);
+
+  public abstract boolean isVagrantInstance(VirtualFile dir);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import org.jetbrains.annotations.NotNull;
@@ -34,13 +35,19 @@ import java.util.List;
  * @author peter
  */
 public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T> {
+  private static final boolean ourUsePsiByDefault = SystemProperties.getBooleanProperty("dom.anchor.use.psi", true);
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomAnchorImpl");
 
   public static <T extends DomElement> DomAnchor<T> createAnchor(@NotNull T t) {
-    return createAnchor(t, false);
+    return createAnchor(t, ourUsePsiByDefault);
   }
 
   public static <T extends DomElement> DomAnchor<T> createAnchor(@NotNull T t, boolean usePsi) {
+    DomInvocationHandler handler = DomManagerImpl.getNotNullHandler(t);
+    if (handler.getStub() != null) {
+      return new StubAnchor<T>(handler);
+    }
+
     if (usePsi) {
       final XmlElement element = t.getXmlElement();
       if (element != null) {
@@ -48,10 +55,6 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       }
     }
 
-    DomInvocationHandler handler = DomManagerImpl.getNotNullHandler(t);
-    if (handler.getStub() != null) {
-      return new StubAnchor<T>(handler);
-    }
 
     final DomElement parent = t.getParent();
     if (parent == null) {
@@ -98,7 +101,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       if (value.toString().equals(t.toString())) {
         final XmlElement tElement = t.getXmlElement();
         final XmlElement valElement = value.getXmlElement();
-        diag.append(" hasSame, i=" + i + 
+        diag.append(" hasSame, i=" + i +
                     "; same=" + (value == t) +
                     ", equal=" + value.equals(t) +
                     ", equal2=" + t.equals(value) +
@@ -107,13 +110,13 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
                     ", sameElements=" + (tElement == value.getXmlElement()) +
                     "\n");
         if (tElement != null && valElement != null) {
-          diag.append("  sameFile=" + (tElement.getContainingFile() == valElement.getContainingFile()) + 
+          diag.append("  sameFile=" + (tElement.getContainingFile() == valElement.getContainingFile()) +
                       ", sameParent=" + (tElement.getParent() == valElement.getParent()) +
                       "\n");
         }
       }
     }
-    
+
     if (parentTag != null) {
       diag.append("Parent tag: ").append(parentTag.getName()).append("\n");
       if (t instanceof GenericAttributeValue) {

@@ -216,7 +216,7 @@ public class IncProjectBuilder {
         }
         else {
           final String causeMessage = cause != null ? cause.getMessage() : "";
-          msg = new CompilerMessage("", BuildMessage.Kind.ERROR, StringUtil.isEmptyOrSpaces(causeMessage) || errMessage.equals(causeMessage)
+          msg = new CompilerMessage("", BuildMessage.Kind.ERROR, StringUtil.isEmptyOrSpaces(causeMessage) || errMessage.trim().endsWith(causeMessage)
                                                                  ? errMessage
                                                                  : errMessage + ": " + causeMessage);
         }
@@ -513,15 +513,20 @@ public class IncProjectBuilder {
       context.checkCanceled();
       boolean okToDelete = true;
       final File outputRoot = entry.getKey();
-      if (JpsPathUtil.isUnder(allSourceRoots, outputRoot)) {
-        okToDelete = false;
-      }
-      else {
-        final Set<File> _outRoot = Collections.singleton(outputRoot);
-        for (File srcRoot : allSourceRoots) {
-          if (JpsPathUtil.isUnder(_outRoot, srcRoot)) {
-            okToDelete = false;
-            break;
+      if (!moduleIndex.isExcluded(outputRoot)) {
+        // if output root itself is directly or indirectly excluded, 
+        // there cannot be any manageable sources under it, even if the output root is located under some source root
+        // so in this case it is safe to delete such root
+        if (JpsPathUtil.isUnder(allSourceRoots, outputRoot)) {
+          okToDelete = false;
+        }
+        else {
+          final Set<File> _outRoot = Collections.singleton(outputRoot);
+          for (File srcRoot : allSourceRoots) {
+            if (JpsPathUtil.isUnder(_outRoot, srcRoot)) {
+              okToDelete = false;
+              break;
+            }
           }
         }
       }
@@ -873,8 +878,14 @@ public class IncProjectBuilder {
     catch (ProjectBuildException e) {
       throw e;
     }
-    catch (Exception e) {
-      throw new ProjectBuildException(e);
+    catch (Throwable e) {
+      final StringBuilder message = new StringBuilder();
+      message.append(chunk.getPresentableName()).append(": ").append(e.getClass().getName());
+      final String exceptionMessage = e.getMessage();
+      if (exceptionMessage != null) {
+        message.append(": ").append(exceptionMessage);
+      }
+      throw new ProjectBuildException(message.toString(), e);
     }
     finally {
       for (BuildRootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().clearTempRoots(context)) {

@@ -38,11 +38,15 @@ public interface ExtensionsArea  {
 
   @NotNull
   ExtensionPoint[] getExtensionPoints();
+  @Deprecated
   void suspendInteractions();
+  @Deprecated
   void resumeInteractions();
 
+  @Deprecated
   void killPendingInteractions();
 
+  @Deprecated
   void addAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener);
 
   @NotNull
@@ -53,8 +57,10 @@ public interface ExtensionsArea  {
 
   void registerExtension(@NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionElement);
 
+  @Deprecated
   void unregisterExtensionPoint(@NotNull String pluginName, @NotNull Element extensionPointElement);
 
+  @Deprecated
   void unregisterExtension(@NotNull String pluginName, @NotNull Element extensionElement);
 
   @NotNull

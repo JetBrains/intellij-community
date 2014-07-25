@@ -50,6 +50,11 @@ public class GitHttpAuthTestService extends GitHttpAuthService {
     public void forgetPassword() {
       throw new IllegalStateException("Authenticator was not registered");
     }
+
+    @Override
+    public boolean wasCancelled() {
+      return false;
+    }
   };
 
   @NotNull private GitHttpAuthenticator myAuthenticator = STUB_AUTHENTICATOR;

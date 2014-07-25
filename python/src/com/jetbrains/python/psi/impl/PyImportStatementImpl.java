@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayFactory;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
@@ -25,6 +26,9 @@ import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyImportStatement;
 import com.jetbrains.python.psi.stubs.PyImportStatementStub;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -65,5 +69,28 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
   public void deleteChildInternal(@NotNull ASTNode child) {
     PyPsiUtils.deleteAdjacentComma(this, child, getImportElements());
     super.deleteChildInternal(child);
+  }
+
+  @NotNull
+  @Override
+  public List<String> getFullyQualifiedObjectNames() {
+    return getImportElementNames(getImportElements());
+  }
+
+  /**
+   * Returns list of qualified names of import elements filtering out nulls
+   * @param elements import elements
+   * @return list of qualified names
+   */
+  @NotNull
+  public static List<String> getImportElementNames(@NotNull final PyImportElement... elements) {
+    final List<String> result = new ArrayList<String>(elements.length);
+    for (final PyImportElement element : elements) {
+      final QualifiedName qName = element.getImportedQName();
+      if (qName != null) {
+        result.add(qName.toString());
+      }
+    }
+    return result;
   }
 }

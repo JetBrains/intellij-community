@@ -20,8 +20,8 @@ import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.asm4.Type;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.org.objectweb.asm.Type;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -414,6 +414,11 @@ class UsageRepr {
       catch (IOException e) {
         throw new BuildDataCorruptedException(e);
       }
+    }
+
+    @Override
+    public void toStream(final DependencyContext context, final PrintStream stream) {
+      stream.println("ClassAsGenericBoundUsage: " + context.getValue(myClassName));
     }
   }
 

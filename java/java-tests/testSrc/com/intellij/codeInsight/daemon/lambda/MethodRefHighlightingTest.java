@@ -99,6 +99,10 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testQualifiersInStaticContext() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

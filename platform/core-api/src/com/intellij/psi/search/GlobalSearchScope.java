@@ -30,10 +30,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public abstract class GlobalSearchScope extends SearchScope implements ProjectAwareFileFilter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.GlobalSearchScope");
@@ -567,8 +564,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   public static final GlobalSearchScope EMPTY_SCOPE = new EmptyScope();
 
-  private static class FileScope extends GlobalSearchScope {
-    private final VirtualFile myVirtualFile;
+  private static class FileScope extends GlobalSearchScope implements Iterable<VirtualFile> {
+    private final VirtualFile myVirtualFile; // files can be out of project roots
     private final Module myModule;
 
     private FileScope(@NotNull Project project, final VirtualFile virtualFile) {
@@ -597,10 +594,15 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public boolean isSearchInLibraries() {
       return myModule == null;
     }
+
+    @Override
+    public Iterator<VirtualFile> iterator() {
+      return Collections.singletonList(myVirtualFile).iterator();
+    }
   }
 
-  public static class FilesScope extends GlobalSearchScope {
-    private final Collection<VirtualFile> myFiles;
+  public static class FilesScope extends GlobalSearchScope implements Iterable<VirtualFile> {
+    private final Collection<VirtualFile> myFiles; // files can be out of project roots
 
     public FilesScope(final Project project, final Collection<VirtualFile> files) {
       super(project);
@@ -636,6 +638,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @Override
     public int hashCode() {
       return myFiles.hashCode();
+    }
+
+    @Override
+    public Iterator<VirtualFile> iterator() {
+      return myFiles.iterator();
     }
   }
 }

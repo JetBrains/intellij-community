@@ -34,6 +34,7 @@ public abstract class LicensingFacade {
   public abstract String getLicensedToMessage();
   public abstract List<String> getLicenseRestrictionsMessages();
   public abstract boolean isEvaluationLicense();
+  public abstract boolean isSubscriptionLicense();
 
   @Nullable
   public abstract Boolean isPaidUpgrade(int majorVersion, Date releaseDate);

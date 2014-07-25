@@ -1,0 +1,1 @@
+any(row <caret>for row in [123] if row == "beetle")

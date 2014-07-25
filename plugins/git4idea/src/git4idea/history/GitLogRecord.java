@@ -15,6 +15,7 @@
  */
 package git4idea.history;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -37,6 +38,8 @@ import static git4idea.history.GitLogParser.GitLogOption.*;
  * @see git4idea.history.GitLogParser
  */
 class GitLogRecord {
+
+  private static final Logger LOG = Logger.getInstance(GitLogRecord.class);
 
   private final Map<GitLogParser.GitLogOption, String> myOptions;
   private final List<String> myPaths;
@@ -90,16 +93,29 @@ class GitLogRecord {
 
   // access methods with some formatting or conversion
 
+  @NotNull
   Date getDate() {
-    return GitUtil.parseTimestampWithNFEReport(myOptions.get(COMMIT_TIME), myHandler, myOptions.toString());
+    return new Date(getCommitTime());
   }
 
   long getCommitTime() {
-    return Long.parseLong(myOptions.get(COMMIT_TIME).trim()) * 1000;
+    try {
+      return Long.parseLong(myOptions.get(COMMIT_TIME).trim()) * 1000;
+    }
+    catch (NumberFormatException e) {
+      LOG.error("Couldn't get commit time from " + toString() + ", while executing " + myHandler, e);
+      return 0;
+    }
   }
 
   long getAuthorTimeStamp() {
-    return Long.parseLong(myOptions.get(AUTHOR_TIME).trim()) * 1000;
+    try {
+      return Long.parseLong(myOptions.get(AUTHOR_TIME).trim()) * 1000;
+    }
+    catch (NumberFormatException e) {
+      LOG.error("Couldn't get author time from " + toString() + ", while executing " + myHandler, e);
+      return 0;
+    }
   }
 
   String getAuthorAndCommitter() {
