@@ -927,4 +927,5 @@ binding.setVariable("analysisImplModules", [
     "java-indexing-impl",
     "java-psi-impl",
     "projectModel-impl",
+    "structure-view-impl",
 ])
