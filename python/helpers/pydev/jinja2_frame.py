@@ -13,7 +13,7 @@ class Jinja2TemplateFrame:
             self.back_context = frame.f_locals['context']
         self.f_code = FCode('Jinja2 Template', file_name)
         self.f_lineno = get_jinja2_template_line(frame)
-        self.f_back = frame
+        self.f_back = find_render_function_frame(frame)
         self.f_globals = {}
         self.f_locals = self.collect_context(frame)
         self.f_trace = None
@@ -33,6 +33,19 @@ class Jinja2TemplateFrame:
                 res[key] = v
         return res
 
+
+def find_render_function_frame(frame):
+    #in order to hide internal rendering functions
+    old_frame = frame
+    try:
+        while not (DictContains(frame.f_locals, 'self') and frame.f_locals['self'].__class__.__name__ == 'Template' and \
+                frame.f_code.co_name == 'render'):
+            frame = frame.f_back
+            if frame is None:
+                return old_frame
+        return frame
+    except:
+        return old_frame
 
 def get_jinja2_template_line(frame):
     if DictContains(frame.f_globals,'__jinja_template__'):

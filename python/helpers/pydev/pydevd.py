@@ -34,7 +34,9 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_REMOVE_EXCEPTION_BREAK, \
                          CMD_LOAD_SOURCE, \
                          CMD_ADD_DJANGO_EXCEPTION_BREAK, \
-                         CMD_REMOVE_DJANGO_EXCEPTION_BREAK, \
+                         CMD_REMOVE_DJANGO_EXCEPTION_BREAK,\
+                         CMD_ADD_JINJA2_EXCEPTION_BREAK, \
+                         CMD_REMOVE_JINJA2_EXCEPTION_BREAK, \
                          CMD_SMART_STEP_INTO,\
     InternalChangeVariable, \
                          InternalGetCompletions, \
@@ -311,6 +313,7 @@ class PyDB:
         self.exception_set = {}
         self.always_exception_set = set()
         self.django_exception_break = {}
+        self.jinja2_exception_break = {}
         self.readyToRun = False
         self._main_lock = threading.Lock()
         self._lock_running_thread_ids = threading.Lock()
@@ -849,6 +852,20 @@ class PyDB:
 
                     try:
                         del self.django_exception_break[exception]
+                    except :
+                        pass
+
+                elif cmd_id == CMD_ADD_JINJA2_EXCEPTION_BREAK:
+                    exception = text
+
+                    self.jinja2_exception_break[exception] = True
+                    self.setTracingForUntracedContexts()
+
+                elif cmd_id == CMD_REMOVE_JINJA2_EXCEPTION_BREAK:
+                    exception = text
+
+                    try:
+                        del self.jinja2_exception_break[exception]
                     except :
                         pass
 

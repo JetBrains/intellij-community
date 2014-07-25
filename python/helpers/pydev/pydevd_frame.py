@@ -75,6 +75,10 @@ class PyDBFrame:
                                   thread.additionalInfo.message = 'VariableDoesNotExist'
                                   suspend_frame.f_back = frame
                                   frame = suspend_frame
+
+                      #if mainDebugger.jinja2_exception_break and is_jinja2_render_call(frame):
+                          #suspend_frame = suspend_jinja2(self, mainDebugger, thread, render_frame, CMD_ADD_JINJA2_EXCEPTION_BREAK)
+                          #print "i have jinja2 exception breakpoints:)"
                   except :
                       flag = False
 
