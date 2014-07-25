@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.application.options.codeStyle.RightMarginForm;
 import com.intellij.ide.highlighter.XmlHighlighterFactory;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -30,6 +31,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.Centerizer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -64,6 +66,8 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   private JCheckBox myShouldKeepLineBreaksInText;
   private TextFieldWithBrowseButton myDontBreakIfInlineContent;
   private JBScrollPane myJBScrollPane;
+  private JPanel myRightMarginPanel;
+  private RightMarginForm myRightMarginForm;
 
   public CodeStyleHtmlPanel(CodeStyleSettings settings) {
     super(settings);
@@ -95,6 +99,8 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   }
 
   private void createUIComponents() {
+    myRightMarginForm = new RightMarginForm(StdFileTypes.HTML.getLanguage(), getSettings());
+    myRightMarginPanel = myRightMarginForm.getTopPanel();
     myJBScrollPane = new JBScrollPane() {
       @Override
       public Dimension getPreferredSize() {
@@ -158,6 +164,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     settings.HTML_KEEP_WHITESPACES_INSIDE = myKeepWhiteSpacesTagNames.getText();
     settings.HTML_KEEP_LINE_BREAKS = myShouldKeepBlankLines.isSelected();
     settings.HTML_KEEP_LINE_BREAKS_IN_TEXT = myShouldKeepLineBreaksInText.isSelected();
+    myRightMarginForm.apply(settings);
   }
 
   private static int getIntValue(JTextField keepBlankLines) {
@@ -190,6 +197,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     myInlineElementsTagNames.setText(settings.HTML_INLINE_ELEMENTS);
     myDontBreakIfInlineContent.setText(settings.HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT);
     myKeepWhiteSpacesTagNames.setText(settings.HTML_KEEP_WHITESPACES_INSIDE);
+    myRightMarginForm.reset(settings);
   }
 
   @Override
@@ -260,7 +268,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       return true;
     }
 
-    return false;
+    return myRightMarginForm.isModified(settings);
   }
 
   @Override
