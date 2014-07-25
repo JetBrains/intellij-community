@@ -27,6 +27,7 @@ RequestExecutionLevel user
 !include "InstallOptions.nsh"
 !include StrFunc.nsh
 !include LogicLib.nsh
+
 ${UnStrStr}
 ${UnStrLoc}
 ${UnStrRep}
@@ -517,12 +518,14 @@ FunctionEnd
 
 
 Function uninstallOldVersionDialog
-  StrCpy $control_fields 3
-  StrCpy $max_fields 10
+  StrCpy $control_fields 2
+  StrCpy $max_fields 11
   StrCpy $0 "HKLM"
   StrCpy $4 0
   ReserveFile "UninstallOldVersions.ini"
   !insertmacro INSTALLOPTIONS_EXTRACT "UninstallOldVersions.ini"
+  !insertmacro MUI_HEADER_TEXT "$(uninstall_previous_installations_title)" "$(uninstall_previous_installations)"
+  !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 1" "Text" "$(uninstall_previous_installations_prompt)"
   StrCpy $8 $control_fields
 
 get_installation_info:
@@ -787,21 +790,15 @@ skip_desktop_shortcut:
 skip_quicklaunch_shortcut:
 
   !insertmacro INSTALLOPTIONS_READ $R1 "Desktop.ini" "Settings" "NumFields"
-  MessageBox MB_OK "Installation process. NumFields R1= $R1"
   IntCmp $R1 ${INSTALL_OPTION_ELEMENTS} do_association done do_association
 do_association:
-  MessageBox MB_OK "do_association"
   StrCpy $R2 ${INSTALL_OPTION_ELEMENTS}  
 get_user_choice:
-  MessageBox MB_OK "get_user_choice"
   !insertmacro INSTALLOPTIONS_READ $R3 "Desktop.ini" "Field $R2" "State"
-  MessageBox MB_OK "field=$R2, value=$R3"
   StrCmp $R3 1 "" next_association
   !insertmacro INSTALLOPTIONS_READ $R4 "Desktop.ini" "Field $R2" "Text"
-  MessageBox MB_OK "field=$R2, text R4 = $R4"
   call DoAssociation
 next_association:  
-  MessageBox MB_OK "next_association"
   IntOp $R2 $R2 + 1
   IntCmp $R1 $R2 get_user_choice done get_user_choice
 
@@ -913,7 +910,6 @@ Function ConfirmDesktopShortcut
   call winVersion
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" "$(create_quick_launch_shortcut)"
   ${If} $0 == "1"
-    ;MessageBox MB_OK "NumFields R0= $R0"
     !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Flags" "DISABLED"
   ${EndIf}
   StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
@@ -925,7 +921,6 @@ loop:
   StrCmp $0 "" done
   IntOp $R0 $R0 + 1
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Text" "$0"
-;  MessageBox MB_OK "Item= $0, R0= $R0"
   goto loop
 skip_association:
   StrCpy $R0 2
@@ -1061,8 +1056,10 @@ FunctionEnd
 Function un.ConfirmDeleteSettings
   !insertmacro MUI_HEADER_TEXT "$(uninstall_options)" "$(uninstall_options_prompt)"
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 1" "Text" "$(prompt_delete_settings)"
-  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 2" "Text" "$(confirm_delete_caches)"
-  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 3" "Text" "$(confirm_delete_settings)"
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 2" "Text" $INSTDIR
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 3" "Text" "$(text_delete_settings)"
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 4" "Text" "$(confirm_delete_caches)"
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 5" "Text" "$(confirm_delete_settings)"
   !insertmacro INSTALLOPTIONS_DISPLAY "DeleteSettings.ini"
 FunctionEnd
 
@@ -1140,7 +1137,7 @@ Section "Uninstall"
   ; Uninstaller is in the \bin directory, we need upper level dir
   StrCpy $INSTDIR $INSTDIR\..
 
-  !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 2" "State"
+  !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 4" "State"
   DetailPrint "Data: $DOCUMENTS\..\${PRODUCT_SETTINGS_DIR}\"
   StrCmp $R2 1 "" skip_delete_caches
    ;find the path to caches (system) folder
@@ -1154,7 +1151,7 @@ Section "Uninstall"
 ;   RmDir /r $DOCUMENTS\..\${PRODUCT_SETTINGS_DIR}\system
 skip_delete_caches:
 
-  !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 3" "State"
+  !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 5" "State"
   StrCmp $R3 1 "" skip_delete_settings
     ;find the path to settings (config) folder
     StrCpy $0 "config"
@@ -1233,7 +1230,6 @@ loop:
   call un.SplitStr
   Pop $0
   StrCmp $0 "" finish_uninstall
-  MessageBox MB_OK "Association= $0"
   StrCpy $1 $0
   StrCpy $2 "backup_val"
   Call un.ReturnBackupRegValue
