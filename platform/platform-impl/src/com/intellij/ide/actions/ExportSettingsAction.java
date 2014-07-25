@@ -35,7 +35,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.ZipUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -47,10 +49,18 @@ import java.util.jar.JarOutputStream;
 public class ExportSettingsAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     Project project = getEventProject(e);
-    List<ExportableComponent> exportableComponents = new ArrayList<ExportableComponent>();
-    Map<File,Set<ExportableComponent>> fileToComponents = getRegisteredComponentsAndFiles(exportableComponents);
 
-    final ChooseComponentsToExportDialog dialog = new ChooseComponentsToExportDialog(exportableComponents, fileToComponents, true,
+    ApplicationManager.getApplication().saveSettings();
+
+    MultiMap<File, ExportableComponent> fileToComponents = getExportableComponentsMap();
+    for (Iterator<File> it = fileToComponents.keySet().iterator(); it.hasNext(); ) {
+      File file = it.next();
+      if (!file.exists()) {
+        it.remove();
+      }
+    }
+
+    final ChooseComponentsToExportDialog dialog = new ChooseComponentsToExportDialog(fileToComponents, true,
                                                                                      IdeBundle.message("title.select.components.to.export"),
                                                                                      IdeBundle.message(
                                                                                        "prompt.please.check.all.components.to.export"));
@@ -64,8 +74,6 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
     for (final ExportableComponent markedComponent : markedComponents) {
       ContainerUtil.addAll(exportFiles, markedComponent.getExportFiles());
     }
-
-    ApplicationManager.getApplication().saveSettings();
 
     final File saveFile = dialog.getExportFile();
     try {
@@ -121,24 +129,18 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
     }
   }
 
-  public static Map<File, Set<ExportableComponent>> getRegisteredComponentsAndFiles(List<ExportableComponent> exportableComponents) {
-    Map<File,Set<ExportableComponent>> fileToComponents = new HashMap<File, Set<ExportableComponent>>();
+  @NotNull
+  public static MultiMap<File, ExportableComponent> getExportableComponentsMap() {
+    MultiMap<File, ExportableComponent> result = MultiMap.createSet();
 
-    final List<ExportableComponent> components = new ArrayList<ExportableComponent>(Arrays.asList(ApplicationManager.getApplication().getComponents(ExportableApplicationComponent.class)));
+    ExportableApplicationComponent[] components1 = ApplicationManager.getApplication().getComponents(ExportableApplicationComponent.class);
+    List<ExportableComponent> components2 = ServiceBean.loadServicesFromBeans(ExportableComponent.EXTENSION_POINT, ExportableComponent.class);
 
-    components.addAll(ServiceBean.loadServicesFromBeans(ExportableComponent.EXTENSION_POINT, ExportableComponent.class));
-
-    for (ExportableComponent component : components) {
-      exportableComponents.add(component);
+    for (ExportableComponent component : ContainerUtil.concat(Arrays.asList(components1), components2)) {
       for (File exportFile : component.getExportFiles()) {
-        Set<ExportableComponent> componentsTied = fileToComponents.get(exportFile);
-        if (componentsTied == null) {
-          componentsTied = new HashSet<ExportableComponent>();
-          fileToComponents.put(exportFile, componentsTied);
-        }
-        componentsTied.add(component);
+        result.putValue(exportFile, component);
       }
     }
-    return fileToComponents;
+    return result;
   }
 }
