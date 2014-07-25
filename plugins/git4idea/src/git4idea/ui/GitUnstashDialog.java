@@ -72,65 +72,25 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * The unstash dialog
  */
 public class GitUnstashDialog extends DialogWrapper {
-  /**
-   * Git root selector
-   */
   private JComboBox myGitRootComboBox;
-  /**
-   * The current branch label
-   */
   private JLabel myCurrentBranch;
-  /**
-   * The view stash button
-   */
   private JButton myViewButton;
-  /**
-   * The drop stash button
-   */
   private JButton myDropButton;
-  /**
-   * The clear stashes button
-   */
   private JButton myClearButton;
-  /**
-   * The pop stash checkbox
-   */
   private JCheckBox myPopStashCheckBox;
-  /**
-   * The branch text field
-   */
   private JTextField myBranchTextField;
-  /**
-   * The root panel of the dialog
-   */
   private JPanel myPanel;
-  /**
-   * The stash list
-   */
   private JList myStashList;
-  /**
-   * If this checkbox is selected, the index is reinstated as well as working tree
-   */
   private JCheckBox myReinstateIndexCheckBox;
   /**
    * Set of branches for the current root
    */
   private final HashSet<String> myBranches = new HashSet<String>();
 
-  /**
-   * The project
-   */
   private final Project myProject;
   private GitVcs myVcs;
   private static final Logger LOG = Logger.getInstance(GitUnstashDialog.class);
 
-  /**
-   * A constructor
-   *
-   * @param project     the project
-   * @param roots       the list of the roots
-   * @param defaultRoot the default root to select
-   */
   public GitUnstashDialog(final Project project, final List<VirtualFile> roots, final VirtualFile defaultRoot) {
     super(project, true);
     setModal(false);
@@ -310,9 +270,6 @@ public class GitUnstashDialog extends DialogWrapper {
     setOKActionEnabled(true);
   }
 
-  /**
-   * Refresh stash list
-   */
   private void refreshStashList() {
     final DefaultListModel listModel = (DefaultListModel)myStashList.getModel();
     listModel.clear();
@@ -334,16 +291,10 @@ public class GitUnstashDialog extends DialogWrapper {
     myStashList.setSelectedIndex(0);
   }
 
-  /**
-   * @return the selected git root
-   */
   private VirtualFile getGitRoot() {
     return (VirtualFile)myGitRootComboBox.getSelectedItem();
   }
 
-  /**
-   * @return unstash handler
-   */
   private GitLineHandler handler() {
     GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitCommand.STASH);
     String branch = myBranchTextField.getText();
@@ -361,32 +312,19 @@ public class GitUnstashDialog extends DialogWrapper {
     return h;
   }
 
-  /**
-   * @return selected stash
-   * @throws NullPointerException if no stash is selected
-   */
   private StashInfo getSelectedStash() {
     return (StashInfo)myStashList.getSelectedValue();
   }
 
-  /**
-   * {@inheritDoc}
-   */
   protected JComponent createCenterPanel() {
     return myPanel;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected String getDimensionServiceKey() {
     return getClass().getName();
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected String getHelpId() {
     return "reference.VersionControl.Git.Unstash";
@@ -418,6 +356,7 @@ public class GitUnstashDialog extends DialogWrapper {
       final Ref<GitCommandResult> result = Ref.create();
       ProgressManager.getInstance().run(new Task.Modal(h.project(), GitBundle.getString("unstash.unstashing"), false) {
         public void run(@NotNull final ProgressIndicator indicator) {
+          indicator.setIndeterminate(true);
           h.addLineListener(new GitHandlerUtil.GitLineHandlerListenerProgress(indicator, h, "stash", false));
           Git git = ServiceManager.getService(Git.class);
           result.set(git.runCommand(new Computable.PredefinedValueComputable<GitLineHandler>(h)));

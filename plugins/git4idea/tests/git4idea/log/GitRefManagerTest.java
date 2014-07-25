@@ -15,7 +15,7 @@ import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.repo.*;
-import git4idea.test.GitTestRepositoryManager;
+import git4idea.test.GitMockRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -145,7 +145,7 @@ public class GitRefManagerTest extends UsefulTestCase {
   }
 
   private static List<VcsRef> sort(final Collection<VcsRef> refs) {
-    final GitTestRepositoryManager manager = new GitTestRepositoryManager();
+    final GitMockRepositoryManager manager = new GitMockRepositoryManager();
     manager.add(new MockGitRepository() {
       @NotNull
       @Override
@@ -201,6 +201,11 @@ public class GitRefManagerTest extends UsefulTestCase {
         }
         return infos;
       }
+
+      @Override
+      public void dispose() {
+      }
+
     });
     return ContainerUtil.sorted(refs, new GitRefManager(manager).getComparator());
   }
@@ -303,6 +308,10 @@ public class GitRefManagerTest extends UsefulTestCase {
     @Override
     public String toLogString() {
       throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void dispose() {
     }
   }
 }
