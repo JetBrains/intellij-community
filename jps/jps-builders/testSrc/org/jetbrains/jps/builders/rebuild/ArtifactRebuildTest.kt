@@ -20,14 +20,19 @@ import com.intellij.util.io.ZipUtil
 
 import java.util.jar.Attributes
 import java.util.jar.Manifest
+import java.io.File
+import java.io.FileInputStream
+import kotlin.test.assertTrue
+import kotlin.test.assertEquals
+
 /**
  * @author nik
  */
-class ArtifactRebuildTest extends JpsRebuildTestCase {
-  public void testArtifactIncludesArchiveArtifact() {
-    def name = "artifactIncludesArchiveArtifact"
+class ArtifactRebuildTest: JpsRebuildTestCase() {
+  fun testArtifactIncludesArchiveArtifact() {
+    val name = "artifactIncludesArchiveArtifact"
     try {
-      doTest("$name/${name}.ipr", {
+      doTest("$name/${name}.ipr", fs {
         dir("artifacts") {
           dir("data") {
             archive("a.jar") {
@@ -38,16 +43,16 @@ class ArtifactRebuildTest extends JpsRebuildTestCase {
       })
     }
     finally {
-      FileUtil.delete(new File(FileUtil.toSystemDependentName(getTestDataRootPath() + "/$name/data/a.jar")))
+      FileUtil.delete(File(FileUtil.toSystemDependentName(getTestDataRootPath() + "/$name/data/a.jar")))
     }
   }
 
-  public void testArtifactWithoutOutput() {
-    def outDir = FileUtil.createTempDirectory("output", "").absolutePath
-    loadProject("artifactWithoutOutput/artifactWithoutOutput.ipr", ["OUTPUT_DIR":outDir])
+  fun testArtifactWithoutOutput() {
+    val outDir = FileUtil.createTempDirectory("output", "").getAbsolutePath()
+    loadProject("artifactWithoutOutput/artifactWithoutOutput.ipr", mapOf("OUTPUT_DIR" to outDir))
 
     rebuild()
-    assertOutput(outDir, {
+    assertOutput(outDir, fs {
       dir("artifacts") {
         dir("main") {
           file("data.txt")
@@ -57,8 +62,8 @@ class ArtifactRebuildTest extends JpsRebuildTestCase {
     })
   }
 
-  public void testExtractDir() {
-    doTest("extractDirTest/extractDirTest.ipr", {
+  fun testExtractDir() {
+    doTest("extractDirTest/extractDirTest.ipr", fs {
       dir("artifacts") {
         dir("extractDir") {
           file("b.txt", "b")
@@ -88,20 +93,20 @@ class ArtifactRebuildTest extends JpsRebuildTestCase {
     })
   }
 
-  public void testManifestInArtifact() {
-    loadAndRebuild("manifestInArtifact/manifest.ipr", [:])
-    File jarFile = new File(myOutputDirectory, "artifacts/simple/simple.jar")
-    junit.framework.Assert.assertTrue(jarFile.exists())
-    File extracted = FileUtil.createTempDirectory("build-manifest", "")
+  fun testManifestInArtifact() {
+    loadAndRebuild("manifestInArtifact/manifest.ipr", mapOf())
+    val jarFile = File(myOutputDirectory, "artifacts/simple/simple.jar")
+    assertTrue(jarFile.exists())
+    val extracted = FileUtil.createTempDirectory("build-manifest", "")
     ZipUtil.extract(jarFile, extracted, null)
-    File manifestFile = new File(extracted, "META-INF/MANIFEST.MF")
-    junit.framework.Assert.assertTrue(manifestFile.exists())
-    Manifest manifest = new Manifest(new FileInputStream(manifestFile))
-    junit.framework.Assert.assertEquals("MyClass", manifest.getMainAttributes().getValue(Attributes.Name.MAIN_CLASS))
+    val manifestFile = File(extracted, "META-INF/MANIFEST.MF")
+    assertTrue(manifestFile.exists())
+    val manifest = Manifest(FileInputStream(manifestFile))
+    assertEquals("MyClass", manifest.getMainAttributes()!!.getValue(Attributes.Name.MAIN_CLASS))
   }
 
-  public void testOverwriteArtifacts() {
-    doTest("overwriteTest/overwriteTest.ipr", {
+  fun testOverwriteArtifacts() {
+    doTest("overwriteTest/overwriteTest.ipr", fs {
       dir("artifacts") {
         dir("classes") {
           file("a.xml", "<root2/>")
@@ -128,9 +133,9 @@ class ArtifactRebuildTest extends JpsRebuildTestCase {
     })
   }
 
-  public void testPathVariablesInArtifact() {
-    String externalDir = "${getTestDataRootPath()}/pathVariables/external"
-    doTest("pathVariables/pathVariables.ipr", ["EXTERNAL_DIR": externalDir], {
+  fun testPathVariablesInArtifact() {
+    val externalDir = "${getTestDataRootPath()}/pathVariables/external"
+    doTest("pathVariables/pathVariables.ipr", mapOf("EXTERNAL_DIR" to externalDir), fs {
       dir("artifacts") {
         dir("fileCopy") {
           dir("dir") {
@@ -141,8 +146,8 @@ class ArtifactRebuildTest extends JpsRebuildTestCase {
     })
   }
 
-  public void testModuleTestOutputElement() {
-    doTest("moduleTestOutput/moduleTestOutput.ipr", {
+  fun testModuleTestOutputElement() {
+    doTest("moduleTestOutput/moduleTestOutput.ipr", fs {
       dir("artifacts") {
         dir("tests") {
           file("MyTest.class")
@@ -159,16 +164,5 @@ class ArtifactRebuildTest extends JpsRebuildTestCase {
         }
       }
     })
-  }
-
-  //todo[nik] fix
-  public void _testSourceRootUnderOutput() throws Exception {
-    loadProject("sourceFolderUnderOutput/sourceFolderUnderOutput.ipr", [:])
-    try {
-      rebuild()
-      junit.framework.Assert.fail("Cleaning should fail")
-    }
-    catch (Exception ignored) {
-    }
   }
 }

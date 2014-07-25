@@ -18,6 +18,7 @@ package org.jetbrains.jps.ant;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderTestCase;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
@@ -26,6 +27,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
@@ -61,8 +63,9 @@ public class JpsAntArtifactBuilderTaskTest extends ArtifactBuilderTestCase {
     return PathManagerEx.findFileUnderProjectHome("plugins/ant/jps-plugin/testData", getClass()).getAbsolutePath();
   }
 
+  @NotNull
   @Override
-  protected void addPathVariables(Map<String, String> pathVariables) {
-    pathVariables.put("ARTIFACTS_OUT", FileUtil.toSystemIndependentName(myArtifactsOutput.getAbsolutePath()));
+  protected Map<String, String> getAdditionalPathVariables() {
+    return Collections.singletonMap("ARTIFACTS_OUT", FileUtil.toSystemIndependentName(myArtifactsOutput.getAbsolutePath()));
   }
 }
