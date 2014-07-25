@@ -1152,8 +1152,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private void balanceWhiteSpaces() {
-    RelativeTokenTypesView wsTokens = null;
-    RelativeTokenTextView tokenTextGetter = null;
+    RelativeTokenTypesView wsTokens = new RelativeTokenTypesView();
+    RelativeTokenTextView tokenTextGetter = new RelativeTokenTextView();
 
     for (int i = 1, size = myProduction.size() - 1; i < size; i++) {
       final ProductionMarker item = myProduction.get(i);
@@ -1162,54 +1162,50 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         LOG.error(UNBALANCED_MESSAGE);
       }
 
-      final int prevProductionLexIndex = myProduction.get(i - 1).myLexemeIndex;
-      int idx = item.myLexemeIndex;
-      while (idx > prevProductionLexIndex && whitespaceOrComment(myLexTypes[idx - 1])) idx--;
-      final int wsStartIndex = idx;
-
+      int prevProductionLexIndex = myProduction.get(i - 1).myLexemeIndex;
+      int wsStartIndex = item.myLexemeIndex;
+      while (wsStartIndex > prevProductionLexIndex && whitespaceOrComment(myLexTypes[wsStartIndex - 1])) wsStartIndex--;
       int wsEndIndex = item.myLexemeIndex;
       while (wsEndIndex < myLexemeCount && whitespaceOrComment(myLexTypes[wsEndIndex])) wsEndIndex++;
 
-      if (wsTokens == null) wsTokens = new RelativeTokenTypesView();
       wsTokens.configure(wsStartIndex, wsEndIndex);
-      final boolean atEnd = wsStartIndex == 0 || wsEndIndex == myLexemeCount;
-      if (tokenTextGetter == null) tokenTextGetter = new RelativeTokenTextView();
       tokenTextGetter.configure(wsStartIndex);
+      boolean atEnd = wsStartIndex == 0 || wsEndIndex == myLexemeCount;
 
       item.myLexemeIndex = wsStartIndex + item.myEdgeTokenBinder.getEdgePosition(wsTokens, atEnd, tokenTextGetter);
     }
   }
 
   private final class RelativeTokenTypesView extends AbstractList<IElementType> {
-    private int start;
-    private int size;
+    private int myStart;
+    private int mySize;
 
-    private void configure(int _start, int _end) {
-      size = _end - _start;
-      start = _start;
+    private void configure(int start, int end) {
+      myStart = start;
+      mySize = end - start;
     }
 
     @Override
-    public IElementType get(final int index) {
-      return myLexTypes[start + index];
+    public IElementType get(int index) {
+      return myLexTypes[myStart + index];
     }
 
     @Override
     public int size() {
-      return size;
+      return mySize;
     }
   }
 
   private final class RelativeTokenTextView implements WhitespacesAndCommentsBinder.TokenTextGetter {
-    private int start;
+    private int myStart;
 
-    private void configure(int _start) {
-      start = _start;
+    private void configure(int start) {
+      myStart = start;
     }
 
     @Override
-    public CharSequence get(final int i) {
-      return myText.subSequence(myLexStarts[start + i], myLexStarts[start + i + 1]);
+    public CharSequence get(int i) {
+      return myText.subSequence(myLexStarts[myStart + i], myLexStarts[myStart + i + 1]);
     }
   }
 
