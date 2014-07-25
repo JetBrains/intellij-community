@@ -81,7 +81,7 @@ public abstract class AdvancedSettingsAction extends AnAction {
       }
     });
     final Component component = e.getInputEvent().getComponent();
-    actionGroupPopup.show(new RelativePoint(component, new Point(component.getWidth(), 0)));
+    actionGroupPopup.show(new RelativePoint(component, new Point(component.getWidth() - 1, 0)));
   }
 
   private JLabel installLeftIndentToLabel(final JLabel label) {
