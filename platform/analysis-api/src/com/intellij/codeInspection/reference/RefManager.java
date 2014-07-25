@@ -47,6 +47,7 @@ public abstract class RefManager {
    *
    * @return the analysis scope.
    */
+  @Nullable
   public abstract AnalysisScope getScope();
 
   /**

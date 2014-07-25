@@ -228,6 +228,8 @@ junit
 keepduplicates
 keychain
 keychains
+keyframe
+keyframes
 kotlin
 labeler
 labelers

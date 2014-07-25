@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.application.options.codeStyle.RightMarginForm;
 import com.intellij.ide.highlighter.XmlHighlighterFactory;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -25,6 +26,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.ui.components.JBScrollPane;
+import org.apache.xmlbeans.XmlLanguage;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,6 +50,8 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   private JComboBox myWhiteSpaceAroundCDATA;
   private JCheckBox myKeepWhitespaceInsideCDATACheckBox;
   private JBScrollPane myJBScrollPane;
+  private JPanel myRightMarginPanel;
+  private RightMarginForm myRightMarginForm;
 
   public CodeStyleXmlPanel(CodeStyleSettings settings) {
     super(settings);
@@ -83,6 +87,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     xmlSettings.XML_SPACE_INSIDE_EMPTY_TAG = myInEmptyTag.isSelected();
     xmlSettings.XML_WHITE_SPACE_AROUND_CDATA = myWhiteSpaceAroundCDATA.getSelectedIndex();
     xmlSettings.XML_KEEP_WHITE_SPACES_INSIDE_CDATA = myKeepWhitespaceInsideCDATACheckBox.isSelected();
+    myRightMarginForm.apply(settings);
   }
 
   private int getIntValue(JTextField keepBlankLines) {
@@ -109,6 +114,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     myWrapText.setSelected(wrapText(settings));
     myWhiteSpaceAroundCDATA.setSelectedIndex(xmlSettings.XML_WHITE_SPACE_AROUND_CDATA);
     myKeepWhitespaceInsideCDATACheckBox.setSelected(xmlSettings.XML_KEEP_WHITE_SPACES_INSIDE_CDATA);
+    myRightMarginForm.reset(settings);
   }
 
   @Override
@@ -156,7 +162,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
       return true;
     }
 
-    return false;
+    return myRightMarginForm.isModified(settings);
   }
 
   private boolean wrapText(final CodeStyleSettings settings) {
@@ -193,5 +199,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
         return new Dimension(prefSize.width + 15, prefSize.height);
       }
     };
+    myRightMarginForm = new RightMarginForm(StdFileTypes.XML.getLanguage(), getSettings());
+    myRightMarginPanel = myRightMarginForm.getTopPanel();
   }
 }

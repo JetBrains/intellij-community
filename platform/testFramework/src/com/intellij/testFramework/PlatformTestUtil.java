@@ -63,9 +63,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InvocationEvent;
-import java.io.File;
-import java.io.IOException;
-import java.io.StringWriter;
+import java.io.*;
 import java.lang.ref.SoftReference;
 import java.nio.charset.Charset;
 import java.text.DecimalFormat;
@@ -826,4 +824,21 @@ public class PlatformTestUtil {
     ReflectionUtil.resetField(Charset.class, Charset.class, "defaultCharset");
     System.setProperty("file.encoding", encoding);
   }
+
+  public static void withStdErrSuppressed(@NotNull Runnable r) {
+    PrintStream std = System.err;
+    System.setErr(new PrintStream(NULL));
+    try {
+      r.run();
+    }
+    finally {
+      System.setErr(std);
+    }
+  }
+
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  private static final OutputStream NULL = new OutputStream() {
+    @Override
+    public void write(int b) throws IOException { }
+  };
 }

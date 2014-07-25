@@ -86,20 +86,23 @@ class AnonymousToInnerDialog extends DialogWrapper{
     final String[] names;
     String name = myAnonClass.getBaseClassReference().getReferenceName();
     PsiType[] typeParameters = myAnonClass.getBaseClassReference().getTypeParameters();
-    if (typeParameters.length > 0) {
-      names = new String[]{StringUtil.join(typeParameters, new Function<PsiType, String>() {
-        public String fun(PsiType psiType) {
-          PsiType type = psiType;
-          if (psiType instanceof PsiClassType) {
-            type = TypeConversionUtil.erasure(psiType);
-          }
-          if (type == null || type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return "";
-          if (type instanceof PsiArrayType) {
-            type = type.getDeepComponentType();
-          }
-          return StringUtil.getShortName(type.getPresentableText());
+
+    final String typeParamsList = StringUtil.join(typeParameters, new Function<PsiType, String>() {
+      public String fun(PsiType psiType) {
+        PsiType type = psiType;
+        if (psiType instanceof PsiClassType) {
+          type = TypeConversionUtil.erasure(psiType);
         }
-      }, "") + name, "My" + name};
+        if (type == null || type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return "";
+        if (type instanceof PsiArrayType) {
+          type = type.getDeepComponentType();
+        }
+        return StringUtil.getShortName(type.getPresentableText());
+      }
+    }, "") + name;
+
+    if (!typeParamsList.equals(name)) {
+      names = new String[]{typeParamsList, "My" + name};
     } else {
       names = new String[]{"My" + name};
     }

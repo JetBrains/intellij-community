@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,15 +56,14 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
   private final boolean myShowFilePath;
   private final String myDescription;
 
-  public ChooseComponentsToExportDialog(List<ExportableComponent> components,
-                                        Map<File, Set<ExportableComponent>> fileToComponents,
+  public ChooseComponentsToExportDialog(MultiMap<File, ExportableComponent> fileToComponents,
                                         boolean showFilePath, final String title, String description) {
     super(false);
     myDescription = description;
     myShowFilePath = showFilePath;
     Map<ExportableComponent, ComponentElementProperties> componentToContainingListElement = new LinkedHashMap<ExportableComponent, ComponentElementProperties>();
 
-    for (ExportableComponent component : components) {
+    for (ExportableComponent component : fileToComponents.values()) {
       if (!addToExistingListElement(component, componentToContainingListElement, fileToComponents)) {
         ComponentElementProperties componentElementProperties = new ComponentElementProperties();
         componentElementProperties.addComponent(component);
@@ -149,14 +149,14 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
   }
 
   private static boolean addToExistingListElement(ExportableComponent component,
-                                           Map<ExportableComponent,ComponentElementProperties> componentToContainingListElement,
-                                           Map<File, Set<ExportableComponent>> fileToComponents) {
+                                                  Map<ExportableComponent, ComponentElementProperties> componentToContainingListElement,
+                                                  MultiMap<File, ExportableComponent> fileToComponents) {
     final File[] exportFiles = component.getExportFiles();
     File file = null;
     for (File exportFile : exportFiles) {
-      final Set<ExportableComponent> tiedComponents = fileToComponents.get(exportFile);
+      Collection<ExportableComponent> tiedComponents = fileToComponents.get(exportFile);
 
-      for (final ExportableComponent tiedComponent : tiedComponents) {
+      for (ExportableComponent tiedComponent : tiedComponents) {
         if (tiedComponent == component) continue;
         final ComponentElementProperties elementProperties = componentToContainingListElement.get(tiedComponent);
         if (elementProperties != null && !FileUtil.filesEqual(exportFile, file)) {

@@ -97,7 +97,7 @@ public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcess
           }
           else {
             if (reference instanceof GrReferenceExpression) {
-              PsiElement referent = reference.resolve();
+              PsiElement referent = resolveReferenceIgnoreOverriding(reference);
               if (!(referent instanceof PsiNamedElement)
                   || !data.staticMemberName.equals(((PsiNamedElement)referent).getName())
                   || !(referent instanceof PsiMember)

@@ -72,14 +72,16 @@ class ContractInferenceInterpreter {
       if (statements[0] instanceof PsiReturnStatement) {
         List<MethodContract> result = handleDelegation(((PsiReturnStatement)statements[0]).getReturnValue(), false);
         if (result != null) {
+          PsiTypeElement typeElement = myMethod.getReturnTypeElement();
+          final boolean returningObject = typeElement == null || !(typeElement.getType() instanceof PsiClassType);
           return ContainerUtil.findAll(result, new Condition<MethodContract>() {
             @Override
             public boolean value(MethodContract contract) {
-              if (contract.returnValue == NULL_VALUE || contract.returnValue == NOT_NULL_VALUE) {
-                PsiTypeElement typeElement = myMethod.getReturnTypeElement();
-                if (typeElement == null || !(typeElement.getType() instanceof PsiClassType)) {
-                  return false;
-                }
+              if ((contract.returnValue == NULL_VALUE || contract.returnValue == NOT_NULL_VALUE) && returningObject) {
+                return false;
+              }
+              if ((contract.returnValue == TRUE_VALUE || contract.returnValue == FALSE_VALUE) && !returningObject) {
+                return false;
               }
 
               return true;

@@ -34,6 +34,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -75,14 +76,14 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
         return ContainerUtil.concatIterators(iteratorList);
       }
 
-      @Nullable
+      @NotNull
       @Override
       public Iterator<FilePath> getDirtyDirectoriesIterator(final VirtualFile root) {
         final THashSet<FilePath> filePaths = myDirtyDirectoriesRecursively.get(root);
         if (filePaths != null) {
           return filePaths.iterator();
         }
-        return null;
+        return ContainerUtil.emptyIterator();
       }
 
       @Override
@@ -338,10 +339,8 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   }
 
   /**
-   * Add dirty file to the scope. Note that file is not added
-   * if its ancestor was added as dirty recursively or if its parent
-   * is in already in the dirty scope. Also immendiate non-directory
-   * children are removed from the set of dirty files.
+   * Add dirty file to the scope. Note that file is not added if its ancestor was added as dirty recursively or if its parent is in already
+   * in the dirty scope. Also immediate non-directory children are removed from the set of dirty files.
    *
    * @param newcomer a file or directory added to the dirty scope.
    */
