@@ -35,7 +35,7 @@ public class ScopeOrderComparator implements Comparator<String> {
   }
 
   private int getKey(String scope) {
-    return ArrayUtil.indexOf(myScopesOrder, scope);
+    return myScopesOrder == null ? -1 : ArrayUtil.indexOf(myScopesOrder, scope);
   }
 
   @Override

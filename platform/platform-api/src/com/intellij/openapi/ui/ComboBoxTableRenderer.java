@@ -46,6 +46,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   private WeakReference<ListPopup> myPopupRef;
   private ChangeEvent myChangeEvent = null;
   private T myValue;
+  private boolean myPaintArrow = true;
 
   protected EventListenerList myListenerList = new EventListenerList();
 
@@ -80,6 +81,10 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     return null;
   }
 
+  public void setPaintArrow(final boolean paintArrow) {
+    myPaintArrow = paintArrow;
+  }
+
   protected Runnable onChosen(@NotNull final T value) {
     stopCellEditing(value);
 
@@ -94,7 +99,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
 
-    if (!StringUtil.isEmpty(getText())) {
+    if (!StringUtil.isEmpty(getText()) && myPaintArrow) {
       final Rectangle r = getBounds();
       final Insets i = getInsets();
       final int x = r.width - i.right - AllIcons.General.ArrowDown.getIconWidth();
