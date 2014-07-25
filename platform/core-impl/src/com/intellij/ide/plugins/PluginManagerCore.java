@@ -322,15 +322,8 @@ public class PluginManagerCore {
     Extensions.registerAreaClass(ExtensionAreas.IDEA_MODULE, ExtensionAreas.IDEA_PROJECT);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  static Method getAddUrlMethod(final ClassLoader loader) throws NoSuchMethodException {
-    if (loader instanceof URLClassLoader) {
-      final Method addUrlMethod = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
-      addUrlMethod.setAccessible(true);
-      return addUrlMethod;
-    }
-
-    return loader.getClass().getDeclaredMethod("addURL", URL.class);
+  private static Method getAddUrlMethod(final ClassLoader loader) {
+    return ReflectionUtil.getDeclaredMethod(loader instanceof URLClassLoader ? URLClassLoader.class : loader.getClass(), "addURL", URL.class);
   }
 
   @Nullable
@@ -350,9 +343,6 @@ public class PluginManagerCore {
         }
 
         return loader;
-      }
-      catch (NoSuchMethodException e) {
-        e.printStackTrace();
       }
       catch (IOException e) {
         e.printStackTrace();

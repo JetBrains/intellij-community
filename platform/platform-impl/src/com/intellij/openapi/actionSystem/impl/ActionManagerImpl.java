@@ -49,6 +49,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -66,7 +67,6 @@ import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.*;
 import java.awt.event.*;
-import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.List;
 
@@ -259,9 +259,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     Object obj;
     String className = stub.getClassName();
     try {
-      Constructor<?> constructor = Class.forName(className, true, stub.getLoader()).getDeclaredConstructor();
-      constructor.setAccessible(true);
-      obj = constructor.newInstance();
+      Class<?> aClass = Class.forName(className, true, stub.getLoader());
+      obj = ReflectionUtil.newInstance(aClass);
     }
     catch (ClassNotFoundException e) {
       PluginId pluginId = stub.getPluginId();
