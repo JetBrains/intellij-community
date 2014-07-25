@@ -60,7 +60,6 @@ import java.awt.event.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AbstractPopup implements JBPopup {
   public static final String SHOW_HINTS = "ShowHints";
@@ -158,7 +157,7 @@ public class AbstractPopup implements JBPopup {
   private boolean myMayBeParent;
   private AbstractPopup.SpeedSearchKeyListener mySearchKeyListener;
   private JLabel myAdComponent;
-  private final AtomicBoolean myDisposed = new AtomicBoolean(true);
+  private boolean myDisposed;
 
   private UiActivity myActivityKey;
   private Disposable myProjectDisposable;
@@ -303,9 +302,6 @@ public class AbstractPopup implements JBPopup {
     }
 
     myKeyEventHandler = keyEventHandler;
-    if (!myDisposed.getAndSet(false)) {
-      LOG.debug("initialize without dispose");
-    }
     return this;
   }
 
@@ -1110,7 +1106,7 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public boolean isDisposed() {
-    return myDisposed.get() || myContent == null;
+    return myContent == null;
   }
 
   protected boolean beforeShow() {
@@ -1241,9 +1237,10 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void dispose() {
-    if (myDisposed.getAndSet(true)) {
+    if (myDisposed) {
       return;
     }
+    myDisposed = true;
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("start disposing " + myContent);
