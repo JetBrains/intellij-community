@@ -65,8 +65,8 @@ public class ScopesOrderDialog extends DialogWrapper {
     }).disableRemoveAction().disableAddAction().createPanel();
     final JLabel descr = new JLabel("<html><p>If file appears in two or more scopes, it will be" +
                                            "inspected with settings of the topmost scope in list above.</p><p/>" +
-                                           "<p>Scope order is set globally for all inspeections in the profile.</p></html>");
-    descr.setPreferredSize(new Dimension(300, 80));
+                                           "<p>Scope order is set globally for all inspections in the profile.</p></html>");
+    descr.setPreferredSize(new Dimension(300, 100));
     UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, descr);
     myPanel = new JPanel();
     myPanel.setLayout(new BorderLayout());
