@@ -16,6 +16,7 @@ import java.util.List;
 public class Course {
 
   private static final Logger LOG = Logger.getInstance(Course.class.getName());
+  public static final String PLAYGROUND_DIR = "Playground";
   public List<Lesson> lessons = new ArrayList<Lesson>();
   public String description;
   public String name;
@@ -59,7 +60,7 @@ public class Course {
                   lessons.get(i).create(courseDir, resourceRoot);
                 }
                 //we need z because we want this folder shown last in project tree
-                baseDir.createChildDirectory(this, "zPlayground");
+                baseDir.createChildDirectory(this, PLAYGROUND_DIR);
               }
               catch (IOException e) {
                 LOG.error(e);

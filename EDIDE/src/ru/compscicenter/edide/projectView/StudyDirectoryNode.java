@@ -8,12 +8,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import icons.StudyIcons;
-import ru.compscicenter.edide.course.StudyStatus;
 import ru.compscicenter.edide.StudyTaskManager;
-import ru.compscicenter.edide.course.Course;
-import ru.compscicenter.edide.course.Lesson;
-import ru.compscicenter.edide.course.Task;
-import ru.compscicenter.edide.course.TaskFile;
+import ru.compscicenter.edide.course.*;
 
 /**
  * author: liana
@@ -65,10 +61,10 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
       }
     }
 
-    if (valueName.contains("zPlayground")) {
+    if (valueName.contains(Course.PLAYGROUND_DIR)) {
       if (myValue.getParent() != null) {
-        if (!myValue.getParent().getName().contains("zPlayground")) {
-          data.setPresentableText("Playground");
+        if (!myValue.getParent().getName().contains(Course.PLAYGROUND_DIR)) {
+          data.setPresentableText(Course.PLAYGROUND_DIR);
           data.setIcon(StudyIcons.Playground);
           return;
         }
@@ -82,5 +78,10 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
       }
     }
     data.setPresentableText(valueName);
+  }
+
+  @Override
+  public int getTypeSortWeight(boolean sortByType) {
+    return myValue.getName().contains(Course.PLAYGROUND_DIR)? 0 : 3;
   }
 }
