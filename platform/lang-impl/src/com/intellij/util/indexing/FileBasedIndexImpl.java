@@ -2030,33 +2030,39 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           // For 'normal indices' schedule the file for update and reset stamps for all affected indices (there
           // can be client that used indices between before and after events, in such case indices are up to date due to force update
           // with old content)
-          if (!fileIsDirectory && !isTooLarge(file)) {
-            FileTypeManagerImpl.cacheFileType(file, getFileType(file));
-            try {
-              final List<ID<?, ?>> candidates = getAffectedIndexCandidates(file);
-              //noinspection ForLoopReplaceableByForEach
-              boolean scheduleForUpdate = false;
-              boolean resetStamp = false;
+          if (!fileIsDirectory) {
+            if (isTooLarge(file)) {
+              // large file might be scheduled for update in before event when its size was not large
+              myChangedFilesCollector.myFilesToUpdate.remove(file);
+            }
+            else {
+              FileTypeManagerImpl.cacheFileType(file, getFileType(file));
+              try {
+                final List<ID<?, ?>> candidates = getAffectedIndexCandidates(file);
+                //noinspection ForLoopReplaceableByForEach
+                boolean scheduleForUpdate = false;
+                boolean resetStamp = false;
 
-              //noinspection ForLoopReplaceableByForEach
-              for (int i = 0, size = candidates.size(); i < size; ++i) {
-                final ID<?, ?> indexId = candidates.get(i);
-                if (needsFileContentLoading(indexId) && getInputFilter(indexId).acceptInput(file)) {
-                  if (IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId))) {
-                    IndexingStamp.update(file, indexId, IndexInfrastructure.INVALID_STAMP2);
-                    resetStamp = true;
+                //noinspection ForLoopReplaceableByForEach
+                for (int i = 0, size = candidates.size(); i < size; ++i) {
+                  final ID<?, ?> indexId = candidates.get(i);
+                  if (needsFileContentLoading(indexId) && getInputFilter(indexId).acceptInput(file)) {
+                    if (IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId))) {
+                      IndexingStamp.update(file, indexId, IndexInfrastructure.INVALID_STAMP2);
+                      resetStamp = true;
+                    }
+                    scheduleForUpdate = true;
                   }
-                  scheduleForUpdate = true;
+                }
+
+                if (scheduleForUpdate) {
+                  if (resetStamp) IndexingStamp.flushCache(file);
+                  scheduleForUpdate(file);
                 }
               }
-
-              if (scheduleForUpdate) {
-                if (resetStamp) IndexingStamp.flushCache(file);
-                scheduleForUpdate(file);
+              finally {
+                FileTypeManagerImpl.cacheFileType(file, null);
               }
-            }
-            finally {
-              FileTypeManagerImpl.cacheFileType(file, null);
             }
           }
 
