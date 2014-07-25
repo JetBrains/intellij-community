@@ -465,6 +465,9 @@ public class ToolsImpl implements Tools {
     if (scopeName == null) {
       myDefaultState.setLevel(level);
     } else {
+      if (myTools == null) {
+        return;
+      }
       ScopeToolState scopeToolState = null;
       int index = -1;
       for (int i = 0; i < myTools.size(); i++) {
