@@ -126,6 +126,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   private final Map<String, ModuleWizardStep> myCustomSteps = new HashMap<String, ModuleWizardStep>();
   private final MultiMap<TemplatesGroup,ProjectTemplate> myTemplatesMap;
   private String myCurrentCard;
+  private TemplatesGroup myLastSelectedGroup;
 
   public ProjectTypeStep(WizardContext context, NewProjectWizard wizard, ModulesProvider modulesProvider) {
     myContext = context;
@@ -369,7 +370,8 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   // new TemplatesGroup selected
   public void projectTypeChanged() {
     TemplatesGroup group = getSelectedGroup();
-    if (group == null) return;
+    if (group == null || group == myLastSelectedGroup) return;
+    myLastSelectedGroup = group;
     PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_GROUP, group.getId() );
     ModuleBuilder groupModuleBuilder = group.getModuleBuilder();
 
