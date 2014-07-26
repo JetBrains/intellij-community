@@ -111,12 +111,6 @@
         <option name="BACKGROUND" value="3a2323" />
       </value>
     </option>
-    <option name="BROWSEWORDATCARET">
-      <value>
-        <option name="EFFECT_COLOR" value="526da5" />
-        <option name="ERROR_STRIPE_COLOR" value="273955" />
-      </value>
-    </option>
     <option name="Bad character">
       <value>
         <option name="FOREGROUND" value="ff0000" />
