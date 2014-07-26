@@ -16,6 +16,10 @@
 package com.intellij.util.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,6 +42,7 @@ import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
@@ -677,6 +682,13 @@ public final class TreeUtil {
     return count;
   }
 
+
+  public static abstract class TreeScrollAction extends AnAction {
+    protected TreeScrollAction(final ShortcutSet shortcutSet, final JComponent component) {
+      registerCustomShortcutSet(shortcutSet, component);
+    }
+  }
+
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static void installActions(@NotNull final JTree tree) {
     tree.getActionMap().put("scrollUpChangeSelection", new AbstractAction() {
@@ -713,6 +725,22 @@ public final class TreeUtil {
     UIUtil.maybeInstall(inputMap, "selectPrevious", KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0));
     UIUtil.maybeInstall(inputMap, "selectLast", KeyStroke.getKeyStroke(KeyEvent.VK_END, 0));
     UIUtil.maybeInstall(inputMap, "selectFirst", KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0));
+
+    // install custom shortcuts (editor up -> makes move_up)
+    //inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_MASK), "selectNext");
+    //inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_MASK), "selectPrevious");
+    new TreeScrollAction(CommonShortcuts.getMoveUp(), tree) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        moveUp(tree);
+      }
+    };
+    new TreeScrollAction(CommonShortcuts.getMoveDown(), tree){
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        moveDown(tree);
+      }
+    };
   }
 
   private static void copyAction(@NotNull final JTree tree, String original, String copyTo) {
