@@ -3,17 +3,17 @@ package org.jetbrains.protocolReader;
 import org.jetbrains.annotations.NotNull;
 
 class QualifiedTypeData {
-  private final BoxableType typeRef;
+  private final BoxableType type;
   private final boolean optional;
   private final boolean nullable;
   private final boolean asRawString;
 
-  QualifiedTypeData(BoxableType typeRef, boolean optional) {
-    this(typeRef, optional, false, false);
+  QualifiedTypeData(@NotNull BoxableType type, boolean optional) {
+    this(type, optional, false, false);
   }
 
-  QualifiedTypeData(BoxableType typeRef, boolean optional, boolean nullable, boolean asRawString) {
-    this.typeRef = typeRef;
+  QualifiedTypeData(@NotNull BoxableType type, boolean optional, boolean nullable, boolean asRawString) {
+    this.type = type;
     this.optional = optional;
     this.nullable = nullable;
     this.asRawString = asRawString;
@@ -23,8 +23,9 @@ class QualifiedTypeData {
     return nullable;
   }
 
-  BoxableType getJavaType() {
-    return typeRef;
+  @NotNull
+  BoxableType getType() {
+    return type;
   }
 
   void writeAnnotations(@NotNull TextOutput out) {

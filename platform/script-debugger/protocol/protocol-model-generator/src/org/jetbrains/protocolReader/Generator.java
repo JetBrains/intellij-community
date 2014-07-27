@@ -155,7 +155,7 @@ class Generator {
 
       @Override
       public QualifiedTypeData visitArray(ArrayItemType items) {
-        return new QualifiedTypeData(new ListType(scope.resolveType(items).getJavaType()), optional);
+        return new QualifiedTypeData(new ListType(scope.resolveType(items).getType()), optional);
       }
 
       @Override

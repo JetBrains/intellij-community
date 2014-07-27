@@ -47,7 +47,7 @@ abstract class ValueReader {
         out.append("name");
       }
       else {
-        out.quoute(fieldName);
+        out.quote(fieldName);
       }
     }
   }

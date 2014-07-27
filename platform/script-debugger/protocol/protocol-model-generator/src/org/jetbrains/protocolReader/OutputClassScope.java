@@ -35,7 +35,7 @@ class OutputClassScope extends ClassScope {
       if (mandatoryParameters.size() == 1) {
         P parameter = mandatoryParameters.get(0);
         QualifiedTypeData typeData = new OutputMemberScope(getName(parameter)).resolveType(parameter);
-        if (typeData.getJavaType().getFullText().equals("int[]")) {
+        if (typeData.getType().getFullText().equals("int[]")) {
           BoxableType[] types = new BoxableType[mandatoryParameters.size()];
           types[0] = new ListType(BoxableType.INT) {
             @Override
@@ -94,7 +94,7 @@ class OutputClassScope extends ClassScope {
         out.append("/**").newLine().append(" * @param v ").append(parameter.description()).newLine().append(" */").newLine();
       }
 
-      CharSequence type = new OutputMemberScope(parameter.name()).resolveType(parameter).getJavaType().getShortText(getClassContextNamespace());
+      CharSequence type = new OutputMemberScope(parameter.name()).resolveType(parameter).getType().getShortText(getClassContextNamespace());
       if (type.equals(JsonReaderEx.class.getCanonicalName())) {
         type = "String";
       }
@@ -134,7 +134,7 @@ class OutputClassScope extends ClassScope {
       assert mandatoryParameterTypes != null;
       if (mandatoryParameterTypes[i] == null) {
         P parameter = mandatoryParameters.get(i);
-        mandatoryParameterTypes[i] = new OutputMemberScope(parameter.name()).resolveType(parameter).getJavaType();
+        mandatoryParameterTypes[i] = new OutputMemberScope(parameter.name()).resolveType(parameter).getType();
       }
     }
 
@@ -162,7 +162,7 @@ class OutputClassScope extends ClassScope {
 
   private void appendWriteValueInvocation(TextOutput out, ItemDescriptor.Named parameter, String valueRefName, @Nullable BoxableType type) {
     if (type == null) {
-      type = new OutputMemberScope(parameter.name()).resolveType(parameter).getJavaType();
+      type = new OutputMemberScope(parameter.name()).resolveType(parameter).getType();
     }
 
     boolean blockOpened = false;
@@ -191,7 +191,7 @@ class OutputClassScope extends ClassScope {
     }
     // todo CallArgument (we should allow write null as value)
     out.append(parameter.name().equals("value") && type.getWriteMethodName().equals("writeString") ? "writeNullableString" : type.getWriteMethodName()).append("(");
-    out.quoute(parameter.name()).comma().append(valueRefName).append(");");
+    out.quote(parameter.name()).comma().append(valueRefName).append(");");
     if (blockOpened) {
       out.closeBlock();
     }

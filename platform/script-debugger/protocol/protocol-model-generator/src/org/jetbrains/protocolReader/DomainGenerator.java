@@ -163,7 +163,7 @@ class DomainGenerator {
           }
         };
         QualifiedTypeData itemTypeData = generator.resolveType(items, resolveAndGenerateScope);
-        BoxableType itemBoxableType = itemTypeData.getJavaType();
+        BoxableType itemBoxableType = itemTypeData.getType();
 
         final BoxableType arrayType = new ListType(itemBoxableType);
         StandaloneTypeBinding.Target target = new StandaloneTypeBinding.Target() {

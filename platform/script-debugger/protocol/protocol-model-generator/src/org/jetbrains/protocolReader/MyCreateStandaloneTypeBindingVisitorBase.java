@@ -68,7 +68,7 @@ class MyCreateStandaloneTypeBindingVisitorBase extends CreateStandaloneTypeBindi
           public BoxableType generateNestedObject(String description, List<ProtocolMetaModel.ObjectProperty> properties) {
             return context.generateNestedObject("Item", description, properties);
           }
-        }).getJavaType());
+        }).getType());
       }
     }, generator.generator.getNaming().outputTypedef, TypeData.Direction.OUTPUT);
   }
