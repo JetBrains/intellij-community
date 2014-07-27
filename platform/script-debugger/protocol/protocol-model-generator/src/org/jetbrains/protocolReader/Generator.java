@@ -246,7 +246,7 @@ class Generator {
     if (!BAD_METHOD_NAMES.contains(originalName)) {
       return originalName;
     }
-    out.append("@org.chromium.protocolReader.JsonField(jsonLiteralName=\"").append(originalName).append("\")").newLine();
+    out.append("@org.jetbrains.jsonProtocol.JsonField(jsonLiteralName=\"").append(originalName).append("\")").newLine();
     return "get" + Character.toUpperCase(originalName.charAt(0)) + originalName.substring(1);
   }
 

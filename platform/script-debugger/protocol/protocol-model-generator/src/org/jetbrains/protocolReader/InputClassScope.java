@@ -79,11 +79,11 @@ class InputClassScope extends ClassScope {
         public void append(TextOutput out) {
           out.newLine().doc(description);
           if (propertyList == null) {
-            out.append("@org.chromium.protocolReader.JsonType(allowsOtherProperties=true)").newLine();
+            out.append("@org.jetbrains.jsonProtocol.JsonType(allowsOtherProperties=true)").newLine();
             out.append("public interface ").append(objectName).append(" extends org.jetbrains.jsonProtocol.JsonObjectBased").openBlock();
           }
           else {
-            out.append("@org.chromium.protocolReader.JsonType").newLine();
+            out.append("@org.jetbrains.jsonProtocol.JsonType").newLine();
             out.append("public interface ").append(objectName).openBlock();
             for (ProtocolMetaModel.ObjectProperty property : propertyList) {
               out.doc(property.description());

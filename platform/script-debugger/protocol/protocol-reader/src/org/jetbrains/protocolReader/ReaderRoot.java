@@ -2,7 +2,7 @@ package org.jetbrains.protocolReader;
 
 import org.jetbrains.io.JsonReaderEx;
 import gnu.trove.THashSet;
-import org.chromium.protocolReader.JsonParseMethod;
+import org.jetbrains.jsonProtocol.JsonParseMethod;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;

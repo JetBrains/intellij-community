@@ -30,7 +30,7 @@ class TypeDescriptor {
 
   void writeAnnotations(@NotNull TextOutput out) {
     if (optional || asRawString) {
-      out.append("@org.chromium.protocolReader.JsonField(");
+      out.append("@org.jetbrains.jsonProtocol.JsonField(");
       if (optional) {
         out.append("optional=true");
       }
@@ -44,7 +44,7 @@ class TypeDescriptor {
     }
 
     if (isNullable()) {
-      out.append("@org.chromium.protocolReader.JsonNullable").newLine();
+      out.append("@org.jetbrains.jsonProtocol.JsonNullable").newLine();
     }
   }
 }

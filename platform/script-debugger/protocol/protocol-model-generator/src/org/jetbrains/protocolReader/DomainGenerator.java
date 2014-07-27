@@ -198,7 +198,7 @@ class DomainGenerator {
           out.doc(type.description());
         }
 
-        out.append("@org.chromium.protocolReader.JsonType").newLine();
+        out.append("@org.jetbrains.jsonProtocol.JsonType").newLine();
         out.append("public interface ").append(className.getLastComponent()).openBlock();
         InputClassScope classScope = new InputClassScope(DomainGenerator.this, className);
         classScope.generateStandaloneTypeBody(out, properties);
@@ -313,7 +313,7 @@ class DomainGenerator {
     if (description != null) {
       out.doc(description);
     }
-    out.append("@org.chromium.protocolReader.JsonType").newLine().append("public interface ").append(className).openBlock();
+    out.append("@org.jetbrains.jsonProtocol.JsonType").newLine().append("public interface ").append(className).openBlock();
     InputClassScope classScope = new InputClassScope(this, new NamePath(className, new NamePath(ClassNameScheme.getPackageName(generator.getNaming().inputPackage, domain.domain()))));
     if (additionalMembersText != null) {
       classScope.addMember(additionalMembersText);

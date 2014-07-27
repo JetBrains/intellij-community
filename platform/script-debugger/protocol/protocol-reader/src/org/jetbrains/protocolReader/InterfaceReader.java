@@ -1,8 +1,8 @@
 package org.jetbrains.protocolReader;
 
 import gnu.trove.THashSet;
-import org.chromium.protocolReader.JsonField;
-import org.chromium.protocolReader.JsonSubtype;
+import org.jetbrains.jsonProtocol.JsonField;
+import org.jetbrains.jsonProtocol.JsonSubtype;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonReaderEx;
 import org.jetbrains.jsonProtocol.StringIntPair;
