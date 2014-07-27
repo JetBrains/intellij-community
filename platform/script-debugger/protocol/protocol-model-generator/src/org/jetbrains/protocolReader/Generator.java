@@ -114,7 +114,7 @@ class Generator {
     fileSet.deleteOtherFiles();
   }
 
-  TypeDescriptor resolveType(final ItemDescriptor typedObject, final ResolveAndGenerateScope scope) {
+  TypeDescriptor resolveType(@NotNull final ItemDescriptor typedObject, @NotNull final ResolveAndGenerateScope scope) {
     final boolean optional = typedObject instanceof ItemDescriptor.Named && ((ItemDescriptor.Named)typedObject).optional();
     return switchByType(typedObject, new TypeVisitor<TypeDescriptor>() {
       @Override
@@ -155,7 +155,8 @@ class Generator {
 
       @Override
       public TypeDescriptor visitArray(ArrayItemType items) {
-        return new TypeDescriptor(new ListType(scope.resolveType(items).getType()), optional);
+        BoxableType type = scope.resolveType(items).getType();
+        return new TypeDescriptor(new ListType(type), optional, false, type == BoxableType.ANY_STRING);
       }
 
       @Override

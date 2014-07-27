@@ -1,8 +1,9 @@
 package org.jetbrains.protocolReader;
 
-import org.jetbrains.jsonProtocol.ProtocolMetaModel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jsonProtocol.ItemDescriptor.Named;
+import org.jetbrains.jsonProtocol.ProtocolMetaModel.ObjectProperty;
 
-import java.io.IOException;
 import java.util.List;
 
 class InputClassScope extends ClassScope {
@@ -10,36 +11,20 @@ class InputClassScope extends ClassScope {
     super(generator, namePath);
   }
 
-  public void generateMainJsonProtocolInterfaceBody(TextOutput out, List<ProtocolMetaModel.Parameter> parameters) throws IOException {
-    if (parameters != null) {
-      for (ProtocolMetaModel.Parameter parameter : parameters) {
-        if (parameter.description() != null) {
-          out.doc(parameter.description());
-        }
-
-        String methodName = Generator.generateMethodNameSubstitute(getName(parameter), out);
-        TypeDescriptor paramTypeData = newMemberScope(getName(parameter)).resolveType(parameter);
-        paramTypeData.writeAnnotations(out);
-        out.append(paramTypeData.getType().getShortText(getClassContextNamespace())).space().append(methodName).append("();").newLine();
+  void generateDeclarationBody(@NotNull TextOutput out, @NotNull List<? extends Named> list) {
+    for (int i = 0, n = list.size(); i < n; i++) {
+      Named named = list.get(i);
+      if (named.description() != null) {
+        out.doc(named.description());
       }
-    }
-  }
 
-  void generateStandaloneTypeBody(TextOutput out, List<ProtocolMetaModel.ObjectProperty> properties) throws IOException {
-    if (properties != null) {
-      for (ProtocolMetaModel.ObjectProperty objectProperty : properties) {
-        String propertyName = getName(objectProperty);
-
-        if (objectProperty.description() != null) {
-          out.doc(objectProperty.description());
-        }
-
-        String methodName = Generator.generateMethodNameSubstitute(propertyName, out);
-        MemberScope memberScope = newMemberScope(propertyName);
-        TypeDescriptor propertyTypeData = memberScope.resolveType(objectProperty);
-        propertyTypeData.writeAnnotations(out);
-
-        out.append(propertyTypeData.getType().getShortText(getClassContextNamespace()) + ' ' + methodName + "();").newLine();
+      String name = getName(named);
+      String declarationName = Generator.generateMethodNameSubstitute(name, out);
+      TypeDescriptor typeDescriptor = new InputMemberScope(name).resolveType(named);
+      typeDescriptor.writeAnnotations(out);
+      out.append(typeDescriptor.getType().getShortText(getClassContextNamespace())).space().append(declarationName).append("();");
+      if (i != (n - 1)) {
+        out.newLine().newLine();
       }
     }
   }
@@ -47,10 +32,6 @@ class InputClassScope extends ClassScope {
   @Override
   protected TypeData.Direction getTypeDirection() {
     return TypeData.Direction.INPUT;
-  }
-
-  private MemberScope newMemberScope(String memberName) {
-    return new InputMemberScope(memberName);
   }
 
   class InputMemberScope extends MemberScope {
@@ -72,7 +53,7 @@ class InputClassScope extends ClassScope {
     }
 
     @Override
-    public BoxableType generateNestedObject(final String description, final List<ProtocolMetaModel.ObjectProperty> propertyList) {
+    public BoxableType generateNestedObject(final String description, final List<ObjectProperty> propertyList) {
       final String objectName = Generator.capitalizeFirstChar(getMemberName());
       addMember(new TextOutConsumer() {
         @Override
@@ -85,11 +66,11 @@ class InputClassScope extends ClassScope {
           else {
             out.append("@org.jetbrains.jsonProtocol.JsonType").newLine();
             out.append("public interface ").append(objectName).openBlock();
-            for (ProtocolMetaModel.ObjectProperty property : propertyList) {
+            for (ObjectProperty property : propertyList) {
               out.doc(property.description());
 
               String methodName = Generator.generateMethodNameSubstitute(getName(property), out);
-              MemberScope memberScope = newMemberScope(getName(property));
+              MemberScope memberScope = new InputMemberScope(getName(property));
               TypeDescriptor propertyTypeData = memberScope.resolveType(property);
               propertyTypeData.writeAnnotations(out);
 
