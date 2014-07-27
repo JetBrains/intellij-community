@@ -50,7 +50,7 @@ public interface DebugEventListener extends EventListener {
   /**
    * Reports that script source has been altered in remote VM.
    */
-  void scriptContentChanged(Script newScript);
+  void scriptContentChanged(@NotNull Script newScript);
 
   /**
    * Reports a navigation event on the target.

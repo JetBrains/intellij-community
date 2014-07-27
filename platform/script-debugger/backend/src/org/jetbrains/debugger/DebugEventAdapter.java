@@ -26,7 +26,7 @@ public abstract class DebugEventAdapter implements DebugEventListener {
   }
 
   @Override
-  public void scriptContentChanged(Script newScript) {
+  public void scriptContentChanged(@NotNull Script newScript) {
   }
 
   @Override
