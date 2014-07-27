@@ -25,6 +25,7 @@ public @interface JsonField {
 
   // read any primitive value as String (true as true, number as string - don't try to parse)
   boolean allowAnyPrimitiveValue() default false;
+
   boolean allowAnyPrimitiveValueAndMap() default false;
 
   boolean optional() default false;

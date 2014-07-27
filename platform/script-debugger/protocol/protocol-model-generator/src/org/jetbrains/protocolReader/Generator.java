@@ -115,91 +115,59 @@ class Generator {
   }
 
   QualifiedTypeData resolveType(final ItemDescriptor typedObject, final ResolveAndGenerateScope scope) {
-    UnqualifiedTypeData unqualifiedType = switchByType(typedObject, new TypeVisitor<UnqualifiedTypeData>() {
+    final boolean optional = typedObject instanceof ItemDescriptor.Named && ((ItemDescriptor.Named)typedObject).optional();
+    return switchByType(typedObject, new TypeVisitor<QualifiedTypeData>() {
       @Override
-      public UnqualifiedTypeData visitRef(String refName) {
-        return new UnqualifiedTypeData(resolveRefType(scope.getDomainName(), refName, scope.getTypeDirection()));
+      public QualifiedTypeData visitRef(String refName) {
+        return new QualifiedTypeData(resolveRefType(scope.getDomainName(), refName, scope.getTypeDirection()), optional);
       }
 
       @Override
-      public UnqualifiedTypeData visitBoolean() {
-        return UnqualifiedTypeData.BOOLEAN;
+      public QualifiedTypeData visitBoolean() {
+        return new QualifiedTypeData(BoxableType.BOOLEAN, optional);
       }
 
       @Override
-      public UnqualifiedTypeData visitEnum(List<String> enumConstants) {
+      public QualifiedTypeData visitEnum(List<String> enumConstants) {
         assert scope instanceof MemberScope;
-        return new UnqualifiedTypeData(((MemberScope)scope).generateEnum(typedObject.description(), enumConstants));
+        return new QualifiedTypeData(((MemberScope)scope).generateEnum(typedObject.description(), enumConstants), optional);
       }
 
       @Override
-      public UnqualifiedTypeData visitString() {
-        return UnqualifiedTypeData.STRING;
+      public QualifiedTypeData visitString() {
+        return new QualifiedTypeData(BoxableType.STRING, optional);
       }
 
       @Override
-      public UnqualifiedTypeData visitInteger() {
-        return UnqualifiedTypeData.INT;
+      public QualifiedTypeData visitInteger() {
+        return new QualifiedTypeData(BoxableType.INT, optional);
       }
 
       @Override
-      public UnqualifiedTypeData visitNumber() {
-        return UnqualifiedTypeData.NUMBER;
+      public QualifiedTypeData visitNumber() {
+        return new QualifiedTypeData(BoxableType.NUMBER, optional);
       }
 
       @Override
-      public UnqualifiedTypeData visitMap() {
-        return UnqualifiedTypeData.MAP;
+      public QualifiedTypeData visitMap() {
+        return new QualifiedTypeData(BoxableType.MAP, optional);
       }
 
       @Override
-      public UnqualifiedTypeData visitArray(ArrayItemType items) {
-        return new UnqualifiedTypeData(new ListType(scope.resolveType(items).getJavaType()));
+      public QualifiedTypeData visitArray(ArrayItemType items) {
+        return new QualifiedTypeData(new ListType(scope.resolveType(items).getJavaType()), optional);
       }
 
       @Override
-      public UnqualifiedTypeData visitObject(List<ObjectProperty> properties) {
-        return new UnqualifiedTypeData(scope.generateNestedObject(typedObject.description(), properties), false);
+      public QualifiedTypeData visitObject(List<ObjectProperty> properties) {
+        return new QualifiedTypeData(scope.generateNestedObject(typedObject.description(), properties), optional);
       }
 
       @Override
-      public UnqualifiedTypeData visitUnknown() {
-        return UnqualifiedTypeData.ANY;
+      public QualifiedTypeData visitUnknown() {
+        return new QualifiedTypeData(BoxableType.STRING, optional, false, true);
       }
     });
-
-    return unqualifiedType.getQualifiedType(typedObject instanceof ItemDescriptor.Named && ((ItemDescriptor.Named)typedObject).optional());
-  }
-
-  private static class UnqualifiedTypeData {
-    private final BoxableType typeRef;
-    private final boolean nullable;
-    private final boolean asRawString;
-
-    UnqualifiedTypeData(BoxableType typeRef) {
-      this(typeRef, false);
-    }
-
-    UnqualifiedTypeData(BoxableType typeRef, boolean nullable) {
-      this(typeRef, nullable, false);
-    }
-
-    UnqualifiedTypeData(BoxableType typeRef, boolean nullable, boolean asRawString) {
-      this.typeRef = typeRef;
-      this.nullable = nullable;
-      this.asRawString = asRawString;
-    }
-
-    QualifiedTypeData getQualifiedType(boolean optional) {
-      return new QualifiedTypeData(typeRef, optional, nullable, asRawString);
-    }
-
-    static final UnqualifiedTypeData BOOLEAN = new UnqualifiedTypeData(BoxableType.BOOLEAN, false);
-    static final UnqualifiedTypeData STRING = new UnqualifiedTypeData(BoxableType.STRING, false);
-    static final UnqualifiedTypeData INT = new UnqualifiedTypeData(BoxableType.INT, false);
-    static final UnqualifiedTypeData MAP = new UnqualifiedTypeData(BoxableType.MAP, false);
-    static final UnqualifiedTypeData NUMBER = new UnqualifiedTypeData(BoxableType.NUMBER, false);
-    static final UnqualifiedTypeData ANY = new UnqualifiedTypeData(BoxableType.STRING, false, true);
   }
 
   private void generateParserInterfaceList() throws IOException {
@@ -274,7 +242,7 @@ class Generator {
     return typeMap.resolve(domainName, shortName, direction);
   }
 
-  static String generateMethodNameSubstitute(String originalName, TextOutput out) {
+  static String generateMethodNameSubstitute(@NotNull String originalName, @NotNull TextOutput out) {
     if (!BAD_METHOD_NAMES.contains(originalName)) {
       return originalName;
     }

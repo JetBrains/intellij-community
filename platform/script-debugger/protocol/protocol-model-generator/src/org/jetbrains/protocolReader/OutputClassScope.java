@@ -19,8 +19,8 @@ class OutputClassScope extends ClassScope {
       return;
     }
 
-    List<P> mandatoryParameters = new ArrayList<P>();
-    List<P> optionalParameters = new ArrayList<P>();
+    List<P> mandatoryParameters = new ArrayList<>();
+    List<P> optionalParameters = new ArrayList<>();
     for (P parameter : parameters) {
       if (parameter.optional()) {
         optionalParameters.add(parameter);
@@ -131,6 +131,7 @@ class OutputClassScope extends ClassScope {
       mandatoryParameterTypes = new BoxableType[mandatoryParameters.size()];
     }
     for (int i = 0, length = mandatoryParameterTypes.length; i < length; i++) {
+      assert mandatoryParameterTypes != null;
       if (mandatoryParameterTypes[i] == null) {
         P parameter = mandatoryParameters.get(i);
         mandatoryParameterTypes[i] = new OutputMemberScope(parameter.name()).resolveType(parameter).getJavaType();
@@ -144,6 +145,7 @@ class OutputClassScope extends ClassScope {
         out.comma();
       }
 
+      assert mandatoryParameterTypes != null;
       out.append(mandatoryParameterTypes[i].getShortText(getClassContextNamespace()));
       out.space().append(parameter.name());
       needComa = true;
@@ -152,6 +154,7 @@ class OutputClassScope extends ClassScope {
     for (int i = 0, size = mandatoryParameters.size(); i < size; i++) {
       P parameter = mandatoryParameters.get(i);
       out.newLine();
+      assert mandatoryParameterTypes != null;
       appendWriteValueInvocation(out, parameter, parameter.name(), mandatoryParameterTypes[i]);
     }
     out.closeBlock();

@@ -1,10 +1,16 @@
 package org.jetbrains.protocolReader;
 
+import org.jetbrains.annotations.NotNull;
+
 class QualifiedTypeData {
   private final BoxableType typeRef;
   private final boolean optional;
   private final boolean nullable;
   private final boolean asRawString;
+
+  QualifiedTypeData(BoxableType typeRef, boolean optional) {
+    this(typeRef, optional, false, false);
+  }
 
   QualifiedTypeData(BoxableType typeRef, boolean optional, boolean nullable, boolean asRawString) {
     this.typeRef = typeRef;
@@ -21,7 +27,7 @@ class QualifiedTypeData {
     return typeRef;
   }
 
-  void writeAnnotations(TextOutput out) {
+  void writeAnnotations(@NotNull TextOutput out) {
     if (optional || asRawString) {
       out.append("@org.chromium.protocolReader.JsonField(");
       if (optional) {
