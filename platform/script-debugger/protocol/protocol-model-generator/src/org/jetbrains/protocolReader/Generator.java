@@ -114,58 +114,58 @@ class Generator {
     fileSet.deleteOtherFiles();
   }
 
-  QualifiedTypeData resolveType(final ItemDescriptor typedObject, final ResolveAndGenerateScope scope) {
+  TypeDescriptor resolveType(final ItemDescriptor typedObject, final ResolveAndGenerateScope scope) {
     final boolean optional = typedObject instanceof ItemDescriptor.Named && ((ItemDescriptor.Named)typedObject).optional();
-    return switchByType(typedObject, new TypeVisitor<QualifiedTypeData>() {
+    return switchByType(typedObject, new TypeVisitor<TypeDescriptor>() {
       @Override
-      public QualifiedTypeData visitRef(String refName) {
-        return new QualifiedTypeData(resolveRefType(scope.getDomainName(), refName, scope.getTypeDirection()), optional);
+      public TypeDescriptor visitRef(String refName) {
+        return new TypeDescriptor(resolveRefType(scope.getDomainName(), refName, scope.getTypeDirection()), optional);
       }
 
       @Override
-      public QualifiedTypeData visitBoolean() {
-        return new QualifiedTypeData(BoxableType.BOOLEAN, optional);
+      public TypeDescriptor visitBoolean() {
+        return new TypeDescriptor(BoxableType.BOOLEAN, optional);
       }
 
       @Override
-      public QualifiedTypeData visitEnum(List<String> enumConstants) {
+      public TypeDescriptor visitEnum(List<String> enumConstants) {
         assert scope instanceof MemberScope;
-        return new QualifiedTypeData(((MemberScope)scope).generateEnum(typedObject.description(), enumConstants), optional);
+        return new TypeDescriptor(((MemberScope)scope).generateEnum(typedObject.description(), enumConstants), optional);
       }
 
       @Override
-      public QualifiedTypeData visitString() {
-        return new QualifiedTypeData(BoxableType.STRING, optional);
+      public TypeDescriptor visitString() {
+        return new TypeDescriptor(BoxableType.STRING, optional);
       }
 
       @Override
-      public QualifiedTypeData visitInteger() {
-        return new QualifiedTypeData(BoxableType.INT, optional);
+      public TypeDescriptor visitInteger() {
+        return new TypeDescriptor(BoxableType.INT, optional);
       }
 
       @Override
-      public QualifiedTypeData visitNumber() {
-        return new QualifiedTypeData(BoxableType.NUMBER, optional);
+      public TypeDescriptor visitNumber() {
+        return new TypeDescriptor(BoxableType.NUMBER, optional);
       }
 
       @Override
-      public QualifiedTypeData visitMap() {
-        return new QualifiedTypeData(BoxableType.MAP, optional);
+      public TypeDescriptor visitMap() {
+        return new TypeDescriptor(BoxableType.MAP, optional);
       }
 
       @Override
-      public QualifiedTypeData visitArray(ArrayItemType items) {
-        return new QualifiedTypeData(new ListType(scope.resolveType(items).getType()), optional);
+      public TypeDescriptor visitArray(ArrayItemType items) {
+        return new TypeDescriptor(new ListType(scope.resolveType(items).getType()), optional);
       }
 
       @Override
-      public QualifiedTypeData visitObject(List<ObjectProperty> properties) {
-        return new QualifiedTypeData(scope.generateNestedObject(typedObject.description(), properties), optional);
+      public TypeDescriptor visitObject(List<ObjectProperty> properties) {
+        return new TypeDescriptor(scope.generateNestedObject(typedObject.description(), properties), optional);
       }
 
       @Override
-      public QualifiedTypeData visitUnknown() {
-        return new QualifiedTypeData(BoxableType.STRING, optional, false, true);
+      public TypeDescriptor visitUnknown() {
+        return new TypeDescriptor(BoxableType.STRING, optional, false, true);
       }
     });
   }

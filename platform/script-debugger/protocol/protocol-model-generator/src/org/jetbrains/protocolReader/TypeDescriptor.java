@@ -2,17 +2,17 @@ package org.jetbrains.protocolReader;
 
 import org.jetbrains.annotations.NotNull;
 
-class QualifiedTypeData {
+class TypeDescriptor {
   private final BoxableType type;
   private final boolean optional;
   private final boolean nullable;
   private final boolean asRawString;
 
-  QualifiedTypeData(@NotNull BoxableType type, boolean optional) {
+  TypeDescriptor(@NotNull BoxableType type, boolean optional) {
     this(type, optional, false, false);
   }
 
-  QualifiedTypeData(@NotNull BoxableType type, boolean optional, boolean nullable, boolean asRawString) {
+  TypeDescriptor(@NotNull BoxableType type, boolean optional, boolean nullable, boolean asRawString) {
     this.type = type;
     this.optional = optional;
     this.nullable = nullable;

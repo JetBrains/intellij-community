@@ -18,7 +18,7 @@ class InputClassScope extends ClassScope {
         }
 
         String methodName = Generator.generateMethodNameSubstitute(getName(parameter), out);
-        QualifiedTypeData paramTypeData = newMemberScope(getName(parameter)).resolveType(parameter);
+        TypeDescriptor paramTypeData = newMemberScope(getName(parameter)).resolveType(parameter);
         paramTypeData.writeAnnotations(out);
         out.append(paramTypeData.getType().getShortText(getClassContextNamespace())).space().append(methodName).append("();").newLine();
       }
@@ -36,7 +36,7 @@ class InputClassScope extends ClassScope {
 
         String methodName = Generator.generateMethodNameSubstitute(propertyName, out);
         MemberScope memberScope = newMemberScope(propertyName);
-        QualifiedTypeData propertyTypeData = memberScope.resolveType(objectProperty);
+        TypeDescriptor propertyTypeData = memberScope.resolveType(objectProperty);
         propertyTypeData.writeAnnotations(out);
 
         out.append(propertyTypeData.getType().getShortText(getClassContextNamespace()) + ' ' + methodName + "();").newLine();
@@ -90,7 +90,7 @@ class InputClassScope extends ClassScope {
 
               String methodName = Generator.generateMethodNameSubstitute(getName(property), out);
               MemberScope memberScope = newMemberScope(getName(property));
-              QualifiedTypeData propertyTypeData = memberScope.resolveType(property);
+              TypeDescriptor propertyTypeData = memberScope.resolveType(property);
               propertyTypeData.writeAnnotations(out);
 
               out.append(propertyTypeData.getType().getShortText(getClassContextNamespace()) + ' ' + methodName + "();").newLine();

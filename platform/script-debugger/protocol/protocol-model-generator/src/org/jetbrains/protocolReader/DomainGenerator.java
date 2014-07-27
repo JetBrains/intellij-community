@@ -153,7 +153,7 @@ class DomainGenerator {
           }
 
           @Override
-          public <T extends ItemDescriptor> QualifiedTypeData resolveType(T typedObject) {
+          public <T extends ItemDescriptor> TypeDescriptor resolveType(T typedObject) {
             throw new UnsupportedOperationException();
           }
 
@@ -162,7 +162,7 @@ class DomainGenerator {
             throw new UnsupportedOperationException();
           }
         };
-        QualifiedTypeData itemTypeData = generator.resolveType(items, resolveAndGenerateScope);
+        TypeDescriptor itemTypeData = generator.resolveType(items, resolveAndGenerateScope);
         BoxableType itemBoxableType = itemTypeData.getType();
 
         final BoxableType arrayType = new ListType(itemBoxableType);

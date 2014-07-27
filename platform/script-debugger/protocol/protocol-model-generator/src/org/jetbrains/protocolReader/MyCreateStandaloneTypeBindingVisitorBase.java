@@ -60,7 +60,7 @@ class MyCreateStandaloneTypeBindingVisitorBase extends CreateStandaloneTypeBindi
           }
 
           @Override
-          public <T extends ItemDescriptor> QualifiedTypeData resolveType(T typedObject) {
+          public <T extends ItemDescriptor> TypeDescriptor resolveType(T typedObject) {
             throw new UnsupportedOperationException();
           }
 

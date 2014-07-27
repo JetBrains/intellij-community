@@ -34,7 +34,7 @@ class OutputClassScope extends ClassScope {
       generateConstructor(out, mandatoryParameters, null);
       if (mandatoryParameters.size() == 1) {
         P parameter = mandatoryParameters.get(0);
-        QualifiedTypeData typeData = new OutputMemberScope(getName(parameter)).resolveType(parameter);
+        TypeDescriptor typeData = new OutputMemberScope(getName(parameter)).resolveType(parameter);
         if (typeData.getType().getFullText().equals("int[]")) {
           BoxableType[] types = new BoxableType[mandatoryParameters.size()];
           types[0] = new ListType(BoxableType.INT) {
