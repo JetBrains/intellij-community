@@ -35,6 +35,8 @@ import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.properties.PropertiesMap;
+import org.jetbrains.idea.svn.properties.PropertyConsumer;
+import org.jetbrains.idea.svn.properties.PropertyData;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -129,9 +131,9 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     final Map<File, ThroughRenameInfo> fromTo = collector.getFromTo();
     try {
       final File tmp = FileUtil.createTempDirectory("forRename", "");
-      final ISVNPropertyHandler handler = new ISVNPropertyHandler() {
+      final PropertyConsumer handler = new PropertyConsumer() {
         @Override
-        public void handleProperty(File path, SVNPropertyData property) throws SVNException {
+        public void handleProperty(File path, PropertyData property) throws SVNException {
           final ThroughRenameInfo info = collector.findToFile(new FilePathImpl(path, path.isDirectory()), null);
           if (info != null) {
             if (!properties.containsKey(info.getTo())) {
@@ -142,11 +144,11 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
         }
 
         @Override
-        public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
+        public void handleProperty(SVNURL url, PropertyData property) throws SVNException {
         }
 
         @Override
-        public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
+        public void handleProperty(long revision, PropertyData property) throws SVNException {
         }
       };
 

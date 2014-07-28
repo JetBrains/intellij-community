@@ -22,10 +22,10 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.info.Info;
+import org.jetbrains.idea.svn.properties.PropertyData;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -205,7 +205,7 @@ public class BranchInfo {
       return SvnMergeInfoCache.MergeCheckResult.getInstance(mergeInfo.contains(revisionAsked));
     }
 
-    final SVNPropertyData mergeinfoProperty;
+    final PropertyData mergeinfoProperty;
     SvnTarget target = SvnTarget.fromURL(branchUrl);
 
     try {
@@ -277,7 +277,7 @@ public class BranchInfo {
       return SvnMergeInfoCache.MergeCheckResult.getInstance(merged);
     }
 
-    final SVNPropertyData mergeinfoProperty;
+    final PropertyData mergeinfoProperty;
     try {
       if (actualRevision == targetRevisionCorrected) {
         // look in WC

@@ -37,9 +37,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.properties.PropertyConsumer;
+import org.jetbrains.idea.svn.properties.PropertyData;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -153,18 +153,18 @@ public class PropertiesComponent extends JPanel {
 
   private void collectProperties(@NotNull SvnVcs vcs, @NotNull File file, @NotNull final Map<String, String> props) {
     try {
-      ISVNPropertyHandler handler = new ISVNPropertyHandler() {
-        public void handleProperty(File path, SVNPropertyData property) throws SVNException {
+      PropertyConsumer handler = new PropertyConsumer() {
+        public void handleProperty(File path, PropertyData property) throws SVNException {
           final SVNPropertyValue value = property.getValue();
           if (value != null) {
             props.put(property.getName(), SVNPropertyValue.getPropertyAsString(property.getValue()));
           }
         }
 
-        public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
+        public void handleProperty(SVNURL url, PropertyData property) throws SVNException {
         }
 
-        public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
+        public void handleProperty(long revision, PropertyData property) throws SVNException {
         }
       };
       vcs.getFactory(file).createPropertyClient().list(SvnTarget.fromFile(file, SVNRevision.UNDEFINED), SVNRevision.WORKING, Depth.EMPTY,
@@ -302,7 +302,7 @@ public class PropertiesComponent extends JPanel {
 
     public void actionPerformed(AnActionEvent e) {
       Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
-      SVNPropertyData propValue = null;
+      PropertyData propValue = null;
       try {
         propValue = myVcs.getFactory(myFile).createPropertyClient()
           .getProperty(SvnTarget.fromFile(myFile), SVNProperty.KEYWORDS, false, SVNRevision.WORKING);

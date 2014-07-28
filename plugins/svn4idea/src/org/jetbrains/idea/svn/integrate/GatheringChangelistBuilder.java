@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
+import org.jetbrains.idea.svn.properties.PropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -92,9 +92,9 @@ public class GatheringChangelistBuilder extends EmptyChangelistBuilder {
     SvnTarget target = SvnTarget.fromFile(file);
 
     try {
-      SVNPropertyData current =
+      PropertyData current =
         myVcs.getFactory(target).createPropertyClient().getProperty(target, SvnPropertyKeys.MERGE_INFO, false, SVNRevision.WORKING);
-      SVNPropertyData base =
+      PropertyData base =
         myVcs.getFactory(target).createPropertyClient().getProperty(target, SvnPropertyKeys.MERGE_INFO, false, SVNRevision.BASE);
 
       if (current != null) {

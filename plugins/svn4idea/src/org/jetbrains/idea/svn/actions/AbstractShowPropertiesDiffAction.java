@@ -42,9 +42,9 @@ import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
+import org.jetbrains.idea.svn.properties.PropertyConsumer;
+import org.jetbrains.idea.svn.properties.PropertyData;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -273,35 +273,35 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
 
   private static String getPropertyList(@NotNull SvnVcs vcs, @NotNull SvnTarget target, @Nullable SVNRevision revision)
     throws VcsException {
-    final List<SVNPropertyData> lines = new ArrayList<SVNPropertyData>();
-    final ISVNPropertyHandler propertyHandler = createHandler(revision, lines);
+    final List<PropertyData> lines = new ArrayList<PropertyData>();
+    final PropertyConsumer propertyHandler = createHandler(revision, lines);
 
     vcs.getFactory(target).createPropertyClient().list(target, revision, Depth.EMPTY, propertyHandler);
 
     return toSortedStringPresentation(lines);
   }
 
-  private static ISVNPropertyHandler createHandler(SVNRevision revision, final List<SVNPropertyData> lines) {
+  private static PropertyConsumer createHandler(SVNRevision revision, final List<PropertyData> lines) {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.checkCanceled();
       indicator.setText(SvnBundle.message("show.properties.diff.progress.text.revision.information", revision.toString()));
     }
 
-    return new ISVNPropertyHandler() {
-      public void handleProperty(final File path, final SVNPropertyData property) throws SVNException {
+    return new PropertyConsumer() {
+      public void handleProperty(final File path, final PropertyData property) throws SVNException {
         registerProperty(property);
       }
 
-      public void handleProperty(final SVNURL url, final SVNPropertyData property) throws SVNException {
+      public void handleProperty(final SVNURL url, final PropertyData property) throws SVNException {
         registerProperty(property);
       }
 
-      public void handleProperty(final long revision, final SVNPropertyData property) throws SVNException {
+      public void handleProperty(final long revision, final PropertyData property) throws SVNException {
         // revision properties here
       }
 
-      private void registerProperty(@NotNull SVNPropertyData property) {
+      private void registerProperty(@NotNull PropertyData property) {
         if (indicator != null) {
           indicator.checkCanceled();
           indicator.setText2(SvnBundle.message("show.properties.diff.progress.text2.property.information", property.getName()));
@@ -311,23 +311,23 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
     };
   }
 
-  private static String toSortedStringPresentation(List<SVNPropertyData> lines) {
+  private static String toSortedStringPresentation(List<PropertyData> lines) {
     StringBuilder sb = new StringBuilder();
 
-    Collections.sort(lines, new Comparator<SVNPropertyData>() {
-      public int compare(final SVNPropertyData o1, final SVNPropertyData o2) {
+    Collections.sort(lines, new Comparator<PropertyData>() {
+      public int compare(final PropertyData o1, final PropertyData o2) {
         return o1.getName().compareTo(o2.getName());
       }
     });
 
-    for (SVNPropertyData line : lines) {
+    for (PropertyData line : lines) {
       addPropertyPresentation(line, sb);
     }
 
     return sb.toString();
   }
 
-  private static void addPropertyPresentation(final SVNPropertyData property, final StringBuilder sb) {
+  private static void addPropertyPresentation(final PropertyData property, final StringBuilder sb) {
     if (sb.length() != 0) {
       sb.append(ourPropertiesDelimiter);
     }

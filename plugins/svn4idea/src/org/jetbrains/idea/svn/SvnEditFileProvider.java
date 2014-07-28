@@ -19,7 +19,7 @@ import com.intellij.openapi.vcs.EditFileProvider;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.properties.PropertyClient;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
+import org.jetbrains.idea.svn.properties.PropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -42,7 +42,7 @@ public class SvnEditFileProvider implements EditFileProvider {
       ioFiles[i] = new File(files[i].getPath());
 
       PropertyClient client = myVCS.getFactory(ioFiles[i]).createPropertyClient();
-      SVNPropertyData property = client.getProperty(SvnTarget.fromFile(ioFiles[i], SVNRevision.WORKING), SvnPropertyKeys.SVN_NEEDS_LOCK,
+      PropertyData property = client.getProperty(SvnTarget.fromFile(ioFiles[i], SVNRevision.WORKING), SvnPropertyKeys.SVN_NEEDS_LOCK,
                                                     false, SVNRevision.WORKING);
 
       if (property == null || property.getValue() == null) {

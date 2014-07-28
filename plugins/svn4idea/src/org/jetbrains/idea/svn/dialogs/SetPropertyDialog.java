@@ -29,10 +29,10 @@ import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.properties.PropertyClient;
+import org.jetbrains.idea.svn.properties.PropertyConsumer;
+import org.jetbrains.idea.svn.properties.PropertyData;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -154,7 +154,7 @@ public class SetPropertyDialog extends DialogWrapper {
       return;
     }
     File file = myFiles[0];
-    SVNPropertyData property = !StringUtil.isEmpty(name) ? getProperty(file, name) : null;
+    PropertyData property = !StringUtil.isEmpty(name) ? getProperty(file, name) : null;
 
     if (property != null) {
       myValueText.setText(SVNPropertyValue.getPropertyAsString(property.getValue()));
@@ -165,8 +165,8 @@ public class SetPropertyDialog extends DialogWrapper {
     }
   }
 
-  private SVNPropertyData getProperty(@NotNull File file, @NotNull String name) {
-    SVNPropertyData property;
+  private PropertyData getProperty(@NotNull File file, @NotNull String name) {
+    PropertyData property;
 
     try {
       PropertyClient client = myVCS.getFactory(file).createPropertyClient();
@@ -205,18 +205,18 @@ public class SetPropertyDialog extends DialogWrapper {
     if (files.length == 1) {
       File file = files[0];
       try {
-        ISVNPropertyHandler handler = new ISVNPropertyHandler() {
-          public void handleProperty(File path, SVNPropertyData property) {
+        PropertyConsumer handler = new PropertyConsumer() {
+          public void handleProperty(File path, PropertyData property) {
             String name = property.getName();
             if (name != null) {
               names.add(name);
             }
           }
 
-          public void handleProperty(SVNURL url, SVNPropertyData property) {
+          public void handleProperty(SVNURL url, PropertyData property) {
           }
 
-          public void handleProperty(long revision, SVNPropertyData property) {
+          public void handleProperty(long revision, PropertyData property) {
           }
         };
 
