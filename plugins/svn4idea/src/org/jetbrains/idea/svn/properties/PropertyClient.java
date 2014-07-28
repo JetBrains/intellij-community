@@ -52,7 +52,7 @@ public interface PropertyClient extends SvnClient {
                    @Nullable Depth depth,
                    boolean force) throws VcsException;
 
-  void setProperties(@NotNull File file, @NotNull SVNProperties properties) throws VcsException;
+  void setProperties(@NotNull File file, @NotNull PropertiesMap properties) throws VcsException;
 
   void setRevisionProperty(@NotNull SvnTarget target,
                            @NotNull String property,

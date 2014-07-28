@@ -11,6 +11,7 @@ import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
+import java.util.Map;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -79,8 +80,8 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
   }
 
   @Override
-  public void setProperties(@NotNull File file, @NotNull SVNProperties properties) throws VcsException {
-    final SVNProperties propertiesToSet = properties;
+  public void setProperties(@NotNull File file, @NotNull PropertiesMap properties) throws VcsException {
+    final SVNProperties propertiesToSet = toSvnProperties(properties);
     try {
       createClient().doSetProperty(file, new ISVNPropertyValueProvider() {
         @Override
@@ -111,6 +112,17 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
     catch (SVNException e) {
       throw new SvnBindException(e);
     }
+  }
+
+  @NotNull
+  private static SVNProperties toSvnProperties(@NotNull PropertiesMap properties) {
+    SVNProperties result = new SVNProperties();
+
+    for (Map.Entry<String, SVNPropertyValue> entry : properties.entrySet()) {
+      result.put(entry.getKey(), entry.getValue());
+    }
+
+    return result;
   }
 
   private void runGetProperty(@NotNull SvnTarget target,

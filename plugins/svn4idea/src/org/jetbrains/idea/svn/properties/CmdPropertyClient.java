@@ -24,6 +24,7 @@ import javax.xml.bind.annotation.XmlValue;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -97,24 +98,24 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   }
 
   @Override
-  public void setProperties(@NotNull File file, @NotNull SVNProperties properties) throws VcsException {
-    SVNProperties currentProperties = collectPropertiesToDelete(file);
+  public void setProperties(@NotNull File file, @NotNull PropertiesMap properties) throws VcsException {
+    PropertiesMap currentProperties = collectPropertiesToDelete(file);
     currentProperties.putAll(properties);
 
-    for (String propertyName : currentProperties.nameSet()) {
-      setProperty(file, propertyName, currentProperties.getSVNPropertyValue(propertyName), Depth.EMPTY, true);
+    for (Map.Entry<String, SVNPropertyValue> entry : currentProperties.entrySet()) {
+      setProperty(file, entry.getKey(), entry.getValue(), Depth.EMPTY, true);
     }
   }
 
   @NotNull
-  private SVNProperties collectPropertiesToDelete(@NotNull File file) throws VcsException {
-    final SVNProperties result = new SVNProperties();
+  private PropertiesMap collectPropertiesToDelete(@NotNull File file) throws VcsException {
+    final PropertiesMap result = new PropertiesMap();
 
     list(SvnTarget.fromFile(file), null, Depth.EMPTY, new ISVNPropertyHandler() {
       @Override
       public void handleProperty(File path, SVNPropertyData property) throws SVNException {
         // null indicates property will be deleted
-        result.put(property.getName(), (SVNPropertyValue)null);
+        result.put(property.getName(), null);
       }
 
       @Override

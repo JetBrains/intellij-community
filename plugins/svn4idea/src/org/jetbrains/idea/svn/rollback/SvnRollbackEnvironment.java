@@ -34,6 +34,7 @@ import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
+import org.jetbrains.idea.svn.properties.PropertiesMap;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -100,7 +101,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     };
 
     final List<CopiedAsideInfo> fromToModified = new ArrayList<CopiedAsideInfo>();
-    final Map<File, SVNProperties> properties = ContainerUtil.newHashMap();
+    final Map<File, PropertiesMap> properties = ContainerUtil.newHashMap();
     moveRenamesToTmp(exceptions, fromToModified, properties, collector);
     // adds (deletes)
     // deletes (adds)
@@ -123,7 +124,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
 
   private void moveRenamesToTmp(List<VcsException> exceptions,
                                 List<CopiedAsideInfo> fromToModified,
-                                final Map<File, SVNProperties> properties,
+                                final Map<File, PropertiesMap> properties,
                                 final UnversionedAndNotTouchedFilesGroupCollector collector) {
     final Map<File, ThroughRenameInfo> fromTo = collector.getFromTo();
     try {
@@ -134,7 +135,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
           final ThroughRenameInfo info = collector.findToFile(new FilePathImpl(path, path.isDirectory()), null);
           if (info != null) {
             if (!properties.containsKey(info.getTo())) {
-              properties.put(info.getTo(), new SVNProperties());
+              properties.put(info.getTo(), new PropertiesMap());
             }
             properties.get(info.getTo()).put(property.getName(), property.getValue());
           }
@@ -181,7 +182,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
 
   private void moveGroup(final List<VcsException> exceptions,
                          List<CopiedAsideInfo> fromTo,
-                         Map<File, SVNProperties> properties) {
+                         Map<File, PropertiesMap> properties) {
     Collections.sort(fromTo, new Comparator<CopiedAsideInfo>() {
       @Override
       public int compare(CopiedAsideInfo o1, CopiedAsideInfo o2) {
@@ -240,8 +241,8 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     applyProperties(properties, exceptions);
   }
 
-  private void applyProperties(Map<File, SVNProperties> propertiesMap, final List<VcsException> exceptions) {
-    for (Map.Entry<File, SVNProperties> entry : propertiesMap.entrySet()) {
+  private void applyProperties(Map<File, PropertiesMap> propertiesMap, final List<VcsException> exceptions) {
+    for (Map.Entry<File, PropertiesMap> entry : propertiesMap.entrySet()) {
       File file = entry.getKey();
       try {
         mySvnVcs.getFactory(file).createPropertyClient().setProperties(file, entry.getValue());
