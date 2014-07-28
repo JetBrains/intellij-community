@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
+
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -30,45 +31,43 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * @author ignatov
+ * See {@link PostfixTemplateExpressionSelector} for description
  */
-public abstract class ExpressionPostfixTemplateWithChooser extends PostfixTemplate {
+public class ChooserExpressionSelector implements PostfixTemplateExpressionSelector {
 
   @NotNull
-  protected final PostfixTemplatePsiInfoBase myInfo;
+  private final Condition<PsiElement> myCondition;
 
-  protected ExpressionPostfixTemplateWithChooser(@NotNull String name, @NotNull String example, @NotNull PostfixTemplatePsiInfoBase info) {
-    super(name, example);
-    myInfo = info;
+  public ChooserExpressionSelector(@NotNull Condition<PsiElement> condition) {
+    myCondition = condition;
   }
 
-  protected ExpressionPostfixTemplateWithChooser(@NotNull String name,
-                                                 @NotNull String key,
-                                                 @NotNull String example,
-                                                 @NotNull PostfixTemplatePsiInfoBase info) {
-    super(name, key, example);
-    myInfo = info;
+
+  public boolean hasExpression(@NotNull final PostfixTemplateWithExpressionSelector postfixTemplate,
+                               @NotNull PsiElement context,
+                               @NotNull Document copyDocument,
+                               int newOffset) {
+    return !getExpressions(postfixTemplate, context, copyDocument, newOffset).isEmpty();
   }
 
-  @Override
-  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    return !getExpressions(context, copyDocument, newOffset).isEmpty();
-  }
-
-  @Override
-  public void expand(@NotNull PsiElement context, @NotNull final Editor editor) {
-    List<PsiElement> expressions = getExpressions(context, editor.getDocument(), editor.getCaretModel().getOffset());
+  public void expandTemplate(@NotNull final PostfixTemplateWithExpressionSelector postfixTemplate,
+                             @NotNull PsiElement context,
+                             @NotNull final Editor editor) {
+    List<PsiElement> expressions =
+      getExpressions(postfixTemplate, context, editor.getDocument(), editor.getCaretModel().getOffset());
 
     if (expressions.isEmpty()) {
       PostfixTemplatesUtils.showErrorHint(context.getProject(), editor);
     }
     else if (expressions.size() == 1) {
-      doIt(editor, expressions.get(0));
+      postfixTemplate.expandForChooseExpression(expressions.get(0), editor);
     }
     else {
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        doIt(editor, expressions.get(expressions.size() - 1));
+        PsiElement item = ContainerUtil.getLastItem(expressions);
+        assert item != null;
+        postfixTemplate.expandForChooseExpression(item, editor);
         return;
       }
 
@@ -81,22 +80,25 @@ public abstract class ExpressionPostfixTemplateWithChooser extends PostfixTempla
               public void run() {
                 CommandProcessor.getInstance().executeCommand(e.getProject(), new Runnable() {
                   public void run() {
-                    doIt(editor, e);
+                    postfixTemplate.expandForChooseExpression(e, editor);
                   }
                 }, "Expand postfix template", PostfixLiveTemplate.POSTFIX_TEMPLATE_ID);
               }
             });
           }
         },
-        myInfo.getRenderer(),
+        postfixTemplate.getPsiInfo().getRenderer(),
         "Expressions", 0, ScopeHighlighter.NATURAL_RANGER
       );
     }
   }
 
   @NotNull
-  protected List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, final int offset) {
-    List<PsiElement> possibleExpressions = myInfo.getExpressions(context, document, offset);
+  private List<PsiElement> getExpressions(@NotNull PostfixTemplateWithExpressionSelector postfixTemplate,
+                                          @NotNull PsiElement context,
+                                          @NotNull Document document,
+                                          final int offset) {
+    List<PsiElement> possibleExpressions = postfixTemplate.getPsiInfo().getExpressions(context, document, offset);
     List<PsiElement> expressions = ContainerUtil.filter(possibleExpressions,
                                                         new Condition<PsiElement>() {
                                                           @Override
@@ -105,19 +107,13 @@ public abstract class ExpressionPostfixTemplateWithChooser extends PostfixTempla
                                                           }
                                                         }
     );
-    return ContainerUtil.filter(expressions.isEmpty() ? maybeTopmostExpression(context) : expressions, getTypeCondition());
+    return ContainerUtil
+      .filter(expressions.isEmpty() ? maybeTopmostExpression(postfixTemplate, context) : expressions, myCondition);
   }
+
 
   @NotNull
-  @SuppressWarnings("unchecked")
-  protected Condition<PsiElement> getTypeCondition() {
-    return Condition.TRUE;
+  private static List<PsiElement> maybeTopmostExpression(@NotNull PostfixTemplateWithExpressionSelector postfixTemplate, @NotNull PsiElement context) {
+    return ContainerUtil.createMaybeSingletonList(postfixTemplate.getPsiInfo().getTopmostExpression(context));
   }
-
-  @NotNull
-  private List<PsiElement> maybeTopmostExpression(@NotNull PsiElement context) {
-    return ContainerUtil.createMaybeSingletonList(myInfo.getTopmostExpression(context));
-  }
-
-  protected abstract void doIt(@NotNull Editor editor, @NotNull PsiElement expression);
 }

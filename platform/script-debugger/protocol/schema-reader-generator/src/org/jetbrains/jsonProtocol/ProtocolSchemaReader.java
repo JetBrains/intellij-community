@@ -5,7 +5,6 @@
 package org.jetbrains.jsonProtocol;
 
 import org.jetbrains.io.JsonReaderEx;
-import org.chromium.protocolReader.JsonParseMethod;
 import org.jetbrains.jsonProtocol.ProtocolMetaModel.Root;
 
 import java.io.IOException;

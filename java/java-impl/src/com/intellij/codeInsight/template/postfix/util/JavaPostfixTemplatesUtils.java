@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.template.postfix.util;
 
 import com.intellij.codeInsight.CodeInsightServicesUtil;
-import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInfoBase;
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInfo;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
@@ -36,7 +36,7 @@ public abstract class JavaPostfixTemplatesUtils {
   private JavaPostfixTemplatesUtils() {
   }
 
-  public static final PostfixTemplatePsiInfoBase JAVA_PSI_INFO = new PostfixTemplatePsiInfoBase() {
+  public static final PostfixTemplatePsiInfo JAVA_PSI_INFO = new PostfixTemplatePsiInfo() {
 
     @NotNull
     @Override

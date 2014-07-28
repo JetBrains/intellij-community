@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package org.chromium.protocolReader;
+package org.jetbrains.jsonProtocol;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -10,10 +10,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * For field-reading method specifies its type as {@code nullable}; it means
- * that JSON structure may have null value for a corresponding property.
+ * Marks method as method casting to a subtype. Normally the method return type should be
+ * some other json type, which serves as subtype; the subtype interface must extend
+ * {@link JsonSubtype} (with correct generic parameter).
  */
-@Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface JsonNullable {
+@Target({ ElementType.METHOD })
+public @interface JsonSubtypeCasting {
+  boolean reinterpret() default false;
 }

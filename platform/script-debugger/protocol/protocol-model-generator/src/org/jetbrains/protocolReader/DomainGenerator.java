@@ -153,7 +153,7 @@ class DomainGenerator {
           }
 
           @Override
-          public <T extends ItemDescriptor> QualifiedTypeData resolveType(T typedObject) {
+          public <T extends ItemDescriptor> TypeDescriptor resolveType(T typedObject) {
             throw new UnsupportedOperationException();
           }
 
@@ -162,8 +162,7 @@ class DomainGenerator {
             throw new UnsupportedOperationException();
           }
         };
-        QualifiedTypeData itemTypeData = generator.resolveType(items, resolveAndGenerateScope);
-        BoxableType itemBoxableType = itemTypeData.getJavaType();
+        BoxableType itemBoxableType = generator.resolveType(items, resolveAndGenerateScope).getType();
 
         final BoxableType arrayType = new ListType(itemBoxableType);
         StandaloneTypeBinding.Target target = new StandaloneTypeBinding.Target() {
@@ -178,7 +177,7 @@ class DomainGenerator {
     });
   }
 
-  StandaloneTypeBinding createStandaloneObjectInputTypeBinding(final ProtocolMetaModel.StandaloneType type, final List<ProtocolMetaModel.ObjectProperty> properties) {
+  StandaloneTypeBinding createStandaloneObjectInputTypeBinding(@NotNull final ProtocolMetaModel.StandaloneType type, @Nullable final List<ProtocolMetaModel.ObjectProperty> properties) {
     final String name = type.id();
     final NamePath fullTypeName = generator.getNaming().inputValue.getFullName(domain.domain(), name);
     generator.jsonProtocolParserClassNames.add(fullTypeName.getFullText());
@@ -198,10 +197,12 @@ class DomainGenerator {
           out.doc(type.description());
         }
 
-        out.append("@org.chromium.protocolReader.JsonType").newLine();
+        out.append("@org.jetbrains.jsonProtocol.JsonType").newLine();
         out.append("public interface ").append(className.getLastComponent()).openBlock();
         InputClassScope classScope = new InputClassScope(DomainGenerator.this, className);
-        classScope.generateStandaloneTypeBody(out, properties);
+        if (properties != null) {
+          classScope.generateDeclarationBody(out, properties);
+        }
         classScope.writeAdditionalMembers(out);
         out.closeBlock();
         fileUpdater.update();
@@ -309,16 +310,18 @@ class DomainGenerator {
     fileUpdater.update();
   }
 
-  private void generateJsonProtocolInterface(TextOutput out, String className, String description, List<ProtocolMetaModel.Parameter> parameters, TextOutConsumer additionalMembersText) throws IOException {
+  private void generateJsonProtocolInterface(TextOutput out, String className, String description, List<ProtocolMetaModel.Parameter> parameters, TextOutConsumer additionalMembersText) {
     if (description != null) {
       out.doc(description);
     }
-    out.append("@org.chromium.protocolReader.JsonType").newLine().append("public interface ").append(className).openBlock();
+    out.append("@org.jetbrains.jsonProtocol.JsonType").newLine().append("public interface ").append(className).openBlock();
     InputClassScope classScope = new InputClassScope(this, new NamePath(className, new NamePath(ClassNameScheme.getPackageName(generator.getNaming().inputPackage, domain.domain()))));
     if (additionalMembersText != null) {
       classScope.addMember(additionalMembersText);
     }
-    classScope.generateMainJsonProtocolInterfaceBody(out, parameters);
+    if (parameters != null) {
+      classScope.generateDeclarationBody(out, parameters);
+    }
     classScope.writeAdditionalMembers(out);
     out.closeBlock();
   }

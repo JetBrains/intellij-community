@@ -60,7 +60,7 @@ class MyCreateStandaloneTypeBindingVisitorBase extends CreateStandaloneTypeBindi
           }
 
           @Override
-          public <T extends ItemDescriptor> QualifiedTypeData resolveType(T typedObject) {
+          public <T extends ItemDescriptor> TypeDescriptor resolveType(T typedObject) {
             throw new UnsupportedOperationException();
           }
 
@@ -68,7 +68,7 @@ class MyCreateStandaloneTypeBindingVisitorBase extends CreateStandaloneTypeBindi
           public BoxableType generateNestedObject(String description, List<ProtocolMetaModel.ObjectProperty> properties) {
             return context.generateNestedObject("Item", description, properties);
           }
-        }).getJavaType());
+        }).getType());
       }
     }, generator.generator.getNaming().outputTypedef, TypeData.Direction.OUTPUT);
   }

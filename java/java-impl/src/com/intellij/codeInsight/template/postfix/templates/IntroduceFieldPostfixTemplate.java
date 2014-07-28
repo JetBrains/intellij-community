@@ -23,13 +23,17 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class IntroduceFieldPostfixTemplate extends JavaPostfixTemplateWithChooser {
+import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.selectorWithChooser;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NON_VOID;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+
+public class IntroduceFieldPostfixTemplate extends PostfixTemplateWithExpressionSelector {
   public IntroduceFieldPostfixTemplate() {
-    super("field", "myField = expr");
+    super("field", "myField = expr", JAVA_PSI_INFO, selectorWithChooser(IS_NON_VOID));
   }
 
   @Override
-  protected void doIt(@NotNull Editor editor, @NotNull PsiElement expression) {
+  protected void expandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
     IntroduceFieldHandler handler =
       ApplicationManager.getApplication().isUnitTestMode() ? getMockHandler(expression) : new IntroduceFieldHandler();
     handler.invoke(expression.getProject(), new PsiElement[]{expression}, null);

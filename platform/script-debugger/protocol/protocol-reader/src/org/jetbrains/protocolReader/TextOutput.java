@@ -9,7 +9,7 @@ public class TextOutput {
   private int identLevel;
   private final static int indentGranularity = 2;
   private char[][] indents = {EMPTY_CHARS};
-  private boolean justNewlined;
+  private boolean justNewLined;
   private final StringBuilder out;
 
   public TextOutput(StringBuilder out) {
@@ -41,7 +41,7 @@ public class TextOutput {
 
   public TextOutput newLine() {
     out.append('\n');
-    justNewlined = true;
+    justNewLined = true;
     return this;
   }
 
@@ -122,14 +122,14 @@ public class TextOutput {
     return append("/**").newLine().append(" * ").append(description).newLine().append(" */").newLine();
   }
 
-  public TextOutput quoute(CharSequence s) {
+  public TextOutput quote(CharSequence s) {
     return append('"').append(s).append('"');
   }
 
   public void maybeIndent() {
-    if (justNewlined) {
+    if (justNewLined) {
       out.append(indents[identLevel]);
-      justNewlined = false;
+      justNewLined = false;
     }
   }
 }

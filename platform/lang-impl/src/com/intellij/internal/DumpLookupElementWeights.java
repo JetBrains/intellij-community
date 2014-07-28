@@ -22,7 +22,6 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -53,7 +52,12 @@ public class DumpLookupElementWeights extends AnAction implements DumbAware {
   }
 
   public static void dumpLookupElementWeights(final LookupImpl lookup) {
-    String sb = StringUtil.join(getLookupElementWeights(lookup), "\n");
+    LookupElement selected = lookup.getCurrentItem();
+    String sb = "selected: " + selected;
+    if (selected != null) {
+      sb += "\nprefix: " + lookup.itemPattern(selected);
+    }
+    sb += "\nweights:\n" + StringUtil.join(getLookupElementWeights(lookup), "\n");
     System.out.println(sb);
     LOG.info(sb);
   }

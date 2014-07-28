@@ -408,7 +408,7 @@ public class FileManagerImpl implements FileManager {
     PsiDirectory psiDir = myVFileToPsiDirMap.get(vFile);
     if (psiDir != null) return psiDir;
 
-    if (Registry.is("ide.hide.excluded.files")) {
+    if (Registry.is("ide.hide.excluded.files", true)) {
       if (myFileIndex.isExcludedFile(vFile)) return null;
     }
     else {

@@ -184,23 +184,24 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
         for(int i = 0; i < tree.getRowCount(); i++) {
           final TreeNode treeNode = (TreeNode)tree.getPathForRow(i).getLastPathComponent();
           if(tree.isCollapsed(i) && !treeNode.isLeaf()) {
+            NodeDescriptor nodeDescriptor = null;
             if (treeNode instanceof DebuggerTreeNodeImpl) {
-              final NodeDescriptor nodeDescriptor = ((DebuggerTreeNodeImpl)treeNode).getDescriptor();
-              boolean shouldExpand = filter == null || filter.shouldExpand(treeNode);
-              if (shouldExpand) {
-                // additional checks to prevent infinite expand
-                if (nodeDescriptor instanceof ValueDescriptor) {
-                  final Value value = ((ValueDescriptor)nodeDescriptor).getValue();
-                  shouldExpand = !alreadyExpanded.contains(value);
-                  if (shouldExpand) {
-                    alreadyExpanded.add(value);
-                  }
+              nodeDescriptor = ((DebuggerTreeNodeImpl)treeNode).getDescriptor();
+            }
+            boolean shouldExpand = filter == null || filter.shouldExpand(treeNode);
+            if (shouldExpand) {
+              // additional checks to prevent infinite expand
+              if (nodeDescriptor instanceof ValueDescriptor) {
+                final Value value = ((ValueDescriptor)nodeDescriptor).getValue();
+                shouldExpand = !alreadyExpanded.contains(value);
+                if (shouldExpand) {
+                  alreadyExpanded.add(value);
                 }
               }
-              if (shouldExpand) {
-                anyCollapsed = true;
-                tree.expandRow(i);
-              }
+            }
+            if (shouldExpand) {
+              anyCollapsed = true;
+              tree.expandRow(i);
             }
           }
         }

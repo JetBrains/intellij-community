@@ -1,13 +1,19 @@
 package org.jetbrains.protocolReader;
 
-class QualifiedTypeData {
-  private final BoxableType typeRef;
+import org.jetbrains.annotations.NotNull;
+
+class TypeDescriptor {
+  private final BoxableType type;
   private final boolean optional;
   private final boolean nullable;
   private final boolean asRawString;
 
-  QualifiedTypeData(BoxableType typeRef, boolean optional, boolean nullable, boolean asRawString) {
-    this.typeRef = typeRef;
+  TypeDescriptor(@NotNull BoxableType type, boolean optional) {
+    this(type, optional, false, false);
+  }
+
+  TypeDescriptor(@NotNull BoxableType type, boolean optional, boolean nullable, boolean asRawString) {
+    this.type = type;
     this.optional = optional;
     this.nullable = nullable;
     this.asRawString = asRawString;
@@ -17,13 +23,14 @@ class QualifiedTypeData {
     return nullable;
   }
 
-  BoxableType getJavaType() {
-    return typeRef;
+  @NotNull
+  BoxableType getType() {
+    return type;
   }
 
-  void writeAnnotations(TextOutput out) {
+  void writeAnnotations(@NotNull TextOutput out) {
     if (optional || asRawString) {
-      out.append("@org.chromium.protocolReader.JsonField(");
+      out.append("@org.jetbrains.jsonProtocol.JsonField(");
       if (optional) {
         out.append("optional=true");
       }
@@ -37,7 +44,7 @@ class QualifiedTypeData {
     }
 
     if (isNullable()) {
-      out.append("@org.chromium.protocolReader.JsonNullable").newLine();
+      out.append("@org.jetbrains.jsonProtocol.JsonNullable").newLine();
     }
   }
 }

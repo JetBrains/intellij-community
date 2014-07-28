@@ -354,7 +354,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         FileContent fileContent = (FileContent)content;
         hashId = getHashOfContent(fileContent);
         if (doReadSavedPersistentData) {
-          if (!myContents.isBusyReading()) { // avoid blocking read, we can calculate index value
+          if (!myContents.isBusyReading() || DebugAssertions.EXTRA_SANITY_CHECKS) { // avoid blocking read, we can calculate index value
             ByteSequence bytes = myContents.get(hashId);
             if (bytes != null) {
               data = deserializeSavedPersistentData(bytes);

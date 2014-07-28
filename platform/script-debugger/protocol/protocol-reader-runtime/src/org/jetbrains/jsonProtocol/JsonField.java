@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package org.chromium.protocolReader;
+package org.jetbrains.jsonProtocol;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -25,6 +25,7 @@ public @interface JsonField {
 
   // read any primitive value as String (true as true, number as string - don't try to parse)
   boolean allowAnyPrimitiveValue() default false;
+
   boolean allowAnyPrimitiveValueAndMap() default false;
 
   boolean optional() default false;

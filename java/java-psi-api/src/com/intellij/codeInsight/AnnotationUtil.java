@@ -379,14 +379,14 @@ public class AnnotationUtil {
   @NotNull
   public static PsiAnnotation[] getAllAnnotations(@NotNull PsiModifierListOwner owner,
                                                   boolean inHierarchy,
-                                                  Set<PsiModifierListOwner> visited) {
+                                                  @Nullable Set<PsiModifierListOwner> visited) {
     return getAllAnnotations(owner, inHierarchy, visited, true);
   }
 
   @NotNull
   public static PsiAnnotation[] getAllAnnotations(@NotNull PsiModifierListOwner owner,
                                                   boolean inHierarchy,
-                                                  Set<PsiModifierListOwner> visited, boolean withInferred) {
+                                                  @Nullable Set<PsiModifierListOwner> visited, boolean withInferred) {
     final PsiModifierList list = owner.getModifierList();
     PsiAnnotation[] annotations = PsiAnnotation.EMPTY_ARRAY;
     if (list != null) {

@@ -160,6 +160,10 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "myVersion", "getVersion", "getSelectedVersion", "calculateVersion");
   }
 
+  public void testPreferFieldsToConstants() {
+    checkPreferredItems(0, "dateField", "LocalDate.MAX", "LocalDate.MIN");
+  }
+
   public void testPreferParametersToGetters() throws Throwable {
     checkPreferredItems(0, "a", "I._1", "getLastI", "valueOf");
   }
