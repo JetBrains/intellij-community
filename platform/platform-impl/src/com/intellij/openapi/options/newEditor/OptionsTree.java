@@ -409,12 +409,11 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         myProjectIcon.setBackground(selected ? getSelectionBackground() : getBackground());
         myProjectIcon.setIcon(selected ? AllIcons.General.ProjectConfigurableSelected : AllIcons.General.ProjectConfigurable);
         myProjectIcon.setVisible(true);
-        tree.setToolTipText(OptionsBundle.message(project.isDefault()
+        myProjectIcon.setToolTipText(OptionsBundle.message(project.isDefault()
                                                   ? "configurable.default.project.tooltip"
                                                   : "configurable.current.project.tooltip"));
       } else {
         myProjectIcon.setVisible(false);
-        tree.setToolTipText(null);
       }
       return result;
     }
@@ -625,6 +624,24 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     private MyTree() {
       getInputMap().clear();
       setOpaque(true);
+    }
+
+    @Override
+    public final String getToolTipText(MouseEvent event) {
+      if (event != null) {
+        Point point = event.getPoint();
+        Component component = getDeepestRendererComponentAt(point.x, point.y);
+        if (component instanceof JLabel) {
+          JLabel label = (JLabel)component;
+          if (label.getIcon() != null) {
+            String text = label.getToolTipText();
+            if (text != null) {
+              return text;
+            }
+          }
+        }
+      }
+      return super.getToolTipText(event);
     }
 
     @Override
