@@ -258,13 +258,41 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testAccessingSameArrayElements() { doTest(); }
 
   public void testParametersAreNonnullByDefault() {
-    myFixture.addClass("package javax.annotation; public @interface ParametersAreNonnullByDefault {}");
-    myFixture.addClass("package javax.annotation; public @interface ParametersAreNullableByDefault {}");
+    addJavaxNullabilityAnnotations();
+
+    myFixture.addClass("package javax.annotation;" +
+                       "@javax.annotation.meta.TypeQualifierDefault(java.lang.annotation.ElementType.PARAMETER) @javax.annotation.Nonnull " +
+                       "public @interface ParametersAreNonnullByDefault {}");
+    myFixture.addClass("package javax.annotation;" +
+                       "@javax.annotation.meta.TypeQualifierDefault(java.lang.annotation.ElementType.PARAMETER) @javax.annotation.Nullable " +
+                       "public @interface ParametersAreNullableByDefault {}");
     
     myFixture.addClass("package foo; public class AnotherPackageNotNull { public static void foo(String s) {}}");
     myFixture.addFileToProject("foo/package-info.java", "@javax.annotation.ParametersAreNonnullByDefault package foo;");
     
     doTest(); 
+  }
+
+  private void addJavaxNullabilityAnnotations() {
+    myFixture.addClass("package javax.annotation;" +
+                       "public @interface Nonnull {}");
+    myFixture.addClass("package javax.annotation.meta;" +
+                       "public @interface TypeQualifier {}");
+    myFixture.addClass("package javax.annotation.meta;" +
+                       "public @interface TypeQualifierDefault { java.lang.annotation.ElementType[] value() default {};}");
+  }
+
+  public void testCustomTypeQualifierDefault() {
+    addJavaxNullabilityAnnotations();
+    myFixture.addClass("package bar;" +
+                       "@javax.annotation.meta.TypeQualifierDefault(java.lang.annotation.ElementType.METHOD) @javax.annotation.Nonnull " +
+                       "public @interface MethodsAreNotNullByDefault {}");
+
+    myFixture.addClass("package foo; public class AnotherPackageNotNull { public static native Object foo(String s); }");
+    myFixture.addFileToProject("foo/package-info.java", "@bar.MethodsAreNotNullByDefault package foo;");
+
+    myFixture.enableInspections(new DataFlowInspection());
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 
   public void testTrueOrEqualsSomething() {
