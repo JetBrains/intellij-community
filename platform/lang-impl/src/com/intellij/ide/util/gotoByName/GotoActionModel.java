@@ -24,6 +24,7 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -56,6 +57,7 @@ import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
 
 public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, Comparator<Object>, EdtSortingModel {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.GotoActionModel");
   @Nullable private final Project myProject;
   private final Component myContextComponent;
 
@@ -448,11 +450,15 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     else if (description != null && !description.equals(text) && matcher.matches(description, compiledPattern)) {
       return MatchMode.DESCRIPTION;
     }
+    if (text == null) {
+      LOG.error("Null text for action " + anAction + " of class " + anAction.getClass());
+      return MatchMode.NONE;
+    }
     final String groupName = myActionGroups.get(anAction);
     if (groupName == null) {
-      return text != null && matcher.matches(text, compiledPattern) ? MatchMode.NON_MENU : MatchMode.NONE;
+      return matcher.matches(text, compiledPattern) ? MatchMode.NON_MENU : MatchMode.NONE;
     }
-    return text != null && matcher.matches(groupName + " " + text, compiledPattern) ? MatchMode.GROUP : MatchMode.NONE;
+    return matcher.matches(groupName + " " + text, compiledPattern) ? MatchMode.GROUP : MatchMode.NONE;
   }
 
   @Nullable
@@ -602,7 +608,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   PatternMatcher getMatcher() {
     return myMatcher.get();
   }
-  
+
   public static class ActionWrapper implements Comparable<ActionWrapper>{
     private final AnAction myAction;
     private final MatchMode myMode;
@@ -628,13 +634,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     @Override
     public int compareTo(@NotNull ActionWrapper o) {
       int compared = myMode.compareTo(o.getMode());
-      if (compared == 0) {
-        compared = StringUtil.compare(myAction.getTemplatePresentation().getText(), o.getAction().getTemplatePresentation().getText(), true);
-      }
-      if (compared == 0) {
-        compared = myAction.getClass().getName().compareTo(o.getAction().getClass().getName());
-      }
-      return compared;
+      return compared != 0
+             ? compared
+             : StringUtil.compare(myAction.getTemplatePresentation().getText(), o.getAction().getTemplatePresentation().getText(), true);
     }
 
     private boolean isAvailable() {
