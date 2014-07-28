@@ -164,8 +164,10 @@ public abstract class XDebuggerEvaluator {
     return text;
   }
 
+  @Deprecated
   /**
    * @return delay before showing value tooltip (in ms)
+   * @deprecated Since IDEA 14 it is a platform setting
    */
   public int getValuePopupDelay() {
     return XDebuggerSettingsManager.getInstance().getDataViewSettings().getValueLookupDelay();
