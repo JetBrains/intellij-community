@@ -17,7 +17,6 @@ package com.intellij.codeInsight;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -181,7 +180,6 @@ public class CompleteStatementTest extends EditorActionTestCase {
   }
 
   public void testSCR36110() throws Exception {
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     doTest();
   }
 

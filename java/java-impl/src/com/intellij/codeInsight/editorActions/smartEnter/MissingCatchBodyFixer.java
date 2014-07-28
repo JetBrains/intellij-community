@@ -44,7 +44,4 @@ public class MissingCatchBodyFixer implements Fixer {
     doc.insertString(rParenth.getTextRange().getEndOffset(), "{}");
   }
 
-  private static int startLine(Document doc, PsiElement psiElement) {
-    return doc.getLineNumber(psiElement.getTextRange().getStartOffset());
-  }
 }
