@@ -43,8 +43,6 @@ public class StudyStartupActivity implements StartupActivity, DumbAware {
                 @Override
                 public void run() {
                   StudyToolWindowFactory factory = new StudyToolWindowFactory();
-
-                  factory.init(newWindow);
                   factory.createToolWindowContent(project, newWindow);
                 }
               });
