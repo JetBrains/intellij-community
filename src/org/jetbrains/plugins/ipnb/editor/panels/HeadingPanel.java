@@ -86,4 +86,7 @@ public class HeadingPanel extends IpnbPanel {
     return label;
   }
 
+  public HeadingCell getCell() {
+    return myCell;
+  }
 }

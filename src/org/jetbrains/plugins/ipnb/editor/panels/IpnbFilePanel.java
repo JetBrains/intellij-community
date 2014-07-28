@@ -175,8 +175,8 @@ public class IpnbFilePanel extends JPanel {
     }
   }
 
-  public void setSelectedCell(IpnbPanel IpnbPanel) {
-    mySelectedCell = IpnbPanel;
+  public void setSelectedCell(@NotNull final IpnbPanel ipnbPanel) {
+    mySelectedCell = ipnbPanel;
     requestFocus();
     repaint();
   }
