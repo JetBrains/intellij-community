@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.IOUtil;
@@ -169,7 +170,6 @@ public class JarHandler extends ZipHandler {
 
       info = new CacheLibraryInfo(mirrorFile.getName(), originalAttributes.lastModified, originalAttributes.length);
       CacheLibraryInfo.ourCachedLibraryInfo.put(path, info);
-      CacheLibraryInfo.ourCachedLibraryInfo.force();
       return mirrorFile;
     }
     catch (IOException ex) {
@@ -260,6 +260,12 @@ public class JarHandler extends ZipHandler {
       }
       assert info != null;
       ourCachedLibraryInfo = info;
+      FlushingDaemon.everyFiveSeconds(new Runnable() {
+        @Override
+        public void run() {
+          if (ourCachedLibraryInfo.isDirty()) ourCachedLibraryInfo.force();
+        }
+      });
     }
 
     private CacheLibraryInfo(@NotNull String path, long time, long length) {
