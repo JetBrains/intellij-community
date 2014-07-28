@@ -9,11 +9,10 @@ import org.jetbrains.plugins.ipnb.format.cells.output.HtmlCellOutput;
 import javax.swing.*;
 import java.awt.*;
 
-public class HtmlPanel extends JPanel {
+public class HtmlPanel extends IpnbPanel {
   @NotNull private final Project myProject;
 
   public HtmlPanel(@NotNull final Project project, @NotNull final HtmlCellOutput cell) {
-    super(new BorderLayout());
     myProject = project;
     add(createPanel(cell), BorderLayout.CENTER);
   }

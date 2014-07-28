@@ -38,6 +38,9 @@ import java.util.List;
  * @author traff
  */
 public class IpnbEditorUtil {
+  public enum PromptType { In, Out }
+
+  public static Dimension PROMPT_SIZE = new Dimension(80, 30);
 
   public static Editor createPythonCodeEditor(@NotNull Project project, @NotNull String text) {
     EditorEx editor =
@@ -74,13 +77,24 @@ public class IpnbEditorUtil {
     return PsiDocumentManager.getInstance(project).getDocument(fragment);
   }
 
-  public static JComponent createPromptComponent(@NotNull String promptText) {
+  public static JComponent createPromptComponent(int promptNumber, @NotNull final PromptType type) {
+    final String promptText = prompt(promptNumber, type);
     JLabel promptLabel = new JLabel(promptText);
+    promptLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+    promptLabel.setPreferredSize(PROMPT_SIZE);
     promptLabel.setFont(promptLabel.getFont().deriveFont(Font.BOLD));
-    promptLabel.setForeground(JBColor.BLUE);
+    final JBColor darkRed = new JBColor(new Color(210, 30, 50), new Color(210, 30, 50));
+    promptLabel.setForeground(type == PromptType.In ? JBColor.BLUE : darkRed);
     promptLabel.setBackground(getBackground());
     return promptLabel;
   }
+
+  protected static String prompt(int promptNumber, @NotNull final PromptType type) {
+    if (type == PromptType.In)
+      return String.format(type + " [%d]:", promptNumber);
+    return String.format(type + "[%d]:", promptNumber);
+  }
+
 
   public static Color getBackground() {
     return EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();

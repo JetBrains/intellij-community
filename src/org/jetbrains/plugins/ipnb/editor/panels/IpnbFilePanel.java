@@ -27,10 +27,6 @@ import org.jetbrains.plugins.ipnb.format.cells.CodeCell;
 import org.jetbrains.plugins.ipnb.format.cells.HeadingCell;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
 import org.jetbrains.plugins.ipnb.format.cells.MarkdownCell;
-import org.jetbrains.plugins.ipnb.format.cells.output.CellOutput;
-import org.jetbrains.plugins.ipnb.format.cells.output.HtmlCellOutput;
-import org.jetbrains.plugins.ipnb.format.cells.output.ImageCellOutput;
-import org.jetbrains.plugins.ipnb.format.cells.output.LatexCellOutput;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,24 +41,22 @@ import java.util.List;
 public class IpnbFilePanel extends JPanel {
 
   public static final int INSET_Y = 10;
-  public static final int INSET_X = 3;
+  public static final int INSET_X = 5;
   private final IpnbFile myIpnbFile;
-
 
   private Project myProject;
   @Nullable private Disposable myParent;
 
-  private final List<RenderedCell> myRenderedCells = Lists.newArrayList();
+  private final List<IpnbPanel> myIpnbPanels = Lists.newArrayList();
 
-  private RenderedCell mySelectedCell;
+  private IpnbPanel mySelectedCell;
 
-  public IpnbFilePanel(@NotNull Project project, @Nullable Disposable parent, @NotNull IpnbFile file) {
+  public IpnbFilePanel(@NotNull final Project project, @Nullable final Disposable parent, @NotNull final IpnbFile file) {
     super();
     myProject = project;
     myParent = parent;
     setLayout(new GridBagLayout());
     setBackground(IpnbEditorUtil.getBackground());
-
     myIpnbFile = file;
 
     layoutFile(file);
@@ -80,12 +74,15 @@ public class IpnbFilePanel extends JPanel {
   private void layoutFile(IpnbFile file) {
     GridBagConstraints c = new GridBagConstraints();
     c.fill = GridBagConstraints.HORIZONTAL;
-    c.anchor = GridBagConstraints.PAGE_START;
-    c.gridx = 1;
+    c.gridx = 0;
     c.gridy = 0;
     c.gridwidth = 1;
-
     c.insets = new Insets(INSET_Y, INSET_X, 0, 0);
+
+    final JPanel panel = new JPanel();
+    panel.setPreferredSize(IpnbEditorUtil.PROMPT_SIZE);
+    panel.setBackground(getBackground());
+    add(panel);
 
     for (IpnbCell cell : file.getCells()) {
       c.gridy = addCellToPanel(cell, c);
@@ -95,74 +92,34 @@ public class IpnbFilePanel extends JPanel {
     add(createEmptyPanel(), c);
   }
 
-  protected static String prompt(int promptNumber, String type) {
-    return String.format(type + "[%d]:", promptNumber);
-  }
-
-  public void addPromptPanel(int promptNumber,
-                             String promptType,
-                             JComponent component,
-                             GridBagConstraints c) {
-    c.gridx = 0;
-    JComponent promptComponent = IpnbEditorUtil.createPromptComponent(prompt(promptNumber, promptType));
-    add(promptComponent, c);
-
-    c.gridx = 1;
-    c.ipady = 10;
-    c.weightx = 1;
-    add(component, c);
-    c.weightx = 0;
-    c.ipady = 0;
-
-    myRenderedCells.add(RenderedCell.create(component));
-  }
-
   private int addCellToPanel(IpnbCell cell, GridBagConstraints c) {
     if (cell instanceof CodeCell) {
+      final CodePanel comp = new CodePanel(myProject, myParent, (CodeCell)cell);
       c.gridwidth = 2;
       c.gridx = 0;
-
-      CodeCell codeCell = (CodeCell)cell;
-
-      addPromptPanel(codeCell.getPromptNumber(), "In", new CodeSourcePanel(myProject, myParent, codeCell.getSourceAsString()), c);
-
-      c.gridx = 1;
-      c.gridwidth = 1;
-
-      for (CellOutput cellOutput : codeCell.getCellOutputs()) {
-        c.gridy++;
-        if (cellOutput instanceof ImageCellOutput) {
-          addPromptPanel(codeCell.getPromptNumber(), "Out",
-                         new ImagePanel(myProject, (ImageCellOutput)cellOutput), c);
-        }
-        else if (cellOutput instanceof HtmlCellOutput) {
-          addPromptPanel(codeCell.getPromptNumber(), "Out",
-                         new HtmlPanel(myProject, (HtmlCellOutput)cellOutput), c);
-        }
-        else if (cellOutput instanceof LatexCellOutput) {
-          addPromptPanel(codeCell.getPromptNumber(), "Out",
-                         new LatexPanel(myProject, (LatexCellOutput)cellOutput), c);
-        }
-        else if (cellOutput.getSourceAsString() != null) {
-          addPromptPanel(codeCell.getPromptNumber(), "Out",
-                         new CodeOutputPanel(cellOutput.getSourceAsString()), c);
-        }
-      }
+      add(comp, c);
+      myIpnbPanels.add(comp);
     }
     else if (cell instanceof MarkdownCell) {
       final MarkdownPanel comp = new MarkdownPanel(myProject, (MarkdownCell)cell);
-      add(comp, c);
-      myRenderedCells.add(RenderedCell.create(comp));
+      addComponent(c, comp);
     }
     else if (cell instanceof HeadingCell) {
-      final HeadingPanel comp = new HeadingPanel(myProject, (HeadingCell)cell);
-      add(comp, c);
-      myRenderedCells.add(RenderedCell.create(comp));
+      final HeadingPanel comp = new HeadingPanel((HeadingCell)cell);
+      addComponent(c, comp);
     }
     else {
       throw new UnsupportedOperationException(cell.getClass().toString());
     }
     return c.gridy + 1;
+  }
+
+  private void addComponent(@NotNull final GridBagConstraints c, @NotNull final IpnbPanel comp) {
+    c.gridwidth = 1;
+    c.gridx = 1;
+    add(comp, c);
+
+    myIpnbPanels.add(comp);
   }
 
   private JPanel createEmptyPanel() {
@@ -184,17 +141,17 @@ public class IpnbFilePanel extends JPanel {
     }
   }
 
-  private void selectPrev(@NotNull RenderedCell cell) {
-    int index = myRenderedCells.indexOf(cell);
-    if (index>0) {
-      setSelectedCell(myRenderedCells.get(index-1));
+  private void selectPrev(@NotNull IpnbPanel cell) {
+    int index = myIpnbPanels.indexOf(cell);
+    if (index > 0) {
+      setSelectedCell(myIpnbPanels.get(index - 1));
     }
   }
 
-  private void selectNext(@NotNull RenderedCell cell) {
-    int index = myRenderedCells.indexOf(cell);
-    if (index<myRenderedCells.size()-1) {
-      setSelectedCell(myRenderedCells.get(index+1));
+  private void selectNext(@NotNull IpnbPanel cell) {
+    int index = myIpnbPanels.indexOf(cell);
+    if (index < myIpnbPanels.size() - 1) {
+      setSelectedCell(myIpnbPanels.get(index + 1));
     }
   }
 
@@ -202,29 +159,29 @@ public class IpnbFilePanel extends JPanel {
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
     if (mySelectedCell != null) {
-      g.setColor(JBColor.GREEN);
-      g.drawRect(2, mySelectedCell.getTop()-1, getWidth() - 4, mySelectedCell.getHeight()+2);
+      g.setColor(mySelectedCell.isEditing() ? JBColor.GREEN : JBColor.GRAY);
+      g.drawRect(2, mySelectedCell.getTop() - 1, getWidth() - 4, mySelectedCell.getHeight() + 2);
     }
   }
 
   private void updateCellSelection(MouseEvent e) {
     if (e.getClickCount()>0) {
-      RenderedCell renderedCell = getRenderedCellByClick(e.getPoint());
-      if (renderedCell != null) {
-        setSelectedCell(renderedCell);
+      IpnbPanel IpnbPanel = getIpnbPanelByClick(e.getPoint());
+      if (IpnbPanel != null) {
+        setSelectedCell(IpnbPanel);
       }
     }
   }
 
-  private void setSelectedCell(RenderedCell renderedCell) {
-    mySelectedCell = renderedCell;
+  public void setSelectedCell(IpnbPanel IpnbPanel) {
+    mySelectedCell = IpnbPanel;
     requestFocus();
     repaint();
   }
 
   @Nullable
-  private RenderedCell getRenderedCellByClick(Point point) {
-    for (RenderedCell c: myRenderedCells) {
+  private IpnbPanel getIpnbPanelByClick(Point point) {
+    for (IpnbPanel c: myIpnbPanels) {
       if (c.contains(point.y)) {
         return c;
       }

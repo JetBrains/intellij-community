@@ -15,7 +15,7 @@ import org.scilab.forge.jlatexmath.TeXIcon;
 import javax.swing.*;
 import java.awt.*;
 
-public class LatexPanel extends JPanel {
+public class LatexPanel extends IpnbPanel {
   private static final Logger LOG = Logger.getInstance(LatexPanel.class);
   private boolean myEditing = false;
   private Project myProject;

@@ -15,12 +15,11 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-public class ImagePanel extends JPanel {
+public class ImagePanel extends IpnbPanel {
   private static final Logger LOG = Logger.getInstance(ImagePanel.class);
   @NotNull private final Project myProject;
 
   public ImagePanel(@NotNull final Project project, @NotNull final ImageCellOutput cell) {
-    super(new BorderLayout());
     myProject = project;
     add(createPanel(cell), BorderLayout.CENTER);
   }

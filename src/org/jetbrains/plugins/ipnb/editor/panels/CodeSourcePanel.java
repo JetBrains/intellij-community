@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.JBColor;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 
 import javax.swing.*;
@@ -28,16 +29,18 @@ import java.awt.*;
 /**
  * @author traff
  */
-public class CodeSourcePanel extends JPanel implements EditorPanel {
+public class CodeSourcePanel extends IpnbPanel implements EditorPanel {
   private final Editor myEditor;
 
   public CodeSourcePanel(Project project, Disposable parent, String source) {
-    super(new BorderLayout());
-    if (source.startsWith("%%"))
+    if (source.startsWith("%"))
       myEditor = IpnbEditorUtil.createPlainCodeEditor(project, source);
     else
       myEditor = IpnbEditorUtil.createPythonCodeEditor(project, source);
-    add(myEditor.getComponent(), BorderLayout.CENTER);
+    final JComponent component = myEditor.getComponent();
+    component.setBackground(JBColor.lightGray);
+    add(component, BorderLayout.CENTER);
+    setBorder(BorderFactory.createLineBorder(JBColor.lightGray));
     Disposer.register(parent, new Disposable() {
       @Override
       public void dispose() {

@@ -30,13 +30,11 @@ import org.scilab.forge.jlatexmath.TeXIcon;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
 /**
  * @author traff
  */
-public class MarkdownPanel extends JPanel {
+public class MarkdownPanel extends IpnbPanel{
   private static final Logger LOG = Logger.getInstance(MarkdownPanel.class);
   private boolean myEditing = false;
   private Project myProject;
@@ -47,16 +45,6 @@ public class MarkdownPanel extends JPanel {
     myProject = project;
     initPanel(cell.getSource());
 
-
-    addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2) {
-//          setEditing(true); TODO: replace panel with editable textarea
-          throw new IllegalStateException("not supported");
-        }
-      }
-    });
   }
 
   private void initPanel(@Nullable final String[] text) {
