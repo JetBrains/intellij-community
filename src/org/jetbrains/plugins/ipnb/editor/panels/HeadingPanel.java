@@ -29,16 +29,7 @@ public class HeadingPanel extends IpnbPanel {
         final MouseEvent parentEvent = SwingUtilities.convertMouseEvent(panel, e, parent);
         parent.dispatchEvent(parentEvent);
         if (e.getClickCount() == 2) {
-          setEditing(true);
-          final LayoutManager layout = getLayout();
-          if (layout instanceof CardLayout) {
-            ((CardLayout)layout).show(HeadingPanel.this, EDITABLE_PANEL);
-
-            if (parent instanceof IpnbFilePanel) {
-              ((IpnbFilePanel)parent).setSelectedCell(HeadingPanel.this);
-              parent.repaint();
-            }
-          }
+          switchToEditing(parent);
         }
       }
     });
@@ -46,6 +37,19 @@ public class HeadingPanel extends IpnbPanel {
     add(panel, VIEW_PANEL);
     final JTextArea textArea = createEditablePanel();
     add(textArea, EDITABLE_PANEL);
+  }
+
+  public void switchToEditing(@NotNull final Container parent) {
+    setEditing(true);
+    final LayoutManager layout = getLayout();
+    if (layout instanceof CardLayout) {
+      ((CardLayout)layout).show(this, EDITABLE_PANEL);
+
+      if (parent instanceof IpnbFilePanel) {
+        ((IpnbFilePanel)parent).setSelectedCell(this);
+        parent.repaint();
+      }
+    }
   }
 
   public void runCell() {

@@ -130,6 +130,9 @@ public class IpnbFilePanel extends JPanel {
   @Override
   protected void processKeyEvent(KeyEvent e) {
     if (mySelectedCell != null && e.getID() == KeyEvent.KEY_PRESSED) {
+      if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+        mySelectedCell.switchToEditing(this);
+      }
       if (e.getKeyCode() == KeyEvent.VK_UP) {
         selectPrev(mySelectedCell);
       }

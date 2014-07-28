@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
-import org.jetbrains.plugins.ipnb.editor.panels.HeadingPanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
 
@@ -29,9 +28,7 @@ public class IpnbRunCellAction extends AnAction {
 
   public void runCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
     final IpnbPanel cell = ipnbFilePanel.getSelectedCell();
-    if (cell instanceof HeadingPanel) {
-      ((HeadingPanel)cell).runCell();
-      ipnbFilePanel.repaint();
-    }
+    cell.runCell();
+    ipnbFilePanel.repaint();
   }
 }

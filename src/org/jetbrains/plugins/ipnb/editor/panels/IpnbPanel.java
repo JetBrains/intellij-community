@@ -34,4 +34,8 @@ public class IpnbPanel extends JPanel {
   public void setEditing(boolean editing) {
     myEditing = editing;
   }
+
+  public void switchToEditing(@NotNull final Container parent) {}
+
+  public void runCell() {}
 }
