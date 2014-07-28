@@ -19,6 +19,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
@@ -61,7 +62,6 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
 
   /**
    * If a given element matches the prefix, give it for further processing (which may eventually result in its appearing in the completion list)
-   * @param element
    */
   public abstract void addElement(@NotNull final LookupElement element);
 
@@ -75,15 +75,17 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
     }
   }
 
+  @Contract(value="", pure=true)
   @NotNull public abstract CompletionResultSet withPrefixMatcher(@NotNull PrefixMatcher matcher);
 
   /**
    * Creates a default camel-hump prefix matcher based on given prefix
-   * @param prefix
    */
+  @Contract(value="", pure=true)
   @NotNull public abstract CompletionResultSet withPrefixMatcher(@NotNull String prefix);
 
   @NotNull
+  @Contract(value="", pure=true)
   public abstract CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter);
 
   public abstract void addLookupAdvertisement(@NotNull String text);
@@ -92,6 +94,7 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
    * @return A result set with the same prefix, but the lookup strings will be matched case-insensitively. Their lookup strings will
    * remain as they are though, so upon insertion the prefix case will be changed.
    */
+  @Contract(value="", pure=true)
   @NotNull public abstract CompletionResultSet caseInsensitive();
 
   @NotNull
