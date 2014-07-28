@@ -13,38 +13,38 @@ import java.awt.event.MouseEvent;
 public class HeadingPanel extends IpnbPanel {
   private final HeadingCell myCell;
 
+  private final static String EDITABLE_PANEL = "Editable panel";
+  private final static String VIEW_PANEL = "View panel";
+
   public HeadingPanel(@NotNull final HeadingCell cell) {
+    super(new CardLayout());
     myCell = cell;
-    final JLabel panel = createPanel();
+    final JLabel panel = createViewPanel("<html><h" + myCell.getLevel() + ">" + myCell.getSourceAsString() + "</h" + myCell.getLevel() + "></html>");
     panel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
         if (e.getClickCount() == 2) {
           setEditing(true);
-          updatePanel(myCell.getSourceAsString());
-          final Container parent = getParent();
-          if (parent instanceof IpnbFilePanel) {
-            ((IpnbFilePanel)parent).setSelectedCell(HeadingPanel.this);
-            repaint();
-            parent.repaint();
+          final LayoutManager layout = getLayout();
+          if (layout instanceof CardLayout) {
+            ((CardLayout)layout).show(HeadingPanel.this, EDITABLE_PANEL);
+            final Container parent = getParent();
+            if (parent instanceof IpnbFilePanel) {
+              ((IpnbFilePanel)parent).setSelectedCell(HeadingPanel.this);
+              parent.repaint();
+            }
           }
         }
       }
     });
-    add(panel, BorderLayout.CENTER);
+
+    add(panel, VIEW_PANEL);
+    final JTextArea textArea = createEditablePanel();
+    add(textArea, EDITABLE_PANEL);
   }
 
-  private JLabel createPanel() {
-    final String text = "<html><h" + myCell.getLevel() + ">" + myCell.getSourceAsString() + "</h" + myCell.getLevel() + "></html>";
-    JBLabel label = new JBLabel(text);
-    label.setBackground(IpnbEditorUtil.getBackground());
-    label.setOpaque(true);
-    return label;
-  }
-
-  private void updatePanel(@NotNull final String text) {
-    removeAll();
-    final JTextArea textArea = new JTextArea(text);
+  private JTextArea createEditablePanel() {
+    final JTextArea textArea = new JTextArea(myCell.getSourceAsString());
     textArea.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
@@ -57,7 +57,14 @@ public class HeadingPanel extends IpnbPanel {
         }
       }
     });
-
-    add(textArea, BorderLayout.CENTER);
+    return textArea;
   }
+
+  private JLabel createViewPanel(@NotNull final String text) {
+    JBLabel label = new JBLabel(text);
+    label.setBackground(IpnbEditorUtil.getBackground());
+    label.setOpaque(true);
+    return label;
+  }
+
 }
