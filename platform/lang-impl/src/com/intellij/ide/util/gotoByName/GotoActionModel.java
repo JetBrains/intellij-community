@@ -24,7 +24,6 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -57,7 +56,6 @@ import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
 
 public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, Comparator<Object>, EdtSortingModel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.GotoActionModel");
   @Nullable private final Project myProject;
   private final Component myContextComponent;
 
@@ -68,16 +66,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   private Pattern myCompiledPattern;
 
   protected final SearchableOptionsRegistrar myIndex;
-  protected final Map<AnAction, String> myActionsMap = new TreeMap<AnAction, String>(new Comparator<AnAction>() {
-    @Override
-    public int compare(@NotNull AnAction o1, @NotNull AnAction o2) {
-      int compare = Comparing.compare(o1.getTemplatePresentation().getText(), o2.getTemplatePresentation().getText());
-      if (compare == 0 && !o1.equals(o2)) {
-        return o1.hashCode() - o2.hashCode();
-      }
-      return compare;
-    }
-  });
+  protected final Map<AnAction, String> myActionGroups = ContainerUtil.newHashMap();
 
   protected final Map<String, ApplyIntentionAction> myIntentions = new TreeMap<String, ApplyIntentionAction>();
   private final Map<String, String> myConfigurablesNames = ContainerUtil.newTroveMap();
@@ -90,7 +79,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     myProject = project;
     myContextComponent = component;
     final ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
-    collectActions(myActionsMap, mainMenu, mainMenu.getTemplatePresentation().getText());
+    collectActions(myActionGroups, mainMenu, mainMenu.getTemplatePresentation().getText());
     if (project != null && editor != null && file != null) {
       final ApplyIntentionAction[] children = ApplyIntentionAction.getAvailableIntentions(editor, file);
       if (children != null) {
@@ -459,15 +448,11 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     else if (description != null && !description.equals(text) && matcher.matches(description, compiledPattern)) {
       return MatchMode.DESCRIPTION;
     }
-    if (text == null) {
-      LOG.error("Null text for action " + anAction + " of class " + anAction.getClass());
-      return MatchMode.NONE;
-    }
-    final String groupName = myActionsMap.get(anAction);
+    final String groupName = myActionGroups.get(anAction);
     if (groupName == null) {
-      return matcher.matches(text, compiledPattern) ? MatchMode.NON_MENU : MatchMode.NONE;
+      return text != null && matcher.matches(text, compiledPattern) ? MatchMode.NON_MENU : MatchMode.NONE;
     }
-    return matcher.matches(groupName + " " + text, compiledPattern) ? MatchMode.GROUP : MatchMode.NONE;
+    return text != null && matcher.matches(groupName + " " + text, compiledPattern) ? MatchMode.GROUP : MatchMode.NONE;
   }
 
   @Nullable
@@ -643,9 +628,13 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     @Override
     public int compareTo(@NotNull ActionWrapper o) {
       int compared = myMode.compareTo(o.getMode());
-      return compared != 0
-             ? compared
-             : StringUtil.compare(myAction.getTemplatePresentation().getText(), o.getAction().getTemplatePresentation().getText(), true);
+      if (compared == 0) {
+        compared = StringUtil.compare(myAction.getTemplatePresentation().getText(), o.getAction().getTemplatePresentation().getText(), true);
+      }
+      if (compared == 0) {
+        compared = myAction.getClass().getName().compareTo(o.getAction().getClass().getName());
+      }
+      return compared;
     }
 
     private boolean isAvailable() {
