@@ -183,6 +183,8 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static Editor createEditor(@NotNull VirtualFile file) {
     Editor editor = FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), file, 0), false);
     ((EditorImpl)editor).setCaretActive();
+    // temporary logging, to investigate blinking tests
+    System.out.println("Editor created with fonts: " + editor.getColorsScheme().getFontPreferences().getEffectiveFontFamilies());
     return editor;
   }
 
