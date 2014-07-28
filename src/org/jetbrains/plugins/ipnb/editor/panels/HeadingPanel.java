@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
@@ -45,6 +47,8 @@ public class HeadingPanel extends IpnbPanel {
 
   private JTextArea createEditablePanel() {
     final JTextArea textArea = new JTextArea(myCell.getSourceAsString());
+    textArea.setBorder(BorderFactory.createLineBorder(JBColor.lightGray));
+    textArea.setBackground(Gray._247);
     textArea.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
