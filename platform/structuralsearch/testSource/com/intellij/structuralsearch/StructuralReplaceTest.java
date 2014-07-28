@@ -1809,6 +1809,35 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     );
   }
 
+  public void testUseStaticImport() {
+    final String in = "class X {{ Math.abs(-1); }}";
+    final String what = "Math.abs('a)";
+    final String by = "Math.abs($a$)";
+    options.setToUseStaticImport(true);
+
+    final String expected = "import static java.lang.Math.abs;class X {{ abs(-1); }}";
+    assertEquals("Replacing with static import", expected, replacer.testReplace(in, what, by, options, true));
+  }
+
+  public void testUseStaticStarImport() {
+    final String in = "class ImportTest {{\n" +
+                      "    Math.abs(-0.5);\n" +
+                      "    Math.sin(0.5);\n" +
+                      "    Math.max(1, 2);\n" +
+                      "}}";
+    final String what = "Math.'m('a*)";
+    final String by = "Math.$m$($a$)";
+    options.setToUseStaticImport(true);
+
+    // depends on default setting being equal to 3 for names count to use import on demand
+    final String expected = "import static java.lang.Math.*;class ImportTest {{\n" +
+                            "    abs(-0.5);\n" +
+                            "    sin(0.5);\n" +
+                            "    max(1,2);\n" +
+                            "}}";
+    assertEquals("Replacing with static star import", expected, replacer.testReplace(in, what, by, options, true));
+  }
+
   public void testReformatAndShortenClassRefPerformance() throws IOException {
     final String testName = getTestName(false);
     final String ext = "java";
