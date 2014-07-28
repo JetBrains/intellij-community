@@ -34,7 +34,7 @@ import java.awt.*;
 /**
  * @author traff
  */
-public class MarkdownPanel extends IpnbPanel{
+public class MarkdownPanel extends IpnbPanel {
   private static final Logger LOG = Logger.getInstance(MarkdownPanel.class);
   private boolean myEditing = false;
   private Project myProject;

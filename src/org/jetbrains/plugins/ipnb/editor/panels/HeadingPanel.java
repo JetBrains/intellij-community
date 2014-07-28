@@ -25,12 +25,15 @@ public class HeadingPanel extends IpnbPanel {
     panel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
+        final Container parent = getParent();
+        final MouseEvent parentEvent = SwingUtilities.convertMouseEvent(panel, e, parent);
+        parent.dispatchEvent(parentEvent);
         if (e.getClickCount() == 2) {
           setEditing(true);
           final LayoutManager layout = getLayout();
           if (layout instanceof CardLayout) {
             ((CardLayout)layout).show(HeadingPanel.this, EDITABLE_PANEL);
-            final Container parent = getParent();
+
             if (parent instanceof IpnbFilePanel) {
               ((IpnbFilePanel)parent).setSelectedCell(HeadingPanel.this);
               parent.repaint();

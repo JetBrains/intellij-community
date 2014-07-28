@@ -165,10 +165,10 @@ public class IpnbFilePanel extends JPanel {
   }
 
   private void updateCellSelection(MouseEvent e) {
-    if (e.getClickCount()>0) {
-      IpnbPanel IpnbPanel = getIpnbPanelByClick(e.getPoint());
-      if (IpnbPanel != null) {
-        setSelectedCell(IpnbPanel);
+    if (e.getClickCount() > 0) {
+      IpnbPanel ipnbPanel = getIpnbPanelByClick(e.getPoint());
+      if (ipnbPanel != null) {
+        setSelectedCell(ipnbPanel);
       }
     }
   }
