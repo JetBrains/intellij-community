@@ -57,8 +57,8 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
 
     myEditor = createEditor(project, vFile);
 
-    final JPanel mainPanel = new JPanel(new BorderLayout());
-    mainPanel.setBackground(IpnbEditorUtil.getBackground());
+    myEditorPanel = new JPanel(new BorderLayout());
+    myEditorPanel.setBackground(IpnbEditorUtil.getBackground());
 
     myIpnbEditorPanel = createIpnbEditorPanel(myProject, vFile, this);
 
@@ -77,10 +77,8 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     controlPanel.add(button);
     final MatteBorder border = BorderFactory.createMatteBorder(0, 0, 1, 0, JBColor.GRAY);
     controlPanel.setBorder(border);
-    mainPanel.add(controlPanel, BorderLayout.NORTH);
-    mainPanel.add(myIpnbEditorPanel, BorderLayout.CENTER);
-
-    myEditorPanel = new MyScrollPane(mainPanel);
+    myEditorPanel.add(controlPanel, BorderLayout.NORTH);
+    myEditorPanel.add(new MyScrollPane(myIpnbEditorPanel), BorderLayout.CENTER);
   }
 
   @NotNull
