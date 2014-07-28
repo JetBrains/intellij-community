@@ -130,6 +130,13 @@
     <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("PrintStream").withParameters("java.lang.String", "java.lang.String").definedInClass("java.io.PrintStream"))]]></place>
     <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("encode").withParameters("java.lang.String", "java.lang.String").definedInClass("java.net.URLEncoder"))]]></place>
     <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("decode").withParameters("java.lang.String", "java.lang.String").definedInClass("java.net.URLDecoder"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("setCharacterEncoding").withParameters("java.lang.String").definedInClass("javax.servlet.ServletResponse"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("newReader").withParameters("java.nio.channels.ReadableByteChannel", "java.lang.String").definedInClass("java.nio.channels.Channels"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("newWriter").withParameters("java.nio.channels.WritableByteChannel", "java.lang.String").definedInClass("java.nio.channels.Channels"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("createXMLEventReader").withParameters("java.io.InputStream", "java.lang.String").definedInClass("javax.xml.stream.XMLInputFactory"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("createXMLStreamReader").withParameters("java.io.InputStream", "java.lang.String").definedInClass("javax.xml.stream.XMLInputFactory"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("createXMLEventWriter").withParameters("java.io.OutputStream", "java.lang.String").definedInClass("javax.xml.stream.XMLInputFactory"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("createXMLStreamWriter").withParameters("java.io.OutputStream", "java.lang.String").definedInClass("javax.xml.stream.XMLInputFactory"))]]></place>
   </injection>
 
 </component>
