@@ -36,7 +36,7 @@ public class MissingCatchBodyFixer implements Fixer {
     final Document doc = editor.getDocument();
 
     PsiCodeBlock body = catchSection.getCatchBlock();
-    if (body != null && startLine(doc, body) == startLine(doc, catchSection)) return;
+    if (body != null && body.getLBrace() != null && body.getRBrace() != null) return;
 
     final PsiJavaToken rParenth = catchSection.getRParenth();
     if (rParenth == null) return;

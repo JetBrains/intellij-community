@@ -83,6 +83,22 @@ public class PlainEnterProcessor implements EnterProcessor {
 
   @Nullable
   private static PsiCodeBlock getControlStatementBlock(int caret, PsiElement element) {
+    if (element instanceof PsiTryStatement) {
+      PsiCodeBlock tryBlock = ((PsiTryStatement)element).getTryBlock();
+      if (tryBlock != null && caret < tryBlock.getTextRange().getEndOffset()) return tryBlock;
+
+      for (PsiCodeBlock catchBlock : ((PsiTryStatement)element).getCatchBlocks()) {
+        if (catchBlock != null && caret < catchBlock.getTextRange().getEndOffset()) return catchBlock;
+      }
+
+      return ((PsiTryStatement)element).getFinallyBlock();
+    }
+
+    if (element instanceof PsiMethod) {
+      PsiCodeBlock methodBody = ((PsiMethod)element).getBody();
+      if (methodBody != null) return methodBody;
+    }
+
     PsiStatement body = null;
     if (element instanceof PsiIfStatement) {
       body =  ((PsiIfStatement)element).getThenBranch();
@@ -101,10 +117,6 @@ public class PlainEnterProcessor implements EnterProcessor {
     }
     else if (element instanceof PsiDoWhileStatement) {
       body =  ((PsiDoWhileStatement)element).getBody();
-    }
-    else if (element instanceof PsiMethod) {
-      PsiCodeBlock methodBody = ((PsiMethod)element).getBody();
-      if (methodBody != null) return methodBody;
     }
 
     return body instanceof PsiBlockStatement ? ((PsiBlockStatement)body).getCodeBlock() : null;
