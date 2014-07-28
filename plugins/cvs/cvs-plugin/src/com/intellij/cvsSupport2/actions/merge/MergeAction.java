@@ -59,12 +59,12 @@ public class MergeAction extends AnAction {
       final VcsContext context = CvsContextWrapper.createCachedInstance(e);
       final VirtualFile[] files = context.getSelectedFiles();
       if (files.length == 0) return;
+      final Project project = context.getProject();
       final ReadonlyStatusHandler.OperationStatus operationStatus =
-        ReadonlyStatusHandler.getInstance(context.getProject()).ensureFilesWritable(files);
+        ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
       if (operationStatus.hasReadonlyFiles()) {
         return;
       }
-      final Project project = context.getProject();
       AbstractVcsHelper.getInstance(project).showMergeDialog(Arrays.asList(files), new CvsMergeProvider());
     }
     catch (Exception e1) {
