@@ -52,10 +52,9 @@ public class IpnbFilePanel extends JPanel {
   private IpnbPanel mySelectedCell;
 
   public IpnbFilePanel(@NotNull final Project project, @Nullable final Disposable parent, @NotNull final IpnbFile file) {
-    super();
+    super(new GridBagLayout());
     myProject = project;
     myParent = parent;
-    setLayout(new GridBagLayout());
     setBackground(IpnbEditorUtil.getBackground());
     myIpnbFile = file;
 
@@ -160,7 +159,7 @@ public class IpnbFilePanel extends JPanel {
     super.paintComponent(g);
     if (mySelectedCell != null) {
       g.setColor(mySelectedCell.isEditing() ? JBColor.GREEN : JBColor.GRAY);
-      g.drawRect(2, mySelectedCell.getTop() - 1, getWidth() - 4, mySelectedCell.getHeight() + 2);
+      g.drawRect(100, mySelectedCell.getTop() - 1, getWidth() - 200, mySelectedCell.getHeight() + 2);
     }
   }
 
@@ -177,6 +176,10 @@ public class IpnbFilePanel extends JPanel {
     mySelectedCell = IpnbPanel;
     requestFocus();
     repaint();
+  }
+
+  public IpnbPanel getSelectedCell() {
+    return mySelectedCell;
   }
 
   @Nullable

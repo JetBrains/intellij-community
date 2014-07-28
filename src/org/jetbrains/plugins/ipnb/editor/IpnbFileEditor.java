@@ -1,8 +1,10 @@
 package org.jetbrains.plugins.ipnb.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl;
@@ -13,16 +15,21 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.format.IpnbParser;
 
 import javax.swing.*;
+import javax.swing.border.MatteBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 
@@ -38,6 +45,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
   private final JComponent myEditorPanel;
 
   private final TextEditor myEditor;
+  private final IpnbFilePanel myIpnbEditorPanel;
 
 
   public IpnbFileEditor(Project project, VirtualFile vFile) {
@@ -49,11 +57,34 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
 
     myEditor = createEditor(project, vFile);
 
-    myEditorPanel = new MyScrollPane(createIpnbEditorPanel(myProject, vFile, this));
+    final JPanel mainPanel = new JPanel(new BorderLayout());
+    mainPanel.setBackground(IpnbEditorUtil.getBackground());
+
+    myIpnbEditorPanel = createIpnbEditorPanel(myProject, vFile, this);
+
+    final JPanel controlPanel = new JPanel();
+    controlPanel.setBackground(IpnbEditorUtil.getBackground());
+    final JButton button = new JButton();
+    button.setPreferredSize(new Dimension(30, 30));
+    button.setIcon(AllIcons.General.Run);
+    button.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final IpnbRunCellAction action = (IpnbRunCellAction)ActionManager.getInstance().getAction("IpnbRunCellAction");
+        action.runCell(myIpnbEditorPanel);
+      }
+    });
+    controlPanel.add(button);
+    final MatteBorder border = BorderFactory.createMatteBorder(0, 0, 1, 0, JBColor.GRAY);
+    controlPanel.setBorder(border);
+    mainPanel.add(controlPanel, BorderLayout.NORTH);
+    mainPanel.add(myIpnbEditorPanel, BorderLayout.CENTER);
+
+    myEditorPanel = new MyScrollPane(mainPanel);
   }
 
   @NotNull
-  private JComponent createIpnbEditorPanel(Project project, VirtualFile vFile, Disposable parent) {
+  private IpnbFilePanel createIpnbEditorPanel(Project project, VirtualFile vFile, Disposable parent) {
     try {
       return new IpnbFilePanel(project, parent, IpnbParser.parseIpnbFile(new String(vFile.contentsToByteArray(), CharsetToolkit.UTF8)));
     }
@@ -61,6 +92,10 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
       Messages.showErrorDialog(project, e.getMessage(), "Can't open " + vFile.getPath());
       throw new IllegalStateException(e);
     }
+  }
+
+  public IpnbFilePanel getIpnbEditorPanel() {
+    return myIpnbEditorPanel;
   }
 
   @NotNull

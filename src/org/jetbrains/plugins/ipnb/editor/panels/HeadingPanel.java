@@ -48,6 +48,14 @@ public class HeadingPanel extends IpnbPanel {
     add(textArea, EDITABLE_PANEL);
   }
 
+  public void runCell() {
+    final LayoutManager layout = getLayout();
+    if (layout instanceof CardLayout) {
+      ((CardLayout)layout).show(HeadingPanel.this, VIEW_PANEL);
+      setEditing(false);
+    }
+  }
+
   private JTextArea createEditablePanel() {
     final JTextArea textArea = new JTextArea(myCell.getSourceAsString());
     textArea.setBorder(BorderFactory.createLineBorder(JBColor.lightGray));
