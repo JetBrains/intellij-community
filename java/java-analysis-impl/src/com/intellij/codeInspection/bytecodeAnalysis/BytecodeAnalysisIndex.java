@@ -16,8 +16,6 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
@@ -42,12 +40,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Long, IdEquat
   private static final SmartLongKeyDescriptor KEY_DESCRIPTOR = new SmartLongKeyDescriptor();
 
   private static final int ourInternalVersion = 3;
-  private static boolean ourEnabled = SystemProperties.getBooleanProperty("idea.enable.bytecode.contract.inference", isEnabledByDefault());
-
-  private static boolean isEnabledByDefault() {
-    Application application = ApplicationManager.getApplication();
-    return application.isInternal() || application.isUnitTestMode();
-  }
+  private static boolean ourEnabled = SystemProperties.getBooleanProperty("idea.enable.bytecode.contract.inference", true);
 
   @NotNull
   @Override
