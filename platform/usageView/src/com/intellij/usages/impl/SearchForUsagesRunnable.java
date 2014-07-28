@@ -19,6 +19,7 @@ import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -71,6 +72,7 @@ class SearchForUsagesRunnable implements Runnable {
   @NonNls private static final String FIND_OPTIONS_HREF_TARGET = "FindOptions";
   @NonNls private static final String SEARCH_IN_PROJECT_HREF_TARGET = "SearchInProject";
   @NonNls private static final String LARGE_FILES_HREF_TARGET = "LargeFiles";
+  @NonNls private static final String SHOW_PROJECT_FILE_OCCURRENCES_HREF_TARGET = "SHOW_PROJECT_FILE_OCCURRENCES";
   private final AtomicInteger myUsageCountWithoutDefinition = new AtomicInteger(0);
   private final AtomicReference<Usage> myFirstUsage = new AtomicReference<Usage>();
   @NotNull
@@ -135,23 +137,41 @@ class SearchForUsagesRunnable implements Runnable {
                             + UsageViewBundle.message("large.files.were.ignored", largeFiles.size()) + "</a>)";
 
       resultLines.add(shortMessage);
-      resultListener = new HyperlinkAdapter(){
-        @Override
-        protected void hyperlinkActivated(HyperlinkEvent e) {
-          if (e.getDescription().equals(LARGE_FILES_HREF_TARGET)) {
-            String detailedMessage = detailedLargeFilesMessage(largeFiles);
-            List<String> strings = new ArrayList<String>(lines);
-            strings.add(detailedMessage);
-            ToolWindowManager.getInstance(project).notifyByBalloon(ToolWindowId.FIND, info, wrapInHtml(strings), AllIcons.Actions.Find, listener);
-          }
-          else if (listener != null) {
-            listener.hyperlinkUpdate(e);
-          }
+      resultListener = addHrefHandling(resultListener, LARGE_FILES_HREF_TARGET, new Runnable() {
+        public void run() {
+          String detailedMessage = detailedLargeFilesMessage(largeFiles);
+          List<String> strings = new ArrayList<String>(lines);
+          strings.add(detailedMessage);
+          //noinspection SSBasedInspection
+          ToolWindowManager.getInstance(project).notifyByBalloon(ToolWindowId.FIND, info, wrapInHtml(strings), AllIcons.Actions.Find, listener);
         }
-      };
+      });
     }
 
+    Runnable searchIncludingProjectFileUsages = processPresentation.searchIncludingProjectFileUsages();
+    if (searchIncludingProjectFileUsages != null) {
+      resultLines.add("Occurrences in " + ApplicationNamesInfo.getInstance().getProductName() + " project files are skipped. " +
+                      "<a href='" + SHOW_PROJECT_FILE_OCCURRENCES_HREF_TARGET + "'>Include them</a>");
+      resultListener = addHrefHandling(resultListener, SHOW_PROJECT_FILE_OCCURRENCES_HREF_TARGET, searchIncludingProjectFileUsages);
+    }
+
+    //noinspection SSBasedInspection
     ToolWindowManager.getInstance(project).notifyByBalloon(ToolWindowId.FIND, info, wrapInHtml(resultLines), AllIcons.Actions.Find, resultListener);
+  }
+
+  private static HyperlinkListener addHrefHandling(@Nullable final HyperlinkListener listener,
+                                                   @NotNull final String hrefTarget, @NotNull final Runnable handler) {
+    return new HyperlinkAdapter() {
+      @Override
+      protected void hyperlinkActivated(HyperlinkEvent e) {
+        if (e.getDescription().equals(hrefTarget)) {
+          handler.run();
+        }
+        else if (listener != null) {
+          listener.hyperlinkUpdate(e);
+        }
+      }
+    };
   }
 
   @NotNull
@@ -460,7 +480,9 @@ class SearchForUsagesRunnable implements Runnable {
         hyperlinkListener = createSearchInProjectListener();
       }
 
-      if (!myProcessPresentation.getLargeFiles().isEmpty() || myOutOfScopeUsages.get() != 0) {
+      if (!myProcessPresentation.getLargeFiles().isEmpty() ||
+          myOutOfScopeUsages.get() != 0 ||
+          myProcessPresentation.searchIncludingProjectFileUsages() != null) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {

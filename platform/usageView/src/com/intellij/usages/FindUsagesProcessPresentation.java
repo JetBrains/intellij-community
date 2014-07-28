@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -41,6 +42,7 @@ public class FindUsagesProcessPresentation {
   private Factory<ProgressIndicator> myProgressIndicatorFactory;
   private Collection<PsiFile> myLargeFiles;
   private boolean myShowFindOptionsPrompt = true;
+  private Runnable mySearchWithProjectFiles;
 
   public FindUsagesProcessPresentation(@NotNull UsageViewPresentation presentation) {
     myUsageViewPresentation = presentation;
@@ -78,6 +80,15 @@ public class FindUsagesProcessPresentation {
 
   public void setProgressIndicatorFactory(@NotNull Factory<ProgressIndicator> progressIndicatorFactory) {
     myProgressIndicatorFactory = progressIndicatorFactory;
+  }
+
+  @Nullable
+  public Runnable searchIncludingProjectFileUsages() {
+    return mySearchWithProjectFiles;
+  }
+
+  public void projectFileUsagesFound(@NotNull Runnable searchWithProjectFiles) {
+    mySearchWithProjectFiles = searchWithProjectFiles;
   }
 
   public void setLargeFilesWereNotScanned(@NotNull Collection<PsiFile> largeFiles) {
