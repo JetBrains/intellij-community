@@ -60,6 +60,12 @@ def is_jinja2_context_call(frame):
 
 def is_jinja2_internal_function(frame):
     return DictContains(frame.f_locals, 'self') and frame.f_locals['self'].__class__.__name__ in \
-        ('LoopContext', 'TemplateReference', 'Macro', 'Markup', 'BlockReference')
+        ('LoopContext', 'TemplateReference', 'Macro', 'BlockReference')
+
+def find_jinja2_render_frame(frame):
+    while frame is not None and not is_jinja2_render_call(frame):
+        frame = frame.f_back
+
+    return frame
 
 

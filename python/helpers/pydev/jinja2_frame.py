@@ -2,7 +2,7 @@
 from django_frame import FCode
 from pydevd_file_utils import GetFileNameAndBaseFromFile
 from runfiles import DictContains
-from jinja2.utils import missing
+
 
 class Jinja2TemplateFrame:
 
@@ -12,7 +12,7 @@ class Jinja2TemplateFrame:
         if 'context' in frame.f_locals:
             #sometimes we don't have 'context', e.g. in macros
             self.back_context = frame.f_locals['context']
-        self.f_code = FCode('Jinja2 Template', file_name)
+        self.f_code = FCode('template', file_name)
         self.f_lineno = get_jinja2_template_line(frame)
         self.f_back = find_render_function_frame(frame)
         self.f_globals = {}
@@ -29,11 +29,14 @@ class Jinja2TemplateFrame:
                 if not k in res:
                     #local variables should shadow globals from context
                     res[k] = v
-            elif k is not missing:
-                key = k[2:]
-                res[key] = v
+            elif v and not is_missing(v):
+                res[k[2:]] = v
         return res
 
+def is_missing(item):
+    if item.__class__.__name__ is 'MissingType':
+        return True
+    return False
 
 def find_render_function_frame(frame):
     #in order to hide internal rendering functions

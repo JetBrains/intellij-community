@@ -3,7 +3,7 @@ from django_debug import find_django_render_frame
 from django_frame import just_raised
 from django_frame import is_django_exception_break_context
 from django_frame import DjangoTemplateFrame
-from jinja2_debug import Jinja2LineBreakpoint, is_jinja2_render_call, suspend_jinja2, is_jinja2_suspended, is_jinja2_context_call, is_jinja2_internal_function
+from jinja2_debug import Jinja2LineBreakpoint, is_jinja2_render_call, suspend_jinja2, is_jinja2_suspended, is_jinja2_context_call, is_jinja2_internal_function, find_jinja2_render_frame
 from jinja2_frame import Jinja2TemplateFrame, get_jinja2_template_filename, get_jinja2_template_line
 from pydevd_comm import * #@UnusedWildImport
 from pydevd_breakpoints import * #@UnusedWildImport
@@ -77,16 +77,27 @@ class PyDBFrame:
                                     suspend_frame.f_back = frame
                                     frame = suspend_frame
 
-                        #if mainDebugger.jinja2_exception_break:
-                        #    if get_exception_name(exception) is 'TemplateSyntaxError':
-                        #      add_exception_to_frame(suspend_frame, (exception, value, trace))
-                        #      pydevd_vars.addAdditionalFrameById(GetThreadId(thread), {id(frame): frame})
-                        #      self.setSuspend(thread, CMD_ADD_JINJA2_EXCEPTION_BREAK)
-                        #      thread.additionalInfo.suspend_type = JINJA2_SUSPEND
-                        #      thread.additionalInfo.filename = frame.f_code.co_filename
-                        #      thread.additionalInfo.line = frame.f_lineno
-                        #      flag = True
-                        #      print "i have jinja2 exception breakpoints"
+                        if mainDebugger.jinja2_exception_break:
+                            if get_exception_name(exception) in ('UndefinedError', 'TemplateNotFound', 'TemplatesNotFound'):
+                                #errors in rendering
+                                render_frame = find_jinja2_render_frame(frame)
+                                if render_frame:
+                                    suspend_frame = suspend_jinja2(self, mainDebugger, thread, render_frame, CMD_ADD_JINJA2_EXCEPTION_BREAK)
+                                    if suspend_frame:
+                                        add_exception_to_frame(suspend_frame, (exception, value, trace))
+                                        flag = True
+                                        suspend_frame.f_back = frame
+                                        frame = suspend_frame
+                            elif get_exception_name(exception) in ('TemplateSyntaxError', 'TemplateAssertionError'):
+                                #errors in compile time
+                                name = frame.f_code.co_name
+                                if name in ('template', 'top-level template code') or name.startswith('block '):
+                                    #Jinja2 translates exception info and creates fake frame on his own
+                                    self.setSuspend(thread, CMD_ADD_JINJA2_EXCEPTION_BREAK)
+                                    add_exception_to_frame(frame, (exception, value, trace))
+                                    thread.additionalInfo.suspend_type = JINJA2_SUSPEND
+                                    flag = True
+
                     except:
                         flag = False
 
@@ -114,10 +125,7 @@ class PyDBFrame:
 
             if event not in ('line', 'call', 'return'):
                 if event == 'exception':
-                    print "event = exception"
                     (flag, frame) = self.shouldStopOnException(frame, event, arg)
-                    print "flag ", flag
-                    print "frame ", frame.__class__.__name__
                     if flag:
                         self.handle_exception(frame, event, arg)
                         return self.trace_dispatch
