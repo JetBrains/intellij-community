@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.svn;
 
-import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.jetbrains.idea.svn.status.StatusType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,8 +51,8 @@ public interface TreeConflictData {
                                         "@@ -0,0 +1,1 @@\n" +
                                         "+added text\n" +
                                         "\\ No newline at end of file\n",
-                                        "added.txt", new FileData[]{new FileData("added.txt", "unversioned text", SVNStatusType.STATUS_UNVERSIONED,
-                                                                    SVNStatusType.STATUS_UNVERSIONED, SVNStatusType.STATUS_UNVERSIONED,
+                                        "added.txt", new FileData[]{new FileData("added.txt", "unversioned text", StatusType.STATUS_UNVERSIONED,
+                                                                    StatusType.STATUS_UNVERSIONED, StatusType.STATUS_UNVERSIONED,
                                                                     false)});
 
     Data MINE_EDIT_THEIRS_DELETE = new Data("Index: root/source/s1.txt\n" +
@@ -62,8 +62,8 @@ public interface TreeConflictData {
                                             "@@ -1,1 +0,0 @@\n" +
                                             "-123\n" +
                                             "\\ No newline at end of file\n", "root/source/s1.txt",
-                                            new FileData[] {new FileData("root/source/s1.txt", "1*2*3", SVNStatusType.STATUS_NORMAL,
-                                                                         SVNStatusType.STATUS_MODIFIED, SVNStatusType.STATUS_NORMAL, false)});
+                                            new FileData[] {new FileData("root/source/s1.txt", "1*2*3", StatusType.STATUS_NORMAL,
+                                                                         StatusType.STATUS_MODIFIED, StatusType.STATUS_NORMAL, false)});
     Data MINE_DELETE_THEIRS_EDIT = new Data("Index: root/source/s1.txt\n" +
                                             "===================================================================\n" +
                                             "--- root/source/s1.txt\t(revision 358)\n" +
@@ -73,24 +73,24 @@ public interface TreeConflictData {
                                             "\\ No newline at end of file\n" +
                                             "+1*2*3\n" +
                                             "\\ No newline at end of file\n", "root/source/s1.txt",
-                                            new FileData[] {new FileData("root/source/s1.txt", null, SVNStatusType.STATUS_DELETED,
-                                                                         SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_DELETED, false)});
+                                            new FileData[] {new FileData("root/source/s1.txt", null, StatusType.STATUS_DELETED,
+                                                                         StatusType.STATUS_DELETED, StatusType.STATUS_DELETED, false)});
 
     Data MINE_EDIT_THEIRS_MOVE = new Data("Index: root/source/s1.txt\n" +
                                           "===================================================================\n" +
                                           "--- root/source/s1.txt\t(revision 358)\n" +
                                           "+++ root/source/s1renamed.txt\t(revision )\n" +
                                           "@@ -1,0 +1,0 @@\n", "root/source/s1.txt",
-                                          new FileData[] {new FileData("root/source/s1.txt", "1*2*3", SVNStatusType.STATUS_NORMAL,
-                                                                       SVNStatusType.STATUS_MODIFIED, SVNStatusType.STATUS_NORMAL, false)});
+                                          new FileData[] {new FileData("root/source/s1.txt", "1*2*3", StatusType.STATUS_NORMAL,
+                                                                       StatusType.STATUS_MODIFIED, StatusType.STATUS_NORMAL, false)});
 
     Data MINE_UNV_THEIRS_MOVE = new Data("Index: root/source/s1.txt\n" +
                                           "===================================================================\n" +
                                           "--- root/source/s1.txt\t(revision 358)\n" +
                                           "+++ root/source/s1renamed.txt\t(revision )\n" +
                                           "@@ -1,0 +1,0 @@\n", "root/source/s1renamed.txt",
-                                          new FileData[] {new FileData("root/source/s1renamed.txt", "1*2*3", SVNStatusType.STATUS_UNVERSIONED,
-                                                                       SVNStatusType.STATUS_UNVERSIONED, SVNStatusType.STATUS_UNVERSIONED,
+                                          new FileData[] {new FileData("root/source/s1renamed.txt", "1*2*3", StatusType.STATUS_UNVERSIONED,
+                                                                       StatusType.STATUS_UNVERSIONED, StatusType.STATUS_UNVERSIONED,
                                                                        false)});
     Data MINE_MOVE_THEIRS_EDIT = new Data("Index: root/source/s1.txt\n" +
                                             "===================================================================\n" +
@@ -102,10 +102,10 @@ public interface TreeConflictData {
                                             "+1*2*3\n" +
                                             // conflict would be marked by svn on s1.txt, but here we put s1moved.txt, for change list manager to find the change
                                             "\\ No newline at end of file\n", "root/source/s1moved.txt",
-                                            new FileData[] {new FileData("root/source/s1moved.txt", null, SVNStatusType.STATUS_ADDED,
-                                                                         SVNStatusType.STATUS_ADDED, SVNStatusType.STATUS_ADDED, false, "root/source/s1.txt"),
-                                              new FileData("root/source/s1.txt", null, SVNStatusType.STATUS_DELETED,
-                                              SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_DELETED, false)});
+                                            new FileData[] {new FileData("root/source/s1moved.txt", null, StatusType.STATUS_ADDED,
+                                                                         StatusType.STATUS_ADDED, StatusType.STATUS_ADDED, false, "root/source/s1.txt"),
+                                              new FileData("root/source/s1.txt", null, StatusType.STATUS_DELETED,
+                                              StatusType.STATUS_DELETED, StatusType.STATUS_DELETED, false)});
     Data MINE_MOVE_THEIRS_ADD = new Data("Index: root/source/s1moved.txt\n" +
                                          "===================================================================\n" +
                                          "--- root/source/s1moved.txt\t(revision )\n" +
@@ -114,10 +114,10 @@ public interface TreeConflictData {
                                          "+added text\n" +
                                          "\\ No newline at end of file\n",
                                          "root/source/s1moved.txt",
-                                         new FileData[] {new FileData("root/source/s1moved.txt", null, SVNStatusType.STATUS_ADDED,
-                                                  SVNStatusType.STATUS_ADDED, SVNStatusType.STATUS_ADDED, false, "root/source/s1.txt"),
-      new FileData("root/source/s1.txt", null, SVNStatusType.STATUS_DELETED,
-                   SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_DELETED, false)}) {
+                                         new FileData[] {new FileData("root/source/s1moved.txt", null, StatusType.STATUS_ADDED,
+                                                  StatusType.STATUS_ADDED, StatusType.STATUS_ADDED, false, "root/source/s1.txt"),
+      new FileData("root/source/s1.txt", null, StatusType.STATUS_DELETED,
+                   StatusType.STATUS_DELETED, StatusType.STATUS_DELETED, false)}) {
       @Override
       protected void afterInit() {
         setExcludeFromToTheirsCheck("root\\source\\s1.txt");
@@ -133,11 +133,11 @@ public interface TreeConflictData {
                                         "@@ -0,0 +1,1 @@\n" +
                                         "+added text\n" +
                                         "\\ No newline at end of file\n",
-                                        "addedDir", new FileData[]{new FileData("addedDir", null, SVNStatusType.STATUS_UNVERSIONED,
-                                                                    SVNStatusType.STATUS_UNVERSIONED, SVNStatusType.STATUS_UNVERSIONED,
+                                        "addedDir", new FileData[]{new FileData("addedDir", null, StatusType.STATUS_UNVERSIONED,
+                                                                    StatusType.STATUS_UNVERSIONED, StatusType.STATUS_UNVERSIONED,
                                                                     true),
-                                                                   new FileData("addedDir/unv.txt", "unversioned", SVNStatusType.STATUS_UNVERSIONED,
-                                                                          SVNStatusType.STATUS_UNVERSIONED, SVNStatusType.STATUS_UNVERSIONED,
+                                                                   new FileData("addedDir/unv.txt", "unversioned", StatusType.STATUS_UNVERSIONED,
+                                                                          StatusType.STATUS_UNVERSIONED, StatusType.STATUS_UNVERSIONED,
                                                                           false)});
 
     Data MINE_EDIT_THEIRS_DELETE = new Data("Index: root/source/s1.txt\n" +
@@ -154,8 +154,8 @@ public interface TreeConflictData {
                                             "@@ -1,1 +0,0 @@\n" +
                                             "-abc\n" +
                                             "\\ No newline at end of file\n", "root/source",
-                                            new FileData[] {new FileData("root/source/s1.txt", "1*2*3", SVNStatusType.STATUS_NORMAL,
-                                                                         SVNStatusType.STATUS_MODIFIED, SVNStatusType.STATUS_NORMAL, false)});
+                                            new FileData[] {new FileData("root/source/s1.txt", "1*2*3", StatusType.STATUS_NORMAL,
+                                                                         StatusType.STATUS_MODIFIED, StatusType.STATUS_NORMAL, false)});
     Data MINE_DELETE_THEIRS_EDIT = new Data("Index: root/source/s1.txt\n" +
                                             "===================================================================\n" +
                                             "--- root/source/s1.txt\t(revision 358)\n" +
@@ -165,8 +165,8 @@ public interface TreeConflictData {
                                             "\\ No newline at end of file\n" +
                                             "+1*2*3\n" +
                                             "\\ No newline at end of file\n", "root/source",
-                                            new FileData[] {new FileData("root/source", null, SVNStatusType.STATUS_DELETED,
-                                                                         SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_DELETED, true)});
+                                            new FileData[] {new FileData("root/source", null, StatusType.STATUS_DELETED,
+                                                                         StatusType.STATUS_DELETED, StatusType.STATUS_DELETED, true)});
 
     Data MINE_EDIT_THEIRS_MOVE = new Data(
                                           "Index: root/source/s1.txt\n" +
@@ -180,8 +180,8 @@ public interface TreeConflictData {
                                           "+++ root/source1/s2.txt\t(revision )\n" +
                                           "@@ -1,0 +1,0 @@\n",
                                           "root/source",
-                                          new FileData[] {new FileData("root/source/s1.txt", "1*2*3", SVNStatusType.STATUS_NORMAL,
-                                                                       SVNStatusType.STATUS_MODIFIED, SVNStatusType.STATUS_NORMAL, false)});
+                                          new FileData[] {new FileData("root/source/s1.txt", "1*2*3", StatusType.STATUS_NORMAL,
+                                                                       StatusType.STATUS_MODIFIED, StatusType.STATUS_NORMAL, false)});
 
     Data MINE_UNV_THEIRS_MOVE = new Data(
       "Index: root/source/s1.txt\n" +
@@ -194,11 +194,11 @@ public interface TreeConflictData {
       "--- root/source/s2.txt\t(revision 358)\n" +
       "+++ root/source1/s2.txt\t(revision )\n" +
       "@@ -1,0 +1,0 @@\n", "root/source1",
-                                          new FileData[] {new FileData("root/source1", null, SVNStatusType.STATUS_UNVERSIONED,
-                                                                       SVNStatusType.STATUS_UNVERSIONED, SVNStatusType.STATUS_UNVERSIONED,
+                                          new FileData[] {new FileData("root/source1", null, StatusType.STATUS_UNVERSIONED,
+                                                                       StatusType.STATUS_UNVERSIONED, StatusType.STATUS_UNVERSIONED,
                                                                        true),
-                                          new FileData("root/source1/unv.txt", "unversioned", SVNStatusType.STATUS_UNVERSIONED,
-                                                                                                                   SVNStatusType.STATUS_UNVERSIONED, SVNStatusType.STATUS_UNVERSIONED,
+                                          new FileData("root/source1/unv.txt", "unversioned", StatusType.STATUS_UNVERSIONED,
+                                                                                                                   StatusType.STATUS_UNVERSIONED, StatusType.STATUS_UNVERSIONED,
                                                                                                                    false)});
 
     Data MINE_MOVE_THEIRS_EDIT = new Data("Index: root/source/s1.txt\n" +
@@ -211,10 +211,10 @@ public interface TreeConflictData {
                                             "+1*2*3\n" +
                                             "\\ No newline at end of file\n", "root/source",
                                             new FileData[] {
-                                              new FileData("root/sourceNew", null, SVNStatusType.STATUS_ADDED,
-                                                SVNStatusType.STATUS_ADDED, SVNStatusType.STATUS_ADDED, true, "root/source"),
-                                              new FileData("root/source", null, SVNStatusType.STATUS_DELETED,
-                                                                         SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_DELETED, true)});
+                                              new FileData("root/sourceNew", null, StatusType.STATUS_ADDED,
+                                                StatusType.STATUS_ADDED, StatusType.STATUS_ADDED, true, "root/source"),
+                                              new FileData("root/source", null, StatusType.STATUS_DELETED,
+                                                                         StatusType.STATUS_DELETED, StatusType.STATUS_DELETED, true)});
     Data MINE_MOVE_THEIRS_ADD = new Data("Index: root/sourceNew/added.txt\n" +
                                             "===================================================================\n" +
                                             "--- root/sourceNew/added.txt\t(revision )\n" +
@@ -223,10 +223,10 @@ public interface TreeConflictData {
                                             "+added text\n" +
                                             "\\ No newline at end of file\n", "root/sourceNew",
                                             new FileData[] {
-                                              new FileData("root/sourceNew", null, SVNStatusType.STATUS_ADDED,
-                                                SVNStatusType.STATUS_ADDED, SVNStatusType.STATUS_ADDED, true, "root/source"),
-                                              new FileData("root/source", null, SVNStatusType.STATUS_DELETED,
-                                                                         SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_DELETED, true)}) {
+                                              new FileData("root/sourceNew", null, StatusType.STATUS_ADDED,
+                                                StatusType.STATUS_ADDED, StatusType.STATUS_ADDED, true, "root/source"),
+                                              new FileData("root/source", null, StatusType.STATUS_DELETED,
+                                                                         StatusType.STATUS_DELETED, StatusType.STATUS_DELETED, true)}) {
       @Override
       protected void afterInit() {
         setExcludeFromToTheirsCheck("root\\source", "root\\source\\s1.txt", "root\\source\\s2.txt");
@@ -243,8 +243,8 @@ public interface TreeConflictData {
                                         "@@ -0,0 +1,1 @@\n" +
                                         "+added text\n" +
                                         "\\ No newline at end of file\n",
-                                        "addedDir", new FileData[]{new FileData("addedDir", "unversioned", SVNStatusType.STATUS_UNVERSIONED,
-                                                                    SVNStatusType.STATUS_UNVERSIONED, SVNStatusType.STATUS_UNVERSIONED,
+                                        "addedDir", new FileData[]{new FileData("addedDir", "unversioned", StatusType.STATUS_UNVERSIONED,
+                                                                    StatusType.STATUS_UNVERSIONED, StatusType.STATUS_UNVERSIONED,
                                                                     false)});
 
     Data MINE_ADD_THEIRS_ADD = new Data("Index: addedDir/added.txt\n" +
@@ -254,8 +254,8 @@ public interface TreeConflictData {
                                         "@@ -0,0 +1,1 @@\n" +
                                         "+added text\n" +
                                         "\\ No newline at end of file\n",
-                                        "addedDir", new FileData[]{new FileData("addedDir", "unversioned", SVNStatusType.STATUS_ADDED,
-                                                                    SVNStatusType.STATUS_UNVERSIONED, SVNStatusType.STATUS_UNVERSIONED,
+                                        "addedDir", new FileData[]{new FileData("addedDir", "unversioned", StatusType.STATUS_ADDED,
+                                                                    StatusType.STATUS_UNVERSIONED, StatusType.STATUS_UNVERSIONED,
                                                                     false)});
 
     Data MINE_UNV_THEIRS_MOVE = new Data(      "Index: root/source/s1.txt\n" +
@@ -268,8 +268,8 @@ public interface TreeConflictData {
           "--- root/source/s2.txt\t(revision 358)\n" +
           "+++ root/source1/s2.txt\t(revision )\n" +
           "@@ -1,0 +1,0 @@\n",
-                                        "root/source1", new FileData[]{new FileData("root/source1", "unversioned", SVNStatusType.STATUS_UNVERSIONED,
-                                                                    SVNStatusType.STATUS_UNVERSIONED, SVNStatusType.STATUS_UNVERSIONED,
+                                        "root/source1", new FileData[]{new FileData("root/source1", "unversioned", StatusType.STATUS_UNVERSIONED,
+                                                                    StatusType.STATUS_UNVERSIONED, StatusType.STATUS_UNVERSIONED,
                                                                     false)});
 
     Data MINE_ADD_THEIRS_MOVE = new Data(      "Index: root/source/s1.txt\n" +
@@ -282,8 +282,8 @@ public interface TreeConflictData {
           "--- root/source/s2.txt\t(revision 358)\n" +
           "+++ root/source1/s2.txt\t(revision )\n" +
           "@@ -1,0 +1,0 @@\n",
-                                        "root/source1", new FileData[]{new FileData("root/source1", "unversioned", SVNStatusType.STATUS_ADDED,
-                                                                    SVNStatusType.STATUS_UNVERSIONED, SVNStatusType.STATUS_UNVERSIONED,
+                                        "root/source1", new FileData[]{new FileData("root/source1", "unversioned", StatusType.STATUS_ADDED,
+                                                                    StatusType.STATUS_UNVERSIONED, StatusType.STATUS_UNVERSIONED,
                                                                     false)});
     Data MINE_MOVE_THEIRS_ADD = new Data("Index: addedDir/added.txt\n" +
                                             "===================================================================\n" +
@@ -292,11 +292,11 @@ public interface TreeConflictData {
                                             "@@ -0,0 +1,1 @@\n" +
                                             "+added text\n" +
                                             "\\ No newline at end of file\n",
-                                            "addedDir", new FileData[]{new FileData("addedDir", null, SVNStatusType.STATUS_ADDED,
-                                                                        SVNStatusType.STATUS_ADDED, SVNStatusType.STATUS_ADDED,
+                                            "addedDir", new FileData[]{new FileData("addedDir", null, StatusType.STATUS_ADDED,
+                                                                        StatusType.STATUS_ADDED, StatusType.STATUS_ADDED,
                                                                         false, "root/source/s1.txt"),
-                                                        new FileData("root/source/s1.txt", null, SVNStatusType.STATUS_DELETED,
-                                                                              SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_DELETED,
+                                                        new FileData("root/source/s1.txt", null, StatusType.STATUS_DELETED,
+                                                                              StatusType.STATUS_DELETED, StatusType.STATUS_DELETED,
                                                                               false, null)}) {
       @Override
       protected void afterInit() {
@@ -314,11 +314,11 @@ public interface TreeConflictData {
                                         "@@ -0,0 +1,1 @@\n" +
                                         "+added text\n" +
                                         "\\ No newline at end of file\n",
-                                        "addedDir.txt", new FileData[]{new FileData("addedDir.txt", null, SVNStatusType.STATUS_UNVERSIONED,
-                                                                                SVNStatusType.STATUS_UNVERSIONED, SVNStatusType.STATUS_UNVERSIONED,
+                                        "addedDir.txt", new FileData[]{new FileData("addedDir.txt", null, StatusType.STATUS_UNVERSIONED,
+                                                                                StatusType.STATUS_UNVERSIONED, StatusType.STATUS_UNVERSIONED,
                                                                                 true),
-      new FileData("addedDir.txt/unv.txt", "unversioned", SVNStatusType.STATUS_UNVERSIONED,
-                   SVNStatusType.STATUS_UNVERSIONED, SVNStatusType.STATUS_UNVERSIONED,
+      new FileData("addedDir.txt/unv.txt", "unversioned", StatusType.STATUS_UNVERSIONED,
+                   StatusType.STATUS_UNVERSIONED, StatusType.STATUS_UNVERSIONED,
                    false)});
 
     Data MINE_ADD_THEIRS_ADD = new Data("Index: addedDir.txt\n" +
@@ -328,11 +328,11 @@ public interface TreeConflictData {
                                             "@@ -0,0 +1,1 @@\n" +
                                             "+added text\n" +
                                             "\\ No newline at end of file\n",
-                                        "addedDir.txt", new FileData[]{new FileData("addedDir.txt", null, SVNStatusType.STATUS_ADDED,
-                                                                                                                        SVNStatusType.STATUS_UNVERSIONED, SVNStatusType.STATUS_UNVERSIONED,
+                                        "addedDir.txt", new FileData[]{new FileData("addedDir.txt", null, StatusType.STATUS_ADDED,
+                                                                                                                        StatusType.STATUS_UNVERSIONED, StatusType.STATUS_UNVERSIONED,
                                                                                                                         true),
-                                              new FileData("addedDir.txt/unv.txt", "unversioned", SVNStatusType.STATUS_ADDED,
-                                                           SVNStatusType.STATUS_UNVERSIONED, SVNStatusType.STATUS_UNVERSIONED,
+                                              new FileData("addedDir.txt/unv.txt", "unversioned", StatusType.STATUS_ADDED,
+                                                           StatusType.STATUS_UNVERSIONED, StatusType.STATUS_UNVERSIONED,
                                                            false)});
 
     Data MINE_UNV_THEIRS_MOVE = new Data(      "Index: root/source/s1.txt\n" +
@@ -342,12 +342,12 @@ public interface TreeConflictData {
           "@@ -1,0 +1,0 @@\n" +
                                                "\\ No newline at end of file\n",
                                         "root/source/s1renamed.txt", new FileData[]{new FileData("root/source/s1renamed.txt", null,
-                                                                                                 SVNStatusType.STATUS_UNVERSIONED,
-                                                                                                 SVNStatusType.STATUS_UNVERSIONED, SVNStatusType.STATUS_UNVERSIONED,
+                                                                                                 StatusType.STATUS_UNVERSIONED,
+                                                                                                 StatusType.STATUS_UNVERSIONED, StatusType.STATUS_UNVERSIONED,
                                                                                                  true),
       new FileData("root/source/s1renamed.txt/file.txt", "unversioned",
-                   SVNStatusType.STATUS_UNVERSIONED,
-                   SVNStatusType.STATUS_UNVERSIONED, SVNStatusType.STATUS_UNVERSIONED,
+                   StatusType.STATUS_UNVERSIONED,
+                   StatusType.STATUS_UNVERSIONED, StatusType.STATUS_UNVERSIONED,
                    false)});
 
     Data MINE_ADD_THEIRS_MOVE = new Data(      "Index: root/source/s1.txt\n" +
@@ -357,12 +357,12 @@ public interface TreeConflictData {
                                                "@@ -1,0 +1,0 @@\n" +
                                                "\\ No newline at end of file\n",
                                                "root/source/s1renamed.txt", new FileData[]{new FileData("root/source/s1renamed.txt", null,
-                                                                                                        SVNStatusType.STATUS_ADDED,
-                                                                                                        SVNStatusType.STATUS_UNVERSIONED, SVNStatusType.STATUS_UNVERSIONED,
+                                                                                                        StatusType.STATUS_ADDED,
+                                                                                                        StatusType.STATUS_UNVERSIONED, StatusType.STATUS_UNVERSIONED,
                                                                                                         true),
     new FileData("root/source/s1renamed.txt/file.txt", "unversioned",
-                 SVNStatusType.STATUS_ADDED,
-                 SVNStatusType.STATUS_UNVERSIONED, SVNStatusType.STATUS_UNVERSIONED,
+                 StatusType.STATUS_ADDED,
+                 StatusType.STATUS_UNVERSIONED, StatusType.STATUS_UNVERSIONED,
                  false)});
 
     Data MINE_MOVE_THEIRS_ADD = new Data("Index: addedDir.txt\n" +
@@ -372,10 +372,10 @@ public interface TreeConflictData {
                                                 "@@ -0,0 +1,1 @@\n" +
                                                 "+added text\n" +
                                                 "\\ No newline at end of file\n",
-                                            "addedDir.txt", new FileData[]{new FileData("addedDir.txt", null, SVNStatusType.STATUS_ADDED,
-                                              SVNStatusType.STATUS_ADDED, SVNStatusType.STATUS_ADDED, true, "root/source"),
-                                                  new FileData("root/source", null, SVNStatusType.STATUS_DELETED,
-                                                  SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_DELETED, true)}) {
+                                            "addedDir.txt", new FileData[]{new FileData("addedDir.txt", null, StatusType.STATUS_ADDED,
+                                              StatusType.STATUS_ADDED, StatusType.STATUS_ADDED, true, "root/source"),
+                                                  new FileData("root/source", null, StatusType.STATUS_DELETED,
+                                                  StatusType.STATUS_DELETED, StatusType.STATUS_DELETED, true)}) {
       @Override
       protected void afterInit() {
         setExcludeFromToTheirsCheck("root\\source", "root\\source\\s1.txt", "root\\source\\s2.txt");
@@ -424,26 +424,26 @@ public interface TreeConflictData {
     public final String myRelativePath;
     public final String myContents;
     public final String myCopyFrom;
-    public final SVNStatusType myNodeStatus;
-    public final SVNStatusType myContentsStatus;
+    public final StatusType myNodeStatus;
+    public final StatusType myContentsStatus;
     // not used for now
-    public final SVNStatusType myPropertiesStatus;
+    public final StatusType myPropertiesStatus;
     public boolean myIsDir;
 
     public FileData(String relativePath,
                     String contents,
-                    SVNStatusType nodeStatus,
-                    SVNStatusType contentsStatus,
-                    SVNStatusType propertiesStatus,
+                    StatusType nodeStatus,
+                    StatusType contentsStatus,
+                    StatusType propertiesStatus,
                     boolean isDir) {
       this(relativePath, contents, nodeStatus, contentsStatus, propertiesStatus, isDir, null);
     }
 
     public FileData(String relativePath,
                     String contents,
-                    SVNStatusType nodeStatus,
-                    SVNStatusType contentsStatus,
-                    SVNStatusType propertiesStatus,
+                    StatusType nodeStatus,
+                    StatusType contentsStatus,
+                    StatusType propertiesStatus,
                     boolean isDir, final String copyFrom) {
       myRelativePath = relativePath;
       myContents = contents;

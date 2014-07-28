@@ -24,7 +24,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 
 /**
  * @author peter
@@ -93,7 +96,11 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   public Self oneOf(final T... values) {
     final Collection<T> list;
 
-    if (values.length >= 11) {
+    final int length = values.length;
+    if (length == 1) {
+      list = Collections.singletonList(values[0]);
+    }
+    else if (length >= 11) {
       list = new HashSet<T>(Arrays.asList(values));
     }
     else {

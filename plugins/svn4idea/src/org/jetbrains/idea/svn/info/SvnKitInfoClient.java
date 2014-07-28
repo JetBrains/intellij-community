@@ -18,12 +18,9 @@ package org.jetbrains.idea.svn.info;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.info.InfoClient;
-import org.tmatesoft.svn.core.SVNDepth;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
@@ -43,50 +40,27 @@ public class SvnKitInfoClient extends BaseSvnClient implements InfoClient {
   }
 
   @Override
-  public void doInfo(File path, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException {
-    getClient().doInfo(path, revision, recursive, handler);
+  public Info doInfo(File path, SVNRevision revision) throws SvnBindException {
+    try {
+      return Info.create(getClient().doInfo(path, revision));
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
   }
 
   @Override
-  public void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler)
-    throws SVNException {
-    getClient().doInfo(path, pegRevision, revision, recursive, handler);
+  public Info doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SvnBindException {
+    try {
+      return Info.create(getClient().doInfo(url, pegRevision, revision));
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
   }
 
   @Override
-  public void doInfo(File path,
-                     SVNRevision pegRevision,
-                     SVNRevision revision,
-                     SVNDepth depth,
-                     Collection changeLists,
-                     ISVNInfoHandler handler) throws SVNException {
-    getClient().doInfo(path, pegRevision, revision, depth, changeLists, handler);
-  }
-
-  @Override
-  public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler)
-    throws SVNException {
-    getClient().doInfo(url, pegRevision, revision, recursive, handler);
-  }
-
-  @Override
-  public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, ISVNInfoHandler handler)
-    throws SVNException {
-    getClient().doInfo(url, pegRevision, revision, depth, handler);
-  }
-
-  @Override
-  public SVNInfo doInfo(File path, SVNRevision revision) throws SVNException {
-    return getClient().doInfo(path, revision);
-  }
-
-  @Override
-  public SVNInfo doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
-    return getClient().doInfo(url, pegRevision, revision);
-  }
-
-  @Override
-  public void doInfo(@NotNull Collection<File> paths, @Nullable ISVNInfoHandler handler) throws SVNException {
+  public void doInfo(@NotNull Collection<File> paths, @Nullable InfoConsumer handler) throws SvnBindException {
     throw new UnsupportedOperationException();
   }
 }

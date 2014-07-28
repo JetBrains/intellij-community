@@ -55,7 +55,7 @@ public class CloudGitChooseAccountStepImpl extends CloudGitChooseAccountStepBase
                                        CloudGitProjectStructureDetector structureDetector,
                                        ProjectFromSourcesBuilder builder,
                                        ProjectDescriptor projectDescriptor) {
-    super(deploymentDetector);
+    super(deploymentDetector, builder.getContext());
     myBuilder = builder;
     myProjectDescriptor = projectDescriptor;
 
@@ -82,6 +82,7 @@ public class CloudGitChooseAccountStepImpl extends CloudGitChooseAccountStepBase
 
   @Override
   public void updateDataModel() {
+    super.updateDataModel();
     final MultiMap<CloudGitProjectRoot, DetectedSourceRoot> project2sourceRoots = new MultiMap<CloudGitProjectRoot, DetectedSourceRoot>();
     new RootIterator() {
 

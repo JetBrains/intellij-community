@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.diff;
 
 import com.intellij.openapi.util.Ref;
@@ -39,7 +38,6 @@ public class DiffTree<OT, NT> {
                    final FlyweightCapableTreeStructure<NT> newTree,
                    final ShallowNodeComparator<OT, NT> comparator,
                    final DiffTreeChangeBuilder<OT, NT> consumer) {
-
     myOldTree = oldTree;
     myNewTree = newTree;
     myComparator = comparator;
@@ -53,7 +51,7 @@ public class DiffTree<OT, NT> {
     new DiffTree<OT, NT>(oldTree, newTree, comparator, consumer).build(oldTree.getRoot(), newTree.getRoot(), 0);
   }
 
-  private static enum CompareResult {
+  private enum CompareResult {
     EQUAL, // 100% equal
     DRILL_DOWN_NEEDED, // element types are equal, but elements are composite
     TYPE_ONLY, // only element types are equal
@@ -146,6 +144,7 @@ public class DiffTree<OT, NT> {
         newIndex++;
         continue;
       }
+
       CompareResult c12 = looksEqual(comparator, oldChild1, newChild2);
       if (c12 == CompareResult.EQUAL || c12 == CompareResult.DRILL_DOWN_NEEDED || c12 == CompareResult.TYPE_ONLY) {
         myConsumer.nodeInserted(oldNode, newChild1, newIndex);
@@ -170,6 +169,7 @@ public class DiffTree<OT, NT> {
         oldIndex++;
         continue;
       }
+
       myConsumer.nodeReplaced(oldChild1, newChild1);
       oldIndex++;
       newIndex++;

@@ -4,9 +4,9 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -22,7 +22,7 @@ public class CmdConflictClient extends BaseSvnClient implements ConflictClient {
   // TODO: Or rewrite logic to have one "Resolve conflicts" action instead of separate actions for each conflict type.
   @Override
   public void resolve(@NotNull File path,
-                      @Nullable SVNDepth depth,
+                      @Nullable Depth depth,
                       boolean resolveProperty,
                       boolean resolveContent,
                       boolean resolveTree) throws VcsException {

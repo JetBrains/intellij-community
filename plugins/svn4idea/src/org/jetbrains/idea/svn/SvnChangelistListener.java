@@ -28,9 +28,8 @@ import com.intellij.openapi.vcs.changes.ChangeListListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.status.Status;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNStatus;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -136,12 +135,11 @@ public class SvnChangelistListener implements ChangeListListener {
   @Nullable
   public static String getCurrentMapping(final SvnVcs vcs, final File file) {
     try {
-      final SVNStatus status = vcs.getFactory(file).createStatusClient().doStatus(file, false);
+      final Status status = vcs.getFactory(file).createStatusClient().doStatus(file, false);
       return status == null ? null : status.getChangelistName();
     }
-    catch (SVNException e) {
-      final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
-      if (SVNErrorCode.WC_NOT_DIRECTORY.equals(errorCode) || SVNErrorCode.WC_NOT_FILE.equals(errorCode)) {
+    catch (SvnBindException e) {
+      if (e.contains(SVNErrorCode.WC_NOT_DIRECTORY) || e.contains(SVNErrorCode.WC_NOT_FILE)) {
         LOG.debug("Logging only, exception is valid (caught) here", e);
       } else {
         LOG.info("Logging only, exception is valid (caught) here", e);

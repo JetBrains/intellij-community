@@ -27,6 +27,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.Task.Backgroundable;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -105,9 +106,21 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PsiFile file = descriptor.getPsiElement().getContainingFile();
-    final String folder = file.getContainingDirectory().getVirtualFile().getCanonicalPath();
+    final Backgroundable backgroundable = getFixTask(file);
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, new BackgroundableProcessIndicator(backgroundable));
+  }
 
-    final Task.Backgroundable backgroundable = new Task.Backgroundable(project, "Generating skeletons for binary module", false) {
+
+  /**
+   * Returns fix task that is used to generate stubs
+   * @param fileToRunTaskIn file where task should run
+   * @return task itself
+   */
+  @NotNull
+  public Backgroundable getFixTask(@NotNull final PsiFile fileToRunTaskIn) {
+    final Project project = fileToRunTaskIn.getProject();
+    final String folder = fileToRunTaskIn.getContainingDirectory().getVirtualFile().getCanonicalPath();
+    return new Task.Backgroundable(project, "Generating skeletons for binary module", false) {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -117,7 +130,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
         final List<String> assemblyRefs = new ReadAction<List<String>>() {
           @Override
           protected void run(@NotNull Result<List<String>> result) throws Throwable {
-            result.setResult(collectAssemblyReferences(file));
+            result.setResult(collectAssemblyReferences(fileToRunTaskIn));
           }
         }.execute().getResultObject();
 
@@ -143,7 +156,6 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
         }
       }
     };
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, new BackgroundableProcessIndicator(backgroundable));
   }
 
   private boolean generateSkeletonsForList(@NotNull final PySkeletonRefresher refresher,

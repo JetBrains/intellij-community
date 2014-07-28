@@ -178,7 +178,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
       }
       List<OrderEntry> orderEntries = index.getOrderEntriesForFile(virtualFile);
       if (orderEntries.isEmpty()) {
-        LOG.error("Inconsistent: " + DirectoryIndex.getInstance(myProject).getInfoForDirectory(folder).toString());
+        LOG.error("Inconsistent: " + DirectoryIndex.getInstance(myProject).getInfoForFile(folder).toString());
       }
       final VirtualFile[] files = orderEntries.get(0).getFiles(OrderRootType.CLASSES);
       for (VirtualFile rootFile : files) {

@@ -46,6 +46,8 @@ public class DeclarationParser {
     JavaTokenType.IDENTIFIER, JavaTokenType.COMMA, JavaTokenType.THROWS_KEYWORD);
   private static final TokenSet PARAM_LIST_STOPPERS = TokenSet.create(
     JavaTokenType.RPARENTH, JavaTokenType.LBRACE, JavaTokenType.ARROW);
+  private static final TokenSet TYPE_START = TokenSet.orSet(
+    ElementType.PRIMITIVE_TYPE_BIT_SET, TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT));
 
   private static final String WHITESPACES = "\n\r \t";
   private static final String LINE_ENDS = "\n\r";
@@ -278,56 +280,64 @@ public class DeclarationParser {
       return modList;
     }
 
-    PsiBuilder.Marker type;
-    if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(builder.getTokenType())) {
-      type = parseTypeNotNull(builder);
-    }
-    else if (builder.getTokenType() == JavaTokenType.IDENTIFIER) {
-      final PsiBuilder.Marker idPos = builder.mark();
-      type = parseTypeNotNull(builder);
-      if (builder.getTokenType() == JavaTokenType.LPARENTH) {  // constructor
-        if (context == Context.CODE_BLOCK) {
-          declaration.rollbackTo();
-          return null;
-        }
-        idPos.rollbackTo();
-        if (typeParams == null) {
-          emptyElement(builder, JavaElementType.TYPE_PARAMETER_LIST);
-        }
-        builder.advanceLexer();
-        if (builder.getTokenType() != JavaTokenType.LPARENTH) {
-          declaration.rollbackTo();
-          return null;
-        }
-        return parseMethodFromLeftParenth(builder, declaration, false, true);
-      }
-      idPos.drop();
-    }
-    else if (builder.getTokenType() == JavaTokenType.LBRACE) {
+    if (builder.getTokenType() == JavaTokenType.LBRACE) {
       if (context == Context.CODE_BLOCK) {
         error(builder, JavaErrorMessages.message("expected.identifier.or.type"), typeParams);
         declaration.drop();
         return modList;
       }
 
-      final PsiBuilder.Marker codeBlock = myParser.getStatementParser().parseCodeBlock(builder);
+      PsiBuilder.Marker codeBlock = myParser.getStatementParser().parseCodeBlock(builder);
       assert codeBlock != null : builder.getOriginalText();
 
       if (typeParams != null) {
-        final PsiBuilder.Marker error = typeParams.precede();
+        PsiBuilder.Marker error = typeParams.precede();
         error.errorBefore(JavaErrorMessages.message("unexpected.token"), codeBlock);
       }
+
       done(declaration, JavaElementType.CLASS_INITIALIZER);
       return declaration;
     }
-    else {
-      final PsiBuilder.Marker error;
-      if (typeParams != null) {
-        error = typeParams.precede();
+
+    PsiBuilder.Marker type = null;
+
+    if (TYPE_START.contains(builder.getTokenType())) {
+      PsiBuilder.Marker pos = builder.mark();
+
+      type = myParser.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
+
+      if (type == null) {
+        pos.rollbackTo();
+      }
+      else if (builder.getTokenType() == JavaTokenType.LPARENTH) {  // constructor
+        if (context == Context.CODE_BLOCK) {
+          declaration.rollbackTo();
+          return null;
+        }
+
+        pos.rollbackTo();
+
+        if (typeParams == null) {
+          emptyElement(builder, JavaElementType.TYPE_PARAMETER_LIST);
+        }
+        parseAnnotations(builder);
+        builder.advanceLexer();
+
+        if (builder.getTokenType() == JavaTokenType.LPARENTH) {
+          return parseMethodFromLeftParenth(builder, declaration, false, true);
+        }
+        else {
+          declaration.rollbackTo();
+          return null;
+        }
       }
       else {
-        error = builder.mark();
+        pos.drop();
       }
+    }
+
+    if (type == null) {
+      PsiBuilder.Marker error = typeParams != null ? typeParams.precede() : builder.mark();
       error.error(JavaErrorMessages.message("expected.identifier.or.type"));
       declaration.drop();
       return modList;
@@ -361,13 +371,6 @@ public class DeclarationParser {
       typeParams.precede().errorBefore(JavaErrorMessages.message("unexpected.token"), type);
     }
     return parseFieldOrLocalVariable(builder, declaration, declarationStart, context);
-  }
-
-  @NotNull
-  private PsiBuilder.Marker parseTypeNotNull(final PsiBuilder builder) {
-    final PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
-    assert type != null : builder.getOriginalText();
-    return type;
   }
 
   @NotNull

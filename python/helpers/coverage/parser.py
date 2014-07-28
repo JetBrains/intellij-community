@@ -1,9 +1,11 @@
 """Code parsing for Coverage."""
 
-import glob, opcode, os, re, sys, token, tokenize
+import dis, re, sys, token, tokenize
 
 from coverage.backward import set, sorted, StringIO # pylint: disable=W0622
-from coverage.backward import open_source
+from coverage.backward import open_source, range    # pylint: disable=W0622
+from coverage.backward import reversed              # pylint: disable=W0622
+from coverage.backward import bytes_to_ints
 from coverage.bytecode import ByteCodes, CodeObjects
 from coverage.misc import nice_pair, expensive, join_regex
 from coverage.misc import CoverageException, NoSource, NotPython
@@ -32,8 +34,12 @@ class CodeParser(object):
             except IOError:
                 _, err, _ = sys.exc_info()
                 raise NoSource(
-                    "No source for code: %r: %s" % (self.filename, err)
+                    "No source for code: '%s': %s" % (self.filename, err)
                     )
+
+        # Scrap the BOM if it exists.
+        if self.text and ord(self.text[0]) == 0xfeff:
+            self.text = self.text[1:]
 
         self.exclude = exclude
 
@@ -102,9 +108,9 @@ class CodeParser(object):
         first_line = None
         empty = True
 
-        tokgen = tokenize.generate_tokens(StringIO(self.text).readline)
+        tokgen = generate_tokens(self.text)
         for toktype, ttext, (slineno, _), (elineno, _), ltext in tokgen:
-            if self.show_tokens:                # pragma: no cover
+            if self.show_tokens:                # pragma: not covered
                 print("%10s %5s %-20r %r" % (
                     tokenize.tok_name.get(toktype, toktype),
                     nice_pair((slineno, elineno)), ttext, ltext
@@ -130,8 +136,7 @@ class CodeParser(object):
                 # (a trick from trace.py in the stdlib.) This works for
                 # 99.9999% of cases.  For the rest (!) see:
                 # http://stackoverflow.com/questions/1769332/x/1769794#1769794
-                for i in range(slineno, elineno+1):
-                    self.docstrings.add(i)
+                self.docstrings.update(range(slineno, elineno+1))
             elif toktype == token.NEWLINE:
                 if first_line is not None and elineno != first_line:
                     # We're at the end of a line, and we've ended on a
@@ -170,16 +175,18 @@ class CodeParser(object):
             first_line = line
         return first_line
 
-    def first_lines(self, lines, ignore=None):
+    def first_lines(self, lines, *ignores):
         """Map the line numbers in `lines` to the correct first line of the
         statement.
 
-        Skip any line mentioned in `ignore`.
+        Skip any line mentioned in any of the sequences in `ignores`.
 
-        Returns a sorted list of the first lines.
+        Returns a set of the first lines.
 
         """
-        ignore = ignore or []
+        ignore = set()
+        for ign in ignores:
+            ignore.update(ign)
         lset = set()
         for l in lines:
             if l in ignore:
@@ -187,23 +194,34 @@ class CodeParser(object):
             new_l = self.first_line(l)
             if new_l not in ignore:
                 lset.add(new_l)
-        return sorted(lset)
+        return lset
 
     def parse_source(self):
         """Parse source text to find executable lines, excluded lines, etc.
 
-        Return values are 1) a sorted list of executable line numbers, and
-        2) a sorted list of excluded line numbers.
+        Return values are 1) a set of executable line numbers, and 2) a set of
+        excluded line numbers.
 
         Reported line numbers are normalized to the first line of multi-line
         statements.
 
         """
-        self._raw_parse()
+        try:
+            self._raw_parse()
+        except (tokenize.TokenError, IndentationError):
+            _, tokerr, _ = sys.exc_info()
+            msg, lineno = tokerr.args
+            raise NotPython(
+                "Couldn't parse '%s' as Python source: '%s' at %s" %
+                    (self.filename, msg, lineno)
+                )
 
         excluded_lines = self.first_lines(self.excluded)
-        ignore = excluded_lines + list(self.docstrings)
-        lines = self.first_lines(self.statement_starts, ignore)
+        lines = self.first_lines(
+            self.statement_starts,
+            excluded_lines,
+            self.docstrings
+        )
 
         return lines, excluded_lines
 
@@ -258,8 +276,8 @@ class CodeParser(object):
 ## Opcodes that guide the ByteParser.
 
 def _opcode(name):
-    """Return the opcode by name from the opcode module."""
-    return opcode.opmap[name]
+    """Return the opcode by name from the dis module."""
+    return dis.opmap[name]
 
 def _opcode_set(*names):
     """Return a set of opcodes by the names in `names`."""
@@ -297,7 +315,7 @@ OPS_EXCEPT_BLOCKS = _opcode_set('SETUP_EXCEPT', 'SETUP_FINALLY')
 OPS_POP_BLOCK = _opcode_set('POP_BLOCK')
 
 # Opcodes that have a jump destination, but aren't really a jump.
-OPS_NO_JUMP = _opcode_set('SETUP_EXCEPT', 'SETUP_FINALLY')
+OPS_NO_JUMP = OPS_PUSH_BLOCK
 
 # Individual opcodes we need below.
 OP_BREAK_LOOP = _opcode('BREAK_LOOP')
@@ -314,6 +332,7 @@ class ByteParser(object):
     def __init__(self, code=None, text=None, filename=None):
         if code:
             self.code = code
+            self.text = text
         else:
             if not text:
                 assert filename, "If no code or text, need a filename"
@@ -322,6 +341,7 @@ class ByteParser(object):
                     text = sourcef.read()
                 finally:
                     sourcef.close()
+            self.text = text
 
             try:
                 # Python 2.3 and 2.4 don't like partial last lines, so be sure
@@ -350,69 +370,54 @@ class ByteParser(object):
         The iteration includes `self` as its first value.
 
         """
-        return map(lambda c: ByteParser(code=c), CodeObjects(self.code))
-
-    # Getting numbers from the lnotab value changed in Py3.0.
-    if sys.version_info >= (3, 0):
-        def _lnotab_increments(self, lnotab):
-            """Return a list of ints from the lnotab bytes in 3.x"""
-            return list(lnotab)
-    else:
-        def _lnotab_increments(self, lnotab):
-            """Return a list of ints from the lnotab string in 2.x"""
-            return [ord(c) for c in lnotab]
+        children = CodeObjects(self.code)
+        return [ByteParser(code=c, text=self.text) for c in children]
 
     def _bytes_lines(self):
         """Map byte offsets to line numbers in `code`.
 
         Uses co_lnotab described in Python/compile.c to map byte offsets to
-        line numbers.  Returns a list: [(b0, l0), (b1, l1), ...]
+        line numbers.  Produces a sequence: (b0, l0), (b1, l1), ...
+
+        Only byte offsets that correspond to line numbers are included in the
+        results.
 
         """
         # Adapted from dis.py in the standard library.
-        byte_increments = self._lnotab_increments(self.code.co_lnotab[0::2])
-        line_increments = self._lnotab_increments(self.code.co_lnotab[1::2])
+        byte_increments = bytes_to_ints(self.code.co_lnotab[0::2])
+        line_increments = bytes_to_ints(self.code.co_lnotab[1::2])
 
-        bytes_lines = []
         last_line_num = None
         line_num = self.code.co_firstlineno
         byte_num = 0
         for byte_incr, line_incr in zip(byte_increments, line_increments):
             if byte_incr:
                 if line_num != last_line_num:
-                    bytes_lines.append((byte_num, line_num))
+                    yield (byte_num, line_num)
                     last_line_num = line_num
                 byte_num += byte_incr
             line_num += line_incr
         if line_num != last_line_num:
-            bytes_lines.append((byte_num, line_num))
-        return bytes_lines
+            yield (byte_num, line_num)
 
     def _find_statements(self):
         """Find the statements in `self.code`.
 
-        Return a set of line numbers that start statements.  Recurses into all
-        code objects reachable from `self.code`.
+        Produce a sequence of line numbers that start statements.  Recurses
+        into all code objects reachable from `self.code`.
 
         """
-        stmts = set()
         for bp in self.child_parsers():
             # Get all of the lineno information from this code.
             for _, l in bp._bytes_lines():
-                stmts.add(l)
-        return stmts
+                yield l
 
-    def _disassemble(self):     # pragma: no cover
-        """Disassemble code, for ad-hoc experimenting."""
-
-        import dis
-
-        for bp in self.child_parsers():
-            print("\n%s: " % bp.code)
-            dis.dis(bp.code)
-            print("Bytes lines: %r" % bp._bytes_lines())
-
-        print("")
+    def _block_stack_repr(self, block_stack):
+        """Get a string version of `block_stack`, for debugging."""
+        blocks = ", ".join(
+            ["(%s, %r)" % (dis.opname[b[0]], b[1]) for b in block_stack]
+        )
+        return "[" + blocks + "]"
 
     def _split_into_chunks(self):
         """Split the code object into a list of `Chunk` objects.
@@ -423,10 +428,11 @@ class ByteParser(object):
         Returns a list of `Chunk` objects.
 
         """
-
         # The list of chunks so far, and the one we're working on.
         chunks = []
         chunk = None
+
+        # A dict mapping byte offsets of line starts to the line numbers.
         bytes_lines_map = dict(self._bytes_lines())
 
         # The block stack: loops and try blocks get pushed here for the
@@ -441,24 +447,38 @@ class ByteParser(object):
         # We have to handle the last two bytecodes specially.
         ult = penult = None
 
-        for bc in ByteCodes(self.code.co_code):
+        # Get a set of all of the jump-to points.
+        jump_to = set()
+        bytecodes = list(ByteCodes(self.code.co_code))
+        for bc in bytecodes:
+            if bc.jump_to >= 0:
+                jump_to.add(bc.jump_to)
+
+        chunk_lineno = 0
+
+        # Walk the byte codes building chunks.
+        for bc in bytecodes:
             # Maybe have to start a new chunk
+            start_new_chunk = False
+            first_chunk = False
             if bc.offset in bytes_lines_map:
                 # Start a new chunk for each source line number.
-                if chunk:
-                    chunk.exits.add(bc.offset)
-                chunk = Chunk(bc.offset, bytes_lines_map[bc.offset])
-                chunks.append(chunk)
+                start_new_chunk = True
+                chunk_lineno = bytes_lines_map[bc.offset]
+                first_chunk = True
+            elif bc.offset in jump_to:
+                # To make chunks have a single entrance, we have to make a new
+                # chunk when we get to a place some bytecode jumps to.
+                start_new_chunk = True
             elif bc.op in OPS_CHUNK_BEGIN:
                 # Jumps deserve their own unnumbered chunk.  This fixes
                 # problems with jumps to jumps getting confused.
+                start_new_chunk = True
+
+            if not chunk or start_new_chunk:
                 if chunk:
                     chunk.exits.add(bc.offset)
-                chunk = Chunk(bc.offset)
-                chunks.append(chunk)
-
-            if not chunk:
-                chunk = Chunk(bc.offset)
+                chunk = Chunk(bc.offset, chunk_lineno, first_chunk)
                 chunks.append(chunk)
 
             # Look at the opcode
@@ -487,15 +507,11 @@ class ByteParser(object):
                     chunk.exits.add(block_stack[-1][1])
                 chunk = None
             if bc.op == OP_END_FINALLY:
-                if block_stack:
-                    # A break that goes through a finally will jump to whatever
-                    # block is on top of the stack.
-                    chunk.exits.add(block_stack[-1][1])
                 # For the finally clause we need to find the closest exception
                 # block, and use its jump target as an exit.
-                for iblock in range(len(block_stack)-1, -1, -1):
-                    if block_stack[iblock][0] in OPS_EXCEPT_BLOCKS:
-                        chunk.exits.add(block_stack[iblock][1])
+                for block in reversed(block_stack):
+                    if block[0] in OPS_EXCEPT_BLOCKS:
+                        chunk.exits.add(block[1])
                         break
             if bc.op == OP_COMPARE_OP and bc.arg == COMPARE_EXCEPTION:
                 # This is an except clause.  We want to overlook the next
@@ -521,23 +537,33 @@ class ByteParser(object):
                             last_chunk = chunks[-1]
                             last_chunk.exits.remove(ex)
                             last_chunk.exits.add(penult.offset)
-                            chunk = Chunk(penult.offset)
+                            chunk = Chunk(
+                                penult.offset, last_chunk.line, False
+                            )
                             chunk.exits.add(ex)
                             chunks.append(chunk)
 
             # Give all the chunks a length.
-            chunks[-1].length = bc.next_offset - chunks[-1].byte
+            chunks[-1].length = bc.next_offset - chunks[-1].byte # pylint: disable=W0631,C0301
             for i in range(len(chunks)-1):
                 chunks[i].length = chunks[i+1].byte - chunks[i].byte
 
+        #self.validate_chunks(chunks)
         return chunks
+
+    def validate_chunks(self, chunks):
+        """Validate the rule that chunks have a single entrance."""
+        # starts is the entrances to the chunks
+        starts = set([ch.byte for ch in chunks])
+        for ch in chunks:
+            assert all([(ex in starts or ex < 0) for ex in ch.exits])
 
     def _arcs(self):
         """Find the executable arcs in the code.
 
-        Returns a set of pairs, (from,to).  From and to are integer line
-        numbers.  If from is < 0, then the arc is an entrance into the code
-        object.  If to is < 0, the arc is an exit from the code object.
+        Yields pairs: (from,to).  From and to are integer line numbers.  If
+        from is < 0, then the arc is an entrance into the code object.  If to
+        is < 0, the arc is an exit from the code object.
 
         """
         chunks = self._split_into_chunks()
@@ -545,65 +571,43 @@ class ByteParser(object):
         # A map from byte offsets to chunks jumped into.
         byte_chunks = dict([(c.byte, c) for c in chunks])
 
-        # Build a map from byte offsets to actual lines reached.
-        byte_lines = {}
-        bytes_to_add = set([c.byte for c in chunks])
+        # There's always an entrance at the first chunk.
+        yield (-1, byte_chunks[0].line)
 
-        while bytes_to_add:
-            byte_to_add = bytes_to_add.pop()
-            if byte_to_add in byte_lines or byte_to_add < 0:
+        # Traverse from the first chunk in each line, and yield arcs where
+        # the trace function will be invoked.
+        for chunk in chunks:
+            if not chunk.first:
                 continue
 
-            # Which lines does this chunk lead to?
-            bytes_considered = set()
-            bytes_to_consider = [byte_to_add]
-            lines = set()
+            chunks_considered = set()
+            chunks_to_consider = [chunk]
+            while chunks_to_consider:
+                # Get the chunk we're considering, and make sure we don't
+                # consider it again
+                this_chunk = chunks_to_consider.pop()
+                chunks_considered.add(this_chunk)
 
-            while bytes_to_consider:
-                byte = bytes_to_consider.pop()
-                bytes_considered.add(byte)
-
-                # Find chunk for byte
-                try:
-                    ch = byte_chunks[byte]
-                except KeyError:
-                    for ch in chunks:
-                        if ch.byte <= byte < ch.byte+ch.length:
-                            break
-                    else:
-                        # No chunk for this byte!
-                        raise Exception("Couldn't find chunk @ %d" % byte)
-                    byte_chunks[byte] = ch
-
-                if ch.line:
-                    lines.add(ch.line)
-                else:
-                    for ex in ch.exits:
-                        if ex < 0:
-                            lines.add(ex)
-                        elif ex not in bytes_considered:
-                            bytes_to_consider.append(ex)
-
-                bytes_to_add.update(ch.exits)
-
-            byte_lines[byte_to_add] = lines
-
-        # Figure out for each chunk where the exits go.
-        arcs = set()
-        for chunk in chunks:
-            if chunk.line:
-                for ex in chunk.exits:
+                # For each exit, add the line number if the trace function
+                # would be triggered, or add the chunk to those being
+                # considered if not.
+                for ex in this_chunk.exits:
                     if ex < 0:
-                        exit_lines = [ex]
+                        yield (chunk.line, ex)
                     else:
-                        exit_lines = byte_lines[ex]
-                    for exit_line in exit_lines:
-                        if chunk.line != exit_line:
-                            arcs.add((chunk.line, exit_line))
-        for line in byte_lines[0]:
-            arcs.add((-1, line))
+                        next_chunk = byte_chunks[ex]
+                        if next_chunk in chunks_considered:
+                            continue
 
-        return arcs
+                        # The trace function is invoked if visiting the first
+                        # bytecode in a line, or if the transition is a
+                        # backward jump.
+                        backward_jump = next_chunk.byte < this_chunk.byte
+                        if next_chunk.first or backward_jump:
+                            if next_chunk.line != chunk.line:
+                                yield (chunk.line, next_chunk.line)
+                        else:
+                            chunks_to_consider.append(next_chunk)
 
     def _all_chunks(self):
         """Returns a list of `Chunk` objects for this code and its children.
@@ -631,11 +635,11 @@ class ByteParser(object):
 
 
 class Chunk(object):
-    """A sequence of bytecodes with a single entrance.
+    """A sequence of byte codes with a single entrance.
 
     To analyze byte code, we have to divide it into chunks, sequences of byte
-    codes such that each basic block has only one entrance, the first
-    instruction in the block.
+    codes such that each chunk has only one entrance, the first instruction in
+    the block.
 
     This is almost the CS concept of `basic block`_, except that we're willing
     to have many exits from a chunk, and "basic block" is a more cumbersome
@@ -643,158 +647,54 @@ class Chunk(object):
 
     .. _basic block: http://en.wikipedia.org/wiki/Basic_block
 
+    `line` is the source line number containing this chunk.
+
+    `first` is true if this is the first chunk in the source line.
+
     An exit < 0 means the chunk can leave the code (return).  The exit is
     the negative of the starting line number of the code block.
 
     """
-    def __init__(self, byte, line=0):
+    def __init__(self, byte, line, first):
         self.byte = byte
         self.line = line
+        self.first = first
         self.length = 0
         self.exits = set()
 
     def __repr__(self):
-        return "<%d+%d @%d %r>" % (
-            self.byte, self.length, self.line, list(self.exits)
-            )
-
-
-class AdHocMain(object):        # pragma: no cover
-    """An ad-hoc main for code parsing experiments."""
-
-    def main(self, args):
-        """A main function for trying the code from the command line."""
-
-        from optparse import OptionParser
-
-        parser = OptionParser()
-        parser.add_option(
-            "-c", action="store_true", dest="chunks",
-            help="Show basic block chunks"
-            )
-        parser.add_option(
-            "-d", action="store_true", dest="dis",
-            help="Disassemble"
-            )
-        parser.add_option(
-            "-R", action="store_true", dest="recursive",
-            help="Recurse to find source files"
-            )
-        parser.add_option(
-            "-s", action="store_true", dest="source",
-            help="Show analyzed source"
-            )
-        parser.add_option(
-            "-t", action="store_true", dest="tokens",
-            help="Show tokens"
-            )
-
-        options, args = parser.parse_args()
-        if options.recursive:
-            if args:
-                root = args[0]
-            else:
-                root = "."
-            for root, _, _ in os.walk(root):
-                for f in glob.glob(root + "/*.py"):
-                    self.adhoc_one_file(options, f)
+        if self.first:
+            bang = "!"
         else:
-            self.adhoc_one_file(options, args[0])
+            bang = ""
+        return "<%d+%d @%d%s %r>" % (
+            self.byte, self.length, self.line, bang, list(self.exits)
+            )
 
-    def adhoc_one_file(self, options, filename):
-        """Process just one file."""
 
-        if options.dis or options.chunks:
-            try:
-                bp = ByteParser(filename=filename)
-            except CoverageException:
-                _, err, _ = sys.exc_info()
-                print("%s" % (err,))
-                return
+class CachedTokenizer(object):
+    """A one-element cache around tokenize.generate_tokens.
 
-        if options.dis:
-            print("Main code:")
-            bp._disassemble()
+    When reporting, coverage.py tokenizes files twice, once to find the
+    structure of the file, and once to syntax-color it.  Tokenizing is
+    expensive, and easily cached.
 
-        if options.chunks:
-            chunks = bp._all_chunks()
-            if options.recursive:
-                print("%6d: %s" % (len(chunks), filename))
-            else:
-                print("Chunks: %r" % chunks)
-                arcs = bp._all_arcs()
-                print("Arcs: %r" % sorted(arcs))
+    This is a one-element cache so that our twice-in-a-row tokenizing doesn't
+    actually tokenize twice.
 
-        if options.source or options.tokens:
-            cp = CodeParser(filename=filename, exclude=r"no\s*cover")
-            cp.show_tokens = options.tokens
-            cp._raw_parse()
+    """
+    def __init__(self):
+        self.last_text = None
+        self.last_tokens = None
 
-            if options.source:
-                if options.chunks:
-                    arc_width, arc_chars = self.arc_ascii_art(arcs)
-                else:
-                    arc_width, arc_chars = 0, {}
+    def generate_tokens(self, text):
+        """A stand-in for `tokenize.generate_tokens`."""
+        if text != self.last_text:
+            self.last_text = text
+            self.last_tokens = list(
+                tokenize.generate_tokens(StringIO(text).readline)
+            )
+        return self.last_tokens
 
-                exit_counts = cp.exit_counts()
-
-                for i, ltext in enumerate(cp.lines):
-                    lineno = i+1
-                    m0 = m1 = m2 = m3 = a = ' '
-                    if lineno in cp.statement_starts:
-                        m0 = '-'
-                    exits = exit_counts.get(lineno, 0)
-                    if exits > 1:
-                        m1 = str(exits)
-                    if lineno in cp.docstrings:
-                        m2 = '"'
-                    if lineno in cp.classdefs:
-                        m2 = 'C'
-                    if lineno in cp.excluded:
-                        m3 = 'x'
-                    a = arc_chars.get(lineno, '').ljust(arc_width)
-                    print("%4d %s%s%s%s%s %s" %
-                                (lineno, m0, m1, m2, m3, a, ltext)
-                        )
-
-    def arc_ascii_art(self, arcs):
-        """Draw arcs as ascii art.
-
-        Returns a width of characters needed to draw all the arcs, and a
-        dictionary mapping line numbers to ascii strings to draw for that line.
-
-        """
-        arc_chars = {}
-        for lfrom, lto in sorted(arcs):
-            if lfrom < 0:
-                arc_chars[lto] = arc_chars.get(lto, '') + 'v'
-            elif lto < 0:
-                arc_chars[lfrom] = arc_chars.get(lfrom, '') + '^'
-            else:
-                if lfrom == lto - 1:
-                    # Don't show obvious arcs.
-                    continue
-                if lfrom < lto:
-                    l1, l2 = lfrom, lto
-                else:
-                    l1, l2 = lto, lfrom
-                w = max([len(arc_chars.get(l, '')) for l in range(l1, l2+1)])
-                for l in range(l1, l2+1):
-                    if l == lfrom:
-                        ch = '<'
-                    elif l == lto:
-                        ch = '>'
-                    else:
-                        ch = '|'
-                    arc_chars[l] = arc_chars.get(l, '').ljust(w) + ch
-                arc_width = 0
-
-        if arc_chars:
-            arc_width = max([len(a) for a in arc_chars.values()])
-        else:
-            arc_width = 0
-
-        return arc_width, arc_chars
-
-if __name__ == '__main__':
-    AdHocMain().main(sys.argv[1:])
+# Create our generate_tokens cache as a callable replacement function.
+generate_tokens = CachedTokenizer().generate_tokens

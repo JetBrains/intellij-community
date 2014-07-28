@@ -24,11 +24,6 @@ public abstract class Breakpoint {
   @NotNull
   public abstract BreakpointTarget getTarget();
 
-  /**
-   * Returns line number of the breakpoint. As source is changed (typically with LiveEdit feature,
-   * and particularly by calling {@link ScriptManager#setSourceOnRemote}) this value
-   * may become stale.
-   */
   public abstract int getLine();
 
   /**

@@ -168,9 +168,11 @@ globals
 google
 gzip
 gruntfile
+hamcrest
 hardcoded
 hardlink
 hardlinks
+hashcode
 haxe
 helvetica
 holdability
@@ -226,6 +228,8 @@ junit
 keepduplicates
 keychain
 keychains
+keyframe
+keyframes
 kotlin
 labeler
 labelers
@@ -486,6 +490,7 @@ sigwaiting
 sigwinch
 sigxcpu
 sigxfsz
+slru
 smallfile
 smallint
 soname
@@ -560,6 +565,7 @@ undofile
 unescaped
 unhandled
 uninstall
+unmerged
 unpivot
 unprotect
 unwatch

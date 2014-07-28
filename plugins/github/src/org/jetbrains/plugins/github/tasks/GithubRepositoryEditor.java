@@ -125,7 +125,8 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
           @Override
           public String convert(ProgressIndicator indicator) throws IOException {
             return GithubUtil
-              .runTaskWithBasicAuthForHost(myProject, GithubAuthDataHolder.createFromSettings(), indicator, getHost(),
+              .runTaskWithBasicAuthForHost(myProject, GithubAuthDataHolder.createFromSettings(indicator.getModalityState()),
+                                           indicator, getHost(),
                                            new ThrowableConvertor<GithubAuthData, String, IOException>() {
                                              @NotNull
                                              @Override

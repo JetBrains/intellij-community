@@ -18,8 +18,9 @@ package org.jetbrains.idea.svn.status;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.status.StatusClient;
-import org.tmatesoft.svn.core.SVNDepth;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
 
@@ -36,68 +37,50 @@ public class SvnKitStatusClient extends BaseSvnClient implements StatusClient {
 
   private SVNStatusClient myStatusClient;
   @Nullable private final ISVNStatusFileProvider myProvider;
-  @Nullable private final ISVNEventHandler myHandler;
+  @Nullable private final ProgressTracker myHandler;
 
   public SvnKitStatusClient() {
     this(null, null);
   }
 
-  public SvnKitStatusClient(@Nullable ISVNStatusFileProvider provider, @Nullable ISVNEventHandler handler) {
+  public SvnKitStatusClient(@Nullable ISVNStatusFileProvider provider, @Nullable ProgressTracker handler) {
     myProvider = provider;
     myHandler = handler;
   }
 
   @Override
-  public long doStatus(File path, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, ISVNStatusHandler handler)
-    throws SVNException {
-    return getStatusClient().doStatus(path, recursive, remote, reportAll, includeIgnored, handler);
-  }
-
-  @Override
-  public long doStatus(File path,
-                       boolean recursive,
-                       boolean remote,
-                       boolean reportAll,
-                       boolean includeIgnored,
-                       boolean collectParentExternals,
-                       ISVNStatusHandler handler) throws SVNException {
-    return getStatusClient().doStatus(path, recursive, remote, reportAll, includeIgnored, collectParentExternals, handler);
-  }
-
-  @Override
   public long doStatus(File path,
                        SVNRevision revision,
-                       boolean recursive,
+                       Depth depth,
                        boolean remote,
                        boolean reportAll,
                        boolean includeIgnored,
                        boolean collectParentExternals,
-                       ISVNStatusHandler handler) throws SVNException {
-    return getStatusClient().doStatus(path, revision, recursive, remote, reportAll, includeIgnored, collectParentExternals, handler);
+                       final StatusConsumer handler,
+                       Collection changeLists) throws SvnBindException {
+    try {
+      return getStatusClient()
+        .doStatus(path, revision, toDepth(depth), remote, reportAll, includeIgnored, collectParentExternals, new ISVNStatusHandler() {
+          @Override
+          public void handleStatus(SVNStatus status) throws SVNException {
+            handler.consume(Status.create(status));
+          }
+        }, changeLists);
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
   }
 
   @Override
-  public long doStatus(File path,
-                       SVNRevision revision,
-                       SVNDepth depth,
-                       boolean remote,
-                       boolean reportAll,
-                       boolean includeIgnored,
-                       boolean collectParentExternals,
-                       ISVNStatusHandler handler,
-                       Collection changeLists) throws SVNException {
-    return getStatusClient()
-      .doStatus(path, revision, depth, remote, reportAll, includeIgnored, collectParentExternals, handler, changeLists);
-  }
-
-  @Override
-  public SVNStatus doStatus(File path, boolean remote) throws SVNException {
-    return getStatusClient().doStatus(path, remote);
-  }
-
-  @Override
-  public SVNStatus doStatus(File path, boolean remote, boolean collectParentExternals) throws SVNException {
-    return getStatusClient().doStatus(path, remote, collectParentExternals);
+  @Nullable
+  public Status doStatus(File path, boolean remote) throws SvnBindException {
+    try {
+      return Status.create(getStatusClient().doStatus(path, remote));
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
   }
 
   @NotNull
@@ -111,7 +94,7 @@ public class SvnKitStatusClient extends BaseSvnClient implements StatusClient {
     if (myStatusClient == null) {
       myStatusClient = myVcs.getSvnKitManager().createStatusClient();
       myStatusClient.setFilesProvider(myProvider);
-      myStatusClient.setEventHandler(myHandler);
+      myStatusClient.setEventHandler(toEventHandler(myHandler));
     }
 
     return myStatusClient;

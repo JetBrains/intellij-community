@@ -20,11 +20,15 @@
  */
 package com.intellij.psi.impl.file;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IconProvider;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.SourceRootPresentation;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -39,11 +43,18 @@ public class DirectoryIconProvider extends IconProvider implements DumbAware {
     if (element instanceof PsiDirectory) {
       final PsiDirectory psiDirectory = (PsiDirectory)element;
       final VirtualFile vFile = psiDirectory.getVirtualFile();
-      SourceFolder sourceFolder = ProjectRootsUtil.getModuleSourceRoot(vFile, psiDirectory.getProject());
+      Project project = psiDirectory.getProject();
+      SourceFolder sourceFolder = ProjectRootsUtil.getModuleSourceRoot(vFile, project);
       if (sourceFolder != null) {
         return SourceRootPresentation.getSourceRootIcon(sourceFolder);
       }
       else {
+        if (!Registry.is("ide.hide.excluded.files")) {
+          boolean ignored = ProjectRootManager.getInstance(project).getFileIndex().isExcluded(vFile);
+          if (ignored) {
+            return AllIcons.Modules.ExcludeRoot;
+          }
+        }
         return PlatformIcons.DIRECTORY_CLOSED_ICON;
       }
     }

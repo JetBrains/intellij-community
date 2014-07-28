@@ -44,7 +44,7 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
   private boolean myBemFilterEnabledByDefault = false;
   private boolean myEmmetEnabled = true;
   private int myEmmetExpandShortcut = TemplateSettings.TAB_CHAR;
-  private boolean myFuzzySearchEnabled = true;
+  private boolean myFuzzySearchEnabled = false;
   private boolean myAutoInsertCssPrefixedEnabled = true;
   private boolean myPreviewEnabled = false;
   private Set<String> myFiltersEnabledByDefault = ContainerUtil.newHashSet();

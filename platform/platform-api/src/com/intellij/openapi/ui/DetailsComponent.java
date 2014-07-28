@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -170,14 +171,13 @@ public class DetailsComponent {
       myContent.setBorder(new EmptyBorder(UIUtil.PANEL_REGULAR_INSETS));
     }
     else {
-      if (Registry.is("ide.new.project.settings")) {
-        myContent.setBorder(new EmptyBorder(16, 10, 16, 10));
-      } else {
-        myContent.setBorder(null);
-      }
+      myContent.setBorder(null);
     }
   }
 
+  public void forProject(Project project) {
+    myBannerLabel.forProject(project);
+  }
 
   public void setPrefix(@Nullable String... prefix) {
     myPrefix = prefix;

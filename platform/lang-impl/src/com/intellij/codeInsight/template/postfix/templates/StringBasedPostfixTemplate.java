@@ -26,7 +26,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class StringBasedPostfixTemplate extends TypedPostfixTemplate {
+public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpressionSelector {
 
   public StringBasedPostfixTemplate(@NotNull String name,
                                     @NotNull String example,
@@ -36,10 +36,8 @@ public abstract class StringBasedPostfixTemplate extends TypedPostfixTemplate {
   }
 
   @Override
-  public final void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    PsiElement expr = myPsiInfo.getTopmostExpression(context);
-    assert expr != null;
-    Project project = context.getProject();
+  public final void expandForChooseExpression(@NotNull PsiElement expr, @NotNull Editor editor) {
+    Project project = expr.getProject();
     Document document = editor.getDocument();
     PsiElement elementForRemoving = shouldRemoveParent() ? expr.getParent() : expr;
     document.deleteString(elementForRemoving.getTextRange().getStartOffset(), elementForRemoving.getTextRange().getEndOffset());

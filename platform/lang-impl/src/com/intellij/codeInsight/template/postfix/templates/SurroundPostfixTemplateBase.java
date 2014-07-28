@@ -40,7 +40,7 @@ public abstract class SurroundPostfixTemplateBase extends StatementWrapPostfixTe
 
 
   @Override
-  public void expand(@NotNull PsiElement context, @NotNull final Editor editor) {
+  public final void expandForChooseExpression(@NotNull PsiElement context, @NotNull final Editor editor) {
     PsiElement topmostExpression = myPsiInfo.getTopmostExpression(context);
     PsiElement expression = getWrappedExpression(topmostExpression);
     assert topmostExpression != null;

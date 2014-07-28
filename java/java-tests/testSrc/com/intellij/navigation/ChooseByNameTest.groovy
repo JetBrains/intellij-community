@@ -197,6 +197,19 @@ class Intf {
     assert getPopupElements(new GotoClassModel2(project), 'Bar:[2,3]') == [c]
   }
 
+  public void "test dollar"() {
+    def bar = myFixture.addClass("package foo; class Bar { class Foo {} }")
+    def foo = bar.innerClasses[0]
+    myFixture.addClass("package goo; class Goo { }")
+    assert getPopupElements(new GotoClassModel2(project), 'Bar$Foo') == [foo]
+    assert getPopupElements(new GotoClassModel2(project), 'foo.Bar$Foo') == [foo]
+    assert getPopupElements(new GotoClassModel2(project), 'foo.B$F') == [foo]
+    assert !getPopupElements(new GotoClassModel2(project), 'foo$Foo')
+    assert !getPopupElements(new GotoClassModel2(project), 'foo$Bar')
+    assert !getPopupElements(new GotoClassModel2(project), 'foo$Bar$Foo')
+    assert !getPopupElements(new GotoClassModel2(project), 'foo$Goo')
+  }
+
   public void "test super method in jdk"() {
     def ourRun = myFixture.addClass("package foo.bar; class Goo implements Runnable { public void run() {} }").methods[0]
     def sdkRun

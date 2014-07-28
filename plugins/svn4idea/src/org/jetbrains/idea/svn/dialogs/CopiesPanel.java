@@ -47,10 +47,10 @@ import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.jetbrains.idea.svn.actions.SelectBranchPopup;
 import org.jetbrains.idea.svn.api.ClientFactory;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.integrate.QuickMergeInteractionImpl;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -228,7 +228,7 @@ public class CopiesPanel {
               if (result == Messages.OK) {
                 // update of view will be triggered by roots changed event
                 SvnCheckoutProvider.checkout(myVcs.getProject(), new File(wcInfo.getPath()), wcInfo.getRootUrl(), SVNRevision.HEAD,
-                                             SVNDepth.INFINITY, false, null, wcInfo.getFormat());
+                                             Depth.INFINITY, false, null, wcInfo.getFormat());
               }
             } else if (CHANGE_FORMAT.equals(e.getDescription())) {
               changeFormat(wcInfo, upgradeFormats);
@@ -296,7 +296,7 @@ public class CopiesPanel {
       sb.append("<tr valign=\"top\"><td>Format:</td><td colspan=\"2\">").append(info.getFormat().getName()).append("</td></tr>");
     }
 
-    if (!SVNDepth.INFINITY.equals(info.getStickyDepth()) && !info.hasError()) {
+    if (!Depth.INFINITY.equals(info.getStickyDepth()) && !info.hasError()) {
       // can fix
       sb.append("<tr valign=\"top\"><td>Depth:</td><td>").append(info.getStickyDepth().getName()).append("</td><td><a href=\"").
         append(FIX_DEPTH).append("\">Fix</a></td></tr>");
@@ -312,7 +312,7 @@ public class CopiesPanel {
       sb.append("<tr valign=\"top\"><td colspan=\"3\"><i>").append("Working copy root</i></td></tr>");
     }
     if (!info.hasError()) {
-      if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat()) || WorkingCopyFormat.ONE_DOT_EIGHT.equals(info.getFormat())) {
+      if (info.getFormat().isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN)) {
         sb.append("<tr valign=\"top\"><td colspan=\"3\"><a href=\"").append(CLEANUP).append("\">Cleanup</a></td></tr>");
       }
       sb.append("<tr valign=\"top\"><td colspan=\"3\"><a href=\"").append(CONFIGURE_BRANCHES).append("\">Configure Branches</a></td></tr>");

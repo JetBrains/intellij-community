@@ -451,7 +451,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
       final Module module = ModuleUtilCore.findModuleForFile(file, project);
       if (module != null) {
         return appendRelatedToModule(element, classesUrl, rootName, file, module);
-      } else if (ProjectRootManager.getInstance(project).getFileIndex().isIgnored(file)) {
+      } else if (ProjectRootManager.getInstance(project).getFileIndex().isExcluded(file)) {
         for (Module aModule : ModuleManager.getInstance(project).getModules()) {
           if (appendRelatedToModule(element, classesUrl, rootName, file, aModule)) return true;
         }

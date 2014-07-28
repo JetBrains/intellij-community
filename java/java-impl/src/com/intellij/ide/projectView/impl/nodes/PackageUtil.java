@@ -21,8 +21,6 @@ import com.intellij.ide.util.treeView.TreeViewUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
@@ -230,20 +228,16 @@ public class PackageUtil {
   }
 
   private static class ProjectLibrariesSearchScope extends GlobalSearchScope {
-    private final DirectoryIndex myDirectoryIndex;
+    private final ProjectFileIndex myFileIndex;
 
     public ProjectLibrariesSearchScope(@NotNull Project project) {
       super(project);
-      myDirectoryIndex = DirectoryIndex.getInstance(project);
+      myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     }
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      VirtualFile dir = file.isDirectory() ? file : file.getParent();
-      if (dir == null) return false;
-
-      DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
-      return info != null && info.hasLibraryClassRoot();
+      return myFileIndex.isInLibraryClasses(file);
     }
 
     @Override

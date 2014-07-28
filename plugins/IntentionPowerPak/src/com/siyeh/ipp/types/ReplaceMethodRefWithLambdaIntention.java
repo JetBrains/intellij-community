@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -45,24 +46,38 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
   protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     final PsiMethodReferenceExpression referenceExpression = PsiTreeUtil.getParentOfType(element, PsiMethodReferenceExpression.class);
     LOG.assertTrue(referenceExpression != null);
+    final PsiElement resolve = referenceExpression.resolve();
+    final boolean isReceiver = resolve instanceof PsiMethod && PsiMethodReferenceUtil.hasReceiver(referenceExpression, (PsiMethod)resolve);
+    final PsiParameter[] psiParameters = resolve instanceof PsiMethod ? ((PsiMethod)resolve).getParameterList().getParameters() : null;
     final PsiType functionalInterfaceType = referenceExpression.getFunctionalInterfaceType();
     final PsiClassType.ClassResolveResult functionalInterfaceResolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
+    LOG.assertTrue(interfaceMethod != null);
+    final PsiSubstitutor psiSubstitutor = LambdaUtil.getSubstitutor(interfaceMethod, functionalInterfaceResolveResult);
     final StringBuilder buf = new StringBuilder("(");
     LOG.assertTrue(functionalInterfaceType != null);
     buf.append(functionalInterfaceType.getCanonicalText()).append(")(");
-    LOG.assertTrue(interfaceMethod != null);
-    final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
+    final PsiParameterList parameterList = interfaceMethod.getParameterList();
+    final PsiParameter[] parameters = parameterList.getParameters();
 
     final Map<PsiParameter, String> map = new HashMap<PsiParameter, String>();
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(element.getProject());
     final String paramsString = StringUtil.join(parameters, new Function<PsiParameter, String>() {
       @Override
       public String fun(PsiParameter parameter) {
-        String parameterName = parameter.getName();
-        if (parameterName != null) {
-          final String baseName = codeStyleManager.variableNameToPropertyName(parameterName, VariableKind.PARAMETER);
-          parameterName = codeStyleManager.suggestUniqueVariableName(baseName, referenceExpression, true);
+        final int parameterIndex = parameterList.getParameterIndex(parameter);
+        String baseName;
+        if (isReceiver && parameterIndex == 0) {
+          final SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, psiSubstitutor.substitute(parameter.getType()));
+          baseName = nameInfo.names.length > 0 ? nameInfo.names[0] : parameter.getName();
+        }
+        else {
+          final String initialName = psiParameters != null ? psiParameters[parameterIndex - (isReceiver ? 1 : 0)].getName() : parameter.getName();
+          baseName = codeStyleManager.variableNameToPropertyName(initialName, VariableKind.PARAMETER);
+        } 
+
+        if (baseName != null) {
+          String parameterName = codeStyleManager.suggestUniqueVariableName(baseName, referenceExpression, true);
           map.put(parameter, parameterName);
           return parameterName;
         }
@@ -92,11 +107,10 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
 
       final boolean onArrayRef =
         JavaPsiFacade.getElementFactory(element.getProject()).getArrayClass(PsiUtil.getLanguageLevel(element)) == containingClass;
-      boolean isReceiver = PsiMethodReferenceUtil.isReceiverType(functionalInterfaceType, containingClass, resolveElement instanceof PsiMethod ? (PsiMethod)resolveElement : null);
 
       final PsiElement referenceNameElement = referenceExpression.getReferenceNameElement();
       if (isReceiver){
-        buf.append(parameters[0].getName()).append(".");
+        buf.append(map.get(parameters[0])).append(".");
       } else {
         if (!(referenceNameElement instanceof PsiKeyword)) {
           if (qualifier instanceof PsiTypeElement) {

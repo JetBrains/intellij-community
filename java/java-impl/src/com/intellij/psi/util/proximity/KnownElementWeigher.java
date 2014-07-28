@@ -20,14 +20,26 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ProximityLocation;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
+
+import static com.intellij.psi.CommonClassNames.*;
 
 /**
  * @author peter
 */
 public class KnownElementWeigher extends ProximityWeigher {
+  private static final Set<String> POPULAR_JDK_CLASSES = ContainerUtil.newHashSet(
+    JAVA_LANG_STRING,
+    JAVA_LANG_CLASS,
+    System.class.getName(), JAVA_LANG_RUNNABLE,
+    JAVA_LANG_EXCEPTION, JAVA_LANG_THROWABLE, JAVA_LANG_RUNTIME_EXCEPTION,
+    JAVA_UTIL_ARRAY_LIST, JAVA_UTIL_HASH_MAP, JAVA_UTIL_HASH_SET
+  );
 
   @Override
   public Comparable weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
@@ -50,7 +62,7 @@ public class KnownElementWeigher extends ProximityWeigher {
       if (containingClass != null) {
         String methodName = method.getName();
         if ("finalize".equals(methodName) || "registerNatives".equals(methodName) || methodName.startsWith("wait") || methodName.startsWith("notify")) {
-          if (CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
+          if (JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
             return -1;
           }
         }
@@ -58,11 +70,11 @@ public class KnownElementWeigher extends ProximityWeigher {
           return -1;
         }
         if ("subSequence".equals(methodName)) {
-          if (CommonClassNames.JAVA_LANG_STRING.equals(containingClass.getQualifiedName())) {
+          if (JAVA_LANG_STRING.equals(containingClass.getQualifiedName())) {
             return -1;
           }
         }
-        if (CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
+        if (JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
           return 0;
         }
         return getJdkClassProximity(method.getContainingClass());
@@ -86,8 +98,8 @@ public class KnownElementWeigher extends ProximityWeigher {
     @NonNls final String qname = element.getQualifiedName();
     if (qname != null) {
       String pkg = StringUtil.getPackageName(qname);
-      if (qname.equals(CommonClassNames.JAVA_LANG_OBJECT)) return 5;
-      if (isPopularJdkClass(qname)) return 8;
+      if (qname.equals(JAVA_LANG_OBJECT)) return 5;
+      if (POPULAR_JDK_CLASSES.contains(qname)) return 8;
       if (pkg.equals("java.lang")) return 6;
       if (pkg.equals("java.util")) return 7;
 
@@ -103,13 +115,4 @@ public class KnownElementWeigher extends ProximityWeigher {
     return 0;
   }
 
-  private static boolean isPopularJdkClass(String qname) {
-    return qname.equals(CommonClassNames.JAVA_LANG_STRING) || 
-           qname.equals(System.class.getName()) || 
-           qname.equals(CommonClassNames.JAVA_LANG_EXCEPTION) || 
-           qname.equals(CommonClassNames.JAVA_LANG_THROWABLE) || 
-           qname.equals(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION) || 
-           qname.equals(CommonClassNames.JAVA_LANG_RUNNABLE) || 
-           qname.equals(CommonClassNames.JAVA_LANG_CLASS);
-  }
 }

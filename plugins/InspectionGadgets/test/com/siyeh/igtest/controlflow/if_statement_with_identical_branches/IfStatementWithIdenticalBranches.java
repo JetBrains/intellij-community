@@ -7,20 +7,20 @@ import java.util.Set;
 public class IfStatementWithIdenticalBranches {
 
     void one() {
-        if (true) {
+        <warning descr="'if' statement with identical branches">if</warning> (true) {
 
         } else {
 
         }
-        if (false) {
+        <warning descr="'if' statement with identical branches">if</warning> (false) {
             System.out.println();
             return;
         }
         System.out.println();
     }
 
-    int two() { 
-        if (true) {
+    int two() {
+        <warning descr="'if' statement with identical branches">if</warning> (true) {
             int i = 2;
             return i;
         } else {
@@ -41,7 +41,7 @@ public class IfStatementWithIdenticalBranches {
 
     void four() {
         if (true) {
-            if (false) {
+            <warning descr="'if' statement with identical branches">if</warning> (false) {
                 System.out.println();
                 return;
             }
@@ -61,7 +61,7 @@ public class IfStatementWithIdenticalBranches {
 
     void six() {
         if (true) {
-            if (false) {
+            <warning descr="'if' statement with identical branches">if</warning> (false) {
                 System.out.println();
                 System.out.println();
                 return;
@@ -93,11 +93,11 @@ public class IfStatementWithIdenticalBranches {
     }
 
     void nine() {
-        if (true) {
+        <warning descr="'if' statement with identical branches">if</warning> (true) {
 
-        } else if (true) {
+        } else <warning descr="'if' statement with identical branches">if</warning> (true) {
 
-        } else if (true) {
+        } else <warning descr="'if' statement with identical branches">if</warning> (true) {
 
         } else {
 
@@ -105,7 +105,7 @@ public class IfStatementWithIdenticalBranches {
     }
 
   void blocks() {
-    if (true) {
+    <warning descr="'if' statement with identical branches">if</warning> (true) {
       System.out.println();
       return;
     }
@@ -135,4 +135,31 @@ class NotADup {
         return null;
     }
 
+  public static String calculate(int someNumber) {
+    if (someNumber == 0 ) {
+      try {
+        return placeOrder(3, null);
+      }
+      catch( Exception e ) {
+        System.out.println("e = " + e);
+      }
+    }
+    else if (someNumber == 1) {
+      try {
+        return placeOrder(3, someNumber, null);
+      }
+      catch(Exception e ) {
+        System.out.println("e = " + e);
+      }
+    }
+    return null;
+  }
+
+  private static String placeOrder(int i, int someNumber, Object o) {
+    return null;
+  }
+
+  private static String placeOrder(int i, Object o) {
+    return null;
+  }
 }

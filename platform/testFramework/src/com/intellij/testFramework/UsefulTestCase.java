@@ -570,8 +570,12 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static <T> T assertOneElement(Collection<T> collection) {
     Assert.assertNotNull(collection);
-    Assert.assertEquals(toString(collection), 1, collection.size());
-    return collection.iterator().next();
+    Iterator<T> iterator = collection.iterator();
+    String toString = toString(collection);
+    Assert.assertTrue(toString, iterator.hasNext());
+    T t = iterator.next();
+    Assert.assertFalse(toString, iterator.hasNext());
+    return t;
   }
 
   public static <T> T assertOneElement(T[] ts) {

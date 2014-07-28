@@ -19,6 +19,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SystemProperties;
 
+import java.util.Formatter;
+
 public class DebugAssertions {
   private static final Logger LOG = Logger.getInstance(DebugAssertions.class);
 
@@ -29,12 +31,22 @@ public class DebugAssertions {
 
   public static final boolean EXTRA_SANITY_CHECKS = SystemProperties.getBooleanProperty(
     "intellij.idea.indices.debug.extra.sanity",
-    DEBUG && ApplicationManager.getApplication().isInternal()
+    DEBUG
   );
 
   public static void assertTrue(boolean value) {
     if (!value) {
       LOG.assertTrue(false);
     }
+  }
+
+  public static void assertTrue(boolean value, String message, Object ... args) {
+    if (!value) {
+      error(message, args);
+    }
+  }
+
+  public static void error(String message, Object ... args) {
+    LOG.error(new Formatter().format(message, args));
   }
 }

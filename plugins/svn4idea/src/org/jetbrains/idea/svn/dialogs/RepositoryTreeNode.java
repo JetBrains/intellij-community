@@ -21,11 +21,9 @@ import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
 import org.jetbrains.idea.svn.dialogs.browserCache.NodeLoadState;
-import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
@@ -89,7 +87,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
   }
 
   public boolean isLeaf() {
-    return myUserObject instanceof SVNDirEntry ? ((SVNDirEntry) myUserObject).getKind() == SVNNodeKind.FILE : false;
+    return myUserObject instanceof DirectoryEntry && ((DirectoryEntry)myUserObject).isFile();
   }
 
   public TreeNode getParent() {
@@ -146,9 +144,9 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
   }
 
   @Nullable
-  public SVNDirEntry getSVNDirEntry() {
-    if (myUserObject instanceof SVNDirEntry) {
-      return (SVNDirEntry) myUserObject;
+  public DirectoryEntry getSVNDirEntry() {
+    if (myUserObject instanceof DirectoryEntry) {
+      return (DirectoryEntry) myUserObject;
     }
     return null;
   }
@@ -161,7 +159,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
   }
 
   public boolean isRepositoryRoot() {
-    return ! (myUserObject instanceof SVNDirEntry);
+    return ! (myUserObject instanceof DirectoryEntry);
   }
 
   @NotNull
@@ -194,13 +192,13 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     return myModel.isDisposed();
   }
 
-  public void setChildren(final List<SVNDirEntry> children, final NodeLoadState state) {
+  public void setChildren(final List<DirectoryEntry> children, final NodeLoadState state) {
     final List<TreeNode> nodes = new ArrayList<TreeNode>();
-    for (final SVNDirEntry entry : children) {
-      if (!myModel.isShowFiles() && entry.getKind() != SVNNodeKind.DIR) {
+    for (final DirectoryEntry entry : children) {
+      if (!myModel.isShowFiles() && !entry.isDirectory()) {
         continue;
       }
-      nodes.add(new RepositoryTreeNode(myModel, this, entry.getURL(), entry, state));
+      nodes.add(new RepositoryTreeNode(myModel, this, entry.getUrl(), entry, state));
     }
 
     myChildrenLoadState = state;

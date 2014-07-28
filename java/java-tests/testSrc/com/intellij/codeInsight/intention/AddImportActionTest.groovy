@@ -177,6 +177,66 @@ class Test {
 '''
   }
 
+  public void "test import class in class reference expression"() {
+    myFixture.configureByText 'a.java', '''
+class Test {
+    {
+      equals(Co<caret>llection.class);
+    }
+}
+'''
+    importClass();
+    myFixture.checkResult '''import java.util.Collection;
+
+class Test {
+    {
+      equals(Co<caret>llection.class);
+    }
+}
+'''
+  }
+
+  public void "test import class in qualifier expression"() {
+    myFixture.configureByText 'a.java', '''
+class Test {
+    {
+      equals(Co<caret>llections.emptySet());
+    }
+}
+'''
+    importClass();
+    myFixture.checkResult '''import java.util.Collections;
+
+class Test {
+    {
+      equals(Co<caret>llections.emptySet());
+    }
+}
+'''
+  }
+
+  public void "test don't import class in method call argument"() {
+    myFixture.configureByText 'a.java', '''
+class Test {
+    {
+      equals(Co<caret>llection);
+    }
+}
+'''
+    assert !myFixture.filterAvailableIntentions("Import Class")
+  }
+
+  public void "test don't import class in assignment"() {
+    myFixture.configureByText 'a.java', '''
+class Test {
+    {
+      Co<caret>llection = 2;
+    }
+}
+'''
+    assert !myFixture.filterAvailableIntentions("Import Class")
+  }
+
   private def importClass() {
     myFixture.launchAction(myFixture.findSingleIntention("Import Class"))
   }

@@ -289,7 +289,16 @@ public class FormatChangedTextUtil {
     }
 
     try {
-      List<Range> changedRanges = new RangesBuilder(document, documentFromVcs).getRanges();
+      List<Range> changedRanges;
+
+      LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
+      if (tracker != null) {
+        changedRanges = tracker.getRanges();
+      }
+      else {
+        changedRanges = new RangesBuilder(document, documentFromVcs).getRanges();
+      }
+
       return getChangedTextRanges(document, changedRanges);
     }
     catch (FilesTooBigForDiffException e) {

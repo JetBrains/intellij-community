@@ -18,10 +18,11 @@ package org.jetbrains.idea.svn.update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.tmatesoft.svn.core.SVNDepth;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 
@@ -35,24 +36,19 @@ import java.io.File;
  */
 public class SvnKitUpdateClient extends BaseSvnClient implements UpdateClient {
 
-  @Nullable protected ISVNEventHandler myDispatcher;
+  @Nullable protected ProgressTracker myDispatcher;
   protected boolean myIgnoreExternals;
   protected boolean myLocksOnDemand;
 
   @Override
-  public long[] doUpdate(File[] paths,
-                         SVNRevision revision,
-                         SVNDepth depth,
-                         boolean allowUnversionedObstructions,
-                         boolean depthIsSticky,
-                         boolean makeParents) throws SVNException {
-    return getClient().doUpdate(paths, revision, depth, allowUnversionedObstructions, depthIsSticky, makeParents);
-  }
-
-  @Override
-  public long doUpdate(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)
-    throws SVNException {
-    return getClient().doUpdate(path, revision, depth, allowUnversionedObstructions, depthIsSticky);
+  public long doUpdate(File path, SVNRevision revision, Depth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)
+    throws SvnBindException {
+    try {
+      return getClient().doUpdate(path, revision, toDepth(depth), allowUnversionedObstructions, depthIsSticky);
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
   }
 
   @Override
@@ -60,9 +56,14 @@ public class SvnKitUpdateClient extends BaseSvnClient implements UpdateClient {
                        SVNURL url,
                        SVNRevision pegRevision,
                        SVNRevision revision,
-                       SVNDepth depth,
-                       boolean allowUnversionedObstructions, boolean depthIsSticky) throws SVNException {
-    return getClient().doSwitch(path, url, pegRevision, revision, depth, allowUnversionedObstructions, depthIsSticky);
+                       Depth depth,
+                       boolean allowUnversionedObstructions, boolean depthIsSticky) throws SvnBindException {
+    try {
+      return getClient().doSwitch(path, url, pegRevision, revision, toDepth(depth), allowUnversionedObstructions, depthIsSticky);
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
   }
 
   @Override
@@ -71,7 +72,7 @@ public class SvnKitUpdateClient extends BaseSvnClient implements UpdateClient {
   }
 
   @Override
-  public void setEventHandler(ISVNEventHandler dispatcher) {
+  public void setEventHandler(ProgressTracker dispatcher) {
     myDispatcher = dispatcher;
   }
 
@@ -84,7 +85,7 @@ public class SvnKitUpdateClient extends BaseSvnClient implements UpdateClient {
   private SVNUpdateClient getClient() {
     SVNUpdateClient client = myVcs.getSvnKitManager().createUpdateClient();
 
-    client.setEventHandler(myDispatcher);
+    client.setEventHandler(toEventHandler(myDispatcher));
     client.setIgnoreExternals(myIgnoreExternals);
     client.setUpdateLocksOnDemand(myLocksOnDemand);
 

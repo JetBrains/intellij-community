@@ -387,8 +387,6 @@
 
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyClassNameCompletionContributor"/>
-    <completion.contributor language="Python"
-                            implementationClass="com.jetbrains.python.codeInsight.completion.PyBracketProtectingCompletionContributor"/>
     <weigher key="completion" implementationClass="com.jetbrains.python.codeInsight.completion.PythonCompletionWeigher" order="first"/>
     <completion.confidence language="Python" implementationClass="com.jetbrains.python.codeInsight.completion.PyCompletionConfidence"/>
     <typedHandler implementation="com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler" id="pydevBlockAutoPopup"
@@ -446,10 +444,10 @@
 
     <applicationService serviceInterface="com.jetbrains.python.documentation.PythonDocumentationMap"
                         serviceImplementation="com.jetbrains.python.documentation.PythonDocumentationMap"/>
-    <applicationConfigurable instance="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
+    <applicationConfigurable groupId="tools" instance="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
                              id="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
                              displayName="Python External Documentation"/>
-    <projectConfigurable instance="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
+    <projectConfigurable groupId="tools" instance="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
                          id="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable" displayName="Python Integrated Tools"
                          nonDefaultProject="true"/>
     <moduleService serviceInterface="com.jetbrains.python.documentation.PyDocumentationSettings"
@@ -465,10 +463,10 @@
 
     <project.converterProvider implementation="com.jetbrains.python.testing.converters.PythonTestConverterProvider"/>
 
-    <projectConfigurable instance="com.jetbrains.python.console.PyConsoleOptionsConfigurable"/>
+    <projectConfigurable groupId="build" dynamic="true" instance="com.jetbrains.python.console.PyConsoleOptionsConfigurable"/>
     <projectService serviceImplementation="com.jetbrains.python.console.PyConsoleOptions"/>
 
-    <projectConfigurable instance="com.jetbrains.python.debugger.PyDebuggerConfigurable"/>
+    <projectConfigurable groupId="build" instance="com.jetbrains.python.debugger.PyDebuggerConfigurable"/>
     <projectService serviceImplementation="com.jetbrains.python.debugger.PyDebuggerOptionsProvider"/>
 
     <codeBlockProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyCodeBlockProvider"/>

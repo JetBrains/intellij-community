@@ -14,7 +14,7 @@ httpclient-4.3.2.jar
 fluent-hc-4.3.2.jar
 freemarker.jar
 httpmime-4.3.2.jar
-ecj-4.3.2.jar
+ecj-4.4.jar
 groovy-all-2.2.1.jar
 gson-2.2.4.jar
 guava-17.0.jar

@@ -64,11 +64,17 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
     task.executeInBackground(false, new GitTaskResultHandlerAdapter() {
       @Override
       protected void run(GitTaskResult taskResult) {
-        editor.close();
-        GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-        manager.updateRepository(root);
-        root.refresh(false, true);
-        notifyAboutErrorResult(taskResult, resultListener, exceptions, project);
+        GitUtil.workingTreeChangeStarted(project);
+        try {
+          editor.close();
+          GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+          manager.updateRepository(root);
+          root.refresh(false, true);
+          notifyAboutErrorResult(taskResult, resultListener, exceptions, project);
+        }
+        finally {
+          GitUtil.workingTreeChangeFinished(project);
+        }
       }
     });
   }

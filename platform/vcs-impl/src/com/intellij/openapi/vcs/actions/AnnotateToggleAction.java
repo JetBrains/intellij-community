@@ -169,6 +169,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     if (vcs == null) return;
 
     final AnnotationProvider annotationProvider = vcs.getCachingAnnotationProvider();
+    assert annotationProvider != null;
 
     final Ref<FileAnnotation> fileAnnotationRef = new Ref<FileAnnotation>();
     final Ref<VcsException> exceptionRef = new Ref<VcsException>();
@@ -190,7 +191,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
           exceptionRef.set(e);
         }
         catch (Throwable t) {
-          handler.completed(file.getPath());
+          exceptionRef.set(new VcsException(t));
         }
       }
 

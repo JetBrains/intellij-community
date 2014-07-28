@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -35,7 +34,6 @@ import com.intellij.openapi.vcs.changes.FilePathUnderVcs;
 import com.intellij.openapi.vcs.changes.VcsGuess;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -102,10 +100,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     if (matchContext != null) {
       return true;
     }
-    if (myBaseDir != null && VfsUtilCore.isAncestor(myBaseDir, file, false)) {
-      return !ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(file);
-    }
-    return false;
+    return myBaseDir != null && VfsUtilCore.isAncestor(myBaseDir, file, false);
   }
 
   @Override

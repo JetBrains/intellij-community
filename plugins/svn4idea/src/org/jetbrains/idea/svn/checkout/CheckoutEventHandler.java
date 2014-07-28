@@ -22,16 +22,15 @@ import com.intellij.openapi.wm.StatusBar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.EventAction;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
 
-public class CheckoutEventHandler implements ISVNEventHandler {
+public class CheckoutEventHandler implements ProgressTracker {
   @Nullable private final ProgressIndicator myIndicator;
   private int myExternalsCount;
   @NotNull private final SvnVcs myVCS;
@@ -46,20 +45,19 @@ public class CheckoutEventHandler implements ISVNEventHandler {
     myCnt = 0;
   }
 
-  public void handleEvent(SVNEvent event, double progress) {
-    final String path = SvnUtil.getPathForProgress(event);
-    if (path == null) {
+  public void consume(ProgressEvent event) {
+    if (event.getPath() == null) {
       return;
     }
-    if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
+    if (event.getAction() == EventAction.UPDATE_EXTERNAL) {
       myExternalsCount++;
       progress(SvnBundle.message("progress.text2.fetching.external.location", event.getFile().getAbsolutePath()));
     }
-    else if (event.getAction() == SVNEventAction.UPDATE_ADD) {
+    else if (event.getAction() == EventAction.UPDATE_ADD) {
       progress2(SvnBundle.message(myIsExport ? "progress.text2.exported" : "progress.text2.checked.out", event.getFile().getName(), myCnt));
       ++ myCnt;
     }
-    else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED) {
+    else if (event.getAction() == EventAction.UPDATE_COMPLETED) {
       myExternalsCount--;
       progress2(
         (SvnBundle.message(myIsExport ? "progress.text2.exported.revision" : "progress.text2.checked.out.revision", event.getRevision())));
@@ -70,10 +68,10 @@ public class CheckoutEventHandler implements ISVNEventHandler {
           StatusBar.Info.set(SvnBundle.message(myIsExport ? "progress.text2.exported.revision" : "status.text.checked.out.revision", event.getRevision()), project);
         }
       }
-    } else if (event.getAction() == SVNEventAction.COMMIT_ADDED) {
-      progress2((SvnBundle.message("progress.text2.adding", path)));
-    } else if (event.getAction() == SVNEventAction.COMMIT_DELTA_SENT) {
-      progress2((SvnBundle.message("progress.text2.transmitting.delta", path)));
+    } else if (event.getAction() == EventAction.COMMIT_ADDED) {
+      progress2((SvnBundle.message("progress.text2.adding", event.getPath())));
+    } else if (event.getAction() == EventAction.COMMIT_DELTA_SENT) {
+      progress2((SvnBundle.message("progress.text2.transmitting.delta", event.getPath())));
     }
   }
 

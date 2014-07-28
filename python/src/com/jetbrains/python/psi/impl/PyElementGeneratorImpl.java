@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.TokenSet;
@@ -191,7 +192,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     final LeafPsiElement[] leafs = PsiTreeUtil.getChildrenOfType(list, LeafPsiElement.class);
     if (leafs != null) {
       final Deque<LeafPsiElement> commas = Queues.newArrayDeque(Collections2.filter(Arrays.asList(leafs), COMMAS_ONLY));
-      if (! commas.isEmpty()) {
+      if (!commas.isEmpty()) {
         final LeafPsiElement lastComma = commas.getLast();
         if (PsiTreeUtil.getNextSiblingOfType(lastComma, PyExpression.class) == null) { //Comma has no expression after it
           lastComma.delete();
@@ -297,7 +298,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
                                    AccessDirection accessDirection) {
     String propertyText;
     if (accessDirection == AccessDirection.DELETE) {
-      propertyText = "@" + propertyName +".deleter\ndef " + propertyName + "(self):\n  del self." + fieldName;
+      propertyText = "@" + propertyName + ".deleter\ndef " + propertyName + "(self):\n  del self." + fieldName;
     }
     else if (accessDirection == AccessDirection.WRITE) {
       propertyText = "@" + propertyName + ".setter\ndef " + propertyName + "(self, value):\n  self." + fieldName + " = value";
@@ -413,6 +414,12 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
   public PyExpressionStatement createDocstring(String content) {
     return createFromText(LanguageLevel.getDefault(),
                           PyExpressionStatement.class, content + "\n");
+  }
+
+  @NotNull
+  @Override
+  public PsiElement createNewLine() {
+    return createFromText(LanguageLevel.getDefault(), PsiWhiteSpace.class, " \n\n ");
   }
 
   private static class CommasOnly extends NotNullPredicate<LeafPsiElement> {

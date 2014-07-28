@@ -42,6 +42,8 @@ public class Range {
   private final byte myType;
   @Nullable private RangeHighlighter myRangeHighlighter;
 
+  private boolean myValid = true;
+
   public static Range createOn(@NotNull Diff.Change change, int shift, int upToDateShift) {
     byte type = getChangeTypeFrom(change);
 
@@ -157,5 +159,13 @@ public class Range {
   @Nullable
   public RangeHighlighter getHighlighter() {
     return myRangeHighlighter;
+  }
+
+  public boolean isValid() {
+    return myValid;
+  }
+
+  public void invalidate() {
+    myValid = false;
   }
 }

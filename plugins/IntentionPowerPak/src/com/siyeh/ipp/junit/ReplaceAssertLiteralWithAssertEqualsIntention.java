@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.siyeh.ipp.junit;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
@@ -73,11 +73,10 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedI
     @NonNls final StringBuilder newExpression = new StringBuilder();
     final PsiElement qualifier = methodExpression.getQualifier();
     if (qualifier == null) {
-      final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(call, PsiMethod.class);
-      if (containingMethod != null && AnnotationUtil.isAnnotated(containingMethod, "org.junit.Test", true)) {
-        if (!ImportUtils.addStaticImport("org.junit.Assert", "assertEquals", element)) {
-          newExpression.append("org.junit.Assert.");
-        }
+      final PsiClass containingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+      if (!InheritanceUtil.isInheritor(containingClass, "junit.framework.Assert") &&
+          !ImportUtils.addStaticImport("org.junit.Assert", "assertEquals", element)) {
+        newExpression.append("org.junit.Assert.");
       }
     }
     else {

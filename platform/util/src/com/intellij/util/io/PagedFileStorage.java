@@ -151,7 +151,7 @@ public class PagedFileStorage implements Forceable {
     if (myValuesAreBufferAligned) {
       long page = addr / myPageSize;
       int page_offset = (int) (addr % myPageSize);
-      return getBuffer(page, false).getInt(page_offset);
+      return getReadOnlyBuffer(page).getInt(page_offset);
     } else {
       get(addr, myTypedIOBuffer, 0, 4);
       return Bits.getInt(myTypedIOBuffer, 0);
@@ -173,15 +173,15 @@ public class PagedFileStorage implements Forceable {
     return (int)(addr % myPageSize);
   }
 
-  ByteBuffer getByteBuffer(long address, boolean modify) {
-    return getBuffer(address / myPageSize, modify);
+  ByteBufferWrapper getByteBuffer(long address, boolean modify) {
+    return getBufferWrapper(address / myPageSize, modify);
   }
 
   public final short getShort(long addr) {
     if (myValuesAreBufferAligned) {
       long page = addr / myPageSize;
       int page_offset = (int)(addr % myPageSize);
-      return getBuffer(page, false).getShort(page_offset);
+      return getReadOnlyBuffer(page).getShort(page_offset);
     } else {
       get(addr, myTypedIOBuffer, 0, 2);
       return Bits.getShort(myTypedIOBuffer, 0);
@@ -212,7 +212,7 @@ public class PagedFileStorage implements Forceable {
     if (myValuesAreBufferAligned) {
       long page = addr / myPageSize;
       int page_offset = (int)(addr % myPageSize);
-      return getBuffer(page, false).getLong(page_offset);
+      return getReadOnlyBuffer(page).getLong(page_offset);
     } else {
       get(addr, myTypedIOBuffer, 0, 8);
       return Bits.getLong(myTypedIOBuffer, 0);
@@ -223,7 +223,7 @@ public class PagedFileStorage implements Forceable {
     long page = index / myPageSize;
     int offset = (int)(index % myPageSize);
 
-    return getBuffer(page, false).get(offset);
+    return getReadOnlyBuffer(page).get(offset);
   }
 
   public void put(long index, byte value) {
@@ -243,7 +243,7 @@ public class PagedFileStorage implements Forceable {
       int page_offset = (int) (i % myPageSize);
 
       int page_len = Math.min(l, myPageSize - page_offset);
-      final ByteBuffer buffer = getBuffer(page, false);
+      final ByteBuffer buffer = getReadOnlyBuffer(page);
       try {
         buffer.position(page_offset);
       }
@@ -369,28 +369,32 @@ public class PagedFileStorage implements Forceable {
   }
 
   private ByteBuffer getBuffer(long page) {
-    return getBuffer(page, true);
+    return getBufferWrapper(page, true).getCachedBuffer();
   }
 
-  private ByteBuffer getBuffer(long page, boolean modify) {
+  private ByteBuffer getReadOnlyBuffer(long page) {
+    return getBufferWrapper(page, false).getCachedBuffer();
+  }
+
+  private ByteBufferWrapper getBufferWrapper(long page, boolean modify) {
     synchronized (myLastAccessedBufferCacheLock) {
       if (myLastPage == page) {
         ByteBuffer buf = myLastBuffer.getCachedBuffer();
         if (buf != null && myLastChangeCount == myStorageLockContext.myStorageLock.myMappingChangeCount) {
           if (modify) markDirty(myLastBuffer);
-          return buf;
+          return myLastBuffer;
         }
       } else if (myLastPage2 == page) {
         ByteBuffer buf = myLastBuffer2.getCachedBuffer();
         if (buf != null && myLastChangeCount2 == myStorageLockContext.myStorageLock.myMappingChangeCount) {
           if (modify) markDirty(myLastBuffer2);
-          return buf;
+          return myLastBuffer2;
         }
       } else if (myLastPage3 == page) {
         ByteBuffer buf = myLastBuffer3.getCachedBuffer();
         if (buf != null && myLastChangeCount3 == myStorageLockContext.myStorageLock.myMappingChangeCount) {
           if (modify) markDirty(myLastBuffer3);
-          return buf;
+          return myLastBuffer3;
         }
       }
     }
@@ -427,7 +431,7 @@ public class PagedFileStorage implements Forceable {
         myLastChangeCount = myStorageLockContext.myStorageLock.myMappingChangeCount;
       }
 
-      return buf;
+      return byteBufferWrapper;
     }
     catch (IOException e) {
       throw new MappingFailedException("Cannot map buffer", e);

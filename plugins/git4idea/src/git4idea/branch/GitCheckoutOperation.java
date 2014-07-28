@@ -47,7 +47,7 @@ import static git4idea.util.GitUIUtil.code;
  */
 class GitCheckoutOperation extends GitBranchOperation {
 
-  public static final String ROLLBACK_PROPOSAL_FORMAT = "You may rollback (checkout back to %s) not to let branches diverge.";
+  public static final String ROLLBACK_PROPOSAL_FORMAT = "You may rollback (checkout back to previous branch) not to let branches diverge.";
 
   @NotNull private final String myStartPointReference;
   @Nullable private final String myNewBranch;
@@ -64,40 +64,46 @@ class GitCheckoutOperation extends GitBranchOperation {
   protected void execute() {
     saveAllDocuments();
     boolean fatalErrorHappened = false;
-    while (hasMoreRepositories() && !fatalErrorHappened) {
-      final GitRepository repository = next();
+    GitUtil.workingTreeChangeStarted(myProject);
+    try {
+      while (hasMoreRepositories() && !fatalErrorHappened) {
+        final GitRepository repository = next();
 
-      VirtualFile root = repository.getRoot();
-      GitLocalChangesWouldBeOverwrittenDetector localChangesDetector =
-        new GitLocalChangesWouldBeOverwrittenDetector(root, GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT);
-      GitSimpleEventDetector unmergedFiles = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED_PREVENTING_CHECKOUT);
-      GitUntrackedFilesOverwrittenByOperationDetector untrackedOverwrittenByCheckout =
-        new GitUntrackedFilesOverwrittenByOperationDetector(root);
+        VirtualFile root = repository.getRoot();
+        GitLocalChangesWouldBeOverwrittenDetector localChangesDetector =
+          new GitLocalChangesWouldBeOverwrittenDetector(root, GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT);
+        GitSimpleEventDetector unmergedFiles = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED_PREVENTING_CHECKOUT);
+        GitUntrackedFilesOverwrittenByOperationDetector untrackedOverwrittenByCheckout =
+          new GitUntrackedFilesOverwrittenByOperationDetector(root);
 
-      GitCommandResult result = myGit.checkout(repository, myStartPointReference, myNewBranch, false,
-                                             localChangesDetector, unmergedFiles, untrackedOverwrittenByCheckout);
-      if (result.success()) {
-        refresh(repository);
-        markSuccessful(repository);
-      }
-      else if (unmergedFiles.hasHappened()) {
-        fatalUnmergedFilesError();
-        fatalErrorHappened = true;
-      }
-      else if (localChangesDetector.wasMessageDetected()) {
-        boolean smartCheckoutSucceeded = smartCheckoutOrNotify(repository, localChangesDetector);
-        if (!smartCheckoutSucceeded) {
+        GitCommandResult result = myGit.checkout(repository, myStartPointReference, myNewBranch, false,
+                                               localChangesDetector, unmergedFiles, untrackedOverwrittenByCheckout);
+        if (result.success()) {
+          refresh(repository);
+          markSuccessful(repository);
+        }
+        else if (unmergedFiles.hasHappened()) {
+          fatalUnmergedFilesError();
+          fatalErrorHappened = true;
+        }
+        else if (localChangesDetector.wasMessageDetected()) {
+          boolean smartCheckoutSucceeded = smartCheckoutOrNotify(repository, localChangesDetector);
+          if (!smartCheckoutSucceeded) {
+            fatalErrorHappened = true;
+          }
+        }
+        else if (untrackedOverwrittenByCheckout.wasMessageDetected()) {
+          fatalUntrackedFilesError(repository.getRoot(), untrackedOverwrittenByCheckout.getRelativeFilePaths());
+          fatalErrorHappened = true;
+        }
+        else {
+          fatalError(getCommonErrorTitle(), result.getErrorOutputAsJoinedString());
           fatalErrorHappened = true;
         }
       }
-      else if (untrackedOverwrittenByCheckout.wasMessageDetected()) {
-        fatalUntrackedFilesError(repository.getRoot(), untrackedOverwrittenByCheckout.getRelativeFilePaths());
-        fatalErrorHappened = true;
-      }
-      else {
-        fatalError(getCommonErrorTitle(), result.getErrorOutputAsJoinedString());
-        fatalErrorHappened = true;
-      }
+    }
+    finally {
+      GitUtil.workingTreeChangeFinished(myProject);
     }
 
     if (!fatalErrorHappened) {
@@ -109,7 +115,8 @@ class GitCheckoutOperation extends GitBranchOperation {
   private boolean smartCheckoutOrNotify(@NotNull GitRepository repository,
                                         @NotNull GitMessageWithFilesDetector localChangesOverwrittenByCheckout) {
     Pair<List<GitRepository>, List<Change>> conflictingRepositoriesAndAffectedChanges =
-      getConflictingRepositoriesAndAffectedChanges(repository, localChangesOverwrittenByCheckout, myCurrentBranchOrRev, myStartPointReference);
+      getConflictingRepositoriesAndAffectedChanges(repository, localChangesOverwrittenByCheckout, myCurrentHeads.get(repository),
+                                                   myStartPointReference);
     List<GitRepository> allConflictingRepositories = conflictingRepositoriesAndAffectedChanges.getFirst();
     List<Change> affectedChanges = conflictingRepositoriesAndAffectedChanges.getSecond();
 
@@ -147,8 +154,7 @@ class GitCheckoutOperation extends GitBranchOperation {
   @Override
   protected String getRollbackProposal() {
     return "However checkout has succeeded for the following " + repositories() + ":<br/>" +
-           successfulRepositoriesJoined() +
-           "<br/>" + String.format(ROLLBACK_PROPOSAL_FORMAT, myCurrentBranchOrRev);
+           successfulRepositoriesJoined() + "<br/>" + ROLLBACK_PROPOSAL_FORMAT;
   }
 
   @NotNull
@@ -162,7 +168,7 @@ class GitCheckoutOperation extends GitBranchOperation {
     GitCompoundResult checkoutResult = new GitCompoundResult(myProject);
     GitCompoundResult deleteResult = new GitCompoundResult(myProject);
     for (GitRepository repository : getSuccessfulRepositories()) {
-      GitCommandResult result = myGit.checkout(repository, myCurrentBranchOrRev, null, true);
+      GitCommandResult result = myGit.checkout(repository, myCurrentHeads.get(repository), null, true);
       checkoutResult.append(repository, result);
       if (result.success() && myNewBranch != null) {
         /*
@@ -177,7 +183,7 @@ class GitCheckoutOperation extends GitBranchOperation {
     if (!checkoutResult.totalSuccess() || !deleteResult.totalSuccess()) {
       StringBuilder message = new StringBuilder();
       if (!checkoutResult.totalSuccess()) {
-        message.append("Errors during checking out ").append(myCurrentBranchOrRev).append(": ");
+        message.append("Errors during checkout: ");
         message.append(checkoutResult.getErrorOutputWithReposIndication());
       }
       if (!deleteResult.totalSuccess()) {

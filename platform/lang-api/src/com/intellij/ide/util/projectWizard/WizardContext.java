@@ -22,6 +22,7 @@ import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.util.SystemProperties;
@@ -48,6 +49,7 @@ public class WizardContext extends UserDataHolderBase {
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private StorageScheme myProjectStorageFormat = StorageScheme.DIRECTORY_BASED;
   private boolean myNewWizard;
+  private ModulesProvider myModulesProvider;
 
   public void setProjectStorageFormat(StorageScheme format) {
     myProjectStorageFormat = format;
@@ -59,6 +61,14 @@ public class WizardContext extends UserDataHolderBase {
 
   public void setNewWizard(boolean newWizard) {
     myNewWizard = newWizard;
+  }
+
+  public ModulesProvider getModulesProvider() {
+    return myModulesProvider;
+  }
+
+  public void setModulesProvider(ModulesProvider modulesProvider) {
+    myModulesProvider = modulesProvider;
   }
 
   public interface Listener {

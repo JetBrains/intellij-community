@@ -101,10 +101,12 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
 
     final RowSorter<? extends TableModel> sorter = getRowSorter();
     final RowSorter.SortKey sortKey = sorter == null ? null : ContainerUtil.getFirstItem(sorter.getSortKeys());
-    ColumnInfo[] columns = getListTableModel().getColumnInfos();
-    int[] sizeMode = new int[columns.length];
-    int[] headers = new int[columns.length];
-    int[] widths = new int[columns.length];
+    ColumnInfo[] columnInfos = getListTableModel().getColumnInfos();
+    TableColumnModel columnModel = getColumnModel();
+    int visibleColumnCount = columnModel.getColumnCount();
+    int[] sizeMode = new int[visibleColumnCount];
+    int[] headers = new int[visibleColumnCount];
+    int[] widths = new int[visibleColumnCount];
     int allColumnWidth = 0;
     int allColumnCurrent = 0;
     int varCount = 0;
@@ -112,9 +114,9 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     Icon sortIcon = UIManager.getIcon("Table.ascendingSortIcon");
 
     // calculate
-    for (int i = 0; i < columns.length; i++) {
-      final ColumnInfo columnInfo = columns[i];
-      final TableColumn column = getColumnModel().getColumn(i);
+    for (int i = 0; i < visibleColumnCount; i++) {
+      final TableColumn column = columnModel.getColumn(i);
+      final ColumnInfo columnInfo = columnInfos[column.getModelIndex()];
 
       TableCellRenderer columnHeaderRenderer = column.getHeaderRenderer();
       if (columnHeaderRenderer == null) {
@@ -162,8 +164,8 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
                               allColumnWidth < (1 - gold) * viewWidth ? (1 - gold) * viewWidth :
                               viewWidth) - allColumnWidth) / varCount;
 
-    for (int i=0 ; i<columns.length; i ++) {
-      TableColumn column = getColumnModel().getColumn(i);
+    for (int i = 0 ; i < visibleColumnCount; i++) {
+      TableColumn column = columnModel.getColumn(i);
       int width = widths[i];
       if (sizeMode[i] == 1) {
         column.setMaxWidth(width);

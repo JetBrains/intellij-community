@@ -21,9 +21,8 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.text.DateFormatUtil;
-import org.tmatesoft.svn.core.SVNDirEntry;
+import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNNodeKind;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -44,7 +43,7 @@ public class SvnRepositoryTreeCellRenderer extends ColoredTreeCellRenderer {
         String name = node.getSVNDirEntry().getName();
         append(name, node.isCached() ? SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
         if (myIsShowDetails) {
-          SVNDirEntry entry = node.getSVNDirEntry();
+          DirectoryEntry entry = node.getSVNDirEntry();
           append(" " + entry.getRevision(), SimpleTextAttributes.GRAY_ATTRIBUTES);
           if (entry.getAuthor() != null) {
             append(" " + entry.getAuthor(), SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
@@ -53,11 +52,9 @@ public class SvnRepositoryTreeCellRenderer extends ColoredTreeCellRenderer {
             append(" " + DateFormatUtil.formatPrettyDateTime(entry.getDate()), SimpleTextAttributes.GRAY_ATTRIBUTES);
           }
         }
-        if (node.getSVNDirEntry().getKind() == SVNNodeKind.FILE) {
-          setIcon(FileTypeManager.getInstance().getFileTypeByFileName(name).getIcon());
-        } else {
-          setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
-        }
+        setIcon(node.getSVNDirEntry().isFile()
+                ? FileTypeManager.getInstance().getFileTypeByFileName(name).getIcon()
+                : PlatformIcons.DIRECTORY_CLOSED_ICON);
       }
     } else if (value instanceof DefaultMutableTreeNode) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;

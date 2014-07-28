@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
@@ -38,14 +39,16 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
 public final class TestWindowManager extends WindowManagerEx {
-  private static final StatusBarEx ourStatusBar = new DummyStatusBar();
+  private static final Key<StatusBar> STATUS_BAR = Key.create("STATUS_BAR");
 
   public final void doNotSuggestAsParent(final Window window) { }
 
@@ -66,7 +69,13 @@ public final class TestWindowManager extends WindowManagerEx {
 
   @Override
   public final StatusBar getStatusBar(final Project project) {
-    return ourStatusBar;
+    synchronized (STATUS_BAR) {
+      StatusBar statusBar = project.getUserData(STATUS_BAR);
+      if (statusBar == null) {
+        project.putUserData(STATUS_BAR, statusBar = new DummyStatusBar());
+      }
+      return statusBar;
+    }
   }
 
   @Override
@@ -86,6 +95,8 @@ public final class TestWindowManager extends WindowManagerEx {
   public void resetWindow(final Window window) { }
 
   private static final class DummyStatusBar implements StatusBarEx {
+    private final Map<String, StatusBarWidget> myWidgetMap = new HashMap<String, StatusBarWidget>();
+    
     @Override
     public Dimension getSize() {
       return new Dimension(0, 0);
@@ -140,33 +151,39 @@ public final class TestWindowManager extends WindowManagerEx {
     }
 
     @Override
+    public void addWidget(@NotNull StatusBarWidget widget) {
+      myWidgetMap.put(widget.ID(), widget);
+    }
+
+    @Override
+    public void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor) {
+      addWidget(widget);
+    }
+
+    @Override
     public void addWidget(@NotNull StatusBarWidget widget, @NotNull Disposable parentDisposable) {
       Disposer.register(parentDisposable, widget);
+      addWidget(widget);
     }
 
     @Override
     public void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor, @NotNull Disposable parentDisposable) {
       Disposer.register(parentDisposable, widget);
+      addWidget(widget);
     }
 
     @Override
     public void updateWidgets() { }
 
     @Override
-    public void addWidget(@NotNull StatusBarWidget widget) { }
-
-    @Override
     public void dispose() { }
-
-    @Override
-    public void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor) { }
 
     @Override
     public void updateWidget(@NotNull String id) { }
 
     @Override
     public StatusBarWidget getWidget(String id) {
-      return null;
+      return myWidgetMap.get(id);
     }
 
     @Override

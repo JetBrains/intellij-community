@@ -29,6 +29,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,14 +100,7 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
   }
 
   @Override
-  public int getValueLookupDelay(final Project project) {
-    XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
-    if (session != null) {
-      XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
-      if (evaluator != null) {
-        return evaluator.getValuePopupDelay();
-      }
-    }
-    return 700;
+  public int getValueLookupDelay(Project project) {
+    return XDebuggerSettingsManager.getInstance().getDataViewSettings().getValueLookupDelay();
   }
 }

@@ -17,6 +17,7 @@ package com.intellij.dvcs.repo;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -29,7 +30,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
@@ -117,7 +121,9 @@ public class RepositoryUtil {
 
     @Override
     public void consume(Object dummy) {
-      myRepository.update();
+      if (!Disposer.isDisposed(myRepository)) {
+        myRepository.update();
+      }
     }
   }
 

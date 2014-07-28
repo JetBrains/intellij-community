@@ -56,7 +56,13 @@ public class GitResetHead extends GitRepositoryAction {
     }
     GitLineHandler h = d.handler();
     affectedRoots.add(d.getGitRoot());
-    GitHandlerUtil.doSynchronously(h, GitBundle.getString("resetting.title"), h.printableCommandLine());
+    GitUtil.workingTreeChangeStarted(project);
+    try {
+      GitHandlerUtil.doSynchronously(h, GitBundle.getString("resetting.title"), h.printableCommandLine());
+    }
+    finally {
+      GitUtil.workingTreeChangeFinished(project);
+    }
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
     manager.updateRepository(d.getGitRoot());
   }

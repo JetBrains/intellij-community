@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.find.FindManager;
-import com.intellij.find.FindModel;
-import com.intellij.find.FindResult;
+import com.intellij.find.*;
+import com.intellij.find.editorHeaderActions.EditorHeaderAction;
+import com.intellij.find.editorHeaderActions.SelectAllAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -26,6 +26,8 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Iterator;
 
 public class SelectAllOccurrencesAction extends EditorAction {
   protected SelectAllOccurrencesAction() {
@@ -39,7 +41,9 @@ public class SelectAllOccurrencesAction extends EditorAction {
     }
 
     @Override
-    public void doExecute(Editor editor, @Nullable Caret c, DataContext dataContext) {
+    public void doExecute(final Editor editor, @Nullable Caret c, DataContext dataContext) {
+      if (executeEquivalentFindPanelAction(editor, dataContext)) return;
+
       Caret caret = c == null ? editor.getCaretModel().getPrimaryCaret() : c;
 
       boolean wholeWordsSearch = false;
@@ -58,25 +62,36 @@ public class SelectAllOccurrencesAction extends EditorAction {
       }
 
       int caretShiftFromSelectionStart = caret.getOffset() - caret.getSelectionStart();
-      FindManager findManager = FindManager.getInstance(project);
+      final FindManager findManager = FindManager.getInstance(project);
 
-      FindModel model = new FindModel();
-      model.setStringToFind(selectedText);
-      model.setCaseSensitive(true);
-      model.setWholeWordsOnly(wholeWordsSearch);
+      final FindModel model = getFindModel(selectedText, wholeWordsSearch);
 
-      int searchStartOffset = 0;
-      FindResult findResult = findManager.findString(editor.getDocument().getCharsSequence(), searchStartOffset, model);
-      while (findResult.isStringFound()) {
-        int newCaretOffset = caretShiftFromSelectionStart + findResult.getStartOffset();
-        EditorActionUtil.makePositionVisible(editor, newCaretOffset);
-        Caret newCaret = editor.getCaretModel().addCaret(editor.offsetToVisualPosition(newCaretOffset));
-        if (newCaret != null) {
-          setSelection(editor, newCaret, findResult);
+      FindUtil.selectSearchResultsInEditor(editor, new Iterator<FindResult>() {
+        FindResult findResult = findManager.findString(editor.getDocument().getCharsSequence(), 0, model);
+
+        @Override
+        public boolean hasNext() {
+          return findResult.isStringFound();
         }
-        findResult = findManager.findString(editor.getDocument().getCharsSequence(), findResult.getEndOffset(), model);
-      }
+
+        @Override
+        public FindResult next() {
+          FindResult result = findResult;
+          findResult = findManager.findString(editor.getDocument().getCharsSequence(), findResult.getEndOffset(), model);
+          return result;
+        }
+
+        @Override
+        public void remove() {
+          throw new UnsupportedOperationException();
+        }
+      }, caretShiftFromSelectionStart);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    }
+
+    @Override
+    protected EditorHeaderAction getEquivalentFindPanelAction(EditorSearchComponent searchComponent) {
+      return new SelectAllAction(searchComponent);
     }
   }
 }

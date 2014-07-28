@@ -220,12 +220,102 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['_ -> true']
   }
 
+  public void "test boolean autoboxing"() {
+    def c = inferContracts("""
+    static Object test1(Object o1) {
+        return o1 == null;
+    }""")
+    assert c == []
+  }
+
+  public void "test boolean autoboxing in delegation"() {
+    def c = inferContracts("""
+    static Boolean test04(String s) {
+        return test03(s);
+    }
+    static boolean test03(String s) {
+        return s == null;
+    }
+    """)
+    assert c == []
+  }
+
+  public void "test boolean auto-unboxing"() {
+    def c = inferContracts("""
+      static boolean test02(String s) {
+          return test01(s);
+      }
+
+      static Boolean test01(String s) {
+          if (s == null)
+              return new Boolean(false);
+          else
+             return null;
+      }
+    """)
+    assert c == []
+  }
+
+  public void "test non-returning delegation"() {
+    def c = inferContracts("""
+    static void test2(Object o) {
+        assertNotNull(o);
+    }
+
+    static boolean assertNotNull(Object o) {
+        if (o == null) {
+            throw new NullPointerException();
+        }
+        return true;
+    }
+    """)
+    assert c == ['null -> fail']
+  }
+
+  public void "test instanceof notnull"() {
+    def c = inferContracts("""
+    public boolean test2(Object o) {
+        if (o != null) {
+            return o instanceof String;
+        } else {
+            return test1(o);
+        }
+    }
+    static boolean test1(Object o1) {
+        return o1 == null;
+    }
+    """)
+    assert c == []
+  }
+
+  public void "test no duplicates in delegation"() {
+    def c = inferContracts("""
+    static boolean test2(Object o1, Object o2) {
+        return  test1(o1, o1);
+    }
+    static boolean test1(Object o1, Object o2) {
+        return  o1 != null && o2 != null;
+    }
+    """)
+    assert c == ['null, _ -> false', '!null, _ -> true']
+  }
+
+  public void "test take explicit parameter notnull into account"() {
+    def c = inferContracts("""
+    final Object foo(@org.jetbrains.annotations.NotNull Object bar) {
+        if (!(bar instanceof CharSequence)) return null;
+        return new String("abc");
+    }
+    """)
+    assert c == []
+  }
+
   private String inferContract(String method) {
     return assertOneElement(inferContracts(method))
   }
 
   private List<String> inferContracts(String method) {
-    def clazz = myFixture.addClass("class Foo { $method }")
+    def clazz = myFixture.addClass("final class Foo { $method }")
     return ContractInference.inferContracts(clazz.methods[0]).collect { it as String }
   }
 }

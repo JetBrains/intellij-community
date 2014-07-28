@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,14 @@ package com.intellij.lang;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerBase;
+import com.intellij.openapi.fileTypes.PlainTextParserDefinition;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.ASTStructure;
 import com.intellij.psi.tree.*;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformLangTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.diff.DiffTree;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
@@ -36,12 +34,9 @@ import com.intellij.util.diff.ShallowNodeComparator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
 import java.util.List;
 
-public class PsiBuilderQuickTest extends LightPlatformTestCase {
+public class PsiBuilderQuickTest extends LightPlatformLangTestCase {
   private static final IFileElementType ROOT = new IFileElementType("ROOT", Language.ANY);
 
   private static final IElementType LETTER = new IElementType("LETTER", Language.ANY);
@@ -56,11 +51,6 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
 
   private static final TokenSet WHITESPACE_SET = TokenSet.create(TokenType.WHITE_SPACE);
   private static final TokenSet COMMENT_SET = TokenSet.create(COMMENT);
-
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public PsiBuilderQuickTest() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
 
   public void testPlain() {
     doTest("a<<b",
@@ -428,15 +418,8 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
            "  PsiElement(OTHER)('}')\n");
   }
 
-  private abstract static class MyLazyElementType extends ILazyParseableElementType implements ILightLazyParseableElementType {
-    protected MyLazyElementType(@NonNls String debugName) {
-      super(debugName, Language.ANY);
-    }
-  }
-
   public void testLightChameleon() {
     final IElementType CHAMELEON_2 = new MyChameleon2Type();
-
     final IElementType CHAMELEON_1 = new MyChameleon1Type(CHAMELEON_2);
 
     doTest("ab{12[.?]}cd{x}",
@@ -478,60 +461,26 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
            "    PsiElement(OTHER)('}')\n");
   }
 
-  @SuppressWarnings("ConstantConditions")
-  private static PsiBuilderImpl createBuilder(CharSequence text) {
-    ParserDefinition parserDefinition = new ParserDefinition() {
-      @NotNull
-      @Override
-      public Lexer createLexer(Project project) {
-        return new MyTestLexer();
-      }
-
-      @Override
-      public PsiParser createParser(Project project) {
-        return null;
-      }
-
-      @Override
-      public IFileElementType getFileNodeType() {
-        return null;
-      }
-
-      @NotNull
-      @Override
-      public TokenSet getWhitespaceTokens() {
-        return WHITESPACE_SET;
-      }
-
-      @NotNull
-      @Override
-      public TokenSet getCommentTokens() {
-        return COMMENT_SET;
-      }
-
-      @NotNull
-      @Override
-      public TokenSet getStringLiteralElements() {
-        return null;
-      }
-
-      @NotNull
-      @Override
-      public PsiElement createElement(ASTNode node) {
-        return null;
-      }
-
-      @Override
-      public PsiFile createFile(FileViewProvider viewProvider) {
-        return null;
-      }
-
-      @Override
-      public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
-        return null;
-      }
-    };
-    return new PsiBuilderImpl(getProject(), null, parserDefinition, parserDefinition.createLexer(getProject()), null, text, null, null);
+  public void testEndMarkersOverlapping() {
+    doTest("a ",
+           new Parser() {
+             @Override
+             public void parse(PsiBuilder builder) {
+               PsiBuilder.Marker e1 = builder.mark();
+               PsiBuilder.Marker e2 = builder.mark();
+               builder.advanceLexer();
+               e2.done(OTHER);
+               e2.setCustomEdgeTokenBinders(null, WhitespacesBinders.GREEDY_RIGHT_BINDER);
+               e1.done(OTHER);
+               e1.setCustomEdgeTokenBinders(null, WhitespacesBinders.DEFAULT_RIGHT_BINDER);
+               assertTrue(builder.eof());
+             }
+           },
+           "Element(ROOT)\n" +
+           "  Element(OTHER)\n" +
+           "    Element(OTHER)\n" +
+           "      PsiElement(LETTER)('a')\n" +
+           "      PsiWhiteSpace(' ')\n");
   }
 
   private interface Parser {
@@ -594,75 +543,44 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
   }
 
   private static void doFailTest(@NonNls final String text, final Parser parser, @NonNls final String expected) {
-    final PrintStream std = System.err;
-    //noinspection IOResourceOpenedButNotSafelyClosed
-    System.setErr(new PrintStream(new NullStream()));
-    try {
-      try {
-        ParserDefinition parserDefinition = new ParserDefinition() {
-          @NotNull
-          @Override
-          public Lexer createLexer(Project project) {
-            return null;
-          }
-
-          @Override
-          public PsiParser createParser(Project project) {
-            return null;
-          }
-
-          @Override
-          public IFileElementType getFileNodeType() {
-            return null;
-          }
-
-          @NotNull
-          @Override
-          public TokenSet getWhitespaceTokens() {
-            return TokenSet.EMPTY;
-          }
-
-          @NotNull
-          @Override
-          public TokenSet getCommentTokens() {
-            return TokenSet.EMPTY;
-          }
-
-          @NotNull
-          @Override
-          public TokenSet getStringLiteralElements() {
-            return null;
-          }
-
-          @NotNull
-          @Override
-          public PsiElement createElement(ASTNode node) {
-            return null;
-          }
-
-          @Override
-          public PsiFile createFile(FileViewProvider viewProvider) {
-            return null;
-          }
-
-          @Override
-          public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
-            return null;
-          }
-        };
-        final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(parserDefinition, new MyTestLexer(),text);
-        builder.setDebugMode(true);
-        parser.parse(builder);
-        builder.getLightTree();
-        fail("should fail");
+    PlatformTestUtil.withStdErrSuppressed(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(new PlainTextParserDefinition(), new MyTestLexer(), text);
+          builder.setDebugMode(true);
+          parser.parse(builder);
+          builder.getLightTree();
+          fail("should fail");
+        }
+        catch (AssertionError e) {
+          assertEquals(expected, e.getMessage());
+        }
       }
-      catch (AssertionError e) {
-        assertEquals(expected, e.getMessage());
+    });
+  }
+
+  private static PsiBuilderImpl createBuilder(CharSequence text) {
+    ParserDefinition parserDefinition = new PlainTextParserDefinition() {
+      @NotNull
+      @Override
+      public Lexer createLexer(Project project) {
+        return new MyTestLexer();
       }
-    }
-    finally {
-      System.setErr(std);
-    }
+
+      @NotNull
+      @Override
+      public TokenSet getWhitespaceTokens() {
+        return WHITESPACE_SET;
+      }
+
+      @NotNull
+      @Override
+      public TokenSet getCommentTokens() {
+        return COMMENT_SET;
+      }
+    };
+    return new PsiBuilderImpl(getProject(), null, parserDefinition, parserDefinition.createLexer(getProject()), null, text, null, null);
   }
 
   private static class MyTestLexer extends LexerBase {
@@ -719,9 +637,10 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
     }
   }
 
-  private static class NullStream extends OutputStream {
-    @Override
-    public void write(final int b) throws IOException { }
+  private abstract static class MyLazyElementType extends ILazyParseableElementType implements ILightLazyParseableElementType {
+    protected MyLazyElementType(@NonNls String debugName) {
+      super(debugName, Language.ANY);
+    }
   }
 
   private static class MyChameleon1Type extends MyLazyElementType {

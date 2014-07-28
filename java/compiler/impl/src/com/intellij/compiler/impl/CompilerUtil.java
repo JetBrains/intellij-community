@@ -20,36 +20,24 @@
  */
 package com.intellij.compiler.impl;
 
-import com.intellij.CommonBundle;
-import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileFilter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public class CompilerUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompilerUtil");
@@ -61,51 +49,6 @@ public class CompilerUtil {
     }
     return path;
   }
-
-  public static void collectFiles(Collection<File> container, File rootDir, FileFilter fileFilter) {
-    final File[] files = rootDir.listFiles(fileFilter);
-    if (files == null) {
-      return;
-    }
-    for (File file : files) {
-      if (file.isDirectory()) {
-        collectFiles(container, file, fileFilter);
-      }
-      else {
-        container.add(file);
-      }
-    }
-  }
-
-  public static Map<Module, List<VirtualFile>> buildModuleToFilesMap(CompileContext context, VirtualFile[] files) {
-    return buildModuleToFilesMap(context, Arrays.asList(files));
-  }
-
-
-  public static Map<Module, List<VirtualFile>> buildModuleToFilesMap(final CompileContext context, final List<VirtualFile> files) {
-    //assertion: all files are different
-    final Map<Module, List<VirtualFile>> map = new THashMap<Module, List<VirtualFile>>();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        for (VirtualFile file : files) {
-          final Module module = context.getModuleByFile(file);
-
-          if (module == null) {
-            continue; // looks like file invalidated
-          }
-
-          List<VirtualFile> moduleFiles = map.get(module);
-          if (moduleFiles == null) {
-            moduleFiles = new ArrayList<VirtualFile>();
-            map.put(module, moduleFiles);
-          }
-          moduleFiles.add(file);
-        }
-      }
-    });
-    return map;
-  }
-
 
   /**
    * must not be called inside ReadAction
@@ -164,58 +107,6 @@ public class CompilerUtil {
     final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     if (vFile != null) {
       vFile.refresh(false, false);
-    }
-  }
-
-  public static void addLocaleOptions(final List<String> commandLine, final boolean launcherUsed) {
-    // need to specify default encoding so that javac outputs messages in 'correct' language
-    //noinspection HardCodedStringLiteral
-    commandLine.add((launcherUsed? "-J" : "") + "-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + CharsetToolkit.getDefaultSystemCharset().name());
-    // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
-    //noinspection HardCodedStringLiteral
-    final String lang = System.getProperty("user.language");
-    if (lang != null) {
-      //noinspection HardCodedStringLiteral
-      commandLine.add((launcherUsed? "-J" : "") + "-Duser.language=" + lang);
-    }
-    //noinspection HardCodedStringLiteral
-    final String country = System.getProperty("user.country");
-    if (country != null) {
-      //noinspection HardCodedStringLiteral
-      commandLine.add((launcherUsed? "-J" : "") + "-Duser.country=" + country);
-    }
-    //noinspection HardCodedStringLiteral
-    final String region = System.getProperty("user.region");
-    if (region != null) {
-      //noinspection HardCodedStringLiteral
-      commandLine.add((launcherUsed? "-J" : "") + "-Duser.region=" + region);
-    }
-  }
-
-  public static void addTargetCommandLineSwitch(final ModuleChunk chunk, final List<String> commandLine) {
-    String optionValue = null;
-    CompilerConfiguration config = null;
-    final Module[] modules = chunk.getModules();
-    for (Module module : modules) {
-      if (config == null) {
-        config = CompilerConfiguration.getInstance(module.getProject());
-      }
-      final String moduleTarget = config.getBytecodeTargetLevel(module);
-      if (moduleTarget == null) {
-        continue;
-      }
-      if (optionValue == null) {
-        optionValue = moduleTarget;
-      }
-      else {
-        if (moduleTarget.compareTo(optionValue) < 0) {
-          optionValue = moduleTarget; // use the lower possible target among modules that form the chunk
-        }
-      }
-    }
-    if (optionValue != null) {
-      commandLine.add("-target");
-      commandLine.add(optionValue);
     }
   }
 
@@ -311,68 +202,5 @@ public class CompilerUtil {
 
   public static void logDuration(final String activityName, long duration) {
     LOG.info(activityName + " took " + duration + " ms: " + duration /60000 + " min " +(duration %60000)/1000 + "sec");
-  }
-
-  public static void clearOutputDirectories(final Collection<File> outputDirectories) {
-    final long start = System.currentTimeMillis();
-    // do not delete directories themselves, or we'll get rootsChanged() otherwise
-    final Collection<File> filesToDelete = new ArrayList<File>(outputDirectories.size() * 2);
-    for (File outputDirectory : outputDirectories) {
-      File[] files = outputDirectory.listFiles();
-      if (files != null) {
-        ContainerUtil.addAll(filesToDelete, files);
-      }
-    }
-    if (filesToDelete.size() > 0) {
-      FileUtil.asyncDelete(filesToDelete);
-
-      // ensure output directories exist
-      for (final File file : outputDirectories) {
-        file.mkdirs();
-      }
-      final long clearStop = System.currentTimeMillis();
-
-      refreshIODirectories(outputDirectories);
-
-      final long refreshStop = System.currentTimeMillis();
-
-      logDuration("Clearing output dirs", clearStop - start);
-      logDuration("Refreshing output directories", refreshStop - clearStop);
-    }
-  }
-
-  public static void computeIntersectingPaths(final Project project,
-                                                          final Collection<VirtualFile> outputPaths,
-                                                          final Collection<VirtualFile> result) {
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-      final VirtualFile[] sourceRoots = rootManager.getSourceRoots();
-      for (final VirtualFile outputPath : outputPaths) {
-        for (VirtualFile sourceRoot : sourceRoots) {
-          if (VfsUtilCore.isAncestor(outputPath, sourceRoot, true) || VfsUtilCore.isAncestor(sourceRoot, outputPath, false)) {
-            result.add(outputPath);
-          }
-        }
-      }
-    }
-  }
-
-  public static boolean askUserToContinueWithNoClearing(Project project, Collection<VirtualFile> affectedOutputPaths) {
-    final StringBuilder paths = new StringBuilder();
-    for (final VirtualFile affectedOutputPath : affectedOutputPaths) {
-      if (paths.length() > 0) {
-        paths.append(",\n");
-      }
-      paths.append(affectedOutputPath.getPath().replace('/', File.separatorChar));
-    }
-    final int answer = Messages.showOkCancelDialog(project,
-                                                   CompilerBundle.message("warning.sources.under.output.paths", paths.toString()),
-                                                   CommonBundle.getErrorTitle(), Messages.getWarningIcon());
-    if (answer == Messages.OK) { // ok
-      return true;
-    }
-    else {
-      return false;
-    }
   }
 }

@@ -161,7 +161,7 @@ public class GithubUtil {
 
             if (ok[0]) {
               authData[0] = dialog.getAuthData();
-              GithubSettings.getInstance().setAuthData(authData[0], dialog.isSavePasswordSelected());
+              GithubSettings.getInstance().setAuthData(authData[0], dialog.isSavePasswordSelected(), indicator.getModalityState());
             }
           }
         }, indicator.getModalityState());
@@ -195,7 +195,7 @@ public class GithubUtil {
 
               final GithubSettings settings = GithubSettings.getInstance();
               if (settings.getAuthType() != GithubAuthData.AuthType.TOKEN) {
-                GithubSettings.getInstance().setAuthData(authData[0], dialog.isSavePasswordSelected());
+                GithubSettings.getInstance().setAuthData(authData[0], dialog.isSavePasswordSelected(), indicator.getModalityState());
               }
             }
           }
@@ -247,7 +247,7 @@ public class GithubUtil {
   @NotNull
   public static GithubAuthDataHolder getValidAuthDataHolderFromConfig(@NotNull Project project, @NotNull ProgressIndicator indicator)
     throws IOException {
-    GithubAuthData auth = GithubAuthData.createFromSettings();
+    GithubAuthData auth = GithubAuthData.createFromSettings(indicator.getModalityState());
     GithubAuthDataHolder authHolder = new GithubAuthDataHolder(auth);
     try {
       checkAuthData(project, authHolder, indicator);

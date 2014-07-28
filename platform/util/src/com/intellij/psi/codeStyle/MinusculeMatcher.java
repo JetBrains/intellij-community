@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.codeStyle;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.FList;
@@ -32,7 +31,6 @@ import java.util.Iterator;
 * @author peter
 */
 public class MinusculeMatcher implements Matcher {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.codeStyle.MinusculeMatcher");
   /**
    * Lowercase humps don't work for parts separated by these characters
    * Need either an explicit uppercase letter or the same separator character in prefix
@@ -220,7 +218,7 @@ public class MinusculeMatcher implements Matcher {
   }
 
   @Nullable
-  private FList<TextRange> calcMatchingFragments(@NotNull String name) {
+  public FList<TextRange> matchingFragments(@NotNull String name) {
     MatchingState state = myMatchingState.get();
     state.initializeState(name);
     try {
@@ -229,22 +227,6 @@ public class MinusculeMatcher implements Matcher {
     finally {
       state.releaseState();
     }
-  }
-
-  @Nullable
-  public FList<TextRange> matchingFragments(@NotNull String name) {
-    long start = System.currentTimeMillis();
-    FList<TextRange> result = calcMatchingFragments(name);
-    if (System.currentTimeMillis() - start > 1000 &&
-        // if there's little free memory, it might have been the gc affecting the performance
-        Runtime.getRuntime().freeMemory() > Runtime.getRuntime().totalMemory() * 3 / 10) {
-      start = System.currentTimeMillis();
-      calcMatchingFragments(name);
-      if (System.currentTimeMillis() - start > 1000) {
-        LOG.error("Too long name matching: name=" + name + "; prefix=" + new String(myPattern));
-      }
-    }
-    return result;
   }
 
   /**

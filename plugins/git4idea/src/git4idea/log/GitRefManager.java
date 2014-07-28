@@ -69,23 +69,31 @@ public class GitRefManager implements VcsLogRefManager {
         return typeComparison;
       }
 
+
       //noinspection UnnecessaryLocalVariable
       VcsRefType type = type1; // common type
+
+      String name1 = ref1.getName();
+      String name2 = ref2.getName();
+      if (name1.equals(name2)) {
+        return 0;
+      }
+
       if (type == LOCAL_BRANCH) {
-        if (ref1.getName().equals(MASTER)) {
+        if (name1.equals(MASTER)) {
           return -1;
         }
-        if (ref2.getName().equals(MASTER)) {
+        if (name2.equals(MASTER)) {
           return 1;
         }
-        return ref1.getName().compareTo(ref2.getName());
+        return name1.compareTo(name2);
       }
 
       if (type == REMOTE_BRANCH) {
-        if (ref1.getName().equals(ORIGIN_MASTER)) {
+        if (name1.equals(ORIGIN_MASTER)) {
           return -1;
         }
-        if (ref2.getName().equals(ORIGIN_MASTER)) {
+        if (name2.equals(ORIGIN_MASTER)) {
           return 1;
         }
         if (hasTrackingBranch(ref1) && !hasTrackingBranch(ref2)) {
@@ -94,10 +102,10 @@ public class GitRefManager implements VcsLogRefManager {
         if (!hasTrackingBranch(ref1) && hasTrackingBranch(ref2)) {
           return 1;
         }
-        return ref1.getName().compareTo(ref2.getName());
+        return name1.compareTo(name2);
       }
 
-      return ref1.getName().compareTo(ref2.getName());
+      return name1.compareTo(name2);
     }
   };
 
@@ -121,10 +129,8 @@ public class GitRefManager implements VcsLogRefManager {
 
   @NotNull
   @Override
-  public List<VcsRef> sort(Collection<VcsRef> refs) {
-    ArrayList<VcsRef> list = new ArrayList<VcsRef>(refs);
-    Collections.sort(list, REF_COMPARATOR);
-    return list;
+  public Comparator<VcsRef> getComparator() {
+    return REF_COMPARATOR;
   }
 
   @NotNull
@@ -314,7 +320,7 @@ public class GitRefManager implements VcsLogRefManager {
     @NotNull
     @Override
     public List<VcsRef> getRefs() {
-      return sort(myBranches);
+      return ContainerUtil.sorted(myBranches, getComparator());
     }
 
     @NotNull

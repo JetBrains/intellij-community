@@ -232,15 +232,16 @@ class Bytecodes {
     static {
         int i;
         byte[] b = new byte[220];
-        String s = "AAAAAAAAAAAAAAAABCLMMDDDDDEEEEEEEEEEEEEEEEEEEEAAAAAAAADD"
-                + "DDDEEEEEEEEEEEEEEEEEEEEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-                + "AAAAAAAAAAAAAAAAANAAAAAAAAAAAAAAAAAAAAJJJJJJJJJJJJJJJJDOPAA"
-                + "AAAAGGGGGGGHIFBFAAFFAARQJJKKJJJJJJJJJJJJJJJJJJ";
-        for (i = 0; i < b.length; ++i) {
-            b[i] = (byte) (s.charAt(i) - 'A');
-        }
-        TYPE = b;
+    String s =
+        "AAAAAAAAAAAAAAAABCLMMDDDDDEEEEEEEEEEEEEEEEEEEEAAAAAAAADDDDDEE" +
+        "EEEEEEEEEEEEEEEEEEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+        "AAAAAAAAAANAAAAAAAAAAAAAAAAAAAAJJJJJJJJJJJJJJJJDOPAAAAAAGGGGG" +
+        "GGHIFBFAAFFAARQJJKKJLMMGGGGGGGGGGGGHGAFFQFFGGG";
+    for (i = 0; i < b.length; ++i) {
+      b[i] = (byte) (s.charAt(i) - 'A');
     }
+    TYPE = b;
+  }
 
 
   static final int NOP = 0; // visitInsn
@@ -445,5 +446,140 @@ class Bytecodes {
   static final int IFNONNULL = 199; // -
   static final int GOTO_W = 200; // -
   static final int JSR_W = 201; // -
+
+  // JVM runtime-specific and reserved opcodes:
+  // From JVM specification:
+  // In addition to the opcodes of the instructions specified later in this chapter, which are used in class files (§4), three opcodes are reserved for internal use by a Java Virtual Machine implementation. If the instruction set of the Java Virtual Machine is extended in the future, these reserved opcodes are guaranteed not to be used.
+  // Two of the reserved opcodes, numbers 254 (0xfe) and 255 (0xff), have the mnemonics impdep1 and impdep2, respectively. These instructions are intended to provide "back doors" or traps to implementation-specific functionality implemented in software and hardware, respectively. The third reserved opcode, number 202 (0xca), has the mnemonic breakpoint and is intended to be used by debuggers to implement breakpoints.
+  // Although these opcodes have been reserved, they may be used only inside a Java Virtual Machine implementation. They cannot appear in valid class files. Tools such as debuggers or JIT code generators (§2.13) that might directly interact with Java Virtual Machine code that has been already loaded and executed may encounter these opcodes. Such tools should attempt to behave gracefully if they encounter any of these reserved instructions.
+
+  static final int BREAKPOINT = 202;
+  static final int LDC_QUICK = 203;
+  static final int LDC_W_QUICK = 204;
+  static final int LDC2_W_QUICK = 205;
+  static final int GETFIELD_QUICK = 206;
+  static final int PUTFIELD_QUICK = 207;
+  static final int GETFIELD2_QUICK = 208;
+  static final int PUTFIELD2_QUICK = 209;
+  static final int GETSTATIC_QUICK = 210;
+  static final int PUTSTATIC_QUICK = 211;
+  static final int GETSTATIC2_QUICK = 212;
+  static final int PUTSTATIC2_QUICK = 213;
+  static final int INVOKEVIRTUAL_QUICK = 214;
+  static final int INVOKENONVIRTUAL_QUICK = 215;
+  static final int INVOKESUPER_QUICK = 216;
+  static final int INVOKESTATIC_QUICK = 217;
+  static final int INVOKEINTERFACE_QUICK = 218;
+  static final int INVOKEVIRTUALOBJECT_QUICK = 219;
+  static final int NEW_QUICK = 221;
+  static final int ANEWARRAY_QUICK = 222;
+  static final int MULTIANEWARRAY_QUICK = 223;
+  static final int CHECKCAST_QUICK = 224;
+  static final int INSTANCEOF_QUICK = 225;
+  static final int INVOKEVIRTUAL_QUICK_W = 226;
+  static final int GETFIELD_QUICK_W = 227;
+  static final int PUTFIELD_QUICK_W = 228;
+  static final int IMPDEP1 = 254;
+  static final int IMPDEP2 = 255;
+
+  public static void main(String[] args) {
+    int[] b = new int[229];
+    //code to generate the above string
+    
+    // SBYTE_INSN instructions
+    b[NEWARRAY] = SBYTE_INSN;
+    b[BIPUSH] = SBYTE_INSN;
+    
+    // SHORT_INSN instructions
+    b[SIPUSH] = SHORT_INSN;
+    
+    // (IMPL)VAR_INSN instructions
+    b[RET] = VAR_INSN;
+    for (int i = ILOAD; i <= ALOAD; ++i) {
+      b[i] = VAR_INSN;
+    }
+    for (int i = ISTORE; i <= ASTORE; ++i) {
+      b[i] = VAR_INSN;
+    }
+    for (int i = 26; i <= 45; ++i) { // ILOAD_0 to ALOAD_3
+      b[i] = IMPLVAR_INSN;
+    }
+    for (int i = 59; i <= 78; ++i) { // ISTORE_0 to ASTORE_3
+      b[i] = IMPLVAR_INSN;
+    }
+    
+    // TYPE_INSN instructions
+    b[NEW] = TYPE_INSN;
+    b[ANEWARRAY] = TYPE_INSN;
+    b[CHECKCAST] = TYPE_INSN;
+    b[INSTANCEOF] = TYPE_INSN;
+    
+    // (Set)FIELDORMETH_INSN instructions
+    for (int i = GETSTATIC; i <= INVOKESTATIC; ++i) {
+      b[i] = FIELDORMETH_INSN;
+    }
+    b[INVOKEINTERFACE] = ITFMETH_INSN;
+    b[INVOKEDYNAMIC] = INDYMETH_INSN;
+    
+    // LABEL(W)_INSN instructions
+    for (int i = IFEQ; i <= JSR; ++i) {
+      b[i] = LABEL_INSN;
+    }
+    b[IFNULL] = LABEL_INSN;
+    b[IFNONNULL] = LABEL_INSN;
+    b[GOTO_W] = LABELW_INSN; // GOTO_W
+    b[JSR_W] = LABELW_INSN; // JSR_W
+
+    b[BREAKPOINT] = LABEL_INSN; // todo: is this correct?
+
+    // LDC(_W) instructions
+    b[LDC] = LDC_INSN;
+    b[LDC_W] = LDCW_INSN; // LDC_W
+    b[LDC2_W] = LDCW_INSN; // LDC2_W
+    
+    // special instructions
+    b[IINC] = IINC_INSN;
+    b[TABLESWITCH] = TABL_INSN;
+    b[LOOKUPSWITCH] = LOOK_INSN;
+    b[MULTIANEWARRAY] = MANA_INSN;
+    b[WIDE] = WIDE_INSN; // WIDE
+
+    // runtime-specific
+
+    b[LDC_QUICK] = LDC_INSN; // = 203;
+    b[LDC_W_QUICK] = LDCW_INSN; // = 204;
+    b[LDC2_W_QUICK] = LDCW_INSN; // = 205;
+    b[GETFIELD_QUICK] = FIELDORMETH_INSN; // = 206;
+    b[PUTFIELD_QUICK] = FIELDORMETH_INSN; // = 207;
+
+    b[GETFIELD2_QUICK] = FIELDORMETH_INSN; // = 208;
+    b[PUTFIELD2_QUICK] = FIELDORMETH_INSN; // = 209;
+    b[GETSTATIC_QUICK] = FIELDORMETH_INSN; // = 210;
+    b[PUTSTATIC_QUICK] = FIELDORMETH_INSN; // = 211;
+    b[GETSTATIC2_QUICK] = FIELDORMETH_INSN; // = 212;
+    b[PUTSTATIC2_QUICK] = FIELDORMETH_INSN; // = 213;
+    b[INVOKEVIRTUAL_QUICK] = FIELDORMETH_INSN; // = 214;
+    b[INVOKENONVIRTUAL_QUICK] = FIELDORMETH_INSN; // = 215;
+    b[INVOKESUPER_QUICK] = FIELDORMETH_INSN; // = 216;
+    b[INVOKESTATIC_QUICK] = FIELDORMETH_INSN; // = 217;
+    b[INVOKEINTERFACE_QUICK] = ITFMETH_INSN; // = 218;
+    b[INVOKEVIRTUALOBJECT_QUICK] = FIELDORMETH_INSN; // = 219;
+    b[220] = Bytecodes.NOARG_INSN; // the ID is not used for any opcode
+    b[NEW_QUICK] = TYPE_INSN; // = 221;
+    b[ANEWARRAY_QUICK] = TYPE_INSN; // = 222;
+    b[MULTIANEWARRAY_QUICK] = MANA_INSN; // = 223;
+    b[CHECKCAST_QUICK] = TYPE_INSN; // = 224;
+    b[INSTANCEOF_QUICK] = TYPE_INSN; // = 225;
+    b[INVOKEVIRTUAL_QUICK_W] = FIELDORMETH_INSN; // = 226;
+    b[GETFIELD_QUICK_W] = FIELDORMETH_INSN; // = 227;
+    b[PUTFIELD_QUICK_W] = FIELDORMETH_INSN; // = 228;
+
+
+    for (int i = 0; i < b.length; ++i) {
+      System.err.print((char)('A' + b[i]));
+    }
+    System.err.println();
+
+  }
 
 }

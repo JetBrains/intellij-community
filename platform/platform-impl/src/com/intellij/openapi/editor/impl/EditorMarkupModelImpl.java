@@ -36,6 +36,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
@@ -45,6 +46,8 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.*;
@@ -229,6 +232,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(RangeHighlighterEx highlighter) {
+        if (!highlighter.getEditorFilter().avaliableIn(myEditor)) return true;
+
         if (highlighter.getErrorStripeMarkColor() != null) {
           if (highlighter.getStartOffset() < endOffset && highlighter.getEndOffset() > startOffset) {
             highlighters.add(highlighter);
@@ -266,6 +271,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(RangeHighlighterEx highlighter) {
+        if (!highlighter.getEditorFilter().avaliableIn(myEditor)) return true;
+
         if (highlighter.getErrorStripeMarkColor() != null) {
           ProperTextRange range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset());
           if (scrollBarY >= range.getStartOffset() - myMinMarkHeight * 2 &&
@@ -432,7 +439,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       errorIconBounds.y = bounds.height / 2 - errorIconBounds.height / 2;
       
       try {
-        if (UISettings.getInstance().PRESENTATION_MODE) {
+        if (UISettings.getInstance().PRESENTATION_MODE || SystemInfo.isMac) {
           g.setColor(getEditor().getColorsScheme().getDefaultBackground());
           g.fillRect(0, 0, bounds.width, bounds.height);
 
@@ -523,7 +530,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
-      if (UISettings.getInstance().PRESENTATION_MODE) {
+      if (UISettings.getInstance().PRESENTATION_MODE || SystemInfo.isMac) {
         super.paintThumb(g, c, thumbBounds);
         return;
       }
@@ -560,16 +567,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected int getThickness() {
-      if (UISettings.getInstance().PRESENTATION_MODE) return super.getThickness();
+      if (UISettings.getInstance().PRESENTATION_MODE || SystemInfo.isMac) return super.getThickness();
       return super.getThickness() + (isMacOverlayScrollbar() ? 2 : 7);
     }
 
     @Override
     protected void doPaintTrack(Graphics g, JComponent c, Rectangle bounds) {
-      if (UISettings.getInstance().PRESENTATION_MODE) {
+      if (UISettings.getInstance().PRESENTATION_MODE || SystemInfo.isMac) {
         g.setColor(getEditor().getColorsScheme().getDefaultBackground());
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
-        return;
+        //return;
       }
       Rectangle clip = g.getClipBounds().intersection(bounds);
       if (clip.height == 0) return;
@@ -604,7 +611,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private void paintTrackBasement(Graphics g, Rectangle bounds) {
-      if (UISettings.getInstance().PRESENTATION_MODE) {
+      if (UISettings.getInstance().PRESENTATION_MODE || SystemInfo.isMac) {
+        g.setColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
         return;
       }
 
@@ -661,6 +670,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       markup.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
         @Override
         public boolean process(RangeHighlighterEx highlighter) {
+          if (!highlighter.getEditorFilter().avaliableIn(myEditor)) return true;
+
           Color color = highlighter.getErrorStripeMarkColor();
           if (color == null) return true;
           boolean isThin = highlighter.isThinErrorStripeMark();
@@ -750,12 +761,21 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                           boolean drawBottomDecoration) {
       int x = isMirrored() ? 3 : 5;
       int paintWidth = width;
+      boolean flatStyle = Registry.is("ide.new.markup.markers");
       if (thinErrorStripeMark) {
         paintWidth /= 2;
-        paintWidth += 1;
+        paintWidth += flatStyle ? 0 : 1;
         x = isMirrored() ? width + 2 : 0;
       }
       if (color == null) return;
+      Color darker = UIUtil.isUnderDarcula()? color : ColorUtil.shift(color, 0.75);
+
+      if (flatStyle) {
+        g.setColor(darker);
+        g.fillRect(x, yStart, paintWidth, yEnd - yStart + 1);
+        return;
+      }
+
       g.setColor(color);
       g.fillRect(x + 1, yStart, paintWidth - 2, yEnd - yStart + 1);
 
@@ -767,7 +787,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         //top decoration
         UIUtil.drawLine(g, x + 1, yStart, x + paintWidth - 2, yStart);
       }
-      Color darker = ColorUtil.shift(color, 0.75);
 
       g.setColor(darker);
       if (drawBottomDecoration) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,29 +17,32 @@ package com.intellij.ui;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * User: ksafonov
- */
 public abstract class ColorPickerListenerFactory {
   private static final ExtensionPointName<ColorPickerListenerFactory> EP_NAME =
     ExtensionPointName.create("com.intellij.colorPickerListenerFactory");
 
-  public static ColorPickerListener[] createListenersFor(@Nullable final PsiElement element) {
-    final List<ColorPickerListener> listeners =
-      ContainerUtil.mapNotNull(EP_NAME.getExtensions(), new Function<ColorPickerListenerFactory, ColorPickerListener>() {
-        @Override
-        public ColorPickerListener fun(ColorPickerListenerFactory factory) {
-          return factory.createListener(element);
+  @NotNull
+  public static List<ColorPickerListener> createListenersFor(@Nullable PsiElement element) {
+    List<ColorPickerListener> listeners = null;
+    for (ColorPickerListenerFactory factory : EP_NAME.getExtensions()) {
+      ColorPickerListener listener = factory.createListener(element);
+      if (listener != null) {
+        if (listeners == null) {
+          listeners = new SmartList<ColorPickerListener>();
         }
-      });
-    return listeners.toArray(new ColorPickerListener[listeners.size()]);
+        listeners.add(listener);
+      }
+    }
+    return ContainerUtil.notNullize(listeners);
   }
 
+  @Nullable
   public abstract ColorPickerListener createListener(@Nullable PsiElement element);
 }

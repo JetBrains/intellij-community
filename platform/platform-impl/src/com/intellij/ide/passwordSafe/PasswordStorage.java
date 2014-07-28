@@ -25,15 +25,21 @@ import org.jetbrains.annotations.Nullable;
  * The interface defines basic password management operations
  */
 public interface PasswordStorage {
+
   /**
-   * <p>Get password stored in a password safe.</p>
-   *
-   * <p><b>NB: </b>
-   *    This method may be called from the background,
-   *    and it may need to ask user to enter the master password to access the database by calling
-   *    {@link Application#invokeAndWait(Runnable, ModalityState) invokeAndWait()} to show a modal dialog.
-   *    So make sure not to call it from the read action.
-   *    Calling this method from the dispatch thread is allowed.</p>
+   * @deprecated To remove in IDEA 15. Use {@link #getPassword(Project, Class, String, ModalityState)}
+   */
+  @Deprecated
+  @Nullable
+  String getPassword(@Nullable Project project, @NotNull Class requestor, String key) throws PasswordSafeException;
+
+  /**
+   * Get password stored in a password safe.
+   * <p/>
+   * The method may be called from any thread. It may need to show a master password dialog to unlock the password database,
+   * and then will use {@link Application#invokeAndWait(Runnable, ModalityState) invokeAndWait()}.
+   * So make sure to pass correct {@link ModalityState} to the method to make sure the dialog is shown above all other dialog or progress
+   * windows.
    *
    * @param project   the project, that is used to ask for the master password if this is the first access to password safe
    * @param requestor the requestor class
@@ -43,19 +49,16 @@ public interface PasswordStorage {
    * @throws IllegalStateException if the method is called from the read action.
    */
   @Nullable
-  String getPassword(@Nullable Project project, @NotNull Class requestor, String key) throws PasswordSafeException;
-  /**
-   * Remove password stored in a password safe
-   *
-   * @param project   the project, that is used to ask for the master password if this is the first access to password safe
-   * @param requestor the requestor class
-   * @param key       the key for the password
-   * @return the plugin key
-   * @throws PasswordSafeException if password safe cannot be accessed
-   */
-  void removePassword(@Nullable Project project, @NotNull Class requestor, String key) throws PasswordSafeException;
+  String getPassword(@Nullable Project project, @NotNull Class requestor, String key,
+                     @Nullable ModalityState state) throws PasswordSafeException;
+
   /**
    * Store password in password safe
+   * <p/>
+   * The method may be called from any thread. It may need to show a master password dialog to unlock the password database,
+   * and then will use {@link Application#invokeAndWait(Runnable, ModalityState) invokeAndWait()}.
+   * So make sure to pass correct {@link ModalityState} to the method to make sure the dialog is shown above all other dialog or progress
+   * windows.
    *
    * @param project   the project, that is used to ask for the master password if this is the first access to password safe
    * @param requestor the requestor class
@@ -63,5 +66,36 @@ public interface PasswordStorage {
    * @param value     the value to store
    * @throws PasswordSafeException if password safe cannot be accessed
    */
+  void storePassword(@Nullable Project project, @NotNull Class requestor, String key, String value,
+                     @Nullable ModalityState modalityState) throws PasswordSafeException;
+
+  /**
+   * @deprecated To remove in IDEA 15. Use {@link #storePassword(Project, Class, String, String, ModalityState)}
+   */
+  @Deprecated
   void storePassword(@Nullable Project project, @NotNull Class requestor, String key, String value) throws PasswordSafeException;
+
+  /**
+   * @deprecated To remove in IDEA 15. Use {@link #removePassword(Project, Class, String, ModalityState)}
+   */
+  @Deprecated
+  void removePassword(@Nullable Project project, @NotNull Class requestor, String key) throws PasswordSafeException;
+
+  /**
+   * Remove password stored in a password safe
+   * <p/>
+   * The method may be called from any thread. It may need to show a master password dialog to unlock the password database,
+   * and then will use {@link Application#invokeAndWait(Runnable, ModalityState) invokeAndWait()}.
+   * So make sure to pass correct {@link ModalityState} to the method to make sure the dialog is shown above all other dialog or progress
+   * windows.
+   *
+   * @param project   the project, that is used to ask for the master password if this is the first access to password safe
+   * @param requestor the requestor class
+   * @param key       the key for the password
+   * @return the plugin key
+   * @throws PasswordSafeException if password safe cannot be accessed
+   */
+  void removePassword(@Nullable Project project, @NotNull Class requestor, String key,
+                      @Nullable ModalityState modalityState) throws PasswordSafeException;
+
 }

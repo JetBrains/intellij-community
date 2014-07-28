@@ -42,6 +42,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,26 +57,23 @@ public class GotoRelatedSymbolAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
-    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(e.getDataContext());
-    e.getPresentation().setEnabled(element != null || file != null);
+    PsiElement element = getContextElement(e.getDataContext());
+    e.getPresentation().setEnabled(element != null);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
-    Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-    if (element == null && file == null) return;
+    PsiElement element = getContextElement(e.getDataContext());
+    if (element == null) return;
 
-    List<GotoRelatedItem> items = element == null? getItems(file, editor, dataContext) : getItems(element, dataContext);
+    List<GotoRelatedItem> items = getItems(element, e.getDataContext());
     if (items.isEmpty()) return;
+
     if (items.size() == 1 && items.get(0).getElement() != null) {
       items.get(0).navigate();
       return;
     }
-    createPopup(items, "Choose Target").showInBestPositionFor(dataContext);
+    createPopup(items, "Choose Target").showInBestPositionFor(e.getDataContext());
   }
 
   public static JBPopup createPopup(final List<? extends GotoRelatedItem> items, final String title) {
@@ -268,8 +266,25 @@ public class GotoRelatedSymbolAction extends AnAction {
     return popup;
   }
 
+  @TestOnly
   @NotNull
   public static List<GotoRelatedItem> getItems(@NotNull PsiFile psiFile, @Nullable Editor editor, @Nullable DataContext dataContext) {
+    return getItems(getContextElement(psiFile, editor), dataContext);
+  }
+
+  @Nullable
+  private static PsiElement getContextElement(@NotNull DataContext dataContext) {
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+    if (file != null && editor != null) {
+      return getContextElement(file, editor);
+    }
+    return element;
+  }
+
+  @NotNull
+  private static PsiElement getContextElement(@NotNull PsiFile psiFile, @Nullable Editor editor) {
     PsiElement contextElement = psiFile;
     if (editor != null) {
       PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
@@ -277,7 +292,7 @@ public class GotoRelatedSymbolAction extends AnAction {
         contextElement = element;
       }
     }
-    return getItems(contextElement, dataContext);
+    return contextElement;
   }
 
   @NotNull

@@ -1,6 +1,9 @@
 package org.jetbrains.protocolReader;
 
-import org.chromium.protocolReader.*;
+import org.jetbrains.jsonProtocol.JsonField;
+import org.jetbrains.jsonProtocol.JsonNullable;
+import org.jetbrains.jsonProtocol.JsonOptionalField;
+import org.jetbrains.jsonProtocol.JsonSubtypeCasting;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;

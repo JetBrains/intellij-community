@@ -22,42 +22,19 @@ import com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordS
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.PasswordDatabase;
 import com.intellij.ide.passwordSafe.impl.providers.memory.MemoryPasswordSafe;
 import com.intellij.ide.passwordSafe.impl.providers.nil.NilProvider;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * The implementation of password safe service
- */
 public class PasswordSafeImpl extends PasswordSafe {
-  /**
-   * The logger instance
-   */
   private static final Logger LOG = Logger.getInstance(PasswordSafeImpl.class.getName());
-  /**
-   * The current settings
-   */
   private final PasswordSafeSettings mySettings;
-  /**
-   * The master key provider
-   */
   private final MasterKeyPasswordSafe myMasterKeyProvider;
-  /**
-   * The nil provider
-   */
   private final NilProvider myNilProvider;
-  /**
-   * The memory provider
-   */
   private final MemoryPasswordSafe myMemoryProvider;
 
-  /**
-   * The constructor
-   *
-   * @param settings the settings for the password safe
-   * @param database the password database
-   */
   public PasswordSafeImpl(PasswordSafeSettings settings, PasswordDatabase database) {
     mySettings = settings;
     myMasterKeyProvider = new MasterKeyPasswordSafe(database);
@@ -89,21 +66,24 @@ public class PasswordSafeImpl extends PasswordSafe {
     return p;
   }
 
-
-  /**
-   * @return settings for the passwords safe
-   */
   public PasswordSafeSettings getSettings() {
     return mySettings;
   }
 
+  @Nullable
+  @Override
+  public String getPassword(@Nullable Project project, @NotNull Class requester, String key) throws PasswordSafeException {
+    return getPassword(project, requester, key, null);
+  }
 
   @Nullable
-  public String getPassword(@Nullable Project project, @NotNull Class requester, String key) throws PasswordSafeException {
+  @Override
+  public String getPassword(@Nullable Project project, @NotNull Class requester, String key,
+                            @Nullable ModalityState modalityState) throws PasswordSafeException {
     if (mySettings.getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
-      String password = getMemoryProvider().getPassword(project, requester, key);
+      String password = getMemoryProvider().getPassword(project, requester, key, modalityState);
       if (password == null) {
-        password = provider().getPassword(project, requester, key);
+        password = provider().getPassword(project, requester, key, modalityState);
         if (password != null) {
           // cache the password in memory as well for easier access during the session
           getMemoryProvider().storePassword(project, requester, key, password);
@@ -111,27 +91,35 @@ public class PasswordSafeImpl extends PasswordSafe {
       }
       return password;
     }
-    return provider().getPassword(project, requester, key);
+    return provider().getPassword(project, requester, key, modalityState);
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  public void removePassword(@Nullable Project project, @NotNull Class requester, String key) throws PasswordSafeException {
+  @Override
+  public void removePassword(@Nullable Project project, @NotNull Class requestor, String key) throws PasswordSafeException {
+    removePassword(project, requestor, key, null);
+  }
+
+  @Override
+  public void removePassword(@Nullable Project project, @NotNull Class requester, String key,
+                             @Nullable ModalityState modalityState) throws PasswordSafeException {
     if (mySettings.getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
       getMemoryProvider().removePassword(project, requester, key);
     }
-    provider().removePassword(project, requester, key);
+    provider().removePassword(project, requester, key, modalityState);
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  public void storePassword(@Nullable Project project, @NotNull Class requester, String key, String value) throws PasswordSafeException {
+  @Override
+  public void storePassword(@Nullable Project project, @NotNull Class requestor, String key, String value) throws PasswordSafeException {
+    storePassword(project, requestor, key, value, null);
+  }
+
+  @Override
+  public void storePassword(@Nullable Project project, @NotNull Class requester, String key, String value,
+                            @Nullable ModalityState modalityState) throws PasswordSafeException {
     if (mySettings.getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
       getMemoryProvider().storePassword(project, requester, key, value);
     }
-    provider().storePassword(project, requester, key, value);
+    provider().storePassword(project, requester, key, value, modalityState);
   }
 
   /**

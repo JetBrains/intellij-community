@@ -245,7 +245,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     assertNotNull(NonProjectFileWritingAccessProvider.getAccessStatus(getProject(), nonProjectFile1));
     assertNull(NonProjectFileWritingAccessProvider.getAccessStatus(getProject(), nonProjectFile2));
 
-    PsiTestUtil.removeContentEntry(myModule, contextRoot);
+    PsiTestUtil.removeContentEntry(myModule, contextRoot.getFile());
 
     // do not add notification panel until access is requested
     assertNotNull(NonProjectFileWritingAccessProvider.getAccessStatus(getProject(), nonProjectFile1));

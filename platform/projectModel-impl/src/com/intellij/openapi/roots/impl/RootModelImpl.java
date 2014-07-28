@@ -213,6 +213,8 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     LOG.assertTrue(myContent.contains(entry));
     if (entry instanceof RootModelComponentBase) {
       Disposer.dispose((RootModelComponentBase)entry);
+      RootModelImpl entryModel = ((RootModelComponentBase)entry).getRootModel();
+      LOG.assertTrue(entryModel == this, "Removing from " + this + " content entry obtained from " + entryModel);
     }
     myContent.remove(entry);
   }
@@ -729,6 +731,15 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   private RootModelImpl getSourceModel() {
     assertWritable();
     return myModuleRootManager.getRootModel();
+  }
+
+  @Override
+  public String toString() {
+    return "RootModelImpl{" +
+           "module=" + getModule().getName() +
+           ", writable=" + myWritable +
+           ", disposed=" + myDisposed +
+           '}';
   }
 
   @Nullable

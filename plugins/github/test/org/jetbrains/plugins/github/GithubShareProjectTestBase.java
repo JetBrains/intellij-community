@@ -48,7 +48,7 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
   }
 
   protected void deleteGithubRepo() throws IOException {
-    GithubApiUtil.deleteGithubRepository(myGitHubSettings.getAuthData(), myLogin1, PROJECT_NAME);
+    GithubApiUtil.deleteGithubRepository(myGitHubSettings.getAuthData(null), myLogin1, PROJECT_NAME);
   }
 
   protected void registerDefaultShareDialogHandler() {

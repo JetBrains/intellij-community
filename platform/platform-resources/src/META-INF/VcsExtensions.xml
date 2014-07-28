@@ -25,7 +25,7 @@
 
     <selectInTarget implementation="com.intellij.openapi.vcs.changes.SelectInChangesViewTarget"/>
 
-    <projectConfigurable instance="com.intellij.openapi.vcs.configurable.VcsManagerConfigurable" id="vcs"/>
+    <projectConfigurable groupId="project" dynamic="true" key="version.control.main.configurable.name" bundle="messages.VcsBundle" instance="com.intellij.openapi.vcs.configurable.VcsManagerConfigurable" id="vcs"/>
 
     <changesViewContent tabName="Repository" className="com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager"
                         predicateClassName="com.intellij.openapi.vcs.changes.committed.CommittedChangesVisibilityPredicate"/>

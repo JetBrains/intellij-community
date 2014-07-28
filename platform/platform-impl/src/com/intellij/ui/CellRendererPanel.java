@@ -25,6 +25,9 @@ import java.awt.*;
  * @author gregsh
  */
 public class CellRendererPanel extends JPanel {
+  public CellRendererPanel() {
+    super(null); // we do the layout ourselves
+  }
 
   // property change support ----------------
   protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
@@ -46,7 +49,10 @@ public class CellRendererPanel extends JPanel {
   @Override
   public void doLayout() {
     if (getComponentCount() != 1) return;
-    getComponent(0).setBounds(0, 0, getWidth(), getHeight());
+    Insets insets = getInsets();
+    getComponent(0).setBounds(insets.left, insets.top,
+                              getWidth() - insets.left - insets.right,
+                              getHeight() - insets.top - insets.bottom);
   }
 
   @Override

@@ -16,7 +16,7 @@
 
 package com.intellij.codeInspection.ex;
 
-import com.intellij.profile.codeInspection.ui.InspectionConfigTreeNode;
+import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -106,7 +106,7 @@ public class VisibleTreeState{
   }
 
   private static State getState(InspectionConfigTreeNode node) {
-    Descriptor descriptor = node.getDescriptor();
+    Descriptor descriptor = node.getDefaultDescriptor();
     final State expandedNode;
     if (descriptor != null) {
       expandedNode = new State(descriptor);

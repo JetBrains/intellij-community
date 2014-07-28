@@ -23,8 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.DepthCombo;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 
 import javax.swing.*;
 import java.awt.*;
@@ -106,7 +106,7 @@ public abstract class AbstractSvnUpdatePanel {
 
   @Nullable
   private SVNURL getUrlFor(@NotNull final FilePath root) {
-    final SVNInfo info = myVCS.getInfo(root.getIOFile());
+    final Info info = myVCS.getInfo(root.getIOFile());
     return info != null ? info.getURL() : null;
   }
 

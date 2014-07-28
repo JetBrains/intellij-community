@@ -28,6 +28,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -50,7 +52,9 @@ import java.util.List;
 public class PyTreeStructureProvider implements SelectableTreeStructureProvider, DumbAware {
   @NotNull
   @Override
-  public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
+  public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,
+                                             @NotNull Collection<AbstractTreeNode> children,
+                                             ViewSettings settings) {
     final Project project = parent.getProject();
     final Sdk sdk = getPythonSdk(parent);
     if (sdk != null && project != null) {
@@ -111,7 +115,15 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
         if (directory.getVirtualFile().equals(PyUserSkeletonsUtil.getUserSkeletonsDirectory())) {
           continue;
         }
-        PsiDirectory dirParent = directory.getParent();
+        VirtualFile dir = directory.getVirtualFile();
+        if (dir.getFileSystem() instanceof JarFileSystem) {
+          dir = ((JarFileSystem)directory.getVirtualFile().getFileSystem()).getLocalVirtualFileFor(directory.getVirtualFile());
+        }
+        if (dir == null) {
+          continue;
+        }
+        VirtualFile dirParent = dir.getParent();
+
         if (dirParent != null && dirParent.getName().equals(PythonSdkType.SKELETON_DIR_NAME)) {
           continue;
         }
@@ -120,7 +132,7 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
           continue;
         }
         if (dirParent != null) {
-          PsiDirectory grandParent = dirParent.getParent();
+          VirtualFile grandParent = dirParent.getParent();
 
           if (grandParent != null && grandParent.getName().equals(PythonSdkType.REMOTE_SOURCES_DIR_NAME)) {
             continue;
@@ -158,8 +170,8 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
       }
     }
     if (parents.size() > 0) {
-      return parents.get(parents.size()-1);
+      return parents.get(parents.size() - 1);
     }
-    return element.getContainingFile();    
+    return element.getContainingFile();
   }
 }

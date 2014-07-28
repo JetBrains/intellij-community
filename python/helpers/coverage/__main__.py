@@ -1,3 +1,4 @@
-"""Coverage.py's main entrypoint."""
+"""Coverage.py's main entry point."""
+import sys
 from coverage.cmdline import main
-main()
+sys.exit(main())

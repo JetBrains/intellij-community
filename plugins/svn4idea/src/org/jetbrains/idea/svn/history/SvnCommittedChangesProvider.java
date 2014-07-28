@@ -49,12 +49,13 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ConfigureBranchesAction;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.status.Status;
+import org.jetbrains.idea.svn.status.StatusConsumer;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.DataInput;
@@ -139,8 +140,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       final String repositoryRoot = getRepositoryRoot(svnLocation);
       final ChangeBrowserSettings.Filter filter = settings.createFilter();
 
-      getCommittedChangesImpl(settings, svnLocation, maxCount, new Consumer<SVNLogEntry>() {
-        public void consume(final SVNLogEntry svnLogEntry) {
+      getCommittedChangesImpl(settings, svnLocation, maxCount, new Consumer<LogEntry>() {
+        public void consume(final LogEntry svnLogEntry) {
           final SvnChangeList cl = new SvnChangeList(myVcs, svnLocation, svnLogEntry, repositoryRoot);
           if (filter.accepts(cl)) {
             consumer.consume(cl);
@@ -158,8 +159,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     final ArrayList<SvnChangeList> result = new ArrayList<SvnChangeList>();
     final String repositoryRoot = getRepositoryRoot(svnLocation);
 
-    getCommittedChangesImpl(settings, svnLocation, maxCount, new Consumer<SVNLogEntry>() {
-      public void consume(final SVNLogEntry svnLogEntry) {
+    getCommittedChangesImpl(settings, svnLocation, maxCount, new Consumer<LogEntry>() {
+      public void consume(final LogEntry svnLogEntry) {
         result.add(new SvnChangeList(myVcs, svnLocation, svnLogEntry, repositoryRoot));
       }
     }, false, true);
@@ -169,24 +170,24 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
 
   public void getCommittedChangesWithMergedRevisons(final ChangeBrowserSettings settings,
                                                                    final RepositoryLocation location, final int maxCount,
-                                                                   final PairConsumer<SvnChangeList, TreeStructureNode<SVNLogEntry>> finalConsumer)
+                                                                   final PairConsumer<SvnChangeList, LogHierarchyNode> finalConsumer)
     throws VcsException {
     final SvnRepositoryLocation svnLocation = (SvnRepositoryLocation) location;
     final String repositoryRoot = getRepositoryRoot(svnLocation);
 
-    final MergeSourceHierarchyBuilder builder = new MergeSourceHierarchyBuilder(new Consumer<TreeStructureNode<SVNLogEntry>>() {
-      public void consume(TreeStructureNode<SVNLogEntry> node) {
+    final MergeSourceHierarchyBuilder builder = new MergeSourceHierarchyBuilder(new Consumer<LogHierarchyNode>() {
+      public void consume(LogHierarchyNode node) {
         finalConsumer.consume(new SvnChangeList(myVcs, svnLocation, node.getMe(), repositoryRoot), node);
       }
     });
-    final SvnMergeSourceTracker mergeSourceTracker = new SvnMergeSourceTracker(new ThrowableConsumer<Pair<SVNLogEntry, Integer>, SVNException>() {
-      public void consume(Pair<SVNLogEntry, Integer> svnLogEntryIntegerPair) throws SVNException {
+    final SvnMergeSourceTracker mergeSourceTracker = new SvnMergeSourceTracker(new ThrowableConsumer<Pair<LogEntry, Integer>, SVNException>() {
+      public void consume(Pair<LogEntry, Integer> svnLogEntryIntegerPair) throws SVNException {
         builder.consume(svnLogEntryIntegerPair);
       }
     });
 
-    getCommittedChangesImpl(settings, svnLocation, maxCount, new Consumer<SVNLogEntry>() {
-      public void consume(final SVNLogEntry svnLogEntry) {
+    getCommittedChangesImpl(settings, svnLocation, maxCount, new Consumer<LogEntry>() {
+      public void consume(final LogEntry svnLogEntry) {
         try {
           mergeSourceTracker.consume(svnLogEntry);
         }
@@ -204,13 +205,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     // TODO: Additionally SvnRepositoryLocation could possibly be refactored to always contain FilePath (or similar local item)
     // TODO: So here we could get repository url without performing remote svn command
 
-    SVNURL rootUrl;
-    try {
-      rootUrl = SvnUtil.getRepositoryRoot(myVcs, svnLocation.toSvnUrl());
-    }
-    catch (SVNException e) {
-      throw new SvnBindException(e);
-    }
+    SVNURL rootUrl = SvnUtil.getRepositoryRoot(myVcs, svnLocation.toSvnUrl());
 
     if (rootUrl == null) {
       throw new SvnBindException("Could not resolve repository root url for " + svnLocation);
@@ -220,7 +215,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   private void getCommittedChangesImpl(ChangeBrowserSettings settings, final SvnRepositoryLocation location,
-                                       final int maxCount, final Consumer<SVNLogEntry> resultConsumer, final boolean includeMergedRevisions,
+                                       final int maxCount, final Consumer<LogEntry> resultConsumer, final boolean includeMergedRevisions,
                                        final boolean filterOutByDate) throws VcsException {
     setCollectingChangesProgress(location);
 
@@ -258,11 +253,12 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @NotNull
-  private ISVNLogEntryHandler createLogHandler(final Consumer<SVNLogEntry> resultConsumer,
+  private LogEntryConsumer createLogHandler(final Consumer<LogEntry> resultConsumer,
                                                final boolean filterOutByDate,
                                                final String author) {
-    return new ISVNLogEntryHandler() {
-      public void handleLogEntry(SVNLogEntry logEntry) {
+    return new LogEntryConsumer() {
+      @Override
+      public void consume(LogEntry logEntry) {
         if (myProject.isDisposed()) throw new ProcessCanceledException();
 
         ProgressManager.progress2(SvnBundle.message("progress.text2.processing.revision", logEntry.getRevision()));
@@ -381,31 +377,26 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     final Set<FilePath> result = ContainerUtil.newHashSet();
     File rootFile = root.getIOFile();
 
-    try {
-      myVcs.getFactory(rootFile).createStatusClient()
-        .doStatus(rootFile, SVNRevision.UNDEFINED, SVNDepth.INFINITY, true, false, false, false, new ISVNStatusHandler() {
-          @Override
-          public void handleStatus(SVNStatus status) throws SVNException {
-            File file = status.getFile();
-            boolean changedOnServer = isNotNone(status.getRemoteContentsStatus()) ||
-                                      isNotNone(status.getRemoteNodeStatus()) ||
-                                      isNotNone(status.getRemotePropertiesStatus());
+    myVcs.getFactory(rootFile).createStatusClient()
+      .doStatus(rootFile, SVNRevision.UNDEFINED, Depth.INFINITY, true, false, false, false, new StatusConsumer() {
+        @Override
+        public void consume(Status status) throws SVNException {
+          File file = status.getFile();
+          boolean changedOnServer = isNotNone(status.getRemoteContentsStatus()) ||
+                                    isNotNone(status.getRemoteNodeStatus()) ||
+                                    isNotNone(status.getRemotePropertiesStatus());
 
-            if (file != null && changedOnServer) {
-              result.add(VcsUtil.getFilePath(file, file.isDirectory()));
-            }
+          if (file != null && changedOnServer) {
+            result.add(VcsUtil.getFilePath(file, file.isDirectory()));
           }
-        }, null);
-    }
-    catch (SVNException e) {
-      throw new SvnBindException(e);
-    }
+        }
+      }, null);
 
     return result;
   }
 
-  private static boolean isNotNone(@Nullable SVNStatusType status) {
-    return status != null && !SVNStatusType.STATUS_NONE.equals(status);
+  private static boolean isNotNone(@Nullable StatusType status) {
+    return status != null && !StatusType.STATUS_NONE.equals(status);
   }
 
   public boolean refreshCacheByNumber() {

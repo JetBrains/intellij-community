@@ -45,14 +45,14 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
-import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.SVNDepth;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.status.Status;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import javax.swing.*;
 import java.awt.*;
@@ -130,18 +130,18 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       return;
     }
 
-    SVNCommitInfo[] results = mySvnVcs.getFactory(format).createCheckinClient().commit(committables, comment);
+    CommitInfo[] results = mySvnVcs.getFactory(format).createCheckinClient().commit(committables, comment);
 
     final StringBuilder committedRevisions = new StringBuilder();
-    for (SVNCommitInfo result : results) {
+    for (CommitInfo result : results) {
       if (result.getErrorMessage() != null) {
         exception.add(new VcsException(result.getErrorMessage().getFullMessage()));
       }
-      else if (result != SVNCommitInfo.NULL && result.getNewRevision() > 0) {
+      else if (result != CommitInfo.EMPTY && result.getRevision() > 0) {
         if (committedRevisions.length() > 0) {
           committedRevisions.append(", ");
         }
-        committedRevisions.append(result.getNewRevision());
+        committedRevisions.append(result.getRevision());
       }
     }
     if (committedRevisions.length() > 0) {
@@ -199,11 +199,9 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   private void addParents(File file, final Adder adder) {
-    SVNStatus status = getStatus(file);
+    Status status = getStatus(file);
 
-    if (status != null &&
-        (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_ADDED) ||
-         SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_REPLACED))) {
+    if (status != null && status.is(StatusType.STATUS_ADDED, StatusType.STATUS_REPLACED)) {
       // file should be added
       adder.add(file);
       file = file.getParentFile();
@@ -214,13 +212,13 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Nullable
-  private SVNStatus getStatus(@NotNull File file) {
-    SVNStatus result = null;
+  private Status getStatus(@NotNull File file) {
+    Status result = null;
 
     try {
       result = mySvnVcs.getFactory(file).createStatusClient().doStatus(file, false);
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       LOG.info(e);
     }
 
@@ -287,9 +285,9 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   public static List<VcsException> scheduleUnversionedFilesForAddition(@NotNull SvnVcs vcs, List<VirtualFile> files, final boolean recursive) {
     Collections.sort(files, FilePathComparator.getInstance());
 
-    ISVNEventHandler eventHandler = new SvnProgressCanceller() {
+    ProgressTracker eventHandler = new SvnProgressCanceller() {
       @Override
-      public void handleEvent(SVNEvent event, double progress) throws SVNException {
+      public void consume(ProgressEvent event) throws SVNException {
         // TODO: indicator is null here when invoking "Add" action
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         File file = event.getFile();
@@ -301,7 +299,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     };
 
     List<VcsException> exceptions = new ArrayList<VcsException>();
-    SVNDepth depth = recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY;
+    Depth depth = Depth.allOrEmpty(recursive);
 
     for (VirtualFile file : files) {
       try {

@@ -245,6 +245,38 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
                       "seven<caret>");
   }
 
+  public void testCopyMultilineFromOneCaretPasteIntoTwo() throws Exception {
+    init("<selection>one\n" +
+         "two<caret></selection>\n" +
+         "three\n" +
+         "four",
+         TestFileType.TEXT);
+    executeAction("EditorCopy");
+    executeAction("EditorTextStart");
+    executeAction("EditorCloneCaretBelow");
+    executeAction("EditorPaste");
+    checkResultByText("one\n" +
+                      "two<caret>one\n" +
+                      "one\n" +
+                      "two<caret>two\n" +
+                      "three\n" +
+                      "four");
+  }
+
+  public void testCopyPasteDoesNothingWithUnevenSelection() throws Exception {
+    init("<selection>one\n" +
+         "two<caret></selection>\n" +
+         "<selection>three<caret></selection>\n" +
+         "four",
+         TestFileType.TEXT);
+    executeAction("EditorCopy");
+    executeAction("EditorPaste");
+    checkResultByText("one\n" +
+                      "two<caret>\n" +
+                      "three<caret>\n" +
+                      "four");
+  }
+
   public void testEscapeAfterDragDown() throws Exception {
     init("line1\n" +
          "line2",

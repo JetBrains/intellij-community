@@ -22,6 +22,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
@@ -42,6 +43,7 @@ import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
+import java.awt.*;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -71,6 +73,8 @@ public class TableModelEditor<T> implements ElementProducer<T> {
     table = new TableView<T>(model);
     table.setDefaultEditor(Enum.class, ComboBoxTableCellEditor.INSTANCE);
     table.setStriped(true);
+    table.setEnableAntialiasing(true);
+    preferredScrollableViewportHeightInRows(JBTable.PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS);
     new TableSpeedSearch(table);
     if (columns[0].getColumnClass() == Boolean.class && columns[0].getName().isEmpty()) {
       TableUtil.setupCheckboxColumn(table.getColumnModel().getColumn(0));
@@ -95,6 +99,11 @@ public class TableModelEditor<T> implements ElementProducer<T> {
     if (itemEditor instanceof DialogItemEditor) {
       addDialogActions();
     }
+  }
+
+  public TableModelEditor<T> preferredScrollableViewportHeightInRows(int rows) {
+    table.setPreferredScrollableViewportSize(new Dimension(200, table.getRowHeight() * rows));
+    return this;
   }
 
   private void addDialogActions() {

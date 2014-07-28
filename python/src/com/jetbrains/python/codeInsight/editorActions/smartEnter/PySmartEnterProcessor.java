@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.codeInsight.editorActions.smartEnter;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,25 +49,22 @@ import java.util.List;
  */
 public class PySmartEnterProcessor extends SmartEnterProcessor {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor");
-  private static final List<PyFixer> ourFixers = new ArrayList<PyFixer>();
-  private static final List<EnterProcessor> ourProcessors = new ArrayList<EnterProcessor>();
-
-  static {
-    ourFixers.add(new PyStringLiteralFixer());
-    ourFixers.add(new PyParenthesizedFixer());
-    ourFixers.add(new PyMissingBracesFixer());
-    ourFixers.add(new PyConditionalStatementPartFixer());
-    ourFixers.add(new PyUnconditionalStatementPartFixer());
-    ourFixers.add(new PyForPartFixer());
-    ourFixers.add(new PyExceptFixer());
-    ourFixers.add(new PyArgumentListFixer());
-    ourFixers.add(new PyParameterListFixer());
-    ourFixers.add(new PyFunctionFixer());
-    ourFixers.add(new PyClassFixer());
-
-    ourProcessors.add(new PyCommentBreakerEnterProcessor());
-    ourProcessors.add(new PyPlainEnterProcessor());
-  }
+  private static final List<PyFixer> ourFixers = ImmutableList.<PyFixer>builder()
+    .add(new PyStringLiteralFixer())
+    .add(new PyParenthesizedFixer())
+    .add(new PyMissingBracesFixer())
+    .add(new PyConditionalStatementPartFixer())
+    .add(new PyUnconditionalStatementPartFixer())
+    .add(new PyForPartFixer())
+    .add(new PyExceptFixer())
+    .add(new PyArgumentListFixer())
+    .add(new PyParameterListFixer())
+    .add(new PyFunctionFixer())
+    .add(new PyClassFixer())
+    .add(new PyWithFixer())
+    .build();
+  private static final List<EnterProcessor> ourProcessors = ImmutableList.of(new PyCommentBreakerEnterProcessor(),
+                                                                             new PyPlainEnterProcessor());
 
   private static class TooManyAttemptsException extends Exception {
   }

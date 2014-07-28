@@ -80,11 +80,19 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     doTestField();
   }
 
+  public void testAnnotationsInParams() throws Exception {
+    doTestMethod();
+  }
+
   public void testLiteral() throws Exception {
     doTestField();
   }
 
   public void testCode() throws Exception {
+    doTestField();
+  }
+
+  public void testPInsidePre() throws Exception {
     doTestField();
   }
 

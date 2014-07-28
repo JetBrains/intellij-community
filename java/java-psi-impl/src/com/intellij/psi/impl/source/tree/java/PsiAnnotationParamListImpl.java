@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,20 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiAnnotationParameterList;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiAnnotationParameterListStub;
 import com.intellij.psi.impl.source.JavaStubPsiElement;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/27/12
+ * @since 27.07.2012
  */
-public class PsiAnnotationParamListImpl extends JavaStubPsiElement<PsiAnnotationParameterListStub> implements
-                                                                                                       PsiAnnotationParameterList {
+public class PsiAnnotationParamListImpl extends JavaStubPsiElement<PsiAnnotationParameterListStub> implements PsiAnnotationParameterList {
   public PsiAnnotationParamListImpl(@NotNull PsiAnnotationParameterListStub stub) {
     super(stub, JavaStubElementTypes.ANNOTATION_PARAMETER_LIST);
   }
@@ -44,8 +44,18 @@ public class PsiAnnotationParamListImpl extends JavaStubPsiElement<PsiAnnotation
     return getStubOrPsiChildren(JavaStubElementTypes.NAME_VALUE_PAIR, PsiNameValuePair.ARRAY_FACTORY);
   }
 
-  @NonNls
-  public String toString(){
-    return "PsiAnnotationParameterList:" + getText();
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitAnnotationParameterList(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
+
+  @Override
+  public String toString() {
+    return "PsiAnnotationParameterList";
   }
 }

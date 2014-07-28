@@ -587,7 +587,15 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     if (parameterList != null) {
       text += parameterList.getText();
     }
-    PsiJavaCodeReferenceElement ref = facade.getParserFacade().createReferenceFromText(text, getParent());
+
+    PsiJavaCodeReferenceElement ref;
+    try {
+      ref = facade.getParserFacade().createReferenceFromText(text, getParent());
+    }
+    catch (IncorrectOperationException e) {
+      throw new IncorrectOperationException(e.getMessage() + " [qname=" + qName + " class=" + aClass + ";" + aClass.getClass().getName() + "]");
+    }
+
     ((PsiJavaCodeReferenceElementImpl)ref).setAnnotations(annotations);
     getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
 
@@ -743,7 +751,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   private String getNormalizedText() {
     String whiteSpaceAndComments = myCachedNormalizedText;
     if (whiteSpaceAndComments == null) {
-      myCachedNormalizedText = whiteSpaceAndComments = SourceUtil.getReferenceText(this);
+      myCachedNormalizedText = whiteSpaceAndComments = JavaSourceUtil.getReferenceText(this);
     }
     return whiteSpaceAndComments;
   }

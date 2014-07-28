@@ -33,12 +33,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.conflict.ConflictClient;
 import org.jetbrains.idea.svn.dialogs.SelectFilesDialog;
+import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.*;
+import org.jetbrains.idea.svn.status.StatusConsumer;
+import org.jetbrains.idea.svn.status.StatusType;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.Collection;
@@ -98,7 +101,7 @@ public class MarkResolvedAction extends BasicAction {
         ConflictClient client = vcs.getFactory(ioFile).createConflictClient();
 
         // TODO: Probably false should be passed to "resolveTree", but previous logic used true implicitly
-        client.resolve(ioFile, SVNDepth.EMPTY, true, true, true);
+        client.resolve(ioFile, Depth.EMPTY, true, true, true);
       }
     }
     finally {
@@ -124,16 +127,17 @@ public class MarkResolvedAction extends BasicAction {
         File path = new File(file.getPath());
         StatusClient client = vcs.getFactory(path).createStatusClient();
 
-        client.doStatus(path, true, false, false, false, new ISVNStatusHandler() {
-          public void handleStatus(SVNStatus status) {
-            if (status.getContentsStatus() == SVNStatusType.STATUS_CONFLICTED ||
-                status.getPropertiesStatus() == SVNStatusType.STATUS_CONFLICTED) {
+        client.doStatus(path, SVNRevision.UNDEFINED, Depth.INFINITY, false, false, false, false, new StatusConsumer() {
+          @Override
+          public void consume(Status status) {
+            if (status.getContentsStatus() == StatusType.STATUS_CONFLICTED ||
+                status.getPropertiesStatus() == StatusType.STATUS_CONFLICTED) {
               target.add(status.getFile().getAbsolutePath());
             }
           }
-        });
+        }, null);
       }
-      catch (SVNException e) {
+      catch (SvnBindException e) {
         LOG.warn(e);
       }
     }

@@ -39,7 +39,7 @@ public class I18nMessageGotoDeclarationHandler extends GotoDeclarationHandlerBas
     int i = 4; //some street magic
     while (element != null && i > 0) {
       final ASTNode node = element.getNode();
-      if (node != null && node.getUserData(KEY) != null) {
+      if (node != null && node.getUserData(KEY) instanceof PropertyFoldingBuilder) {
         break;
       }
       else {

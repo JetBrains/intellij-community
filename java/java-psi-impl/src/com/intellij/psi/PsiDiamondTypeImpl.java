@@ -34,6 +34,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -253,8 +254,9 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
                                                  PsiTypeParameter[] params,
                                                  PsiJavaCodeReferenceElement reference) {
     final StringBuilder buf = new StringBuilder();
-    buf.append(constructor != null ? constructor.getModifierList().getText() : containingClass.getModifierList().getText());
-    if (buf.length() > 0) {
+    final String modifier = VisibilityUtil.getVisibilityModifier(constructor != null ? constructor.getModifierList() : containingClass.getModifierList());
+    if (!PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
+      buf.append(modifier);
       buf.append(" ");
     }
     buf.append("static ");
@@ -262,8 +264,20 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     buf.append(StringUtil.join(params, new Function<PsiTypeParameter, String>() {
       @Override
       public String fun(PsiTypeParameter psiTypeParameter) {
-        final String extendsList = psiTypeParameter.getLanguage().isKindOf(JavaLanguage.INSTANCE) ? psiTypeParameter.getExtendsList().getText() : null;
-        return psiTypeParameter.getName() + (StringUtil.isEmpty(extendsList) ? "" : " " + extendsList);
+        String extendsList = "";
+        if (psiTypeParameter.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+          final PsiClassType[] extendsListTypes = psiTypeParameter.getExtendsListTypes();
+          if (extendsListTypes.length > 0) {
+            final Function<PsiClassType, String> canonicalTypePresentationFun = new Function<PsiClassType, String>() {
+              @Override
+              public String fun(PsiClassType type) {
+                return type.getCanonicalText();
+              }
+            };
+            extendsList = " extends " + StringUtil.join(extendsListTypes, canonicalTypePresentationFun, "&");
+          }
+        }
+        return psiTypeParameter.getName() + extendsList;
       }
     }, ", "));
     buf.append(">");

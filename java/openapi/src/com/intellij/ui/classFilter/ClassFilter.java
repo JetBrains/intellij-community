@@ -72,10 +72,12 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
     return getPattern();
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
@@ -99,6 +101,7 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
     return result;
   }
 
+  @Override
   public ClassFilter clone() {
     try {
       return (ClassFilter) super.clone();

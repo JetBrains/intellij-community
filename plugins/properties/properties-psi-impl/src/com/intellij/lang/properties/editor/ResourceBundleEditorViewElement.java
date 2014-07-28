@@ -25,6 +25,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface ResourceBundleEditorViewElement {
 
-  PsiElement[] getPsiElements(@NotNull Project project);
+  PsiElement[] getPsiElements();
 
 }

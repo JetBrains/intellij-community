@@ -38,4 +38,9 @@ public class PyConvertFormatOperatorToMethodIntentionTest extends PyIntentionTes
   public void testUnicode() {
     doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);
   }
+
+  // PY-9176
+  public void testConcatenated() {
+    doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);
+  }
 }

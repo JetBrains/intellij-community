@@ -15,7 +15,6 @@
  */
 package com.intellij.xdebugger;
 
-import com.intellij.openapi.options.Configurable;
 import com.intellij.testFramework.PlatformLiteFixture;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -23,7 +22,6 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
@@ -36,11 +34,11 @@ public class XDebuggerSettingsTest extends PlatformLiteFixture {
     registerExtensionPoint(XDebuggerSettings.EXTENSION_POINT, XDebuggerSettings.class);
     registerExtension(XDebuggerSettings.EXTENSION_POINT, new MyDebuggerSettings());
     getApplication().registerService(XDebuggerUtil.class, XDebuggerUtilImpl.class);
-    getApplication().registerService(XDebuggerSettingsManager.class, XDebuggerSettingsManager.class);
+    getApplication().registerService(com.intellij.xdebugger.settings.XDebuggerSettingsManager.class, XDebuggerSettingsManager.class);
   }
 
   public void testSerialize() throws Exception {
-    XDebuggerSettingsManager settingsManager = XDebuggerSettingsManager.getInstance();
+    XDebuggerSettingsManager settingsManager = XDebuggerSettingsManager.getInstanceImpl();
 
     MyDebuggerSettings settings = MyDebuggerSettings.getInstance();
     assertNotNull(settings);
@@ -78,12 +76,6 @@ public class XDebuggerSettingsTest extends PlatformLiteFixture {
     @Override
     public void loadState(final MyDebuggerSettings state) {
       myOption = state.myOption;
-    }
-
-    @Override
-    @NotNull
-    public Configurable createConfigurable() {
-      throw new UnsupportedOperationException("'createConfigurable' not implemented in " + getClass().getName());
     }
   }
 }

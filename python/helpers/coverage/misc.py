@@ -1,6 +1,10 @@
 """Miscellaneous stuff for Coverage."""
 
+import errno
 import inspect
+import os
+import sys
+
 from coverage.backward import md5, sorted       # pylint: disable=W0622
 from coverage.backward import string_class, to_bytes
 
@@ -34,6 +38,8 @@ def format_lines(statements, lines):
     i = 0
     j = 0
     start = None
+    statements = sorted(statements)
+    lines = sorted(lines)
     while i < len(statements) and j < len(lines):
         if statements[i] == lines[j]:
             if start == None:
@@ -48,6 +54,12 @@ def format_lines(statements, lines):
         pairs.append((start, end))
     ret = ', '.join(map(nice_pair, pairs))
     return ret
+
+
+def short_stack():
+    """Return a string summarizing the call stack."""
+    stack = inspect.stack()[:0:-1]
+    return "\n".join(["%30s : %s @%d" % (t[3],t[1],t[2]) for t in stack])
 
 
 def expensive(fn):
@@ -76,11 +88,21 @@ def bool_or_none(b):
 def join_regex(regexes):
     """Combine a list of regexes into one that matches any of them."""
     if len(regexes) > 1:
-        return "(" + ")|(".join(regexes) + ")"
+        return "|".join(["(%s)" % r for r in regexes])
     elif regexes:
         return regexes[0]
     else:
         return ""
+
+
+def file_be_gone(path):
+    """Remove a file, and don't get annoyed if it doesn't exist."""
+    try:
+        os.remove(path)
+    except OSError:
+        _, e, _ = sys.exc_info()
+        if e.errno != errno.ENOENT:
+            raise
 
 
 class Hasher(object):
@@ -93,8 +115,10 @@ class Hasher(object):
         self.md5.update(to_bytes(str(type(v))))
         if isinstance(v, string_class):
             self.md5.update(to_bytes(v))
+        elif v is None:
+            pass
         elif isinstance(v, (int, float)):
-            self.update(str(v))
+            self.md5.update(to_bytes(str(v)))
         elif isinstance(v, (tuple, list)):
             for e in v:
                 self.update(e)
@@ -124,6 +148,10 @@ class CoverageException(Exception):
 
 class NoSource(CoverageException):
     """We couldn't find the source for a module."""
+    pass
+
+class NoCode(NoSource):
+    """We couldn't find any code at all."""
     pass
 
 class NotPython(CoverageException):

@@ -35,10 +35,10 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -183,6 +183,8 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static Editor createEditor(@NotNull VirtualFile file) {
     Editor editor = FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), file, 0), false);
     ((EditorImpl)editor).setCaretActive();
+    // temporary logging, to investigate blinking tests
+    System.out.println("Editor created with fonts: " + editor.getColorsScheme().getFontPreferences().getEffectiveFontFamilies());
     return editor;
   }
 

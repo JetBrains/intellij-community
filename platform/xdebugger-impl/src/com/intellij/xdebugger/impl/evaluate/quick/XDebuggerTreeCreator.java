@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.evaluate.quick;
 
 import com.intellij.concurrency.ResultConsumer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.xdebugger.XSourcePosition;
@@ -26,14 +27,10 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeCreator;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
-import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import javax.swing.tree.TreeNode;
 
 public class XDebuggerTreeCreator implements DebuggerTreeCreator<Pair<XValue,String>> {
   @NotNull private final Project myProject;
@@ -56,19 +53,10 @@ public class XDebuggerTreeCreator implements DebuggerTreeCreator<Pair<XValue,Str
     final XValueNodeImpl root = new XValueNodeImpl(tree, null, descriptor.getSecond(), descriptor.getFirst());
     tree.setRoot(root, true);
     // expand root on load
-    tree.addTreeListener(new XDebuggerTreeListener() {
+    tree.expandNodesOnLoad(new Condition<TreeNode>() {
       @Override
-      public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
-        if (node == root && !node.isLeaf()) {
-          node.getChildCount();
-        }
-      }
-
-      @Override
-      public void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, boolean last) {
-        if (node == root) {
-          tree.expandPath(node.getPath());
-        }
+      public boolean value(TreeNode node) {
+        return node == root;
       }
     });
     return tree;

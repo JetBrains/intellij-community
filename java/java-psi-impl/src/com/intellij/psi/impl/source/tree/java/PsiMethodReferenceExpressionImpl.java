@@ -434,7 +434,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         return true;
       }
 
-      final PsiSubstitutor subst = result.getSubstitutor();
+      PsiSubstitutor subst = result.getSubstitutor();
 
       PsiType methodReturnType = null;
       PsiClass containingClass = null;
@@ -449,6 +449,12 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
         if (returnType == PsiType.VOID) {
           return false;
+        }
+
+        PsiClass qContainingClass = PsiMethodReferenceUtil.getQualifierResolveResult(this).getContainingClass();
+        if (qContainingClass != null && containingClass != null && InheritanceUtil.isInheritorOrSelf(qContainingClass, containingClass, true)) {
+          subst = TypeConversionUtil.getClassSubstitutor(containingClass, qContainingClass, subst);
+          LOG.assertTrue(subst != null);
         }
 
         methodReturnType = subst.substitute(returnType);

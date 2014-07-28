@@ -24,14 +24,12 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.impl.ProjectRootUtil;
-import com.intellij.openapi.roots.ModulePackageIndex;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -52,13 +50,29 @@ public class PackageUtil {
 
   @Nullable
   public static PsiDirectory findPossiblePackageDirectoryInModule(Module module, String packageName) {
+    return findPossiblePackageDirectoryInModule(module, packageName, true);
+  }
+  @Nullable
+  public static PsiDirectory findPossiblePackageDirectoryInModule(Module module, String packageName, boolean preferNonGeneratedRoots) {
+    final Project project = module.getProject();
     PsiDirectory psiDirectory = null;
-    if (!"".equals(packageName)) {
-      PsiPackage rootPackage = findLongestExistingPackage(module.getProject(), packageName);
+    if (!StringUtil.isEmptyOrSpaces(packageName)) {
+      PsiPackage rootPackage = findLongestExistingPackage(project, packageName);
       if (rootPackage != null) {
         final PsiDirectory[] psiDirectories = getPackageDirectoriesInModule(rootPackage, module);
         if (psiDirectories.length > 0) {
           psiDirectory = psiDirectories[0];
+
+          // If we prefer to find a non-generated PsiDirectory for the given package name, search through all
+          // the directories for the first dir not marked as generated and use that one instead
+          if (preferNonGeneratedRoots && psiDirectories.length > 1) {
+            for (PsiDirectory dir : psiDirectories) {
+              if (!GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(dir.getVirtualFile(), project)) {
+                psiDirectory = dir;
+                break;
+              }
+            }
+          }
         }
       }
     }
@@ -66,7 +80,7 @@ public class PackageUtil {
       if (checkSourceRootsConfigured(module)) {
         final List<VirtualFile> sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(JavaModuleSourceRootTypes.SOURCES);
         for (VirtualFile sourceRoot : sourceRoots) {
-          final PsiDirectory directory = PsiManager.getInstance(module.getProject()).findDirectory(sourceRoot);
+          final PsiDirectory directory = PsiManager.getInstance(project).findDirectory(sourceRoot);
           if (directory != null) {
             psiDirectory = directory;
             break;

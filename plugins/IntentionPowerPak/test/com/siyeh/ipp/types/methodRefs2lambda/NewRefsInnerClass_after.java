@@ -8,6 +8,6 @@ class MyTest {
     }
 
     static {
-        I i1 = (receiver) -> new Inner(receiver);
+        I i1 = (mt) -> new Inner(mt);
     }
 }

@@ -5,11 +5,11 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.BaseUpdateCommandListener;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -26,11 +26,11 @@ public class CmdExportClient extends BaseSvnClient implements ExportClient {
   public void export(@NotNull SvnTarget from,
                      @NotNull File to,
                      @Nullable SVNRevision revision,
-                     @Nullable SVNDepth depth,
+                     @Nullable Depth depth,
                      @Nullable String nativeLineEnd,
                      boolean force,
                      boolean ignoreExternals,
-                     @Nullable ISVNEventHandler handler) throws VcsException {
+                     @Nullable ProgressTracker handler) throws VcsException {
     List<String> parameters = new ArrayList<String>();
 
     CommandUtil.put(parameters, from);

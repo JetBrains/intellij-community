@@ -1,6 +1,0 @@
-<idea-plugin url="http://www.jetbrains.com/idea">
-  <extensions defaultExtensionNs="com.intellij">
-    <structuralsearch.profile implementation="com.intellij.structuralsearch.GroovyStructuralSearchProfile"/>
-  </extensions>
-</idea-plugin>
-    

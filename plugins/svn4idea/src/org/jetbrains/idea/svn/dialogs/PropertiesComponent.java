@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Depth;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
@@ -166,7 +167,7 @@ public class PropertiesComponent extends JPanel {
         public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
         }
       };
-      vcs.getFactory(file).createPropertyClient().list(SvnTarget.fromFile(file, SVNRevision.UNDEFINED), SVNRevision.WORKING, SVNDepth.EMPTY,
+      vcs.getFactory(file).createPropertyClient().list(SvnTarget.fromFile(file, SVNRevision.UNDEFINED), SVNRevision.WORKING, Depth.EMPTY,
                                                        handler);
     }
     catch (VcsException e) {
@@ -272,7 +273,7 @@ public class PropertiesComponent extends JPanel {
         try {
           myVcs.getFactory(myFile).createPropertyClient()
             .setProperty(myFile, property, value != null ? SVNPropertyValue.create(value) : null,
-                         SVNDepth.getInfinityOrEmptyDepth(recursive), force);
+                         Depth.allOrEmpty(recursive), force);
         }
         catch (VcsException error) {
           VcsBalloonProblemNotifier

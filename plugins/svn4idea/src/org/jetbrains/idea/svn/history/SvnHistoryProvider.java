@@ -40,10 +40,11 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -284,7 +285,7 @@ public class SvnHistoryProvider
   }
 
   private static class LocalLoader extends LogLoader {
-    private SVNInfo myInfo;
+    private Info myInfo;
 
     private LocalLoader(SvnVcs vcs, FilePath file, SVNRevision from, SVNRevision to, int limit, SVNRevision peg, boolean showMergeSources) {
       super(vcs, file, from, to, limit, peg, showMergeSources);
@@ -419,7 +420,7 @@ public class SvnHistoryProvider
     private void loadBackwards(SVNURL svnurl) throws SVNException, VcsException {
       // this method is called when svnurl does not exist in latest repository revision - thus concrete old revision is used for "info"
       // command to get repository url
-      SVNInfo info = myVcs.getInfo(svnurl, myPeg, myPeg);
+      Info info = myVcs.getInfo(svnurl, myPeg, myPeg);
       final SVNURL rootURL = info != null ? info.getRepositoryRootURL() : null;
       final String root = rootURL != null ? rootURL.toString() : "";
       String relativeUrl = myUrl;
@@ -444,11 +445,11 @@ public class SvnHistoryProvider
     }
 
     private boolean existsNow(SVNURL svnurl) {
-      final SVNInfo info;
+      final Info info;
       try {
         info = myVcs.getInfo(svnurl, SVNRevision.HEAD, SVNRevision.HEAD);
       }
-      catch (SVNException e) {
+      catch (SvnBindException e) {
         return false;
       }
       return info != null && info.getURL() != null && info.getRevision().isValid();
@@ -470,7 +471,7 @@ public class SvnHistoryProvider
     return false;
   }
 
-  private static class MyLogEntryHandler implements ISVNLogEntryHandler {
+  private static class MyLogEntryHandler implements LogEntryConsumer {
     private final ProgressIndicator myIndicator;
     protected final SvnVcs myVcs;
     protected final SvnPathThroughHistoryCorrection myLastPathCorrector;
@@ -503,10 +504,10 @@ public class SvnHistoryProvider
       myPegRevision = pegRevision;
       myUrl = url;
       myRepositoryRoot = repoRootURL;
-      myTracker = new SvnMergeSourceTracker(new ThrowableConsumer<Pair<SVNLogEntry, Integer>, SVNException>() {
+      myTracker = new SvnMergeSourceTracker(new ThrowableConsumer<Pair<LogEntry, Integer>, SVNException>() {
         @Override
-        public void consume(final Pair<SVNLogEntry, Integer> svnLogEntryIntegerPair) throws SVNException {
-          final SVNLogEntry logEntry = svnLogEntryIntegerPair.getFirst();
+        public void consume(final Pair<LogEntry, Integer> svnLogEntryIntegerPair) throws SVNException {
+          final LogEntry logEntry = svnLogEntryIntegerPair.getFirst();
 
           if (myIndicator != null) {
             if (myIndicator.isCanceled()) {
@@ -514,12 +515,12 @@ public class SvnHistoryProvider
             }
             myIndicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
           }
-          SVNLogEntryPath entryPath = null;
+          LogEntryPath entryPath = null;
           String copyPath = null;
           final int mergeLevel = svnLogEntryIntegerPair.getSecond();
 
           if (! myLastPathCorrector.isRoot()) {
-            myLastPathCorrector.handleLogEntry(logEntry);
+            myLastPathCorrector.consume(logEntry);
             entryPath = myLastPathCorrector.getDirectlyMentioned();
             copyPath = null;
             if (entryPath != null) {
@@ -528,7 +529,7 @@ public class SvnHistoryProvider
               // if there are no path with exact match, check whether parent or child paths had changed
               // "entry path" is allowed to be null now; if it is null, last path would be taken for revision construction
 
-              // Separate SVNLogEntry is issued for each "merge source" revision. These "merge source" revisions are treated as child
+              // Separate LogEntry is issued for each "merge source" revision. These "merge source" revisions are treated as child
               // revisions of some other revision - this way we construct merge hierarchy.
               // mergeLevel >= 0 indicates that we are currently processing some "merge source" revision. This "merge source" revision
               // contains changes from some other branch - so checkForChildChanges() and checkForParentChanges() return "false".
@@ -556,11 +557,11 @@ public class SvnHistoryProvider
       });
     }
 
-    private boolean checkForParentChanges(SVNLogEntry logEntry) {
+    private boolean checkForParentChanges(LogEntry logEntry) {
       final String lastPathBefore = myLastPathCorrector.getBefore();
       String path = SVNPathUtil.removeTail(lastPathBefore);
       while (path.length() > 0) {
-        final SVNLogEntryPath entryPath = logEntry.getChangedPaths().get(path);
+        final LogEntryPath entryPath = logEntry.getChangedPaths().get(path);
         // A & D are checked since we are not interested in parent folders property changes, only in structure changes
         // TODO: seems that R (replaced) should also be checked here
         if (entryPath != null && (entryPath.getType() == 'A' || entryPath.getType() == 'D')) {
@@ -576,7 +577,7 @@ public class SvnHistoryProvider
 
     // TODO: this makes sense only for directories, but should always return true if something under the directory was changed in revision
     // TODO: as svn will provide child changes in history for directory
-    private boolean checkForChildChanges(SVNLogEntry logEntry) {
+    private boolean checkForChildChanges(LogEntry logEntry) {
       final String lastPathBefore = myLastPathCorrector.getBefore();
       for (String key : logEntry.getChangedPaths().keySet()) {
         if (SVNPathUtil.isAncestor(lastPathBefore, key)) {
@@ -587,7 +588,7 @@ public class SvnHistoryProvider
     }
 
     @Override
-    public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
+    public void consume(LogEntry logEntry) throws SVNException {
       myTracker.consume(logEntry);
     }
 
@@ -605,7 +606,7 @@ public class SvnHistoryProvider
       }
     }
 
-    protected SvnFileRevision createRevision(final SVNLogEntry logEntry, final String copyPath, SVNLogEntryPath entryPath) throws SVNException {
+    protected SvnFileRevision createRevision(final LogEntry logEntry, final String copyPath, LogEntryPath entryPath) throws SVNException {
       Date date = logEntry.getDate();
       String author = logEntry.getAuthor();
       String message = logEntry.getMessage();
@@ -628,7 +629,7 @@ public class SvnHistoryProvider
     }
 
     @Override
-    protected SvnFileRevision createRevision(final SVNLogEntry logEntry, final String copyPath, SVNLogEntryPath entryPath)
+    protected SvnFileRevision createRevision(final LogEntry logEntry, final String copyPath, LogEntryPath entryPath)
       throws SVNException {
       final SVNURL url = entryPath == null ? myRepositoryRoot.appendPath(myLastPathCorrector.getBefore(), false) :
                          myRepositoryRoot.appendPath(entryPath.getPath(), true);

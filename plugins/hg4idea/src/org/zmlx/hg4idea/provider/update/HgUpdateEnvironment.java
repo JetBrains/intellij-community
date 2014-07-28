@@ -99,7 +99,7 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
     }
 
     public String getHelpTopic() {
-      return null;
+      return "reference.VersionControl.Mercurial.UpdateProject";
     }
 
     public JComponent createComponent() {

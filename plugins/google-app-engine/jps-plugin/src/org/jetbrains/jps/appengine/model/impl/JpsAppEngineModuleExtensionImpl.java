@@ -71,6 +71,11 @@ public class JpsAppEngineModuleExtensionImpl extends JpsElementBase<JpsAppEngine
   }
 
   @Override
+  public String getOrmLibPath() {
+    return FileUtil.toSystemDependentName(JpsArtifactPathUtil.appendToPath(getSdkHomePath(), "/lib/user/orm"));
+  }
+
+  @Override
   public String getSdkHomePath() {
     return myProperties.mySdkHomePath;
   }

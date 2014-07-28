@@ -2,12 +2,11 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNEvent;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicReference;
@@ -21,12 +20,12 @@ public class BaseUpdateCommandListener extends LineCommandAdapter {
   private final UpdateOutputLineConverter converter;
 
   @Nullable
-  private final ISVNEventHandler handler;
+  private final ProgressTracker handler;
 
   @NotNull
   private final AtomicReference<SVNException> exception;
 
-  public BaseUpdateCommandListener(@NotNull File base, @Nullable ISVNEventHandler handler) {
+  public BaseUpdateCommandListener(@NotNull File base, @Nullable ProgressTracker handler) {
     this.handler = handler;
     this.converter = new UpdateOutputLineConverter(base);
     exception = new AtomicReference<SVNException>();
@@ -35,7 +34,7 @@ public class BaseUpdateCommandListener extends LineCommandAdapter {
   @Override
   public void onLineAvailable(String line, Key outputType) {
     if (ProcessOutputTypes.STDOUT.equals(outputType)) {
-      final SVNEvent event = converter.convert(line);
+      final ProgressEvent event = converter.convert(line);
       if (event != null) {
         beforeHandler(event);
         try {
@@ -49,28 +48,20 @@ public class BaseUpdateCommandListener extends LineCommandAdapter {
     }
   }
 
-  private void callHandler(SVNEvent event) throws SVNException {
+  private void callHandler(ProgressEvent event) throws SVNException {
     if (handler != null) {
-      handler.handleEvent(event, 0.5);
+      handler.consume(event);
     }
   }
 
-  public void throwIfException() throws SVNException {
+  public void throwWrappedIfException() throws SvnBindException {
     SVNException e = exception.get();
 
     if (e != null) {
-      throw e;
+      throw new SvnBindException(e);
     }
   }
 
-  public void throwWrappedIfException() throws VcsException {
-    SVNException e = exception.get();
-
-    if (e != null) {
-      throw new VcsException(e);
-    }
-  }
-
-  protected void beforeHandler(@NotNull SVNEvent event) {
+  protected void beforeHandler(@NotNull ProgressEvent event) {
   }
 }

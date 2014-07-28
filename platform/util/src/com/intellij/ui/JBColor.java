@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.color.ColorSpace;
@@ -32,6 +34,7 @@ public class JBColor extends Color {
   private static volatile boolean DARK = UIUtil.isUnderDarcula();
 
   private final Color darkColor;
+  private final NotNullProducer<Color> func;
 
   public JBColor(int rgb, int darkRGB) {
     this(new Color(rgb), new Color(darkRGB));
@@ -42,6 +45,13 @@ public class JBColor extends Color {
     darkColor = dark;
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     DARK = UIUtil.isUnderDarcula(); //Double check. Sometimes DARK != isDarcula() after dialogs appear on splash screen
+    func = null;
+  }
+
+  public JBColor(NotNullProducer<Color> function) {
+    super(0);
+    darkColor = null;
+    func = function;
   }
 
   public static void setDark(boolean dark) {
@@ -52,99 +62,142 @@ public class JBColor extends Color {
     return darkColor;
   }
 
+  Color getColor() {
+    if (func != null) {
+      return func.produce();
+    } else {
+      return DARK ? getDarkVariant() : this;
+    }
+  }
+
   @Override
   public int getRed() {
-    return DARK ? getDarkVariant().getRed() : super.getRed();
+    final Color c = getColor();
+    return c == this ? super.getRed() : c.getRed();
   }
 
   @Override
   public int getGreen() {
-    return DARK ? getDarkVariant().getGreen() : super.getGreen();
+    final Color c = getColor();
+    return c == this ? super.getGreen() : c.getGreen();
   }
 
   @Override
   public int getBlue() {
-    return DARK ? getDarkVariant().getBlue() : super.getBlue();
+    final Color c = getColor();
+    return c == this ? super.getBlue() : c.getBlue();
   }
 
   @Override
   public int getAlpha() {
-    return DARK ? getDarkVariant().getAlpha() : super.getAlpha();
+    final Color c = getColor();
+    return c == this ? super.getAlpha() : c.getAlpha();
   }
 
   @Override
   public int getRGB() {
-    return DARK ? getDarkVariant().getRGB() : super.getRGB();
+    final Color c = getColor();
+    return c == this ? super.getRGB() : c.getRGB();
   }
 
   @Override
   public Color brighter() {
+    if (func != null) {
+      return new JBColor(new NotNullProducer<Color>() {
+        @NotNull
+        @Override
+        public Color produce() {
+          return func.produce().brighter();
+        }
+      });
+    }
     return new JBColor(super.brighter(), getDarkVariant().brighter());
   }
 
   @Override
   public Color darker() {
+    if (func != null) {
+      return new JBColor(new NotNullProducer<Color>() {
+        @NotNull
+        @Override
+        public Color produce() {
+          return func.produce().darker();
+        }
+      });
+    }
     return new JBColor(super.darker(), getDarkVariant().darker());
   }
 
   @Override
   public int hashCode() {
-    return DARK ? getDarkVariant().hashCode() : super.hashCode();
+    final Color c = getColor();
+    return c == this ? super.hashCode() : c.hashCode();
   }
 
   @Override
   public boolean equals(Object obj) {
-    return DARK ? getDarkVariant().equals(obj) : super.equals(obj);
+    final Color c = getColor();
+    return c == this ? super.equals(obj) : c.equals(obj);
   }
 
   @Override
   public String toString() {
-    return DARK ? getDarkVariant().toString() : super.toString();
+    final Color c = getColor();
+    return c == this ? super.toString() : c.toString();
   }
 
   @Override
   public float[] getRGBComponents(float[] compArray) {
-    return DARK ? getDarkVariant().getRGBComponents(compArray) : super.getRGBComponents(compArray);
+    final Color c = getColor();
+    return c == this ? super.getRGBComponents(compArray) : c.getRGBComponents(compArray);
   }
 
   @Override
   public float[] getRGBColorComponents(float[] compArray) {
-    return DARK ? getDarkVariant().getRGBColorComponents(compArray) : super.getRGBComponents(compArray);
+    final Color c = getColor();
+    return c == this ? super.getRGBComponents(compArray) : c.getRGBColorComponents(compArray);
   }
 
   @Override
   public float[] getComponents(float[] compArray) {
-    return DARK ? getDarkVariant().getComponents(compArray) : super.getComponents(compArray);
+    final Color c = getColor();
+    return c == this ? super.getComponents(compArray) : c.getComponents(compArray);
   }
 
   @Override
   public float[] getColorComponents(float[] compArray) {
-    return DARK ? getDarkVariant().getColorComponents(compArray) : super.getColorComponents(compArray);
+    final Color c = getColor();
+    return c == this ? super.getColorComponents(compArray) : c.getColorComponents(compArray);
   }
 
   @Override
   public float[] getComponents(ColorSpace cspace, float[] compArray) {
-    return DARK ? getDarkVariant().getComponents(cspace, compArray) : super.getComponents(cspace, compArray);
+    final Color c = getColor();
+    return c == this ? super.getComponents(cspace, compArray) : c.getComponents(cspace, compArray);
   }
 
   @Override
   public float[] getColorComponents(ColorSpace cspace, float[] compArray) {
-    return DARK ? getDarkVariant().getColorComponents(cspace, compArray) : super.getColorComponents(cspace, compArray);
+    final Color c = getColor();
+    return c == this ? super.getColorComponents(cspace, compArray) : c.getColorComponents(cspace, compArray);
   }
 
   @Override
   public ColorSpace getColorSpace() {
-    return DARK ? getDarkVariant().getColorSpace() : super.getColorSpace();
+    final Color c = getColor();
+    return c == this ? super.getColorSpace() : c.getColorSpace();
   }
 
   @Override
   public synchronized PaintContext createContext(ColorModel cm, Rectangle r, Rectangle2D r2d, AffineTransform xform, RenderingHints hints) {
-    return DARK ? getDarkVariant().createContext(cm, r, r2d, xform, hints) : super.createContext(cm, r, r2d, xform, hints);
+    final Color c = getColor();
+    return c == this ? super.createContext(cm, r, r2d, xform, hints) : c.createContext(cm, r, r2d, xform, hints);
   }
 
   @Override
   public int getTransparency() {
-    return DARK ? getDarkVariant().getTransparency() : super.getTransparency();
+    final Color c = getColor();
+    return c == this ? super.getTransparency() : c.getTransparency();
   }
 
   public static final JBColor red = new JBColor(Color.red, DarculaColors.RED);
@@ -196,7 +249,34 @@ public class JBColor extends Color {
   public static final Color cyan = new JBColor(Color.cyan, new Color(0, 137, 137));
   public static final Color CYAN = cyan;
 
-  public static Color foreground() {return UIUtil.getLabelForeground();}
+  public static Color foreground() {
+    return new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        return UIUtil.getLabelForeground();
+      }
+    });
+  }
 
-  public static Color background() {return UIUtil.getListBackground();}
+  public static Color background() {
+    return new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        return UIUtil.getListBackground();
+      }
+    });
+  }
+
+  public static Color border() {
+    return new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        //noinspection deprecation
+        return UIUtil.getBorderColor();
+      }
+    });
+  }
 }

@@ -219,7 +219,10 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       }
     }
     PsiMethod methodCopy = (PsiMethod)method.copy();
-    if (method.findSuperMethods(myTargetSuperClass).length == 0) {
+    Language language = myTargetSuperClass.getLanguage();
+    final PsiMethod superClassMethod = myTargetSuperClass.findMethodBySignature(methodCopy, false);
+    if (superClassMethod != null && superClassMethod.findDeepestSuperMethods().length == 0 ||
+        method.findSuperMethods(myTargetSuperClass).length == 0) {
       deleteOverrideAnnotationIfFound(methodCopy);
     }
     boolean isOriginalMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT) || method.hasModifierProperty(PsiModifier.DEFAULT);
@@ -238,7 +241,14 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
 
       myJavaDocPolicy.processCopiedJavaDoc(methodCopy.getDocComment(), method.getDocComment(), isOriginalMethodAbstract);
 
-      final PsiMember movedElement = anchor != null ? (PsiMember)myTargetSuperClass.addBefore(methodCopy, anchor) : (PsiMember)myTargetSuperClass.add(methodCopy);
+      final PsiMember movedElement;
+      if (superClassMethod != null && superClassMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        movedElement = (PsiMember)superClassMethod.replace(convertMethodToLanguage(methodCopy, language));
+      }
+      else {
+        movedElement =
+          anchor != null ? (PsiMember)myTargetSuperClass.addBefore(methodCopy, anchor) : (PsiMember)myTargetSuperClass.add(methodCopy);
+      }
       CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(method.getProject());
       if (styleSettings.INSERT_OVERRIDE_ANNOTATION) {
         if (PsiUtil.isLanguageLevel5OrHigher(mySourceClass) && !myIsTargetInterface || PsiUtil.isLanguageLevel6OrHigher(mySourceClass)) {
@@ -265,8 +275,6 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       RefactoringUtil.replaceMovedMemberTypeParameters(methodCopy, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
       fixReferencesToStatic(methodCopy);
 
-      Language language = myTargetSuperClass.getLanguage();
-      final PsiMethod superClassMethod = myTargetSuperClass.findMethodBySignature(methodCopy, false);
       if (superClassMethod != null && superClassMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
         superClassMethod.replace(convertMethodToLanguage(methodCopy, language));
       }

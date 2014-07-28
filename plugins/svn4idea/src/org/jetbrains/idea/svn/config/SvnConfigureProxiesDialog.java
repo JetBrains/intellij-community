@@ -25,7 +25,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.ui.components.JBTabbedPane;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
@@ -43,7 +42,7 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
     super(project, true);
     valid = true;
     myProject = project;
-    
+
     setTitle(SvnBundle.message("dialog.title.edit.http.proxies.settings"));
 
     final Ref<SvnServerFileManager> systemManager = new Ref<SvnServerFileManager>();
@@ -56,7 +55,7 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
     myUserTab = new SvnConfigureProxiesComponent(userManager.get(), myValidator, this);
 
     init();
-    
+
     mySystemTab.reset();
     myUserTab.reset();
     myValidator.run();
@@ -139,9 +138,6 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
         }
         try {
           SvnVcs.getInstance(myProject).getInfo(SvnUtil.createUrl(url), SVNRevision.HEAD);
-        }
-        catch (SVNException exc) {
-          excRef.set(exc);
         }
         catch (SvnBindException e) {
           excRef.set(e);

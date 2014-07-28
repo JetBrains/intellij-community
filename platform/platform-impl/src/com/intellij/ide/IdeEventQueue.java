@@ -44,6 +44,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
+import com.sun.java.swing.plaf.windows.WindowsLookAndFeel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +54,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
@@ -731,9 +733,29 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
+  private static Field stickyAltField;
   //IDEA-17359
   private static void fixStickyAlt(AWTEvent e) {
-    if (SystemInfo.isWindowsXP && e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
+    if (Registry.is("actionSystem.win.suppressAlt.new")) {
+      if (SystemInfo.isWindows
+          && UIManager.getLookAndFeel() instanceof WindowsLookAndFeel
+          && e instanceof InputEvent
+          && (((InputEvent)e).getModifiers() & (InputEvent.ALT_MASK | InputEvent.ALT_DOWN_MASK)) != 0
+          && !(e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT)) {
+        try {
+          if (stickyAltField == null) {
+            stickyAltField = Class
+              .forName("com.sun.java.swing.plaf.windows.WindowsRootPaneUI$AltProcessor")
+              .getDeclaredField("menuCanceledOnPress");
+            stickyAltField.setAccessible(true);
+          }
+          stickyAltField.set(null, true);
+        }
+        catch (Exception exception) {
+          LOG.error(exception);
+        }
+      }
+    } else if (SystemInfo.isWindowsXP && e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
       ((KeyEvent)e).consume();
     }
   }
@@ -930,11 +952,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private static class WindowsAltSupressor implements EventDispatcher {
-
-    private boolean myPureAltWasPressed;
     private boolean myWaitingForAltRelease;
-    private boolean myWaiterScheduled;
-
     private Robot myRobot;
 
     @Override
@@ -943,12 +961,9 @@ public class IdeEventQueue extends EventQueue {
       if (e instanceof KeyEvent) {
         KeyEvent ke = (KeyEvent)e;
         final Component component = ke.getComponent();
-        final Window window = component == null ? null : SwingUtilities.windowForComponent(component);
         boolean pureAlt = ke.getKeyCode() == KeyEvent.VK_ALT && (ke.getModifiers() | InputEvent.ALT_MASK) == InputEvent.ALT_MASK;
         if (!pureAlt) {
-          myPureAltWasPressed = false;
           myWaitingForAltRelease = false;
-          myWaiterScheduled = false;
         }
         else {
           if (ApplicationManager.getApplication() == null ||
@@ -956,28 +971,25 @@ public class IdeEventQueue extends EventQueue {
               !SystemInfo.isWindows ||
               !Registry.is("actionSystem.win.suppressAlt") ||
               !(UISettings.getInstance().HIDE_TOOL_STRIPES || UISettings.getInstance().PRESENTATION_MODE)) {
-            return !dispatch;
+            return true;
           }
 
           if (ke.getID() == KeyEvent.KEY_PRESSED) {
-            myPureAltWasPressed = true;
             dispatch = !myWaitingForAltRelease;
           }
           else if (ke.getID() == KeyEvent.KEY_RELEASED) {
             if (myWaitingForAltRelease) {
-              myPureAltWasPressed = false;
               myWaitingForAltRelease = false;
-              myWaiterScheduled = false;
               dispatch = false;
             }
-            else {
-              myWaiterScheduled = true;
+            else if (component != null) {
               //noinspection SSBasedInspection
               SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
                   try {
-                    if (SystemInfo.isWindows || window == null || !window.isActive()) {
+                    final Window window = component instanceof Window ? (Window)component : SwingUtilities.windowForComponent(component);
+                    if (window == null || !window.isActive()) {
                       return;
                     }
                     myWaitingForAltRelease = true;

@@ -415,6 +415,17 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean delete(@NotNull File file) {
+    if (SystemInfo.isWindows) {
+      File tempFile = findSequentNonexistentFile(file.getParentFile(), file.getName(), "");
+      if (file.renameTo(tempFile)) {
+        file = tempFile;
+      }
+    }
+
+    return doDelete(file);
+  }
+
+  private static boolean doDelete(File file) {
     FileAttributes attributes = FileSystemUtil.getAttributes(file);
     if (attributes == null) return true;
 
@@ -422,7 +433,7 @@ public class FileUtil extends FileUtilRt {
       File[] files = file.listFiles();
       if (files != null) {
         for (File child : files) {
-          if (!delete(child)) return false;
+          if (!doDelete(child)) return false;
         }
       }
     }

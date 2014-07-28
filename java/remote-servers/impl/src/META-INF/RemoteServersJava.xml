@@ -1,7 +1,14 @@
 <idea-plugin>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.remoteServer.moduleBuilderContribution"
+                    interface="com.intellij.remoteServer.impl.module.CloudModuleBuilderContribution"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.remoteServer.configuration.deployment.JavaDeploymentSourceUtil"
                         serviceImplementation="com.intellij.remoteServer.impl.configuration.deployment.JavaDeploymentSourceUtilImpl"/>
     <remoteServer.deploymentSource.type implementation="com.intellij.remoteServer.impl.configuration.deployment.ArtifactDeploymentSourceType"/>
+    <moduleBuilder builderClass="com.intellij.remoteServer.impl.module.CloudModuleBuilder"/>
   </extensions>
 </idea-plugin>

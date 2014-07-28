@@ -132,6 +132,7 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
                                        final Set<PsiField> candidates,
                                        final Set<PsiField> usedFields,
                                        final boolean ignoreFieldsUsedInMultipleMethods) {
+    final Set<PsiField> ignored = new HashSet<PsiField>();
     aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
@@ -144,7 +145,7 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
 
         final PsiCodeBlock body = method.getBody();
         if (body != null) {
-          checkCodeBlock(body, candidates, usedFields, ignoreFieldsUsedInMultipleMethods);
+          checkCodeBlock(body, candidates, usedFields, ignoreFieldsUsedInMultipleMethods, ignored);
         }
       }
 
@@ -153,14 +154,14 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
         super.visitLambdaExpression(expression);
         final PsiElement body = expression.getBody();
         if (body != null) {
-          checkCodeBlock(body, candidates, usedFields, ignoreFieldsUsedInMultipleMethods);
+          checkCodeBlock(body, candidates, usedFields, ignoreFieldsUsedInMultipleMethods, ignored);
         }
       }
 
       @Override
       public void visitClassInitializer(PsiClassInitializer initializer) {
         super.visitClassInitializer(initializer);
-        checkCodeBlock(initializer.getBody(), candidates, usedFields, ignoreFieldsUsedInMultipleMethods);
+        checkCodeBlock(initializer.getBody(), candidates, usedFields, ignoreFieldsUsedInMultipleMethods, ignored);
       }
     });
   }
@@ -168,20 +169,28 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
   private static void checkCodeBlock(final PsiElement body,
                                      final Set<PsiField> candidates,
                                      Set<PsiField> usedFields,
-                                     boolean ignoreFieldsUsedInMultipleMethods) {
+                                     boolean ignoreFieldsUsedInMultipleMethods, 
+                                     Set<PsiField> ignored) {
     try {
+      final Ref<Collection<PsiVariable>> writtenVariables = new Ref<Collection<PsiVariable>>();
       final ControlFlow
         controlFlow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, AllVariablesControlFlowPolicy.getInstance());
       final List<PsiVariable> usedVars = ControlFlowUtil.getUsedVariables(controlFlow, 0, controlFlow.getSize());
       for (PsiVariable usedVariable : usedVars) {
         if (usedVariable instanceof PsiField) {
           final PsiField usedField = (PsiField)usedVariable;
-          if (!usedFields.add(usedField) && ignoreFieldsUsedInMultipleMethods) {
+          if (!getWrittenVariables(controlFlow, writtenVariables).contains(usedField)) {
+            ignored.add(usedField);
+          }
+
+          if (!usedFields.add(usedField) && (ignoreFieldsUsedInMultipleMethods || ignored.contains(usedField))) {
             candidates.remove(usedField); //used in more than one code block
           }
         }
       }
-      final Ref<Collection<PsiVariable>> writtenVariables = new Ref<Collection<PsiVariable>>();
+
+      if (candidates.isEmpty()) return;
+
       final List<PsiReferenceExpression> readBeforeWrites = ControlFlowUtil.getReadBeforeWrite(controlFlow);
       for (final PsiReferenceExpression readBeforeWrite : readBeforeWrites) {
         final PsiElement resolved = readBeforeWrite.resolve();

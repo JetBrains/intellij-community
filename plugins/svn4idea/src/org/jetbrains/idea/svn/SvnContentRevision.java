@@ -29,8 +29,8 @@ import com.intellij.openapi.vcs.impl.CurrentRevisionProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.status.Status;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -56,7 +56,7 @@ public class SvnContentRevision implements ContentRevision, MarkerVcsContentRevi
     myFile = file;
   }
 
-  public static SvnContentRevision createBaseRevision(@NotNull SvnVcs vcs, @NotNull final FilePath file, final SVNStatus status) {
+  public static SvnContentRevision createBaseRevision(@NotNull SvnVcs vcs, @NotNull final FilePath file, final Status status) {
     SVNRevision revision = status.getRevision().isValid() ? status.getRevision() : status.getCommittedRevision();
     return createBaseRevision(vcs, file, revision);
   }

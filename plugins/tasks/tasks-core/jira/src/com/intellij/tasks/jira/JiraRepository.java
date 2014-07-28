@@ -15,23 +15,31 @@ import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.impl.gson.GsonUtil;
 import com.intellij.tasks.jira.rest.JiraRestApi;
-import com.intellij.tasks.jira.soap.JiraSoapApi;
+import com.intellij.tasks.jira.soap.JiraLegacyApi;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.xmlrpc.CommonsXmlRpcTransport;
+import org.apache.xmlrpc.XmlRpcClient;
+import org.apache.xmlrpc.XmlRpcRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
+import java.net.URL;
+import java.util.Collections;
+import java.util.Hashtable;
 import java.util.List;
+import java.util.Vector;
 import java.util.regex.Pattern;
 
 /**
  * @author Dmitry Avdeev
  */
+@SuppressWarnings("UseOfObsoleteCollectionType")
 @Tag("JIRA")
 public class JiraRepository extends BaseRepositoryImpl {
 
@@ -51,6 +59,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   private String mySearchQuery = TaskBundle.message("jira.default.query");
 
   private JiraRemoteApi myApiVersion;
+  private String myJiraVersion;
 
   /**
    * Serialization constructor
@@ -69,6 +78,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   private JiraRepository(JiraRepository other) {
     super(other);
     mySearchQuery = other.mySearchQuery;
+    myJiraVersion = other.myJiraVersion;
     if (other.myApiVersion != null) {
       myApiVersion = other.myApiVersion.getType().createApi(this);
     }
@@ -77,8 +87,13 @@ public class JiraRepository extends BaseRepositoryImpl {
   @Override
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
-    if (o.getClass() != getClass()) return false;
-    return Comparing.equal(mySearchQuery, ((JiraRepository)o).mySearchQuery);
+    if (!(o instanceof JiraRepository)) return false;
+
+    JiraRepository repository = (JiraRepository)o;
+
+    if (!Comparing.equal(mySearchQuery, repository.getSearchQuery())) return false;
+    if (!Comparing.equal(myJiraVersion, repository.getJiraVersion())) return false;
+    return true;
   }
 
 
@@ -149,7 +164,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   public JiraRemoteApi discoverApiVersion() throws Exception {
     if (LEGACY_API_ONLY) {
       LOG.info("Intentionally using only legacy JIRA API");
-      return new JiraSoapApi(this);
+      return createLegacyApi();
     }
 
     String responseBody;
@@ -164,7 +179,7 @@ public class JiraRepository extends BaseRepositoryImpl {
       // not the way to check it safely.
       StatusLine status = method.getStatusLine();
       if (status != null && status.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-        return new JiraSoapApi(this);
+        return createLegacyApi();
       }
       else {
         throw e;
@@ -173,11 +188,29 @@ public class JiraRepository extends BaseRepositoryImpl {
     JsonObject object = GSON.fromJson(responseBody, JsonObject.class);
     // when JIRA 4.x support will be dropped 'versionNumber' array in response
     // may be used instead version string parsing
-    JiraRestApi restApi = JiraRestApi.fromJiraVersion(object.get("version").getAsString(), this);
+    myJiraVersion = object.get("version").getAsString();
+    JiraRestApi restApi = JiraRestApi.fromJiraVersion(myJiraVersion, this);
     if (restApi == null) {
       throw new Exception(TaskBundle.message("jira.failure.no.REST"));
     }
     return restApi;
+  }
+
+  private JiraLegacyApi createLegacyApi() {
+    try {
+      XmlRpcClient client = new XmlRpcClient(getUrl());
+      Vector<String> parameters = new Vector<String>(Collections.singletonList(""));
+      XmlRpcRequest request = new XmlRpcRequest("jira1.getServerInfo", parameters);
+      @SuppressWarnings("unchecked") Hashtable<String, Object> response =
+        (Hashtable<String, Object>)client.execute(request, new CommonsXmlRpcTransport(new URL(getUrl()), getHttpClient()));
+      if (response != null) {
+        myJiraVersion = (String)response.get("version");
+      }
+    }
+    catch (Exception e) {
+      LOG.error("Cannot find out JIRA version via XML-RPC", e);
+    }
+    return new JiraLegacyApi(this);
   }
 
   private void ensureApiVersionDiscovered() throws Exception {
@@ -275,7 +308,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   }
 
   private boolean isRestApiSupported() {
-    return myApiVersion != null && myApiVersion.getType() != JiraRemoteApi.ApiType.SOAP;
+    return myApiVersion != null && myApiVersion.getType() != JiraRemoteApi.ApiType.LEGACY;
   }
 
   public boolean isJqlSupported() {
@@ -320,6 +353,16 @@ public class JiraRepository extends BaseRepositoryImpl {
     if (type != null) {
       myApiVersion = type.createApi(this);
     }
+  }
+
+  @Nullable
+  public String getJiraVersion() {
+    return myJiraVersion;
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
+  public void setJiraVersion(@Nullable String jiraVersion) {
+    myJiraVersion = jiraVersion;
   }
 
   public String getRestUrl(String... parts) {

@@ -176,17 +176,6 @@ public class CompileDriver {
     }
   }
 
-  private static boolean containsFileIndexScopes(CompileScope scope) {
-    if (scope instanceof CompositeScope) {
-      for (CompileScope childScope : ((CompositeScope)scope).getScopes()) {
-        if (containsFileIndexScopes(childScope)) {
-          return true;
-        }
-      }
-    }
-    return scope instanceof FileIndexCompileScope;
-  }
-
   private void doRebuild(CompileStatusNotification callback, CompilerMessage message, final CompileScope compileScope) {
     if (validateCompilerConfiguration(compileScope)) {
       startup(compileScope, true, false, callback, message);

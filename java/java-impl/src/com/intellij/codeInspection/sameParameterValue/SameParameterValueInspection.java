@@ -76,7 +76,7 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-      LOG.assertTrue(method != null);
+      if (method == null) return;
       PsiParameter parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class, false);
       if (parameter == null) {
         final PsiParameter[] parameters = method.getParameterList().getParameters();

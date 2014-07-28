@@ -149,7 +149,7 @@ public class EPathUtil {
       return collapse2eclipsePathRelative2Module(file, module);
     } else { //should check all modules then
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      if (fileIndex.isIgnored(file) || fileIndex.isInLibraryClasses(file)) {
+      if (fileIndex.isExcluded(file) || fileIndex.isInLibraryClasses(file)) {
         for (Module aModule : ModuleManager.getInstance(project).getModules()) {
           final String path = collapse2eclipsePathRelative2Module(file, aModule);
           if (path != null) {

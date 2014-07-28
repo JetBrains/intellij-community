@@ -429,7 +429,7 @@ print a<caret>a
   }
 
   void testTraitField() {
-    doTest(6, '''
+    doTest(4, '''
 trait T {
   public int fi<caret>eld = 4
 
@@ -439,16 +439,16 @@ trait T {
   }
 }
 
-class C extends T {
-  def abc {
-    print field
+class C implements T {
+  def abc() {
+    print field         //unresolved
     print T__field
   }
 }
 
 
 new C().T__field
-new C().field
+new C().field             //unresolved
 
 ''')
   }

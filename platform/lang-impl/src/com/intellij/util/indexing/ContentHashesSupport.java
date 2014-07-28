@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.ContentHashesUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,25 +64,27 @@ class ContentHashesSupport {
   }
 
   static void flushContentHashes() {
-    if (ourHashesWithFileType.isDirty()) ourHashesWithFileType.force();
+    if (ourHashesWithFileType != null && ourHashesWithFileType.isDirty()) ourHashesWithFileType.force();
   }
 
 
-  static int calcContentHashIdWithFileType(@NotNull byte[] bytes, @NotNull FileType fileType) throws IOException {
-    return enumerateHash(calcContentHashWithFileType(bytes, fileType));
+  static int calcContentHashIdWithFileType(@NotNull byte[] bytes, @Nullable Charset charset, @NotNull FileType fileType) throws IOException {
+    return enumerateHash(calcContentHashWithFileType(bytes, charset, fileType));
   }
 
   static int enumerateHash(@NotNull byte[] digest) throws IOException {
     return ourHashesWithFileType.enumerate(digest);
   }
 
-  static byte[] calcContentHashWithFileType(@NotNull byte[] bytes, @NotNull FileType fileType) throws IOException {
+  static byte[] calcContentHashWithFileType(@NotNull byte[] bytes, @Nullable Charset charset, @NotNull FileType fileType) throws IOException {
     MessageDigest messageDigest = ContentHashesUtil.HASHER_CACHE.getValue();
 
     Charset defaultCharset = Charset.defaultCharset();
     messageDigest.update(fileType.getName().getBytes(defaultCharset));
     messageDigest.update((byte)0);
     messageDigest.update(String.valueOf(bytes.length).getBytes(defaultCharset));
+    messageDigest.update((byte)0);
+    messageDigest.update((charset != null ? charset.displayName():"null_charset").getBytes(defaultCharset));
     messageDigest.update((byte)0);
 
     messageDigest.update(bytes, 0, bytes.length);

@@ -282,11 +282,9 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     }
   }
 
-  boolean addCaret(CaretImpl caretToAdd) {
+  boolean addCaret(@NotNull CaretImpl caretToAdd) {
     for (CaretImpl caret : myCarets) {
-      VisualPosition newVisualPosition = caretToAdd.getVisualPosition();
-      int newOffset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(newVisualPosition));
-      if (caret.getVisualPosition().equals(newVisualPosition) || newOffset >= caret.getSelectionStart() && newOffset <= caret.getSelectionEnd()) {
+      if (caretsOverlap(caret, caretToAdd)) {
         return false;
       }
     }
@@ -384,8 +382,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         it.next();
       }
       CaretImpl currCaret = it.next();
-      if (prevCaret != null && (currCaret.getVisualPosition().equals(prevCaret.getVisualPosition())
-                                || selectionsIntersect(currCaret, prevCaret))) {
+      if (prevCaret != null && caretsOverlap(currCaret, prevCaret)) {
         int newSelectionStart = Math.min(currCaret.getSelectionStart(), prevCaret.getSelectionStart());
         int newSelectionEnd = Math.max(currCaret.getSelectionEnd(), prevCaret.getSelectionEnd());
         CaretImpl toRetain, toRemove;
@@ -410,7 +407,10 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     }
   }
 
-  private static boolean selectionsIntersect(CaretImpl firstCaret, CaretImpl secondCaret) {
+  private static boolean caretsOverlap(@NotNull CaretImpl firstCaret, @NotNull CaretImpl secondCaret) {
+    if (firstCaret.getVisualPosition().equals(secondCaret.getVisualPosition())) {
+      return true;
+    }
     int firstStart = firstCaret.getSelectionStart();
     int secondStart = secondCaret.getSelectionStart();
     int firstEnd = firstCaret.getSelectionEnd();

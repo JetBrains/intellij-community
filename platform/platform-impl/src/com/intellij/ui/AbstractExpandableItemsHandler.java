@@ -54,6 +54,16 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     myTipComponent = new TipComponent();
 
+    myTipComponent.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseExited(MouseEvent e) {
+        // don't hide the hint if mouse exited to myComponent
+        if (myComponent.getMousePosition() == null) {
+          hideHint();
+        }
+      }
+    });
+
     myComponent.addMouseListener(
       new MouseListener() {
         @Override
@@ -63,7 +73,10 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
         @Override
         public void mouseExited(MouseEvent e) {
-          hideHint();
+          // don't hide the hint if mouse exited to it
+          if (myTipComponent.getMousePosition() == null) {
+            hideHint();
+          }
         }
 
         @Override
@@ -319,7 +332,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     g.setClip(null);
     doFillBackground(height, width, g);
     g.translate(-(visibleRect.x + visibleRect.width - cellBounds.x), 0);
-    doPaintTooltipImage(renderer, cellBounds, height, g, key);
+    doPaintTooltipImage(renderer, cellBounds, g, key);
 
     if (isPaintBorder()) {
       g.translate(visibleRect.x + visibleRect.width - cellBounds.x, 0);
@@ -354,8 +367,8 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     g.fillRect(0, 0, width, height);
   }
 
-  protected void doPaintTooltipImage(Component rComponent, Rectangle cellBounds, int height, Graphics2D g, KeyType key) {
-    myRendererPane.paintComponent(g, rComponent, myComponent, 0, 0, cellBounds.width, height, true);
+  protected void doPaintTooltipImage(Component rComponent, Rectangle cellBounds, Graphics2D g, KeyType key) {
+    myRendererPane.paintComponent(g, rComponent, myComponent, 0, 0, cellBounds.width, cellBounds.height, true);
   }
 
   protected Rectangle getVisibleRect(KeyType key) {

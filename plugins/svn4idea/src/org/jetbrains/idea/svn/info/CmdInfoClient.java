@@ -20,17 +20,16 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.*;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
-import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.xml.sax.SAXException;
@@ -41,7 +40,6 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -55,48 +53,7 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
 
   private static final Logger LOG = Logger.getInstance(CmdInfoClient.class);
 
-  @Override
-  public void doInfo(File path, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException {
-    doInfo(path, SVNRevision.UNDEFINED, revision, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, null, handler);
-  }
-
-  @Override
-  public void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler)
-    throws SVNException {
-    doInfo(path, pegRevision, revision, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, null, handler);
-  }
-
-  @Override
-  public void doInfo(File path,
-                     SVNRevision pegRevision,
-                     SVNRevision revision,
-                     SVNDepth depth,
-                     Collection changeLists,
-                     final ISVNInfoHandler handler) throws SVNException {
-    File base = path.isDirectory() ? path : path.getParentFile();
-    base = CommandUtil.correctUpToExistingParent(base);
-    if (base == null) {
-      // very unrealistic
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not find existing parent file"));
-    }
-    issueCommand(path, pegRevision, revision, depth, changeLists, handler, base);
-  }
-
-  private void issueCommand(File path, SVNRevision pegRevision,
-                            SVNRevision revision,
-                            SVNDepth depth,
-                            Collection changeLists,
-                            final ISVNInfoHandler handler, File base) throws SVNException {
-    List<String> parameters = new ArrayList<String>();
-
-    fillParameters(path.getAbsolutePath(), pegRevision, revision, depth, parameters);
-    // TODO: Fix this check - update corresponding parameters in InfoClient
-    CommandUtil.putChangeLists(parameters, changeLists);
-
-    parseResult(handler, base, execute(parameters, path));
-  }
-
-  private String execute(@NotNull List<String> parameters, @NotNull File path) throws SVNException {
+  private String execute(@NotNull List<String> parameters, @NotNull File path) throws SvnBindException {
     // workaround: separately capture command output - used in exception handling logic to overcome svn 1.8 issue (see below)
     final ProcessOutput output = new ProcessOutput();
     LineCommandListener listener = new LineCommandAdapter() {
@@ -113,51 +70,46 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
 
       return command.getOutput();
     }
-    catch (VcsException e) {
-      final String text = e.getMessage();
-      final boolean notEmpty = !StringUtil.isEmptyOrSpaces(text);
-      if (notEmpty && text.contains("W155010")) {
+    catch (SvnBindException e) {
+      final String text = StringUtil.notNullize(e.getMessage());
+      if (text.contains("W155010")) {
         // if "svn info" is executed for several files at once, then this warning could be printed only for some files, but info for other
         // files should be parsed from output
         return output.getStdout();
       }
       // not a working copy exception
       // "E155007: '' is not a working copy"
-      if (notEmpty && text.contains("is not a working copy")) {
-        if (StringUtil.isNotEmpty(output.getStdout())) {
-          // TODO: Seems not reproducible in 1.8.4
-          // workaround: as in subversion 1.8 "svn info" on a working copy root outputs such error for parent folder,
-          // if there are files with conflicts.
-          // but the requested info is still in the output except root closing tag
-          return output.getStdout() + "</info>";
-        } else {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, e), e);
-        }
-      // svn: E200009: Could not display info for all targets because some targets don't exist
-      } else if (notEmpty && text.contains("some targets don't exist")) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, e), e);
-      } else if (notEmpty && text.contains(String.valueOf(SVNErrorCode.WC_UPGRADE_REQUIRED.getCode()))) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_UPGRADE_REQUIRED, e), e);
-      } else if (notEmpty &&
-                 (text.contains("upgrade your Subversion client") ||
-                  text.contains(String.valueOf(SVNErrorCode.WC_UNSUPPORTED_FORMAT.getCode())))) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, e), e);
+      if (text.contains("is not a working copy") && StringUtil.isNotEmpty(output.getStdout())) {
+        // TODO: Seems not reproducible in 1.8.4
+        // workaround: as in subversion 1.8 "svn info" on a working copy root outputs such error for parent folder,
+        // if there are files with conflicts.
+        // but the requested info is still in the output except root closing tag
+        return output.getStdout() + "</info>";
       }
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
+      throw e;
     }
   }
 
-  private static void parseResult(@NotNull final ISVNInfoHandler handler, @Nullable File base, @Nullable String result) throws SVNException {
+  @Nullable
+  private static Info parseResult(@Nullable File base, @Nullable String result) throws SvnBindException {
+    CollectInfoHandler handler = new CollectInfoHandler();
+
+    parseResult(handler, base, result);
+
+    return handler.getInfo();
+  }
+
+  private static void parseResult(@NotNull final InfoConsumer handler, @Nullable File base, @Nullable String result)
+    throws SvnBindException {
     if (StringUtil.isEmptyOrSpaces(result)) {
       return;
     }
 
-    final SvnInfoHandler[] infoHandler = new SvnInfoHandler[1];
-    infoHandler[0] = new SvnInfoHandler(base, new Consumer<SVNInfo>() {
+    final SvnInfoHandler infoHandler = new SvnInfoHandler(base, new Consumer<Info>() {
       @Override
-      public void consume(SVNInfo info) {
+      public void consume(Info info) {
         try {
-          handler.handleInfo(info);
+          handler.consume(info);
         }
         catch (SVNException e) {
           throw new SvnExceptionWrapper(e);
@@ -165,87 +117,68 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
       }
     });
 
+    parseResult(result, infoHandler);
+  }
+
+  private static void parseResult(@NotNull String result, @NotNull SvnInfoHandler handler) throws SvnBindException {
     try {
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
 
-      parser.parse(new ByteArrayInputStream(result.trim().getBytes(CharsetToolkit.UTF8_CHARSET)), infoHandler[0]);
+      parser.parse(new ByteArrayInputStream(result.trim().getBytes(CharsetToolkit.UTF8_CHARSET)), handler);
     }
     catch (SvnExceptionWrapper e) {
       LOG.info("info output " + result);
-      throw (SVNException) e.getCause();
+      throw new SvnBindException(e.getCause());
     } catch (IOException e) {
       LOG.info("info output " + result);
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
+      throw new SvnBindException(e);
     }
     catch (ParserConfigurationException e) {
       LOG.info("info output " + result);
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
+      throw new SvnBindException(e);
     }
     catch (SAXException e) {
       LOG.info("info output " + result);
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
+      throw new SvnBindException(e);
     }
   }
 
-  private static void fillParameters(String path, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, List<String> parameters) {
+  @NotNull
+  private static List<String> buildParameters(@NotNull String path,
+                                              @Nullable SVNRevision pegRevision,
+                                              @Nullable SVNRevision revision,
+                                              @Nullable Depth depth) {
+    List<String> parameters = ContainerUtil.newArrayList();
+
     CommandUtil.put(parameters, depth);
     CommandUtil.put(parameters, revision);
     CommandUtil.put(parameters, path, pegRevision);
     parameters.add("--xml");
+
+    return parameters;
   }
 
   @Override
-  public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler)
-    throws SVNException {
-    doInfo(url, pegRevision, revision, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, handler);
-  }
-
-  @Override
-  public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, ISVNInfoHandler handler)
-    throws SVNException {
-    String path = url.toDecodedString();
-    List<String> parameters = new ArrayList<String>();
-
-    fillParameters(path, pegRevision, revision, depth, parameters);
-    CommandExecutor command;
-    try {
-      command = execute(myVcs, SvnTarget.fromURL(url), SvnCommandName.info, parameters, null);
-    }
-    catch (SvnBindException e) {
-      SVNErrorCode code = e.contains(SVNErrorCode.RA_ILLEGAL_URL) ? SVNErrorCode.RA_ILLEGAL_URL : SVNErrorCode.IO_ERROR;
-
-      throw new SVNException(SVNErrorMessage.create(code, e), e);
+  public Info doInfo(File path, SVNRevision revision) throws SvnBindException {
+    File base = path.isDirectory() ? path : path.getParentFile();
+    base = CommandUtil.correctUpToExistingParent(base);
+    if (base == null) {
+      // very unrealistic
+      throw new SvnBindException("Can not find existing parent file");
     }
 
-    parseResult(handler, null, command.getOutput());
+    return parseResult(base, execute(buildParameters(path.getAbsolutePath(), SVNRevision.UNDEFINED, revision, Depth.EMPTY), path));
   }
 
   @Override
-  public SVNInfo doInfo(File path, SVNRevision revision) throws SVNException {
-    final SVNInfo[] infoArr = new SVNInfo[1];
-    doInfo(path, SVNRevision.UNDEFINED, revision, SVNDepth.EMPTY, null, new ISVNInfoHandler() {
-      @Override
-      public void handleInfo(SVNInfo info) throws SVNException {
-        infoArr[0] = info;
-      }
-    });
-    return infoArr[0];
+  public Info doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SvnBindException {
+    CommandExecutor command = execute(myVcs, SvnTarget.fromURL(url), SvnCommandName.info, buildParameters(url.toDecodedString(), pegRevision, revision, Depth.EMPTY), null);
+
+    return parseResult(null, command.getOutput());
   }
 
   @Override
-  public SVNInfo doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
-    final SVNInfo[] infoArr = new SVNInfo[1];
-    doInfo(url, pegRevision, revision, SVNDepth.EMPTY, new ISVNInfoHandler() {
-      @Override
-      public void handleInfo(SVNInfo info) throws SVNException {
-        infoArr[0] = info;
-      }
-    });
-    return infoArr[0];
-  }
-
-  @Override
-  public void doInfo(@NotNull Collection<File> paths, @Nullable ISVNInfoHandler handler) throws SVNException {
+  public void doInfo(@NotNull Collection<File> paths, @Nullable InfoConsumer handler) throws SvnBindException {
     File base = ContainerUtil.getFirstItem(paths);
 
     if (base != null) {
@@ -263,6 +196,21 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
       if (handler != null) {
         parseResult(handler, base, result);
       }
+    }
+  }
+
+  private static class CollectInfoHandler implements InfoConsumer {
+
+    @Nullable private Info myInfo;
+
+    @Override
+    public void consume(Info info) throws SVNException {
+      myInfo = info;
+    }
+
+    @Nullable
+    public Info getInfo() {
+      return myInfo;
     }
   }
 }

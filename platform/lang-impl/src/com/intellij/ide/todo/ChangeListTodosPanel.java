@@ -65,7 +65,12 @@ public abstract class ChangeListTodosPanel extends TodoPanel{
 
     @Override
     public void changeListRenamed(final ChangeList list, final String oldName) {
-      setDisplayName(IdeBundle.message("changelist.todo.title", list.getName()));
+      AppUIUtil.invokeOnEdt(new Runnable() {
+        @Override
+        public void run() {
+          setDisplayName(IdeBundle.message("changelist.todo.title", list.getName()));
+        }
+      });
     }
 
     @Override

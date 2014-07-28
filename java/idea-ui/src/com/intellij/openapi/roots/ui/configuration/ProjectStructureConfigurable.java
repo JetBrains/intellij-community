@@ -43,7 +43,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.ui.Gray;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.navigation.BackAction;
@@ -179,11 +178,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     mySplitter.setSplitterProportionKey("ProjectStructure.TopLevelElements");
     mySplitter.setHonorComponentsMinimumSize(true);
     if (Registry.is("ide.new.project.settings")) {
-      mySplitter.setDividerWidth(1);
-      mySplitter.setShowDividerIcon(false);
-      mySplitter.getDivider().setBackground(Gray._153.withAlpha(128));
-      mySplitter.setShowDividerControls(false);
-      mySplitter.setOrientation(mySplitter.getOrientation());
+      mySplitter.setOnePixelMode();
     }
 
     initSidePanel();
@@ -203,7 +198,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     toolbar.setTargetComponent(myComponent);
     myToolbarComponent = toolbar.getComponent();
     if (Registry.is("ide.new.project.settings")) {
-      left.setBackground(new Color(0xD2D6DD));
+      left.setBackground(UIUtil.getSidePanelColor());
     } else {
       left.add(myToolbarComponent, BorderLayout.NORTH);
     }
@@ -214,7 +209,9 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
     myComponent.add(mySplitter, BorderLayout.CENTER);
     myErrorsComponent = new ConfigurationErrorsComponent(myProject);
-    myComponent.add(myErrorsComponent, BorderLayout.SOUTH);
+    if (!Registry.is("ide.new.project.settings")) {
+      myComponent.add(myErrorsComponent, BorderLayout.SOUTH);
+    }
 
     myUiInitialized = true;
 
@@ -252,6 +249,11 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
       for (Configurable configurable : adder.getExtraPlatformConfigurables(myProject, myContext)) {
         addConfigurable(configurable, true);
       }
+    }
+
+    if (Registry.is("ide.new.project.settings")) {
+      mySidePanel.addSeparator("--");
+      addErrorPane();
     }
   }
 
@@ -297,6 +299,15 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
   private void addProjectLibrariesConfig() {
     addConfigurable(myProjectLibrariesConfig, ConfigurableId.PROJECT_LIBRARIES);
+  }
+
+  private void addErrorPane() {
+    addConfigurable(new ErrorPaneConfigurable(myProject, myContext, new Runnable() {
+      @Override
+      public void run() {
+        mySidePanel.getList().repaint();
+      }
+    }), true);
   }
 
   private void addGlobalLibrariesConfig() {

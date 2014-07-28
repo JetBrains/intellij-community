@@ -68,10 +68,8 @@ import org.picocontainer.MutablePicoContainer;
 
 import java.lang.reflect.Modifier;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * @author yole
@@ -210,12 +208,12 @@ public class CoreApplicationEnvironment {
             }
 
             @Override
-            public Object get() throws InterruptedException, ExecutionException {
+            public Object get() {
               return null;
             }
 
             @Override
-            public Object get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+            public Object get(long timeout, @NotNull TimeUnit unit) {
               return null;
             }
           });

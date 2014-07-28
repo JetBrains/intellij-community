@@ -7,7 +7,10 @@
     <meta http-equiv='X-UA-Compatible' content='IE=emulateIE7' />
     <title>Coverage for {{cu.name|escape}}: {{nums.pc_covered_str}}%</title>
     <link rel='stylesheet' href='style.css' type='text/css'>
-    <script type='text/javascript' src='jquery-1.4.3.min.js'></script>
+    {% if extra_css %}
+        <link rel='stylesheet' href='{{ extra_css }}' type='text/css'>
+    {% endif %}
+    <script type='text/javascript' src='jquery.min.js'></script>
     <script type='text/javascript' src='jquery.hotkeys.js'></script>
     <script type='text/javascript' src='jquery.isonscreen.js'></script>
     <script type='text/javascript' src='coverage_html.js'></script>
@@ -24,12 +27,12 @@
         </h1>
         <img id='keyboard_icon' src='keybd_closed.png'>
         <h2 class='stats'>
-            {{nums.n_statements}} statements
-            <span class='{{c_run}} shortkey_r' onclick='coverage.toggle_lines(this, "run")'>{{nums.n_executed}} run</span>
-            <span class='{{c_mis}} shortkey_m' onclick='coverage.toggle_lines(this, "mis")'>{{nums.n_missing}} missing</span>
-            <span class='{{c_exc}} shortkey_x' onclick='coverage.toggle_lines(this, "exc")'>{{nums.n_excluded}} excluded</span>
+            {{nums.n_statements}} statements &nbsp;
+            <span class='{{c_run}} shortkey_r button_toggle_run'>{{nums.n_executed}} run</span>
+            <span class='{{c_mis}} shortkey_m button_toggle_mis'>{{nums.n_missing}} missing</span>
+            <span class='{{c_exc}} shortkey_x button_toggle_exc'>{{nums.n_excluded}} excluded</span>
             {% if arcs %}
-                <span class='{{c_par}} shortkey_p' onclick='coverage.toggle_lines(this, "par")'>{{n_par}} partial</span>
+                <span class='{{c_par}} shortkey_p button_toggle_par'>{{nums.n_partial_branches}} partial</span>
             {% endif %}
         </h2>
     </div>

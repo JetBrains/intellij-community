@@ -11,7 +11,7 @@
     <toolWindow id="Terminal" anchor="bottom" icon="TerminalIcons.OpenTerminal_13x13"
                 factoryClass="org.jetbrains.plugins.terminal.TerminalToolWindowFactory" secondary="false"/>
 
-    <projectConfigurable instance="org.jetbrains.plugins.terminal.TerminalOptionsConfigurable"/>
+    <projectConfigurable groupId="tools" displayName="Terminal" instance="org.jetbrains.plugins.terminal.TerminalOptionsConfigurable"/>
 
     <fileEditorProvider implementation="org.jetbrains.plugins.terminal.vfs.TerminalSessionEditorProvider"/>
   </extensions>

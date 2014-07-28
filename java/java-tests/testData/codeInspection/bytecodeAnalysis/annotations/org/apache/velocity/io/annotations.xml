@@ -1,0 +1,8 @@
+<root>
+  <item name="org.apache.velocity.io.UnicodeInputStream org.apache.velocity.io.UnicodeInputStream.UnicodeBOM match(org.apache.velocity.io.UnicodeInputStream.UnicodeBOM, org.apache.velocity.io.UnicodeInputStream.UnicodeBOM) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.io.VelocityWriter void write(char[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+</root>

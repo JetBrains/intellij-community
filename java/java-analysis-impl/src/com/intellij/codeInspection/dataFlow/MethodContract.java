@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -31,7 +32,7 @@ public class MethodContract {
   public final ValueConstraint[] arguments;
   public final ValueConstraint returnValue;
 
-  public MethodContract(ValueConstraint[] arguments, ValueConstraint returnValue) {
+  public MethodContract(@NotNull ValueConstraint[] arguments, @NotNull ValueConstraint returnValue) {
     this.arguments = arguments;
     this.returnValue = returnValue;
   }

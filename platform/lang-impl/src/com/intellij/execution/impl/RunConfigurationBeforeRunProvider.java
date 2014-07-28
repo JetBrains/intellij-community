@@ -49,6 +49,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -345,6 +347,14 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       mySettings = settings;
       init();
       myJBList.setSelectedValue(mySelectedSettings, true);
+      myJBList.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() ==2) {
+            doOKAction();
+          }
+        }
+      });
       FontMetrics fontMetrics = myJBList.getFontMetrics(myJBList.getFont());
       int maxWidth = fontMetrics.stringWidth("m") * 30;
       for (RunnerAndConfigurationSettings setting : settings) {

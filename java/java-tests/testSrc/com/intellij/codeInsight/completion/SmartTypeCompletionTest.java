@@ -1029,6 +1029,19 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     assertStringItems("Bar", "Goo");
   }
 
+  public void testAutoImportExpectedType() throws Throwable {
+    boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
+    CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
+    try {
+      configureByTestName();
+      performAction();
+      myFixture.assertPreferredCompletionItems(1, "List", "ArrayList", "AbstractList");
+    }
+    finally {
+      CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
+    }
+  }
+
   public void testNoWrongSubstitutorFromStats() throws Throwable {
     doTest();
     FileDocumentManager.getInstance().saveDocument(myFixture.getEditor().getDocument());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,19 @@
  */
 package com.intellij.openapi.options.newEditor;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.treeStructure.*;
@@ -287,7 +291,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
   class Renderer extends GroupedElementsRenderer.Tree {
 
-
+    private JLabel myProjectIcon;
     private JLabel myHandle;
 
     @Override
@@ -304,6 +308,9 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       myHandle.setOpaque(false);
       content.add(myHandle, BorderLayout.WEST);
       content.add(myComponent, BorderLayout.CENTER);
+      myProjectIcon = new JLabel(" ", SwingConstants.LEFT);
+      myProjectIcon.setOpaque(true);
+      content.add(myProjectIcon, BorderLayout.EAST);
       myRendererComponent.add(content, BorderLayout.CENTER);
     }
 
@@ -393,7 +400,22 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground() : fg);
 
       myTextLabel.setOpaque(selected);
+      if (Registry.is("ide.file.settings.order.new")) {
+        myTextLabel.setBorder(new EmptyBorder(1,2,1,0));
+      }
 
+      Project project = getConfigurableProject(base);
+      if (project != null && Registry.is("ide.file.settings.order.new")) {
+        myProjectIcon.setBackground(selected ? getSelectionBackground() : getBackground());
+        myProjectIcon.setIcon(selected ? AllIcons.General.ProjectConfigurableSelected : AllIcons.General.ProjectConfigurable);
+        myProjectIcon.setVisible(true);
+        tree.setToolTipText(OptionsBundle.message(project.isDefault()
+                                                  ? "configurable.default.project.tooltip"
+                                                  : "configurable.current.project.tooltip"));
+      } else {
+        myProjectIcon.setVisible(false);
+        tree.setToolTipText(null);
+      }
       return result;
     }
 
@@ -602,6 +624,12 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
     private MyTree() {
       getInputMap().clear();
+      setOpaque(true);
+    }
+
+    @Override
+    protected boolean paintNodes() {
+      return false;
     }
 
     @Override
@@ -834,5 +862,28 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       }
 
     }
+  }
+
+  Project getConfigurableProject(Configurable configurable) {
+    if (configurable instanceof ConfigurableWrapper) {
+      ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+      return wrapper.getExtensionPoint().getProject();
+    }
+    return getConfigurableProject(myConfigurable2Node.get(configurable));
+  }
+
+  private static Project getConfigurableProject(SimpleNode node) {
+    if (node == null) {
+      return null;
+    }
+    if (node instanceof EditorNode) {
+      EditorNode editor = (EditorNode)node;
+      Configurable configurable = editor.getConfigurable();
+      if (configurable instanceof ConfigurableWrapper) {
+        ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+        return wrapper.getExtensionPoint().getProject();
+      }
+    }
+    return getConfigurableProject(node.getParent());
   }
 }

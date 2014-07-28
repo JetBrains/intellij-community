@@ -1,0 +1,98 @@
+<root>
+  <item name="org.apache.velocity.runtime.ParserPoolImpl void initialize(org.apache.velocity.runtime.RuntimeServices) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.ParserPoolImpl void put(org.apache.velocity.runtime.parser.Parser) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.RuntimeInstance boolean addVelocimacro(java.lang.String, java.lang.String, java.lang.String[], java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.RuntimeInstance boolean addVelocimacro(java.lang.String, org.apache.velocity.runtime.parser.node.Node, java.lang.String[], java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.RuntimeInstance boolean evaluate(org.apache.velocity.context.Context, java.io.Writer, java.lang.String, java.io.Reader) 2">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.RuntimeInstance boolean invokeVelocimacro(java.lang.String, java.lang.String, java.lang.String[], org.apache.velocity.context.Context, java.io.Writer) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.RuntimeInstance boolean invokeVelocimacro(java.lang.String, java.lang.String, java.lang.String[], org.apache.velocity.context.Context, java.io.Writer) 3">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.RuntimeInstance boolean invokeVelocimacro(java.lang.String, java.lang.String, java.lang.String[], org.apache.velocity.context.Context, java.io.Writer) 4">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.RuntimeInstance boolean isVelocimacro(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.RuntimeInstance boolean render(org.apache.velocity.context.Context, java.io.Writer, java.lang.String, org.apache.velocity.runtime.parser.node.SimpleNode)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_,_,_-&gt;true;_,!null,_,_-&gt;true;_,_,!null,_-&gt;true;_,_,_,!null-&gt;true;_,_,_,null-&gt;true;_,_,null,_-&gt;true;_,null,_,_-&gt;true;null,_,_,_-&gt;true&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.RuntimeInstance org.apache.velocity.app.event.EventHandler initializeSpecificEventHandler(java.lang.String, java.lang.String, java.lang.Class)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;_,_,null-&gt;null;null,_,_-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.RuntimeInstance org.apache.velocity.runtime.parser.Parser createNewParser()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.RuntimeInstance void addDirective(org.apache.velocity.runtime.directive.Directive) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.RuntimeInstance void init(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.RuntimeInstance void init(java.util.Properties) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.RuntimeInstance void setProperties(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.RuntimeInstance void setProperties(java.util.Properties) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.VelocimacroFactory VelocimacroFactory(org.apache.velocity.runtime.RuntimeServices) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.VelocimacroFactory boolean addVelocimacro(java.lang.String, java.lang.String, java.lang.String[], java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.VelocimacroFactory boolean addVelocimacro(java.lang.String, java.lang.String, java.lang.String[], java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.VelocimacroFactory boolean addVelocimacro(java.lang.String, java.lang.String, java.lang.String[], java.lang.String) 2">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.VelocimacroFactory boolean addVelocimacro(java.lang.String, java.lang.String, java.lang.String[], java.lang.String) 3">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.VelocimacroFactory boolean addVelocimacro(java.lang.String, org.apache.velocity.runtime.parser.node.Node, java.lang.String[], java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.VelocimacroFactory boolean addVelocimacro(java.lang.String, org.apache.velocity.runtime.parser.node.Node, java.lang.String[], java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.VelocimacroFactory boolean addVelocimacro(java.lang.String, org.apache.velocity.runtime.parser.node.Node, java.lang.String[], java.lang.String) 2">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.VelocimacroFactory boolean addVelocimacro(java.lang.String, org.apache.velocity.runtime.parser.node.Node, java.lang.String[], java.lang.String) 3">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.VelocimacroManager boolean addVM(java.lang.String, org.apache.velocity.runtime.parser.node.Node, java.lang.String[], java.lang.String, boolean) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.VelocimacroManager boolean addVM(java.lang.String, org.apache.velocity.runtime.parser.node.Node, java.lang.String[], java.lang.String, boolean)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_,_,_,_-&gt;true;_,!null,_,_,_-&gt;true;_,_,!null,_,_-&gt;true;_,_,_,!null,_-&gt;true;_,_,_,_,false-&gt;true;_,_,_,_,true-&gt;true;_,_,_,null,_-&gt;true;_,_,null,_,_-&gt;true;null,_,_,_,_-&gt;true&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.VelocimacroManager.MacroEntry MacroEntry(java.lang.String, org.apache.velocity.runtime.parser.node.Node, java.lang.String[], java.lang.String, org.apache.velocity.runtime.RuntimeServices) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.VelocimacroManager.MacroEntry MacroEntry(java.lang.String, org.apache.velocity.runtime.parser.node.Node, java.lang.String[], java.lang.String, org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.runtime.VelocimacroManager.1) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+</root>

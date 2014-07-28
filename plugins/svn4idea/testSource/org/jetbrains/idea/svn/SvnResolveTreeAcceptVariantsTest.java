@@ -26,12 +26,12 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import junit.framework.Assert;
+import org.jetbrains.idea.svn.info.Info;
+import org.jetbrains.idea.svn.status.Status;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.jetbrains.idea.svn.treeConflict.SvnTreeConflictResolver;
 import org.junit.Before;
 import org.junit.Test;
-import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
 import java.io.IOException;
@@ -162,43 +162,43 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
   }
 
   private void checkStatusesAfterMineFullResolve(TreeConflictData.Data data, File conflictIoFile) {
-    SVNStatus conflStatus = SvnUtil.getStatus(myVcs, conflictIoFile);
+    Status conflStatus = SvnUtil.getStatus(myVcs, conflictIoFile);
     Assert.assertTrue(createTestFailedComment(data, conflictIoFile.getPath()) + " tree conflict resolved",
                       conflStatus.getTreeConflict() == null);
     Collection<TreeConflictData.FileData> leftFiles = data.getLeftFiles();
     for (TreeConflictData.FileData file : leftFiles) {
       File exFile = new File(myWorkingCopyDir.getPath(), file.myRelativePath);
-      final SVNStatus status = SvnUtil.getStatus(myVcs, exFile);
+      final Status status = SvnUtil.getStatus(myVcs, exFile);
       boolean theirsExists = new File(myTheirs.getPath(), file.myRelativePath).exists();
 
-      if (SVNStatusType.STATUS_UNVERSIONED.equals(file.myNodeStatus)) {
+      if (StatusType.STATUS_UNVERSIONED.equals(file.myNodeStatus)) {
         Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (file exists)", exFile.exists());
         if (theirsExists) {
           // should be deleted
-          Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (unversioned)", status == null || SVNStatusType.STATUS_DELETED.equals(status.getNodeStatus()));
+          Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (unversioned)", status == null || StatusType.STATUS_DELETED.equals(status.getNodeStatus()));
         } else {
           // unversioned
-          Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (unversioned)", status == null || SVNStatusType.STATUS_UNVERSIONED.equals(status.getNodeStatus()));
+          Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (unversioned)", status == null || StatusType.STATUS_UNVERSIONED.equals(status.getNodeStatus()));
         }
-      } else if (SVNStatusType.STATUS_DELETED.equals(file.myNodeStatus)) {
+      } else if (StatusType.STATUS_DELETED.equals(file.myNodeStatus)) {
         Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (deleted status)", status != null && file.myNodeStatus.equals(status.getNodeStatus()));
-      } else if (SVNStatusType.STATUS_ADDED.equals(file.myNodeStatus)) {
+      } else if (StatusType.STATUS_ADDED.equals(file.myNodeStatus)) {
         Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (file exists)", exFile.exists());
         if (theirsExists) {
-          Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (added status)", status != null && SVNStatusType.STATUS_REPLACED.equals(status.getNodeStatus()));
+          Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (added status)", status != null && StatusType.STATUS_REPLACED.equals(status.getNodeStatus()));
         } else {
-          Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (added status)", status != null && SVNStatusType.STATUS_ADDED.equals(status.getNodeStatus()));
+          Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (added status)", status != null && StatusType.STATUS_ADDED.equals(status.getNodeStatus()));
         }
       } else {
-        if (SVNStatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+        if (StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
           // in theirs -> deleted
           Assert.assertFalse(createTestFailedComment(data, file.myRelativePath) + " check deleted in theirs", theirsExists);
         } else {
           if (theirsExists) {
-            Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (normal node status)", status != null && SVNStatusType.STATUS_REPLACED.equals(status.getNodeStatus()));
+            Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (normal node status)", status != null && StatusType.STATUS_REPLACED.equals(status.getNodeStatus()));
           } else {
             Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (normal node status)", status != null &&
-              (SVNStatusType.STATUS_NORMAL.equals(status.getNodeStatus()) || SVNStatusType.STATUS_MODIFIED.equals(status.getNodeStatus())));
+              (StatusType.STATUS_NORMAL.equals(status.getNodeStatus()) || StatusType.STATUS_MODIFIED.equals(status.getNodeStatus())));
           }
         }
         Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (modified text status)", status != null && file.myContentsStatus.equals(status.getContentsStatus()));
@@ -271,8 +271,8 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
                           exists);
           }
           final File theirsFile = new File(file.getPath());
-          SVNInfo theirsInfo = myVcs.getInfo(theirsFile);
-          SVNInfo thisInfo = myVcs.getInfo(workingFile);
+          Info theirsInfo = myVcs.getInfo(theirsFile);
+          Info thisInfo = myVcs.getInfo(workingFile);
           if (theirsInfo != null) {
             Assert.assertEquals("Check failed for test: " + getTestName(data) + " and file: " + relative + " in: " + myWorkingCopyDir.getPath() +
                                 ", theirs: " + theirsInfo.getRevision().getNumber() + ", mine: " + thisInfo.getRevision().getNumber(),

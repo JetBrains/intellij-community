@@ -15,50 +15,32 @@
  */
 package org.jetbrains.idea.svn;
 
-import org.tmatesoft.svn.core.SVNDepth;
+import com.intellij.ui.ListCellRendererWrapper;
+import org.jetbrains.idea.svn.api.Depth;
 
 import javax.swing.*;
 
 public class DepthCombo extends JComboBox {
   public DepthCombo(final boolean forUpdate) {
     super(forUpdate ? ourForUpdate : ourForCheckout);
-    setSelectedIndex(forUpdate ? 0 : 3);
+    setRenderer(new DepthRenderer());
+    setSelectedItem(forUpdate ? Depth.UNKNOWN : Depth.INFINITY);
     setEditable(false);
     setToolTipText(SvnBundle.message("label.depth.description"));
   }
 
-  public SVNDepth getDepth() {
-    return ((SVNDepthWithName) super.getSelectedItem()).getDepth();
+  public Depth getDepth() {
+    return (Depth)super.getSelectedItem();
   }
 
-  private final static SVNDepthWithName [] ourForUpdate = {new SVNDepthWithName(SVNDepth.UNKNOWN, "working copy"),
-    new SVNDepthWithName(SVNDepth.EMPTY), new SVNDepthWithName(SVNDepth.FILES), new SVNDepthWithName(SVNDepth.IMMEDIATES),
-    new SVNDepthWithName(SVNDepth.INFINITY)};
-  private final static SVNDepthWithName [] ourForCheckout = {
-    new SVNDepthWithName(SVNDepth.EMPTY), new SVNDepthWithName(SVNDepth.FILES), new SVNDepthWithName(SVNDepth.IMMEDIATES),
-    new SVNDepthWithName(SVNDepth.INFINITY)};
+  private final static Depth[] ourForUpdate = {Depth.UNKNOWN, Depth.EMPTY, Depth.FILES, Depth.IMMEDIATES, Depth.INFINITY};
+  private final static Depth[] ourForCheckout = {Depth.EMPTY, Depth.FILES, Depth.IMMEDIATES, Depth.INFINITY};
 
-  private static class SVNDepthWithName {
-    private final SVNDepth myDepth;
-    private final String myName;
-
-    private SVNDepthWithName(SVNDepth depth) {
-      myDepth = depth;
-      myName = myDepth.toString();
-    }
-
-    private SVNDepthWithName(SVNDepth depth, String name) {
-      myDepth = depth;
-      myName = name;
-    }
+  private static class DepthRenderer extends ListCellRendererWrapper<Depth> {
 
     @Override
-    public String toString() {
-      return myName;
-    }
-
-    public SVNDepth getDepth() {
-      return myDepth;
+    public void customize(JList list, Depth value, int index, boolean selected, boolean hasFocus) {
+      setText(Depth.UNKNOWN.equals(value) ? "working copy" : value.getName());
     }
   }
 }

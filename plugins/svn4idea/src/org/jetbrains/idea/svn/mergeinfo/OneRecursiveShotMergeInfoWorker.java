@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.AreaMap;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.dialogs.MergeContext;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
@@ -61,7 +62,7 @@ public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
   }
   
   public void prepare() throws VcsException {
-    final SVNDepth depth = myMergeContext.getVcs().getSvnConfiguration().isCheckNestedForQuickMerge() ? SVNDepth.INFINITY : SVNDepth.EMPTY;
+    final Depth depth = Depth.allOrEmpty(myMergeContext.getVcs().getSvnConfiguration().isCheckNestedForQuickMerge());
     ISVNPropertyHandler handler = new ISVNPropertyHandler() {
       public void handleProperty(File path, SVNPropertyData property) throws SVNException {
         final String key = keyFromFile(path);

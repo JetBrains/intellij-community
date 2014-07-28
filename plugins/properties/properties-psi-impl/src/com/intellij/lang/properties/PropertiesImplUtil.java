@@ -28,13 +28,14 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Konstantin Bulenkov
@@ -64,7 +65,7 @@ public class PropertiesImplUtil extends PropertiesUtil {
       if (baseName.equals(getBaseName(psiFile))) {
         final PropertiesFile propertiesFile = getPropertiesFile(psiFile);
         if (propertiesFile != null) {
-          if (defaultPropertiesFile == null || defaultPropertiesFile.getName().compareTo(propertiesFile.getName()) < 0) {
+          if (defaultPropertiesFile == null || defaultPropertiesFile.getName().compareTo(propertiesFile.getName()) > 0) {
             defaultPropertiesFile = propertiesFile;
           }
         }
@@ -91,7 +92,7 @@ public class PropertiesImplUtil extends PropertiesUtil {
   }
 
   @NotNull
-  public static List<IProperty> findPropertiesByKey(final Project project, final String key) {
+  public static List<IProperty> findPropertiesByKey(@NotNull final Project project, @NotNull final String key) {
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     final ArrayList<IProperty> properties =
       new ArrayList<IProperty>(PropertyKeyIndex.getInstance().get(key, project, scope));

@@ -28,6 +28,7 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.Application;
@@ -246,7 +247,13 @@ public class BuildManager implements ApplicationComponent{
 
         for (VFileEvent event : events) {
           final VirtualFile eventFile = event.getFile();
-          if (eventFile == null || ProjectCoreUtil.isProjectOrWorkspaceFile(eventFile)) {
+          if (eventFile == null) {
+            continue;
+          }
+          if (!eventFile.isValid()) {
+            return true; // should be deleted
+          }
+          if (ProjectCoreUtil.isProjectOrWorkspaceFile(eventFile)) {
             continue;
           }
 
@@ -266,6 +273,12 @@ public class BuildManager implements ApplicationComponent{
         return false;
       }
 
+    });
+
+    conn.subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener.Adapter() {
+      public void batchChangeStarted(Project project) {
+        cancelAutoMakeTasks(project);
+      }
     });
 
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {

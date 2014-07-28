@@ -62,7 +62,6 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   private static final int GRADLE_DAEMON_TTL_MS = 10000;
 
-  public static final Pattern TEST_METHOD_NAME_PATTERN = Pattern.compile("(.*)\\[(\\d*: with Gradle-.*)\\]");
   @Rule public TestName name = new TestName();
 
   @NotNull
@@ -91,12 +90,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   @Override
   public String getName() {
-    String methodName = name.getMethodName();
-    Matcher m = TEST_METHOD_NAME_PATTERN.matcher(methodName);
-    if (m.matches()) {
-      methodName = m.group(1);
-    }
-    return methodName;
+    return name.getMethodName() == null ? super.getName() : FileUtil.sanitizeFileName(name.getMethodName());
   }
 
   @Parameterized.Parameters(name = "{index}: with Gradle-{0}")

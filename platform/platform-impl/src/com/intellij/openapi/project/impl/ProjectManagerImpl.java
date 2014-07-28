@@ -752,8 +752,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       message = ProjectBundle.message("project.reload.external.change.multiple", filesBuilder.toString());
     }
 
-    return Messages.showTwoStepConfirmationDialog(message, ProjectBundle.message("project.reload.external.change.title"), "Reload project",
-                                                  Messages.getQuestionIcon()) == 0;
+    return Messages.showDialog(message,
+                               ProjectBundle.message("project.reload.external.change.title"),
+                               new String[]{"&Reload Project", "&Discard Changes"},
+                               -1,
+                               Messages.getQuestionIcon()) == 0;
   }
 
   @Override

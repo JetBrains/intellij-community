@@ -48,7 +48,7 @@ public class IgnoredFilesComponent {
   }
 
   public void add(final IgnoredFileBean... filesToIgnore) {
-    synchronized(myFilesToIgnore) {
+    synchronized (myFilesToIgnore) {
       Collections.addAll(myFilesToIgnore, filesToIgnore);
       addIgnoredFiles(filesToIgnore);
     }
@@ -73,6 +73,7 @@ public class IgnoredFilesComponent {
       myFilesMap.clear();
     }
   }
+
   public boolean isEmpty() {
     synchronized (myFilesToIgnore) {
       return myFilesToIgnore.isEmpty();
@@ -80,7 +81,7 @@ public class IgnoredFilesComponent {
   }
 
   public void set(final IgnoredFileBean... filesToIgnore) {
-    synchronized(myFilesToIgnore) {
+    synchronized (myFilesToIgnore) {
       myFilesToIgnore.clear();
       Collections.addAll(myFilesToIgnore, filesToIgnore);
       myFilesMap.clear();
@@ -89,7 +90,7 @@ public class IgnoredFilesComponent {
   }
 
   public IgnoredFileBean[] getFilesToIgnore() {
-    synchronized(myFilesToIgnore) {
+    synchronized (myFilesToIgnore) {
       return myFilesToIgnore.toArray(new IgnoredFileBean[myFilesToIgnore.size()]);
     }
   }
@@ -103,14 +104,14 @@ public class IgnoredFilesComponent {
   }
 
   public boolean isIgnoredFile(@NotNull VirtualFile file) {
-    synchronized(myFilesToIgnore) {
+    synchronized (myFilesToIgnore) {
       if (myFilesToIgnore.size() == 0) return false;
 
       final String path = FilePathsHelper.convertPath(file);
       final IgnoredFileBean fileBean = myFilesMap.get(path);
       if (fileBean != null && fileBean.matchesFile(file)) return true;
 
-      for(IgnoredFileBean bean: myFilesToIgnore) {
+      for (IgnoredFileBean bean : myFilesToIgnore) {
         if (bean.matchesFile(file)) return true;
       }
       return false;

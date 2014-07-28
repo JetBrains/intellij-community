@@ -1,10 +1,11 @@
 """Command-line support for Coverage."""
 
-import optparse, re, sys, traceback
+import optparse, os, sys, time, traceback
 
 from coverage.backward import sorted                # pylint: disable=W0622
 from coverage.execfile import run_python_file, run_python_module
 from coverage.misc import CoverageException, ExceptionDuringRun, NoSource
+from coverage.debug import info_formatter
 
 
 class Opts(object):
@@ -19,10 +20,17 @@ class Opts(object):
         '', '--branch', action='store_true',
         help="Measure branch coverage in addition to statement coverage."
         )
+    debug = optparse.make_option(
+        '', '--debug', action='store', metavar="OPTS",
+        help="Debug options, separated by commas"
+        )
     directory = optparse.make_option(
-        '-d', '--directory', action='store',
-        metavar="DIR",
+        '-d', '--directory', action='store', metavar="DIR",
         help="Write the output files to DIR."
+        )
+    fail_under = optparse.make_option(
+        '', '--fail-under', action='store', metavar="MIN", type="int",
+        help="Exit with a status of 2 if the total coverage is less than MIN."
         )
     help = optparse.make_option(
         '-h', '--help', action='store_true',
@@ -89,6 +97,10 @@ class Opts(object):
         help="Use a simpler but slower trace method.  Try this if you get "
                 "seemingly impossible results!"
         )
+    title = optparse.make_option(
+        '', '--title', action='store', metavar="TITLE",
+        help="A text string to use as the title on the HTML."
+        )
     version = optparse.make_option(
         '', '--version', action='store_true',
         help="Display version information and exit."
@@ -110,7 +122,9 @@ class CoverageOptionParser(optparse.OptionParser, object):
         self.set_defaults(
             actions=[],
             branch=None,
+            debug=None,
             directory=None,
+            fail_under=None,
             help=None,
             ignore_errors=None,
             include=None,
@@ -122,6 +136,7 @@ class CoverageOptionParser(optparse.OptionParser, object):
             show_missing=None,
             source=None,
             timid=None,
+            title=None,
             erase_first=None,
             version=None,
             )
@@ -273,9 +288,11 @@ CMDS = {
     'html': CmdOptionParser("html",
         [
             Opts.directory,
+            Opts.fail_under,
             Opts.ignore_errors,
             Opts.omit,
             Opts.include,
+            Opts.title,
             ] + GLOBAL_ARGS,
         usage = "[options] [modules]",
         description = "Create an HTML report of the coverage of the files.  "
@@ -285,6 +302,7 @@ CMDS = {
 
     'report': CmdOptionParser("report",
         [
+            Opts.fail_under,
             Opts.ignore_errors,
             Opts.omit,
             Opts.include,
@@ -298,6 +316,7 @@ CMDS = {
         [
             Opts.append,
             Opts.branch,
+            Opts.debug,
             Opts.pylib,
             Opts.parallel_mode,
             Opts.module,
@@ -314,20 +333,20 @@ CMDS = {
 
     'xml': CmdOptionParser("xml",
         [
+            Opts.fail_under,
             Opts.ignore_errors,
             Opts.omit,
             Opts.include,
             Opts.output_xml,
             ] + GLOBAL_ARGS,
         cmd = "xml",
-        defaults = {'outfile': 'coverage.xml'},
         usage = "[options] [modules]",
         description = "Generate an XML report of coverage results."
         ),
     }
 
 
-OK, ERR = 0, 1
+OK, ERR, FAIL_UNDER = 0, 1, 2
 
 
 class CoverageScript(object):
@@ -346,26 +365,9 @@ class CoverageScript(object):
         self.run_python_file = _run_python_file or run_python_file
         self.run_python_module = _run_python_module or run_python_module
         self.help_fn = _help_fn or self.help
+        self.classic = False
 
         self.coverage = None
-
-    def help(self, error=None, topic=None, parser=None):
-        """Display an error message, or the named topic."""
-        assert error or topic or parser
-        if error:
-            print(error)
-            print("Use 'coverage help' for help.")
-        elif parser:
-            print(parser.format_help().strip())
-        else:
-            # Parse out the topic we want from HELP_TOPICS
-            topic_list = re.split("(?m)^=+ (\w+) =+$", HELP_TOPICS)
-            topics = dict(zip(topic_list[1::2], topic_list[2::2]))
-            help_msg = topics.get(topic, '').strip()
-            if help_msg:
-                print(help_msg % self.covpkg.__dict__)
-            else:
-                print("Don't know topic %r" % topic)
 
     def command_line(self, argv):
         """The bulk of the command line interface to Coverage.
@@ -376,15 +378,14 @@ class CoverageScript(object):
 
         """
         # Collect the command-line options.
-
         if not argv:
             self.help_fn(topic='minimum_help')
             return OK
 
         # The command syntax we parse depends on the first argument.  Classic
         # syntax always starts with an option.
-        classic = argv[0].startswith('-')
-        if classic:
+        self.classic = argv[0].startswith('-')
+        if self.classic:
             parser = ClassicOptionParser()
         else:
             parser = CMDS.get(argv[0])
@@ -398,64 +399,19 @@ class CoverageScript(object):
         if not ok:
             return ERR
 
-        # Handle help.
-        if options.help:
-            if classic:
-                self.help_fn(topic='help')
-            else:
-                self.help_fn(parser=parser)
-            return OK
-
-        if "help" in options.actions:
-            if args:
-                for a in args:
-                    parser = CMDS.get(a)
-                    if parser:
-                        self.help_fn(parser=parser)
-                    else:
-                        self.help_fn(topic=a)
-            else:
-                self.help_fn(topic='help')
-            return OK
-
-        # Handle version.
-        if options.version:
-            self.help_fn(topic='version')
+        # Handle help and version.
+        if self.do_help(options, args, parser):
             return OK
 
         # Check for conflicts and problems in the options.
-        for i in ['erase', 'execute']:
-            for j in ['annotate', 'html', 'report', 'combine']:
-                if (i in options.actions) and (j in options.actions):
-                    self.help_fn("You can't specify the '%s' and '%s' "
-                              "options at the same time." % (i, j))
-                    return ERR
-
-        if not options.actions:
-            self.help_fn(
-                "You must specify at least one of -e, -x, -c, -r, -a, or -b."
-                )
-            return ERR
-        args_allowed = (
-            'execute' in options.actions or
-            'annotate' in options.actions or
-            'html' in options.actions or
-            'debug' in options.actions or
-            'report' in options.actions or
-            'xml' in options.actions
-            )
-        if not args_allowed and args:
-            self.help_fn("Unexpected arguments: %s" % " ".join(args))
-            return ERR
-
-        if 'execute' in options.actions and not args:
-            self.help_fn("Nothing to do.")
+        if not self.args_ok(options, args):
             return ERR
 
         # Listify the list options.
         source = unshell_list(options.source)
         omit = unshell_list(options.omit)
         include = unshell_list(options.include)
+        debug = unshell_list(options.debug)
 
         # Do something.
         self.coverage = self.covpkg.coverage(
@@ -467,41 +423,11 @@ class CoverageScript(object):
             source = source,
             omit = omit,
             include = include,
+            debug = debug,
             )
 
         if 'debug' in options.actions:
-            if not args:
-                self.help_fn("What information would you like: data, sys?")
-                return ERR
-            for info in args:
-                if info == 'sys':
-                    print("-- sys ----------------------------------------")
-                    for label, info in self.coverage.sysinfo():
-                        if info == []:
-                            info = "-none-"
-                        if isinstance(info, list):
-                            print("%15s:" % label)
-                            for e in info:
-                                print("%15s  %s" % ("", e))
-                        else:
-                            print("%15s: %s" % (label, info))
-                elif info == 'data':
-                    print("-- data ---------------------------------------")
-                    self.coverage.load()
-                    print("path: %s" % self.coverage.data.filename)
-                    print("has_arcs: %r" % self.coverage.data.has_arcs())
-                    summary = self.coverage.data.summary(fullpath=True)
-                    if summary:
-                        filenames = sorted(summary.keys())
-                        print("\n%d files:" % len(filenames))
-                        for f in filenames:
-                            print("%s: %d lines" % (f, summary[f]))
-                    else:
-                        print("No data collected")
-                else:
-                    self.help_fn("Don't know what you mean by %r" % info)
-                    return ERR
-            return OK
+            return self.do_debug(args)
 
         if 'erase' in options.actions or options.erase_first:
             self.coverage.erase()
@@ -509,22 +435,7 @@ class CoverageScript(object):
             self.coverage.load()
 
         if 'execute' in options.actions:
-            # Run the script.
-            self.coverage.start()
-            code_ran = True
-            try:
-                try:
-                    if options.module:
-                        self.run_python_module(args[0], args)
-                    else:
-                        self.run_python_file(args[0], args)
-                except NoSource:
-                    code_ran = False
-                    raise
-            finally:
-                if code_ran:
-                    self.coverage.stop()
-                    self.coverage.save()
+            self.do_execute(options, args)
 
         if 'combine' in options.actions:
             self.coverage.combine()
@@ -539,18 +450,167 @@ class CoverageScript(object):
             )
 
         if 'report' in options.actions:
-            self.coverage.report(
+            total = self.coverage.report(
                 show_missing=options.show_missing, **report_args)
         if 'annotate' in options.actions:
             self.coverage.annotate(
                 directory=options.directory, **report_args)
         if 'html' in options.actions:
-            self.coverage.html_report(
-                directory=options.directory, **report_args)
+            total = self.coverage.html_report(
+                directory=options.directory, title=options.title,
+                **report_args)
         if 'xml' in options.actions:
             outfile = options.outfile
-            self.coverage.xml_report(outfile=outfile, **report_args)
+            total = self.coverage.xml_report(outfile=outfile, **report_args)
 
+        if options.fail_under is not None:
+            if total >= options.fail_under:
+                return OK
+            else:
+                return FAIL_UNDER
+        else:
+            return OK
+
+    def help(self, error=None, topic=None, parser=None):
+        """Display an error message, or the named topic."""
+        assert error or topic or parser
+        if error:
+            print(error)
+            print("Use 'coverage help' for help.")
+        elif parser:
+            print(parser.format_help().strip())
+        else:
+            help_msg = HELP_TOPICS.get(topic, '').strip()
+            if help_msg:
+                print(help_msg % self.covpkg.__dict__)
+            else:
+                print("Don't know topic %r" % topic)
+
+    def do_help(self, options, args, parser):
+        """Deal with help requests.
+
+        Return True if it handled the request, False if not.
+
+        """
+        # Handle help.
+        if options.help:
+            if self.classic:
+                self.help_fn(topic='help')
+            else:
+                self.help_fn(parser=parser)
+            return True
+
+        if "help" in options.actions:
+            if args:
+                for a in args:
+                    parser = CMDS.get(a)
+                    if parser:
+                        self.help_fn(parser=parser)
+                    else:
+                        self.help_fn(topic=a)
+            else:
+                self.help_fn(topic='help')
+            return True
+
+        # Handle version.
+        if options.version:
+            self.help_fn(topic='version')
+            return True
+
+        return False
+
+    def args_ok(self, options, args):
+        """Check for conflicts and problems in the options.
+
+        Returns True if everything is ok, or False if not.
+
+        """
+        for i in ['erase', 'execute']:
+            for j in ['annotate', 'html', 'report', 'combine']:
+                if (i in options.actions) and (j in options.actions):
+                    self.help_fn("You can't specify the '%s' and '%s' "
+                              "options at the same time." % (i, j))
+                    return False
+
+        if not options.actions:
+            self.help_fn(
+                "You must specify at least one of -e, -x, -c, -r, -a, or -b."
+                )
+            return False
+        args_allowed = (
+            'execute' in options.actions or
+            'annotate' in options.actions or
+            'html' in options.actions or
+            'debug' in options.actions or
+            'report' in options.actions or
+            'xml' in options.actions
+            )
+        if not args_allowed and args:
+            self.help_fn("Unexpected arguments: %s" % " ".join(args))
+            return False
+
+        if 'execute' in options.actions and not args:
+            self.help_fn("Nothing to do.")
+            return False
+
+        return True
+
+    def do_execute(self, options, args):
+        """Implementation of 'coverage run'."""
+
+        # Set the first path element properly.
+        old_path0 = sys.path[0]
+
+        # Run the script.
+        self.coverage.start()
+        code_ran = True
+        try:
+            try:
+                if options.module:
+                    sys.path[0] = ''
+                    self.run_python_module(args[0], args)
+                else:
+                    filename = args[0]
+                    sys.path[0] = os.path.abspath(os.path.dirname(filename))
+                    self.run_python_file(filename, args)
+            except NoSource:
+                code_ran = False
+                raise
+        finally:
+            self.coverage.stop()
+            if code_ran:
+                self.coverage.save()
+
+            # Restore the old path
+            sys.path[0] = old_path0
+
+    def do_debug(self, args):
+        """Implementation of 'coverage debug'."""
+
+        if not args:
+            self.help_fn("What information would you like: data, sys?")
+            return ERR
+        for info in args:
+            if info == 'sys':
+                print("-- sys ----------------------------------------")
+                for line in info_formatter(self.coverage.sysinfo()):
+                    print(" %s" % line)
+            elif info == 'data':
+                print("-- data ---------------------------------------")
+                self.coverage.load()
+                print("path: %s" % self.coverage.data.filename)
+                print("has_arcs: %r" % self.coverage.data.has_arcs())
+                summary = self.coverage.data.summary(fullpath=True)
+                if summary:
+                    filenames = sorted(summary.keys())
+                    print("\n%d files:" % len(filenames))
+                    for f in filenames:
+                        print("%s: %d lines" % (f, summary[f]))
+                else:
+                    print("No data collected")
+            else:
+                self.help_fn("Don't know what you mean by %r" % info)
+                return ERR
         return OK
 
 
@@ -568,10 +628,10 @@ def unshell_list(s):
     return s.split(',')
 
 
-HELP_TOPICS = r"""
-
-== classic ====================================================================
-Coverage.py version %(__version__)s
+HELP_TOPICS = {
+# -------------------------
+'classic':
+r"""Coverage.py version %(__version__)s
 Measure, collect, and report on code coverage in Python programs.
 
 Usage:
@@ -615,8 +675,9 @@ coverage -a [-d DIR] [-i] [-o DIR,...] [FILE1 FILE2 ...]
 
 Coverage data is saved in the file .coverage by default.  Set the
 COVERAGE_FILE environment variable to save it somewhere else.
-
-== help =======================================================================
+""",
+# -------------------------
+'help': """\
 Coverage.py, version %(__version__)s
 Measure, collect, and report on code coverage in Python programs.
 
@@ -635,26 +696,32 @@ Commands:
 Use "coverage help <command>" for detailed help on any command.
 Use "coverage help classic" for help on older command syntax.
 For more information, see %(__url__)s
-
-== minimum_help ===============================================================
+""",
+# -------------------------
+'minimum_help': """\
 Code coverage for Python.  Use 'coverage help' for help.
-
-== version ====================================================================
+""",
+# -------------------------
+'version': """\
 Coverage.py, version %(__version__)s.  %(__url__)s
-
-"""
+""",
+}
 
 
 def main(argv=None):
-    """The main entrypoint to Coverage.
+    """The main entry point to Coverage.
 
-    This is installed as the script entrypoint.
+    This is installed as the script entry point.
 
     """
     if argv is None:
         argv = sys.argv[1:]
     try:
+        start = time.clock()
         status = CoverageScript().command_line(argv)
+        end = time.clock()
+        if 0:
+            print("time: %.3fs" % (end - start))
     except ExceptionDuringRun:
         # An exception was caught while running the product code.  The
         # sys.exc_info() return tuple is packed into an ExceptionDuringRun

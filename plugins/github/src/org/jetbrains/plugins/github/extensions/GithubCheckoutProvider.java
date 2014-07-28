@@ -61,7 +61,7 @@ public class GithubCheckoutProvider implements CheckoutProvider {
           @NotNull
           @Override
           public List<GithubRepo> convert(ProgressIndicator indicator) throws IOException {
-            return GithubUtil.runTask(project, GithubAuthDataHolder.createFromSettings(), indicator,
+            return GithubUtil.runTask(project, GithubAuthDataHolder.createFromSettings(indicator.getModalityState()), indicator,
                                       new ThrowableConvertor<GithubAuthData, List<GithubRepo>, IOException>() {
                                         @NotNull
                                         @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,6 +92,14 @@ public class JBSplitter extends Splitter {
   public void setProportion(float proportion) {
     super.setProportion(proportion);
     saveProportion();
+  }
+
+  public void setOnePixelMode() {
+    setDividerWidth(1);
+    setShowDividerIcon(false);
+    getDivider().setBackground(new JBColor(Gray._153.withAlpha(128), Gray._100.withAlpha(128)));
+    setShowDividerControls(false);
+    setOrientation(getOrientation());
   }
 
   protected void loadProportion() {

@@ -34,6 +34,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remoteServer.ServerType;
@@ -258,20 +259,14 @@ public class CloudGitRemoteDetector extends AbstractProjectComponent implements 
         ImportModuleAction.createFromWizard(myProject, wizard);
       }
       else {
-        final CloudGitChooseAccountStepBase chooseAccountStep
-          = new CloudGitChooseAccountStepBase(myDeploymentDetector) {
-
-          @Override
-          public void updateDataModel() {
-
-          }
-        };
-
+        final Ref<CloudGitChooseAccountStepBase> chooseAccountStepRef = new Ref<CloudGitChooseAccountStepBase>();
         if (!new AbstractProjectWizard(CloudBundle.getText("choose.account.wizzard.title", myCloudName), myProject, (String)null) {
 
           final StepSequence myStepSequence;
 
           {
+            CloudGitChooseAccountStepBase chooseAccountStep = new CloudGitChooseAccountStepBase(myDeploymentDetector, myWizardContext);
+            chooseAccountStepRef.set(chooseAccountStep);
             myStepSequence = new StepSequence(chooseAccountStep);
             addStep(chooseAccountStep);
             init();
@@ -284,7 +279,7 @@ public class CloudGitRemoteDetector extends AbstractProjectComponent implements 
         }.showAndGet()) {
           return;
         }
-        chooseAccountStep.createRunConfiguration(targetModule, myApplicationName);
+        chooseAccountStepRef.get().createRunConfiguration(targetModule, myApplicationName);
       }
     }
   }

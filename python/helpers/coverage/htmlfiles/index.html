@@ -2,9 +2,12 @@
 <html>
 <head>
     <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
-    <title>Coverage report</title>
+    <title>{{ title|escape }}</title>
     <link rel='stylesheet' href='style.css' type='text/css'>
-    <script type='text/javascript' src='jquery-1.4.3.min.js'></script>
+    {% if extra_css %}
+        <link rel='stylesheet' href='{{ extra_css }}' type='text/css'>
+    {% endif %}
+    <script type='text/javascript' src='jquery.min.js'></script>
     <script type='text/javascript' src='jquery.tablesorter.min.js'></script>
     <script type='text/javascript' src='jquery.hotkeys.js'></script>
     <script type='text/javascript' src='coverage_html.js'></script>
@@ -16,7 +19,7 @@
 
 <div id='header'>
     <div class='content'>
-        <h1>Coverage report:
+        <h1>{{ title|escape }}:
             <span class='pc_cov'>{{totals.pc_covered_str}}%</span>
         </h1>
         <img id='keyboard_icon' src='keybd_closed.png'>
@@ -66,7 +69,7 @@
                 <td>{{totals.n_excluded}}</td>
                 {% if arcs %}
                 <td>{{totals.n_branches}}</td>
-                <td>{{totals.n_missing_branches}}</td>
+                <td>{{totals.n_partial_branches}}</td>
                 {% endif %}
                 <td class='right'>{{totals.pc_covered_str}}%</td>
             </tr>
@@ -80,7 +83,7 @@
                 <td>{{file.nums.n_excluded}}</td>
                 {% if arcs %}
                 <td>{{file.nums.n_branches}}</td>
-                <td>{{file.nums.n_missing_branches}}</td>
+                <td>{{file.nums.n_partial_branches}}</td>
                 {% endif %}
                 <td class='right'>{{file.nums.pc_covered_str}}%</td>
             </tr>

@@ -18,6 +18,7 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 
 import java.util.List;
 
@@ -72,5 +73,24 @@ public class Py3CompletionTest extends PyTestCase {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     myFixture.completeBasic();
     return myFixture.getLookupElementStrings();
+  }
+
+  // PY-4073
+  public void testSpecialFunctionAttributesPy3() throws Exception {
+    setLanguageLevel(LanguageLevel.PYTHON32);
+    try {
+      List<String> suggested = doTestByText("def func(): pass; func.func_<caret>");
+      assertNotNull(suggested);
+      assertEmpty(suggested);
+
+      suggested = doTestByText("def func(): pass; func.__<caret>");
+      assertNotNull(suggested);
+      assertContainsElements(suggested, "__defaults__", "__globals__", "__closure__",
+                             "__code__", "__name__", "__doc__", "__dict__", "__module__");
+      assertContainsElements(suggested, "__annotations__", "__kwdefaults__");
+    }
+    finally {
+      setLanguageLevel(null);
+    }
   }
 }

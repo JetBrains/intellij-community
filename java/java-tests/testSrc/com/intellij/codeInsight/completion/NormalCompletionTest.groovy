@@ -768,6 +768,8 @@ public class ListUtils {
     assertStringItems("fofoo", "fofoo");
   }
 
+  public void testMethodMergingMinimalTail() { doTest() }
+
   public void testAnnotationQualifiedName() throws Throwable {
     doTest();
   }
@@ -1421,6 +1423,11 @@ class XInternalError {}
     checkResult()
   }
 
+  public void testMulticaretCompletionFromNonPrimaryCaret() {
+    configure()
+    myFixture.assertPreferredCompletionItems(0, "arraycopy")
+  }
+
   public void "test complete lowercase class name"() {
     myFixture.addClass("package foo; public class myClass {}")
     myFixture.configureByText "a.java", """
@@ -1469,6 +1476,11 @@ class Bar {
 
   public void testProtectedFieldInAnotherPackage() {
     myFixture.addClass("package foo; public class Super { protected String myString; }");
+    doTest()
+  }
+
+  public void testUnimportedStaticInnerClass() {
+    myFixture.addClass("package foo; public class Super { public static class Inner {} }");
     doTest()
   }
 

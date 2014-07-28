@@ -15,7 +15,11 @@
  */
 package com.intellij.ide.passwordSafe.impl;
 
+import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.ide.passwordSafe.PasswordStorage;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The provider for password safe component
@@ -34,4 +38,21 @@ public abstract class PasswordSafeProvider implements PasswordStorage {
    * @return the name of provider
    */
   public abstract String getName();
+
+  @Nullable
+  @Override
+  public String getPassword(@Nullable Project project, @NotNull Class requestor, String key) throws PasswordSafeException {
+    return getPassword(project, requestor, key, null);
+  }
+
+  @Override
+  public void storePassword(@Nullable Project project, @NotNull Class requestor, String key, String value) throws PasswordSafeException {
+    storePassword(project, requestor, key, value, null);
+  }
+
+  @Override
+  public void removePassword(@Nullable Project project, @NotNull Class requestor, String key) throws PasswordSafeException {
+    removePassword(project, requestor, key, null);
+  }
+
 }

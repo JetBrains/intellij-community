@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogStructureFilter> {
@@ -89,13 +88,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogStructure
     return tooltip;
   }
 
-  @NotNull
-  private static <T> Collection<T> notNullize(@Nullable Collection<T> items) {
-    return items != null ? items : Collections.<T>emptyList();
-  }
-
   private class SelectAction extends DumbAwareAction {
-
     SelectAction() {
       super("Select...");
     }
@@ -108,7 +101,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogStructure
                                                             new ArrayList<VirtualFile>(myRoots));
       if (chooser.showAndGet()) {
         myFiles.clear();
-        myFiles.addAll(notNullize(chooser.getSelectedFiles()));
+        myFiles.addAll(ContainerUtil.notNullize(chooser.getSelectedFiles()));
         setValue(myFiles);
         applyFilters();
       }

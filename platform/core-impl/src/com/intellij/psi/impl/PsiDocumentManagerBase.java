@@ -699,7 +699,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
 
     // we can end up outside write action here if the document has forUseInNonAWTThread=true
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    ApplicationManager.getApplication().runWriteAction(new ExternalChangeAction() {
       @Override
       public void run() {
         psiFile.getViewProvider().beforeContentsSynchronized();

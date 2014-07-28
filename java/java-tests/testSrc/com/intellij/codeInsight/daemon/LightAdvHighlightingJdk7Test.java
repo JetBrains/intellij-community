@@ -34,7 +34,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -44,7 +43,7 @@ import java.util.List;
  * For "heavyweight" tests use AdvHighlightingTest
  */
 public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
-  @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting7";
+  private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting7";
 
   private void doTest(boolean checkWarnings, boolean checkInfos, Class<?>... classes) {
     setLanguageLevel(LanguageLevel.JDK_1_7);
@@ -102,12 +101,9 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testHighlightInaccessibleFromClassModifierList() { doTest(false, false); }
   public void testInnerInTypeArguments() { doTest(false, false); }
   public void testRawSubstitutor() { doTest(false, false); }
+  public void testIncompleteDiamonds() { doTest(false, false); }
 
-  public void testIncompleteDiamonds() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDynamicallyAddIgnoredAnnotations() throws Exception {
+  public void testDynamicallyAddIgnoredAnnotations() {
     ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
     EntryPoint extension = new EntryPoint() {
       @NotNull @Override public String getDisplayName() { return "duh"; }

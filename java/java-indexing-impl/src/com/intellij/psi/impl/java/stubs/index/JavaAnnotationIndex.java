@@ -44,7 +44,7 @@ public class JavaAnnotationIndex extends StringStubIndexExtension<PsiAnnotation>
   }
 
   @Override
-  public Collection<PsiAnnotation> get(final String s, final Project project, @NotNull final GlobalSearchScope scope) {
+  public Collection<PsiAnnotation> get(@NotNull final String s, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), s, project, new JavaSourceFilterScope(scope), PsiAnnotation.class);
   }
 }

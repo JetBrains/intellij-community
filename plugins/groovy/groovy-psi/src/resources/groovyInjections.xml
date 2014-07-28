@@ -50,4 +50,13 @@
     <display-name>RegExp</display-name>
     <place><![CDATA[groovyLiteralExpression().regExpOperatorArgument()]]></place>
   </injection>
+  <injection language="encoding-reference" injector-id="java">
+    <display-name>Charset Name</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("getBytes").withParameters("java.lang.String").definedInClass("groovy.lang.GString"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("newPrintWriter").withParameters("java.io.File", "java.lang.String").definedInClass("org.codehaus.groovy.runtime.DefaultGroovyMethods"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("newReader").withParameters("java.io.File", "java.lang.String").definedInClass("org.codehaus.groovy.runtime.DefaultGroovyMethods"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("newReader").withParameters("java.io.InputStream", "java.lang.String").definedInClass("org.codehaus.groovy.runtime.DefaultGroovyMethods"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("newWriter").withParameters("java.io.File", "java.lang.String").definedInClass("org.codehaus.groovy.runtime.DefaultGroovyMethods"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("newWriter").withParameters("java.io.File", "java.lang.String", "boolean").definedInClass("org.codehaus.groovy.runtime.DefaultGroovyMethods"))]]></place>
+  </injection>
 </component>

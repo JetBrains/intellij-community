@@ -53,11 +53,12 @@ public class GitExecutor extends Executor {
     printVersionTheFirstTime();
     List<String> split = splitCommandInParameters(command);
     split.add(0, PathHolder.GIT_EXECUTABLE);
-    debug("# git " + command);
+    File workingDir = ourCurrentDir();
+    debug("[" + workingDir.getName() + "] # git " + command);
     for (int attempt = 0; attempt < MAX_RETRIES; attempt++) {
       String stdout;
       try {
-        stdout = run(split, ignoreNonZeroExitCode);
+        stdout = run(workingDir, split, ignoreNonZeroExitCode);
         if (!isIndexLockFileError(stdout)) {
           return stdout;
         }
@@ -97,7 +98,7 @@ public class GitExecutor extends Executor {
   }
 
   public static void add(@NotNull String path) {
-    git("add " + path);
+    git("add --verbose " + path);
   }
 
   public static void addCommit(@NotNull String message) {

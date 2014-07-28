@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.options.ex.IdeConfigurablesGroup;
+import com.intellij.openapi.options.ex.MixedConfigurableGroup;
 import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
@@ -29,6 +30,7 @@ import com.intellij.openapi.options.newEditor.OptionsEditorDialog;
 import com.intellij.openapi.options.newEditor.PreferencesDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -47,11 +49,62 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ShowSettingsUtilImpl");
   private AtomicBoolean myShown = new AtomicBoolean(false);
 
+  @NotNull
+  private static Project getProject(@Nullable Project project) {
+    return project != null ? project : ProjectManager.getInstance().getDefaultProject();
+  }
+
+  @NotNull
+  private static DialogWrapper getDialog(@Nullable Project project, @NotNull ConfigurableGroup[] groups, @Nullable Configurable toSelect) {
+    return Registry.is("ide.perProjectModality")
+           ? new OptionsEditorDialog(getProject(project), filterEmptyGroups(groups), toSelect, true)
+           : Registry.is("ide.new.preferences")
+             ? new PreferencesDialog(getProject(project), filterEmptyGroups(groups))
+             : new OptionsEditorDialog(getProject(project), filterEmptyGroups(groups), toSelect);
+  }
+
+  @NotNull
+  public static ConfigurableGroup[] getConfigurableGroups(@Nullable Project project, boolean withIdeSettings) {
+    ConfigurableGroup[] groups = !withIdeSettings
+           ? new ConfigurableGroup[]{new ProjectConfigurablesGroup(getProject(project))}
+           : (project == null)
+             ? new ConfigurableGroup[]{new IdeConfigurablesGroup()}
+             : new ConfigurableGroup[]{
+               new ProjectConfigurablesGroup(project),
+               new IdeConfigurablesGroup()};
+
+    return Registry.is("ide.file.settings.order.new")
+           ? MixedConfigurableGroup.getGroups(getConfigurables(groups, true))
+           : groups;
+  }
+
+  @NotNull
+  public static Configurable[] getConfigurables(@Nullable Project project, boolean withGroupReverseOrder) {
+    return getConfigurables(getConfigurableGroups(project, true), withGroupReverseOrder);
+  }
+
+  @NotNull
+  private static Configurable[] getConfigurables(@NotNull ConfigurableGroup[] groups, boolean withGroupReverseOrder) {
+    Configurable[][] arrays = new Configurable[groups.length][];
+    int length = 0;
+    for (int i = 0; i < groups.length; i++) {
+      arrays[i] = groups[withGroupReverseOrder ? groups.length - 1 - i : i].getConfigurables();
+      length += arrays[i].length;
+    }
+    Configurable[] configurables = new Configurable[length];
+    int offset = 0;
+    for (Configurable[] array : arrays) {
+      System.arraycopy(array, 0, configurables, offset, array.length);
+      offset += array.length;
+    }
+    return configurables;
+  }
+
   @Override
   public void showSettingsDialog(@NotNull Project project, @NotNull ConfigurableGroup[] group) {
     try {
       myShown.set(true);
-      _showSettingsDialog(project, group, null);
+      getDialog(project, group, null).show();
     }
     catch (Exception e) {
       LOG.error(e);
@@ -61,41 +114,17 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     }
   }
 
-  private static void _showSettingsDialog(@NotNull final Project project, @NotNull ConfigurableGroup[] group, @Nullable Configurable toSelect) {
-    group = filterEmptyGroups(group);
-    if (Registry.is("ide.perProjectModality")) {
-      new OptionsEditorDialog(project, group, toSelect, true).show();
-    } else {
-      if (Registry.is("ide.new.preferences")) {
-        new PreferencesDialog(project, group).show();
-      } else {
-        new OptionsEditorDialog(project, group, toSelect).show();
-      }
-    }
-  }
-
   @Override
   public void showSettingsDialog(@Nullable final Project project, final Class configurableClass) {
     assert Configurable.class.isAssignableFrom(configurableClass) : "Not a configurable: " + configurableClass.getName();
 
-    ConfigurableGroup[] groups;
-    IdeConfigurablesGroup commonGroup = new IdeConfigurablesGroup();
-    ProjectConfigurablesGroup projectGroup = project == null ? null : new ProjectConfigurablesGroup(project);
-    if (projectGroup == null) {
-      groups = new ConfigurableGroup[] {commonGroup};
-    } else {
-      groups = new ConfigurableGroup[] {projectGroup, commonGroup};
-    }
+    ConfigurableGroup[] groups = getConfigurableGroups(project, true);
 
-    Configurable config = findByClass(commonGroup.getConfigurables(), configurableClass);
-    if (config == null && projectGroup != null) {
-      config = findByClass(projectGroup.getConfigurables(), configurableClass);
-    }
+    Configurable config = findByClass(getConfigurables(groups, true), configurableClass);
 
     assert config != null : "Cannot find configurable: " + configurableClass.getName();
 
-    @NotNull Project nnProject = project != null ? project : ProjectManager.getInstance().getDefaultProject();
-    _showSettingsDialog(nnProject, groups, config);
+    getDialog(project, groups, config).show();
   }
 
   @Nullable
@@ -110,15 +139,9 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   @Override
   public void showSettingsDialog(@Nullable final Project project, @NotNull final String nameToSelect) {
-    ConfigurableGroup[] group;
-    if (project == null) {
-      group = new ConfigurableGroup[]{new IdeConfigurablesGroup()};
-    }
-    else {
-      group = new ConfigurableGroup[]{new ProjectConfigurablesGroup(project), new IdeConfigurablesGroup()};
-    }
+    ConfigurableGroup[] group = getConfigurableGroups(project, true);
 
-    Project actualProject = project != null ? project : ProjectManager.getInstance().getDefaultProject();
+    Project actualProject = getProject(project);
 
     group = filterEmptyGroups(group);
 
@@ -133,15 +156,9 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   public static void showSettingsDialog(@Nullable Project project, final String id2Select, final String filter) {
-    ConfigurableGroup[] group;
-    if (project == null) {
-      group = new ConfigurableGroup[]{new IdeConfigurablesGroup()};
-    }
-    else {
-      group = new ConfigurableGroup[]{new ProjectConfigurablesGroup(project), new IdeConfigurablesGroup()};
-    }
+    ConfigurableGroup[] group = getConfigurableGroups(project, true);
 
-    Project actualProject = project != null ? project : ProjectManager.getInstance().getDefaultProject();
+    Project actualProject = getProject(project);
 
     group = filterEmptyGroups(group);
     final Configurable configurable2Select = findConfigurable2Select(id2Select, group);
@@ -191,10 +208,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   @Override
   public void showSettingsDialog(@NotNull final Project project, final Configurable toSelect) {
-    _showSettingsDialog(project, new ConfigurableGroup[]{
-      new ProjectConfigurablesGroup(project),
-      new IdeConfigurablesGroup()
-    }, toSelect);
+    getDialog(project, getConfigurableGroups(project, true), toSelect).show();
   }
 
   @NotNull

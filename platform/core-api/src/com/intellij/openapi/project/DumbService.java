@@ -87,13 +87,15 @@ public abstract class DumbService {
   }
 
   @Nullable
-  public <T> T tryRunReadActionInSmartMode(@NotNull Computable<T> task, @NotNull String notification) {
+  public <T> T tryRunReadActionInSmartMode(@NotNull Computable<T> task, @Nullable String notification) {
     if (ApplicationManager.getApplication().isReadAccessAllowed()) {
       try {
         return task.compute();
       }
       catch (IndexNotReadyException e) {
-        showDumbModeNotification(notification);
+        if (notification != null) {
+          showDumbModeNotification(notification);
+        }
         return null;
       }
     }

@@ -340,6 +340,16 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     addOption(fieldName, title, null, options, values);
   }
 
+  protected void addOption(@NotNull String fieldName,
+                           @NotNull String title,
+                           @Nullable String groupName,
+                           int minValue,
+                           int maxValue,
+                           int defaultValue,
+                           String defaultValueText) {
+    myOptions.add(new IntOption(null, fieldName, title, groupName, null, null, minValue, maxValue, defaultValue, defaultValueText));
+  }
+
   protected void addOption(@NotNull String fieldName, @NotNull String title, @Nullable String groupName) {
     myOptions.add(new BooleanOption(null, fieldName, title, groupName, null, null));
   }
@@ -466,6 +476,78 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
       }
       catch (IllegalAccessException e) {
       }
+    }
+  }
+
+  private class IntOption extends Option {
+
+    private final int myMinValue;
+    private final int myMaxValue;
+    private final int myDefaultValue;
+    @Nullable private String myDefaultValueText;
+
+    public IntOption(Class<? extends CustomCodeStyleSettings> clazz,
+                     @NotNull String fieldName,
+                     @NotNull String title,
+                     @Nullable String groupName, 
+                     @Nullable OptionAnchor anchor, 
+                     @Nullable String anchorFiledName,
+                     int minValue,
+                     int maxValue,
+                     int defaultValue,
+                     @Nullable String defaultValueText) {
+      super(clazz, fieldName, title, groupName, anchor, anchorFiledName);
+      myMinValue = minValue;
+      myMaxValue = maxValue;
+      myDefaultValue = defaultValue;
+      myDefaultValueText = defaultValueText;
+    }
+
+    @Override
+    public Object getValue(CodeStyleSettings settings) {
+      try {
+        int value = field.getInt(getSettings(settings));
+        return value == myDefaultValue && myDefaultValueText != null ? myDefaultValueText : value;
+      }
+      catch (IllegalAccessException e) {
+        return null;
+      }      
+    }
+
+    @Override
+    public void setValue(Object value, CodeStyleSettings settings) {
+      //noinspection EmptyCatchBlock
+      try {
+        if (myDefaultValueText != null && !myDefaultValueText.equals(value)) {
+          field.setInt(getSettings(settings), ((Integer)value).intValue());
+        }
+        else {
+          field.setInt(getSettings(settings), -1);
+        }
+      }
+      catch (IllegalAccessException e) {
+      }
+    }
+
+    public int getMinValue() {
+      return myMinValue;
+    }
+
+    public int getMaxValue() {
+      return myMaxValue;
+    }
+
+    public int getDefaultValue() {
+      return myDefaultValue;
+    }
+    
+    public boolean isDefaultText(Object value) {
+      return myDefaultValueText != null && myDefaultValueText.equals(value);
+    }
+
+    @Nullable
+    public String getDefaultValueText() {
+      return myDefaultValueText;
     }
   }
 
@@ -604,6 +686,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     private final JLabel myComboBox = new JLabel();
     private final JCheckBox myCheckBox = new JCheckBox();
     private final JPanel myEmptyLabel = new JPanel();
+    private final JLabel myIntLabel = new JLabel();
 
     @Override
     public Component getTableCellRendererComponent(JTable table,
@@ -636,6 +719,10 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
         myComboBox.setEnabled(isEnabled);
         return myComboBox;
       }
+      else if (value instanceof Integer) {
+        myIntLabel.setText(value.toString());
+        return myIntLabel;
+      }
 
       myCheckBox.putClientProperty("JComponent.sizeVariant", "small");
       myComboBox.putClientProperty("JComponent.sizeVariant", "small");
@@ -645,12 +732,55 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     }
   }
 
+  private static class MyIntOptionEditor extends JTextField {
+    private int myMinValue;
+    private int myMaxValue;
+    private int myDefaultValue;
+    private String myDefaultValueText;
+
+    private MyIntOptionEditor() {
+      super();
+    }
+    
+    public Object getPresentableValue() {
+      int value = validateAndGetIntOption();
+      return value == myDefaultValue && myDefaultValueText != null ? myDefaultValueText : value;
+    }
+
+    private int validateAndGetIntOption() {
+      try {
+        int value = Integer.parseInt(getText());
+        return value >= myMinValue && value <= myMaxValue ? value : myDefaultValue;
+      }
+      catch (NumberFormatException nfe) {
+        return myDefaultValue;
+      }
+    }   
+
+    public void setMinValue(int minValue) {
+      myMinValue = minValue;
+    }
+
+    public void setMaxValue(int maxValue) {
+      myMaxValue = maxValue;
+    }
+
+    public void setDefaultValue(int defaultValue) {
+      myDefaultValue = defaultValue;
+    }
+
+    public void setDefaultValueText(String defaultValueText) {
+      myDefaultValueText = defaultValueText;
+    }
+  }
+
   /**
    * @author Konstantin Bulenkov
    */
   private class MyValueEditor extends AbstractTableCellEditor {
     private final JCheckBox myBooleanEditor = new JCheckBox();
     private JBComboBoxTableCellEditorComponent myOptionsEditor = new JBComboBoxTableCellEditorComponent();
+    private MyIntOptionEditor myIntOptionsEditor = new MyIntOptionEditor();
     private Component myCurrentEditor = null;
     private MyTreeNode myCurrentNode = null;
 
@@ -684,6 +814,9 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
       else if (myCurrentEditor == myBooleanEditor) {
         return myBooleanEditor.isSelected() ? Boolean.TRUE : Boolean.FALSE;
       }
+      else if (myCurrentEditor == myIntOptionsEditor) {
+        return myIntOptionsEditor.getPresentableValue();
+      }
 
       return null;
     }
@@ -701,6 +834,15 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
           myCurrentEditor = myBooleanEditor;
           myBooleanEditor.setSelected(node.getValue() == Boolean.TRUE);
           myBooleanEditor.setEnabled(node.isEnabled());
+        }
+        else if (node.getKey() instanceof IntOption) {
+          IntOption intOption = (IntOption)node.getKey();
+          myCurrentEditor = myIntOptionsEditor;
+          myIntOptionsEditor.setText(intOption.isDefaultText(node.getValue()) ? "" : node.getValue().toString());
+          myIntOptionsEditor.setMinValue(intOption.getMinValue());
+          myIntOptionsEditor.setMaxValue(intOption.getMaxValue());
+          myIntOptionsEditor.setDefaultValue(intOption.getDefaultValue());
+          myIntOptionsEditor.setDefaultValueText(intOption.getDefaultValueText());
         }
         else {
           myCurrentEditor = myOptionsEditor;

@@ -16,7 +16,6 @@
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -26,12 +25,15 @@ import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 /**
  * @author nik
+ * todo rename to XDebuggerSettingsManagerImpl
  */
+@SuppressWarnings("ClassNameSameAsAncestorName")
 @State(
     name = XDebuggerSettingsManager.COMPONENT_NAME,
     storages = {
@@ -40,26 +42,30 @@ import java.util.*;
       )
     }
 )
-public class XDebuggerSettingsManager implements PersistentStateComponent<XDebuggerSettingsManager.SettingsState>{
+public class XDebuggerSettingsManager extends com.intellij.xdebugger.settings.XDebuggerSettingsManager implements PersistentStateComponent<XDebuggerSettingsManager.SettingsState> {
   @NonNls public static final String COMPONENT_NAME = "XDebuggerSettings";
   private Map<String, XDebuggerSettings<?>> mySettingsById;
   private Map<Class<? extends XDebuggerSettings>, XDebuggerSettings<?>> mySettingsByClass;
   private XDebuggerDataViewSettings myDataViewSettings = new XDebuggerDataViewSettings();
   private XDebuggerGeneralSettings myGeneralSettings = new XDebuggerGeneralSettings();
 
-  public static XDebuggerSettingsManager getInstance() {
-    return ServiceManager.getService(XDebuggerSettingsManager.class);
+  public static XDebuggerSettingsManager getInstanceImpl() {
+    return (XDebuggerSettingsManager)com.intellij.xdebugger.settings.XDebuggerSettingsManager.getInstance();
   }
 
+  @Override
   public SettingsState getState() {
     SettingsState settingsState = new SettingsState();
     settingsState.setDataViewSettings(myDataViewSettings);
     settingsState.setGeneralSettings(myGeneralSettings);
     for (XDebuggerSettings<?> settings : getSettingsList()) {
-      SpecificSettingsState state = new SpecificSettingsState();
-      state.setId(settings.getId());
-      state.setSettingsElement(XmlSerializer.serialize(settings.getState(), new SkipDefaultValuesSerializationFilters()));
-      settingsState.getSpecificStates().add(state);
+      Object subState = settings.getState();
+      if (subState != null) {
+        SpecificSettingsState state = new SpecificSettingsState();
+        state.setId(settings.getId());
+        state.setSettingsElement(XmlSerializer.serialize(subState, new SkipDefaultValuesSerializationFilters()));
+        settingsState.getSpecificStates().add(state);
+      }
     }
     return settingsState;
   }
@@ -69,6 +75,8 @@ public class XDebuggerSettingsManager implements PersistentStateComponent<XDebug
     return Collections.unmodifiableCollection(mySettingsById.values());
   }
 
+  @Override
+  @NotNull
   public XDebuggerDataViewSettings getDataViewSettings() {
     return myDataViewSettings;
   }
@@ -77,6 +85,7 @@ public class XDebuggerSettingsManager implements PersistentStateComponent<XDebug
     return myGeneralSettings;
   }
 
+  @Override
   public void loadState(final SettingsState state) {
     myDataViewSettings = state.getDataViewSettings();
     myGeneralSettings = state.getGeneralSettings();
@@ -95,9 +104,10 @@ public class XDebuggerSettingsManager implements PersistentStateComponent<XDebug
 
   private void initSettings() {
     if (mySettingsById == null) {
-      mySettingsById = new HashMap<String, XDebuggerSettings<?>>();
-      mySettingsByClass = new HashMap<Class<? extends XDebuggerSettings>, XDebuggerSettings<?>>();
-      for (XDebuggerSettings settings : Extensions.getExtensions(XDebuggerSettings.EXTENSION_POINT)) {
+      XDebuggerSettings[] extensions = XDebuggerSettings.EXTENSION_POINT.getExtensions();
+      mySettingsById = new LinkedHashMap<String, XDebuggerSettings<?>>(extensions.length);
+      mySettingsByClass = new LinkedHashMap<Class<? extends XDebuggerSettings>, XDebuggerSettings<?>>(extensions.length);
+      for (XDebuggerSettings settings : extensions) {
         mySettingsById.put(settings.getId(), settings);
         mySettingsByClass.put(settings.getClass(), settings);
       }

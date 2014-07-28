@@ -106,22 +106,12 @@ public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<
   }
 
   public Pair<Component, Rectangle> getCellRendererAndBounds(TableCell key) {
-    Rectangle cellRect = getCellRect(key);
-
-    int modelColumnIndex = myComponent.convertColumnIndexToModel(key.column);
-    final int modelRowIndex = myComponent.convertRowIndexToModel(key.row);
-    TableModel model = myComponent.getModel();
-    if (key.row < 0 || key.row >= model.getRowCount() || key.column < 0 || key.column >= model.getColumnCount()) {
+    if (key.row < 0 || key.row >= myComponent.getRowCount() || key.column < 0 || key.column >= myComponent.getColumnCount()) {
       return null;
     }
 
-    Component renderer = myComponent
-      .getCellRenderer(key.row, key.column)
-      .getTableCellRendererComponent(myComponent,
-                                     model.getValueAt(modelRowIndex, modelColumnIndex),
-                                     myComponent.getSelectionModel().isSelectedIndex(key.row),
-                                     myComponent.hasFocus(),
-                                     key.row, key.column);
+    Rectangle cellRect = getCellRect(key);
+    Component renderer = myComponent.prepareRenderer(myComponent.getCellRenderer(key.row, key.column), key.row, key.column);
     cellRect.width = renderer.getPreferredSize().width;
 
     return Pair.create(renderer, cellRect);

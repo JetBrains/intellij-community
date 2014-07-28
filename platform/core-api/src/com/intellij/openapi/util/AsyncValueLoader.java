@@ -2,6 +2,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -125,7 +126,7 @@ public abstract class AsyncValueLoader<T> {
 
   protected abstract void load(@NotNull AsyncResult<T> result) throws IOException;
 
-  protected boolean isUpToDate(@NotNull T result) {
+  protected boolean isUpToDate(@Nullable T result) {
     return loadedModificationCount == modificationCount;
   }
 

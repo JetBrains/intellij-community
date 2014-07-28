@@ -36,7 +36,7 @@ class BrokenAlignment {
   }
 
   public void bar(@NotNull Object foo) {
-    assert <warning descr="Condition 'foo != null' is always 'true'">foo != null</warning>;
+    if (<warning descr="Condition 'foo != null' is always 'true'">foo != null</warning>);
   }
 
   public void bar2(@NotNull Object foo) {

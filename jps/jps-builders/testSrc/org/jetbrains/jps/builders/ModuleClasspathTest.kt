@@ -25,7 +25,6 @@ import org.jetbrains.jps.incremental.ModuleBuildTarget
 import java.io.File
 import com.intellij.openapi.util.text.StringUtil
 import org.junit.Assert
-import java.util.Collections
 
 /**
  * @author nik
@@ -72,14 +71,14 @@ public class ModuleClasspathTest(): JpsBuildTestCase() {
     }
 
     private fun createChunk(moduleName: String): ModuleChunk {
-        val module = myProject.getModules().firstOrNull { it.getName() == moduleName }
-        return ModuleChunk(setOf(ModuleBuildTarget(module!!, JavaModuleBuildTargetType.PRODUCTION)))
+        val module = myProject.getModules().first { it.getName() == moduleName }
+        return ModuleChunk(setOf(ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION)))
     }
 
     private fun assertClasspath(expected: List<String>, classpath: List<String>) {
         val basePath = FileUtil.toSystemIndependentName(File(getProjectPath()).getParentFile()!!.getAbsolutePath()) + "/"
         val actual = toSystemIndependentPaths(classpath).map { StringUtil.trimStart(it, basePath) }
-        Assert.assertEquals(expected.makeString("\n"), actual.makeString("\n"))
+        Assert.assertEquals(expected.join("\n"), actual.join("\n"))
     }
 
     private fun toSystemIndependentPaths(classpath: List<String>): List<String> {

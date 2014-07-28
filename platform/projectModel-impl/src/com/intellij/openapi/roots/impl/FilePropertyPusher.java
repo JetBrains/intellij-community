@@ -50,7 +50,7 @@ public interface FilePropertyPusher<T> {
   boolean acceptsFile(@NotNull VirtualFile file);
   boolean acceptsDirectory(@NotNull VirtualFile file, @NotNull Project project);
 
-  void persistAttribute(@NotNull VirtualFile fileOrDir, @NotNull T value) throws IOException;
+  void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull T value) throws IOException;
 
   interface Engine {
     void pushAll();

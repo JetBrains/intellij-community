@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -445,7 +446,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     ContentRevision afterRevision = change.getAfterRevision();
     if (afterRevision == null) return false;
     FilePath file = afterRevision.getFile();
-    return file.getName().equals(toSelect.getName());
+    return FileUtil.pathsEqual(file.getPath(), toSelect.getPath());
   }
 
   protected abstract DefaultTreeModel buildTreeModel(final List<T> changes, final ChangeNodeDecorator changeNodeDecorator);

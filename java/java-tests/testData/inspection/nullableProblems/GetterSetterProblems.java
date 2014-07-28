@@ -2,7 +2,7 @@ import org.jetbrains.annotations.NotNull;
 
 class B {
      @NotNull
-     B b;
+     B b = new B();
 
     public B <warning descr="Getter for @NotNull field might be annotated @NotNull itself">getB</warning>() {
         return b;
@@ -39,7 +39,7 @@ class C {
     this.c = c;
   }
 
-  @NotNull C c1;
+  @NotNull C c1 = new C(null);
   @org.jetbrains.annotations.Nullable
   public C getC1() {
     if (c1 != null) {

@@ -18,16 +18,25 @@ void PrintUsage() {
 	exit(0);
 }
 
-void ErrorMessage(char *str) {
-
+void ErrorMessage(char *operationName) {
 	LPVOID msg;
-
-	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-			NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-			(LPTSTR) &msg, 0, NULL);
-
-	printf("%s: %s\n", str, msg);
-	LocalFree(msg);
+	DWORD lastError = GetLastError();
+	FormatMessage(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+		NULL,
+		lastError,
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPSTR)&msg,
+		0,
+		NULL);
+	if (msg) {
+		fprintf(stderr, "%s failed with error %d: %s\n", operationName, lastError, msg);
+		LocalFree(msg);
+	}
+	else {
+		fprintf(stderr, "%s failed with error %d (no message available)\n", operationName, lastError);
+	}
+	fflush(stderr);
 }
 
 void CtrlBreak() {
@@ -126,6 +135,33 @@ bool hasEnding(std::string const &fullString, std::string const &ending) {
 	}
 }
 
+BOOL attachChildConsole(PROCESS_INFORMATION const &childProcessInfo) {
+	if (!FreeConsole()) {
+		ErrorMessage("FreeConsole");
+		return FALSE;
+	}
+	int attempts = 20;
+	for (int i = 0; i < attempts; i++) {
+		DWORD sleepMillis = i < 5 ? 30 : (i < 10 ? 100 : 500);
+		// sleep to let child process initialize itself
+		Sleep(sleepMillis);
+		if (WaitForSingleObject(childProcessInfo.hProcess, 0) != WAIT_TIMEOUT) {
+			// child process has been terminated, no console to attach to
+			return FALSE;
+		}
+		if (AttachConsole(childProcessInfo.dwProcessId)) {
+			return TRUE;
+		}
+		// ERROR_GEN_FAILURE means "the specified process does not exist"
+		// Seems it also means that the console hasn't been fully initialized.
+		if (GetLastError() != ERROR_GEN_FAILURE) {
+			break;
+		}
+	}
+	ErrorMessage("AttachConsole");
+	return FALSE;
+}
+
 int main(int argc, char * argv[]) {
 	if (argc < 2) {
 		PrintUsage();
@@ -195,17 +231,33 @@ int main(int argc, char * argv[]) {
 	char* c_args = new char[args.size() + 1];
 	strcpy(c_args, args.c_str());
 
-	if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE) CtrlHandler, TRUE)) {
-		ErrorMessage("SetConsoleCtrlHandler");
+	DWORD processFlag = CREATE_DEFAULT_ERROR_MODE;
+	BOOL hasConsoleWindow = GetConsoleWindow() != NULL;
+	if (hasConsoleWindow) {
+		processFlag |= CREATE_NO_WINDOW;
 	}
 
-	if (!CreateProcess(c_app, // Application name
-			c_args, // Application arguments
-			NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE, NULL, NULL, &si, &pi)) {
+	if (!CreateProcess(
+			c_app,
+			c_args,
+			NULL,
+			NULL,
+			TRUE,
+			processFlag,
+			NULL,
+			NULL,
+			&si,
+			&pi)) {
 		ErrorMessage("CreateProcess");
 		CloseHandle(newstdin);
 		CloseHandle(write_stdin);
 		exit(0);
+	}
+	if (hasConsoleWindow) {
+		attachChildConsole(pi);
+	}
+	if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE)) {
+		ErrorMessage("SetConsoleCtrlHandler");
 	}
 
 	CreateThread(NULL, 0, &scanStdinThread, &write_stdin, 0, NULL);

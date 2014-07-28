@@ -37,6 +37,7 @@
     <component>
       <implementation-class>com.intellij.codeInsight.preview.ImageOrColorPreviewManager</implementation-class>
     </component>
+
   </application-components>
 
   <project-components>
@@ -203,7 +204,8 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater</implementation-class>
+      <interface-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater</interface-class>
+      <implementation-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl</implementation-class>
     </component>
 
     <component>
@@ -225,6 +227,7 @@
       <interface-class>com.intellij.ide.GeneratedSourceFileChangeTracker</interface-class>
       <implementation-class>com.intellij.ide.GeneratedSourceFileChangeTrackerImpl</implementation-class>
     </component>
+
   </project-components>
 
   <module-components>

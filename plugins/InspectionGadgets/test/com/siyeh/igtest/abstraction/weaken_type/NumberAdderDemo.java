@@ -1,6 +1,6 @@
-package com.siyeh.igtest.abstraction.weaken_type;
+package weaken_type;
 
-import com.siyeh.igtest.abstraction.weaken_type.sub.NumberAdderExtension;
+import weaken_type.sub.NumberAdderExtension;
 
 
 public class NumberAdderDemo {

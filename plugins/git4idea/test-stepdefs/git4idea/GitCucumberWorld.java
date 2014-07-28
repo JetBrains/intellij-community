@@ -65,7 +65,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.mkdir;
-import static org.junit.Assume.assumeTrue;
 
 /**
  * <p>The container of test environment variables which should be visible from any step definition script.</p>
@@ -149,16 +148,12 @@ public class GitCucumberWorld {
     AbstractVcs vcs = vcsManager.findVcsByName("Git");
     Assert.assertEquals(1, vcsManager.getRootsUnderVcs(vcs).length);
 
-    assumeSupportedGitVersion();
+    GitTestUtil.assumeSupportedGitVersion(myVcs);
     LOG.info(getStartTestMarker());
   }
 
   private String getStartTestMarker() {
     return "Starting " + myTestName;
-  }
-
-  private static void assumeSupportedGitVersion() {
-    assumeTrue(myVcs.getVersion().isSupported());
   }
 
   // TODO should take actual feature name once we migrate to more recent cucumber lib

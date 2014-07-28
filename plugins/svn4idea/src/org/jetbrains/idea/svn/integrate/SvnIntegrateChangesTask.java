@@ -36,11 +36,11 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnChangeProvider;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.status.Status;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -267,8 +267,8 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   private void initMergeTarget() {
     final File mergeInfoHolder = myMerger.getMergeInfoHolder();
     if (mergeInfoHolder != null) {
-      final SVNStatus svnStatus = SvnUtil.getStatus(myVcs, mergeInfoHolder);
-      if ((svnStatus != null) && (SVNStatusType.STATUS_MODIFIED.equals(svnStatus.getPropertiesStatus()))) {
+      final Status svnStatus = SvnUtil.getStatus(myVcs, mergeInfoHolder);
+      if ((svnStatus != null) && (StatusType.STATUS_MODIFIED.equals(svnStatus.getPropertiesStatus()))) {
 
         myMergeTarget = FilePathImpl.create(mergeInfoHolder, mergeInfoHolder.isDirectory());
       }

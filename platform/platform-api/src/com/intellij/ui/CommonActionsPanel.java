@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -165,6 +165,9 @@ public class CommonActionsPanel extends JPanel {
 
   @Override
   public void addNotify() {
+    if (getBackground() != null && !getBackground().equals(UIUtil.getPanelBackground())) {
+      SwingUtilities.updateComponentTreeUI(this.getParent());
+    }
     final JRootPane pane = getRootPane();
     for (AnActionButton button : myActions) {
       final ShortcutSet shortcut = button.getShortcut();

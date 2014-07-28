@@ -26,6 +26,10 @@ import org.jetbrains.annotations.Nullable;
 
 public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
 
+  public RefactoringQuickListPopupAction() {
+    setInjectedContext(true);
+  }
+
   @Override
   protected void fillActions(@Nullable final Project project,
                              @NotNull final DefaultActionGroup group,
@@ -64,6 +68,7 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
               child instanceof CopyElementAction) {
             final Presentation presentation = new Presentation();
             final AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, presentation, actionManager, 0);
+            event.setInjectedContext(child.isInInjectedContext());
             child.update(event);
             if (presentation.isEnabled() && presentation.isVisible()) {
               destinationGroup.add(child);

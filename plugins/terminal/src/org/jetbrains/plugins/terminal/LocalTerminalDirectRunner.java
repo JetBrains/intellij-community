@@ -77,10 +77,14 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   private String currentProjectFolder() {
-    for (VirtualFile vf : ProjectRootManager.getInstance(myProject).getContentRoots()) {
-      return vf.getCanonicalPath();
+    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
+
+    final VirtualFile[] roots = projectRootManager.getContentRoots();
+    if (roots.length == 1) {
+      roots[0].getCanonicalPath();
     }
-    return null;
+    final VirtualFile baseDir = myProject.getBaseDir();
+    return baseDir == null ? null : baseDir.getCanonicalPath();
   }
 
   @Override

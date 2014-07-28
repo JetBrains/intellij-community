@@ -131,7 +131,7 @@ public class DuplicatesImpl {
     }
     HighlightManager.getInstance(project).removeSegmentHighlighter(editor, highlighters.get(0));
 
-    new WriteCommandAction(project, MethodDuplicatesHandler.REFACTORING_NAME) {
+    new WriteCommandAction(project, MethodDuplicatesHandler.REFACTORING_NAME, MethodDuplicatesHandler.REFACTORING_NAME) {
       @Override
       protected void run(Result result) throws Throwable {
         try {

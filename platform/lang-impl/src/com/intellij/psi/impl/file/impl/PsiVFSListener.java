@@ -443,7 +443,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
         public void run() {
           PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
 
-          boolean isExcluded = vFile.isDirectory() && myProjectRootManager.getFileIndex().isIgnored(vFile);
+          boolean isExcluded = vFile.isDirectory() && myProjectRootManager.getFileIndex().isExcluded(vFile);
           if (oldParentDir != null && !isExcluded) {
             if (newParentDir != null) {
               treeEvent.setOldParent(oldParentDir);

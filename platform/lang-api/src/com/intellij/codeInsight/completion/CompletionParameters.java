@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public final class CompletionParameters {
   private final int myInvocationCount;
 
   CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
-                                 final CompletionType completionType, int offset, final int invocationCount, @NotNull Editor editor) {
+                       @NotNull CompletionType completionType, int offset, final int invocationCount, @NotNull Editor editor) {
     assert offset >= position.getTextRange().getStartOffset();
     myPosition = position;
     assert position.isValid();
@@ -44,14 +44,17 @@ public final class CompletionParameters {
     myEditor = editor;
   }
 
+  @NotNull
   public CompletionParameters delegateToClassName() {
     return withType(CompletionType.CLASS_NAME).withInvocationCount(myInvocationCount - 1);
   }
 
-  public CompletionParameters withType(CompletionType type) {
+  @NotNull
+  public CompletionParameters withType(@NotNull CompletionType type) {
     return new CompletionParameters(myPosition, myOriginalFile, type, myOffset, myInvocationCount, myEditor);
   }
 
+  @NotNull
   public CompletionParameters withInvocationCount(int newCount) {
     return new CompletionParameters(myPosition, myOriginalFile, myCompletionType, myOffset, newCount, myEditor);
   }
@@ -94,7 +97,8 @@ public final class CompletionParameters {
     return myInvocationCount == 0;
   }
 
-  public CompletionParameters withPosition(PsiElement element, int offset) {
+  @NotNull
+  public CompletionParameters withPosition(@NotNull PsiElement element, int offset) {
     return new CompletionParameters(element, myOriginalFile, myCompletionType, offset, myInvocationCount, myEditor);
   }
 
@@ -102,6 +106,7 @@ public final class CompletionParameters {
     return myCompletionType == CompletionType.BASIC && myInvocationCount >= 2;
   }
 
+  @NotNull
   public Editor getEditor() {
     return myEditor;
   }

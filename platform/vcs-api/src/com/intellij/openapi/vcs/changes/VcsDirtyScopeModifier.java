@@ -17,7 +17,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -28,7 +28,7 @@ import java.util.Iterator;
 public interface VcsDirtyScopeModifier {
   Iterator<FilePath> getDirtyFilesIterator();
   Collection<VirtualFile> getAffectedVcsRoots();
-  @Nullable
+  @NotNull
   Iterator<FilePath> getDirtyDirectoriesIterator(VirtualFile root);
   void recheckDirtyKeys();
 }

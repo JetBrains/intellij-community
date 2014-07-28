@@ -208,7 +208,7 @@ public class EditorTestUtil {
         return visibleWidth;
       }
     });
-    applianceManager.setRepresentationHelper(new DefaultEditorTextRepresentationHelper(editor) {
+    model.setEditorTextRepresentationHelper(new DefaultEditorTextRepresentationHelper(editor) {
       @Override
       public int charWidth(char c, int fontType) {
         return charWidthInPixels;

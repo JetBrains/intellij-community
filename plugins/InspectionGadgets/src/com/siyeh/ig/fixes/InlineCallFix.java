@@ -16,52 +16,54 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
-import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.inline.InlineMethodProcessor;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class InlineCallFix extends InspectionGadgetsFix {
-      @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
+  private String myName;
+
+  public InlineCallFix(String name) {
+    myName = name;
+  }
+
+  public InlineCallFix() {
+    this(InspectionGadgetsBundle.message("inline.call.quickfix"));
+  }
+
+  @Override
+  @NotNull
+  public String getFamilyName() {
+    return myName;
+  }
 
   @Override
   @NotNull
   public String getName() {
-    return InspectionGadgetsBundle.message("inline.call.quickfix");
+    return getFamilyName();
   }
 
   @Override
   public void doFix(final Project project, ProblemDescriptor descriptor) {
     final PsiElement nameElement = descriptor.getPsiElement();
-    final PsiReferenceExpression methodExpression =
-      (PsiReferenceExpression)nameElement.getParent();
-    assert methodExpression != null;
-    final PsiMethodCallExpression methodCallExpression =
-      (PsiMethodCallExpression)methodExpression.getParent();
-    final JavaRefactoringActionHandlerFactory factory =
-      JavaRefactoringActionHandlerFactory.getInstance();
-    final RefactoringActionHandler inlineHandler = factory.createInlineHandler();
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        inlineHandler.invoke(project, new PsiElement[]{methodCallExpression}, null);
-      }
-    };
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      runnable.run();
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
-    }
+    final PsiReferenceExpression methodExpression = (PsiReferenceExpression)nameElement.getParent();
+    if (methodExpression == null) return;
+    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)methodExpression.getParent();
+    final PsiMethod method = methodCallExpression.resolveMethod();
+    if (method == null) return;
+    inline(project, methodExpression, method);
+  }
+
+  protected void inline(Project project, PsiReferenceExpression methodExpression, PsiMethod method) {
+    new InlineMethodProcessor(project, method, methodExpression, null, true,
+                              JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_METHOD,
+                              JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_METHOD).inlineMethodCall(methodExpression);
   }
 }

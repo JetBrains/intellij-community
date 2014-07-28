@@ -30,6 +30,8 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   public void testProblems2() throws Exception{ doTest(); }
   public void testNullableFieldNotnullParam() throws Exception{ doTest(); }
   public void testNotNullFieldNullableParam() throws Exception{ doTest(); }
+  public void testNotNullCustomException() throws Exception{ doTest(); }
+  public void testNotNullFieldNotInitialized() throws Exception{ doTest(); }
 
   public void testGetterSetterProblems() throws Exception{ doTest(); }
   public void testOverriddenMethods() throws Exception{
@@ -38,8 +40,8 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   }
 
   public void testHonorSuperParameterDefault() {
-    myFixture.addClass("package javax.annotation; public @interface ParametersAreNonnullByDefault {}");
-    myFixture.addClass("package javax.annotation; public @interface Nullable {}");
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
     myFixture.addFileToProject("foo/package-info.java", "@javax.annotation.ParametersAreNonnullByDefault package foo;");
 
     myFixture.addClass("import javax.annotation.*; package foo; public interface NullableFunction { void fun(@Nullable Object o); }");
@@ -49,7 +51,8 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   }
 
   public void testHonorThisParameterDefault() {
-    myFixture.addClass("package javax.annotation; public @interface ParametersAreNonnullByDefault {}");
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
     myFixture.addFileToProject("foo/package-info.java", "@javax.annotation.ParametersAreNonnullByDefault package foo;");
 
     myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".java", "foo/Classes.java"));
@@ -58,8 +61,8 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   }
 
   public void testHonorParameterDefaultInSetters() {
-    myFixture.addClass("package javax.annotation; public @interface ParametersAreNonnullByDefault {}");
-    myFixture.addClass("package javax.annotation; public @interface Nullable {}");
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
     myFixture.addFileToProject("foo/package-info.java", "@javax.annotation.ParametersAreNonnullByDefault package foo;");
 
     myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".java", "foo/Classes.java"));

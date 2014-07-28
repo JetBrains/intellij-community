@@ -16,19 +16,13 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
-import java.io.IOException;
 
 /**
  * Author: dmitrylomov
  */
-public interface AbstractStringEnumerator extends Closeable, Forceable {
-  int enumerate(@Nullable String value) throws IOException;
-
-  @Nullable
-  String valueOf(int idx) throws IOException;
+public interface AbstractStringEnumerator extends Closeable, Forceable, DataEnumerator<String> {
 
   void markCorrupted();
 }

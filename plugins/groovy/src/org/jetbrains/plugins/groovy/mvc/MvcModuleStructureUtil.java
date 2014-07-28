@@ -143,9 +143,15 @@ public class MvcModuleStructureUtil {
   }
 
   public static void removeSrcFolderFromRoots(final VirtualFile file,
-                                              List<Consumer<ContentEntry>> actions,
-                                              Map<VirtualFile, JpsModuleSourceRootType<?>> sourceRoots) {
-    if (sourceRoots.containsKey(file)) {
+                                              @NotNull List<Consumer<ContentEntry>> actions,
+                                              @NotNull Map<VirtualFile, JpsModuleSourceRootType<?>> sourceRoots) {
+    removeSrcFolderFromRoots(file, actions, sourceRoots.keySet());
+  }
+
+  public static void removeSrcFolderFromRoots(final VirtualFile file,
+                                              @NotNull List<Consumer<ContentEntry>> actions,
+                                              @NotNull Collection<VirtualFile> sourceRoots) {
+    if (sourceRoots.contains(file)) {
       actions.add(new Consumer<ContentEntry>() {
         @Override
         public void consume(ContentEntry contentEntry) {
@@ -163,7 +169,7 @@ public class MvcModuleStructureUtil {
   @Nullable
   public static Consumer<ModifiableRootModel> addJarDirectory(VirtualFile root, Module module, final String libName) {
     final VirtualFile libDir = root.findFileByRelativePath("lib");
-    if (libDir == null || !libDir.isDirectory() || ProjectRootManager.getInstance(module.getProject()).getFileIndex().isIgnored(libDir)) {
+    if (libDir == null || !libDir.isDirectory() || ProjectRootManager.getInstance(module.getProject()).getFileIndex().isExcluded(libDir)) {
       return null;
     }
 
@@ -350,16 +356,17 @@ public class MvcModuleStructureUtil {
 
   private static void removeInvalidSourceRoots(List<Consumer<ModifiableRootModel>> actions, MvcProjectStructure structure) {
     final Set<SourceFolder> toRemove = ContainerUtil.newTroveSet();
-    final Set<ContentEntry> toRemoveContent = ContainerUtil.newTroveSet();
+    final Set<String> toRemoveContent = ContainerUtil.newTroveSet();
     for (ContentEntry entry : ModuleRootManager.getInstance(structure.myModule).getContentEntries()) {
       final VirtualFile file = entry.getFile();
       if (file == null || !structure.isValidContentRoot(file)) {
-        toRemoveContent.add(entry);
+        toRemoveContent.add(entry.getUrl());
       }
-
-      for (SourceFolder folder : entry.getSourceFolders()) {
-        if (folder.getFile() == null) {
-          toRemove.add(folder);
+      else {
+        for (SourceFolder folder : entry.getSourceFolders()) {
+          if (folder.getFile() == null) {
+            toRemove.add(folder);
+          }
         }
       }
     }
@@ -368,14 +375,15 @@ public class MvcModuleStructureUtil {
       actions.add(new Consumer<ModifiableRootModel>() {
         @Override
         public void consume(ModifiableRootModel model) {
-          for (final ContentEntry entry : toRemoveContent) {
-            model.removeContentEntry(entry);
-          }
-
           for (ContentEntry entry : model.getContentEntries()) {
-            for (SourceFolder folder : entry.getSourceFolders()) {
-              if (toRemove.remove(folder)) {
-                entry.removeSourceFolder(folder);
+            if (toRemoveContent.remove(entry.getUrl())) {
+              model.removeContentEntry(entry);
+            }
+            else {
+              for (SourceFolder folder : entry.getSourceFolders()) {
+                if (toRemove.remove(folder)) {
+                  entry.removeSourceFolder(folder);
+                }
               }
             }
           }

@@ -181,7 +181,8 @@ public class EditorHyperlinkSupport {
                                                         new FilteringProcessor<RangeHighlighterEx>(new Condition<RangeHighlighterEx>() {
                                                           @Override
                                                           public boolean value(RangeHighlighterEx rangeHighlighterEx) {
-                                                            return HYPERLINK_LAYER == rangeHighlighterEx.getLayer() &&
+                                                            return rangeHighlighterEx.getEditorFilter().avaliableIn(editor) &&
+                                                                   HYPERLINK_LAYER == rangeHighlighterEx.getLayer() &&
                                                                    rangeHighlighterEx.isValid() &&
                                                                    getHyperlinkInfo(rangeHighlighterEx) != null;
                                                           }

@@ -29,8 +29,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.properties.PropertyClient;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc.*;
@@ -64,7 +65,7 @@ public class SvnMergeProvider implements MergeProvider {
         File workingFile = null;
         boolean mergeCase = false;
         SvnVcs vcs = SvnVcs.getInstance(myProject);
-        SVNInfo info = vcs.getInfo(file);
+        Info info = vcs.getInfo(file);
 
         if (info != null) {
           oldFile = info.getConflictOldFile();
@@ -142,7 +143,7 @@ public class SvnMergeProvider implements MergeProvider {
     File path = new File(file.getPath());
     try {
       // TODO: Probably false should be passed to "resolveTree", but previous logic used true implicitly
-      vcs.getFactory(path).createConflictClient().resolve(path, SVNDepth.EMPTY, false, true, true);
+      vcs.getFactory(path).createConflictClient().resolve(path, Depth.EMPTY, false, true, true);
     }
     catch (VcsException e) {
       LOG.warn(e);

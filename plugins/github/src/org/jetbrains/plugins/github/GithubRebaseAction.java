@@ -43,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubFullPath;
 import org.jetbrains.plugins.github.api.GithubRepoDetailed;
-import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.util.*;
 
 import java.io.IOException;
@@ -196,7 +195,7 @@ public class GithubRebaseAction extends DumbAwareAction {
     }
 
     try {
-      return GithubUtil.runTask(project, GithubAuthDataHolder.createFromSettings(), indicator,
+      return GithubUtil.runTask(project, GithubAuthDataHolder.createFromSettings(indicator.getModalityState()), indicator,
                                 new ThrowableConvertor<GithubAuthData, GithubRepoDetailed, IOException>() {
                                   @NotNull
                                   @Override
@@ -227,6 +226,7 @@ public class GithubRebaseAction extends DumbAwareAction {
                                           @NotNull final ProgressIndicator indicator) {
     final Git git = ServiceManager.getService(project, Git.class);
     final GitPlatformFacade facade = ServiceManager.getService(project, GitPlatformFacade.class);
+    GitUtil.workingTreeChangeStarted(project);
     GitPreservingProcess process =
       new GitPreservingProcess(project, facade, git, Collections.singletonList(gitRepository), "Rebasing", "upstream/master", indicator,
                                new Runnable() {
@@ -237,6 +237,7 @@ public class GithubRebaseAction extends DumbAwareAction {
                                }
       );
     process.execute();
+    GitUtil.workingTreeChangeFinished(project);
   }
 
   private static void doRebaseCurrentBranch(@NotNull final Project project,

@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInsight.generation;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.MethodImplementor;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -259,6 +256,11 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
       for (String annotation : each.getAnnotations(project)) {
         if (moduleScope != null && facade.findClass(annotation, moduleScope) == null) continue;
         if (AnnotationUtil.isAnnotated(overridden, annotation, false, false) && !AnnotationUtil.isAnnotated(method, annotation, false, false)) {
+          PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotation(overridden, annotation);
+          if (psiAnnotation != null && AnnotationUtil.isInferredAnnotation(psiAnnotation)) {
+            continue;
+          }
+
           AddAnnotationPsiFix.removePhysicalAnnotations(method, each.annotationsToRemove(project, annotation));
           AddAnnotationPsiFix.addPhysicalAnnotation(annotation, PsiNameValuePair.EMPTY_ARRAY, method.getModifierList());
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.testFramework.fixtures;
 
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -25,5 +26,5 @@ import java.io.IOException;
  * @author peter
  */
 public interface HeavyIdeaTestFixture extends IdeaProjectTestFixture {
-  PsiFile addFileToProject(@NonNls String rootPath, @NonNls String relativePath, @NonNls String fileText) throws IOException;
+  PsiFile addFileToProject(@NonNls @NotNull String rootPath, @NonNls @NotNull String relativePath, @NonNls @NotNull String fileText) throws IOException;
 }

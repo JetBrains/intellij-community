@@ -32,7 +32,6 @@ public class ViewsGeneralSettings implements PersistentStateComponent<Element> {
   public boolean SHOW_OBJECTID = true;
   public boolean HIDE_NULL_ARRAY_ELEMENTS = true;
   public boolean AUTOSCROLL_TO_NEW_LOCALS = true;
-  public boolean ENABLE_AUTO_EXPRESSIONS = true;
 
   public ViewsGeneralSettings() {
   }
@@ -41,22 +40,22 @@ public class ViewsGeneralSettings implements PersistentStateComponent<Element> {
     return ServiceManager.getService(ViewsGeneralSettings.class);
   }
 
+  @Override
   public void loadState(Element element) {
     try {
       DefaultJDOMExternalizer.readExternal(this, element);
     }
-    catch (InvalidDataException e) {
-      // ignore
+    catch (InvalidDataException ignored) {
     }
   }
 
+  @Override
   public Element getState() {
     Element element = new Element("ViewsGeneralSettings");
     try {
       DefaultJDOMExternalizer.writeExternal(this, element);
     }
-    catch (WriteExternalException e) {
-      // ignore
+    catch (WriteExternalException ignored) {
     }
     return element;
   }

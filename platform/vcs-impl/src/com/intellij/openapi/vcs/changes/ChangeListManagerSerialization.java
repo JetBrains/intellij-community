@@ -22,6 +22,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -60,7 +61,7 @@ class ChangeListManagerSerialization {
       readChangeList(listNode);
     }
     final List<Element> ignoredNodes = element.getChildren(NODE_IGNORED);
-    for (Element ignoredNode: ignoredNodes) {
+    for (Element ignoredNode : ignoredNodes) {
       readFileToIgnore(ignoredNode);
     }
   }
@@ -90,7 +91,6 @@ class ChangeListManagerSerialization {
     if (ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_READONLY))) {
       list.setReadOnly(true);
     }
-
   }
 
   private void readFileToIgnore(final Element ignoredNode) {
@@ -123,7 +123,10 @@ class ChangeListManagerSerialization {
 
       listNode.setAttribute(ATT_ID, list.getId());
       listNode.setAttribute(ATT_NAME, list.getName());
-      listNode.setAttribute(ATT_COMMENT, list.getComment());
+      String comment = list.getComment();
+      if (comment != null) {
+        listNode.setAttribute(ATT_COMMENT, comment);
+      }
       List<Change> changes = new ArrayList<Change>(list.getChanges());
       Collections.sort(changes, new ChangeComparator());
       for (Change change : changes) {
@@ -131,26 +134,27 @@ class ChangeListManagerSerialization {
       }
     }
     final IgnoredFileBean[] filesToIgnore = myIgnoredIdeaLevel.getFilesToIgnore();
-    for(IgnoredFileBean bean: filesToIgnore) {
-        Element fileNode = new Element(NODE_IGNORED);
-        element.addContent(fileNode);
-        String path = bean.getPath();
-        if (path != null) {
-          fileNode.setAttribute("path", path);
-        }
-        String mask = bean.getMask();
-        if (mask != null) {
-          fileNode.setAttribute("mask", mask);
-        }
+    for (IgnoredFileBean bean : filesToIgnore) {
+      Element fileNode = new Element(NODE_IGNORED);
+      element.addContent(fileNode);
+      String path = bean.getPath();
+      if (path != null) {
+        fileNode.setAttribute("path", path);
       }
+      String mask = bean.getMask();
+      if (mask != null) {
+        fileNode.setAttribute("mask", mask);
+      }
+    }
   }
 
   private static class ChangeComparator implements Comparator<Change> {
     @Override
-    public int compare(Change o1, Change o2) {
+    public int compare(@NotNull Change o1, @NotNull Change o2) {
       return Comparing.compare(o1.toString(), o2.toString());
     }
   }
+
   private static void writeChange(final Element listNode, final Change change) {
     Element changeNode = new Element(NODE_CHANGE);
     listNode.addContent(changeNode);

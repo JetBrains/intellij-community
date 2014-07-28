@@ -26,6 +26,8 @@ public class XDebuggerGeneralSettings {
   private EvaluationMode myEvaluationDialogMode = EvaluationMode.EXPRESSION;
   private boolean myUnmuteOnStop = false;
 
+  private boolean hideDebuggerOnProcessTermination;
+
   @Tag("evaluation-dialog-mode")
   public EvaluationMode getEvaluationDialogMode() {
     return myEvaluationDialogMode;
@@ -42,5 +44,13 @@ public class XDebuggerGeneralSettings {
 
   public void setUnmuteOnStop(boolean unmuteOnStop) {
     myUnmuteOnStop = unmuteOnStop;
+  }
+
+  public boolean isHideDebuggerOnProcessTermination() {
+    return hideDebuggerOnProcessTermination;
+  }
+
+  public void setHideDebuggerOnProcessTermination(boolean hideDebuggerOnProcessTermination) {
+    this.hideDebuggerOnProcessTermination = hideDebuggerOnProcessTermination;
   }
 }

@@ -19,20 +19,14 @@ import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.MockDocumentEvent;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
 
 public class EditorModificationUtil {
@@ -99,7 +93,7 @@ public class EditorModificationUtil {
     zeroWidthBlockSelectionAtCaretColumn(editor, startLine, endLine);
   }
 
-  private static void zeroWidthBlockSelectionAtCaretColumn(final Editor editor, final int startLine, final int endLine) {
+  public static void zeroWidthBlockSelectionAtCaretColumn(final Editor editor, final int startLine, final int endLine) {
     int caretColumn = editor.getCaretModel().getLogicalPosition().column;
     editor.getSelectionModel().setBlockSelection(new LogicalPosition(startLine, caretColumn), new LogicalPosition(endLine, caretColumn));
   }
@@ -181,112 +175,21 @@ public class EditorModificationUtil {
     return offset;
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.openapi.editor.CopyPasteSupport#pasteTransferable(Editor, com.intellij.util.Producer)} instead.
+   * (to remove in IDEA 15)
+   */
   @Nullable
   public static TextRange pasteTransferable(final Editor editor, @Nullable Producer<Transferable> producer) {
-    String text = getStringContent(producer);
-    if (text == null) return null;
-
-    if (editor.getCaretModel().supportsMultipleCarets()) {
-      int caretCount = editor.getCaretModel().getCaretCount();
-      if (caretCount == 1 && editor.isColumnMode()) {
-        int pastedLineCount = LineTokenizer.calcLineCount(text, true);
-        deleteSelectedText(editor);
-        Caret caret = editor.getCaretModel().getPrimaryCaret();
-        for (int i = 0; i < pastedLineCount - 1; i++) {
-          caret = caret.clone(false);
-          if (caret == null) {
-            break;
-          }
-        }
-        caretCount = editor.getCaretModel().getCaretCount();
-      }
-      final Iterator<String> segments = new ClipboardTextPerCaretSplitter().split(text, caretCount).iterator();
-      editor.getCaretModel().runForEachCaret(new CaretAction() {
-        @Override
-        public void perform(Caret caret) {
-          insertStringAtCaret(editor, segments.next(), false, true);
-        }
-      });
-      return null;
-    }
-    else {
-      int caretOffset = editor.getCaretModel().getOffset();
-      insertStringAtCaret(editor, text, false, true);
-      return new TextRange(caretOffset, caretOffset + text.length());
-    }
+    return CopyPasteSupport.pasteTransferable(editor, producer);
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.openapi.editor.CopyPasteSupport#pasteTransferableAsBlock(Editor, com.intellij.util.Producer)} instead.
+   * (to remove in IDEA 15)
+   */
   public static void pasteTransferableAsBlock(Editor editor, @Nullable Producer<Transferable> producer) {
-    String text = getStringContent(producer);
-    if (text == null) return;
-
-    int caretLine = editor.getCaretModel().getLogicalPosition().line;
-    int originalCaretLine = caretLine;
-    int selectedLinesCount = 0;
-
-    final SelectionModel selectionModel = editor.getSelectionModel();
-    if (selectionModel.hasBlockSelection()) {
-      final LogicalPosition start = selectionModel.getBlockStart();
-      final LogicalPosition end = selectionModel.getBlockEnd();
-      assert start != null;
-      assert end != null;
-      LogicalPosition caret = new LogicalPosition(Math.min(start.line, end.line), Math.min(start.column, end.column));
-      selectedLinesCount = Math.abs(end.line - start.line);
-      caretLine = caret.line;
-
-      deleteSelectedText(editor);
-      editor.getCaretModel().moveToLogicalPosition(caret);
-    }
-
-    LogicalPosition caretToRestore = editor.getCaretModel().getLogicalPosition();
-
-    String[] lines = LineTokenizer.tokenize(text.toCharArray(), false);
-    if (lines.length > 1 || selectedLinesCount == 0) {
-      int longestLineLength = 0;
-      for (int i = 0; i < lines.length; i++) {
-        String line = lines[i];
-        longestLineLength = Math.max(longestLineLength, line.length());
-        editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(caretLine + i, caretToRestore.column));
-        insertStringAtCaret(editor, line, false, true);
-      }
-      caretToRestore = new LogicalPosition(originalCaretLine, caretToRestore.column + longestLineLength);
-    }
-    else {
-      for (int i = 0; i <= selectedLinesCount; i++) {
-        editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(caretLine + i, caretToRestore.column));
-        insertStringAtCaret(editor, text, false, true);
-      }
-      caretToRestore = new LogicalPosition(originalCaretLine, caretToRestore.column + text.length());
-    }
-
-    editor.getCaretModel().moveToLogicalPosition(caretToRestore);
-    zeroWidthBlockSelectionAtCaretColumn(editor, caretLine, caretLine + selectedLinesCount);
-  }
-
-  @Nullable
-  private static String getStringContent(@Nullable Producer<Transferable> producer) {
-    Transferable content = null;
-    if (producer != null) {
-      content = producer.produce();
-    }
-    else {
-      CopyPasteManager manager = CopyPasteManager.getInstance();
-      if (manager.areDataFlavorsAvailable(DataFlavor.stringFlavor)) {
-        content = manager.getContents();
-      }
-    }
-    if (content == null) return null;
-
-    RawText raw = RawText.fromTransferable(content);
-    if (raw != null) return raw.rawText;
-
-    try {
-      return (String)content.getTransferData(DataFlavor.stringFlavor);
-    }
-    catch (UnsupportedFlavorException ignore) { }
-    catch (IOException ignore) { }
-
-    return null;
+    CopyPasteSupport.pasteTransferableAsBlock(editor, producer);
   }
 
   /**
@@ -493,41 +396,5 @@ public class EditorModificationUtil {
   public static void moveCaretRelatively(@NotNull Editor editor, final int caretShift) {
     CaretModel caretModel = editor.getCaretModel();
     caretModel.moveToOffset(caretModel.getOffset() + caretShift);
-  }
-
-  /** @deprecated use {@link #pasteTransferable(Editor, Producer)} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static TextRange pasteFromClipboard(Editor editor) {
-    return pasteTransferable(editor, null);
-  }
-
-  /** @deprecated use {@link #pasteTransferable(Editor, Producer)} (to remove in IDEA 14) */
-  @SuppressWarnings("SpellCheckingInspection,UnusedDeclaration")
-  public static TextRange pasteFromTransferrable(final Transferable content, Editor editor) {
-    return pasteTransferable(editor, new Producer<Transferable>() {
-      @Nullable
-      @Override
-      public Transferable produce() {
-        return content;
-      }
-    });
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  /** @deprecated use {@link #pasteTransferableAsBlock(Editor, Producer)} (to remove in IDEA 14) */
-  public static void pasteFromClipboardAsBlock(Editor editor) {
-    pasteTransferableAsBlock(editor, (Producer<Transferable>)null);
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  /** @deprecated use {@link #pasteTransferableAsBlock(Editor, Producer)} (to remove in IDEA 14) */
-  public static void pasteTransferableAsBlock(Editor editor, @Nullable final Transferable content) {
-    pasteTransferableAsBlock(editor, new Producer<Transferable>() {
-      @Nullable
-      @Override
-      public Transferable produce() {
-        return content;
-      }
-    });
   }
 }

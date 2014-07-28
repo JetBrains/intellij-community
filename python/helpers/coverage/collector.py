@@ -1,13 +1,24 @@
 """Raw data collector for Coverage."""
 
-import sys, threading
+import os, sys, threading
 
 try:
     # Use the C extension code when we can, for speed.
-    from coverage.tracer import Tracer
+    from coverage.tracer import CTracer         # pylint: disable=F0401,E0611
 except ImportError:
     # Couldn't import the C extension, maybe it isn't built.
-    Tracer = None
+    if os.getenv('COVERAGE_TEST_TRACER') == 'c':
+        # During testing, we use the COVERAGE_TEST_TRACER env var to indicate
+        # that we've fiddled with the environment to test this fallback code.
+        # If we thought we had a C tracer, but couldn't import it, then exit
+        # quickly and clearly instead of dribbling confusing errors. I'm using
+        # sys.exit here instead of an exception because an exception here
+        # causes all sorts of other noise in unittest.
+        sys.stderr.write(
+            "*** COVERAGE_TEST_TRACER is 'c' but can't import CTracer!\n"
+            )
+        sys.exit(1)
+    CTracer = None
 
 
 class PyTracer(object):
@@ -40,12 +51,19 @@ class PyTracer(object):
         self.last_exc_back = None
         self.last_exc_firstlineno = 0
         self.arcs = False
+        self.thread = None
+        self.stopped = False
 
     def _trace(self, frame, event, arg_unused):
         """The trace function passed to sys.settrace."""
 
-        #print("trace event: %s %r @%d" % (
-        #           event, frame.f_code.co_filename, frame.f_lineno))
+        if self.stopped:
+            return
+
+        if 0:
+            sys.stderr.write("trace event: %s %r @%d\n" % (
+                event, frame.f_code.co_filename, frame.f_lineno
+            ))
 
         if self.last_exc_back:
             if frame == self.last_exc_back:
@@ -61,10 +79,11 @@ class PyTracer(object):
             # in this file.
             self.data_stack.append((self.cur_file_data, self.last_line))
             filename = frame.f_code.co_filename
-            tracename = self.should_trace_cache.get(filename)
-            if tracename is None:
+            if filename not in self.should_trace_cache:
                 tracename = self.should_trace(filename, frame)
                 self.should_trace_cache[filename] = tracename
+            else:
+                tracename = self.should_trace_cache[filename]
             #print("called, stack is %d deep, tracename is %r" % (
             #               len(self.data_stack), tracename))
             if tracename:
@@ -105,15 +124,24 @@ class PyTracer(object):
         Return a Python function suitable for use with sys.settrace().
 
         """
+        self.thread = threading.currentThread()
         sys.settrace(self._trace)
         return self._trace
 
     def stop(self):
         """Stop this Tracer."""
+        self.stopped = True
+        if self.thread != threading.currentThread():
+            # Called on a different thread than started us: we can't unhook
+            # ourseves, but we've set the flag that we should stop, so we won't
+            # do any more tracing.
+            return
+
         if hasattr(sys, "gettrace") and self.warn:
             if sys.gettrace() != self._trace:
                 msg = "Trace function changed, measurement is likely wrong: %r"
-                self.warn(msg % sys.gettrace())
+                self.warn(msg % (sys.gettrace(),))
+        #print("Stopping tracer on %s" % threading.current_thread().ident)
         sys.settrace(None)
 
     def get_stats(self):
@@ -146,7 +174,7 @@ class Collector(object):
         """Create a collector.
 
         `should_trace` is a function, taking a filename, and returning a
-        canonicalized filename, or False depending on whether the file should
+        canonicalized filename, or None depending on whether the file should
         be traced or not.
 
         If `timid` is true, then a slower simpler trace function will be
@@ -173,7 +201,7 @@ class Collector(object):
         else:
             # Being fast: use the C Tracer if it is available, else the Python
             # trace function.
-            self._trace_class = Tracer or PyTracer
+            self._trace_class = CTracer or PyTracer
 
     def __repr__(self):
         return "<Collector at 0x%x>" % id(self)
@@ -190,7 +218,7 @@ class Collector(object):
 
         # A cache of the results from should_trace, the decision about whether
         # to trace execution in a file. A dict of filename to (filename or
-        # False).
+        # None).
         self.should_trace_cache = {}
 
         # Our active Tracers.
@@ -232,9 +260,29 @@ class Collector(object):
         if self._collectors:
             self._collectors[-1].pause()
         self._collectors.append(self)
-        #print >>sys.stderr, "Started: %r" % self._collectors
+        #print("Started: %r" % self._collectors, file=sys.stderr)
+
+        # Check to see whether we had a fullcoverage tracer installed.
+        traces0 = []
+        if hasattr(sys, "gettrace"):
+            fn0 = sys.gettrace()
+            if fn0:
+                tracer0 = getattr(fn0, '__self__', None)
+                if tracer0:
+                    traces0 = getattr(tracer0, 'traces', [])
+
         # Install the tracer on this thread.
-        self._start_tracer()
+        fn = self._start_tracer()
+
+        for args in traces0:
+            (frame, event, arg), lineno = args
+            try:
+                fn(frame, event, arg, lineno=lineno)
+            except TypeError:
+                raise Exception(
+                    "fullcoverage must be run with the C trace function."
+                )
+
         # Install our installation tracer in threading, to jump start other
         # threads.
         threading.settrace(self._installation_trace)

@@ -120,9 +120,6 @@ public class FileWatcher {
         }
       });
     }
-    else if (!isUpToDate(myExecutable)) {
-      notifyOnFailure(ApplicationBundle.message("watcher.exe.outdated"), null);
-    }
     else {
       try {
         startupProcess(false);
@@ -181,30 +178,16 @@ public class FileWatcher {
 
   @Nullable
   private static File getExecutable() {
-    String execPath = null;
+    String execPath = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
+    if (execPath != null) return new File(execPath);
 
-    final String altExecPath = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
-    if (altExecPath != null && new File(altExecPath).isFile()) {
-      execPath = FileUtil.toSystemDependentName(altExecPath);
-    }
+    String execName = getExecutableName(false);
+    if (execName == null) return null;
 
-    if (execPath == null) {
-      final String execName = getExecutableName(false);
-      if (execName == null) {
-        return null;
-      }
-      execPath = FileUtil.join(PathManager.getBinPath(), execName);
-    }
-
-    File exec = new File(execPath);
-    if (!exec.exists()) {
-      String homePath = PathManager.getHomePath();
-      if (new File(homePath, "community").exists()) {
-        homePath += File.separator + "community";
-      }
-      exec = new File(FileUtil.join(homePath, "bin", getExecutableName(true)));
-    }
-    return exec;
+    return FileUtil.findFirstThatExist(
+      FileUtil.join(PathManager.getBinPath(), execName),
+      FileUtil.join(PathManager.getHomePath(), "community", "bin", getExecutableName(true)),
+      FileUtil.join(PathManager.getBinPath(), getExecutableName(true)));
   }
 
   @Nullable
@@ -213,14 +196,6 @@ public class FileWatcher {
     else if (SystemInfo.isMac) return (withSubDir ? "mac" + File.separator : "") + "fsnotifier";
     else if (SystemInfo.isLinux) return (withSubDir ? "linux" + File.separator : "") + (SystemInfo.isAMD64 ? "fsnotifier64" : "fsnotifier");
     return null;
-  }
-
-  private static boolean isUpToDate(File executable) {
-    long length = SystemInfo.isWindows ? 71208 :
-                  SystemInfo.isMac ? 13984 :
-                  SystemInfo.isLinux ? SystemInfo.isAMD64 ? 29155 : 22791 :
-                  -1;
-    return length < 0 || length == executable.length();
   }
 
   public void notifyOnFailure(final String cause, @Nullable final NotificationListener listener) {
@@ -580,8 +555,11 @@ public class FileWatcher {
           case CREATE:
           case DELETE:
             for (String p : paths) {
+              myDirtyPaths.dirtyPaths.add(p);
               String parentPath = new File(p).getParent();
-              myDirtyPaths.dirtyPaths.add(parentPath != null ? parentPath : p);
+              if (parentPath != null) {
+                myDirtyPaths.dirtyPaths.add(parentPath);
+              }
             }
             break;
 

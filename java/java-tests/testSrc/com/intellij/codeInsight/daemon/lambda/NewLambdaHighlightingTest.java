@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,214 +31,64 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
-      new UnusedSymbolLocalInspection(),
+      new UnusedSymbolLocalInspection()
     };
   }
 
-  public void testIDEA93586() throws Exception {
-    doTest();
-  }
+  public void testIDEA93586() { doTest(); }
+  public void testIDEA113573() { doTest(); }
+  public void testIDEA112922() { doTest(); }
+  public void testIDEA113504() { doTest(); }
+  public void testAfterAbstractPipeline2() { doTest(); }
+  public void testIDEA116252() { doTest(); }
+  public void testIDEA106670() { doTest(); }
+  public void testIDEA116548() { doTest(); }
+  public void testOverloadResolutionSAM() { doTest(); }
+  public void testIntersectionTypesDuringInference() { doTest(); }
+  public void testIncludeConstraintsWhenParentMethodIsDuringCalculation() { doTest(); }
+  public void testUseCalculatedSubstitutor() { doTest(); }
+  public void testArgumentOfAnonymousClass() { doTest(); }
+  public void testEllipsis() { doTest(); }
+  public void testOuterMethodPropagation() { doTest(); }
+  public void testRecursiveCalls() { doTest(); }
+  public void testGroundTargetTypeForImplicitLambdas() { doTest(); }
+  public void testAdditionalConstraintsReduceOrder() { doTest(); }
+  public void testAdditionalConstraintSubstitution() { doTest(); }
+  public void testFunctionalInterfacesCalculation() { doTest(); }
+  public void testMissedSiteSubstitutorDuringDeepAdditionalConstraintsGathering() { doTest(); }
+  public void testIDEA120992() { doTest(); }
+  public void testTargetTypeConflictResolverShouldNotTryToEvaluateCurrentArgumentType() { doTest(); }
+  public void testIDEA119535() { doTest(); }
+  public void testIDEA119003() { doTest(); }
+  public void testIDEA117124() { doTest(); }
+  public void testWildcardParameterization() { doTest(); }
+  public void testDiamondInLambdaReturn() { doTest(); }
+  public void testIDEA118965() { doTest(); }
+  public void testIDEA121315() { doTest(); }
+  public void testIDEA118965comment() { doTest(); }
+  public void testIDEA122074() { doTest(); }
+  public void testIDEA122084() { doTest(); }
+  public void testAdditionalConstraintDependsOnNonMentionedVars() { doTest(); }
+  public void testIDEA122616() { doTest(); }
+  public void testIDEA122700() { doTest(); }
+  public void testIDEA122406() { doTest(); }
+  public void testNestedCallsInsideLambdaReturnExpression() { doTest(); }
+  public void testIDEA123731() { doTest(); }
+  public void testIDEA123869() { doTest(); }
+  public void testIDEA123848() { doTest(); }
+  public void testOnlyLambdaAtTypeParameterPlace() { doTest(); }
+  public void testLiftedIntersectionType() { doTest(); }
+  public void testInferenceFromReturnStatements() { doTest(); }
+  public void testDownUpThroughLambdaReturnStatements() { doTest(); }
+  public void testIDEA124547() { doTest(); }
+  public void testIDEA118362() { doTest(); }
+  public void testIDEA126056() { doTest(); }
+  public void testIDEA125254() { doTest(); }
+  public void testIDEA124961() { doTest(); }
+  public void testIDEA126109() { doTest(); }
+  public void testIDEA126809() { doTest(); }
 
-  public void testIDEA113573() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA112922() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA113504() throws Exception {
-    doTest();
-  }
-  
-  public void testAfterAbstractPipeline2() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA116252() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA106670() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA116548() throws Exception {
-    doTest();
-  }
-
-  public void testOverloadResolutionSAM() throws Exception {
-    doTest();
-  }
-
-  public void testIntersectionTypesDuringInference() throws Exception {
-    doTest();
-  }
-
-  public void testIncludeConstraintsWhenParentMethodIsDuringCalculation() throws Exception {
-    doTest();
-  }
-
-  public void testUseCalculatedSubstitutor() throws Exception {
-    doTest();
-  }
-
-  public void testArgumentOfAnonymousClass() throws Exception {
-    doTest();
-  }
-
-  public void testEllipsis() throws Exception {
-    doTest();
-  }
-
-  public void testOuterMethodPropagation() throws Exception {
-    doTest();
-  }
-
-  public void testRecursiveCalls() throws Exception {
-    doTest();
-  }
-
-  public void testGroundTargetTypeForImplicitLambdas() throws Exception {
-    doTest();
-  }
-
-  public void testAdditionalConstraintsReduceOrder() throws Exception {
-    doTest();
-  }
-
-  public void testAdditionalConstraintSubstitution() throws Exception {
-    doTest();
-  }
-  public void testFunctionalInterfacesCalculation() throws Exception {
-    doTest();
-  }
-
-  public void testMissedSiteSubstitutorDuringDeepAdditionalConstraintsGathering() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA120992() throws Exception {
-    doTest();
-  }
-
-  public void testTargetTypeConflictResolverShouldNotTryToEvaluateCurrentArgumentType() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA119535() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA119003() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA117124() throws Exception {
-    doTest();
-  }
-
-  public void testWildcardParameterization() throws Exception {
-    doTest();
-  }
-
-  public void testDiamondInLambdaReturn() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA118965() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA121315() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA118965comment() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA122074() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA122084() throws Exception {
-    doTest();
-  }
-
-  public void testAdditionalConstraintDependsOnNonMentionedVars() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA122616() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA122700() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA122406() throws Exception {
-    doTest();
-  }
-
-  public void testNestedCallsInsideLambdaReturnExpression() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA123731() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA123869() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA123848() throws Exception {
-    doTest();
-  }
-
-  public void testOnlyLambdaAtTypeParameterPlace() throws Exception {
-    doTest();
-  }
-
-  public void testLiftedIntersectionType() throws Exception {
-    doTest();
-  }
-
-  public void testInferenceFromReturnStatements() throws Exception {
-    doTest();
-  }
-
-  public void testDownUpThroughLambdaReturnStatements() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA124547() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA118362() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA126056() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA125254() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA124961() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA126109() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA126809() throws Exception {
+  public void testIDEA127596() throws Exception {
     doTest();
   }
 

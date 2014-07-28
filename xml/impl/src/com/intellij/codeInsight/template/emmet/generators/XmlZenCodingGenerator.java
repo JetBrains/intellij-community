@@ -19,6 +19,8 @@ import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.ZenCodingTemplate;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
@@ -109,6 +111,11 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
       prevVisibleLeaf = PsiTreeUtil.prevVisibleLeaf(prevVisibleLeaf);
     }
 
+    if (startOffset < 0 || currentOffset > documentText.length() || currentOffset < startOffset) {
+      Logger.getInstance(getClass()).error("Error while calculating emmet abbreviation. Offset: " + currentOffset + "; Start: " + startOffset, 
+                                           AttachmentFactory.createAttachment(editor.getDocument()));
+      return null;
+    }
     String key = computeKey(documentText.subSequence(startOffset, currentOffset));
     return !StringUtil.isEmpty(key) && ZenCodingTemplate.checkTemplateKey(key, callback, this) ? key : null;
   }

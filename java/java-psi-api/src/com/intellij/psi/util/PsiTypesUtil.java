@@ -181,6 +181,7 @@ public class PsiTypesUtil {
   @Nullable
   public static PsiType createJavaLangClassType(@NotNull PsiElement context, @Nullable PsiType qualifierType, boolean captureTopLevelWildcards) {
     if (qualifierType != null) {
+      PsiUtil.ensureValidType(qualifierType);
       JavaPsiFacade facade = JavaPsiFacade.getInstance(context.getProject());
       PsiClass javaLangClass = facade.findClass(CommonClassNames.JAVA_LANG_CLASS, context.getResolveScope());
       if (javaLangClass != null && javaLangClass.getTypeParameters().length == 1) {

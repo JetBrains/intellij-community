@@ -1007,6 +1007,8 @@ class ModuleRedeclarator(object):
             if self.doing_builtins and p_name == BUILTIN_MOD_NAME:
                 txt = create_generator()
                 self.classes_buf.out(0, txt)
+                txt = create_function()
+                self.classes_buf.out(0, txt)
 
                 # Fake <type 'namedtuple'>
                 if version[0] >= 3 or (version[0] == 2 and version[1] >= 6):

@@ -1,0 +1,11 @@
+<root>
+  <item name="org.apache.velocity.texen.ant.TexenTask org.apache.velocity.context.Context initControlContext()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.texen.ant.TexenTask void populateInitialContext(org.apache.velocity.context.Context) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.texen.ant.TexenTask void setOutputDirectory(java.io.File) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+</root>

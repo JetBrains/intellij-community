@@ -149,6 +149,7 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
+  @Nullable
   @Override
   public AnalysisScope getScope() {
     return myScope;
@@ -304,7 +305,9 @@ public class RefManagerImpl extends RefManager {
     if (!myDeclarationsFound) {
       long before = System.currentTimeMillis();
       final AnalysisScope scope = getScope();
-      scope.accept(myProjectIterator);
+      if (scope != null) {
+        scope.accept(myProjectIterator);
+      }
       myDeclarationsFound = true;
 
       LOG.info("Total duration of processing project usages:" + (System.currentTimeMillis() - before));

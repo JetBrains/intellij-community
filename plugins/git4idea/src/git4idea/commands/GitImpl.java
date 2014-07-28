@@ -138,7 +138,7 @@ public class GitImpl implements Git {
     return run(new Computable<GitLineHandler>() {
       @Override
       public GitLineHandler compute() {
-        GitLineHandlerPasswordRequestAware handler = new GitLineHandlerPasswordRequestAware(project, parentDirectory, GitCommand.CLONE);
+        GitLineHandler handler = new GitLineHandler(project, parentDirectory, GitCommand.CLONE);
         handler.setStdoutSuppressed(false);
         handler.setUrl(url);
         handler.addParameters("--progress");
@@ -376,8 +376,7 @@ public class GitImpl implements Git {
     return runCommand(new Computable<GitLineHandler>() {
       @Override
       public GitLineHandler compute() {
-        final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(repository.getProject(), repository.getRoot(),
-                                                                                            GitCommand.PUSH);
+        final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.PUSH);
         h.setUrl(url);
         h.setSilent(false);
         h.setStdoutSuppressed(false);
@@ -454,8 +453,7 @@ public class GitImpl implements Git {
     return runCommand(new Computable<GitLineHandler>() {
       @Override
       public GitLineHandler compute() {
-        final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(repository.getProject(), repository.getRoot(),
-                                                                                            GitCommand.FETCH);
+        final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.FETCH);
         h.setUrl(url);
         h.addParameters(remote);
         h.addParameters(params);
@@ -520,13 +518,7 @@ public class GitImpl implements Git {
       });
 
       handler.runInCurrentThread(null);
-
       authFailed = handler.hasHttpAuthFailed();
-
-      if (handler instanceof GitLineHandlerPasswordRequestAware && ((GitLineHandlerPasswordRequestAware)handler).hadAuthRequest()) {
-        errorOutput.add("Authentication failed");
-      }
-
       success = !startFailed.get() && errorOutput.isEmpty() && (handler.isIgnoredErrorCode(exitCode.get()) || exitCode.get() == 0);
     }
     while (authFailed && authAttempt++ < 2);

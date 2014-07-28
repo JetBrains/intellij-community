@@ -337,7 +337,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   public void setShowHints(boolean show) {
-    final Window ancestor = SwingUtilities.getWindowAncestor(myComponent);
+    final Window ancestor = getContentWindow(myComponent);
     if (ancestor instanceof RootPaneContainer) {
       final JRootPane rootPane = ((RootPaneContainer)ancestor).getRootPane();
       if (rootPane != null) {
@@ -610,8 +610,13 @@ public class AbstractPopup implements JBPopup {
       }
 
       if (myInStack) {
-        myFocusTrackback.setForcedRestore(!myOk && myFocusable);
-        myFocusTrackback.restoreFocus();
+        if (myFocusTrackback != null) {
+          myFocusTrackback.setForcedRestore(!myOk && myFocusable);
+          myFocusTrackback.restoreFocus();
+        }
+        else if (LOG.isDebugEnabled()) {
+          LOG.debug("cancel before show @ " + Thread.currentThread());
+        }
       }
 
 
@@ -763,7 +768,27 @@ public class AbstractPopup implements JBPopup {
       RootPaneContainer root = (RootPaneContainer)popupOwner;
       popupOwner = root.getRootPane();
     }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("expected preferred size: " + myContent.getPreferredSize());
+    }
     myPopup = factory.getPopup(popupOwner, myContent, targetBounds.x, targetBounds.y, this);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("  actual preferred size: " + myContent.getPreferredSize());
+    }
+    if ((targetBounds.width != myContent.getWidth()) || (targetBounds.height != myContent.getHeight())) {
+      // JDK uses cached heavyweight popup that is not initialized properly
+      LOG.debug("the expected size is not equal to the actual size");
+      Window popup = myPopup.getWindow();
+      if (popup != null) {
+        popup.setSize(targetBounds.width, targetBounds.height);
+        if (myContent.getParent().getComponentCount() != 1) {
+          LOG.debug("unexpected count of components in heavy-weight popup");
+        }
+      }
+      else {
+        LOG.debug("cannot fix size for non-heavy-weight popup");
+      }
+    }
 
     if (myResizable) {
       final JRootPane root = myContent.getRootPane();
@@ -805,13 +830,10 @@ public class AbstractPopup implements JBPopup {
       listener.beforeShown(new LightweightWindowEvent(this));
     }
 
-    // can be improved by moving in myPopup code
-    myPopup.getWindow().setSize(myContent.getSize());
-
     myPopup.setRequestFocus(myRequestFocus);
     myPopup.show();
 
-    final Window window = SwingUtilities.getWindowAncestor(myContent);
+    final Window window = getContentWindow(myContent);
 
     myWindow = window;
 
@@ -1191,14 +1213,17 @@ public class AbstractPopup implements JBPopup {
 
     size = computeWindowSize(size);
 
-    final Window window = SwingUtilities.getWindowAncestor(myContent);
-    window.setSize(size);
+    final Window window = getContentWindow(myContent);
+    if (window != null) {
+      window.setSize(size);
+    }
   }
 
   public void pack() {
-    final Window window = SwingUtilities.getWindowAncestor(myContent);
-
-    window.pack();
+    final Window window = getContentWindow(myContent);
+    if (window != null) {
+      window.pack();
+    }
   }
 
   public JComponent getComponent() {
@@ -1216,6 +1241,10 @@ public class AbstractPopup implements JBPopup {
       return;
     }
     myDisposed = true;
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("start disposing " + myContent);
+    }
 
     Disposer.dispose(this, false);
 
@@ -1262,6 +1291,10 @@ public class AbstractPopup implements JBPopup {
 
       IdeFocusManager.getInstance(myProject).typeAheadUntil(typeAheadDone);
       getFocusManager().doWhenFocusSettlesDown(runFinal);
+    }
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("stop disposing content");
     }
   }
 
@@ -1391,13 +1424,25 @@ public class AbstractPopup implements JBPopup {
   }
 
   public static Window moveTo(JComponent content, Point screenPoint, final Dimension headerCorrectionSize) {
-    setDefaultCursor(content);
-    final Window wnd = SwingUtilities.getWindowAncestor(content);
-    if (headerCorrectionSize != null) {
-      screenPoint.y -= headerCorrectionSize.height;
+    final Window wnd = getContentWindow(content);
+    if (wnd != null) {
+      wnd.setCursor(Cursor.getDefaultCursor());
+      if (headerCorrectionSize != null) {
+        screenPoint.y -= headerCorrectionSize.height;
+      }
+      wnd.setLocation(screenPoint);
     }
-    wnd.setLocation(screenPoint);
     return wnd;
+  }
+
+  private static Window getContentWindow(Component content) {
+    Window window = SwingUtilities.getWindowAncestor(content);
+    if (window == null) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("no window ancestor for " + content);
+      }
+    }
+    return window;
   }
 
   @Override
@@ -1440,8 +1485,8 @@ public class AbstractPopup implements JBPopup {
   @Override
   public Dimension getSize() {
     if (myPopup != null) {
-      final Window popupWindow = SwingUtilities.windowForComponent(myContent);
-      return popupWindow.getSize();
+      final Window popupWindow = getContentWindow(myContent);
+      return (popupWindow == null) ? myForcedSize : popupWindow.getSize();
     } else {
       return myForcedSize;
     }
@@ -1451,7 +1496,8 @@ public class AbstractPopup implements JBPopup {
   public void moveToFitScreen() {
     if (myPopup == null) return;
 
-    final Window popupWindow = SwingUtilities.windowForComponent(myContent);
+    final Window popupWindow = getContentWindow(myContent);
+    if (popupWindow == null) return;
     Rectangle bounds = popupWindow.getBounds();
 
     ScreenUtil.moveRectangleToFitTheScreen(bounds);
@@ -1461,7 +1507,8 @@ public class AbstractPopup implements JBPopup {
 
 
   public static Window setSize(JComponent content, final Dimension size) {
-    final Window popupWindow = SwingUtilities.windowForComponent(content);
+    final Window popupWindow = getContentWindow(content);
+    if (popupWindow == null) return null;
     Insets insets = content.getInsets();
     if (insets != null) {
       size.width += insets.left + insets.right;
@@ -1473,7 +1520,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   public static void setDefaultCursor(JComponent content) {
-    final Window wnd = SwingUtilities.getWindowAncestor(content);
+    final Window wnd = getContentWindow(content);
     if (wnd != null) {
       wnd.setCursor(Cursor.getDefaultCursor());
     }

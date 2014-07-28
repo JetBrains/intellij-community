@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,70 +15,46 @@
  */
 package git4idea.test;
 
-import com.intellij.dvcs.repo.RepositoryManager;
-import com.intellij.openapi.vcs.FilePath;
+import com.intellij.dvcs.repo.RepoStateException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitPlatformFacade;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryImpl;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+public class GitTestRepositoryManager extends GitRepositoryManager {
 
-/**
- * @author Kirill Likhodedov
- */
-public class GitTestRepositoryManager implements RepositoryManager<GitRepository> {
-  private final List<GitRepository> myRepositories = new ArrayList<GitRepository>();
+  @NotNull private final Project myProject;
+  @NotNull private final GitPlatformFacade myFacade;
 
-  public void add(GitRepository repository) {
-    myRepositories.add(repository);
-  }
-
-  @Override
-  public GitRepository getRepositoryForRoot(@Nullable VirtualFile root) {
-    for (GitRepository repository : myRepositories) {
-      if (repository.getRoot().equals(root)) {
-        return repository;
-      }
-    }
-
-    return null;
-  }
-
-  @Override
-  public GitRepository getRepositoryForFile(@NotNull VirtualFile file) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public GitRepository getRepositoryForFile(@NotNull FilePath file) {
-    throw new UnsupportedOperationException();
+  public GitTestRepositoryManager(@NotNull Project project,
+                                  @NotNull GitPlatformFacade platformFacade,
+                                  @NotNull ProjectLevelVcsManager vcsManager) {
+    super(project, platformFacade, vcsManager);
+    myProject = project;
+    myFacade = platformFacade;
   }
 
   @NotNull
   @Override
-  public List<GitRepository> getRepositories() {
-    return myRepositories;
-  }
-
-  @Override
-  public boolean moreThanOneRoot() {
-    return myRepositories.size() > 1;
-  }
-
-  @Override
-  public void updateRepository(VirtualFile root) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void updateAllRepositories() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void waitUntilInitialized() {
+  protected GitRepository createRepository(@NotNull VirtualFile root) {
+    return new GitRepositoryImpl(root, myFacade, myProject, this, false) {
+      @Override
+      public void update() {
+        try {
+          super.update();
+        }
+        catch (RepoStateException e) {
+          if (!Disposer.isDisposed(this)) { // project dir will simply be removed during dispose
+            throw e;
+          }
+        }
+      }
+    };
   }
 
 }

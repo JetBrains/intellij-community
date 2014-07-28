@@ -4,7 +4,7 @@ import os, sys, time
 import xml.dom.minidom
 
 from coverage import __url__, __version__
-from coverage.backward import sorted            # pylint: disable=W0622
+from coverage.backward import sorted, rpartition    # pylint: disable=W0622
 from coverage.report import Reporter
 
 def rate(hit, num):
@@ -15,20 +15,19 @@ def rate(hit, num):
 class XmlReporter(Reporter):
     """A reporter for writing Cobertura-style XML coverage results."""
 
-    def __init__(self, coverage, ignore_errors=False):
-        super(XmlReporter, self).__init__(coverage, ignore_errors)
+    def __init__(self, coverage, config):
+        super(XmlReporter, self).__init__(coverage, config)
 
         self.packages = None
         self.xml_out = None
         self.arcs = coverage.data.has_arcs()
 
-    def report(self, morfs, outfile=None, config=None):
+    def report(self, morfs, outfile=None):
         """Generate a Cobertura-compatible XML report for `morfs`.
 
         `morfs` is a list of modules or filenames.
 
-        `outfile` is a file object to write the XML to.  `config` is a
-        CoverageConfig instance.
+        `outfile` is a file object to write the XML to.
 
         """
         # Initial setup.
@@ -54,7 +53,7 @@ class XmlReporter(Reporter):
 
         # Call xml_file for each file in the data.
         self.packages = {}
-        self.report_files(self.xml_file, morfs, config)
+        self.report_files(self.xml_file, morfs)
 
         lnum_tot, lhits_tot = 0, 0
         bnum_tot, bhits_tot = 0, 0
@@ -85,14 +84,23 @@ class XmlReporter(Reporter):
         # Use the DOM to write the output file.
         outfile.write(self.xml_out.toprettyxml())
 
+        # Return the total percentage.
+        denom = lnum_tot + bnum_tot
+        if denom == 0:
+            pct = 0.0
+        else:
+            pct = 100.0 * (lhits_tot + bhits_tot) / denom
+        return pct
+
     def xml_file(self, cu, analysis):
         """Add to the XML report for a single file."""
 
         # Create the 'lines' and 'package' XML elements, which
         # are populated later.  Note that a package == a directory.
-        dirname, fname = os.path.split(cu.name)
-        dirname = dirname or '.'
-        package = self.packages.setdefault(dirname, [ {}, 0, 0, 0, 0 ])
+        package_name = rpartition(cu.name, ".")[0]
+        className = cu.name
+
+        package = self.packages.setdefault(package_name, [{}, 0, 0, 0, 0])
 
         xclass = self.xml_out.createElement("class")
 
@@ -100,22 +108,22 @@ class XmlReporter(Reporter):
 
         xlines = self.xml_out.createElement("lines")
         xclass.appendChild(xlines)
-        className = fname.replace('.', '_')
+
         xclass.setAttribute("name", className)
-        ext = os.path.splitext(cu.filename)[1]
-        xclass.setAttribute("filename", cu.name + ext)
+        filename = cu.file_locator.relative_filename(cu.filename)
+        xclass.setAttribute("filename", filename.replace("\\", "/"))
         xclass.setAttribute("complexity", "0")
 
         branch_stats = analysis.branch_stats()
 
         # For each statement, create an XML 'line' element.
-        for line in analysis.statements:
+        for line in sorted(analysis.statements):
             xline = self.xml_out.createElement("line")
             xline.setAttribute("number", str(line))
 
             # Q: can we get info about the number of times a statement is
             # executed?  If so, that should be recorded here.
-            xline.setAttribute("hits", str(int(not line in analysis.missing)))
+            xline.setAttribute("hits", str(int(line not in analysis.missing)))
 
             if self.arcs:
                 if line in branch_stats:
