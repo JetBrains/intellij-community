@@ -155,18 +155,19 @@ public class CheckAction extends AnAction {
                 createTestResultPopUp("Congratulations!", JBColor.GREEN, project);
                 return;
               }
+
+              final TaskFile taskFileCopy = new TaskFile();
+              final VirtualFile copyWithAnswers = getCopyWithAnswers(taskDir, openedFile, selectedTaskFile, taskFileCopy);
+              for (final Window window : taskFileCopy.getWindows()) {
+                check(project, window, copyWithAnswers, taskFileCopy, selectedTaskFile, selectedEditor.getDocument(), testRunner);
+              }
+              try {
+                copyWithAnswers.delete(this);
+              }
+              catch (IOException e) {
+                LOG.error(e);
+              }
               if (testPassed == 0) {
-                final TaskFile taskFileCopy = new TaskFile();
-                final VirtualFile copyWithAnswers = getCopyWithAnswers(taskDir, openedFile, selectedTaskFile, taskFileCopy);
-                for (final Window window : taskFileCopy.getWindows()) {
-                  check(project, window, copyWithAnswers, taskFileCopy, selectedTaskFile, selectedEditor.getDocument(), testRunner);
-                }
-                try {
-                  copyWithAnswers.delete(this);
-                }
-                catch (IOException e) {
-                  LOG.error(e);
-                }
                 String message = testRunner.getRunFailedMessage(testProcess);
                 if (message.length() != 0) {
                   Messages.showErrorDialog(project, message, "Failed to Run");
