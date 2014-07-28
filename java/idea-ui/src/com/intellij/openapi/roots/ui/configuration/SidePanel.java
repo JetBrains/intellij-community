@@ -20,7 +20,10 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.navigation.History;
@@ -172,16 +175,14 @@ public class SidePanel extends JPanel {
       protected JComponent createItemComponent() {
         myExtraPanel = new NonOpaquePanel(new BorderLayout());
         myCountLabel = new CountLabel();
-
+        final JComponent component = super.createItemComponent();
 
         if (Registry.is("ide.new.project.settings")) {
-          myTextLabel = new EngravedLabel();
-          myTextLabel.setFont(myTextLabel.getFont().deriveFont(Font.BOLD));
           myTextLabel.setForeground(Gray._240);
           myTextLabel.setOpaque(true);
-          return layoutComponent(myTextLabel);
         }
-        return super.createItemComponent();
+
+        return component;
       }
 
       @Override
