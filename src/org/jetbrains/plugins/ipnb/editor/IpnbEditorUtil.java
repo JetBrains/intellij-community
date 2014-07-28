@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
@@ -45,6 +46,7 @@ public class IpnbEditorUtil {
   public static Editor createPythonCodeEditor(@NotNull Project project, @NotNull String text) {
     EditorEx editor =
       (EditorEx)EditorFactory.getInstance().createEditor(createPythonCodeDocument(project, text), project, PythonFileType.INSTANCE, false);
+    editor.setBackgroundColor(Gray._247);
     noScrolling(editor);
     ConsoleViewUtil.setupConsoleEditor(editor, false, false);
     return editor;
@@ -54,6 +56,7 @@ public class IpnbEditorUtil {
     final EditorFactory editorFactory = EditorFactory.getInstance();
     final Document document = editorFactory.createDocument(text);
     EditorEx editor = (EditorEx)editorFactory.createEditor(document, project);
+    editor.setBackgroundColor(Gray._247);
     noScrolling(editor);
     ConsoleViewUtil.setupConsoleEditor(editor, false, false);
     return editor;

@@ -38,7 +38,6 @@ public class CodeSourcePanel extends IpnbPanel implements EditorPanel {
     else
       myEditor = IpnbEditorUtil.createPythonCodeEditor(project, source);
     final JComponent component = myEditor.getComponent();
-    component.setBackground(JBColor.lightGray);
     add(component, BorderLayout.CENTER);
     setBorder(BorderFactory.createLineBorder(JBColor.lightGray));
     Disposer.register(parent, new Disposable() {
