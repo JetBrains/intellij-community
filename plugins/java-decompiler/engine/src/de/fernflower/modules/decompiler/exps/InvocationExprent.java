@@ -76,7 +76,7 @@ public class InvocationExprent extends Exprent {
 	
 	public InvocationExprent() {}
 			
-	public InvocationExprent(int opcode, LinkConstant cn, ListStack<Exprent> stack) {
+	public InvocationExprent(int opcode, LinkConstant cn, ListStack<Exprent> stack, int dynamic_invokation_type) {
 		
 		name = cn.elementname;
 		classname = cn.classname;
@@ -99,6 +99,7 @@ public class InvocationExprent extends Exprent {
 			
 			classname = "java/lang/Class"; // dummy class name
 			invoke_dynamic_classsuffix = "##Lambda_" + cn.index1 + "_" + cn.index2;
+			
 		}
 		
 		if("<init>".equals(name)) {
@@ -114,7 +115,13 @@ public class InvocationExprent extends Exprent {
 			lstParameters.add(0, stack.pop());
 		}
 		
-		if(opcode == CodeConstants.opc_invokestatic || opcode == CodeConstants.opc_invokedynamic) {
+		if(opcode == CodeConstants.opc_invokedynamic) {
+			if(dynamic_invokation_type == CodeConstants.CONSTANT_MethodHandle_REF_invokeStatic) {
+				isStatic = true;
+			} else {
+				instance = lstParameters.get(0); // FIXME: remove the first parameter completely from the list. It's the object type for a virtual lambda method.   
+			}
+		} else if(opcode == CodeConstants.opc_invokestatic) {
 			isStatic = true;
 		} else {
 			instance = stack.pop(); 

@@ -133,6 +133,12 @@ public class NewExprent extends Exprent {
 		List<Exprent> lst = new ArrayList<Exprent>();
 		if(newtype.arraydim == 0) {
 			if(constructor != null) {
+				Exprent constructor_instance = constructor.getInstance();
+				
+				if(constructor_instance != null) { // should be true only for a lambda expression with a virtual content method  
+					lst.add(constructor_instance);
+				}
+				
 				lst.addAll(constructor.getLstParameters());
 			}
 		} else {
@@ -164,22 +170,22 @@ public class NewExprent extends Exprent {
 	
 	public String toJava(int indent) {
 		StringBuilder buf = new StringBuilder();
-		
-		if(anonymous) {
-			
-			ClassNode child = DecompilerContext.getClassprocessor().getMapRootClasses().get(newtype.value); 
+
+		if (anonymous) {
+
+			ClassNode child = DecompilerContext.getClassprocessor().getMapRootClasses().get(newtype.value);
 
 			buf.append("(");
-			
-			if(!lambda && constructor != null) {
-				
+
+			if (!lambda && constructor != null) {
+
 				InvocationExprent invsuper = child.superInvocation;
-				
-				ClassNode newnode = DecompilerContext.getClassprocessor().getMapRootClasses().get(invsuper.getClassname()); 
+
+				ClassNode newnode = DecompilerContext.getClassprocessor().getMapRootClasses().get(invsuper.getClassname());
 
 				List<VarVersionPaar> sigFields = null;
-				if(newnode != null) {  // own class
-					if(newnode.wrapper != null) {
+				if (newnode != null) { // own class
+					if (newnode.wrapper != null) {
 						sigFields = newnode.wrapper.getMethodWrapper("<init>", invsuper.getStringDescriptor()).signatureFields;
 					} else {
 						if(newnode.type == ClassNode.CLASS_MEMBER && (newnode.access & CodeConstants.ACC_STATIC) == 0 && 
@@ -191,27 +197,28 @@ public class NewExprent extends Exprent {
 				}
 
 				boolean firstpar = true;
-        int start = 0, end = invsuper.getLstParameters().size();
-        if(enumconst) {
-          start += 2; end -= 1;
-        }
-        for(int i=start;i<end;i++) {
-					if(sigFields == null || sigFields.get(i) == null) {
-						if(!firstpar) {
+				int start = 0, end = invsuper.getLstParameters().size();
+				if (enumconst) {
+					start += 2;
+					end -= 1;
+				}
+				for(int i = start; i < end; i++) {
+					if (sigFields == null || sigFields.get(i) == null) {
+						if (!firstpar) {
 							buf.append(", ");
 						}
-						
+
 						Exprent param = invsuper.getLstParameters().get(i);
-						if(param.type == Exprent.EXPRENT_VAR) {
-							int varindex = ((VarExprent)param).getIndex();
-							if(varindex > 0 && varindex <= constructor.getLstParameters().size()) {
-								param = constructor.getLstParameters().get(varindex-1);
+						if (param.type == Exprent.EXPRENT_VAR) {
+							int varindex = ((VarExprent) param).getIndex();
+							if (varindex > 0 && varindex <= constructor.getLstParameters().size()) {
+								param = constructor.getLstParameters().get(varindex - 1);
 							}
 						}
-						
+
 						StringBuilder buff = new StringBuilder();
 						ExprProcessor.getCastedExprent(param, invsuper.getDescriptor().params[i], buff, indent, true);
-						
+
 						buf.append(buff);
 						firstpar = false;
 					}
@@ -219,161 +226,162 @@ public class NewExprent extends Exprent {
 
 			}
 
-			if(!enumconst) {
+			if (!enumconst) {
 				String enclosing = null;
-				if(!lambda && constructor != null) {
+				if (!lambda && constructor != null) {
 					enclosing = getQualifiedNewInstance(child.anonimousClassType.value, constructor.getLstParameters(), indent);
 				}
-				
+
 				String typename = ExprProcessor.getCastTypeName(child.anonimousClassType);
-				
-				if(enclosing != null) {
+
+				if (enclosing != null) {
 					ClassNode anonimousNode = DecompilerContext.getClassprocessor().getMapRootClasses().get(child.anonimousClassType.value);
-					if(anonimousNode != null) {
-						typename = anonimousNode.simpleName; 
+					if (anonimousNode != null) {
+						typename = anonimousNode.simpleName;
 					} else {
-						typename = typename.substring(typename.lastIndexOf('.')+1);
+						typename = typename.substring(typename.lastIndexOf('.') + 1);
 					}
 				}
-				buf.insert(0, "new "+typename);
-				
-				if(enclosing != null) {
-					buf.insert(0, enclosing+".");
+				buf.insert(0, "new " + typename);
+
+				if (enclosing != null) {
+					buf.insert(0, enclosing + ".");
 				}
 			}
-			
+
 			buf.append(")");
 
-      if(enumconst && buf.length() == 2) {
-        buf.setLength(0);
-      }
+			if (enumconst && buf.length() == 2) {
+				buf.setLength(0);
+			}
 
 			StringWriter strwriter = new StringWriter();
 			BufferedWriter bufstrwriter = new BufferedWriter(strwriter);
-			
+
 			ClassWriter clwriter = new ClassWriter();
 			try {
-				if(lambda) {
-					clwriter.classLambdaToJava(child, bufstrwriter, indent);
+				if (lambda) {
+					clwriter.classLambdaToJava(child, bufstrwriter, (constructor == null ? null : constructor.getInstance()), indent);
 				} else {
 					clwriter.classToJava(child, bufstrwriter, indent);
 				}
 				bufstrwriter.flush();
-			} catch(IOException ex) {
+			} catch (IOException ex) {
 				throw new RuntimeException(ex);
 			}
-			
-			if(lambda && !DecompilerContext.getOption(IFernflowerPreferences.LAMBDA_TO_ANONYMOUS_CLASS)) {
-				buf.setLength(0); // remove the usual 'new <class>()', it will be replaced with lambda style '() ->'  
+
+			if (lambda && !DecompilerContext.getOption(IFernflowerPreferences.LAMBDA_TO_ANONYMOUS_CLASS)) {
+				buf.setLength(0); // remove the usual 'new <class>()', it will
+								  // be replaced with lambda style '() ->'
 			}
-			
+
 			buf.append(strwriter.toString());
-			
-		} else if(directArrayInit) {
+
+		} else if (directArrayInit) {
 			VarType leftType = newtype.copy();
 			leftType.decArrayDim();
-			
+
 			buf.append("{");
-			for(int i=0;i<lstArrayElements.size();i++) {
-				if(i>0) {
+			for(int i = 0; i < lstArrayElements.size(); i++) {
+				if (i > 0) {
 					buf.append(", ");
 				}
 				StringBuilder buff = new StringBuilder();
 				ExprProcessor.getCastedExprent(lstArrayElements.get(i), leftType, buff, indent, false);
-				
+
 				buf.append(buff);
 			}
 			buf.append("}");
 		} else {
-			if(newtype.arraydim == 0) {
-				
-				if(constructor != null) {
+			if (newtype.arraydim == 0) {
+
+				if (constructor != null) {
 
 					List<Exprent> lstParameters = constructor.getLstParameters();
-					
-					ClassNode newnode = DecompilerContext.getClassprocessor().getMapRootClasses().get(constructor.getClassname()); 
-					
+
+					ClassNode newnode = DecompilerContext.getClassprocessor().getMapRootClasses().get(constructor.getClassname());
+
 					List<VarVersionPaar> sigFields = null;
-					if(newnode != null) {  // own class
-						if(newnode.wrapper != null) {
+					if (newnode != null) { // own class
+						if (newnode.wrapper != null) {
 							sigFields = newnode.wrapper.getMethodWrapper("<init>", constructor.getStringDescriptor()).signatureFields;
 						} else {
-							if(newnode.type == ClassNode.CLASS_MEMBER && (newnode.access & CodeConstants.ACC_STATIC) == 0 &&
-										!constructor.getLstParameters().isEmpty()) { // member non-static class invoked with enclosing class instance
-								sigFields = new ArrayList<VarVersionPaar>(Collections.nCopies(lstParameters.size(), (VarVersionPaar)null));
+							if (newnode.type == ClassNode.CLASS_MEMBER && (newnode.access & CodeConstants.ACC_STATIC) == 0 && 
+									  !constructor.getLstParameters().isEmpty()) { // member non-static class invoked with enclosing class instance
+								sigFields = new ArrayList<VarVersionPaar>(Collections.nCopies(lstParameters.size(), (VarVersionPaar) null));
 								sigFields.set(0, new VarVersionPaar(-1, 0));
 							}
 						}
 					}
 
-          int start = enumconst ? 2 : 0;
-          if(!enumconst || start < lstParameters.size()) {
-            buf.append("(");
+					int start = enumconst ? 2 : 0;
+					if (!enumconst || start < lstParameters.size()) {
+						buf.append("(");
 
-            boolean firstpar = true;
-            for(int i=start;i<lstParameters.size();i++) {
-              if(sigFields == null || sigFields.get(i) == null) {
-                if(!firstpar) {
-                  buf.append(", ");
-                }
+						boolean firstpar = true;
+						for(int i = start; i < lstParameters.size(); i++) {
+							if (sigFields == null || sigFields.get(i) == null) {
+								if (!firstpar) {
+									buf.append(", ");
+								}
 
-                StringBuilder buff = new StringBuilder();
-                ExprProcessor.getCastedExprent(lstParameters.get(i), constructor.getDescriptor().params[i], buff, indent, true);
+								StringBuilder buff = new StringBuilder();
+								ExprProcessor.getCastedExprent(lstParameters.get(i), constructor.getDescriptor().params[i], buff, indent, true);
 
-                buf.append(buff);
-                firstpar = false;
-              }
-            }
-            buf.append(")");
-          }
-        }
-
-				if(!enumconst) {
-					String enclosing = null;
-					if(constructor != null) {
-						enclosing = getQualifiedNewInstance(newtype.value, constructor.getLstParameters(), indent);
-					}
-					
-					String typename = ExprProcessor.getTypeName(newtype);
-					
-					if(enclosing != null) {
-						ClassNode newNode = DecompilerContext.getClassprocessor().getMapRootClasses().get(newtype.value);
-						if(newNode != null) {
-							typename = newNode.simpleName; 
-						} else {
-							typename = typename.substring(typename.lastIndexOf('.')+1);
+								buf.append(buff);
+								firstpar = false;
+							}
 						}
-					}
-					buf.insert(0, "new "+typename);
-					
-					if(enclosing != null) {
-						buf.insert(0, enclosing+".");
+						buf.append(")");
 					}
 				}
-				
+
+				if (!enumconst) {
+					String enclosing = null;
+					if (constructor != null) {
+						enclosing = getQualifiedNewInstance(newtype.value, constructor.getLstParameters(), indent);
+					}
+
+					String typename = ExprProcessor.getTypeName(newtype);
+
+					if (enclosing != null) {
+						ClassNode newNode = DecompilerContext.getClassprocessor().getMapRootClasses().get(newtype.value);
+						if (newNode != null) {
+							typename = newNode.simpleName;
+						} else {
+							typename = typename.substring(typename.lastIndexOf('.') + 1);
+						}
+					}
+					buf.insert(0, "new " + typename);
+
+					if (enclosing != null) {
+						buf.insert(0, enclosing + ".");
+					}
+				}
+
 			} else {
 				buf.append("new ").append(ExprProcessor.getTypeName(newtype));
 
-				if(lstArrayElements.isEmpty()) {
-	 				for(int i=0;i<newtype.arraydim;i++) {
+				if (lstArrayElements.isEmpty()) {
+					for(int i = 0; i < newtype.arraydim; i++) {
 						buf.append("[").append(i < lstDims.size() ? lstDims.get(i).toJava(indent) : "").append("]");
 					}
 				} else {
-	 				for(int i=0;i<newtype.arraydim;i++) {
+					for(int i = 0; i < newtype.arraydim; i++) {
 						buf.append("[]");
 					}
-	 				
-	 				VarType leftType = newtype.copy();
-	 				leftType.decArrayDim();
-	 				
-	 				buf.append("{");
-					for(int i=0;i<lstArrayElements.size();i++) {
-						if(i>0) {
+
+					VarType leftType = newtype.copy();
+					leftType.decArrayDim();
+
+					buf.append("{");
+					for(int i = 0; i < lstArrayElements.size(); i++) {
+						if (i > 0) {
 							buf.append(", ");
 						}
 						StringBuilder buff = new StringBuilder();
 						ExprProcessor.getCastedExprent(lstArrayElements.get(i), leftType, buff, indent, false);
-						
+
 						buf.append(buff);
 					}
 					buf.append("}");

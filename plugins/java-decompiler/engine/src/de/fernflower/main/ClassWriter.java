@@ -112,7 +112,7 @@ public class ClassWriter {
 
 	}
 	
-	public void classLambdaToJava(ClassNode node, BufferedWriter writer, int indent) throws IOException {
+	public void classLambdaToJava(ClassNode node, BufferedWriter writer, Exprent method_object, int indent) throws IOException {
 
 		// get the class node with the content method
 		ClassNode node_content = node;
@@ -136,7 +136,12 @@ public class ClassWriter {
 
 		if(node.lambda_information.is_method_reference) {
 
-			writer.write(ExprProcessor.getCastTypeName(new VarType(node.lambda_information.content_class_name, false)));
+			if(!node.lambda_information.is_content_method_static && method_object != null) { // reference to a virtual method
+				writer.write(method_object.toJava(indent));
+			} else { // reference to a static method 
+				writer.write(ExprProcessor.getCastTypeName(new VarType(node.lambda_information.content_class_name, false)));
+			}
+			
     		writer.write("::");
     		writer.write(node.lambda_information.content_method_name);
     
@@ -156,7 +161,7 @@ public class ClassWriter {
     			StringBuilder buff = new StringBuilder("(");
     
     			boolean firstpar = true;
-    			int index = 1;
+    			int index = node.lambda_information.is_content_method_static ? 0 : 1;;
     			
     			int start_index = md_content.params.length - md_lambda.params.length;
     			
@@ -604,7 +609,7 @@ public class ClassWriter {
 			bufstrwriter.write("(");
 	
 			boolean firstpar = true;
-			int index = 1;
+			int index = node_lambda.lambda_information.is_content_method_static ? 0 : 1;;
 			
 			int start_index = md_content.params.length - md_lambda.params.length;
 			

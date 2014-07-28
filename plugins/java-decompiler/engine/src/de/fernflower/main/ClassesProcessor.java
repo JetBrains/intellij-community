@@ -379,8 +379,8 @@ public class ClassesProcessor {
 		
 		public LambdaInformation lambda_information;
 		
-		public ClassNode(String content_class_name, String content_method_name, String content_method_descriptor, String lambda_class_name, String lambda_method_name, 
-												String lambda_method_descriptor, StructClass classStruct) { // lambda class constructor
+		public ClassNode(String content_class_name, String content_method_name, String content_method_descriptor, int content_method_invokation_type,
+										String lambda_class_name, String lambda_method_name, String lambda_method_descriptor, StructClass classStruct) { // lambda class constructor
 			this.type = CLASS_LAMBDA;
 			this.classStruct = classStruct; // 'parent' class containing the static function 
 			
@@ -393,19 +393,22 @@ public class ClassesProcessor {
 			lambda_information.content_class_name = content_class_name;
 			lambda_information.content_method_name = content_method_name;
 			lambda_information.content_method_descriptor = content_method_descriptor;
+			lambda_information.content_method_invokation_type = content_method_invokation_type; 
+			
 			lambda_information.content_method_key = InterpreterUtil.makeUniqueKey(lambda_information.content_method_name, lambda_information.content_method_descriptor);
 
 			anonimousClassType = new VarType(lambda_class_name, true);
 			
-			if(content_class_name != classStruct.qualifiedName) { // method reference. FIXME: class name alone doesn't cover it. Synthetic flag seems to be the only 'reliable' difference.
-				lambda_information.is_method_reference = true;
-				lambda_information.is_content_method_static = true; // FIXME: consider argument flag
-			} else {
-				StructMethod mt = classStruct.getMethod(content_method_name, content_method_descriptor);
-
-				lambda_information.is_method_reference = false;
-				lambda_information.is_content_method_static = ((mt.getAccessFlags() & CodeConstants.ACC_STATIC) != 0);
+			boolean is_method_reference = (content_class_name != classStruct.qualifiedName);
+			StructMethod mt = null;
+			
+			if(!is_method_reference) { // content method in the same class, check synthetic flag
+				mt = classStruct.getMethod(content_method_name, content_method_descriptor);
+				is_method_reference = !((mt.getAccessFlags() & CodeConstants.ACC_SYNTHETIC) != 0 || mt.getAttributes().containsKey("Synthetic")); // if not synthetic -> method reference
 			}
+			
+			lambda_information.is_method_reference = is_method_reference;
+			lambda_information.is_content_method_static = (lambda_information.content_method_invokation_type == CodeConstants.CONSTANT_MethodHandle_REF_invokeStatic); // FIXME: redundant?
 		}
 		
 		public ClassNode(int type, StructClass classStruct) {
@@ -425,6 +428,9 @@ public class ClassesProcessor {
 		}
 
 		public class LambdaInformation {
+			
+			
+			
 			public String class_name;
 			public String method_name;
 			public String method_descriptor;
@@ -432,6 +438,7 @@ public class ClassesProcessor {
 			public String content_class_name;
 			public String content_method_name;
 			public String content_method_descriptor;
+			public int content_method_invokation_type; // values from CONSTANT_MethodHandle_REF_*
 			
 			public String content_method_key;
 			

@@ -175,7 +175,7 @@ public class MethodProcessorThread implements Runnable {
 		ClearStructHelper.clearStatements(root);
 		
 		ExprProcessor proc = new ExprProcessor();
-		proc.processStatement(root, cl.getPool());
+		proc.processStatement(root, cl);
 
 //		DotExporter.toDotFile(graph, new File("c:\\Temp\\fern3.dot"), true);
 //		System.out.println(graph.toString());

@@ -720,7 +720,10 @@ public class SimplifyExprentsHelper {
 				if(lambda_class != null) { // real lambda class found, replace invocation with an anonymous class
 					
 					NewExprent newexp = new NewExprent(new VarType(lambda_class_name, true), null, 0);
-					newexp.setConstructor(in);
+					newexp.setConstructor(in); 
+					// note: we don't set the instance to null with in.setInstance(null) like it is done for a common constructor invokation
+					// lambda can also be a reference to a virtual method (e.g. String x; ...(x::toString);)
+					// in this case instance will hold the corresponding object
 					
 					return newexp;
 				}

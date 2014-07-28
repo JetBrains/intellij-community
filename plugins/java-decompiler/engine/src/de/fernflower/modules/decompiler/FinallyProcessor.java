@@ -206,7 +206,7 @@ public class FinallyProcessor {
 		}
 		
 		ExprProcessor proc = new ExprProcessor();
-		proc.processStatement(root, mt.getClassStruct().getPool());
+		proc.processStatement(root, mt.getClassStruct());
 
 		SSAConstructorSparseEx ssa = new SSAConstructorSparseEx();
 		ssa.splitVariables(root, mt);

@@ -56,8 +56,8 @@ public class NestedClassProcessor {
 	
 	public void processClass(ClassNode root, ClassNode node) {
 
-		// hide lambda content methods
-		if(node.type == ClassNode.CLASS_LAMBDA) {
+		// hide synthetic lambda content methods
+		if(node.type == ClassNode.CLASS_LAMBDA && !node.lambda_information.is_method_reference) {
 			ClassNode node_content = DecompilerContext.getClassprocessor().getMapRootClasses().get(node.classStruct.qualifiedName);
 			if(node_content != null && node_content.wrapper != null) {
 				node_content.wrapper.getHideMembers().add(node.lambda_information.content_method_key);

@@ -14,22 +14,48 @@
 
 package de.fernflower.modules.decompiler;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import de.fernflower.code.CodeConstants;
 import de.fernflower.code.Instruction;
 import de.fernflower.code.InstructionSequence;
 import de.fernflower.code.cfg.BasicBlock;
 import de.fernflower.main.DecompilerContext;
-import de.fernflower.modules.decompiler.exps.*;
+import de.fernflower.modules.decompiler.exps.ArrayExprent;
+import de.fernflower.modules.decompiler.exps.AssignmentExprent;
+import de.fernflower.modules.decompiler.exps.ConstExprent;
+import de.fernflower.modules.decompiler.exps.ExitExprent;
+import de.fernflower.modules.decompiler.exps.Exprent;
+import de.fernflower.modules.decompiler.exps.FieldExprent;
+import de.fernflower.modules.decompiler.exps.FunctionExprent;
+import de.fernflower.modules.decompiler.exps.IfExprent;
+import de.fernflower.modules.decompiler.exps.InvocationExprent;
+import de.fernflower.modules.decompiler.exps.MonitorExprent;
+import de.fernflower.modules.decompiler.exps.NewExprent;
+import de.fernflower.modules.decompiler.exps.SwitchExprent;
+import de.fernflower.modules.decompiler.exps.VarExprent;
 import de.fernflower.modules.decompiler.sforms.DirectGraph;
 import de.fernflower.modules.decompiler.sforms.DirectNode;
 import de.fernflower.modules.decompiler.sforms.FlattenStatementsHelper;
 import de.fernflower.modules.decompiler.sforms.FlattenStatementsHelper.FinallyPathWrapper;
-import de.fernflower.modules.decompiler.stats.*;
+import de.fernflower.modules.decompiler.stats.BasicBlockStatement;
+import de.fernflower.modules.decompiler.stats.CatchAllStatement;
+import de.fernflower.modules.decompiler.stats.CatchStatement;
+import de.fernflower.modules.decompiler.stats.RootStatement;
+import de.fernflower.modules.decompiler.stats.Statement;
 import de.fernflower.modules.decompiler.vars.VarProcessor;
 import de.fernflower.struct.StructClass;
+import de.fernflower.struct.attr.StructBootstrapMethodsAttribute;
+import de.fernflower.struct.attr.StructGeneralAttribute;
 import de.fernflower.struct.consts.ConstantPool;
+import de.fernflower.struct.consts.LinkConstant;
+import de.fernflower.struct.consts.PooledConstant;
 import de.fernflower.struct.consts.PrimitiveConstant;
 import de.fernflower.struct.gen.MethodDescriptor;
 import de.fernflower.struct.gen.VarType;
@@ -124,7 +150,7 @@ public class ExprProcessor implements CodeConstants {
 
 	private VarProcessor varProcessor = (VarProcessor) DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR);
 
-	public void processStatement(RootStatement root, ConstantPool pool) {
+	public void processStatement(RootStatement root, StructClass cl) {
 
 		FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
 		DirectGraph dgraph = flatthelper.buildDirectGraph(root);
@@ -179,7 +205,7 @@ public class ExprProcessor implements CodeConstants {
 
 			BasicBlockStatement block = node.block;
 			if (block != null) {
-				processBlock(block, data, pool);
+				processBlock(block, data, cl);
 				block.setExprents(data.getLstExprents());
 			}
 
@@ -291,8 +317,11 @@ public class ExprProcessor implements CodeConstants {
 		}
 	}
 
-	public void processBlock(BasicBlockStatement stat, PrimitiveExprsList data, ConstantPool pool) {
+	public void processBlock(BasicBlockStatement stat, PrimitiveExprsList data, StructClass cl) {
 
+		ConstantPool pool = cl.getPool();
+		StructBootstrapMethodsAttribute bootstrap = (StructBootstrapMethodsAttribute)cl.getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_BOOTSTRAP_METHODS);
+		
 		BasicBlock block = stat.getBlock();
 
 		ExprentStack stack = data.getStack();
@@ -516,7 +545,18 @@ public class ExprProcessor implements CodeConstants {
 			case opc_invokeinterface:
 			case opc_invokedynamic:
 				if(instr.opcode != opc_invokedynamic || instr.bytecode_version >= CodeConstants.BYTECODE_JAVA_7) {
-					InvocationExprent exprinv = new InvocationExprent(instr.opcode, pool.getLinkConstant(instr.getOperand(0)), stack);
+					
+					LinkConstant invoke_constant = pool.getLinkConstant(instr.getOperand(0));
+					int dynamic_invokation_type = -1;
+					
+					if(instr.opcode == opc_invokedynamic && bootstrap != null) {
+						List<PooledConstant> bootstrap_arguments = bootstrap.getMethodArguments(invoke_constant.index1);
+						LinkConstant content_method_handle = (LinkConstant)bootstrap_arguments.get(1);
+						
+						dynamic_invokation_type = content_method_handle.index1;
+					}
+					
+					InvocationExprent exprinv = new InvocationExprent(instr.opcode, invoke_constant, stack, dynamic_invokation_type);
 					if (exprinv.getDescriptor().ret.type == CodeConstants.TYPE_VOID) {
 						exprlist.add(exprinv);
 					} else {
