@@ -146,7 +146,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final EditorComponentImpl myEditorComponent;
   @NotNull private final EditorGutterComponentImpl myGutterComponent;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(new Throwable());
-  private volatile boolean hasTabs; // optimisation flag: when editor contains no tabs it is dramatically easier to calculate positions
 
   static {
     ComplementaryFontsRegistry.getFontAbleToDisplay(' ', 0, 0, UIManager.getFont("Label.font").getFamily()); // load costly font info
@@ -317,8 +316,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   EditorImpl(@NotNull Document document, boolean viewer, @Nullable Project project) {
+    assertIsDispatchThread();
     myProject = project;
     myDocument = (DocumentEx)document;
+    if (myDocument instanceof DocumentImpl) {
+      ((DocumentImpl)myDocument).requestTabTracking();
+    }
     myScheme = createBoundColorSchemeDelegate(null);
     initTabPainter();
     myIsViewer = viewer;
@@ -548,7 +551,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       });
     }
-    updateHasTabsFlag(document.getImmutableCharSequence());
   }
 
   @NotNull
@@ -790,6 +792,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (myConnection != null) {
       myConnection.disconnect();
+    }
+    if (myDocument instanceof DocumentImpl) {
+      ((DocumentImpl)myDocument).giveUpTabTracking();
     }
     Disposer.dispose(myDisposable);
   }
@@ -1755,16 +1760,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Point caretLocation = visualPositionToXY(getCaretModel().getVisualPosition());
     int scrollOffset = caretLocation.y - myCaretUpdateVShift;
     getScrollingModel().scrollVertically(scrollOffset);
-    updateHasTabsFlag(e.getNewFragment());
   }
 
-  private void updateHasTabsFlag(@NotNull CharSequence newChars) {
-    if (!hasTabs) {
-      hasTabs = StringUtil.contains(newChars, 0, newChars.length(), '\t');
-    }
-  }
   public boolean hasTabs() {
-    return hasTabs;
+    return !(myDocument instanceof DocumentImpl) || ((DocumentImpl)myDocument).mightContainTabs();
   }
 
   public boolean isScrollToCaret() {
