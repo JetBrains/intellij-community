@@ -532,7 +532,7 @@ public abstract class ChooseByNameBase {
                 if (queue instanceof IdeEventQueue) {
                   if (!((IdeEventQueue)queue).wasRootRecentlyClicked(oppositeComponent)) {
                     Component root = SwingUtilities.getRoot(myTextField);
-                    if (root != null) {
+                    if (root != null && root.isShowing()) {
                       root.requestFocus();
                       myTextField.requestFocus();
                       return;
