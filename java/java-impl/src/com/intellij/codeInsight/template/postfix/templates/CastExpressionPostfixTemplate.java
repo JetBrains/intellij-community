@@ -20,13 +20,17 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-public class CastExpressionPostfixTemplate extends JavaPostfixTemplateWithChooser {
+import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.selectorWithChooser;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NON_VOID;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+
+public class CastExpressionPostfixTemplate extends PostfixTemplateWithExpressionSelector {
   public CastExpressionPostfixTemplate() {
-    super("cast", "((SomeType) expr)");
+    super("cast", "((SomeType) expr)", JAVA_PSI_INFO, selectorWithChooser(IS_NON_VOID));
   }
 
   @Override
-  protected void doIt(@NotNull final Editor editor, @NotNull final PsiElement expression) {
+  protected void expandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
     PostfixTemplatesUtils.surround(new JavaWithCastSurrounder(), editor, expression);
   }
 }

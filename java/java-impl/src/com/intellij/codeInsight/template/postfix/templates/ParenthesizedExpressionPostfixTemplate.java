@@ -15,21 +15,11 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.openapi.util.Condition;
-import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NotNull;
-
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NON_VOID;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
 
 public class ParenthesizedExpressionPostfixTemplate extends ParenthesizedPostfixTemplate {
   public ParenthesizedExpressionPostfixTemplate() {
-    super(JAVA_PSI_INFO);
-  }
-
-  @NotNull
-  @Override
-  protected Condition<PsiElement> getTypeCondition() {
-    return IS_NON_VOID;
+    super(JAVA_PSI_INFO, IS_NON_VOID);
   }
 }
