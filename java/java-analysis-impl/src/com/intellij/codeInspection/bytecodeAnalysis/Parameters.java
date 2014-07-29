@@ -78,8 +78,9 @@ abstract class PResults {
   };
   static final class ConditionalNPE implements PResult {
     final Set<Set<Key>> sop;
-    public ConditionalNPE(Set<Set<Key>> sop) {
+    public ConditionalNPE(Set<Set<Key>> sop) throws AnalyzerException {
       this.sop = sop;
+      checkLimit(sop);
     }
 
     public ConditionalNPE(Key key) {
@@ -88,9 +89,19 @@ abstract class PResults {
       prod.add(key);
       sop.add(prod);
     }
+
+    static void checkLimit(Set<Set<Key>> sop) throws AnalyzerException {
+      int size = 0;
+      for (Set<Key> keys : sop) {
+        size += keys.size();
+      }
+      if (size > Analysis.EQUATION_SIZE_LIMIT) {
+        throw new AnalyzerException(null, "Equation size is too big");
+      }
+    }
   }
 
-  static PResult join(PResult r1, PResult r2) {
+  static PResult join(PResult r1, PResult r2) throws AnalyzerException {
     if (Identity == r1) return r2;
     if (Identity == r2) return r1;
     if (Return == r1) return Return;
@@ -102,7 +113,7 @@ abstract class PResults {
     return new ConditionalNPE(join(cnpe1.sop, cnpe2.sop));
   }
 
-  static PResult meet(PResult r1, PResult r2) {
+  static PResult meet(PResult r1, PResult r2) throws AnalyzerException {
     if (Identity == r1) return r2;
     if (Return == r1) return r2;
     if (Return == r2) return r1;
@@ -130,7 +141,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
   }
 
   @Override
-  PResult combineResults(PResult delta, List<PResult> subResults) {
+  PResult combineResults(PResult delta, List<PResult> subResults) throws AnalyzerException {
     PResult subResult = Identity;
     for (PResult sr : subResults) {
       subResult = join(subResult, sr);

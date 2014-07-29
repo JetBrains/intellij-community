@@ -20,6 +20,7 @@ import gnu.trove.TLongHashSet;
 import gnu.trove.TLongIterator;
 import gnu.trove.TLongObjectHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
 import java.util.*;
 
@@ -138,7 +139,7 @@ class ResultUtil<Id, T extends Enum<T>> {
     top = lattice.top;
   }
 
-  Result<Id, T> join(Result<Id, T> r1, Result<Id, T> r2) {
+  Result<Id, T> join(Result<Id, T> r1, Result<Id, T> r2) throws AnalyzerException {
     if (r1 instanceof Final && ((Final) r1).value == top) {
       return r1;
     }
@@ -167,7 +168,18 @@ class ResultUtil<Id, T extends Enum<T>> {
     Set<Product<Id, T>> sum = new HashSet<Product<Id, T>>();
     sum.addAll(pending1.sum);
     sum.addAll(pending2.sum);
+    checkLimit(sum);
     return new Pending<Id, T>(sum);
+  }
+
+  private void checkLimit(Set<Product<Id, T>> sum) throws AnalyzerException {
+    int size = 0;
+    for (Product<Id, T> prod : sum) {
+      size += prod.ids.size();
+    }
+    if (size > Analysis.EQUATION_SIZE_LIMIT) {
+      throw new AnalyzerException(null, "Equation size is too big");
+    }
   }
 }
 
