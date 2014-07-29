@@ -246,6 +246,8 @@ class PyDBFrame:
             try:
                 django_stop = False
                 jinja2_stop = False
+                if info.pydev_step_cmd != CMD_STEP_OVER:
+                    info.pydev_call_inside_jinja2 = None
 
                 if info.pydev_step_cmd == CMD_STEP_INTO:
                     stop = event in ('line', 'return')
@@ -287,8 +289,14 @@ class PyDBFrame:
                         django_stop = event == 'call' and is_django_render_call(frame)
                         stop = False
                     elif is_jinja2_suspended(thread):
-                        jinja2_stop = event in ('call', 'line') and is_jinja2_render_call(frame)
                         stop = False
+                        if event in ('line', 'return') and is_jinja2_render_call(frame) and info.pydev_call_inside_jinja2 is not None:
+                            if info.pydev_call_inside_jinja2 is frame:
+                                jinja2_stop = True
+
+                        if event in ('call', 'line') and is_jinja2_render_call(frame) and info.pydev_call_inside_jinja2 is None:
+                            info.pydev_call_inside_jinja2 = frame
+
                     else:
                         if event == 'return' and info.pydev_django_resolve_frame is not None and is_django_resolve_call(frame.f_back):
                             #we return to Django suspend mode and should not stop before django rendering frame
@@ -306,7 +314,7 @@ class PyDBFrame:
 
                     #print "info.pydev_call_from_jinja2", info.pydev_call_from_jinja2, "stop", stop, "jinja_stop", jinja2_stop, \
                     #    "thread.additionalInfo.suspend_type", thread.additionalInfo.suspend_type
-                    #print "event", event, "farme.locals", frame.f_locals, "frame.f_back.f_locals", frame.f_back.f_locals
+                    #print "event", event, "info.pydev_call_inside_jinja2", info.pydev_call_inside_jinja2, "frame", frame #, "farme.locals", frame.f_locals
 
                 elif info.pydev_step_cmd == CMD_SMART_STEP_INTO:
                     stop = False

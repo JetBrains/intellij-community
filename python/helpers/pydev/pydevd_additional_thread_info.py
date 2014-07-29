@@ -20,6 +20,7 @@ class AbstractPyDBAdditionalThreadInfo:
         self.pydev_smart_step_stop = None
         self.pydev_django_resolve_frame = None
         self.pydev_call_from_jinja2 = None
+        self.pydev_call_inside_jinja2 = None
         self.is_tracing = False
 
         
