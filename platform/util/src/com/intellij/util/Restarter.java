@@ -15,8 +15,8 @@
  */
 package com.intellij.util;
 
+//import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -167,7 +167,8 @@ public class Restarter {
   }
 
   public static File createTempExecutableLauncher(File executable) throws IOException {
-    File dir = new File(System.getProperty("user.home") + File.pathSeparator + "." + ApplicationNamesInfo.getInstance().getProductName());
+    File dir = new File(System.getProperty("user.home") + File.pathSeparator + "." + "__TEST__");
+//    File dir = new File(System.getProperty("user.home") + File.pathSeparator + "." + ApplicationNamesInfo.getInstance().getProductName());
     System.out.println("pathToLauncher: " + dir.getPath());
     String ext = FileUtilRt.getExtension(executable.getName());
     File copy = FileUtilRt.createTempFile(dir, FileUtilRt.getNameWithoutExtension(executable.getName()),
