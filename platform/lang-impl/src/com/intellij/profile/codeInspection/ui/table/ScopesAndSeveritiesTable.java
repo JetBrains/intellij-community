@@ -76,8 +76,8 @@ public class ScopesAndSeveritiesTable extends JBTable {
 
     final TableColumn scopeEnabledColumn = columnModel.getColumn(SCOPE_ENABLED_COLUMN);
     scopeEnabledColumn.setMaxWidth(30);
-    scopeEnabledColumn.setCellRenderer(new ThreeStateCheckBoxRenderer());
-    scopeEnabledColumn.setCellEditor(new ThreeStateCheckBoxRenderer());
+    scopeEnabledColumn.setCellRenderer(new ThreeStateCheckBoxRenderer(false));
+    scopeEnabledColumn.setCellEditor(new ThreeStateCheckBoxRenderer(true));
 
     final TableColumn severityColumn = columnModel.getColumn(SEVERITY_COLUMN);
     severityColumn.setCellRenderer(SeverityRenderer.create(tableSettings.getInspectionProfile()));

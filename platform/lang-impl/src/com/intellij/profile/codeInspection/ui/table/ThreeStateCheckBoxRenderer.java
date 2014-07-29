@@ -39,10 +39,22 @@ public class ThreeStateCheckBoxRenderer extends ThreeStateCheckBox implements Ta
 
   private final List<CellEditorListener> myListeners = new SmartList<CellEditorListener>();
 
-  public ThreeStateCheckBoxRenderer() {
+  public ThreeStateCheckBoxRenderer(final boolean isEditor) {
     setThirdStateEnabled(false);
     setHorizontalAlignment(CENTER);
     setVerticalAlignment(CENTER);
+    if (isEditor) {
+      new ClickListener() {
+        @Override
+        public boolean onClick(@NotNull final MouseEvent event, final int clickCount) {
+          if (clickCount == 1) {
+            stopCellEditing();
+            return true;
+          }
+          return false;
+        }
+      }.installOn(this);
+    }
   }
 
   @Override
@@ -69,16 +81,6 @@ public class ThreeStateCheckBoxRenderer extends ThreeStateCheckBox implements Ta
     } else {
       setSelected((Boolean) value);
     }
-    new ClickListener() {
-      @Override
-      public boolean onClick(@NotNull final MouseEvent event, final int clickCount) {
-        if (clickCount == 1) {
-          stopCellEditing();
-          return true;
-        }
-        return false;
-      }
-    }.installOn(this);
     return this;
   }
 

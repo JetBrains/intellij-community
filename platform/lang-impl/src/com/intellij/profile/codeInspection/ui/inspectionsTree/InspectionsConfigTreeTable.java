@@ -60,8 +60,8 @@ public class InspectionsConfigTreeTable extends TreeTable {
 
     final TableColumn isEnabledColumn = getColumnModel().getColumn(IS_ENABLED_COLUMN);
     isEnabledColumn.setMaxWidth(20);
-    isEnabledColumn.setCellRenderer(new ThreeStateCheckBoxRenderer());
-    isEnabledColumn.setCellEditor(new ThreeStateCheckBoxRenderer());
+    isEnabledColumn.setCellRenderer(new ThreeStateCheckBoxRenderer(false));
+    isEnabledColumn.setCellEditor(new ThreeStateCheckBoxRenderer(true));
 
     addMouseMotionListener(new MouseAdapter() {
       @Override
