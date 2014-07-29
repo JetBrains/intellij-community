@@ -273,7 +273,11 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   public void onTestFailure(@NotNull final TestFailedEvent testFailedEvent) {
     addToInvokeLater(new Runnable() {
       public void run() {
-        final String testName = ObjectUtils.assertNotNull(testFailedEvent.getName());
+        final String testName = testFailedEvent.getName();
+        if (testName == null) {
+          logProblem("No test name specified in " + testFailedEvent);
+          return;
+        }
         final String localizedMessage = testFailedEvent.getLocalizedFailureMessage();
         final String stackTrace = testFailedEvent.getStacktrace();
         final boolean isTestError = testFailedEvent.isTestError();
