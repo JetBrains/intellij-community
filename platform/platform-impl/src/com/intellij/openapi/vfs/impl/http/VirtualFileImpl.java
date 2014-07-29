@@ -135,8 +135,7 @@ class VirtualFileImpl extends HttpVirtualFile {
 
   @Override
   public VirtualFile getParent() {
-    if (myParentPath == null) return null;
-    return myFileSystem.findFileByPath(myParentPath, true);
+    return myParentPath == null ? null : myFileSystem.findFileByPath(myParentPath, true);
   }
 
   @Override
