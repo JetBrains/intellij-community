@@ -24,6 +24,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
@@ -191,14 +192,15 @@ public class NamePathComponent extends JPanel{
   }
 
   public String getPath() {
-    return myTfPath.getText().trim().replace(File.separatorChar, '/');
+    String text = myTfPath.getText().trim();
+    return FileUtil.expandUserHome(FileUtil.toSystemIndependentName(text));
   }
 
   public void setPath(String path) {
     final boolean isPathChangedByUser = myIsPathChangedByUser;
     setPathNameSyncEnabled(false);
     try {
-      myTfPath.setText(path);
+      myTfPath.setText(FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(path)));
     }
     finally {
       myIsPathChangedByUser = isPathChangedByUser;
