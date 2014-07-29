@@ -35,9 +35,9 @@ public enum BrowserFamily implements Iconable {
   private final Icon myIcon;
 
   BrowserFamily(@NotNull String name,
-                @NotNull final String windowsPath,
-                @Nullable final String unixPath,
-                @Nullable final String macPath,
+                @NotNull String windowsPath,
+                @Nullable String unixPath,
+                @Nullable String macPath,
                 @NotNull Icon icon) {
     myName = name;
     myWindowsPath = windowsPath;
