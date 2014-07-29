@@ -28,15 +28,15 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.ui.InspectionsAggregationUtil;
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.profile.codeInspection.ui.table.ThreeStateCheckBoxRenderer;
-import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.ui.ClickListener;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ui.treeStructure.treetable.TreeTableTree;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
@@ -141,6 +141,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
   private static class InspectionsConfigTreeTableModel extends DefaultTreeModel implements TreeTableModel {
 
     private final InspectionsConfigTreeTableSettings mySettings;
+    private TreeTable myTreeTable;
 
     public InspectionsConfigTreeTableModel(final InspectionsConfigTreeTableSettings settings) {
       super(settings.getRoot());
@@ -229,10 +230,18 @@ public class InspectionsConfigTreeTable extends TreeTable {
         aNode.dropCache();
         mySettings.onChanged(aNode);
       }
+      if (myTreeTable != null) {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          public void run() {
+            ((AbstractTableModel)myTreeTable.getModel()).fireTableDataChanged();
+          }
+        });
+      }
     }
 
     @Override
     public void setTree(final JTree tree) {
+      myTreeTable = ((TreeTableTree)tree).getTreeTable();
     }
   }
 
