@@ -143,6 +143,9 @@ public class PreparedFragmentedContent {
                  fragmentedContent.getBefore(), fragmentedContent.getAfter());
         // add "artificial" empty lines
 
+        final Document document = fragmentedContent.getBefore();
+        final Document document1 = fragmentedContent.getAfter();
+
         // line starts
         BeforeAfter<Integer> lines = new BeforeAfter<Integer>(0, 0);
         for (BeforeAfter<TextRange> lineNumbers : expandedRanges) {
@@ -158,7 +161,6 @@ public class PreparedFragmentedContent {
           oldConvertor.put(lines.getBefore(), lineNumbers.getBefore().getStartOffset());
           newConvertor.put(lines.getAfter(), lineNumbers.getAfter().getStartOffset());
 
-          final Document document = fragmentedContent.getBefore();
           if (sbOld.length() > 0) {
             sbOld.append('\n');
           }
@@ -167,7 +169,6 @@ public class PreparedFragmentedContent {
           myBeforeFragments.add(beforeRange);
           sbOld.append(document.getText(beforeRange));
 
-          final Document document1 = fragmentedContent.getAfter();
           if (sbNew.length() > 0) {
             sbNew.append('\n');
           }
@@ -182,6 +183,22 @@ public class PreparedFragmentedContent {
         }
         myLineRanges.add(new BeforeAfter<Integer>(lines.getBefore() == 0 ? 0 : lines.getBefore() - 1,
                                                   lines.getAfter() == 0 ? 0 : lines.getAfter() - 1));
+
+        if (!expandedRanges.isEmpty()) {
+          BeforeAfter<TextRange> last = expandedRanges.get(expandedRanges.size() - 1);
+          if (sbOld.length() > 0) {
+            if (document.getLineEndOffset(last.getBefore().getEndOffset()) != document.getTextLength()) {
+              sbOld.append('\n');
+              oldConvertor.emptyLine(lines.getBefore());
+            }
+          }
+          if (sbNew.length() > 0) {
+            if (document1.getLineEndOffset(last.getAfter().getEndOffset()) != document1.getTextLength()) {
+              sbNew.append('\n');
+              newConvertor.emptyLine(lines.getAfter());
+            }
+          }
+        }
 
         setHighlighters(fragmentedContent.getBefore(), fragmentedContent.getAfter(), expandedRanges, fragmentedContent);
         setTodoHighlighting(fragmentedContent.getBefore(), fragmentedContent.getAfter());
