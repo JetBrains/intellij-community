@@ -255,6 +255,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testContractInferenceBewareOverriding() { doTest(); }
 
   public void testNumberComparisonsWhenValueIsKnown() { doTest(); }
+  public void testFloatComparisons() { doTest(); }
 
   public void testAccessingSameArrayElements() { doTest(); }
 
