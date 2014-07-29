@@ -122,7 +122,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
 
   @Override
   public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
-    final boolean smRunner = Registry.is("testng_sm_runner", false);
+    final boolean smRunner = Registry.is("testng_sm_runner");
     if (smRunner) {
       return startSMRunner(executor);
     }

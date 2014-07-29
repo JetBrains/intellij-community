@@ -66,7 +66,7 @@ public abstract class BlockSupport {
 
   // maximal tree depth for which incremental reparse is allowed
   // if tree is deeper then it will be replaced completely - to avoid SOEs
-  public static final int INCREMENTAL_REPARSE_DEPTH_LIMIT = Registry.intValue("psi.incremental.reparse.depth.limit", 1000);
+  public static final int INCREMENTAL_REPARSE_DEPTH_LIMIT = Registry.intValue("psi.incremental.reparse.depth.limit");
 
   public static final Key<Boolean> TREE_DEPTH_LIMIT_EXCEEDED = Key.create("TREE_IS_TOO_DEEP");
 
