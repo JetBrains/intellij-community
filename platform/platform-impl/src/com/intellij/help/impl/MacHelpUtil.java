@@ -41,7 +41,7 @@ public class MacHelpUtil {
   }
 
   static boolean isApplicable() {
-    return SystemInfo.isMac && Registry.is("ide.mac.show.native.help", false) && !PlatformUtils.isCidr() && !PlatformUtils
+    return SystemInfo.isMac && Registry.is("ide.mac.show.native.help") && !PlatformUtils.isCidr() && !PlatformUtils
       .isIdeaCommunity();
   }
 }

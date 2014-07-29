@@ -15,11 +15,9 @@
  */
 package com.intellij.profile.codeInspection.ui.table;
 
-import com.intellij.ui.ClickListener;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -28,7 +26,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.EventObject;
 import java.util.List;
 
@@ -39,10 +37,16 @@ public class ThreeStateCheckBoxRenderer extends ThreeStateCheckBox implements Ta
 
   private final List<CellEditorListener> myListeners = new SmartList<CellEditorListener>();
 
-  public ThreeStateCheckBoxRenderer() {
+  public ThreeStateCheckBoxRenderer(final boolean isEditor) {
     setThirdStateEnabled(false);
     setHorizontalAlignment(CENTER);
     setVerticalAlignment(CENTER);
+    addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        stopCellEditing();
+      }
+    });
   }
 
   @Override
@@ -69,16 +73,6 @@ public class ThreeStateCheckBoxRenderer extends ThreeStateCheckBox implements Ta
     } else {
       setSelected((Boolean) value);
     }
-    new ClickListener() {
-      @Override
-      public boolean onClick(@NotNull final MouseEvent event, final int clickCount) {
-        if (clickCount == 1) {
-          stopCellEditing();
-          return true;
-        }
-        return false;
-      }
-    }.installOn(this);
     return this;
   }
 

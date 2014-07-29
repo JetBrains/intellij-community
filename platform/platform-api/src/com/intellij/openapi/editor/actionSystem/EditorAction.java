@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.KeyEvent;
 
+import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
+
 public abstract class EditorAction extends AnAction implements DumbAware {
   private EditorActionHandler myHandler;
   private boolean myHandlersLoaded;
@@ -126,14 +128,14 @@ public abstract class EditorAction extends AnAction implements DumbAware {
   }
 
   private static DataContext getProjectAwareDataContext(final Editor editor, @NotNull final DataContext original) {
-    if (CommonDataKeys.PROJECT.getData(original) == editor.getProject()) {
-      return original;
+    if (PROJECT.getData(original) == editor.getProject()) {
+      return new DialogAwareDataContext(original);
     }
 
     return new DataContext() {
       @Override
       public Object getData(String dataId) {
-        if (CommonDataKeys.PROJECT.is(dataId)) {
+        if (PROJECT.is(dataId)) {
           return editor.getProject();
         }
         return original.getData(dataId);

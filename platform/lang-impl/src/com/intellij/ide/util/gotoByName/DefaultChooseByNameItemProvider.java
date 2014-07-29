@@ -189,6 +189,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
   @NotNull
   private static String getQualifierPattern(@NotNull ChooseByNameBase base, @NotNull String pattern) {
+    pattern = base.transformPattern(pattern);
     final String[] separators = base.getModel().getSeparators();
     int lastSeparatorOccurrence = 0;
     for (String separator : separators) {

@@ -261,10 +261,20 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   public void showJavaDocInfo(final Editor editor, @Nullable final PsiFile file, boolean requestFocus) {
-    showJavaDocInfo(editor, file, requestFocus, true);
+    showJavaDocInfo(editor, file, requestFocus, null);
   }
 
-  private void showJavaDocInfo(final Editor editor, @Nullable final PsiFile file, boolean requestFocus, final boolean autoupdate) {
+  public void showJavaDocInfo(final Editor editor,
+                              @Nullable final PsiFile file,
+                              boolean requestFocus,
+                              final Runnable closeCallback) {
+    showJavaDocInfo(editor, file, requestFocus, true, closeCallback);
+  }
+
+  private void showJavaDocInfo(final Editor editor,
+                               @Nullable final PsiFile file,
+                               boolean requestFocus,
+                               final boolean autoupdate, @Nullable final Runnable closeCallback) {
     myEditor = editor;
     final Project project = getProject(file);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -314,7 +324,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           return;
         }
         if (lookupIteObject instanceof PsiElement) {
-          doShowJavaDocInfo((PsiElement)lookupIteObject, false, this, originalElement, autoupdate);
+          doShowJavaDocInfo((PsiElement)lookupIteObject, false, this, originalElement, autoupdate, closeCallback);
           return;
         }
 
@@ -337,12 +347,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           }
         }
         else {
-          doShowJavaDocInfo(element, false, this, originalElement, autoupdate);
+          doShowJavaDocInfo(element, false, this, originalElement, autoupdate, closeCallback);
         }
       }
     };
 
-    doShowJavaDocInfo(element, requestFocus, updateProcessor, originalElement, autoupdate);
+    doShowJavaDocInfo(element, requestFocus, updateProcessor, originalElement, autoupdate, closeCallback);
   }
 
   public PsiElement findTargetElement(Editor editor, PsiFile file) {
@@ -969,7 +979,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   
   @Override
   protected void doUpdateComponent(Editor editor, PsiFile psiFile) {
-    showJavaDocInfo(editor, psiFile, false, true);
+    showJavaDocInfo(editor, psiFile, false, true, null);
   }
 
   @Override

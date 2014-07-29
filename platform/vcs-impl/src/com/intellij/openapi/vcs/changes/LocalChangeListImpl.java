@@ -146,12 +146,11 @@ public class LocalChangeListImpl extends LocalChangeList {
     createReadChangesCache();
     final Collection<Change> result = new ArrayList<Change>();
     myChangesBeforeUpdate = new OpenTHashSet<Change>(myChanges);
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     for (Change oldBoy : myChangesBeforeUpdate) {
       final ContentRevision before = oldBoy.getBeforeRevision();
       final ContentRevision after = oldBoy.getAfterRevision();
       if (scope == null || before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile())
-        || isIgnoredChange(oldBoy, vcsManager)) {
+        || isIgnoredChange(oldBoy, project)) {
         result.add(oldBoy);
         myChanges.remove(oldBoy);
         myReadChangesCache = null;
@@ -160,18 +159,21 @@ public class LocalChangeListImpl extends LocalChangeList {
     return result;
   }
 
-  private static boolean isIgnoredChange(final Change change, final ProjectLevelVcsManager vcsManager) {
-    boolean beforeRevIgnored = change.getBeforeRevision() == null || isIgnoredRevision(change.getBeforeRevision(), vcsManager);
-    boolean afterRevIgnored = change.getAfterRevision() == null || isIgnoredRevision(change.getAfterRevision(), vcsManager);
+  private static boolean isIgnoredChange(@NotNull Change change, @NotNull Project project) {
+    boolean beforeRevIgnored = change.getBeforeRevision() == null || isIgnoredRevision(change.getBeforeRevision(), project);
+    boolean afterRevIgnored = change.getAfterRevision() == null || isIgnoredRevision(change.getAfterRevision(), project);
     return beforeRevIgnored && afterRevIgnored;
   }
 
-  private static boolean isIgnoredRevision(final ContentRevision revision, final ProjectLevelVcsManager vcsManager) {
+  private static boolean isIgnoredRevision(final @NotNull ContentRevision revision, final @NotNull Project project) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
+        if (project.isDisposed()) {
+          return false;
+        }
         VirtualFile vFile = revision.getFile().getVirtualFile();
-        return vFile != null && vcsManager.isIgnoredByVcs(vFile);
+        return vFile != null && ProjectLevelVcsManager.getInstance(project).isIgnoredByVcs(vFile);
       }
     });
   }

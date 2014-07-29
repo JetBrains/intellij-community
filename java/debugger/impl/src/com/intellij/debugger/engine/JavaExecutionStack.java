@@ -26,6 +26,7 @@ import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.impl.watch.MethodsTracker;
+import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.sun.jdi.ThreadReference;
@@ -43,6 +44,7 @@ import java.util.Iterator;
 public class JavaExecutionStack extends XExecutionStack {
   private final ThreadReferenceProxyImpl myThreadProxy;
   private final DebugProcessImpl myDebugProcess;
+  private final NodeManagerImpl myNodeManager;
   private volatile JavaStackFrame myTopFrame;
   private boolean myTopFrameReady = false;
   private final MethodsTracker myTracker = new MethodsTracker();
@@ -51,6 +53,7 @@ public class JavaExecutionStack extends XExecutionStack {
     super(calcRepresentation(threadProxy), calcIcon(threadProxy, current));
     myThreadProxy = threadProxy;
     myDebugProcess = debugProcess;
+    myNodeManager = myDebugProcess.getXdebugProcess().getNodeManager();
     if (current) {
       myTopFrame = calcTopFrame();
     }
@@ -81,7 +84,7 @@ public class JavaExecutionStack extends XExecutionStack {
     try {
       StackFrameProxyImpl frame = myThreadProxy.frame(0);
       if (frame != null) {
-        return new JavaStackFrame(frame, myDebugProcess, myTracker);
+        return new JavaStackFrame(frame, myDebugProcess, myTracker, myNodeManager);
       }
     }
     catch (EvaluateException e) {
@@ -180,7 +183,7 @@ public class JavaExecutionStack extends XExecutionStack {
     @Override
     public void contextAction() throws Exception {
       if (myStackFramesIterator.hasNext()) {
-        JavaStackFrame frame = new JavaStackFrame(myStackFramesIterator.next(), myDebugProcess, myTracker);
+        JavaStackFrame frame = new JavaStackFrame(myStackFramesIterator.next(), myDebugProcess, myTracker, myNodeManager);
         if (DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES || (!frame.getDescriptor().isSynthetic() && !frame.getDescriptor().isInLibraryContent())) {
           if (++myAdded > mySkip) {
             myContainer.addStackFrames(Arrays.asList(frame), false);

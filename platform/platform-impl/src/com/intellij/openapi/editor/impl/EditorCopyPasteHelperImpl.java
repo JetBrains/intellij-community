@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.editor;
+package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.editorActions.TextBlockTransferable;
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
-import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,12 +36,11 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-public class CopyPasteSupport {
-  private static final Logger LOG = Logger.getInstance(CopyPasteSupport.class);
+public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
+  private static final Logger LOG = Logger.getInstance(EditorCopyPasteHelperImpl.class);
 
-  private CopyPasteSupport() { }
-
-  public static void copySelectionToClipboard(@NotNull Editor editor) {
+  @Override
+  public void copySelectionToClipboard(@NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<TextBlockTransferableData> extraData = new ArrayList<TextBlockTransferableData>();
     String s = editor.getCaretModel().supportsMultipleCarets() ? getSelectedTextForClipboard(editor, extraData)
@@ -73,25 +72,22 @@ public class CopyPasteSupport {
     return buf.toString();
   }
 
-
-  public static TextRange pasteFromClipboard(Editor editor) {
-    return pasteTransferable(editor, (Producer<Transferable>)null);
-  }
-
-  public static TextRange pasteTransferable(Editor editor, final Transferable content) {
-    return pasteTransferable(editor, new Producer<Transferable>() {
-      @Nullable
-      @Override
-      public Transferable produce() {
-        return content;
+  @Nullable
+  @Override
+  public TextRange[] pasteFromClipboard(@NotNull Editor editor) {
+    CopyPasteManager manager = CopyPasteManager.getInstance();
+    if (manager.areDataFlavorsAvailable(DataFlavor.stringFlavor)) {
+      Transferable clipboardContents = manager.getContents();
+      if (clipboardContents != null) {
+        return pasteTransferable(editor, clipboardContents);
       }
-    });
+    }
+    return null;
   }
 
   @Nullable
-  public static TextRange pasteTransferable(final Editor editor, @Nullable Producer<Transferable> producer) {
-    Transferable content = getTransferable(producer);
-    if (content == null) return null;
+  @Override
+  public TextRange[] pasteTransferable(final @NotNull Editor editor, @NotNull Transferable content) {
     String text = getStringContent(content);
     if (text == null) return null;
 
@@ -117,69 +113,25 @@ public class CopyPasteSupport {
       catch (Exception e) {
         LOG.error(e);
       }
+      final TextRange[] ranges = new TextRange[caretCount];
       final Iterator<String> segments = new ClipboardTextPerCaretSplitter().split(text, caretData, caretCount).iterator();
+      final int[] index = {0};
       editor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
         public void perform(Caret caret) {
-          EditorModificationUtil.insertStringAtCaret(editor, segments.next(), false, true);
+          String segment = segments.next();
+          int caretOffset = caret.getOffset();
+          ranges[index[0]++] = new TextRange(caretOffset, caretOffset + segment.length());
+          EditorModificationUtil.insertStringAtCaret(editor, segment, false, true);
         }
       });
-      return null;
+      return ranges;
     }
     else {
       int caretOffset = editor.getCaretModel().getOffset();
       EditorModificationUtil.insertStringAtCaret(editor, text, false, true);
-      return new TextRange(caretOffset, caretOffset + text.length());
+      return new TextRange[] { new TextRange(caretOffset, caretOffset + text.length())};
     }
-  }
-
-  public static void pasteTransferableAsBlock(Editor editor, @Nullable Producer<Transferable> producer) {
-    Transferable content = getTransferable(producer);
-    if (content == null) return;
-    String text = getStringContent(content);
-    if (text == null) return;
-
-    int caretLine = editor.getCaretModel().getLogicalPosition().line;
-    int originalCaretLine = caretLine;
-    int selectedLinesCount = 0;
-
-    final SelectionModel selectionModel = editor.getSelectionModel();
-    if (selectionModel.hasBlockSelection()) {
-      final LogicalPosition start = selectionModel.getBlockStart();
-      final LogicalPosition end = selectionModel.getBlockEnd();
-      assert start != null;
-      assert end != null;
-      LogicalPosition caret = new LogicalPosition(Math.min(start.line, end.line), Math.min(start.column, end.column));
-      selectedLinesCount = Math.abs(end.line - start.line);
-      caretLine = caret.line;
-
-      EditorModificationUtil.deleteSelectedText(editor);
-      editor.getCaretModel().moveToLogicalPosition(caret);
-    }
-
-    LogicalPosition caretToRestore = editor.getCaretModel().getLogicalPosition();
-
-    String[] lines = LineTokenizer.tokenize(text.toCharArray(), false);
-    if (lines.length > 1 || selectedLinesCount == 0) {
-      int longestLineLength = 0;
-      for (int i = 0; i < lines.length; i++) {
-        String line = lines[i];
-        longestLineLength = Math.max(longestLineLength, line.length());
-        editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(caretLine + i, caretToRestore.column));
-        EditorModificationUtil.insertStringAtCaret(editor, line, false, true);
-      }
-      caretToRestore = new LogicalPosition(originalCaretLine, caretToRestore.column + longestLineLength);
-    }
-    else {
-      for (int i = 0; i <= selectedLinesCount; i++) {
-        editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(caretLine + i, caretToRestore.column));
-        EditorModificationUtil.insertStringAtCaret(editor, text, false, true);
-      }
-      caretToRestore = new LogicalPosition(originalCaretLine, caretToRestore.column + text.length());
-    }
-
-    editor.getCaretModel().moveToLogicalPosition(caretToRestore);
-    EditorModificationUtil.zeroWidthBlockSelectionAtCaretColumn(editor, caretLine, caretLine + selectedLinesCount);
   }
 
   @Nullable
@@ -194,19 +146,5 @@ public class CopyPasteSupport {
     catch (IOException ignore) { }
 
     return null;
-  }
-
-  private static Transferable getTransferable(Producer<Transferable> producer) {
-    Transferable content = null;
-    if (producer != null) {
-      content = producer.produce();
-    }
-    else {
-      CopyPasteManager manager = CopyPasteManager.getInstance();
-      if (manager.areDataFlavorsAvailable(DataFlavor.stringFlavor)) {
-        content = manager.getContents();
-      }
-    }
-    return content;
   }
 }

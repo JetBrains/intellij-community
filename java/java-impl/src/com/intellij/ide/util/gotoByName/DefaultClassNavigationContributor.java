@@ -36,6 +36,8 @@ import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.regex.Matcher;
+
 public class DefaultClassNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor {
   @Override
   @NotNull
@@ -91,8 +93,15 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
                                       @NotNull final Processor<NavigationItem> processor,
                                       @NotNull final FindSymbolParameters parameters) {
     String namePattern = StringUtil.getShortName(parameters.getCompletePattern());
-    boolean innerClass = namePattern.contains("$");
-    final MinusculeMatcher innerMatcher = innerClass ? new MinusculeMatcher("*" + namePattern, NameUtil.MatchingCaseSensitivity.NONE) : null;
+    boolean hasDollar = namePattern.contains("$");
+    if (hasDollar) {
+      Matcher matcher = ChooseByNamePopup.patternToDetectAnonymousClasses.matcher(namePattern);
+      if (matcher.matches()) {
+        namePattern = matcher.group(1);
+        hasDollar = namePattern.contains("$");
+      }
+    }
+    final MinusculeMatcher innerMatcher = hasDollar ? new MinusculeMatcher("*" + namePattern, NameUtil.MatchingCaseSensitivity.NONE) : null;
     PsiShortNamesCache.getInstance(parameters.getProject()).processClassesWithName(name, new Processor<PsiClass>() {
       final boolean isAnnotation = parameters.getLocalPatternName().startsWith("@");
 

@@ -18,7 +18,5 @@ class Test {
     }
   }
 
-  private static @NotNull String createString() {
-    throw new NullPointerException();
-  }
+  private static native @NotNull String createString();
 }

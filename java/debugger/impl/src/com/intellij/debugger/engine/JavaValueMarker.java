@@ -30,8 +30,7 @@ public class JavaValueMarker extends XValueMarkerProvider<JavaValue, ObjectRefer
 
   @Override
   public boolean canMark(@NotNull JavaValue value) {
-    Value obj = value.getDescriptor().getValue();
-    return obj instanceof ObjectReference;
+    return value.getDescriptor().canMark();
   }
 
   @Override

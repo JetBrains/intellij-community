@@ -44,6 +44,11 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   }
 
   @Override
+  public void weHaveGotNonIgnorableProblems(@NotNull VirtualFile virtualFile, @NotNull List<Problem> problems) {
+    if (myDelegate != null) myDelegate.weHaveGotNonIgnorableProblems(virtualFile, problems);
+  }
+
+  @Override
   public boolean hasProblemFilesBeneath(@NotNull final Condition<VirtualFile> condition) {
     return false;
   }

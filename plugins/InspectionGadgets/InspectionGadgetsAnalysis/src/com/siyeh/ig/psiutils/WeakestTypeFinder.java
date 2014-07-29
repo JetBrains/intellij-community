@@ -132,7 +132,7 @@ public class WeakestTypeFinder {
       else if (referenceParent instanceof PsiVariable) {
         final PsiVariable variable = (PsiVariable)referenceParent;
         final PsiType type = variable.getType();
-        if (!checkType(type, weakestTypeClasses)) {
+        if (!type.isAssignableFrom(variableOrMethodType) || !checkType(type, weakestTypeClasses)) {
           return Collections.emptyList();
         }
       }
@@ -442,22 +442,23 @@ public class WeakestTypeFinder {
     }
     final PsiExpression lhs = assignmentExpression.getLExpression();
     final PsiExpression rhs = assignmentExpression.getRExpression();
+    if (rhs == null) {
+      return false;
+    }
     final PsiType lhsType = lhs.getType();
+    final PsiType rhsType = rhs.getType();
+    if (lhsType == null || rhsType == null || !lhsType.isAssignableFrom(rhsType)) {
+      return false;
+    }
     if (referenceElement.equals(rhs)) {
       if (!checkType(lhsType, weakestTypeClasses)) {
         return false;
       }
     }
-    else if (useRighthandTypeAsWeakestTypeInAssignments) {
-      if (rhs == null) {
-        return false;
-      }
-      if (!(rhs instanceof PsiNewExpression) || !(rhs instanceof PsiTypeCastExpression)) {
-        final PsiType rhsType = rhs.getType();
-        if (lhsType == null || lhsType.equals(rhsType)) {
-          return false;
-        }
-      }
+    else if (useRighthandTypeAsWeakestTypeInAssignments &&
+             (!(rhs instanceof PsiNewExpression) || !(rhs instanceof PsiTypeCastExpression)) &&
+             lhsType.equals(rhsType)) {
+      return false;
     }
     return true;
   }

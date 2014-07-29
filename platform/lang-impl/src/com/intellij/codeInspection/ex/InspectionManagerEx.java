@@ -64,6 +64,8 @@ public class InspectionManagerEx extends InspectionManagerBase {
         @NotNull
         @Override
         protected ContentManager compute() {
+          ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+          toolWindowManager.registerToolWindow(ToolWindowId.INSPECTION, true, ToolWindowAnchor.BOTTOM, project);
           return ContentFactory.SERVICE.getInstance().createContentManager(new TabbedPaneContentUI(), true, project);
         }
       };

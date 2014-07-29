@@ -19,6 +19,6 @@
    }
 
    public static void bar() throws CheckedException {
-     throw new CheckedException();
+     if (new Random().nextInt() > 2) throw new CheckedException();
    }
  }

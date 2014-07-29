@@ -217,7 +217,7 @@ public abstract class TestObject implements JavaCommandLine {
 
     myJavaParameters.getClassPath().add(JavaSdkUtil.getIdeaRtJarPath());
     myJavaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
-    if (Registry.is("junit_sm_runner", false)) {
+    if (Registry.is("junit_sm_runner")) {
       myJavaParameters.getClassPath().add(PathUtil.getJarPathForClass(ServiceMessageTypes.class));
     }
     myJavaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
@@ -273,7 +273,7 @@ public abstract class TestObject implements JavaCommandLine {
 
   @Override
   public ExecutionResult execute(final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
-    final boolean smRunner = Registry.is("junit_sm_runner", false);
+    final boolean smRunner = Registry.is("junit_sm_runner");
     if (smRunner) {
       myJavaParameters.getVMParametersList().add("-Didea.junit.sm_runner");
     }

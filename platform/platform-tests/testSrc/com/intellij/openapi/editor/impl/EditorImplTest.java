@@ -80,6 +80,15 @@ public class EditorImplTest extends AbstractEditorTest {
                       "last <caret>line");
   }
 
+  public void testInsertingFirstTab() throws Exception {
+    init(" <caret>space-indented line");
+    EditorTestUtil.configureSoftWraps(myEditor, 100);
+    myEditor.getSettings().setUseTabCharacter(true);
+
+    executeAction(IdeActions.ACTION_EDITOR_TAB);
+    checkResultByText(" \t<caret>space-indented line");
+  }
+
   private void init(String text) throws IOException {
     configureFromFileText(getTestName(false) + ".txt", text);
   }

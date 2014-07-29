@@ -73,7 +73,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
 
   @Override
   protected void collectInformationWithProgress(@NotNull final ProgressIndicator progress) {
-    if (!Registry.is("editor.injected.highlighting.enabled", true)) return;
+    if (!Registry.is("editor.injected.highlighting.enabled")) return;
 
     final Set<HighlightInfo> gotHighlights = new THashSet<HighlightInfo>(100);
 
