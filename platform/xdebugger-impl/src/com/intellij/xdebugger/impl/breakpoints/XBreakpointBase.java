@@ -62,9 +62,9 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   private final XBreakpointManagerImpl myBreakpointManager;
   private Icon myIcon;
   private CustomizedBreakpointPresentation myCustomizedPresentation;
-  private boolean myConditionEnabled;
+  private boolean myConditionEnabled = true;
   private XExpression myCondition;
-  private boolean myLogExpressionEnabled;
+  private boolean myLogExpressionEnabled = true;
   private XExpression myLogExpression;
 
   public XBreakpointBase(final XBreakpointType<Self, P> type, XBreakpointManagerImpl breakpointManager, final @Nullable P properties, final S state) {
@@ -192,7 +192,6 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Override
   public void setLogExpression(@Nullable final String expression) {
-    setLogExpressionEnabled(true);
     if (!Comparing.equal(getLogExpression(), expression)) {
       myLogExpression = XExpressionImpl.fromText(expression);
       fireBreakpointChanged();
@@ -211,7 +210,6 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Override
   public void setLogExpressionObject(@Nullable XExpression expression) {
-    setLogExpressionEnabled(true);
     if (!Comparing.equal(myLogExpression, expression)) {
       myLogExpression = expression;
       fireBreakpointChanged();
@@ -226,7 +224,6 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Override
   public void setCondition(@Nullable final String condition) {
-    setConditionEnabled(true);
     if (!Comparing.equal(condition, getCondition())) {
       myCondition = XExpressionImpl.fromText(condition);
       fireBreakpointChanged();
@@ -245,7 +242,6 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Override
   public void setConditionExpression(@Nullable XExpression condition) {
-    setConditionEnabled(true);
     if (!Comparing.equal(condition, myCondition)) {
       myCondition = condition;
       fireBreakpointChanged();
