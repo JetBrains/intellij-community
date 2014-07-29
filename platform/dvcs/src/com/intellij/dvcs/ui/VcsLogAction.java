@@ -34,7 +34,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public abstract class VcsLogSingleCommitAction<Repo extends Repository> extends DumbAwareAction {
+public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAction {
 
   protected enum Mode {
     SINGLE_COMMIT,

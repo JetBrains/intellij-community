@@ -15,7 +15,7 @@
  */
 package git4idea.actions;
 
-import com.intellij.dvcs.ui.VcsLogSingleCommitAction;
+import com.intellij.dvcs.ui.VcsLogAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public abstract class GitLogSingleCommitAction extends VcsLogSingleCommitAction<GitRepository> {
+public abstract class GitLogSingleCommitAction extends VcsLogAction<GitRepository> {
 
   @Override
   @Nullable

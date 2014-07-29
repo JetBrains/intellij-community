@@ -16,7 +16,7 @@
 
 package org.zmlx.hg4idea.action;
 
-import com.intellij.dvcs.ui.VcsLogSingleCommitAction;
+import com.intellij.dvcs.ui.VcsLogAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,7 +28,7 @@ import org.zmlx.hg4idea.repo.HgRepositoryManager;
 
 import java.util.Map;
 
-public abstract class HgLogSingleCommitAction extends VcsLogSingleCommitAction<HgRepository> {
+public abstract class HgLogSingleCommitAction extends VcsLogAction<HgRepository> {
 
   @Nullable
   @Override
