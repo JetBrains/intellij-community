@@ -25,7 +25,7 @@ import com.intellij.ui.JBColor;
 import com.jetbrains.python.sdk.PythonSdkType;
 import ru.compscicenter.edide.StudyDocumentListener;
 import ru.compscicenter.edide.StudyTaskManager;
-import ru.compscicenter.edide.StudyToolWindowFactory;
+import ru.compscicenter.edide.ui.StudyToolWindowFactory;
 import ru.compscicenter.edide.StudyUtils;
 import ru.compscicenter.edide.course.StudyStatus;
 import ru.compscicenter.edide.course.Task;
@@ -126,6 +126,9 @@ public class CheckAction extends AnAction {
           @Override
           public void run() {
             final Editor selectedEditor = StudyEditor.getSelectedEditor(project);
+            if (selectedEditor == null) {
+              return;
+            }
             final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
             final VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
             StudyTaskManager taskManager = StudyTaskManager.getInstance(selectedEditor.getProject());

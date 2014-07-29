@@ -260,6 +260,7 @@ public class StudyEditor implements FileEditor {
   }
 
 
+  //TODO:handle exceptions
   public static StudyEditor getSelectedStudyEditor(Project project) {
     FileEditor fileEditor =
       FileEditorManagerImpl.getInstanceEx(project).getSplitters().getCurrentWindow().getSelectedEditor().getSelectedEditorWithProvider()

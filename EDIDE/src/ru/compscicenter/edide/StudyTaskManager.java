@@ -17,6 +17,8 @@ import ru.compscicenter.edide.course.Course;
 import ru.compscicenter.edide.course.Lesson;
 import ru.compscicenter.edide.course.Task;
 import ru.compscicenter.edide.course.TaskFile;
+import ru.compscicenter.edide.ui.StudyCondition;
+import ru.compscicenter.edide.ui.StudyToolWindowFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -62,9 +64,11 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
   @Override
   public Element getState() {
     Element el = new Element("taskManager");
-    Element courseElement = new Element(COURSE_ELEMENT);
-    XmlSerializer.serializeInto(myCourse, courseElement);
-    el.addContent(courseElement);
+    if (myCourse != null) {
+      Element courseElement = new Element(COURSE_ELEMENT);
+      XmlSerializer.serializeInto(myCourse, courseElement);
+      el.addContent(courseElement);
+    }
     return el;
   }
 
@@ -84,16 +88,18 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            UISettings.getInstance().HIDE_TOOL_STRIPES = false;
-            UISettings.getInstance().fireUISettingsChanged();
-            final ToolWindow newWindow = ToolWindowManager.getInstance(myProject).getToolWindow("StudyToolWindow");
-            if (newWindow != null) {
-              newWindow.getContentManager().removeAllContents(false);
-              StudyToolWindowFactory factory = new StudyToolWindowFactory();
-              factory.createToolWindowContent(myProject, newWindow);
-              newWindow.setIcon(StudyIcons.ShortcutReminder);
+            if (myCourse != null) {
+              UISettings.getInstance().HIDE_TOOL_STRIPES = false;
+              UISettings.getInstance().fireUISettingsChanged();
+              final ToolWindow newWindow = ToolWindowManager.getInstance(myProject).getToolWindow("StudyToolWindow");
+              if (newWindow != null) {
+                newWindow.getContentManager().removeAllContents(false);
+                StudyToolWindowFactory factory = new StudyToolWindowFactory();
+                factory.createToolWindowContent(myProject, newWindow);
+                newWindow.setIcon(StudyIcons.ShortcutReminder);
 
-              newWindow.show(null);
+                newWindow.show(null);
+              }
             }
           }
         });
@@ -103,7 +109,11 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
 
   @Override
   public void projectClosed() {
-    ToolWindowManager.getInstance(myProject).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW).getContentManager().removeAllContents(false);
+    StudyCondition.myValue = false;
+    if (myCourse != null) {
+      ToolWindowManager.getInstance(myProject).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW).getContentManager()
+        .removeAllContents(false);
+    }
   }
 
   @Override

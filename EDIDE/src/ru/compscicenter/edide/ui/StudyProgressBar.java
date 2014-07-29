@@ -58,23 +58,25 @@ public class StudyProgressBar extends JComponent {
     }
 
     Dimension size = getSize();
-
+    double width = size.getWidth() - 2*myIndent;
     g2.setPaint(UIUtil.getListBackground());
-    Rectangle2D rect = new Rectangle2D.Double(0, 0, size.width - 4, myHeight - 4);
+    Rectangle2D rect = new Rectangle2D.Double(myIndent, 0, width, myHeight);
     g2.fill(rect);
 
     g2.setPaint(new JBColor(SHADOW1, UIUtil.getBorderColor()));
-    rect.setRect(0, 0, size.width - 2, myHeight - 2);
-    g2.drawRoundRect(0, 0, size.width - 2, myHeight - 2, 5, 5);
+    rect.setRect(myIndent, 0, width, myHeight);
+    int arcWidth = 5;
+    int arcHeight = 5;
+    g2.drawRoundRect(myIndent, 0, (int)width, myHeight, arcWidth, arcHeight);
     g2.setPaint(SHADOW2);
-    g2.drawRoundRect(0, 0, size.width - 2, myHeight - 2, 5, 5);
+    g2.drawRoundRect(myIndent, 0, (int)width, myHeight, arcWidth, arcHeight);
 
     int y_center = myHeight / 2;
     int y_steps = myHeight / 2 - 3;
     int alpha_step = y_steps > 0 ? (255 - 70) / y_steps : 255 - 70;
     int x_offset = 4;
 
-    g.setClip(4, 3, size.width - 8, myHeight - 6);
+    g.setClip(4 + myIndent, 3, (int)width - 6, myHeight - 4);
 
     int bricksToDraw = myFraction == 0 ? 0 : getBricksToDraw(myFraction);
     for (int i = 0; i < bricksToDraw; i++) {

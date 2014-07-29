@@ -14,13 +14,12 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowManager;
 import ru.compscicenter.edide.StudyDocumentListener;
+import ru.compscicenter.edide.ui.StudyToolWindowFactory;
+import ru.compscicenter.edide.course.*;
 import ru.compscicenter.edide.editor.StudyEditor;
 import ru.compscicenter.edide.StudyTaskManager;
-import ru.compscicenter.edide.course.Lesson;
-import ru.compscicenter.edide.course.Task;
-import ru.compscicenter.edide.course.TaskFile;
-import ru.compscicenter.edide.course.Window;
 
 import java.io.*;
 
@@ -72,6 +71,18 @@ public class RefreshTaskAction extends AnAction {
                       patternText.delete(patternLength - 1, patternLength);
                     }
                     document.setText(patternText);
+                    StudyStatus oldStatus = currentTask.getStatus();
+                    LessonInfo lessonInfo = currentTask.getLesson().getLessonInfo();
+                    if (oldStatus == StudyStatus.Failed) {
+                      lessonInfo.setTaskFailed(lessonInfo.getTaskFailed() - 1);
+                    }
+                    if (oldStatus == StudyStatus.Solved) {
+                      lessonInfo.setTaskSolved(lessonInfo.getTaskSolved() - 1);
+                    }
+                    lessonInfo.setTaskUnchecked(lessonInfo.getTaskUnchecked() + 1);
+                    ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW).getContentManager().removeAllContents(false);
+                    StudyToolWindowFactory factory =  new StudyToolWindowFactory();
+                    factory.createToolWindowContent(project, ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW));
                     for (Window window : selectedTaskFile.getWindows()) {
                       window.reset();
                     }

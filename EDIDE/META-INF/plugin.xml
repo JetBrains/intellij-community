@@ -39,7 +39,6 @@
   <actions>
     <action id="CheckAction" class="ru.compscicenter.edide.actions.CheckAction" text="check"
             description="Runs tests for current tasks" icon="/icons/icon.jpg">
-      <add-to-group group-id="MainToolBar" anchor="last"/>
       <keyboard-shortcut first-keystroke="shift C" keymap="$default"/>
     </action>
     <action id="PrevWindowAction" class="ru.compscicenter.edide.actions.PrevWindowAction" text="PrevWindowAction" description="prev"
@@ -68,8 +67,8 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <toolWindow id="StudyToolWindow" anchor="right" factoryClass="ru.compscicenter.edide.StudyToolWindowFactory"
-        icon="/icons/showHint.png"/>
+    <toolWindow id="StudyToolWindow" anchor="right" factoryClass="ru.compscicenter.edide.ui.StudyToolWindowFactory"
+        icon="/icons/showHint.png" conditionClass="ru.compscicenter.edide.ui.StudyCondition"/>
     <fileEditorProvider implementation="ru.compscicenter.edide.editor.StudyFileEditorProvider"/>
     <directoryProjectGenerator implementation="ru.compscicenter.edide.StudyDirectoryProjectGenerator"/>
     <treeStructureProvider implementation="ru.compscicenter.edide.projectView.StudyTreeStructureProvider"/>

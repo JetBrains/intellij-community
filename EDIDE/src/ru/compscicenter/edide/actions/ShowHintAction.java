@@ -75,4 +75,9 @@ public class ShowHintAction extends AnAction {
       }
     }
   }
+
+  @Override
+  public void update(AnActionEvent e) {
+    StudyUtils.updateAction(e);
+  }
 }

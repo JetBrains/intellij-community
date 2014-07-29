@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import ru.compscicenter.edide.StudyUtils;
 import ru.compscicenter.edide.course.StudyStatus;
 import ru.compscicenter.edide.editor.StudyEditor;
 import ru.compscicenter.edide.StudyTaskManager;
@@ -43,5 +44,10 @@ public class PrevWindowAction extends AnAction {
         }
       }
     }
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    StudyUtils.updateAction(e);
   }
 }

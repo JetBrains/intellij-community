@@ -1,5 +1,12 @@
 package ru.compscicenter.edide;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
+import ru.compscicenter.edide.editor.StudyEditor;
+
 import java.io.*;
 
 /**
@@ -54,5 +61,19 @@ public class StudyUtils {
       StudyUtils.closeSilently(reader);
     }
     return null;
+  }
+
+  public static void updateAction(AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+    presentation.setEnabled(false);
+    Project project = e.getProject();
+    if (project != null) {
+      FileEditor[] editors = FileEditorManager.getInstance(project).getAllEditors();
+      for (FileEditor editor : editors) {
+        if (editor instanceof StudyEditor) {
+          presentation.setEnabled(true);
+        }
+      }
+    }
   }
 }

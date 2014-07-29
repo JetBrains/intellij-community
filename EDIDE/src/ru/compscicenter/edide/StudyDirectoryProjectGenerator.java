@@ -23,10 +23,12 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.compscicenter.edide.course.Course;
+import ru.compscicenter.edide.ui.StudyCondition;
 import ru.compscicenter.edide.ui.StudyNewCourseDialog;
 
 import java.io.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -144,6 +146,8 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
   @Override
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @Nullable Object settings, @NotNull Module module) {
+
+    StudyCondition.myValue = true;
     myProject = project;
     mySelectedCourseFile = null;
     StudyNewCourseDialog dlg = new StudyNewCourseDialog(project, this);
