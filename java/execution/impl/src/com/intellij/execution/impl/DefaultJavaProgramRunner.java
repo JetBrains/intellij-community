@@ -224,9 +224,10 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
             threadStates = ThreadDumpParser.parse(stdout);
             if (threadStates == null || threadStates.isEmpty()) {
               try {
+                //noinspection BusyWait
                 Thread.sleep(50);
               }
-              catch (InterruptedException e1) {
+              catch (InterruptedException ignored) {
                 //
               }
               threadStates = null;
