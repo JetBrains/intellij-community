@@ -434,13 +434,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (myPrimaryCaret != null) {
           myPrimaryCaret.updateVisualPosition(); // repainting old primary caret's row background
         }
-        ((CaretImpl)e.getCaret()).updateVisualPosition(); // repainting caret region
+        updateCaretVisualPosition(e);
         myPrimaryCaret = myCaretModel.getPrimaryCaret();
       }
 
       @Override
       public void caretRemoved(CaretEvent e) {
-        ((CaretImpl)e.getCaret()).updateVisualPosition(); // repainting caret region
+        updateCaretVisualPosition(e);
         myPrimaryCaret = myCaretModel.getPrimaryCaret(); // repainting new primary caret's row background
         myPrimaryCaret.updateVisualPosition();
       }
@@ -551,6 +551,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  private static void updateCaretVisualPosition(CaretEvent e) {
+    CaretImpl caretImpl = ((CaretImpl)e.getCaret());
+    if (caretImpl != null) {
+      caretImpl.updateVisualPosition(); // repainting caret region
+    }
+  }
+
   @NotNull
   @Override
   public EditorColorsScheme createBoundColorSchemeDelegate(@Nullable final EditorColorsScheme customGlobalScheme) {
@@ -575,7 +582,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPrefixWidthInPixels = 0;
     if (myPrefixText != null) {
       for (char c : myPrefixText) {
-        myPrefixWidthInPixels += EditorUtil.charWidth(c, myPrefixAttributes.getFontType(), this);
+        LOG.assertTrue(myPrefixAttributes != null);
+        if (myPrefixAttributes != null) {
+          myPrefixWidthInPixels += EditorUtil.charWidth(c, myPrefixAttributes.getFontType(), this);
+        }
       }
     }
     mySoftWrapModel.recalculate();
@@ -1623,7 +1633,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void repaint(final int startOffset, int endOffset) {
-    if (!isShowing() || myScrollPane == null || myDocument.isInBulkUpdate()) {
+    if (!isShowing() || myDocument.isInBulkUpdate()) {
       return;
     }
 
@@ -1640,7 +1650,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private boolean isShowing() {
-    return myGutterComponent != null && myGutterComponent.isShowing();
+    return myGutterComponent.isShowing();
   }
 
   private void repaintToScreenBottom(int startLine) {
@@ -1681,9 +1691,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void bulkUpdateFinished() {
-    if (myScrollPane == null) {
-      return;
-    }
 
     clearTextWidthCache();
 
@@ -1702,7 +1709,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (isStickySelection()) {
       setStickySelection(false);
     }
-    if (myDocument.isInBulkUpdate() || myScrollingModel == null) {
+    if (myDocument.isInBulkUpdate()) {
       // Assuming that the job is done at bulk listener callback methods.
       return;
     }
@@ -1718,7 +1725,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void changedUpdate(DocumentEvent e) {
-    if (myScrollPane == null || myDocument.isInBulkUpdate()) return;
+    if (myDocument.isInBulkUpdate()) return;
 
     clearTextWidthCache();
     mySelectionModel.removeBlockSelection();
@@ -1924,7 +1931,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     if (isReleased) {
-      g.setColor(new Color(128, 255, 128));
+      g.setColor(new JBColor(new Color(128, 255, 128), new Color(128, 255, 128)));
       g.fillRect(clip.x, clip.y, clip.width, clip.height);
       return;
     }
@@ -2218,7 +2225,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myLastBackgroundColor = null;
 
     int start = clipStartOffset;
-    int end = clipEndOffset;
+
     if (!myPurePaintingMode) {
       getSoftWrapModel().registerSoftWrapsIfNecessary();
     }
@@ -2229,7 +2236,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    IterationState iterationState = new IterationState(this, start, end, isPaintSelection());
+    IterationState iterationState = new IterationState(this, start, clipEndOffset, isPaintSelection());
     TextAttributes attributes = iterationState.getMergedAttributes();
     Color backColor = getBackgroundColor(attributes);
     int fontType = attributes.getFontType();
@@ -2301,7 +2308,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           position.y += lineHeight;
           start = lEnd;
         }
-        else if (collapsedFolderAt.getEndOffset() == end) {
+        else if (collapsedFolderAt.getEndOffset() == clipEndOffset) {
           softWrap = mySoftWrapModel.getSoftWrap(collapsedFolderAt.getStartOffset());
           if (softWrap != null) {
             position.x = drawSoftWrapAwareBackground(
@@ -3951,7 +3958,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return false;
     }
 
-    if (e.getComponent() != myInitialMouseEvent.getComponent() || !e.getPoint().equals(myInitialMouseEvent.getPoint())) {
+    if (myInitialMouseEvent!= null && (e.getComponent() != myInitialMouseEvent.getComponent() || !e.getPoint().equals(myInitialMouseEvent.getPoint()))) {
       myIgnoreMouseEventsConsecutiveToInitial = false;
       myInitialMouseEvent = null;
       return false;
@@ -4160,7 +4167,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             }
           } else {
             final LogicalPosition blockStart = selectionModel.hasBlockSelection() ? selectionModel.getBlockStart() : oldLogicalCaret;
-            setBlockSelectionAndBlockActions(e, blockStart, getCaretModel().getLogicalPosition());
+            if (blockStart != null) {
+              setBlockSelectionAndBlockActions(e, blockStart, getCaretModel().getLogicalPosition());
+            }
           }
         }
         else {
@@ -5355,7 +5364,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             public void run() {
               int docLength = doc.getTextLength();
               ProperTextRange range = composedTextRange.intersection(new TextRange(0, docLength));
-              doc.deleteString(range.getStartOffset(), range.getEndOffset());
+              if (range != null) {
+                doc.deleteString(range.getStartOffset(), range.getEndOffset());
+              }
             }
           });
         }
@@ -6708,7 +6719,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private class TablessBorder extends SideBorder {
     private TablessBorder() {
-      super(UIUtil.getBorderColor(), SideBorder.ALL);
+      super(JBColor.border(), SideBorder.ALL);
     }
 
     @Override
