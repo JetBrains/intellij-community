@@ -93,7 +93,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
         if (path != null) {
           final InspectionConfigTreeNode node = (InspectionConfigTreeNode)path.getLastPathComponent();
           if (node.isLeaf()) {
-            swapInspectionEnableState(true);
+            swapInspectionEnableState();
           }
         }
         return true;
@@ -102,13 +102,15 @@ public class InspectionsConfigTreeTable extends TreeTable {
 
     registerKeyboardAction(new ActionListener() {
                              public void actionPerformed(ActionEvent e) {
-                               swapInspectionEnableState(false);
+                               swapInspectionEnableState();
                                updateUI();
                              }
                            }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
+
+    getEmptyText().setText("No enabled inspections available");
   }
 
-  private void swapInspectionEnableState(final boolean isFromClickAction) {
+  private void swapInspectionEnableState() {
     for (int selectedRow : getSelectedRows()) {
       final Object value = getValueAt(selectedRow, IS_ENABLED_COLUMN);
       final boolean newValue = !Boolean.TRUE.equals(value);
