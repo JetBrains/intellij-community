@@ -27,9 +27,7 @@ import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.actions.NextDiffAction;
 import com.intellij.openapi.diff.actions.PreviousDiffAction;
 import com.intellij.openapi.diff.actions.ToggleAutoScrollAction;
-import com.intellij.openapi.diff.impl.DiffUtil;
-import com.intellij.openapi.diff.impl.EditingSides;
-import com.intellij.openapi.diff.impl.GenericDataProvider;
+import com.intellij.openapi.diff.impl.*;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.incrementalMerge.ChangeCounter;
 import com.intellij.openapi.diff.impl.incrementalMerge.ChangeList;
@@ -49,6 +47,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -57,6 +56,8 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import gnu.trove.TIntHashSet;
@@ -235,6 +236,8 @@ public class MergePanel2 implements DiffViewer {
     Editor base = getEditor(1);
     Editor right = getEditor(2);
 
+    setupHighlighterSettings(left, base, right);
+
     myMergeList.setMarkups(left, base, right);
     EditingSides[] sides = {getFirstEditingSide(), getSecondEditingSide()};
     myScrollSupport.install(sides);
@@ -269,6 +272,37 @@ public class MergePanel2 implements DiffViewer {
 
   public boolean isAutoScrollEnabled() {
     return myScrollSupport.isEnabled();
+  }
+
+  private void setupHighlighterSettings(Editor left, Editor base, Editor right) {
+    Editor[] editors = new Editor[]{left, base, right};
+    DiffContent[] contents = myData.getContents();
+    FileType[] types = DiffUtil.chooseContentTypes(contents);
+
+    VirtualFile fallbackFile = contents[1].getFile();
+    FileType fallbackType = contents[1].getContentType();
+
+    for (int i = 0; i < 3; i++) {
+      Editor editor = editors[i];
+      DiffContent content = contents[i];
+
+      EditorHighlighter highlighter =
+        createHighlighter(types[i], content.getFile(), fallbackFile, fallbackType, myData.getProject()).createHighlighter();
+      if (highlighter != null) {
+        ((EditorEx)editor).setHighlighter(highlighter);
+      }
+    }
+  }
+
+  private static DiffHighlighterFactory createHighlighter(FileType contentType,
+                                                          VirtualFile file,
+                                                          VirtualFile otherFile,
+                                                          FileType otherType,
+                                                          Project project) {
+    if (file == null) file = otherFile;
+    if (contentType == null) contentType = otherType;
+
+    return new DiffHighlighterFactoryImpl(contentType, file, project);
   }
 
   public void setHighlighterSettings(@Nullable EditorColorsScheme settings) {
