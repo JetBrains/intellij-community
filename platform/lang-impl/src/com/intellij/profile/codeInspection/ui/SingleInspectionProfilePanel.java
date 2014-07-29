@@ -188,8 +188,10 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (myTreeTable != null) {
       final TreePath selectionPath = myTreeTable.getTree().getSelectionPath();
       if (selectionPath != null) {
-        TreeUtil.selectNode(myTreeTable.getTree(), (TreeNode)selectionPath.getLastPathComponent());
-        TreeUtil.showRowCentered(myTreeTable.getTree(), myTreeTable.getTree().getRowForPath(selectionPath), false);
+        TreeUtil.selectNode(myTreeTable.getTree(), (TreeNode) selectionPath.getLastPathComponent());
+        final int rowForPath = myTreeTable.getTree().getRowForPath(selectionPath);
+        TableUtil.selectRows(myTreeTable, new int[]{rowForPath});
+        scrollToCenter();
       }
     }
   }
@@ -410,9 +412,22 @@ public class SingleInspectionProfilePanel extends JPanel {
   public void selectInspectionTool(String name) {
     final InspectionConfigTreeNode node = findNodeByKey(name, myRoot);
     if (node != null) {
-      TreeUtil.showRowCentered(myTreeTable.getTree(), myTreeTable.getTree().getRowForPath(new TreePath(node.getPath())) - 1, true);//myTree.isRootVisible ? 0 : 1;
       TreeUtil.selectNode(myTreeTable.getTree(), node);
+      final int rowForPath = myTreeTable.getTree().getRowForPath(new TreePath(node.getPath()));
+      TableUtil.selectRows(myTreeTable, new int[]{rowForPath});
+      scrollToCenter();
     }
+  }
+
+  private void scrollToCenter() {
+    ListSelectionModel selectionModel = myTreeTable.getSelectionModel();
+    int maxSelectionIndex = selectionModel.getMaxSelectionIndex();
+    final int maxColumnSelectionIndex = Math.max(0, myTreeTable.getColumnModel().getSelectionModel().getMinSelectionIndex());
+    Rectangle maxCellRect = myTreeTable.getCellRect(maxSelectionIndex, maxColumnSelectionIndex, false);
+
+    final Point selectPoint = maxCellRect.getLocation();
+    final int allHeight = myTreeTable.getVisibleRect().height;
+    myTreeTable.scrollRectToVisible(new Rectangle(new Point(0, Math.max(0, selectPoint.y - allHeight / 2)), new Dimension(0, allHeight)));
   }
 
   @Nullable
