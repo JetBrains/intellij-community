@@ -763,10 +763,11 @@ public class AbstractPopup implements JBPopup {
     PopupComponent.Factory factory = getFactory(myForcedHeavyweight || myResizable, forcedDialog);
     myNativePopup = factory.isNativePopup();
     Component popupOwner = myOwner;
-    if (popupOwner instanceof RootPaneContainer) {
+    if (popupOwner instanceof RootPaneContainer && !(popupOwner instanceof IdeFrame && !Registry.is("popup.fix.ide.frame.owner"))) {
       // JDK uses cached heavyweight popup for a window ancestor
       RootPaneContainer root = (RootPaneContainer)popupOwner;
       popupOwner = root.getRootPane();
+      LOG.debug("popup owner fixed for JDK cache");
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("expected preferred size: " + myContent.getPreferredSize());
