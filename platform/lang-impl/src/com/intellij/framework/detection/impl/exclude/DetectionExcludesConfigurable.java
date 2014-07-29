@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -97,7 +98,6 @@ public class DetectionExcludesConfigurable implements Configurable {
     renderer.setMyBorder(new EmptyBorder(0,0,0,0));
     excludesList.setCellRenderer(renderer);
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(excludesList)
-      .setPanelBorder(new CustomLineBorder(1, 0, 0, 0))
       .disableUpAction().disableDownAction()
       .setAddAction(new AnActionButtonRunnable() {
         @Override
@@ -105,6 +105,9 @@ public class DetectionExcludesConfigurable implements Configurable {
           doAddAction(button);
         }
       });
+    if (Registry.is("ide.new.project.settings")) {
+      decorator.setPanelBorder(new CustomLineBorder(1, 0, 0, 0));
+    }
     myMainPanel = new JPanel(new BorderLayout(0, 5));
     myMainPanel.add(myEnabledDetectionCheckBox, BorderLayout.NORTH);
     final LabeledComponent<JPanel> excludesComponent = LabeledComponent.create(decorator.createPanel(), "   Exclude from detection:");
