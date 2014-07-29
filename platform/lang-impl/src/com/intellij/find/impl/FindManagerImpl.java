@@ -96,6 +96,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
   private final FindUsagesManager myFindUsagesManager;
   private boolean isFindWasPerformed = false;
+  private boolean isSelectNextOccurrenceWasPerformed = false;
   private Point myReplaceInFilePromptPos = new Point(-1, -1);
   private Point myReplaceInProjectPromptPos = new Point(-1, -1);
   private final FindModel myFindInProjectModel = new FindModel();
@@ -257,7 +258,18 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   @Override
   public void setFindWasPerformed() {
     isFindWasPerformed = true;
-    //myFindUsagesManager.clearFindingNextUsageInFile();
+    isSelectNextOccurrenceWasPerformed = false;
+  }
+
+  @Override
+  public boolean selectNextOccurrenceWasPerformed() {
+    return isSelectNextOccurrenceWasPerformed;
+  }
+
+  @Override
+  public void setSelectNextOccurrenceWasPerformed() {
+    isSelectNextOccurrenceWasPerformed = true;
+    isFindWasPerformed = false;
   }
 
   @Override
@@ -270,7 +282,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     if (myFindNextModel == null) return null;
 
     final JComponent header = editor.getHeaderComponent();
-    if (header instanceof EditorSearchComponent) {
+    if (header instanceof EditorSearchComponent && !isSelectNextOccurrenceWasPerformed) {
       final EditorSearchComponent searchComponent = (EditorSearchComponent)header;
       final String textInField = searchComponent.getTextInField();
       if (!Comparing.equal(textInField, myFindInFileModel.getStringToFind()) && !textInField.isEmpty()) {

@@ -107,25 +107,4 @@ abstract public class SelectOccurrencesActionHandler extends EditorActionHandler
     model.setWholeWordsOnly(wholeWords);
     return model;
   }
-
-  protected boolean executeEquivalentFindPanelAction(Editor editor, DataContext context) {
-    if (editor.getHeaderComponent() instanceof EditorSearchComponent) {
-      EditorSearchComponent searchComponent = (EditorSearchComponent)editor.getHeaderComponent();
-      EditorHeaderAction action = getEquivalentFindPanelAction(searchComponent);
-      if (action != null) {
-        Presentation presentation = new Presentation();
-        AnActionEvent event = new AnActionEvent(null, context, ActionPlaces.MAIN_MENU, presentation, ActionManager.getInstance(), 0);
-        action.update(event);
-        if (presentation.isEnabled()) {
-          action.actionPerformed(event);
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  protected EditorHeaderAction getEquivalentFindPanelAction(EditorSearchComponent searchComponent) {
-    return null;
-  }
 }

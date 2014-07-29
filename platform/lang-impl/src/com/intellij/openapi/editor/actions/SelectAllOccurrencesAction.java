@@ -42,8 +42,6 @@ public class SelectAllOccurrencesAction extends EditorAction {
 
     @Override
     public void doExecute(final Editor editor, @Nullable Caret c, DataContext dataContext) {
-      if (executeEquivalentFindPanelAction(editor, dataContext)) return;
-
       Caret caret = c == null ? editor.getCaretModel().getPrimaryCaret() : c;
 
       boolean wholeWordsSearch = false;
@@ -87,11 +85,6 @@ public class SelectAllOccurrencesAction extends EditorAction {
         }
       }, caretShiftFromSelectionStart);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    }
-
-    @Override
-    protected EditorHeaderAction getEquivalentFindPanelAction(EditorSearchComponent searchComponent) {
-      return new SelectAllAction(searchComponent);
     }
   }
 }

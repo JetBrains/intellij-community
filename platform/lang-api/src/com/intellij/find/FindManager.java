@@ -172,6 +172,18 @@ public abstract class FindManager {
   public abstract void setFindWasPerformed();
 
   /**
+   * Gets the flag indicating that 'Add Selection for Next Occurrence' action was performed recently,
+   * so "Find Next" and "Find Previous" actions should work in its context.
+   */
+  public abstract boolean selectNextOccurrenceWasPerformed();
+
+  /**
+   * Sets the flag indicating that 'Add Selection for Next Occurrence' action was performed recently,
+   * so "Find Next" and "Find Previous" actions should work in its context.
+   */
+  public abstract void setSelectNextOccurrenceWasPerformed();
+
+  /**
    * Explicitly tell FindManager that "Find Next" and "Find Previous" actions should not use
    * find usages previous results.
    */

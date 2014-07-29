@@ -321,7 +321,7 @@ public class FindUtil {
 
   public static void searchBack(final Project project, final Editor editor, @Nullable DataContext context) {
     FindManager findManager = FindManager.getInstance(project);
-    if (!findManager.findWasPerformed()) {
+    if (!findManager.findWasPerformed() && !findManager.selectNextOccurrenceWasPerformed()) {
       new IncrementalFindAction().getHandler().execute(editor, context);
       return;
     }
@@ -363,7 +363,7 @@ public class FindUtil {
 
   public static boolean searchAgain(final Project project, final Editor editor, @Nullable DataContext context) {
     FindManager findManager = FindManager.getInstance(project);
-    if (!findManager.findWasPerformed()) {
+    if (!findManager.findWasPerformed() && !findManager.selectNextOccurrenceWasPerformed()) {
       new IncrementalFindAction().getHandler().execute(editor, context);
       return false;
     }
