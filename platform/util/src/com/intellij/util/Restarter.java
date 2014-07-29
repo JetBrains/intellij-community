@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -112,7 +113,10 @@ public class Restarter {
     final String[] argv = argv_ptr.getStringArray(0, argc.getValue(), true);
     kernel32.LocalFree(argv_ptr);
 
-    doScheduleRestart(new File(PathManager.getBinPath(), "restarter.exe"), new Consumer<List<String>>() {
+    File restarter = new File(PathManager.getBinPath(), "restarter.exe");
+    File restarter_copy = createTempExecutableLauncher(restarter);
+
+    doScheduleRestart(restarter_copy, new Consumer<List<String>>() {
       @Override
       public void consume(List<String> commands) {
         Collections.addAll(commands, String.valueOf(pid), String.valueOf(beforeRestart.length));
@@ -162,7 +166,9 @@ public class Restarter {
     return copy;
   }
 
-  public static File createTempExecutable(File dir, File executable) throws IOException {
+  public static File createTempExecutableLauncher(File executable) throws IOException {
+    File dir = new File(System.getProperty("user.home") + File.pathSeparator + "." + ApplicationNamesInfo.getInstance().getProductName());
+    System.out.println("pathToLauncher: " + dir.getPath());
     String ext = FileUtilRt.getExtension(executable.getName());
     File copy = FileUtilRt.createTempFile(dir, FileUtilRt.getNameWithoutExtension(executable.getName()),
                                           StringUtil.isEmptyOrSpaces(ext) ? ".tmp" : ("." + dir),
