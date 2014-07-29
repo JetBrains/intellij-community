@@ -245,8 +245,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Nullable private Color myForcedBackground = null;
   @Nullable private Dimension myPreferredSize;
   private int myVirtualPageHeight;
-  @Nullable private Runnable myGutterSizeUpdater = null;
-  private boolean myGutterNeedsUpdate = false;
   private Alarm myAppleRepaintAlarm;
 
   private final Alarm myMouseSelectionStateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
@@ -903,9 +901,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     new UiNotifyConnector(myEditorComponent, new Activatable.Adapter(){
       @Override
       public void showNotify() {
-        if (myGutterNeedsUpdate) {
-          updateGutterSize();
-        }
+        myGutterComponent.updateSize();
       }
     });
 
@@ -1784,24 +1780,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void updateGutterSize() {
-    if (myGutterSizeUpdater != null) return;
-    myGutterSizeUpdater = new Runnable() {
-      @Override
-      public void run() {
-        if (!isDisposed()) {
-          if (isShowing()) {
-            myGutterComponent.updateSize();
-            myGutterNeedsUpdate = false;
-          }
-          else {
-            myGutterNeedsUpdate = true;
-          }
-        }
-        myGutterSizeUpdater = null;
-      }
-    };
-
-    SwingUtilities.invokeLater(myGutterSizeUpdater);
+    myGutterComponent.updateSize();
   }
 
   void validateSize() {
