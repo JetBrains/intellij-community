@@ -17,7 +17,6 @@ package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpVirtualFileListener;
 import com.intellij.util.EventDispatcher;
@@ -35,7 +34,10 @@ import java.util.Map;
  */
 public class RemoteFileManagerImpl extends RemoteFileManager implements Disposable {
   private final LocalFileStorage myStorage;
-  private final Map<Pair<Boolean, Url>, HttpVirtualFileImpl> myRemoteFiles = new THashMap<Pair<Boolean, Url>, HttpVirtualFileImpl>();
+
+  private final Map<Url, HttpVirtualFileImpl> remoteFiles = new THashMap<Url, HttpVirtualFileImpl>();
+  private final Map<Url, HttpVirtualFileImpl> remoteDirectories = new THashMap<Url, HttpVirtualFileImpl>();
+
   private final EventDispatcher<HttpVirtualFileListener> myDispatcher = EventDispatcher.create(HttpVirtualFileListener.class);
   private final List<RemoteContentProvider> myProviders = new ArrayList<RemoteContentProvider>();
   private final DefaultRemoteContentProvider myDefaultRemoteContentProvider;
@@ -56,8 +58,8 @@ public class RemoteFileManagerImpl extends RemoteFileManager implements Disposab
   }
 
   public synchronized HttpVirtualFileImpl getOrCreateFile(@Nullable HttpVirtualFileImpl parent, @NotNull Url url, @NotNull String path, final boolean directory) {
-    Pair<Boolean, Url> key = Pair.create(directory, url);
-    HttpVirtualFileImpl file = myRemoteFiles.get(key);
+    Map<Url, HttpVirtualFileImpl> cache = directory ? remoteDirectories : remoteFiles;
+    HttpVirtualFileImpl file = cache.get(url);
     if (file == null) {
       if (directory) {
         file = new HttpVirtualFileImpl(getHttpFileSystem(url), parent, path, null);
@@ -67,7 +69,7 @@ public class RemoteFileManagerImpl extends RemoteFileManager implements Disposab
         file = new HttpVirtualFileImpl(getHttpFileSystem(url), parent, path, fileInfo);
         fileInfo.addDownloadingListener(new MyDownloadingListener(file));
       }
-      myRemoteFiles.put(key, file);
+      cache.put(url, file);
     }
     return file;
   }
