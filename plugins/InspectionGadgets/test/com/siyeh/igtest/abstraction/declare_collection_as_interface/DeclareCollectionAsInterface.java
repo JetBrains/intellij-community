@@ -60,4 +60,14 @@ public class DeclareCollectionAsInterface
     <warning descr="Declaration of 'HashSet' should probably be weakened to 'java.util.Set'">HashSet</warning><String> set = new HashSet<>();
     set.add("foo");
   }
+
+  public static Properties stringToProperties(String propertiesAsString) { return null; }
+  public static Properties stringToProperties2(String propertiesAsString) { return null; }
+  public static Properties stringToProperties3(String propertiesAsString) { return null; }
+
+  void m() {
+    stringToProperties("");
+    <error descr="Incompatible types. Found: 'java.util.Properties', required: 'java.lang.String'">String s = stringToProperties2("");</error>
+    <error descr="Incompatible types. Found: 'java.util.Properties', required: 'java.lang.String'">s = stringToProperties3("")</error>;
+  }
 }
