@@ -413,6 +413,12 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   public void weHaveGotProblems(@NotNull final VirtualFile virtualFile, @NotNull List<Problem> problems) {
     if (problems.isEmpty()) return;
     if (!isToBeHighlighted(virtualFile)) return;
+    weHaveGotNonIgnorableProblems(virtualFile, problems);
+  }
+
+  @Override
+  public void weHaveGotNonIgnorableProblems(@NotNull VirtualFile virtualFile, @NotNull List<Problem> problems) {
+    if (problems.isEmpty()) return;
     boolean fireListener = false;
     synchronized (myProblems) {
       ProblemFileInfo storedProblems = myProblems.get(virtualFile);
