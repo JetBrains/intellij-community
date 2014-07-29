@@ -28,17 +28,21 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.ui.InspectionsAggregationUtil;
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.profile.codeInspection.ui.table.ThreeStateCheckBoxRenderer;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.ui.ClickListener;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
@@ -76,10 +80,40 @@ public class InspectionsConfigTreeTable extends TreeTable {
         if (maybeIcon instanceof MultiScopeSeverityIcon) {
           final LinkedHashMap<String, HighlightSeverity> scopeToAverageSeverityMap =
             ((MultiScopeSeverityIcon)maybeIcon).getScopeToAverageSeverityMap();
-          IdeTooltipManager.getInstance().show(new IdeTooltip(InspectionsConfigTreeTable.this, point, new ScopesAndSeveritiesHintTable(scopeToAverageSeverityMap)), false);
+          IdeTooltipManager.getInstance().show(
+            new IdeTooltip(InspectionsConfigTreeTable.this, point, new ScopesAndSeveritiesHintTable(scopeToAverageSeverityMap)), false);
         }
       }
     });
+
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent event) {
+        final TreePath path = getTree().getPathForRow(getTree().getLeadSelectionRow());
+        if (path != null) {
+          final InspectionConfigTreeNode node = (InspectionConfigTreeNode)path.getLastPathComponent();
+          if (node.isLeaf()) {
+            swapInspectionEnableState(true);
+          }
+        }
+        return true;
+      }
+    }.installOn(this);
+
+    registerKeyboardAction(new ActionListener() {
+                             public void actionPerformed(ActionEvent e) {
+                               swapInspectionEnableState(false);
+                               updateUI();
+                             }
+                           }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
+  }
+
+  private void swapInspectionEnableState(final boolean isFromClickAction) {
+    for (int selectedRow : getSelectedRows()) {
+      final Object value = getValueAt(selectedRow, IS_ENABLED_COLUMN);
+      final boolean newValue = !Boolean.TRUE.equals(value);
+      setValueAt(newValue, selectedRow, IS_ENABLED_COLUMN);
+    }
   }
 
   public abstract static class InspectionsConfigTreeTableSettings {
