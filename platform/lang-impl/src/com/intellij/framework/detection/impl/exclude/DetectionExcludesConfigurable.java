@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -66,16 +69,35 @@ public class DetectionExcludesConfigurable implements Configurable {
   @NotNull
   public JComponent createComponent() {
     myEnabledDetectionCheckBox = new JCheckBox("Enable framework detection");
+    myEnabledDetectionCheckBox.setBorder(new EmptyBorder(10, 10, 0, 0));
     final JBList excludesList = new JBList(myModel);
-    excludesList.setCellRenderer(new ColoredListCellRenderer() {
+    final ColoredListCellRenderer renderer = new ColoredListCellRenderer() {
+      JPanel panel = new JPanel(new BorderLayout());
+      {
+        panel.setBorder(new EmptyBorder(2, 10, 2, 0));
+        panel.add(this);
+      }
+
       @Override
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        setIconTextGap(4);
         if (value instanceof ExcludeListItem) {
           ((ExcludeListItem)value).renderItem(this);
+          setBorder(new EmptyBorder(0, 10, 0, 0));
         }
       }
-    });
+
+      @Override
+      public Component getListCellRendererComponent(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        super.getListCellRendererComponent(list, value, index, selected, hasFocus);
+        panel.setBackground(UIUtil.getListBackground(selected));
+        return panel;
+      }
+    };
+    renderer.setMyBorder(new EmptyBorder(0,0,0,0));
+    excludesList.setCellRenderer(renderer);
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(excludesList)
+      .setPanelBorder(new CustomLineBorder(1, 0, 0, 0))
       .disableUpAction().disableDownAction()
       .setAddAction(new AnActionButtonRunnable() {
         @Override
@@ -85,7 +107,7 @@ public class DetectionExcludesConfigurable implements Configurable {
       });
     myMainPanel = new JPanel(new BorderLayout(0, 5));
     myMainPanel.add(myEnabledDetectionCheckBox, BorderLayout.NORTH);
-    final LabeledComponent<JPanel> excludesComponent = LabeledComponent.create(decorator.createPanel(), "Exclude from detection:");
+    final LabeledComponent<JPanel> excludesComponent = LabeledComponent.create(decorator.createPanel(), "   Exclude from detection:");
     myMainPanel.add(excludesComponent);
     myEnabledDetectionCheckBox.addActionListener(new ActionListener() {
       @Override
