@@ -44,6 +44,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -78,6 +79,13 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     moduleBuilder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
     moduleBuilder.addJdk(IdeaTestUtil.getMockJdk17Path().getPath());
     super.tuneFixture(moduleBuilder);
+  }
+
+  @Override
+  protected void runTest() throws Throwable {
+    if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
+
+    super.runTest();
   }
 
   protected static void addGroovyLibrary(final Module to) {
