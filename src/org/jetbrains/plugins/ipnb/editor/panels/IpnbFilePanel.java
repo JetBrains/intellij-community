@@ -19,6 +19,7 @@ import com.google.common.collect.Lists;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
@@ -72,9 +73,10 @@ public class IpnbFilePanel extends JPanel {
     });
 
     setFocusable(true);
+    UIUtil.requestFocus(this);
   }
 
-  private void layoutFile(IpnbFile file) {
+  private void layoutFile(@NotNull final IpnbFile file) {
     GridBagConstraints c = new GridBagConstraints();
     c.fill = GridBagConstraints.HORIZONTAL;
     c.gridx = 0;
@@ -96,23 +98,27 @@ public class IpnbFilePanel extends JPanel {
   }
 
   private int addCellToPanel(IpnbCell cell, GridBagConstraints c) {
+    IpnbPanel comp;
     if (cell instanceof CodeCell) {
-      final CodePanel comp = new CodePanel(myProject, myParent, (CodeCell)cell);
+      comp = new CodePanel(myProject, myParent, (CodeCell)cell);
       c.gridwidth = 2;
       c.gridx = 0;
       add(comp, c);
       myIpnbPanels.add(comp);
     }
     else if (cell instanceof MarkdownCell) {
-      final MarkdownPanel comp = new MarkdownPanel(myProject, (MarkdownCell)cell);
+      comp = new MarkdownPanel(myProject, (MarkdownCell)cell);
       addComponent(c, comp);
     }
     else if (cell instanceof HeadingCell) {
-      final HeadingPanel comp = new HeadingPanel((HeadingCell)cell);
+      comp = new HeadingPanel((HeadingCell)cell);
       addComponent(c, comp);
     }
     else {
       throw new UnsupportedOperationException(cell.getClass().toString());
+    }
+    if (c.gridy == 0) {
+      setSelectedCell(comp);
     }
     return c.gridy + 1;
   }

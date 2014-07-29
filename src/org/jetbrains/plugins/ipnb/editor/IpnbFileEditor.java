@@ -112,8 +112,9 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
         }
       }
     });
+    final IpnbPanel selectedCell = myIpnbEditorPanel.getSelectedCell();
+    updateCellTypeCombo(selectedCell);
     controlPanel.add(myCellTypeCombo);
-
     final MatteBorder border = BorderFactory.createMatteBorder(0, 0, 1, 0, JBColor.GRAY);
     controlPanel.setBorder(border);
     return controlPanel;
@@ -126,23 +127,28 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
                                new CellSelectionListener() {
                                  @Override
                                  public void selectionChanged(@NotNull IpnbPanel ipnbPanel) {
-                                   if (ipnbPanel instanceof HeadingPanel) {
-                                     final HeadingCell cell = ((HeadingPanel)ipnbPanel).getCell();
-                                     final int level = cell.getLevel();
-                                     myCellTypeCombo.setSelectedItem(headingCellType + level);
-                                   }
-                                   else if (ipnbPanel instanceof MarkdownPanel) {
-                                     myCellTypeCombo.setSelectedItem(markdownCellType);
-                                   }
-                                   else if (ipnbPanel instanceof CodePanel) {
-                                     myCellTypeCombo.setSelectedItem(codeCellType);
-                                   }
+                                   if (myCellTypeCombo == null) return;
+                                   updateCellTypeCombo(ipnbPanel);
                                  }
                                });
     }
     catch (IOException e) {
       Messages.showErrorDialog(project, e.getMessage(), "Can't open " + vFile.getPath());
       throw new IllegalStateException(e);
+    }
+  }
+
+  private void updateCellTypeCombo(IpnbPanel ipnbPanel) {
+    if (ipnbPanel instanceof HeadingPanel) {
+      final HeadingCell cell = ((HeadingPanel)ipnbPanel).getCell();
+      final int level = cell.getLevel();
+      myCellTypeCombo.setSelectedItem(headingCellType + level);
+    }
+    else if (ipnbPanel instanceof MarkdownPanel) {
+      myCellTypeCombo.setSelectedItem(markdownCellType);
+    }
+    else if (ipnbPanel instanceof CodePanel) {
+      myCellTypeCombo.setSelectedItem(codeCellType);
     }
   }
 
