@@ -19,11 +19,13 @@
  */
 package com.intellij.openapi.wm.impl.commands;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Expirable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -44,10 +46,16 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
   private final IdeFocusManager myFocusManager;
   private final Expirable myTimestamp;
 
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.commands.RequestFocusInEditorComponentCmd");
+
   public RequestFocusInEditorComponentCmd(@NotNull final EditorsSplitters splitters, IdeFocusManager
                                           focusManager, final Runnable finishCallBack, boolean forced){
     super(finishCallBack);
 
+    boolean shouldLogFocuses = Registry.is("ide.log.focuses");
+    if (shouldLogFocuses) {
+      LOG.info(new Exception());
+    }
     myComponent = null;
     final EditorWindow window = splitters.getCurrentWindow();
     if (window != null) {
