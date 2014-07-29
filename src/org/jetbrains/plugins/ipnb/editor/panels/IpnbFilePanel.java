@@ -160,7 +160,7 @@ public class IpnbFilePanel extends JPanel {
     }
   }
 
-  private void selectNext(@NotNull IpnbPanel cell) {
+  public void selectNext(@NotNull IpnbPanel cell) {
     int index = myIpnbPanels.indexOf(cell);
     if (index < myIpnbPanels.size() - 1) {
       setSelectedCell(myIpnbPanels.get(index + 1));
