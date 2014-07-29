@@ -1071,7 +1071,7 @@ public class Switcher extends AnAction implements DumbAware {
       public void layoutContainer(Container target) {
         final JScrollPane scrollPane = UIUtil.getParentOfType(JScrollPane.class, files);
         JComponent filesPane = scrollPane != null ? scrollPane : files;
-        if (sBounds == null) {
+        if (sBounds == null || !target.isShowing()) {
           super.layoutContainer(target);
           sBounds = separator.getBounds();
           tBounds = toolWindows.getBounds();
