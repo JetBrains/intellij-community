@@ -721,7 +721,6 @@ public class SingleInspectionProfilePanel extends JPanel {
       final JPanel severityPanel = new JPanel(new GridBagLayout());
       final double severityPanelWeightY;
       final JPanel configPanelAnchor = new JPanel(new GridLayout());
-      configPanelAnchor.setBorder(IdeBorderFactory.createTitledBorder("Options", false, new Insets(0, 0, 0, 0)));
 
       final Set<String> scopesNames = new THashSet<String>();
       for (final InspectionConfigTreeNode node : nodes) {
@@ -844,8 +843,13 @@ public class SingleInspectionProfilePanel extends JPanel {
         severityPanelWeightY = 0.3;
       }
       myOptionsPanel.add(severityPanel, new GridBagConstraints(0, 0, 1, 1, 1.0, severityPanelWeightY, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-      myOptionsPanel.add(configPanelAnchor, new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                                                   new Insets(0, 0, 0, 0), 0, 0));
+      if (configPanelAnchor.getComponentCount() != 0) {
+        configPanelAnchor.setBorder(IdeBorderFactory.createTitledBorder("Options", false, new Insets(0, 0, 0, 0)));
+      }
+      if (configPanelAnchor.getComponentCount() != 0 || scopesNames.isEmpty()) {
+        myOptionsPanel.add(configPanelAnchor, new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH,
+                                                                     new Insets(0, 0, 0, 0), 0, 0));
+      }
       myOptionsPanel.revalidate();
       GuiUtils.enableChildren(myOptionsPanel, isThoughOneNodeEnabled(nodes));
     }
@@ -889,7 +893,10 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private static void setConfigPanel(final JPanel configPanelAnchor, final ScopeToolState state) {
     configPanelAnchor.removeAll();
-    configPanelAnchor.add(ScrollPaneFactory.createScrollPane(state.getAdditionalConfigPanel(), SideBorder.NONE));
+    final JComponent additionalConfigPanel = state.getAdditionalConfigPanel();
+    if (additionalConfigPanel != null) {
+      configPanelAnchor.add(ScrollPaneFactory.createScrollPane(additionalConfigPanel, SideBorder.NONE));
+    }
   }
 
   private static InspectionConfigTreeNode getGroupNode(InspectionConfigTreeNode root, String[] groupPath) {

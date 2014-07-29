@@ -42,6 +42,7 @@ public class ScopeToolState {
   private boolean myEnabled;
   private HighlightDisplayLevel myLevel;
 
+  private boolean myAdditionalConfigPanelCreated = false;
   private JComponent myAdditionalConfigPanel;
   private static final Logger LOG = Logger.getInstance("#" + ScopeToolState.class.getName());
 
@@ -98,13 +99,11 @@ public class ScopeToolState {
     myLevel = level;
   }
 
-  @NotNull
+  @Nullable
   public JComponent getAdditionalConfigPanel() {
-    if (myAdditionalConfigPanel == null) {
+    if (!myAdditionalConfigPanelCreated) {
       myAdditionalConfigPanel = myToolWrapper.getTool().createOptionsPanel();
-      if (myAdditionalConfigPanel == null){
-        myAdditionalConfigPanel = new JPanel();
-      }
+      myAdditionalConfigPanelCreated = true;
     }
     return myAdditionalConfigPanel;
   }
