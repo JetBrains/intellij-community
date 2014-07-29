@@ -69,11 +69,12 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <toolWindow id="StudyToolWindow" anchor="right" factoryClass="ru.compscicenter.edide.StudyToolWindowFactory"
-        icon="/icons/showHint.png" conditionClass="ru.compscicenter.edide.StudyCondition"/>
+        icon="/icons/showHint.png"/>
     <fileEditorProvider implementation="ru.compscicenter.edide.editor.StudyFileEditorProvider"/>
     <directoryProjectGenerator implementation="ru.compscicenter.edide.StudyDirectoryProjectGenerator"/>
     <treeStructureProvider implementation="ru.compscicenter.edide.projectView.StudyTreeStructureProvider"/>
     <highlightErrorFilter implementation="ru.compscicenter.edide.StudyHighlightErrorFilter"/>
-    <postStartupActivity implementation="ru.compscicenter.edide.StudyStartupActivity"/>
+    <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"
+        serviceImplementation="ru.compscicenter.edide.StudyInstructionPainter" overrides="true"/>
   </extensions>
 </idea-plugin>

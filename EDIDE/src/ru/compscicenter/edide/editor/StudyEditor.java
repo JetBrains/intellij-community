@@ -103,7 +103,6 @@ public class StudyEditor implements FileEditor {
     myPrevTaskButton = addButton(taskActionsPanel, "Prev Task", StudyIcons.Prev);
     myNextTaskButton = addButton(taskActionsPanel, "Next Task", StudyIcons.Next);
     myRefreshButton = addButton(taskActionsPanel, "Start task again", StudyIcons.Refresh24);
-    addButton(taskActionsPanel, "Remind shortcuts", StudyIcons.ShortcutReminder);
     if (taskFile.getTask().getInput() != null) {
       myWatchInputButton = addButton(taskActionsPanel, "Watch test input", StudyIcons.WatchInput);
       myWatchInputButton.addActionListener(new ActionListener() {

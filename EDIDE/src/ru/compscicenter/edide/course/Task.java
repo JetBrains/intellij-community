@@ -53,6 +53,15 @@ public class Task {
   }
 
   public void setStatus(StudyStatus status) {
+    LessonInfo lessonInfo = myLesson.getLessonInfo();
+    if (status == StudyStatus.Failed) {
+      lessonInfo.setTaskFailed(lessonInfo.getTaskFailed() + 1);
+      lessonInfo.setTaskUnchecked(lessonInfo.getTaskUnchecked() - 1);
+    }
+    if (status == StudyStatus.Solved) {
+      lessonInfo.setTaskSolved(lessonInfo.getTaskSolved() + 1);
+      lessonInfo.setTaskUnchecked(lessonInfo.getTaskUnchecked() - 1);
+    }
     for (TaskFile taskFile : taskFiles) {
       taskFile.setStatus(status);
     }

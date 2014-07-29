@@ -18,6 +18,11 @@ public class Lesson {
   private Course myCourse = null;
   public int myIndex = -1;
   public static final String LESSON_DIR = "lesson";
+  public LessonInfo myLessonInfo = new LessonInfo();
+
+  public LessonInfo getLessonInfo() {
+    return myLessonInfo;
+  }
 
   public StudyStatus getStatus() {
     for (Task task : taskList) {
@@ -58,6 +63,8 @@ public class Lesson {
    */
   public void init(Course course, boolean isRestarted) {
     myCourse = course;
+    myLessonInfo.setTaskNum(taskList.size());
+    myLessonInfo.setTaskUnchecked(taskList.size());
     for (Task task : taskList) {
       task.init(this, isRestarted);
     }

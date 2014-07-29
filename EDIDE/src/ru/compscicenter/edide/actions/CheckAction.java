@@ -20,16 +20,18 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.JBColor;
 import com.jetbrains.python.sdk.PythonSdkType;
 import ru.compscicenter.edide.StudyDocumentListener;
-import ru.compscicenter.edide.course.StudyStatus;
-import ru.compscicenter.edide.editor.StudyEditor;
 import ru.compscicenter.edide.StudyTaskManager;
+import ru.compscicenter.edide.StudyToolWindowFactory;
 import ru.compscicenter.edide.StudyUtils;
+import ru.compscicenter.edide.course.StudyStatus;
 import ru.compscicenter.edide.course.Task;
 import ru.compscicenter.edide.course.TaskFile;
 import ru.compscicenter.edide.course.Window;
+import ru.compscicenter.edide.editor.StudyEditor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -150,6 +152,10 @@ public class CheckAction extends AnAction {
               final int testPassed = testRunner.getPassedTests(testProcess);
               if (testPassed == testNum) {
                 currentTask.setStatus(StudyStatus.Solved);
+                //TODO:update tool window somehow
+                ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW).getContentManager().removeAllContents(false);
+                StudyToolWindowFactory factory =  new StudyToolWindowFactory();
+                factory.createToolWindowContent(project, ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW));
                 selectedTaskFile.drawAllWindows(selectedEditor);
                 ProjectView.getInstance(project).refresh();
                 createTestResultPopUp("Congratulations!", JBColor.GREEN, project);

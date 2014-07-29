@@ -82,4 +82,8 @@ public class Course {
   public String getResourcePath() {
     return myResourcePath;
   }
+
+  public String getDescription() {
+    return description;
+  }
 }

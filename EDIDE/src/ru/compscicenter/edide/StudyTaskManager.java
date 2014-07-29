@@ -1,10 +1,15 @@
 package ru.compscicenter.edide;
 
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.xmlb.XmlSerializer;
+import icons.StudyIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,10 +78,32 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
 
   @Override
   public void projectOpened() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            UISettings.getInstance().HIDE_TOOL_STRIPES = false;
+            UISettings.getInstance().fireUISettingsChanged();
+            final ToolWindow newWindow = ToolWindowManager.getInstance(myProject).getToolWindow("StudyToolWindow");
+            if (newWindow != null) {
+              newWindow.getContentManager().removeAllContents(false);
+              StudyToolWindowFactory factory = new StudyToolWindowFactory();
+              factory.createToolWindowContent(myProject, newWindow);
+              newWindow.setIcon(StudyIcons.ShortcutReminder);
+
+              newWindow.show(null);
+            }
+          }
+        });
+      }
+    });
   }
 
   @Override
   public void projectClosed() {
+    ToolWindowManager.getInstance(myProject).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW).getContentManager().removeAllContents(false);
   }
 
   @Override
