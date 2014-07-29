@@ -16,7 +16,6 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
@@ -114,9 +113,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
 
     if (deniedFiles.isEmpty()) return Collections.emptyList();
 
-    final int savedEventCount = IdeEventQueue.getInstance().getEventCount();
     UnlockOption unlockOption = askToUnlock(deniedFiles);
-    IdeEventQueue.getInstance().setEventCount(savedEventCount);
 
     if (unlockOption == null) return deniedFiles;
 
