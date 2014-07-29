@@ -709,7 +709,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
       else {
         try {
-          myBrowser.read(new StringReader(EMPTY_HTML), null);
+          myBrowser.read(new StringReader("<html><body>Multiple inspections are selected. You can edit them as a single inspection.</body></html>"), null);
         }
         catch (IOException e1) {
           //Can't be
