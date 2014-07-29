@@ -93,6 +93,25 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
 
     myCellTypeCombo = new ComboBox(ourCellTypes);
 
+    myCellTypeCombo.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final Object selectedItem = myCellTypeCombo.getSelectedItem();
+        final IpnbPanel selectedCell = myIpnbEditorPanel.getSelectedCell();
+        if (selectedCell != null && selectedItem instanceof String) {
+          if (selectedCell instanceof HeadingPanel && ((String)selectedItem).startsWith(headingCellType)) {
+          // TODO: change cell to different cell type
+            final char c = ((String)selectedItem).charAt(((String)selectedItem).length() - 1);
+            final int level = Character.getNumericValue(c);
+            final HeadingCell headingCell = ((HeadingPanel)selectedCell).getCell();
+            if (level != headingCell.getLevel()) {
+              headingCell.setLevel(level);
+              ((HeadingPanel)selectedCell).updateCellView();
+            }
+          }
+        }
+      }
+    });
     controlPanel.add(myCellTypeCombo);
 
     final MatteBorder border = BorderFactory.createMatteBorder(0, 0, 1, 0, JBColor.GRAY);

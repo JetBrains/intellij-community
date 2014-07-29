@@ -30,5 +30,6 @@ public class IpnbRunCellAction extends AnAction {
     final IpnbPanel cell = ipnbFilePanel.getSelectedCell();
     cell.runCell();
     ipnbFilePanel.repaint();
+    cell.requestFocus();
   }
 }

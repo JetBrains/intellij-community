@@ -4,7 +4,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class SourceCell implements IpnbCell {
-  @NotNull private final String[] mySource;
+  @NotNull private String[] mySource;
 
   SourceCell(@NotNull final String[] source) {
     mySource = source;
@@ -13,6 +13,10 @@ public abstract class SourceCell implements IpnbCell {
   @NotNull
   public String[] getSource() {
     return mySource;
+  }
+
+  public void setSource(@NotNull final String[] source) {
+    mySource = source;
   }
 
   @NotNull

@@ -3,7 +3,7 @@ package org.jetbrains.plugins.ipnb.format.cells;
 import org.jetbrains.annotations.NotNull;
 
 public class HeadingCell extends SourceCell {
-  private final int myLevel;
+  private int myLevel;
 
   public HeadingCell(@NotNull final String[] source, int level) {
     super(source);
@@ -12,5 +12,9 @@ public class HeadingCell extends SourceCell {
 
   public int getLevel() {
     return myLevel;
+  }
+
+  public void setLevel(int level) {
+    myLevel = level;
   }
 }
