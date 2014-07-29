@@ -262,11 +262,15 @@ public class StudyEditor implements FileEditor {
 
   //TODO:handle exceptions
   public static StudyEditor getSelectedStudyEditor(Project project) {
-    FileEditor fileEditor =
-      FileEditorManagerImpl.getInstanceEx(project).getSplitters().getCurrentWindow().getSelectedEditor().getSelectedEditorWithProvider()
-        .getFirst();
-    if (fileEditor instanceof StudyEditor) {
-      return (StudyEditor)fileEditor;
+    try {
+      FileEditor fileEditor =
+        FileEditorManagerImpl.getInstanceEx(project).getSplitters().getCurrentWindow().getSelectedEditor().getSelectedEditorWithProvider()
+          .getFirst();
+      if (fileEditor instanceof StudyEditor) {
+        return (StudyEditor)fileEditor;
+      }
+    } catch (Exception e) {
+      return null;
     }
     return null;
   }

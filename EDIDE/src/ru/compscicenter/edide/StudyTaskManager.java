@@ -1,9 +1,13 @@
 package ru.compscicenter.edide;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -20,6 +24,7 @@ import ru.compscicenter.edide.course.TaskFile;
 import ru.compscicenter.edide.ui.StudyCondition;
 import ru.compscicenter.edide.ui.StudyToolWindowFactory;
 
+import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -97,14 +102,27 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
                 StudyToolWindowFactory factory = new StudyToolWindowFactory();
                 factory.createToolWindowContent(myProject, newWindow);
                 newWindow.setIcon(StudyIcons.ShortcutReminder);
-
                 newWindow.show(null);
+
               }
             }
           }
         });
       }
     });
+    addShortcut("ctrl pressed PERIOD", "NextWindow");
+    addShortcut("ctrl pressed COMMA", "PrevWindowAction");
+    addShortcut("ctrl pressed 7", "ShowHintAction");
+  }
+
+  private void addShortcut(String shortcutString, String actionIdString) {
+    Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+    Shortcut studyActionShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(shortcutString), null);
+    String[] actionsIds = keymap.getActionIds(studyActionShortcut);
+    for (String actionId : actionsIds) {
+      keymap.removeShortcut(actionId, studyActionShortcut);
+    }
+    keymap.addShortcut(actionIdString, studyActionShortcut);
   }
 
   @Override
