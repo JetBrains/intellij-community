@@ -454,7 +454,13 @@ public class BrowserLauncherAppless extends BrowserLauncher {
       commandLine.addParameter(url);
     }
 
-    addArgs(commandLine, browser == null ? null : browser.getSpecificSettings(), additionalParameters);
+    final BrowserSpecificSettings browserSpecificSettings = browser == null ? null : browser.getSpecificSettings();
+    if (browserSpecificSettings != null) {
+      commandLine.getEnvironment().putAll(browserSpecificSettings.getEnvironmentVariables());
+    }
+
+    addArgs(commandLine, browserSpecificSettings, additionalParameters);
+
     try {
       Process process = commandLine.createProcess();
       checkCreatedProcess(browser, project, commandLine, process, launchTask);
