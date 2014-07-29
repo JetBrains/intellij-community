@@ -75,6 +75,19 @@ public class MergeRequestImpl extends MergeRequest {
          cancelButtonPresentation);
   }
 
+  public MergeRequestImpl(String left,
+                          String base,
+                          String right,
+                          FileType type,
+                          Project project,
+                          @Nullable final ActionButtonPresentation okButtonPresentation,
+                          @Nullable final ActionButtonPresentation cancelButtonPresentation) {
+    this(new SimpleContent(left, type),
+         new SimpleContent(base, type),
+         new SimpleContent(right, type),
+         project, okButtonPresentation, cancelButtonPresentation);
+  }
+
   private MergeRequestImpl(DiffContent left,
                            DiffContent base,
                            DiffContent right,

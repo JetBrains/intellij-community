@@ -325,7 +325,7 @@ public class ApplyPatchAction extends DumbAwareAction {
       MergeRequest request;
       if (myReadOnly) {
         request = DiffRequestFactory.getInstance()
-          .create3WayDiffRequest(leftText, rightText, originalContent, project, null, null);
+          .create3WayDiffRequest(leftText, rightText, originalContent, file.getFileType(), project, null, null);
       } else {
         request = DiffRequestFactory.getInstance().createMergeRequest(reverse ? rightText : leftText,
                                                                       reverse ? leftText : rightText, originalContent,

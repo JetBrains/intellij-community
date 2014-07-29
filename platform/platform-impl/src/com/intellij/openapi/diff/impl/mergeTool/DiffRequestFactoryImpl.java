@@ -20,6 +20,7 @@ import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -41,8 +42,21 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
                                   cancelButtonPresentation);
     }
     else {
-      return create3WayDiffRequest(leftText, rightText, originalContent, project, okButtonPresentation, cancelButtonPresentation);
+      return create3WayDiffRequest(leftText, rightText, originalContent, file.getFileType(), project, okButtonPresentation, cancelButtonPresentation);
     }
+  }
+
+  public MergeRequest create3WayDiffRequest(final String leftText,
+                                            final String rightText,
+                                            final String originalContent,
+                                            @Nullable FileType type,
+                                            final Project project,
+                                            @Nullable final ActionButtonPresentation okButtonPresentation,
+                                            @Nullable final ActionButtonPresentation cancelButtonPresentation) {
+    if (type != null) {
+      return new MergeRequestImpl(leftText, originalContent, rightText, type, project, okButtonPresentation, cancelButtonPresentation);
+    }
+    return new MergeRequestImpl(leftText, originalContent, rightText, project, okButtonPresentation, cancelButtonPresentation);
   }
 
   public MergeRequest create3WayDiffRequest(final String leftText,
@@ -51,6 +65,6 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
                                             final Project project,
                                             @Nullable final ActionButtonPresentation okButtonPresentation,
                                             @Nullable final ActionButtonPresentation cancelButtonPresentation) {
-    return new MergeRequestImpl(leftText, originalContent, rightText, project, okButtonPresentation, cancelButtonPresentation);
+    return create3WayDiffRequest(leftText, rightText, originalContent, null, project, okButtonPresentation, cancelButtonPresentation);
   }
 }
