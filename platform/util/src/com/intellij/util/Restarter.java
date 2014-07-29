@@ -133,18 +133,13 @@ public class Restarter {
   }
 
   private static void restartOnMac(@NotNull final String... beforeRestart) throws IOException {
-    final String homePath = PathManager.getHomePath();
-    System.out.println("homePath: " + homePath);
-    final String bundle = homePath.substring(0, homePath.indexOf( ".app" ) + 4);
-    System.out.println("bundle: " + bundle);
-    if (!StringUtil.endsWithIgnoreCase(bundle, ".app")) throw new IOException("Application bundle not found: " + homePath);
+    final String homePath = PathManager.getHomePath().substring(0, PathManager.getHomePath().indexOf( ".app" ) + 4);
+    if (!StringUtil.endsWithIgnoreCase(homePath, ".app")) throw new IOException("Application bundle not found: " + homePath);
 
-    System.out.println("PathManager.getBinPath(): " + PathManager.getBinPath());
-    System.out.println("beforeRestart: " + beforeRestart);
     doScheduleRestart(new File(PathManager.getBinPath(), "restarter"), new Consumer<List<String>>() {
       @Override
       public void consume(List<String> commands) {
-        Collections.addAll(commands, bundle);
+        Collections.addAll(commands, homePath);
         Collections.addAll(commands, beforeRestart);
       }
     });
@@ -154,7 +149,6 @@ public class Restarter {
     List<String> commands = new ArrayList<String>();
     commands.add(createTempExecutable(restarterFile).getPath());
     argumentsBuilder.consume(commands);
-    System.out.println("commands: " + commands);
     Runtime.getRuntime().exec(commands.toArray(new String[commands.size()]));
   }
 
@@ -162,6 +156,16 @@ public class Restarter {
     String ext = FileUtilRt.getExtension(executable.getName());
     File copy = FileUtilRt.createTempFile(FileUtilRt.getNameWithoutExtension(executable.getName()),
                                           StringUtil.isEmptyOrSpaces(ext) ? ".tmp" : ("." + ext),
+                                          false);
+    FileUtilRt.copy(executable, copy);
+    if (!copy.setExecutable(executable.canExecute())) throw new IOException("Cannot make file executable: " + copy);
+    return copy;
+  }
+
+  public static File createTempExecutable(File dir, File executable) throws IOException {
+    String ext = FileUtilRt.getExtension(executable.getName());
+    File copy = FileUtilRt.createTempFile(dir, FileUtilRt.getNameWithoutExtension(executable.getName()),
+                                          StringUtil.isEmptyOrSpaces(ext) ? ".tmp" : ("." + dir),
                                           false);
     FileUtilRt.copy(executable, copy);
     if (!copy.setExecutable(executable.canExecute())) throw new IOException("Cannot make file executable: " + copy);
