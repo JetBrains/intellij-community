@@ -42,7 +42,7 @@ public abstract class GitLogSingleCommitAction extends VcsLogAction<GitRepositor
   }
 
   @Override
-  protected void actionPerformed(@NotNull Map<GitRepository, VcsFullCommitDetails> commits) {
+  protected void actionPerformed(@NotNull Project project, @NotNull Map<GitRepository, VcsFullCommitDetails> commits) {
     assert commits.size() == 1;
     Map.Entry<GitRepository, VcsFullCommitDetails> entry = commits.entrySet().iterator().next();
     GitRepository repository = entry.getKey();

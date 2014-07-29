@@ -43,7 +43,7 @@ public abstract class HgLogSingleCommitAction extends VcsLogAction<HgRepository>
   }
 
   @Override
-  protected void actionPerformed(@NotNull Map<HgRepository, VcsFullCommitDetails> commits) {
+  protected void actionPerformed(@NotNull Project project, @NotNull Map<HgRepository, VcsFullCommitDetails> commits) {
     assert commits.size() == 1;
     Map.Entry<HgRepository, VcsFullCommitDetails> entry = commits.entrySet().iterator().next();
     HgRepository repository = entry.getKey();

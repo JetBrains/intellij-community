@@ -50,7 +50,7 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
     assert grouped != null;
     Map<Repo, VcsFullCommitDetails> singleElementMap = convertToSingleElementMap(grouped);
     assert singleElementMap != null;
-    actionPerformed(singleElementMap);
+    actionPerformed(project, singleElementMap);
   }
 
   @Override
@@ -87,7 +87,7 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
   @Nullable
   protected abstract Repo getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root);
 
-  protected abstract void actionPerformed(@NotNull Map<Repo, VcsFullCommitDetails> commits);
+  protected abstract void actionPerformed(@NotNull Project project, @NotNull Map<Repo, VcsFullCommitDetails> commits);
 
   @NotNull
   protected abstract Mode getMode();
