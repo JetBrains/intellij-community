@@ -18,6 +18,7 @@ package com.intellij.profile.codeInspection.ui;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -84,7 +85,9 @@ public class ScopesOrderDialog extends DialogWrapper {
     final List<String> scopes = new ArrayList<String>();
     for (final NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(myProject)) {
       for (final NamedScope scope : holder.getScopes()) {
-        scopes.add(scope.getName());
+        if (!(scope instanceof NonProjectFilesScope)) {
+          scopes.add(scope.getName());
+        }
       }
     }
     scopes.remove(CustomScopesProviderEx.getAllScope().getName());
