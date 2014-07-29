@@ -20,10 +20,13 @@ import com.intellij.dvcs.ui.VcsLogSingleCommitAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
+
+import java.util.Map;
 
 public abstract class HgLogSingleCommitAction extends VcsLogSingleCommitAction<HgRepository> {
 
@@ -32,4 +35,22 @@ public abstract class HgLogSingleCommitAction extends VcsLogSingleCommitAction<H
   protected HgRepository getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root) {
     return ServiceManager.getService(project, HgRepositoryManager.class).getRepositoryForRoot(root);
   }
+
+  @NotNull
+  @Override
+  protected Mode getMode() {
+    return Mode.SINGLE_COMMIT;
+  }
+
+  @Override
+  protected void actionPerformed(@NotNull Map<HgRepository, VcsFullCommitDetails> commits) {
+    assert commits.size() == 1;
+    Map.Entry<HgRepository, VcsFullCommitDetails> entry = commits.entrySet().iterator().next();
+    HgRepository repository = entry.getKey();
+    VcsFullCommitDetails commit = entry.getValue();
+    actionPerformed(repository, commit);
+  }
+
+  protected abstract void actionPerformed(@NotNull HgRepository repository, @NotNull VcsFullCommitDetails commit);
+
 }

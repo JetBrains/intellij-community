@@ -23,27 +23,34 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public abstract class VcsLogSingleCommitAction<Repo extends Repository> extends DumbAwareAction {
+
+  protected enum Mode {
+    SINGLE_COMMIT,
+    SINGLE_PER_REPO
+  }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VcsLog log = e.getRequiredData(VcsLogDataKeys.VSC_LOG);
     List<VcsFullCommitDetails> details = log.getSelectedDetails();
-    assert details.size() == 1;
-    VcsFullCommitDetails commit = details.get(0);
-    Repo repository = getRepositoryForRoot(project, commit.getRoot());
-    assert repository != null;
-
-    actionPerformed(repository, commit);
+    MultiMap<Repo, VcsFullCommitDetails> grouped = groupByRoot(project, details);
+    assert grouped != null;
+    Map<Repo, VcsFullCommitDetails> singleElementMap = convertToSingleElementMap(grouped);
+    assert singleElementMap != null;
+    actionPerformed(singleElementMap);
   }
 
   @Override
@@ -56,27 +63,68 @@ public abstract class VcsLogSingleCommitAction<Repo extends Repository> extends 
     }
 
     List<VcsFullCommitDetails> details = log.getSelectedDetails();
-    if (containsCommitFromOtherVcs(project, details)) {
+    MultiMap<Repo, VcsFullCommitDetails> grouped = groupByRoot(project, details);
+    if (grouped == null) {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {
       e.getPresentation().setVisible(true);
-      e.getPresentation().setEnabled(details.size() == 1);
+      e.getPresentation().setEnabled(isEnabled(grouped));
     }
+  }
+
+  private boolean isEnabled(@NotNull MultiMap<Repo, VcsFullCommitDetails> grouped) {
+    Mode mode = getMode();
+    if (mode == Mode.SINGLE_COMMIT) {
+      return grouped.size() == 1;
+    }
+    if (mode == Mode.SINGLE_PER_REPO) {
+      return allValuesAreSingletons(grouped);
+    }
+    return false;
   }
 
   @Nullable
   protected abstract Repo getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root);
 
-  protected abstract void actionPerformed(@NotNull Repo repository, @NotNull VcsFullCommitDetails commit);
+  protected abstract void actionPerformed(@NotNull Map<Repo, VcsFullCommitDetails> commits);
 
-  private boolean containsCommitFromOtherVcs(@NotNull final Project project, @NotNull List<VcsFullCommitDetails> details) {
-    return ContainerUtil.exists(details, new Condition<VcsFullCommitDetails>() {
+  @NotNull
+  protected abstract Mode getMode();
+
+  @Nullable
+  private MultiMap<Repo, VcsFullCommitDetails> groupByRoot(@NotNull Project project, @NotNull List<VcsFullCommitDetails> commits) {
+    MultiMap<Repo, VcsFullCommitDetails> map = MultiMap.create();
+    for (VcsFullCommitDetails commit : commits) {
+      Repo root = getRepositoryForRoot(project, commit.getRoot());
+      if (root == null) { // commit from some other VCS
+        return null;
+      }
+      map.putValue(root, commit);
+    }
+    return map;
+  }
+
+  private boolean allValuesAreSingletons(@NotNull MultiMap<Repo, VcsFullCommitDetails> grouped) {
+    return !ContainerUtil.exists(grouped.entrySet(), new Condition<Map.Entry<Repo, Collection<VcsFullCommitDetails>>>() {
       @Override
-      public boolean value(VcsFullCommitDetails details) {
-        return getRepositoryForRoot(project, details.getRoot()) == null;
+      public boolean value(Map.Entry<Repo, Collection<VcsFullCommitDetails>> entry) {
+        return entry.getValue().size() != 1;
       }
     });
+  }
+
+  @Nullable
+  private Map<Repo, VcsFullCommitDetails> convertToSingleElementMap(@NotNull MultiMap<Repo, VcsFullCommitDetails> groupedCommits) {
+    Map<Repo, VcsFullCommitDetails> map = ContainerUtil.newHashMap();
+    for (Map.Entry<Repo, Collection<VcsFullCommitDetails>> entry : groupedCommits.entrySet()) {
+      Collection<VcsFullCommitDetails> commits = entry.getValue();
+      if (commits.size() != 1) {
+        return null;
+      }
+      map.put(entry.getKey(), commits.iterator().next());
+    }
+    return map;
   }
 
 }

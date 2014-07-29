@@ -19,10 +19,13 @@ import com.intellij.dvcs.ui.VcsLogSingleCommitAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 public abstract class GitLogSingleCommitAction extends VcsLogSingleCommitAction<GitRepository> {
 
@@ -31,5 +34,22 @@ public abstract class GitLogSingleCommitAction extends VcsLogSingleCommitAction<
   protected GitRepository getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root) {
     return ServiceManager.getService(project, GitRepositoryManager.class).getRepositoryForRoot(root);
   }
+
+  @NotNull
+  @Override
+  protected Mode getMode() {
+    return Mode.SINGLE_COMMIT;
+  }
+
+  @Override
+  protected void actionPerformed(@NotNull Map<GitRepository, VcsFullCommitDetails> commits) {
+    assert commits.size() == 1;
+    Map.Entry<GitRepository, VcsFullCommitDetails> entry = commits.entrySet().iterator().next();
+    GitRepository repository = entry.getKey();
+    VcsFullCommitDetails commit = entry.getValue();
+    actionPerformed(repository, commit);
+  }
+
+  protected abstract void actionPerformed(@NotNull GitRepository repository, @NotNull VcsFullCommitDetails commit);
 
 }
