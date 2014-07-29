@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -22,8 +23,9 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction;
-import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
+import org.jetbrains.plugins.ipnb.editor.panels.*;
 import org.jetbrains.plugins.ipnb.format.IpnbParser;
+import org.jetbrains.plugins.ipnb.format.cells.HeadingCell;
 
 import javax.swing.*;
 import javax.swing.border.MatteBorder;
@@ -46,6 +48,13 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
 
   private final TextEditor myEditor;
   private final IpnbFilePanel myIpnbEditorPanel;
+  private ComboBox myCellTypeCombo;
+  private static final String codeCellType = "Code";
+  private static final String markdownCellType = "Markdown";
+  private static final String headingCellType = "Heading ";
+  private static final String rawNBCellType = "Raw NBConvert";
+  private final static String[] ourCellTypes = new String[]{codeCellType, markdownCellType, rawNBCellType, headingCellType + "1",
+    headingCellType + "2", headingCellType + "3", headingCellType + "4", headingCellType + "5", headingCellType + "6"};
 
 
   public IpnbFileEditor(Project project, VirtualFile vFile) {
@@ -62,6 +71,12 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
 
     myIpnbEditorPanel = createIpnbEditorPanel(myProject, vFile, this);
 
+    final JPanel controlPanel = createControlPanel();
+    myEditorPanel.add(controlPanel, BorderLayout.NORTH);
+    myEditorPanel.add(new MyScrollPane(myIpnbEditorPanel), BorderLayout.CENTER);
+  }
+
+  private JPanel createControlPanel() {
     final JPanel controlPanel = new JPanel();
     controlPanel.setBackground(IpnbEditorUtil.getBackground());
     final JButton button = new JButton();
@@ -75,16 +90,36 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
       }
     });
     controlPanel.add(button);
+
+    myCellTypeCombo = new ComboBox(ourCellTypes);
+
+    controlPanel.add(myCellTypeCombo);
+
     final MatteBorder border = BorderFactory.createMatteBorder(0, 0, 1, 0, JBColor.GRAY);
     controlPanel.setBorder(border);
-    myEditorPanel.add(controlPanel, BorderLayout.NORTH);
-    myEditorPanel.add(new MyScrollPane(myIpnbEditorPanel), BorderLayout.CENTER);
+    return controlPanel;
   }
 
   @NotNull
   private IpnbFilePanel createIpnbEditorPanel(Project project, VirtualFile vFile, Disposable parent) {
     try {
-      return new IpnbFilePanel(project, parent, IpnbParser.parseIpnbFile(new String(vFile.contentsToByteArray(), CharsetToolkit.UTF8)));
+      return new IpnbFilePanel(project, parent, IpnbParser.parseIpnbFile(new String(vFile.contentsToByteArray(), CharsetToolkit.UTF8)),
+                               new CellSelectionListener() {
+                                 @Override
+                                 public void selectionChanged(@NotNull IpnbPanel ipnbPanel) {
+                                   if (ipnbPanel instanceof HeadingPanel) {
+                                     final HeadingCell cell = ((HeadingPanel)ipnbPanel).getCell();
+                                     final int level = cell.getLevel();
+                                     myCellTypeCombo.setSelectedItem(headingCellType + level);
+                                   }
+                                   else if (ipnbPanel instanceof MarkdownPanel) {
+                                     myCellTypeCombo.setSelectedItem(markdownCellType);
+                                   }
+                                   else if (ipnbPanel instanceof CodePanel) {
+                                     myCellTypeCombo.setSelectedItem(codeCellType);
+                                   }
+                                 }
+                               });
     }
     catch (IOException e) {
       Messages.showErrorDialog(project, e.getMessage(), "Can't open " + vFile.getPath());
@@ -219,7 +254,6 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     }
   }
 
-
   private class MyScrollBar extends JBScrollBar {
     private MyScrollPane myScrollPane;
 
@@ -236,5 +270,9 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     public int getBlockIncrement(int direction) {
       return myEditor.getEditor().getLineHeight();
     }
+  }
+
+  public abstract class CellSelectionListener {
+    public abstract void selectionChanged(@NotNull final IpnbPanel ipnbPanel);
   }
 }

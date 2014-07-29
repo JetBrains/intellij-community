@@ -22,6 +22,7 @@ import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
+import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.format.IpnbFile;
 import org.jetbrains.plugins.ipnb.format.cells.CodeCell;
 import org.jetbrains.plugins.ipnb.format.cells.HeadingCell;
@@ -46,15 +47,18 @@ public class IpnbFilePanel extends JPanel {
 
   private Project myProject;
   @Nullable private Disposable myParent;
+  @NotNull private final IpnbFileEditor.CellSelectionListener myListener;
 
   private final List<IpnbPanel> myIpnbPanels = Lists.newArrayList();
 
   private IpnbPanel mySelectedCell;
 
-  public IpnbFilePanel(@NotNull final Project project, @Nullable final Disposable parent, @NotNull final IpnbFile file) {
+  public IpnbFilePanel(@NotNull final Project project, @Nullable final Disposable parent, @NotNull final IpnbFile file,
+                       @NotNull final IpnbFileEditor.CellSelectionListener listener) {
     super(new GridBagLayout());
     myProject = project;
     myParent = parent;
+    myListener = listener;
     setBackground(IpnbEditorUtil.getBackground());
     myIpnbFile = file;
 
@@ -162,7 +166,7 @@ public class IpnbFilePanel extends JPanel {
     super.paintComponent(g);
     if (mySelectedCell != null) {
       g.setColor(mySelectedCell.isEditing() ? JBColor.GREEN : JBColor.GRAY);
-      g.drawRect(100, mySelectedCell.getTop() - 1, getWidth() - 200, mySelectedCell.getHeight() + 2);
+      g.drawRoundRect(100, mySelectedCell.getTop() - 1, getWidth() - 200, mySelectedCell.getHeight() + 2, 5, 5);
     }
   }
 
@@ -179,6 +183,7 @@ public class IpnbFilePanel extends JPanel {
     mySelectedCell = ipnbPanel;
     requestFocus();
     repaint();
+    myListener.selectionChanged(ipnbPanel);
   }
 
   public IpnbPanel getSelectedCell() {
@@ -186,7 +191,7 @@ public class IpnbFilePanel extends JPanel {
   }
 
   @Nullable
-  private IpnbPanel getIpnbPanelByClick(Point point) {
+  private IpnbPanel getIpnbPanelByClick(@NotNull final Point point) {
     for (IpnbPanel c: myIpnbPanels) {
       if (c.contains(point.y)) {
         return c;
