@@ -35,7 +35,7 @@ import java.util.Map;
  */
 public class RemoteFileManagerImpl extends RemoteFileManager implements Disposable {
   private final LocalFileStorage myStorage;
-  private final Map<Pair<Boolean, Url>, VirtualFileImpl> myRemoteFiles = new THashMap<Pair<Boolean, Url>, VirtualFileImpl>();
+  private final Map<Pair<Boolean, Url>, HttpVirtualFileImpl> myRemoteFiles = new THashMap<Pair<Boolean, Url>, HttpVirtualFileImpl>();
   private final EventDispatcher<HttpVirtualFileListener> myDispatcher = EventDispatcher.create(HttpVirtualFileListener.class);
   private final List<RemoteContentProvider> myProviders = new ArrayList<RemoteContentProvider>();
   private final DefaultRemoteContentProvider myDefaultRemoteContentProvider;
@@ -55,16 +55,16 @@ public class RemoteFileManagerImpl extends RemoteFileManager implements Disposab
     return myDefaultRemoteContentProvider;
   }
 
-  public synchronized VirtualFileImpl getOrCreateFile(@Nullable VirtualFileImpl parent, @NotNull Url url, @NotNull String path, final boolean directory) {
+  public synchronized HttpVirtualFileImpl getOrCreateFile(@Nullable HttpVirtualFileImpl parent, @NotNull Url url, @NotNull String path, final boolean directory) {
     Pair<Boolean, Url> key = Pair.create(directory, url);
-    VirtualFileImpl file = myRemoteFiles.get(key);
+    HttpVirtualFileImpl file = myRemoteFiles.get(key);
     if (file == null) {
       if (directory) {
-        file = new VirtualFileImpl(getHttpFileSystem(url), parent, path, null);
+        file = new HttpVirtualFileImpl(getHttpFileSystem(url), parent, path, null);
       }
       else {
         RemoteFileInfoImpl fileInfo = new RemoteFileInfoImpl(url, this);
-        file = new VirtualFileImpl(getHttpFileSystem(url), parent, path, fileInfo);
+        file = new HttpVirtualFileImpl(getHttpFileSystem(url), parent, path, fileInfo);
         fileInfo.addDownloadingListener(new MyDownloadingListener(file));
       }
       myRemoteFiles.put(key, file);
@@ -133,9 +133,9 @@ public class RemoteFileManagerImpl extends RemoteFileManager implements Disposab
   }
 
   private class MyDownloadingListener extends FileDownloadingAdapter {
-    private final VirtualFileImpl myFile;
+    private final HttpVirtualFileImpl myFile;
 
-    public MyDownloadingListener(final VirtualFileImpl file) {
+    public MyDownloadingListener(final HttpVirtualFileImpl file) {
       myFile = file;
     }
 

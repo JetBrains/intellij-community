@@ -35,7 +35,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
-class VirtualFileImpl extends HttpVirtualFile {
+class HttpVirtualFileImpl extends HttpVirtualFile {
   private final HttpFileSystemBase myFileSystem;
   @Nullable private final RemoteFileInfoImpl myFileInfo;
   private FileType myInitialFileType;
@@ -45,7 +45,7 @@ class VirtualFileImpl extends HttpVirtualFile {
 
   private List<VirtualFile> myChildren;
 
-  VirtualFileImpl(@NotNull HttpFileSystemBase fileSystem, @Nullable VirtualFileImpl parent, String path, @Nullable RemoteFileInfoImpl fileInfo) {
+  HttpVirtualFileImpl(@NotNull HttpFileSystemBase fileSystem, @Nullable HttpVirtualFileImpl parent, String path, @Nullable RemoteFileInfoImpl fileInfo) {
     if (parent != null) {
       if (parent.myChildren == null) {
         parent.myChildren = new SmartList<VirtualFile>();
@@ -63,7 +63,7 @@ class VirtualFileImpl extends HttpVirtualFile {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              VirtualFileImpl file = VirtualFileImpl.this;
+              HttpVirtualFileImpl file = HttpVirtualFileImpl.this;
               FileDocumentManager.getInstance().reloadFiles(file);
               if (!localFile.getFileType().equals(myInitialFileType)) {
                 FileContentUtilCore.reparseFiles(file);
