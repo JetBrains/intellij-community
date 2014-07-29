@@ -71,9 +71,12 @@ public class JavaStackFrame extends XStackFrame {
   private static final JavaFramesListRenderer FRAME_RENDERER = new JavaFramesListRenderer();
   private JavaDebuggerEvaluator myEvaluator = null;
 
-  public JavaStackFrame(@NotNull StackFrameProxyImpl stackFrameProxy, @NotNull DebugProcessImpl debugProcess, MethodsTracker tracker) {
+  public JavaStackFrame(@NotNull StackFrameProxyImpl stackFrameProxy,
+                        @NotNull DebugProcessImpl debugProcess,
+                        @NotNull MethodsTracker tracker,
+                        @NotNull NodeManagerImpl nodeManager) {
     myDebugProcess = debugProcess;
-    myNodeManager = debugProcess.getXdebugProcess().getNodeManager();
+    myNodeManager = nodeManager;
     myDescriptor = new StackFrameDescriptorImpl(stackFrameProxy, tracker);
     myDescriptor.setContext(null);
     myDescriptor.updateRepresentation(null, DescriptorLabelListener.DUMMY_LISTENER);
