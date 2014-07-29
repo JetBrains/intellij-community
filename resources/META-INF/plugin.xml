@@ -16,6 +16,7 @@
   </extensions>
   <actions>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction" id="IpnbRunCellAction" text="Run cell">
+      <keyboard-shortcut keymap="$default" first-keystroke="ctrl ENTER"/>
     </action>
   </actions>
 </idea-plugin>
