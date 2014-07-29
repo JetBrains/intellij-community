@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import org.jetbrains.annotations.NotNull;
@@ -44,21 +45,25 @@ public class IpnbEditorUtil {
   public static Dimension PROMPT_SIZE = new Dimension(80, 30);
 
   public static Editor createPythonCodeEditor(@NotNull Project project, @NotNull String text) {
-    EditorEx editor =
-      (EditorEx)EditorFactory.getInstance().createEditor(createPythonCodeDocument(project, text), project, PythonFileType.INSTANCE, false);
-    editor.setBackgroundColor(Gray._247);
+    EditorEx editor = (EditorEx)EditorFactory.getInstance().createEditor(createPythonCodeDocument(project, text), project,
+                                                                         PythonFileType.INSTANCE, false);
+
+    setupEditor(editor);
+    return editor;
+  }
+
+  private static void setupEditor(@NotNull final EditorEx editor) {
+    if (!UIUtil.isUnderDarcula())
+      editor.setBackgroundColor(Gray._247);
     noScrolling(editor);
     ConsoleViewUtil.setupConsoleEditor(editor, false, false);
-    return editor;
   }
 
   public static Editor createPlainCodeEditor(@NotNull Project project, @NotNull String text) {
     final EditorFactory editorFactory = EditorFactory.getInstance();
     final Document document = editorFactory.createDocument(text);
     EditorEx editor = (EditorEx)editorFactory.createEditor(document, project);
-    editor.setBackgroundColor(Gray._247);
-    noScrolling(editor);
-    ConsoleViewUtil.setupConsoleEditor(editor, false, false);
+    setupEditor(editor);
     return editor;
   }
 
