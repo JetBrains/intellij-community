@@ -81,10 +81,7 @@ public class FragmentedDiffRequestFromChange {
     }
     List<BeforeAfter<TextRange>> ranges = calculator.getRanges();
     if (ranges == null || ranges.isEmpty()) return null;
-    FragmentedContent fragmentedContent = new FragmentedContent(calculator.getOldDocument(), calculator.getDocument(), ranges);
-    final FileStatus fs = change.getFileStatus();
-    fragmentedContent.setIsAddition(FileStatus.ADDED.equals(fs));
-    fragmentedContent.setOneSide(FileStatus.ADDED.equals(fs) || FileStatus.DELETED.equals(fs));
+    FragmentedContent fragmentedContent = new FragmentedContent(calculator.getOldDocument(), calculator.getDocument(), ranges, change);
     VirtualFile file = filePath.getVirtualFile();
     if (file == null) {
       filePath.hardRefresh();
