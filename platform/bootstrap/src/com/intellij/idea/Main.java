@@ -146,10 +146,16 @@ public class Main {
       List<String> args = new ArrayList<String>();
 
       if (SystemInfoRt.isWindows) {
+        String userDir = System.getProperty("user.home") + "/." + ApplicationNamesInfo.getInstance().getProductName();
         File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
-        File userDir = new File(System.getProperty("user.home") + "/." + ApplicationNamesInfo.getInstance().getProductName());
+        //File userDir = new File(System.getProperty("user.home") + "/." + ApplicationNamesInfo.getInstance().getProductName());
         System.out.println("pathToLauncher: " + userDir.getPath());
-        Restarter.setRestarterDir(userDir.getPath());
+        if (!FileUtilRt.delete(new File(userDir + "/VistaLauncher.exe")) || !FileUtilRt.delete(new File(userDir + "/restarter.exe"))) {
+          throw new IOException("Cannot delete launchers in " + userDir);
+        }else {
+          System.out.println("previous versions of launchers were deleted successfully.");
+        }
+        Restarter.setRestarterDir(userDir);
 //        File restarter = new File(PathManager.getBinPath(), "restarter.exe");
 //        Restarter.createTempExecutable(userDir, restarter);
         args.add(Restarter.createTempExecutableLauncher(launcher).getPath());
