@@ -154,7 +154,7 @@ public class PropertiesComponent extends JPanel {
     }
   }
 
-  private void collectProperties(@NotNull SvnVcs vcs, @NotNull File file, @NotNull final Map<String, String> props) {
+  private static void collectProperties(@NotNull SvnVcs vcs, @NotNull File file, @NotNull final Map<String, String> props) {
     try {
       PropertyConsumer handler = new PropertyConsumer() {
         public void handleProperty(File path, PropertyData property) throws SVNException {
@@ -232,10 +232,12 @@ public class PropertiesComponent extends JPanel {
       String url = "file://" + myFile.getPath().replace(File.separatorChar, '/');
       VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
       if (file != null) {
+        VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(myVcs.getProject());
+
         if (recursive && file.isDirectory()) {
-          VcsDirtyScopeManager.getInstance(myVcs.getProject()).dirDirtyRecursively(file, true);
+          dirtyScopeManager.dirDirtyRecursively(file);
         } else {
-          VcsDirtyScopeManager.getInstance(myVcs.getProject()).fileDirty(file);
+          dirtyScopeManager.fileDirty(file);
         }
       }
     }
@@ -275,8 +277,7 @@ public class PropertiesComponent extends JPanel {
       if (!StringUtil.isEmpty(property)) {
         try {
           myVcs.getFactory(myFile).createPropertyClient()
-            .setProperty(myFile, property, value != null ? PropertyValue.create(value) : null,
-                         Depth.allOrEmpty(recursive), force);
+            .setProperty(myFile, property, PropertyValue.create(value), Depth.allOrEmpty(recursive), force);
         }
         catch (VcsException error) {
           VcsBalloonProblemNotifier
