@@ -29,7 +29,7 @@ public abstract class HttpRequestHandler {
   public static final ExtensionPointName<HttpRequestHandler> EP_NAME = ExtensionPointName.create("com.intellij.httpRequestHandler");
 
   public boolean isSupported(@NotNull FullHttpRequest request) {
-    return request.getMethod() == HttpMethod.GET || request.getMethod() == HttpMethod.HEAD;
+    return request.method() == HttpMethod.GET || request.method() == HttpMethod.HEAD;
   }
 
   public abstract boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context)
