@@ -22,10 +22,10 @@ import java.util.List;
  * which is visible to student in project view
  */
 public class TaskFile {
-  public List<Window> windows = new ArrayList<Window>();
+  public List<TaskWindow> taskWindows = new ArrayList<TaskWindow>();
   private Task myTask;
   @Transient
-  private Window mySelectedWindow = null;
+  private TaskWindow mySelectedTaskWindow = null;
   public int myIndex = -1;
 
   /**
@@ -33,8 +33,8 @@ public class TaskFile {
    */
   @Transient
   public StudyStatus getStatus() {
-    for (Window window : windows) {
-      StudyStatus windowStatus = window.getStatus();
+    for (TaskWindow taskWindow : taskWindows) {
+      StudyStatus windowStatus = taskWindow.getStatus();
       if (windowStatus == StudyStatus.Failed) {
         return StudyStatus.Failed;
       }
@@ -50,24 +50,24 @@ public class TaskFile {
   }
 
   @Transient
-  public Window getSelectedWindow() {
-    return mySelectedWindow;
+  public TaskWindow getSelectedTaskWindow() {
+    return mySelectedTaskWindow;
   }
 
   /**
-   * @param selectedWindow window from this task file to be set as selected
+   * @param selectedTaskWindow window from this task file to be set as selected
    */
-  public void setSelectedWindow(Window selectedWindow) {
-    if (selectedWindow.getTaskFile() == this) {
-      mySelectedWindow = selectedWindow;
+  public void setSelectedTaskWindow(TaskWindow selectedTaskWindow) {
+    if (selectedTaskWindow.getTaskFile() == this) {
+      mySelectedTaskWindow = selectedTaskWindow;
     }
     else {
       throw new IllegalArgumentException("Window may be set as selected only in task file which it belongs to");
     }
   }
 
-  public List<Window> getWindows() {
-    return windows;
+  public List<TaskWindow> getTaskWindows() {
+    return taskWindows;
   }
 
   /**
@@ -89,8 +89,8 @@ public class TaskFile {
   }
 
   public void drawAllWindows(Editor editor) {
-    for (Window window : windows) {
-      window.draw(editor, false, false);
+    for (TaskWindow taskWindow : taskWindows) {
+      taskWindow.draw(editor, false, false);
     }
   }
 
@@ -100,14 +100,14 @@ public class TaskFile {
    * @return task window located in specified position or null if there is no task window in this position
    */
   @Nullable
-  public Window getTaskWindow(Document document, LogicalPosition pos) {
+  public TaskWindow getTaskWindow(Document document, LogicalPosition pos) {
     int line = pos.line;
     if (line >= document.getLineCount()) {
       return null;
     }
     int column = pos.column;
     int offset = document.getLineStartOffset(line) + column;
-    for (Window tw : windows) {
+    for (TaskWindow tw : taskWindows) {
       if (line == tw.getLine()) {
         int twStartOffset = tw.getRealStartOffset(document);
         int twEndOffset = twStartOffset + tw.getLength();
@@ -126,9 +126,9 @@ public class TaskFile {
    * @param change    change to be added to line numbers
    */
   public void incrementLines(int startLine, int change) {
-    for (Window taskWindow : windows) {
-      if (taskWindow.getLine() >= startLine) {
-        taskWindow.setLine(taskWindow.getLine() + change);
+    for (TaskWindow taskTaskWindow : taskWindows) {
+      if (taskTaskWindow.getLine() >= startLine) {
+        taskTaskWindow.setLine(taskTaskWindow.getLine() + change);
       }
     }
   }
@@ -141,12 +141,12 @@ public class TaskFile {
 
   public void init(Task task, boolean isRestarted) {
     myTask = task;
-    for (Window window : windows) {
-      window.init(this, isRestarted);
+    for (TaskWindow taskWindow : taskWindows) {
+      taskWindow.init(this, isRestarted);
     }
-    Collections.sort(windows);
-    for (int i = 0; i < windows.size(); i++) {
-      windows.get(i).setIndex(i);
+    Collections.sort(taskWindows);
+    for (int i = 0; i < taskWindows.size(); i++) {
+      taskWindows.get(i).setIndex(i);
     }
   }
 
@@ -166,7 +166,7 @@ public class TaskFile {
    * @param oldEndOffsetInLine distance from line start to end of changed fragment
    */
   public void updateLine(int lineChange, int line, int newEndOffsetInLine, int oldEndOffsetInLine) {
-    for (Window w : windows) {
+    for (TaskWindow w : taskWindows) {
       if ((w.getLine() == line) && (w.getStart() > oldEndOffsetInLine)) {
         int distance = w.getStart() - oldEndOffsetInLine;
         w.setStart(distance + newEndOffsetInLine);
@@ -176,27 +176,27 @@ public class TaskFile {
   }
 
   public static void copy(TaskFile source, TaskFile target) {
-    List<Window> sourceWindows = source.getWindows();
-    List<Window> windowsCopy = new ArrayList<Window>(sourceWindows.size());
-    for (Window window : sourceWindows) {
-      Window windowCopy = new Window();
-      windowCopy.setLine(window.getLine());
-      windowCopy.setStart(window.getStart());
-      windowCopy.setLength(window.getLength());
-      windowCopy.setPossibleAnswer(window.getPossibleAnswer());
-      windowCopy.setIndex(window.getIndex());
-      windowsCopy.add(windowCopy);
+    List<TaskWindow> sourceTaskWindows = source.getTaskWindows();
+    List<TaskWindow> windowsCopy = new ArrayList<TaskWindow>(sourceTaskWindows.size());
+    for (TaskWindow taskWindow : sourceTaskWindows) {
+      TaskWindow taskWindowCopy = new TaskWindow();
+      taskWindowCopy.setLine(taskWindow.getLine());
+      taskWindowCopy.setStart(taskWindow.getStart());
+      taskWindowCopy.setLength(taskWindow.getLength());
+      taskWindowCopy.setPossibleAnswer(taskWindow.getPossibleAnswer());
+      taskWindowCopy.setIndex(taskWindow.getIndex());
+      windowsCopy.add(taskWindowCopy);
     }
-    target.setWindows(windowsCopy);
+    target.setTaskWindows(windowsCopy);
   }
 
-  public void setWindows(List<Window> windows) {
-    this.windows = windows;
+  public void setTaskWindows(List<TaskWindow> taskWindows) {
+    this.taskWindows = taskWindows;
   }
 
   public void setStatus(StudyStatus status) {
-    for (Window window : windows) {
-      window.setStatus(status);
+    for (TaskWindow taskWindow : taskWindows) {
+      taskWindow.setStatus(status);
     }
   }
 }

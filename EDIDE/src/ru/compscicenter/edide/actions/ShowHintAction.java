@@ -14,12 +14,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import ru.compscicenter.edide.course.TaskWindow;
 import ru.compscicenter.edide.editor.StudyEditor;
 import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.StudyUtils;
 import ru.compscicenter.edide.course.Course;
 import ru.compscicenter.edide.course.TaskFile;
-import ru.compscicenter.edide.course.Window;
 
 import java.io.File;
 
@@ -43,9 +43,9 @@ public class ShowHintAction extends AnAction {
         PsiFile file = PsiManager.getInstance(project).findFile(openedFile);
         if (file != null) {
           LogicalPosition pos = selectedEditor.getCaretModel().getLogicalPosition();
-          Window window = taskFile.getTaskWindow(selectedEditor.getDocument(), pos);
-          if (window != null) {
-            String hint = window.getHint();
+          TaskWindow taskWindow = taskFile.getTaskWindow(selectedEditor.getDocument(), pos);
+          if (taskWindow != null) {
+            String hint = taskWindow.getHint();
             File resourceFile = new File(taskManager.getCourse().getResourcePath());
             File resourceRoot = resourceFile.getParentFile();
             if (resourceRoot != null && resourceRoot.exists()) {

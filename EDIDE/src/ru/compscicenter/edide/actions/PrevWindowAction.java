@@ -10,7 +10,7 @@ import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.StudyUtils;
 import ru.compscicenter.edide.course.StudyStatus;
 import ru.compscicenter.edide.course.TaskFile;
-import ru.compscicenter.edide.course.Window;
+import ru.compscicenter.edide.course.TaskWindow;
 import ru.compscicenter.edide.editor.StudyEditor;
 
 /**
@@ -28,17 +28,17 @@ public class PrevWindowAction extends AnAction {
         StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
         TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
         if (selectedTaskFile != null) {
-          Window selectedWindow = selectedTaskFile.getSelectedWindow();
-          Window prev = null;
-          for (Window window : selectedTaskFile.getWindows()) {
-            if (window == selectedWindow) {
+          TaskWindow selectedTaskWindow = selectedTaskFile.getSelectedTaskWindow();
+          TaskWindow prev = null;
+          for (TaskWindow taskWindow : selectedTaskFile.getTaskWindows()) {
+            if (taskWindow == selectedTaskWindow) {
               break;
             }
-            prev = window;
+            prev = taskWindow;
           }
 
           if (prev != null) {
-            selectedTaskFile.setSelectedWindow(prev);
+            selectedTaskFile.setSelectedTaskWindow(prev);
             prev.draw(selectedEditor, prev.getStatus() != StudyStatus.Solved, true);
           }
         }

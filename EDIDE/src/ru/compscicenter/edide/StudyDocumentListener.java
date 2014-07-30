@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import ru.compscicenter.edide.course.TaskFile;
-import ru.compscicenter.edide.course.Window;
+import ru.compscicenter.edide.course.TaskWindow;
 
 /**
  * author: liana
@@ -42,10 +42,10 @@ public class StudyDocumentListener extends DocumentAdapter {
       int line = document.getLineNumber(offset);
       int offsetInLine = offset - document.getLineStartOffset(line);
       LogicalPosition pos = new LogicalPosition(line, offsetInLine);
-      Window window = myTaskFile.getTaskWindow(document, pos);
-      if (window != null) {
-        int newLength = window.getLength() + change;
-        window.setLength(newLength);
+      TaskWindow taskWindow = myTaskFile.getTaskWindow(document, pos);
+      if (taskWindow != null) {
+        int newLength = taskWindow.getLength() + change;
+        taskWindow.setLength(newLength);
       }
       int newEnd = offset + event.getNewLength();
       int newLine = document.getLineNumber(newEnd);

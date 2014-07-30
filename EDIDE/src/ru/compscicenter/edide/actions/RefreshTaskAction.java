@@ -83,8 +83,8 @@ public class RefreshTaskAction extends AnAction {
                     ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW).getContentManager().removeAllContents(false);
                     StudyToolWindowFactory factory =  new StudyToolWindowFactory();
                     factory.createToolWindowContent(project, ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW));
-                    for (Window window : selectedTaskFile.getWindows()) {
-                      window.reset();
+                    for (TaskWindow taskWindow : selectedTaskFile.getTaskWindows()) {
+                      taskWindow.reset();
                     }
                     ProjectView.getInstance(project).refresh();
                     if (listener != null) {

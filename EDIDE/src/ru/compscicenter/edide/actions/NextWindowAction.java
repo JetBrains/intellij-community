@@ -10,7 +10,7 @@ import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.StudyUtils;
 import ru.compscicenter.edide.course.StudyStatus;
 import ru.compscicenter.edide.course.TaskFile;
-import ru.compscicenter.edide.course.Window;
+import ru.compscicenter.edide.course.TaskWindow;
 import ru.compscicenter.edide.editor.StudyEditor;
 
 /**
@@ -30,15 +30,15 @@ public class NextWindowAction extends AnAction {
         StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
         TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
         if (selectedTaskFile != null) {
-          Window selectedWindow = selectedTaskFile.getSelectedWindow();
+          TaskWindow selectedTaskWindow = selectedTaskFile.getSelectedTaskWindow();
           boolean ifDraw = false;
-          for (Window window : selectedTaskFile.getWindows()) {
+          for (TaskWindow taskWindow : selectedTaskFile.getTaskWindows()) {
             if (ifDraw) {
-              selectedTaskFile.setSelectedWindow(window);
-              window.draw(selectedEditor, window.getStatus() != StudyStatus.Solved, true);
+              selectedTaskFile.setSelectedTaskWindow(taskWindow);
+              taskWindow.draw(selectedEditor, taskWindow.getStatus() != StudyStatus.Solved, true);
               return;
             }
-            if (window == selectedWindow) {
+            if (taskWindow == selectedTaskWindow) {
               ifDraw = true;
             }
           }

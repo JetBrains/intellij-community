@@ -12,7 +12,7 @@
           "test_num":1,
           "task_files": { "helloworld.py":
           {
-            "windows": [
+            "task_windows": [
               {
                 "line": 0,
                 "start": 0,
@@ -38,7 +38,7 @@
           "test_num":3,
           "task_files": { "match_ends.py":
           {
-            "windows": [
+            "task_windows": [
               {
                 "line": 1,
                 "start": 43,
@@ -85,7 +85,7 @@
           "output":"sum-output",
           "task_files": { "sum.py":
           {
-            "windows": [
+            "task_windows": [
               {
                 "line": 4,
                 "start": 15,

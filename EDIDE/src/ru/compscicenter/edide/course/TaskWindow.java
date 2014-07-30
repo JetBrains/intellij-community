@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  */
 
 
-public class Window implements Comparable {
+public class TaskWindow implements Comparable {
 
   public int line = 0;
   public int start = 0;
@@ -131,13 +131,13 @@ public class Window implements Comparable {
 
   @Override
   public int compareTo(@NotNull Object o) {
-    Window window = (Window)o;
-    if (window.getTaskFile() != myTaskFile) {
+    TaskWindow taskWindow = (TaskWindow)o;
+    if (taskWindow.getTaskFile() != myTaskFile) {
       throw new ClassCastException();
     }
-    int lineDiff = line - window.line;
+    int lineDiff = line - taskWindow.line;
     if (lineDiff == 0) {
-      return start - window.start;
+      return start - taskWindow.start;
     }
     return lineDiff;
   }

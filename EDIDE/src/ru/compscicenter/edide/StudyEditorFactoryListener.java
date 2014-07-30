@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import ru.compscicenter.edide.course.StudyStatus;
 import ru.compscicenter.edide.course.TaskFile;
-import ru.compscicenter.edide.course.Window;
+import ru.compscicenter.edide.course.TaskWindow;
 import ru.compscicenter.edide.editor.StudyEditor;
 
 import java.awt.*;
@@ -41,10 +41,10 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
       Editor editor = e.getEditor();
       Point point = e.getMouseEvent().getPoint();
       LogicalPosition pos = editor.xyToLogicalPosition(point);
-      Window window = myTaskFile.getTaskWindow(editor.getDocument(), pos);
-      if (window != null) {
-        myTaskFile.setSelectedWindow(window);
-        window.draw(editor, window.getStatus() != StudyStatus.Solved, true);
+      TaskWindow taskWindow = myTaskFile.getTaskWindow(editor.getDocument(), pos);
+      if (taskWindow != null) {
+        myTaskFile.setSelectedTaskWindow(taskWindow);
+        taskWindow.draw(editor, taskWindow.getStatus() != StudyStatus.Solved, true);
       }
       else {
         myTaskFile.drawAllWindows(editor);

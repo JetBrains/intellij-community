@@ -25,12 +25,12 @@ import com.intellij.ui.JBColor;
 import com.jetbrains.python.sdk.PythonSdkType;
 import ru.compscicenter.edide.StudyDocumentListener;
 import ru.compscicenter.edide.StudyTaskManager;
+import ru.compscicenter.edide.course.TaskWindow;
 import ru.compscicenter.edide.ui.StudyToolWindowFactory;
 import ru.compscicenter.edide.StudyUtils;
 import ru.compscicenter.edide.course.StudyStatus;
 import ru.compscicenter.edide.course.Task;
 import ru.compscicenter.edide.course.TaskFile;
-import ru.compscicenter.edide.course.Window;
 import ru.compscicenter.edide.editor.StudyEditor;
 
 import javax.swing.*;
@@ -167,8 +167,8 @@ public class CheckAction extends AnAction {
 
               final TaskFile taskFileCopy = new TaskFile();
               final VirtualFile copyWithAnswers = getCopyWithAnswers(taskDir, openedFile, selectedTaskFile, taskFileCopy);
-              for (final Window window : taskFileCopy.getWindows()) {
-                check(project, window, copyWithAnswers, taskFileCopy, selectedTaskFile, selectedEditor.getDocument(), testRunner);
+              for (final TaskWindow taskWindow : taskFileCopy.getTaskWindows()) {
+                check(project, taskWindow, copyWithAnswers, taskFileCopy, selectedTaskFile, selectedEditor.getDocument(), testRunner);
               }
               try {
                 copyWithAnswers.delete(this);
@@ -197,7 +197,7 @@ public class CheckAction extends AnAction {
   }
 
   private void check(Project project,
-                     Window window,
+                     TaskWindow taskWindow,
                      VirtualFile answerFile,
                      TaskFile answerTaskFile,
                      TaskFile usersTaskFile,
@@ -205,7 +205,7 @@ public class CheckAction extends AnAction {
                      StudyTestRunner testRunner) {
 
     try {
-      VirtualFile windowCopy = answerFile.copy(this, answerFile.getParent(), "window" + window.getIndex() + ".py");
+      VirtualFile windowCopy = answerFile.copy(this, answerFile.getParent(), "window" + taskWindow.getIndex() + ".py");
       final FileDocumentManager documentManager = FileDocumentManager.getInstance();
       final Document windowDocument = documentManager.getDocument(windowCopy);
       if (windowDocument != null) {
@@ -213,11 +213,11 @@ public class CheckAction extends AnAction {
         TaskFile.copy(answerTaskFile, windowTaskFile);
         StudyDocumentListener listener = new StudyDocumentListener(windowTaskFile);
         windowDocument.addDocumentListener(listener);
-        int start = window.getRealStartOffset(windowDocument);
-        int end = start + window.getLength();
-        Window userWindow = usersTaskFile.getWindows().get(window.getIndex());
-        int userStart = userWindow.getRealStartOffset(usersDocument);
-        int userEnd = userStart + userWindow.getLength();
+        int start = taskWindow.getRealStartOffset(windowDocument);
+        int end = start + taskWindow.getLength();
+        TaskWindow userTaskWindow = usersTaskFile.getTaskWindows().get(taskWindow.getIndex());
+        int userStart = userTaskWindow.getRealStartOffset(usersDocument);
+        int userEnd = userStart + userTaskWindow.getLength();
         String text = usersDocument.getText(new TextRange(userStart, userEnd));
         windowDocument.replaceString(start, end, text);
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -228,7 +228,7 @@ public class CheckAction extends AnAction {
         });
         Process smartTestProcess = testRunner.launchTests(project, windowCopy.getNameWithoutExtension());
         boolean res = testRunner.testsPassed(smartTestProcess);
-        userWindow.setStatus(res ? StudyStatus.Solved : StudyStatus.Failed);
+        userTaskWindow.setStatus(res ? StudyStatus.Solved : StudyStatus.Failed);
         windowCopy.delete(this);
       }
     }
@@ -255,10 +255,10 @@ public class CheckAction extends AnAction {
         TaskFile.copy(source, target);
         StudyDocumentListener listener = new StudyDocumentListener(target);
         document.addDocumentListener(listener);
-        for (Window window : target.getWindows()) {
-          final int start = window.getRealStartOffset(document);
-          final int end = start + window.getLength();
-          final String text = window.getPossibleAnswer();
+        for (TaskWindow taskWindow : target.getTaskWindows()) {
+          final int start = taskWindow.getRealStartOffset(document);
+          final int end = start + taskWindow.getLength();
+          final String text = taskWindow.getPossibleAnswer();
           document.replaceString(start, end, text);
         }
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
