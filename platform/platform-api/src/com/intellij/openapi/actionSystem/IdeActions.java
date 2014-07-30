@@ -189,6 +189,8 @@ public interface IdeActions {
   @NonNls String GROUP_METHOD_HIERARCHY_POPUP = "MethodHierarchyPopupMenu";
   @NonNls String GROUP_CALL_HIERARCHY_POPUP = "CallHierarchyPopupMenu";
 
+  @NonNls String GROUP_PY_CALL_HIERARCHY_POPUP = "PyCallHierarchyPopupMenu";
+
   @NonNls String GROUP_COMPILER_ERROR_VIEW_POPUP = "CompilerErrorViewPopupMenu";
 
   @NonNls String GROUP_OTHER_MENU = "OtherMenu";
