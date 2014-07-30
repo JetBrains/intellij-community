@@ -81,9 +81,11 @@ public class SimplifiableAnnotationInspection extends BaseInspection {
       if (!(element instanceof PsiAnnotation)) {
         return;
       }
+      final PsiAnnotation annotation = (PsiAnnotation)element;
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiAnnotation annotation = factory.createAnnotationFromText(replacement, element);
-      element.replace(annotation);
+      final String annotationText = buildAnnotationText(annotation, new StringBuilder()).toString();
+      final PsiAnnotation newAnnotation = factory.createAnnotationFromText(annotationText, element);
+      annotation.replace(newAnnotation);
     }
 
     private static StringBuilder buildAnnotationText(PsiAnnotation annotation, StringBuilder out) {
