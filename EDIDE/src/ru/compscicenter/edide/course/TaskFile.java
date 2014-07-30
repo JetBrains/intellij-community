@@ -22,7 +22,6 @@ import java.util.List;
  * which is visible to student in project view
  */
 public class TaskFile {
-  public String name;
   public List<Window> windows = new ArrayList<Window>();
   private Task myTask;
   @Transient
@@ -67,10 +66,6 @@ public class TaskFile {
     }
   }
 
-  public String getName() {
-    return name;
-  }
-
   public List<Window> getWindows() {
     return windows;
   }
@@ -82,7 +77,7 @@ public class TaskFile {
    * @param resourceRoot directory where original task file stored
    * @throws IOException
    */
-  public void create(VirtualFile taskDir, File resourceRoot) throws IOException {
+  public void create(VirtualFile taskDir, File resourceRoot, String name) throws IOException {
     String systemIndependentName = FileUtil.toSystemIndependentName(name);
     final int index = systemIndependentName.lastIndexOf("/");
     if (index > 0) {

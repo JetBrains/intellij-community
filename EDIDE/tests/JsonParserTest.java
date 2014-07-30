@@ -3,10 +3,14 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.*;
 import ru.compscicenter.edide.course.Course;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * author: liana
@@ -16,7 +20,7 @@ public class JsonParserTest {
   private Course myCourse = null;
   @Before
   public void setUp() throws FileNotFoundException {
-    Reader reader = new InputStreamReader(new FileInputStream("testData/course.json"));
+    Reader reader = new InputStreamReader(new FileInputStream("EDIDE/testData/course.json"));
     Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
     myCourse = gson.fromJson(reader, Course.class);
   }
@@ -24,7 +28,7 @@ public class JsonParserTest {
   @Test
   public void testCourseLevel() {
     assertEquals(myCourse.getName(), "Python для начинающих");
-    assertEquals(myCourse.getLessons().get(0).getTaskList().get(0).getInput(), "input");
+    assertEquals(myCourse.getLessons().get(1).getTaskList().get(0).getInput(), "sum-input.txt");
     assertEquals(myCourse.getLessons().size(), 2);
     assertEquals(myCourse.getLessons().get(0).getTaskList().size(), 2);
     assertEquals(myCourse.getLessons().get(1).getTaskList().size(), 1);

@@ -4,13 +4,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.compscicenter.edide.StudyUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * User: lia
@@ -24,7 +25,7 @@ public class Task {
   public int testNum;
   public String name;
   public String text;
-  public List<TaskFile> taskFiles = new ArrayList<TaskFile>();
+  public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
   private Lesson myLesson;
   public int myIndex;
   public String input = null;
@@ -34,13 +35,13 @@ public class Task {
     return testNum;
   }
 
-  public List<TaskFile> getTaskFiles() {
+  public Map<String, TaskFile> getTaskFiles() {
     return taskFiles;
   }
 
   @Transient
   public StudyStatus getStatus() {
-    for (TaskFile taskFile : taskFiles) {
+    for (TaskFile taskFile : taskFiles.values()) {
       StudyStatus taskFileStatus = taskFile.getStatus();
       if (taskFileStatus == StudyStatus.Unchecked) {
         return StudyStatus.Unchecked;
@@ -64,7 +65,7 @@ public class Task {
         lessonInfo.setTaskSolved(lessonInfo.getTaskSolved() + 1);
         lessonInfo.setTaskUnchecked(lessonInfo.getTaskUnchecked() - 1);
       }
-      for (TaskFile taskFile : taskFiles) {
+      for (TaskFile taskFile : taskFiles.values()) {
         taskFile.setStatus(status);
       }
     }
@@ -88,9 +89,11 @@ public class Task {
   public void create(VirtualFile lessonDir, File resourceRoot) throws IOException {
     VirtualFile taskDir = lessonDir.createChildDirectory(this, TASK_DIR + Integer.toString(myIndex + 1));
     File newResourceRoot = new File(resourceRoot, taskDir.getName());
-    for (int i = 0; i < taskFiles.size(); i++) {
-      taskFiles.get(i).setIndex(i);
-      taskFiles.get(i).create(taskDir, newResourceRoot);
+    int i = 0;
+    for (Map.Entry<String, TaskFile> taskFile : taskFiles.entrySet()) {
+      taskFile.getValue().setIndex(i);
+      i++;
+      taskFile.getValue().create(taskDir, newResourceRoot, taskFile.getKey());
     }
     File[] filesInTask = newResourceRoot.listFiles();
     if (filesInTask != null) {
@@ -105,23 +108,13 @@ public class Task {
     }
   }
 
-  private boolean isTaskFile(String fileName) {
-    for (TaskFile taskFile : taskFiles) {
-      if (taskFile.getName().equals(fileName)) {
-        return true;
-      }
-    }
-    return false;
+  private boolean isTaskFile(@NotNull String fileName) {
+    return taskFiles.get(fileName) != null;
   }
 
   @Nullable
-  public TaskFile getFile(String fileName) {
-    for (TaskFile file : taskFiles) {
-      if (file.getName().equals(fileName)) {
-        return file;
-      }
-    }
-    return null;
+  public TaskFile getFile(@NotNull String fileName) {
+    return  taskFiles.get(fileName);
   }
 
   /**
@@ -131,7 +124,7 @@ public class Task {
    */
   public void init(Lesson lesson, boolean isRestarted) {
     myLesson = lesson;
-    for (TaskFile taskFile : taskFiles) {
+    for (TaskFile taskFile : taskFiles.values()) {
       taskFile.init(this, isRestarted);
     }
   }

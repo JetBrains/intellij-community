@@ -20,6 +20,7 @@ import ru.compscicenter.edide.course.Task;
 import ru.compscicenter.edide.course.TaskFile;
 
 import javax.swing.*;
+import java.util.Map;
 
 /**
  * author: liana
@@ -47,7 +48,7 @@ abstract public class TaskNavigationAction extends AnAction {
     }
     int nextTaskIndex = nextTask.getIndex();
     int lessonIndex = nextTask.getLesson().getIndex();
-    TaskFile nextFile = nextTask.getTaskFiles().iterator().next();
+    TaskFile nextFile = nextTask.getTaskFiles().values().iterator().next();
     if (nextFile != null) {
       VirtualFile projectDir = project.getBaseDir();
       VirtualFile courseDir = projectDir.findChild(Course.COURSE_DIR);
@@ -58,8 +59,8 @@ abstract public class TaskNavigationAction extends AnAction {
           String taskDirName = Task.TASK_DIR + String.valueOf(nextTaskIndex + 1);
           VirtualFile taskDir = lessonDir.findChild(taskDirName);
           if (taskDir != null) {
-            TaskFile taskFile = StudyUtils.getFirst(nextTask.getTaskFiles());
-            VirtualFile virtualFile = taskDir.findChild(taskFile.getName());
+            Map.Entry<String, TaskFile> taskFile = StudyUtils.getFirst(nextTask.getTaskFiles().entrySet());
+            VirtualFile virtualFile = taskDir.findChild(taskFile.getKey());
             if (virtualFile != null) {
               FileEditorManager.getInstance(project).openFile(virtualFile, true);
             }

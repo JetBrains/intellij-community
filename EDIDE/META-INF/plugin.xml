@@ -39,17 +39,14 @@
   <actions>
     <action id="CheckAction" class="ru.compscicenter.edide.actions.CheckAction" text="check"
             description="Runs tests for current tasks" icon="/icons/icon.jpg">
-      <keyboard-shortcut first-keystroke="shift C" keymap="$default"/>
     </action>
     <action id="PrevWindowAction" class="ru.compscicenter.edide.actions.PrevWindowAction" text="PrevWindowAction" description="prev"
             icon="/icons/prev.png">
-      <keyboard-shortcut keymap="$default" first-keystroke="alt LEFT"/>
       <add-to-group group-id="MainToolBar" anchor="last"/>
     </action>
 
     <action id="NextWindow" class="ru.compscicenter.edide.actions.NextWindowAction" text="NextWindowAction" description="next"
             icon="/icons/next.png">
-      <keyboard-shortcut keymap="$default" first-keystroke="alt RIGHT"/>
       <add-to-group group-id="MainToolBar" anchor="last"/>
     </action>
     <action id="NextTaskAction" class="ru.compscicenter.edide.actions.NextTaskAction" text="NextTaskAction" description="Next Task"/>
