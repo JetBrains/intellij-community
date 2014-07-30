@@ -167,7 +167,7 @@ public class Restarter {
   }
 
   public static File createTempExecutableLauncher(File executable) throws IOException {
-    File dir = new File(System.getProperty("user.home") + File.pathSeparator + "." + "__TEST__");
+    File dir = new File(System.getProperty("user.home") + "/." + "__TEST__");
 //    File dir = new File(System.getProperty("user.home") + File.pathSeparator + "." + ApplicationNamesInfo.getInstance().getProductName());
     System.out.println("pathToLauncher: " + dir.getPath());
     String ext = FileUtilRt.getExtension(executable.getName());
