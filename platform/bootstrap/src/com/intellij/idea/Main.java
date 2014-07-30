@@ -15,6 +15,7 @@
  */
 package com.intellij.idea;
 
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Comparing;
@@ -146,8 +147,8 @@ public class Main {
 
       if (SystemInfoRt.isWindows) {
         File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
-        //File userDir = new File(System.getProperty("user.home") + File.pathSeparator + "." + ApplicationNamesInfo.getInstance().getProductName());
-//        System.out.println("pathToLauncher: " + userDir.getPath());
+        File userDir = new File(System.getProperty("user.home") + "/." + ApplicationNamesInfo.getInstance().getProductName());
+        System.out.println("pathToLauncher: " + userDir.getPath());
 //        File restarter = new File(PathManager.getBinPath(), "restarter.exe");
 //        Restarter.createTempExecutable(userDir, restarter);
         args.add(Restarter.createTempExecutableLauncher(launcher).getPath());
