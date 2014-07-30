@@ -56,10 +56,11 @@ public class IpnbEditorUtil {
     if (!UIUtil.isUnderDarcula())
       editor.setBackgroundColor(Gray._247);
     noScrolling(editor);
+    editor.getScrollPane().setBorder(null);
     ConsoleViewUtil.setupConsoleEditor(editor, false, false);
   }
 
-  public static Editor createPlainCodeEditor(@NotNull Project project, @NotNull String text) {
+  public static Editor createPlainCodeEditor(@NotNull final Project project, @NotNull final String text) {
     final EditorFactory editorFactory = EditorFactory.getInstance();
     final Document document = editorFactory.createDocument(text);
     EditorEx editor = (EditorEx)editorFactory.createEditor(document, project);
