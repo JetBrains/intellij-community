@@ -293,6 +293,11 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
       return handler;
     }
 
+    @Override
+    protected boolean ansiColoringEnabled() {
+      return true;
+    }
+
     protected ApplicationConfiguration getConfiguration() {
       return myConfiguration;
     }
