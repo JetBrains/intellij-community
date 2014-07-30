@@ -15,7 +15,7 @@ import org.scilab.forge.jlatexmath.TeXIcon;
 import javax.swing.*;
 import java.awt.*;
 
-public class MarkdownPanel extends IpnbEditablePanel {
+public class MarkdownPanel extends IpnbEditablePanel<JPanel> {
   private static final Logger LOG = Logger.getInstance(MarkdownPanel.class);
   private final MarkdownCell myCell;
 
@@ -30,8 +30,16 @@ public class MarkdownPanel extends IpnbEditablePanel {
   }
 
   @Override
-  protected JComponent createViewPanel() {
+  protected JPanel createViewPanel() {
     final JPanel panel = new JPanel(new VerticalFlowLayout(FlowLayout.LEFT, false, true));
+    updatePanel(panel);
+    panel.setBackground(IpnbEditorUtil.getBackground());
+    panel.setOpaque(true);
+    return panel;
+  }
+
+  private void updatePanel(@NotNull final JPanel panel) {
+    panel.removeAll();
     StringBuilder formula = new StringBuilder();
     boolean hasFormula = false;
     boolean isEscaped = false;
@@ -108,8 +116,13 @@ public class MarkdownPanel extends IpnbEditablePanel {
         LOG.error("Error parsing " + formula.toString() + " because of:" + x.getMessage());
       }
     }
-    panel.setBackground(IpnbEditorUtil.getBackground());
-    panel.setOpaque(true);
-    return panel;
   }
+
+  @Override
+  public void updateCellView() {
+    final String text = myEditablePanel.getText();
+    myCell.setSource(StringUtil.splitByLines(text));
+    updatePanel(myViewPanel);
+  }
+
 }

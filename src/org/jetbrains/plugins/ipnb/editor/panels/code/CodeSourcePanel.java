@@ -73,8 +73,6 @@ public class CodeSourcePanel extends IpnbPanel implements EditorPanel {
           ((IpnbFilePanel)ipnbFilePanel).setSelectedCell(myParent);
           myParent.switchToEditing();
         }
-
-
         UIUtil.requestFocus(myEditor.getContentComponent());
       }
     });
