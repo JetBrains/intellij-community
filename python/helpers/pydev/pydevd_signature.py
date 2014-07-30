@@ -4,7 +4,7 @@ import os
 
 trace._warn = lambda *args: None   # workaround for http://bugs.python.org/issue17143 (PY-8706)
 import gc
-from pydevd_comm import CMD_SIGNATURE_CALL_TRACE, CMD_SIGNATURE_RETURN_TRACE, NetCommand
+from pydevd_comm import CMD_SIGNATURE_CALL_TRACE, CMD_SIGNATURE_RETURN_TRACE, CMD_HIERARCHY_CALL_TRACE, NetCommand
 from pydevd_utils import get_type_of_value
 import pydevd_vars
 
@@ -138,6 +138,22 @@ def create_return_signature_message(signature, return_info):
     return NetCommand(CMD_SIGNATURE_RETURN_TRACE, 0, cmdText)
 
 
+def create_hierarchy_call_message(call_info):
+    cmdTextList = ["<xml><hierarchy_call>"]
+
+    cmdTextList.append('<caller file="%s" name="%s" line="%s"></caller><callee file="%s" name="%s"></callee>'
+                       % (pydevd_vars.makeValidXmlValue(call_info.caller_file),
+                          pydevd_vars.makeValidXmlValue(call_info.caller_name),
+                          pydevd_vars.makeValidXmlValue(call_info.caller_line),
+                          pydevd_vars.makeValidXmlValue(call_info.callee_file),
+                          pydevd_vars.makeValidXmlValue(call_info.callee_name)))
+
+    cmdTextList.append("</hierarchy_call></xml>")
+    cmdText = ''.join(cmdTextList)
+
+    return NetCommand(CMD_HIERARCHY_CALL_TRACE, 0, cmdText)
+
+
 def sendSignatureCallTrace(dbg, frame, filename):
     if dbg.signature_factory and dbg.signature_factory.is_in_scope(filename):
         signature = dbg.signature_factory.create_signature(frame)
@@ -165,3 +181,10 @@ def sendSignatureReturnTrace(dbg, frame, filename, return_value): #send return_t
         if not dbg.return_signature_cache_manager.is_repetition(signature, return_info):
             dbg.return_signature_cache_manager.add(signature, return_info)
             dbg.writer.addCommand(create_return_signature_message(signature, return_info))
+
+
+def sendHierarchyCallTrace(dbg, frame, filename):
+    if dbg.signature_factory and dbg.signature_factory.is_in_scope(filename) and dbg.call_hierarchy_cache_manager:
+        call_info = dbg.call_hierarchy_cache_manager.add(frame)
+        if (call_info):
+            dbg.writer.addCommand(create_hierarchy_call_message(call_info))

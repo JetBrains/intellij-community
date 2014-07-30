@@ -9,7 +9,7 @@ import traceback #@Reimport
 import os.path
 import sys
 import pydev_log
-from pydevd_signature import sendSignatureCallTrace, isFirstCall, sendSignatureReturnTrace
+from pydevd_signature import sendSignatureCallTrace, isFirstCall, sendSignatureReturnTrace, sendHierarchyCallTrace
 
 basename = os.path.basename
 
@@ -100,6 +100,7 @@ class PyDBFrame:
             if event == 'call':
                 is_first_call = isFirstCall(mainDebugger, frame, filename)
                 sendSignatureCallTrace(mainDebugger, frame, filename)
+                sendHierarchyCallTrace(mainDebugger, frame, filename)
 
             if event == 'return':
                 sendSignatureReturnTrace(mainDebugger, frame, filename, arg)
