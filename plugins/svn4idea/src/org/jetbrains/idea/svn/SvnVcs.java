@@ -583,17 +583,16 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
 
     PropertyClient client = getFactory(ioFile).createPropertyClient();
-    final PropertyData value = client.getProperty(SvnTarget.fromFile(ioFile, SVNRevision.WORKING), propName, false, SVNRevision.WORKING);
-    final PropertyValue propValue = value == null ? null : value.getValue();
+    final PropertyValue value = client.getProperty(SvnTarget.fromFile(ioFile, SVNRevision.WORKING), propName, false, SVNRevision.WORKING);
 
     if (cachedMap == null) {
       cachedMap = new HashMap<String, Pair<PropertyValue, Trinity<Long, Long, Long>>>();
       myPropertyCache.put(keyForVf(file), cachedMap);
     }
 
-    cachedMap.put(propName, Pair.create(propValue, tsTrinity));
+    cachedMap.put(propName, Pair.create(value, tsTrinity));
 
-    return propValue;
+    return value;
   }
 
   @Override

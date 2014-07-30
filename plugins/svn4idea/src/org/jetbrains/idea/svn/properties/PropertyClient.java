@@ -16,10 +16,10 @@ import java.io.File;
 public interface PropertyClient extends SvnClient {
 
   @Nullable
-  PropertyData getProperty(@NotNull final SvnTarget target,
-                           @NotNull final String property,
-                           boolean revisionProperty,
-                           @Nullable SVNRevision revision) throws VcsException;
+  PropertyValue getProperty(@NotNull final SvnTarget target,
+                            @NotNull final String property,
+                            boolean revisionProperty,
+                            @Nullable SVNRevision revision) throws VcsException;
 
   void getProperty(@NotNull SvnTarget target, @NotNull String property,
                    @Nullable SVNRevision revision,

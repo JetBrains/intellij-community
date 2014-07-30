@@ -30,24 +30,28 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
 
   @Nullable
   @Override
-  public PropertyData getProperty(@NotNull SvnTarget target,
-                                  @NotNull String property,
-                                  boolean revisionProperty,
-                                  @Nullable SVNRevision revision) throws VcsException {
+  public PropertyValue getProperty(@NotNull SvnTarget target,
+                                   @NotNull String property,
+                                   boolean revisionProperty,
+                                   @Nullable SVNRevision revision) throws VcsException {
+    PropertyData resultData;
+
     try {
       if (!revisionProperty) {
         if (target.isFile()) {
-          return PropertyData.create(createClient().doGetProperty(target.getFile(), property, target.getPegRevision(), revision));
+          resultData = PropertyData.create(createClient().doGetProperty(target.getFile(), property, target.getPegRevision(), revision));
         } else {
-          return PropertyData.create(createClient().doGetProperty(target.getURL(), property, target.getPegRevision(), revision));
+          resultData = PropertyData.create(createClient().doGetProperty(target.getURL(), property, target.getPegRevision(), revision));
         }
       } else {
-        return getRevisionProperty(target, property, revision);
+        resultData = getRevisionProperty(target, property, revision);
       }
     }
     catch (SVNException e) {
       throw new VcsException(e);
     }
+
+    return resultData != null ? resultData.getValue() : null;
   }
 
   @NotNull

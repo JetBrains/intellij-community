@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -154,10 +155,10 @@ public class SetPropertyDialog extends DialogWrapper {
       return;
     }
     File file = myFiles[0];
-    PropertyData property = !StringUtil.isEmpty(name) ? getProperty(file, name) : null;
+    PropertyValue property = !StringUtil.isEmpty(name) ? getProperty(file, name) : null;
 
     if (property != null) {
-      myValueText.setText(PropertyValue.toString(property.getValue()));
+      myValueText.setText(property.toString());
       myValueText.selectAll();
     }
     else {
@@ -165,19 +166,20 @@ public class SetPropertyDialog extends DialogWrapper {
     }
   }
 
-  private PropertyData getProperty(@NotNull File file, @NotNull String name) {
-    PropertyData property;
+  @Nullable
+  private PropertyValue getProperty(@NotNull File file, @NotNull String name) {
+    PropertyValue result;
 
     try {
       PropertyClient client = myVCS.getFactory(file).createPropertyClient();
-      property = client.getProperty(SvnTarget.fromFile(file, SVNRevision.WORKING), name, false, SVNRevision.WORKING);
+      result = client.getProperty(SvnTarget.fromFile(file, SVNRevision.WORKING), name, false, SVNRevision.WORKING);
     }
     catch (VcsException e) {
       LOG.info(e);
-      property = null;
+      result = null;
     }
 
-    return property;
+    return result;
   }
 
   protected JComponent createCenterPanel() {

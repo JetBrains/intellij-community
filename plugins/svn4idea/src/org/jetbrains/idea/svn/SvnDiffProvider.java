@@ -34,15 +34,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.history.LatestExistentSearcher;
-import org.jetbrains.idea.svn.info.InfoConsumer;
 import org.jetbrains.idea.svn.info.Info;
-import org.jetbrains.idea.svn.properties.PropertyData;
+import org.jetbrains.idea.svn.info.InfoConsumer;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -163,11 +162,12 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     }
   }
 
+  @Nullable
   private String getCommitMessage(File path) throws VcsException {
-    PropertyData property =
+    PropertyValue property =
       myVcs.getFactory(path).createPropertyClient().getProperty(SvnTarget.fromFile(path), COMMIT_MESSAGE, true, SVNRevision.BASE);
 
-    return property != null ? PropertyValue.toString(property.getValue()) : null;
+    return PropertyValue.toString(property);
   }
 
   private static ItemLatestState defaultResult() {

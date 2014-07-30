@@ -32,10 +32,10 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
 
   @Nullable
   @Override
-  public PropertyData getProperty(@NotNull SvnTarget target,
-                                  @NotNull String property,
-                                  boolean revisionProperty,
-                                  @Nullable SVNRevision revision)
+  public PropertyValue getProperty(@NotNull SvnTarget target,
+                                   @NotNull String property,
+                                   boolean revisionProperty,
+                                   @Nullable SVNRevision revision)
     throws VcsException {
     List<String> parameters = new ArrayList<String>();
 
@@ -57,7 +57,9 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     parameters.add("--xml");
 
     CommandExecutor command = execute(myVcs, target, SvnCommandName.propget, parameters, null);
-    return parseSingleProperty(target, command.getOutput());
+    PropertyData data = parseSingleProperty(target, command.getOutput());
+
+    return data != null ? data.getValue() : null;
   }
 
   @Override
@@ -180,6 +182,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     CommandUtil.put(parameters, verbose, "--verbose");
   }
 
+  @Nullable
   private PropertyData parseSingleProperty(SvnTarget target, String output) throws VcsException {
     final PropertyData[] data = new PropertyData[1];
     PropertyConsumer handler = new PropertyConsumer() {

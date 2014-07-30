@@ -42,13 +42,12 @@ import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.dialogs.SelectCreateExternalTargetDialog;
-import org.jetbrains.idea.svn.properties.PropertyData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.jetbrains.idea.svn.update.UpdateClient;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -133,11 +132,11 @@ public class CreateExternalAction extends DumbAwareAction {
   public static boolean addToExternalProperty(@NotNull SvnVcs vcs, @NotNull File ioFile, String target, String url)
     throws SVNException, VcsException {
     ClientFactory factory = vcs.getFactory(ioFile);
-    PropertyData propertyData = factory.createPropertyClient().getProperty(SvnTarget.fromFile(ioFile), SvnPropertyKeys.SVN_EXTERNALS,
+    PropertyValue propertyValue = factory.createPropertyClient().getProperty(SvnTarget.fromFile(ioFile), SvnPropertyKeys.SVN_EXTERNALS,
                                                                               false, SVNRevision.UNDEFINED);
     String newValue;
-    if (propertyData != null && propertyData.getValue() != null && ! StringUtil.isEmptyOrSpaces(propertyData.getValue().toString())) {
-      final SVNExternal[] externals = SVNExternal.parseExternals("Create External", propertyData.getValue().toString());
+    if (propertyValue != null && !StringUtil.isEmptyOrSpaces(propertyValue.toString())) {
+      final SVNExternal[] externals = SVNExternal.parseExternals("Create External", propertyValue.toString());
       for (SVNExternal external : externals) {
         if (Comparing.equal(external.getPath(), target)) {
           AbstractVcsHelper
@@ -146,7 +145,7 @@ public class CreateExternalAction extends DumbAwareAction {
         }
       }
       final String string = createExternalDefinitionString(url, target);
-      newValue = propertyData.getValue().toString().trim() + "\n" + string;
+      newValue = propertyValue.toString().trim() + "\n" + string;
     } else {
       newValue = createExternalDefinitionString(url, target);
     }

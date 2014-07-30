@@ -305,7 +305,7 @@ public class PropertiesComponent extends JPanel {
 
     public void actionPerformed(AnActionEvent e) {
       Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
-      PropertyData propValue = null;
+      PropertyValue propValue = null;
       try {
         propValue = myVcs.getFactory(myFile).createPropertyClient()
           .getProperty(SvnTarget.fromFile(myFile), SVNProperty.KEYWORDS, false, SVNRevision.WORKING);
@@ -314,8 +314,7 @@ public class PropertiesComponent extends JPanel {
         // show erorr message
       }
 
-      SetKeywordsDialog dialog =
-        new SetKeywordsDialog(project, propValue != null ? PropertyValue.toString(propValue.getValue()) : null);
+      SetKeywordsDialog dialog = new SetKeywordsDialog(project, PropertyValue.toString(propValue));
       dialog.show();
       if (dialog.isOK()) {
         setProperty(SvnPropertyKeys.SVN_KEYWORDS, dialog.getKeywords(), false, false);

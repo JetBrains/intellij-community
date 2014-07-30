@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.properties.PropertyData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -96,10 +95,8 @@ public class SvnPropertyService {
           if (myCanUseCachedProperty) {
             value = myVcs.getPropertyWithCaching(entry.getKey(), SvnPropertyKeys.SVN_IGNORE);
           } else {
-            final PropertyData data =
-              myVcs.getFactory(dir).createPropertyClient()
-                .getProperty(SvnTarget.fromFile(dir), SvnPropertyKeys.SVN_IGNORE, false, SVNRevision.WORKING);
-            value = data == null ? null : data.getValue();
+            value = myVcs.getFactory(dir).createPropertyClient()
+              .getProperty(SvnTarget.fromFile(dir), SvnPropertyKeys.SVN_IGNORE, false, SVNRevision.WORKING);
           }
           processFolder(entry.getKey(), dir, entry.getValue(), value);
         }

@@ -22,7 +22,6 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.info.Info;
-import org.jetbrains.idea.svn.properties.PropertyData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
@@ -206,7 +205,7 @@ public class BranchInfo {
       return SvnMergeInfoCache.MergeCheckResult.getInstance(mergeInfo.contains(revisionAsked));
     }
 
-    final PropertyData mergeinfoProperty;
+    final PropertyValue mergeinfoProperty;
     SvnTarget target = SvnTarget.fromURL(branchUrl);
 
     try {
@@ -236,7 +235,7 @@ public class BranchInfo {
       return goUpInRepo(revisionAsked, targetRevision, newBranchUrl, newTrunkUrl);
     }
     // process
-    return processMergeinfoProperty(keyString, revisionAsked, mergeinfoProperty.getValue(), trunkUrl, false);
+    return processMergeinfoProperty(keyString, revisionAsked, mergeinfoProperty, trunkUrl, false);
   }
 
   private Info getInfo(final File pathFile) {
@@ -278,7 +277,7 @@ public class BranchInfo {
       return SvnMergeInfoCache.MergeCheckResult.getInstance(merged);
     }
 
-    final PropertyData mergeinfoProperty;
+    final PropertyValue mergeinfoProperty;
     try {
       if (actualRevision == targetRevisionCorrected) {
         // look in WC
@@ -303,7 +302,7 @@ public class BranchInfo {
       return goUp(revisionAsked, targetRevisionCorrected, branchRootPath, path, trunkUrl);
     }
     // process
-    return processMergeinfoProperty(keyString, revisionAsked, mergeinfoProperty.getValue(), trunkUrl, self);
+    return processMergeinfoProperty(keyString, revisionAsked, mergeinfoProperty, trunkUrl, self);
   }
 
   private SvnMergeInfoCache.MergeCheckResult processMergeinfoProperty(final String pathWithRevisionNumber, final long revisionAsked,
