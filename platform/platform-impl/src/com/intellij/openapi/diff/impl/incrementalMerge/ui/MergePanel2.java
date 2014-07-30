@@ -53,13 +53,14 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
-import com.intellij.util.diff.FilesTooBigForDiffException;
+import com.intellij.util.containers.Convertor;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -371,7 +372,20 @@ public class MergePanel2 implements DiffViewer {
       data.customizeToolbar(myPanel.resetToolbar());
       myPanel.registerToolbarActions();
       if ( data instanceof MergeRequestImpl && myBuilder != null){
-        ((MergeRequestImpl)data).setActions(myBuilder, this);
+        Convertor<DialogWrapper, Boolean> preOkHook = new Convertor<DialogWrapper, Boolean>() {
+          @Override
+          public Boolean convert(DialogWrapper dialog) {
+            ChangeCounter counter = ChangeCounter.getOrCreate(myMergeList);
+            int changes = counter.getChangeCounter();
+            int conflicts = counter.getConflictCounter();
+            if (changes == 0 && conflicts == 0) return true;
+            return Messages.showYesNoDialog(dialog.getRootPane(),
+                                            DiffBundle.message("merge.dialog.apply.partially.resolved.changes.confirmation.message", changes, conflicts),
+                                            DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
+                                            Messages.getQuestionIcon()) == Messages.YES;
+          }
+        };
+        ((MergeRequestImpl)data).setActions(myBuilder, this, preOkHook);
       }
     }
     finally {
