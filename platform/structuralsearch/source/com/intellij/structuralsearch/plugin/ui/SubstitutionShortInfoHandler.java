@@ -1,7 +1,6 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.hint.TooltipController;
-import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
 import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.openapi.editor.Document;
@@ -21,7 +20,6 @@ import java.util.ArrayList;
  * To change this template use File | Settings | File Templates.
  */
 public class SubstitutionShortInfoHandler implements DocumentListener, EditorMouseMotionListener, CaretListener {
-  private static final TooltipGroup SS_INFO_TOOLTIP_GROUP = new TooltipGroup("SS_INFO_TOOLTIP_GROUP", 0);
 
   private long modificationTimeStamp;
   private final ArrayList<Variable> variables = new ArrayList<Variable>();
@@ -77,7 +75,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     }
 
     if (text.length() > 0) {
-      UIUtil.showTooltip(editor, start, end, text, SS_INFO_TOOLTIP_GROUP);
+      UIUtil.showTooltip(editor, start, end + 1, text);
     }
     else {
       TooltipController.getInstance().cancelTooltips();
