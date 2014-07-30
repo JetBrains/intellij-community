@@ -1,15 +1,17 @@
 package ru.compscicenter.edide.ui;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import ru.compscicenter.edide.StudyDirectoryProjectGenerator;
 import ru.compscicenter.edide.StudyUtils;
 
 import javax.swing.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -50,7 +52,17 @@ public class StudyNewCourseDialog extends DialogWrapper {
   }
 
   private void initListeners(Project project) {
-    final FileChooserDescriptor fileChooser = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
+    FileChooserDescriptor fileChooser = new FileChooserDescriptor(true, false, false, true, false, false) {
+      @Override
+      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+        return super.isFileVisible(file, showHiddenFiles) || StudyUtils.isZip(file.getName());
+      }
+
+      @Override
+      public boolean isFileSelectable(VirtualFile file) {
+       return super.isFileSelectable(file)|| file.getName().contains(".zip");
+      }
+    };
     myCourseLocationField.addBrowseFolderListener("Select course archive", null, project, fileChooser);
     myCourseLocationField.addActionListener(new LocalCourseChosenListener());
     myDefaultCoursesComboBox.addActionListener(new CourseSelectedListener());
