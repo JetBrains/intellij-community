@@ -18,6 +18,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
 import gnu.trove.TIntHashSet;
@@ -26,7 +27,10 @@ import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
@@ -117,9 +121,9 @@ public class ClassDataIndexer implements DataIndexer<Long, IdEquation, FileConte
           return;
         }
 
-        Method method = new Method(className, methodNode.name, methodNode.desc);
+        final Method method = new Method(className, methodNode.name, methodNode.desc);
         int access = methodNode.access;
-        boolean stable =
+        final boolean stable =
           stableClass ||
           (access & Opcodes.ACC_FINAL) != 0 ||
           (access & Opcodes.ACC_PRIVATE) != 0 ||
@@ -127,7 +131,7 @@ public class ClassDataIndexer implements DataIndexer<Long, IdEquation, FileConte
           "<init>".equals(methodNode.name);
         try {
           boolean added = false;
-          ControlFlowGraph graph = cfg.buildControlFlowGraph(className, methodNode);
+          final ControlFlowGraph graph = cfg.buildControlFlowGraph(className, methodNode);
 
           boolean maybeLeakingParameter = false;
           for (Type argType : argumentTypes) {
@@ -139,39 +143,42 @@ public class ClassDataIndexer implements DataIndexer<Long, IdEquation, FileConte
           }
 
           if (graph.transitions.length > 0) {
-            DFSTree dfs = cfg.buildDFSTree(graph.transitions);
+            final DFSTree dfs = cfg.buildDFSTree(graph.transitions);
             boolean reducible = dfs.back.isEmpty() || cfg.reducible(graph, dfs);
             if (reducible) {
-              NotNullLazyValue<TIntHashSet> resultOrigins = new NotNullLazyValue<TIntHashSet>() {
-                @NotNull
+
+              final NullableLazyValue<TIntHashSet> resultOrigins = new NullableLazyValue<TIntHashSet>() {
                 @Override
                 protected TIntHashSet compute() {
                   try {
                     return cfg.resultOrigins(className, methodNode);
                   }
                   catch (AnalyzerException e) {
-                    throw new RuntimeException(e);
+                    return null;
+                  }
+                  catch (LimitReachedException e) {
+                    return null;
                   }
                 }
               };
-              boolean[] leakingParameters = maybeLeakingParameter ? cfg.leakingParameters(className, methodNode) : null;
-              boolean shouldComputeResult = isReferenceResult;
 
-              if (!shouldComputeResult && isInterestingResult && maybeLeakingParameter) {
-                loop: for (int i = 0; i < argumentTypes.length; i++) {
-                  Type argType = argumentTypes[i];
-                  int argSort = argType.getSort();
-                  boolean isReferenceArg = argSort == Type.OBJECT || argSort == Type.ARRAY;
-                  boolean isBooleanArg = Type.BOOLEAN_TYPE.equals(argType);
-                  if ((isReferenceArg || isBooleanArg) && !leakingParameters[i]) {
-                    shouldComputeResult = true;
-                    break loop;
+              NotNullLazyValue<Equation<Key, Value>> resultEquation = new NotNullLazyValue<Equation<Key, Value>>() {
+                @NotNull
+                @Override
+                protected Equation<Key, Value> compute() {
+                  TIntHashSet origins = resultOrigins.getValue();
+                  if (origins != null) {
+                    try {
+                      return new InOutAnalysis(new RichControlFlow(graph, dfs), new Out(), origins, stable).analyze();
+                    }
+                    catch (AnalyzerException ignored) {
+                    }
                   }
+                  return new Equation<Key, Value>(new Key(method, new Out(), stable), new Final<Key, Value>(Value.Top));
                 }
-              }
+              };
 
-              Equation<Key, Value> resultEquation =
-                shouldComputeResult ? new InOutAnalysis(new RichControlFlow(graph, dfs), new Out(), resultOrigins.getValue(), stable).analyze() : null;
+              boolean[] leakingParameters = maybeLeakingParameter ? cfg.leakingParameters(className, methodNode) : null;
 
               for (int i = 0; i < argumentTypes.length; i++) {
                 Type argType = argumentTypes[i];
@@ -190,8 +197,8 @@ public class ClassDataIndexer implements DataIndexer<Long, IdEquation, FileConte
                     contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.Null), resultOrigins.getValue(), stable).analyze());
                     contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.NotNull), resultOrigins.getValue(), stable).analyze());
                   } else {
-                    contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), resultEquation.rhs));
-                    contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), resultEquation.rhs));
+                    contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), resultEquation.getValue().rhs));
+                    contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), resultEquation.getValue().rhs));
                   }
                 }
                 if (isBooleanArg && isInterestingResult) {
@@ -199,17 +206,13 @@ public class ClassDataIndexer implements DataIndexer<Long, IdEquation, FileConte
                     contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.False), resultOrigins.getValue(), stable).analyze());
                     contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.True), resultOrigins.getValue(), stable).analyze());
                   } else {
-                    contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), resultEquation.rhs));
-                    contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), resultEquation.rhs));
+                    contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), resultEquation.getValue().rhs));
+                    contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), resultEquation.getValue().rhs));
                   }
                 }
               }
               if (isReferenceResult) {
-                if (resultEquation != null) {
-                  contractEquations.add(resultEquation);
-                } else {
-                  contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new Out(), resultOrigins.getValue(), stable).analyze());
-                }
+                contractEquations.add(resultEquation.getValue());
               }
               added = true;
             }
@@ -219,7 +222,6 @@ public class ClassDataIndexer implements DataIndexer<Long, IdEquation, FileConte
           }
 
           if (!added) {
-            method = new Method(className, methodNode.name, methodNode.desc);
             for (int i = 0; i < argumentTypes.length; i++) {
               Type argType = argumentTypes[i];
               int argSort = argType.getSort();

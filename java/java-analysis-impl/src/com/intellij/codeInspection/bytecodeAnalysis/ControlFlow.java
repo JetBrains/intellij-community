@@ -34,7 +34,7 @@ final class cfg {
   }
 
   static TIntHashSet resultOrigins(String className, MethodNode methodNode) throws AnalyzerException {
-    Frame<SourceValue>[] frames = new Analyzer<SourceValue>(MININAL_ORIGIN_INTERPRETER).analyze(className, methodNode);
+    Frame<SourceValue>[] frames = new Analyzer<SourceValue>(new MinimalOriginInterpreter()).analyze(className, methodNode);
     InsnList insns = methodNode.instructions;
     TIntHashSet result = new TIntHashSet();
     for (int i = 0; i < frames.length; i++) {
@@ -81,8 +81,10 @@ final class cfg {
     return collector.leaking;
   }
 
-  static final Interpreter<SourceValue> MININAL_ORIGIN_INTERPRETER = new SourceInterpreter() {
-    final SourceValue[] sourceVals = {new SourceValue(1), new SourceValue(2)};
+  static class MinimalOriginInterpreter extends SourceInterpreter {
+    private int mergedCount = 0;
+
+    static final SourceValue[] sourceVals = {new SourceValue(1), new SourceValue(2)};
 
     @Override
     public SourceValue newOperation(AbstractInsnNode insn) {
@@ -148,7 +150,19 @@ final class cfg {
       return value;
     }
 
-  };
+    @Override
+    public SourceValue merge(SourceValue d, SourceValue w) {
+      SourceValue merged = super.merge(d, w);
+      int mergedSize = merged.insns.size();
+      if (mergedSize > 2) {
+        mergedCount += mergedSize;
+      }
+      if (mergedCount > Analysis.MERGE_LIMIT) {
+        throw new LimitReachedException();
+      }
+      return merged;
+    }
+  }
 
   private interface Action {}
   private static class MarkScanned implements Action {

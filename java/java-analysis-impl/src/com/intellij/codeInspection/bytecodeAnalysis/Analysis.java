@@ -210,6 +210,7 @@ class MakeResult<Res> implements PendingAction<Res> {
 abstract class Analysis<Res> {
   public static final int STEPS_LIMIT = 30000;
   public static final int EQUATION_SIZE_LIMIT = 30;
+  public static final int MERGE_LIMIT = 100000;
   final RichControlFlow richControlFlow;
   final Direction direction;
   final ControlFlowGraph controlFlow;
