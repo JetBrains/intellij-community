@@ -107,7 +107,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
             final HeadingCell headingCell = ((HeadingPanel)selectedCell).getCell();
             if (level != headingCell.getLevel()) {
               headingCell.setLevel(level);
-              ((HeadingPanel)selectedCell).updateCellView();
+              selectedCell.updateCellView();
             }
           }
         }

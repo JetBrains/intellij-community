@@ -1,7 +1,9 @@
 package org.jetbrains.plugins.ipnb.editor.panels.code;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
@@ -61,7 +63,13 @@ public class CodePanel extends IpnbPanel {
     c.gridy = 0;
     c.gridwidth = 1;
 
-    myCodeSourcePanel = new CodeSourcePanel(myProject, myParent, myCell.getSourceAsString());
+    myCodeSourcePanel = new CodeSourcePanel(myProject, this, myCell.getSourceAsString());
+    Disposer.register(myParent, new Disposable() {
+      @Override
+      public void dispose() {
+        EditorFactory.getInstance().releaseEditor(myCodeSourcePanel.getEditor());
+      }
+    });
     addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.In, myCodeSourcePanel, c);
 
     c.gridx = 1;

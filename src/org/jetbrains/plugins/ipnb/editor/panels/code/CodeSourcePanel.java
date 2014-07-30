@@ -15,22 +15,22 @@
  */
 package org.jetbrains.plugins.ipnb.editor.panels.code;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.panels.EditorPanel;
+import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * @author traff
@@ -38,10 +38,10 @@ import java.awt.*;
 public class CodeSourcePanel extends IpnbPanel implements EditorPanel {
   private Editor myEditor;
   @NotNull private final Project myProject;
-  @NotNull private final Disposable myParent;
+  @NotNull private final CodePanel myParent;
   @NotNull private final String mySource;
 
-  public CodeSourcePanel(@NotNull final Project project, @NotNull final Disposable parent, @NotNull final String source) {
+  public CodeSourcePanel(@NotNull final Project project, @NotNull final CodePanel parent, @NotNull final String source) {
     myProject = project;
     myParent = parent;
     mySource = source;
@@ -65,14 +65,21 @@ public class CodeSourcePanel extends IpnbPanel implements EditorPanel {
     else
       myEditor = IpnbEditorUtil.createPythonCodeEditor(myProject, mySource);
     final JComponent component = myEditor.getComponent();
-    panel.add(component);
-    setBorder(BorderFactory.createLineBorder(JBColor.lightGray, 1, true));
-    Disposer.register(myParent, new Disposable() {
+    myEditor.getContentComponent().addMouseListener(new MouseAdapter() {
       @Override
-      public void dispose() {
-        EditorFactory.getInstance().releaseEditor(myEditor);
+      public void mouseClicked(MouseEvent e) {
+        final Container ipnbFilePanel = myParent.getParent();
+        if (ipnbFilePanel instanceof IpnbFilePanel) {
+          ((IpnbFilePanel)ipnbFilePanel).setSelectedCell(myParent);
+          myParent.switchToEditing();
+        }
+
+
+        UIUtil.requestFocus(myEditor.getContentComponent());
       }
     });
+    panel.add(component);
+    setBorder(BorderFactory.createLineBorder(JBColor.lightGray, 1, true));
     return panel;
   }
 }
