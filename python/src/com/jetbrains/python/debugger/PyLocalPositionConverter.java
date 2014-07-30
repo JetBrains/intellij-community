@@ -114,6 +114,11 @@ public class PyLocalPositionConverter implements PyPositionConverter {
     return returnSignature;
   }
 
+  @Override
+  public PyHierarchyCallInfo convertHierarchyCallInfo(PyHierarchyCallInfo callInfo) {
+    return callInfo;
+  }
+
   public VirtualFile getVirtualFile(String path) {
     VirtualFile vFile = getLocalFileSystem().findFileByPath(path);
 

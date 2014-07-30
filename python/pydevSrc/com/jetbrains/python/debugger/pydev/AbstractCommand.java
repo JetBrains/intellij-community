@@ -34,6 +34,7 @@ public abstract class AbstractCommand<T> {
   public static final int EXIT = 129;
   public static final int CALL_SIGNATURE_TRACE = 130;
   public static final int RETURN_SIGNATURE_TRACE = 131;
+  public static final int HIERARCHY_CALL_TRACE = 132;
 
   public static final int VERSION = 501;
   public static final String NEW_LINE_CHAR = "@_@NEW_LINE_CHAR@_@";
@@ -175,6 +176,10 @@ public abstract class AbstractCommand<T> {
 
   public static boolean isReturnSignatureTrace (int command) {
     return command == RETURN_SIGNATURE_TRACE;
+  }
+
+  public static boolean isHierarchyCallTrace(int command) {
+    return command == HIERARCHY_CALL_TRACE;
   }
 
   public static boolean isWriteToConsole(final int command) {

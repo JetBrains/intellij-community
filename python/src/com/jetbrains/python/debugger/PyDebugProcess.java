@@ -290,6 +290,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     PyReturnSignatureCacheManager.getInstance(getSession().getProject()).recordReturnSignature(myPositionConverter.convertReturnSignature(returnSignature));
   }
 
+  @Override
+  public void recordHierarchyCallInfo(PyHierarchyCallInfo callInfo) {
+    PyHierarchyCallCacheManager.getInstance(getSession().getProject()).recordHierarchyCallInfo(myPositionConverter.convertHierarchyCallInfo(callInfo));
+  }
+
   protected void afterConnect() {
   }
 
