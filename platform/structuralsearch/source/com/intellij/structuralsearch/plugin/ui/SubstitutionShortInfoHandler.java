@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
 import com.intellij.codeInsight.template.impl.Variable;
@@ -11,7 +12,6 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * Created by IntelliJ IDEA.
@@ -63,9 +63,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
         String varname = elements.subSequence(start + 1, end).toString();
         Variable foundVar = null;
 
-        for(Iterator<Variable> i=variables.iterator();i.hasNext();) {
-          final Variable var = i.next();
-
+        for (final Variable var : variables) {
           if (var.getName().equals(varname)) {
             foundVar = var;
             break;
@@ -80,6 +78,9 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
 
     if (text.length() > 0) {
       UIUtil.showTooltip(editor, start, end, text, SS_INFO_TOOLTIP_GROUP);
+    }
+    else {
+      TooltipController.getInstance().cancelTooltips();
     }
   }
 
