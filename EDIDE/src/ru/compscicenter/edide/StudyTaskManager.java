@@ -99,9 +99,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
               UISettings.getInstance().fireUISettingsChanged();
               final ToolWindow newWindow = ToolWindowManager.getInstance(myProject).getToolWindow("StudyToolWindow");
               if (newWindow != null) {
-                newWindow.getContentManager().removeAllContents(false);
-                StudyToolWindowFactory factory = new StudyToolWindowFactory();
-                factory.createToolWindowContent(myProject, newWindow);
+                StudyUtils.updateStudyToolWindow(myProject);
                 newWindow.setIcon(StudyIcons.ShortcutReminder);
                 newWindow.show(null);
               }

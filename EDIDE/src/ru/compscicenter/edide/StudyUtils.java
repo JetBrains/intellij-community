@@ -5,7 +5,9 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindowManager;
 import ru.compscicenter.edide.editor.StudyEditor;
+import ru.compscicenter.edide.ui.StudyToolWindowFactory;
 
 import java.io.*;
 
@@ -75,5 +77,11 @@ public class StudyUtils {
         }
       }
     }
+  }
+
+  public static void updateStudyToolWindow(Project project) {
+    ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW).getContentManager().removeAllContents(false);
+    StudyToolWindowFactory factory =  new StudyToolWindowFactory();
+    factory.createToolWindowContent(project, ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW));
   }
 }

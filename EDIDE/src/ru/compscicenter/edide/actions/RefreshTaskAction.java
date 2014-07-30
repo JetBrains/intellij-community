@@ -14,12 +14,11 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowManager;
 import ru.compscicenter.edide.StudyDocumentListener;
-import ru.compscicenter.edide.ui.StudyToolWindowFactory;
+import ru.compscicenter.edide.StudyTaskManager;
+import ru.compscicenter.edide.StudyUtils;
 import ru.compscicenter.edide.course.*;
 import ru.compscicenter.edide.editor.StudyEditor;
-import ru.compscicenter.edide.StudyTaskManager;
 
 import java.io.*;
 
@@ -80,9 +79,7 @@ public class RefreshTaskAction extends AnAction {
                       lessonInfo.setTaskSolved(lessonInfo.getTaskSolved() - 1);
                     }
                     lessonInfo.setTaskUnchecked(lessonInfo.getTaskUnchecked() + 1);
-                    ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW).getContentManager().removeAllContents(false);
-                    StudyToolWindowFactory factory =  new StudyToolWindowFactory();
-                    factory.createToolWindowContent(project, ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW));
+                    StudyUtils.updateStudyToolWindow(project);
                     for (TaskWindow taskWindow : selectedTaskFile.getTaskWindows()) {
                       taskWindow.reset();
                     }
