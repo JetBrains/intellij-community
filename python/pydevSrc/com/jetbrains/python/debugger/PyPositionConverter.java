@@ -17,4 +17,6 @@ public interface PyPositionConverter {
   XSourcePosition convertFromPython(@NotNull final PySourcePosition position);
 
   PySignature convertSignature(PySignature signature);
+
+  PyReturnSignature convertReturnSignature(PyReturnSignature returnSignature);
 }

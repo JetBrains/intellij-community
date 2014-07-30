@@ -109,6 +109,11 @@ public class PyLocalPositionConverter implements PyPositionConverter {
     return signature;
   }
 
+  @Override
+  public PyReturnSignature convertReturnSignature(PyReturnSignature returnSignature) {
+    return returnSignature;
+  }
+
   public VirtualFile getVirtualFile(String path) {
     VirtualFile vFile = getLocalFileSystem().findFileByPath(path);
 

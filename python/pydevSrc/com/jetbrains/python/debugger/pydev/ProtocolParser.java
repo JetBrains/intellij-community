@@ -41,6 +41,20 @@ public class ProtocolParser {
     return signature;
   }
 
+  public static PyReturnSignature parseReturnSignature(String payload) throws PyDebuggerException {
+    final XppReader reader = openReader(payload, true);
+    reader.moveDown();
+    if (!"return_signature".equals(reader.getNodeName())) {
+      throw new PyDebuggerException("Expected <return_signature>, found " + reader.getNodeName());
+    }
+    final String file = readString(reader, "file", "");
+    final String name = readString(reader, "name", "");
+    final String return_type = readString(reader, "return_type", "");
+    PyReturnSignature signature = new PyReturnSignature(file, name, return_type);
+
+    return signature;
+  }
+
   public static String parseSourceContent(String payload) throws PyDebuggerException {
     return payload;
   }

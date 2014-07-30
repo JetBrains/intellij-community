@@ -285,6 +285,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     PySignatureCacheManager.getInstance(getSession().getProject()).recordSignature(myPositionConverter.convertSignature(signature));
   }
 
+  @Override
+  public void recordReturnSignature(PyReturnSignature returnSignature) {
+    PyReturnSignatureCacheManager.getInstance(getSession().getProject()).recordReturnSignature(myPositionConverter.convertReturnSignature(returnSignature));
+  }
+
   protected void afterConnect() {
   }
 

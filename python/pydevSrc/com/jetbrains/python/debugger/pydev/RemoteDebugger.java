@@ -464,6 +464,9 @@ public class RemoteDebugger implements ProcessDebugger {
         else if (AbstractCommand.isCallSignatureTrace(frame.getCommand())) {
           recordCallSignature(ProtocolParser.parseCallSignature(frame.getPayload()));
         }
+        else if (AbstractCommand.isReturnSignatureTrace(frame.getCommand())) {
+          recordReturnSignature(ProtocolParser.parseReturnSignature(frame.getPayload()));
+        }
         else {
           placeResponse(frame.getSequence(), frame);
         }
@@ -476,6 +479,10 @@ public class RemoteDebugger implements ProcessDebugger {
 
     private void recordCallSignature(PySignature signature) {
       myDebugProcess.recordSignature(signature);
+    }
+
+    private void recordReturnSignature(PyReturnSignature signature) {
+      myDebugProcess.recordReturnSignature(signature);
     }
 
     // todo: extract response processing
