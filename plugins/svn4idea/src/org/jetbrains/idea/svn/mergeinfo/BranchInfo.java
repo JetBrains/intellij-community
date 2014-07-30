@@ -23,6 +23,7 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.properties.PropertyData;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -306,7 +307,7 @@ public class BranchInfo {
   }
 
   private SvnMergeInfoCache.MergeCheckResult processMergeinfoProperty(final String pathWithRevisionNumber, final long revisionAsked,
-                                                                      final SVNPropertyValue value, final String trunkRelativeUrl,
+                                                                      final PropertyValue value, final String trunkRelativeUrl,
                                                                       final boolean self) {
     final String valueAsString = value.toString().trim();
 
@@ -318,7 +319,7 @@ public class BranchInfo {
 
     final Map<String, SVNMergeRangeList> map;
     try {
-      map = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(replaceSeparators(value.getString())), null);
+      map = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(replaceSeparators(value.toString())), null);
     }
     catch (SVNException e) {
       LOG.info(e);

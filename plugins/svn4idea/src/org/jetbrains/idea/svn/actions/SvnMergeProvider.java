@@ -33,8 +33,8 @@ import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.properties.PropertyData;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -164,7 +164,7 @@ public class SvnMergeProvider implements MergeProvider {
       PropertyClient client = vcs.getFactory(ioFile).createPropertyClient();
 
       PropertyData svnPropertyData = client.getProperty(SvnTarget.fromFile(ioFile), SVNProperty.MIME_TYPE, false, SVNRevision.WORKING);
-      if (svnPropertyData != null && SVNProperty.isBinaryMimeType(SVNPropertyValue.getPropertyAsString(svnPropertyData.getValue()))) {
+      if (svnPropertyData != null && SVNProperty.isBinaryMimeType(PropertyValue.toString(svnPropertyData.getValue()))) {
         return true;
       }
     }

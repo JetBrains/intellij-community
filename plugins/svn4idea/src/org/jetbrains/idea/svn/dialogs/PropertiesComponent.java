@@ -39,7 +39,10 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
-import org.tmatesoft.svn.core.*;
+import org.jetbrains.idea.svn.properties.PropertyValue;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -155,9 +158,9 @@ public class PropertiesComponent extends JPanel {
     try {
       PropertyConsumer handler = new PropertyConsumer() {
         public void handleProperty(File path, PropertyData property) throws SVNException {
-          final SVNPropertyValue value = property.getValue();
+          final PropertyValue value = property.getValue();
           if (value != null) {
-            props.put(property.getName(), SVNPropertyValue.getPropertyAsString(property.getValue()));
+            props.put(property.getName(), PropertyValue.toString(property.getValue()));
           }
         }
 
@@ -272,7 +275,7 @@ public class PropertiesComponent extends JPanel {
       if (!StringUtil.isEmpty(property)) {
         try {
           myVcs.getFactory(myFile).createPropertyClient()
-            .setProperty(myFile, property, value != null ? SVNPropertyValue.create(value) : null,
+            .setProperty(myFile, property, value != null ? PropertyValue.create(value) : null,
                          Depth.allOrEmpty(recursive), force);
         }
         catch (VcsException error) {
@@ -311,8 +314,8 @@ public class PropertiesComponent extends JPanel {
         // show erorr message
       }
 
-      SetKeywordsDialog dialog = new SetKeywordsDialog(project,
-                                                       propValue != null ? SVNPropertyValue.getPropertyAsString(propValue.getValue()) : null);
+      SetKeywordsDialog dialog =
+        new SetKeywordsDialog(project, propValue != null ? PropertyValue.toString(propValue.getValue()) : null);
       dialog.show();
       if (dialog.isOK()) {
         setProperty(SvnPropertyKeys.SVN_KEYWORDS, dialog.getKeywords(), false, false);

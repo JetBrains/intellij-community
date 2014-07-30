@@ -44,6 +44,7 @@ import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -331,6 +332,6 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
     if (sb.length() != 0) {
       sb.append(ourPropertiesDelimiter);
     }
-    sb.append(property.getName()).append("=").append((property.getValue() == null) ? "" : SVNPropertyValue.getPropertyAsString(property.getValue()));
+    sb.append(property.getName()).append("=").append((property.getValue() == null) ? "" : PropertyValue.toString(property.getValue()));
   }
 }

@@ -25,6 +25,7 @@ import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.dialogs.MergeContext;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -68,7 +69,7 @@ public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
         final String key = keyFromFile(path);
         synchronized (myLock) {
           myDataMap.put(key, SVNMergeInfoUtil
-            .parseMergeInfo(new StringBuffer(replaceSeparators(SVNPropertyValue.getPropertyAsString(property.getValue()))), null));
+            .parseMergeInfo(new StringBuffer(replaceSeparators(PropertyValue.toString(property.getValue()))), null));
         }
       }
 

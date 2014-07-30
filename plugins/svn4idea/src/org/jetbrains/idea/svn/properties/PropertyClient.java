@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.SvnClient;
-import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -34,7 +33,7 @@ public interface PropertyClient extends SvnClient {
 
   void setProperty(@NotNull File file,
                    @NotNull String property,
-                   @Nullable SVNPropertyValue value,
+                   @Nullable PropertyValue value,
                    @Nullable Depth depth,
                    boolean force) throws VcsException;
 
@@ -43,6 +42,6 @@ public interface PropertyClient extends SvnClient {
   void setRevisionProperty(@NotNull SvnTarget target,
                            @NotNull String property,
                            @NotNull SVNRevision revision,
-                           @Nullable SVNPropertyValue value,
+                           @Nullable PropertyValue value,
                            boolean force) throws VcsException;
 }

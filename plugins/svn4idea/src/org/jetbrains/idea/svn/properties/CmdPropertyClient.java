@@ -11,7 +11,6 @@ import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -91,7 +90,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   @Override
   public void setProperty(@NotNull File file,
                           @NotNull String property,
-                          @Nullable SVNPropertyValue value,
+                          @Nullable PropertyValue value,
                           @Nullable Depth depth,
                           boolean force) throws VcsException {
     runSetProperty(SvnTarget.fromFile(file), property, null, depth, value, force);
@@ -102,7 +101,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     PropertiesMap currentProperties = collectPropertiesToDelete(file);
     currentProperties.putAll(properties);
 
-    for (Map.Entry<String, SVNPropertyValue> entry : currentProperties.entrySet()) {
+    for (Map.Entry<String, PropertyValue> entry : currentProperties.entrySet()) {
       setProperty(file, entry.getKey(), entry.getValue(), Depth.EMPTY, true);
     }
   }
@@ -134,7 +133,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   public void setRevisionProperty(@NotNull SvnTarget target,
                                   @NotNull String property,
                                   @NotNull SVNRevision revision,
-                                  @Nullable SVNPropertyValue value,
+                                  @Nullable PropertyValue value,
                                   boolean force) throws VcsException {
     runSetProperty(target, property, revision, null, value, force);
   }
@@ -143,7 +142,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
                               @NotNull String property,
                               @Nullable SVNRevision revision,
                               @Nullable Depth depth,
-                              @Nullable SVNPropertyValue value,
+                              @Nullable PropertyValue value,
                               boolean force) throws VcsException {
     List<String> parameters = new ArrayList<String>();
     boolean isDelete = value == null;
@@ -154,7 +153,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
       CommandUtil.put(parameters, revision);
     }
     if (!isDelete) {
-      parameters.add(SVNPropertyValue.getPropertyAsString(value));
+      parameters.add(PropertyValue.toString(value));
       // --force could only be used in "propset" command, but not in "propdel" command
       CommandUtil.put(parameters, force, "--force");
     }
@@ -257,7 +256,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     // such behavior is required to compatibility with SVNKit as some logic in merge depends on
     // whether null property data or property data with empty string value is returned
     if (value != null) {
-      result = new PropertyData(property, SVNPropertyValue.create(value.trim()));
+      result = new PropertyData(property, PropertyValue.create(value.trim()));
     }
 
     return result;

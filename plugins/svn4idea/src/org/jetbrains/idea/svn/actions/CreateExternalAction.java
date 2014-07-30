@@ -43,10 +43,10 @@ import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.dialogs.SelectCreateExternalTargetDialog;
 import org.jetbrains.idea.svn.properties.PropertyData;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.jetbrains.idea.svn.update.UpdateClient;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -136,8 +136,8 @@ public class CreateExternalAction extends DumbAwareAction {
     PropertyData propertyData = factory.createPropertyClient().getProperty(SvnTarget.fromFile(ioFile), SvnPropertyKeys.SVN_EXTERNALS,
                                                                               false, SVNRevision.UNDEFINED);
     String newValue;
-    if (propertyData != null && propertyData.getValue() != null && ! StringUtil.isEmptyOrSpaces(propertyData.getValue().getString())) {
-      final SVNExternal[] externals = SVNExternal.parseExternals("Create External", propertyData.getValue().getString());
+    if (propertyData != null && propertyData.getValue() != null && ! StringUtil.isEmptyOrSpaces(propertyData.getValue().toString())) {
+      final SVNExternal[] externals = SVNExternal.parseExternals("Create External", propertyData.getValue().toString());
       for (SVNExternal external : externals) {
         if (Comparing.equal(external.getPath(), target)) {
           AbstractVcsHelper
@@ -146,12 +146,11 @@ public class CreateExternalAction extends DumbAwareAction {
         }
       }
       final String string = createExternalDefinitionString(url, target);
-      newValue = propertyData.getValue().getString().trim() + "\n" + string;
+      newValue = propertyData.getValue().toString().trim() + "\n" + string;
     } else {
       newValue = createExternalDefinitionString(url, target);
     }
-    factory.createPropertyClient().setProperty(ioFile, SvnPropertyKeys.SVN_EXTERNALS, SVNPropertyValue.create(newValue), Depth.EMPTY,
-                                               false);
+    factory.createPropertyClient().setProperty(ioFile, SvnPropertyKeys.SVN_EXTERNALS, PropertyValue.create(newValue), Depth.EMPTY, false);
     return false;
   }
 

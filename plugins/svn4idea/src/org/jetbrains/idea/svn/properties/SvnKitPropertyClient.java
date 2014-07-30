@@ -78,11 +78,11 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
   @Override
   public void setProperty(@NotNull File file,
                           @NotNull String property,
-                          @Nullable SVNPropertyValue value,
+                          @Nullable PropertyValue value,
                           @Nullable Depth depth,
                           boolean force) throws VcsException {
     try {
-      createClient().doSetProperty(file, property, value, force, toDepth(depth), null, null);
+      createClient().doSetProperty(file, property, toPropertyValue(value), force, toDepth(depth), null, null);
     }
     catch (SVNException e) {
       throw new SvnBindException(e);
@@ -109,14 +109,14 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
   public void setRevisionProperty(@NotNull SvnTarget target,
                                   @NotNull String property,
                                   @NotNull SVNRevision revision,
-                                  @Nullable SVNPropertyValue value,
+                                  @Nullable PropertyValue value,
                                   boolean force) throws VcsException {
     try {
       if (target.isFile()) {
-        createClient().doSetRevisionProperty(target.getFile(), revision, property, value, force, null);
+        createClient().doSetRevisionProperty(target.getFile(), revision, property, toPropertyValue(value), force, null);
       }
       else {
-        createClient().doSetRevisionProperty(target.getURL(), revision, property, value, force, null);
+        createClient().doSetRevisionProperty(target.getURL(), revision, property, toPropertyValue(value), force, null);
       }
     }
     catch (SVNException e) {
@@ -128,8 +128,8 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
   private static SVNProperties toSvnProperties(@NotNull PropertiesMap properties) {
     SVNProperties result = new SVNProperties();
 
-    for (Map.Entry<String, SVNPropertyValue> entry : properties.entrySet()) {
-      result.put(entry.getKey(), entry.getValue());
+    for (Map.Entry<String, PropertyValue> entry : properties.entrySet()) {
+      result.put(entry.getKey(), toPropertyValue(entry.getValue()));
     }
 
     return result;
@@ -210,6 +210,17 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
           consumer.handleProperty(revision, PropertyData.create(property));
         }
       };
+    }
+
+    return result;
+  }
+
+  @Nullable
+  private static SVNPropertyValue toPropertyValue(@Nullable PropertyValue value) {
+    SVNPropertyValue result = null;
+
+    if (value != null) {
+      result = SVNPropertyValue.create(value.toString());
     }
 
     return result;

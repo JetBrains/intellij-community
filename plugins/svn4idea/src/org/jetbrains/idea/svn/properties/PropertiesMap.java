@@ -16,10 +16,9 @@
 package org.jetbrains.idea.svn.properties;
 
 import com.intellij.util.containers.HashMap;
-import org.tmatesoft.svn.core.SVNPropertyValue;
 
 /**
  * @author Konstantin Kolosovsky.
  */
-public class PropertiesMap extends HashMap<String, SVNPropertyValue> {
+public class PropertiesMap extends HashMap<String, PropertyValue> {
 }

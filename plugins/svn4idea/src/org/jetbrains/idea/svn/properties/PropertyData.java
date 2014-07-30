@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.properties;
 
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 
 /**
@@ -24,11 +23,11 @@ import org.tmatesoft.svn.core.wc.SVNPropertyData;
  */
 public class PropertyData {
 
-  private final SVNPropertyValue myValue;
+  private final PropertyValue myValue;
 
   private final String myName;
 
-  public PropertyData(String name, SVNPropertyValue value) {
+  public PropertyData(String name, PropertyValue value) {
     myName = name;
     myValue = value;
   }
@@ -37,7 +36,7 @@ public class PropertyData {
     return myName;
   }
 
-  public SVNPropertyValue getValue() {
+  public PropertyValue getValue() {
     return myValue;
   }
 
@@ -46,7 +45,7 @@ public class PropertyData {
     PropertyData result = null;
 
     if (data != null) {
-      result = new PropertyData(data.getName(), data.getValue());
+      result = new PropertyData(data.getName(), PropertyValue.create(data.getValue()));
     }
 
     return result;

@@ -37,10 +37,10 @@ import org.jetbrains.idea.svn.history.LatestExistentSearcher;
 import org.jetbrains.idea.svn.info.InfoConsumer;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.properties.PropertyData;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -167,7 +167,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     PropertyData property =
       myVcs.getFactory(path).createPropertyClient().getProperty(SvnTarget.fromFile(path), COMMIT_MESSAGE, true, SVNRevision.BASE);
 
-    return property != null ? SVNPropertyValue.getPropertyAsString(property.getValue()) : null;
+    return property != null ? PropertyValue.toString(property.getValue()) : null;
   }
 
   private static ItemLatestState defaultResult() {

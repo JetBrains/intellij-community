@@ -31,7 +31,7 @@ import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
-import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -157,7 +157,7 @@ public class SetPropertyDialog extends DialogWrapper {
     PropertyData property = !StringUtil.isEmpty(name) ? getProperty(file, name) : null;
 
     if (property != null) {
-      myValueText.setText(SVNPropertyValue.getPropertyAsString(property.getValue()));
+      myValueText.setText(PropertyValue.toString(property.getValue()));
       myValueText.selectAll();
     }
     else {
