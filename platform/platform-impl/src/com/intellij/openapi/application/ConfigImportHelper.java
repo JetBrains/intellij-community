@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -402,15 +401,12 @@ public class ConfigImportHelper {
       dir = dir.substring(1, dir.length() - 1);
     }
     if (replaceUserHome) {
-      if (dir.startsWith("~\\") || dir.startsWith("~//") || StringUtil.startsWithConcatenation(dir, "~", File.separator)) {
-        dir = SystemProperties.getUserHome() + dir.substring(1);
-      }
+      dir = FileUtil.expandUserHome(dir);
     }
     return dir;
   }
 
-  public static boolean isInstallationHomeOrConfig(@NotNull final String installationHome, 
-                                                   @NotNull final ConfigImportSettings settings) {
+  public static boolean isInstallationHomeOrConfig(@NotNull final String installationHome, @NotNull final ConfigImportSettings settings) {
     if (new File(installationHome, OPTIONS_XML).exists()) return true;
     if (new File(installationHome, CONFIG_RELATED_PATH + OPTIONS_XML).exists()) return true;
 

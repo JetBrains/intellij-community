@@ -33,9 +33,14 @@ public abstract class InspectionsFilter {
   private final Set<HighlightSeverity> mySuitableSeverities = new HashSet<HighlightSeverity>();
   private Boolean mySuitableInspectionsStates;
   private boolean myAvailableOnlyForAnalyze;
+  private boolean myShowOnlyCleanupInspections;
 
   public boolean isAvailableOnlyForAnalyze() {
     return myAvailableOnlyForAnalyze;
+  }
+
+  public boolean isShowOnlyCleanupInspections() {
+    return myShowOnlyCleanupInspections;
   }
 
   public Boolean getSuitableInspectionsStates() {
@@ -44,6 +49,11 @@ public abstract class InspectionsFilter {
 
   public boolean containsSeverity(final HighlightSeverity severity) {
     return mySuitableSeverities.contains(severity);
+  }
+
+  public void setShowOnlyCleanupInspections(final boolean showOnlyCleanupInspections) {
+    myShowOnlyCleanupInspections = showOnlyCleanupInspections;
+    filterChanged();
   }
 
   public void setAvailableOnlyForAnalyze(final boolean availableOnlyForAnalyze) {
@@ -67,10 +77,17 @@ public abstract class InspectionsFilter {
   }
 
   public boolean isEmptyFilter() {
-    return mySuitableInspectionsStates == null && !myAvailableOnlyForAnalyze && mySuitableSeverities.isEmpty();
+    return mySuitableInspectionsStates == null
+           && !myAvailableOnlyForAnalyze
+           && !myShowOnlyCleanupInspections
+           && mySuitableSeverities.isEmpty();
   }
 
   public boolean matches(final Tools tools) {
+    if (myShowOnlyCleanupInspections && !tools.getTool().isCleanupTool()) {
+      return false;
+    }
+
     if (mySuitableInspectionsStates != null && mySuitableInspectionsStates != tools.isEnabled()) {
       return false;
     }

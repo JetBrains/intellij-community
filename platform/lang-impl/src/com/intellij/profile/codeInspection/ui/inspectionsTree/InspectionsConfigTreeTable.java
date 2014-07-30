@@ -28,15 +28,15 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.ui.InspectionsAggregationUtil;
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.profile.codeInspection.ui.table.ThreeStateCheckBoxRenderer;
-import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.ui.ClickListener;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ui.treeStructure.treetable.TreeTableTree;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
@@ -93,7 +93,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
         if (path != null) {
           final InspectionConfigTreeNode node = (InspectionConfigTreeNode)path.getLastPathComponent();
           if (node.isLeaf()) {
-            swapInspectionEnableState(true);
+            swapInspectionEnableState();
           }
         }
         return true;
@@ -102,13 +102,15 @@ public class InspectionsConfigTreeTable extends TreeTable {
 
     registerKeyboardAction(new ActionListener() {
                              public void actionPerformed(ActionEvent e) {
-                               swapInspectionEnableState(false);
+                               swapInspectionEnableState();
                                updateUI();
                              }
                            }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
+
+    getEmptyText().setText("No enabled inspections available");
   }
 
-  private void swapInspectionEnableState(final boolean isFromClickAction) {
+  private void swapInspectionEnableState() {
     for (int selectedRow : getSelectedRows()) {
       final Object value = getValueAt(selectedRow, IS_ENABLED_COLUMN);
       final boolean newValue = !Boolean.TRUE.equals(value);
@@ -141,6 +143,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
   private static class InspectionsConfigTreeTableModel extends DefaultTreeModel implements TreeTableModel {
 
     private final InspectionsConfigTreeTableSettings mySettings;
+    private TreeTable myTreeTable;
 
     public InspectionsConfigTreeTableModel(final InspectionsConfigTreeTableSettings settings) {
       super(settings.getRoot());
@@ -229,10 +232,18 @@ public class InspectionsConfigTreeTable extends TreeTable {
         aNode.dropCache();
         mySettings.onChanged(aNode);
       }
+      if (myTreeTable != null) {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          public void run() {
+            ((AbstractTableModel)myTreeTable.getModel()).fireTableDataChanged();
+          }
+        });
+      }
     }
 
     @Override
     public void setTree(final JTree tree) {
+      myTreeTable = ((TreeTableTree)tree).getTreeTable();
     }
   }
 

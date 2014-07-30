@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.framework.detection.impl.exclude;
 
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.EmptyIcon;
 
 /**
 * @author nik
@@ -51,6 +52,7 @@ class InvalidExcludeListItem extends ExcludeListItem {
     else {
       renderer.append(myFileUrl, SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
+    renderer.setIcon(EmptyIcon.ICON_16);
   }
 
   @Override

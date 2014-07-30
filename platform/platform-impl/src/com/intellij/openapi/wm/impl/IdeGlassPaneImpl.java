@@ -20,6 +20,7 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.dnd.DnDAware;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
@@ -41,6 +42,8 @@ import java.util.*;
 import java.util.List;
 
 public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEventQueue.EventDispatcher, Painter.Listener {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.IdeGlassPaneImpl");
 
   private final List<EventListener> myMouseListeners = new ArrayList<EventListener>();
   private final Set<EventListener> mySortedMouseListeners = new TreeSet<EventListener>(new Comparator<EventListener>() {
@@ -360,9 +363,12 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
         }
         else {
           cursor = Cursor.getDefaultCursor();
-          getRootPane().setCursor(cursor);
-
-
+          JRootPane rootPane = getRootPane();
+          if (rootPane != null) {
+            rootPane.setCursor(cursor);
+          } else {
+            LOG.warn("Root pane is null. Event: " + e);
+          }
           restoreLastComponent(null);
           myLastOriginalCursor = null;
           myLastCursorComponent = null;
