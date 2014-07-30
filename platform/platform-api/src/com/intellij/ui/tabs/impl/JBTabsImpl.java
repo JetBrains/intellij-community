@@ -1262,6 +1262,10 @@ public class JBTabsImpl extends JComponent
     return null;
   }
 
+  public boolean isAlphabeticalMode() {
+    return false;
+  }
+
   @Nullable
   private TabInfo findEnabledBackward(int from, boolean cycle) {
     if (from < 0) return null;

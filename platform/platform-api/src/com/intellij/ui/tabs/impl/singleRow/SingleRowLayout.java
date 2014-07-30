@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,7 +147,7 @@ public class SingleRowLayout extends TabLayout {
   }
 
   public LayoutPassInfo layoutSingleRow(List<TabInfo> visibleInfos)  {
-    if (JBEditorTabs.isAlphabeticalMode()) {
+    if (myTabs.isAlphabeticalMode()) {
       Collections.sort(visibleInfos, new Comparator<TabInfo>() {
         @Override
         public int compare(TabInfo o1, TabInfo o2) {
