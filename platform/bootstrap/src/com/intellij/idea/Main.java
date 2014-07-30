@@ -145,8 +145,8 @@ public class Main {
     if (Restarter.isSupported()) {
       List<String> args = new ArrayList<String>();
 
+      String userDir = System.getProperty("user.home") + "/." + ApplicationNamesInfo.getInstance().getProductName();
       if (SystemInfoRt.isWindows) {
-        String userDir = System.getProperty("user.home") + "/." + ApplicationNamesInfo.getInstance().getProductName();
         File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
         //File userDir = new File(System.getProperty("user.home") + "/." + ApplicationNamesInfo.getInstance().getProductName());
         System.out.println("pathToLauncher: " + userDir);
@@ -167,7 +167,7 @@ public class Main {
                          "-Xmx500m",
                          "-classpath",
                          patchCopy.getPath() + File.pathSeparator + log4jCopy.getPath(),
-                         "-Djava.io.tmpdir=" + tempDir,
+                         "-Djava.io.tmpdir=" + userDir,
                          "-Didea.updater.log=" + PathManager.getLogPath(),
                          "-Dswing.defaultlaf=" + UIManager.getSystemLookAndFeelClassName(),
                          "com.intellij.updater.Runner",
