@@ -104,7 +104,6 @@ public class PackagesNotificationPanel {
   }
 
   private void showContent(String text, final Color background) {
-    myEditorPane.removeAll();
     String htmlText = text.startsWith("<html>") ? text : UIUtil.toHtml(text);
     myEditorPane.setText(htmlText);
     myEditorPane.setBackground(background);
