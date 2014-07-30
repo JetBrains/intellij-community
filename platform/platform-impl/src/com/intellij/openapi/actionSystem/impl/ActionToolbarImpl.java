@@ -103,6 +103,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
    * @see ActionToolbar#adjustTheSameSize(boolean)
    */
   private boolean myAdjustTheSameSize;
+  private boolean myRightAlignSecondaries;
 
   private final ActionButtonLook myButtonLook = null;
   private final ActionButtonLook myMinimalButtonLook = new InplaceActionButtonLook();
@@ -271,6 +272,34 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
   }
 
+  public boolean getRightAlignSecondaries() {
+    return myRightAlignSecondaries && myOrientation == SwingConstants.HORIZONTAL;
+  }
+
+  public void setRightAlignSecondaries(boolean rightAlign) {
+    myRightAlignSecondaries = rightAlign;
+  }
+
+  private JComponent addComponent(AnAction action, boolean atEnd) {
+    JComponent addedComponent = null;
+
+    if (action instanceof Separator) {
+      if (!atEnd) {
+        addedComponent = new MySeparator();
+      }
+    }
+    else if (action instanceof CustomComponentAction) {
+      addedComponent = getCustomComponent(action);
+    }
+    else {
+      addedComponent = createToolbarButton(action);
+    }
+    if (addedComponent != null) {
+      add(addedComponent);
+    }
+    return addedComponent;
+  }
+
   private void fillToolBar(final List<AnAction> actions, boolean layoutSecondaries) {
     if (myAddSeparatorFirst) {
       add(new MySeparator());
@@ -285,30 +314,22 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       //  ((ComboBoxAction)action).setSmallVariant(true);
       //}
 
-      if (layoutSecondaries) {
-        if (!myActionGroup.isPrimary(action)) {
-          mySecondaryActions.add(action);
-          continue;
-        }
+      //there are three cases for secondaries:
+      //1. They show up right aligned as normal toolbar buttons ( getRightAlignSecondaries = true)
+      //2. They show up in a popup under a cogwheel button (layoutSecondaries = true, getRightAlignSecondaries = false)
+      //    This happens if the layout supports the cogwheel (horizontal, auto layout)
+      //3. They show up as regular left-aligned toolbar buttons (layoutSecondaries = false, getRightAlignSecondaries = false)
+      if (!myActionGroup.isPrimary(action) && getRightAlignSecondaries()) {
+        mySecondaryActions.add(action);  //the secondary will be in the main toolbar, but right aligned.
+        continue;
       }
+      else if (!myActionGroup.isPrimary(action) && layoutSecondaries) {
+        mySecondaryActions.add(action); //the secondary will be in a popup
+        continue;
+      }
+      //falling thru with a secondary, it will be treated as a regular left aligned button.
 
-      if (action instanceof Separator) {
-        if (i > 0 && i < actions.size() - 1) {
-          add(new MySeparator());
-        }
-      }
-      else if (action instanceof CustomComponentAction) {
-        add(getCustomComponent(action));
-      }
-      else {
-        add(createToolbarButton(action));
-      }
-    }
-
-    if (mySecondaryActions.getChildrenCount() > 0) {
-      mySecondaryActionsButton = new ActionButton(mySecondaryActions, myPresentationFactory.getPresentation(mySecondaryActions), myPlace, getMinimumButtonSize());
-      mySecondaryActionsButton.setNoIconsInPopup(true);
-      add(mySecondaryActionsButton);
+      addComponent(action, i == 0 || i == actions.size() - 1);
     }
 
     if ((ActionPlaces.MAIN_TOOLBAR.equals(myPlace) || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(myPlace))) {
@@ -317,10 +338,31 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         try {
           final CustomComponentAction searchEveryWhereAction = (CustomComponentAction)searchEverywhereAction;
           final JComponent searchEverywhere = searchEveryWhereAction.createCustomComponent(searchEverywhereAction.getTemplatePresentation());
-          searchEverywhere.putClientProperty("SEARCH_EVERYWHERE", Boolean.TRUE);
+          searchEverywhere.putClientProperty("RIGHT_ALIGN", Boolean.TRUE);
           add(searchEverywhere);
         }
-        catch (Exception ignore) {}
+        catch (Exception ignore) {
+        }
+      }
+    }
+
+    //note that the cogwheel should be after search (if its there) because further down, there is an assert that its last.
+    if (mySecondaryActions.getChildrenCount() > 0) {
+      if (!getRightAlignSecondaries()) {
+        mySecondaryActionsButton = new ActionButton(mySecondaryActions, myPresentationFactory.getPresentation(mySecondaryActions), myPlace, getMinimumButtonSize());
+        mySecondaryActionsButton.setNoIconsInPopup(true);
+        mySecondaryActionsButton.putClientProperty("RIGHT_ALIGN", Boolean.TRUE);
+        add(mySecondaryActionsButton);
+      }
+      else {
+        //add all of the secondaries as primaries, but right-aligned.
+        AnAction[] secondaries = mySecondaryActions.getChildren(null);
+        for (int i = 0; i < secondaries.length; i++) {
+          JComponent component = addComponent(secondaries[i], i == 0 || i == secondaries.length - 1);
+          if (component != null) {
+            component.putClientProperty("RIGHT_ALIGN", Boolean.TRUE);
+          }
+        }
       }
     }
   }
@@ -731,13 +773,25 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
 
     if (getComponentCount() > 0 && size2Fit.width < Integer.MAX_VALUE) {
-      final Component component = getComponent(getComponentCount() - 1);
-      if (component instanceof JComponent && ((JComponent)component).getClientProperty("SEARCH_EVERYWHERE") == Boolean.TRUE) {
-        int max = 0;
-        for (int i = 0; i < bounds.size() - 2; i++) {
-          max = Math.max(max, bounds.get(i).height);
+      //right aligned components must be at the end of the component list.
+      int countfromend = getComponentCount() - 1;
+      Component component = getComponent(countfromend);
+      int rightEdge = size2Fit.width - 4; //provides some buffer from the right edge.
+      while (component instanceof JComponent && ((JComponent)component).getClientProperty("RIGHT_ALIGN") == Boolean.TRUE) {
+        Rectangle oldbounds = bounds.get(countfromend);
+        //check to ensure we are actually moving the component to the right.  If its offscreen, just break
+        if (oldbounds.getX() > rightEdge - oldbounds.width) {
+          break;
         }
-        bounds.set(bounds.size() - 1, new Rectangle(size2Fit.width - 25, 0, 25, max));
+        bounds.set(countfromend, new Rectangle(rightEdge - oldbounds.width, oldbounds.y, oldbounds.width, oldbounds.height));
+        countfromend--;
+        rightEdge = rightEdge - oldbounds.width;
+        if (countfromend >= 0) {
+          component = getComponent(countfromend);
+        }
+        else {
+          break;
+        }
       }
     }
   }
