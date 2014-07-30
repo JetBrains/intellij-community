@@ -73,7 +73,7 @@ final class BrowserSettingsPanel {
       }
     };
 
-  private static final ColumnInfo[] COLUMNS = {new EditableColumnInfo<ConfigurableWebBrowser, Boolean>() {
+  private static final EditableColumnInfo<ConfigurableWebBrowser, Boolean> ACTIVE_COLUMN_INFO = new EditableColumnInfo<ConfigurableWebBrowser, Boolean>() {
     @Override
     public Class getColumnClass() {
       return Boolean.class;
@@ -88,44 +88,49 @@ final class BrowserSettingsPanel {
     public void setValue(ConfigurableWebBrowser item, Boolean value) {
       item.setActive(value);
     }
-  }, new EditableColumnInfo<ConfigurableWebBrowser, String>("Name") {
-    @Override
-    public String valueOf(ConfigurableWebBrowser item) {
-      return item.getName();
-    }
+  };
 
-    @Override
-    public void setValue(ConfigurableWebBrowser item, String value) {
-      item.setName(value);
-    }
-  }, new ColumnInfo<ConfigurableWebBrowser, BrowserFamily>("Family") {
-    @Override
-    public Class getColumnClass() {
-      return BrowserFamily.class;
-    }
+  private static final ColumnInfo[] COLUMNS = {ACTIVE_COLUMN_INFO,
+    new EditableColumnInfo<ConfigurableWebBrowser, String>("Name") {
+      @Override
+      public String valueOf(ConfigurableWebBrowser item) {
+        return item.getName();
+      }
 
-    @Override
-    public BrowserFamily valueOf(ConfigurableWebBrowser item) {
-      return item.getFamily();
-    }
+      @Override
+      public void setValue(ConfigurableWebBrowser item, String value) {
+        item.setName(value);
+      }
+    },
+    new ColumnInfo<ConfigurableWebBrowser, BrowserFamily>("Family") {
+      @Override
+      public Class getColumnClass() {
+        return BrowserFamily.class;
+      }
 
-    @Override
-    public void setValue(ConfigurableWebBrowser item, BrowserFamily value) {
-      item.setFamily(value);
-      item.setSpecificSettings(value.createBrowserSpecificSettings());
-    }
+      @Override
+      public BrowserFamily valueOf(ConfigurableWebBrowser item) {
+        return item.getFamily();
+      }
 
-    @Nullable
-    @Override
-    public TableCellRenderer getRenderer(ConfigurableWebBrowser item) {
-      return IconTableCellRenderer.ICONABLE;
-    }
+      @Override
+      public void setValue(ConfigurableWebBrowser item, BrowserFamily value) {
+        item.setFamily(value);
+        item.setSpecificSettings(value.createBrowserSpecificSettings());
+      }
 
-    @Override
-    public boolean isCellEditable(ConfigurableWebBrowser item) {
-      return !WebBrowserManager.getInstance().isPredefinedBrowser(item);
-    }
-  }, PATH_COLUMN_INFO};
+      @Nullable
+      @Override
+      public TableCellRenderer getRenderer(ConfigurableWebBrowser item) {
+        return IconTableCellRenderer.ICONABLE;
+      }
+
+      @Override
+      public boolean isCellEditable(ConfigurableWebBrowser item) {
+        return !WebBrowserManager.getInstance().isPredefinedBrowser(item);
+      }
+    },
+    PATH_COLUMN_INFO};
 
   private JPanel root;
 
@@ -274,18 +279,18 @@ final class BrowserSettingsPanel {
       .modelListener(new TableModelEditor.DataChangedListener<ConfigurableWebBrowser>() {
         @Override
         public void tableChanged(TableModelEvent event) {
-          update(event.getFirstRow());
+          update();
         }
 
         @Override
         public void dataChanged(@NotNull ColumnInfo<ConfigurableWebBrowser, ?> columnInfo, int rowIndex) {
-          if (columnInfo == PATH_COLUMN_INFO) {
-            update(rowIndex);
+          if (columnInfo == PATH_COLUMN_INFO || columnInfo == ACTIVE_COLUMN_INFO) {
+            update();
           }
         }
 
-        private void update(int rowIndex) {
-          if (rowIndex == 0 && getDefaultBrowser() == DefaultBrowserPolicy.FIRST) {
+        private void update() {
+          if (getDefaultBrowser() == DefaultBrowserPolicy.FIRST) {
             setCustomPathToFirstListed();
           }
         }
@@ -295,7 +300,15 @@ final class BrowserSettingsPanel {
 
   private void setCustomPathToFirstListed() {
     ListTableModel<ConfigurableWebBrowser> model = browsersEditor.getModel();
-    alternativeBrowserPathField.setText(model.getRowCount() == 0 ? "" : model.getRowValue(0).getPath());
+    for (int i = 0, n = model.getRowCount(); i < n; i++) {
+      ConfigurableWebBrowser browser = model.getRowValue(i);
+      if (browser.isActive() && browser.getPath() != null) {
+        alternativeBrowserPathField.setText(browser.getPath());
+        return;
+      }
+    }
+
+    alternativeBrowserPathField.setText("");
   }
 
   @NotNull
