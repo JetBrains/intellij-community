@@ -18,6 +18,7 @@ package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -58,6 +59,8 @@ import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.File;
 import java.io.IOException;
@@ -434,9 +437,14 @@ public class GroovyBuilder extends ModuleLevelBuilder {
           final String sourcePath = FileUtil.toSystemIndependentName(item.sourcePath);
           final String outputPath = FileUtil.toSystemIndependentName(item.outputPath);
           final File outputFile = new File(outputPath);
-          outputConsumer.registerOutputFile(target, outputFile, Collections.singleton(sourcePath));
+          final File srcFile = new File(sourcePath);
           try {
-            callback.associate(outputPath, sourcePath, new ClassReader(FileUtil.loadFileBytes(outputFile)));
+            final byte[] bytes = FileUtil.loadFileBytes(outputFile);
+            outputConsumer.registerCompiledClass(
+              target,
+              new CompiledClass(outputFile, srcFile, readClassName(bytes), new BinaryContent(bytes))
+            );
+            callback.associate(outputPath, sourcePath, new ClassReader(bytes));
           }
           catch (Throwable e) {
             // need this to make sure that unexpected errors in, for example, ASM will not ruin the compilation
@@ -446,12 +454,22 @@ public class GroovyBuilder extends ModuleLevelBuilder {
               myBuilderName, BuildMessage.Kind.WARNING, message + "\n" + CompilerMessage.getTextFromThrowable(e), sourcePath)
             );
           }
-          successfullyCompiledFiles.add(new File(sourcePath));
+          successfullyCompiledFiles.add(srcFile);
         }
       }
     }
 
     return JavaBuilderUtil.updateMappings(context, delta, dirtyFilesHolder, chunk, toCompile, successfullyCompiledFiles);
+  }
+
+  private static String readClassName(byte[] classBytes) throws IOException{
+    final Ref<String> nameRef = Ref.create(null);
+    new ClassReader(classBytes).accept(new ClassVisitor(Opcodes.ASM5) {
+      public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+        nameRef.set(name.replace('/', '.'));
+      }
+    }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+    return nameRef.get();
   }
 
   private static Collection<String> generateClasspath(CompileContext context, ModuleChunk chunk) {
