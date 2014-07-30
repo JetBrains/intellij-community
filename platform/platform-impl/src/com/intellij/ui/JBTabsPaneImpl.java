@@ -41,6 +41,11 @@ public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
   public JBTabsPaneImpl(@Nullable Project project, int tabPlacement, @NotNull Disposable parent) {
     myTabs = new JBEditorTabs(project, ActionManager.getInstance(), project == null ? null : IdeFocusManager.getInstance(project), parent) {
       @Override
+      public boolean isAlphabeticalMode() {
+        return false;
+      }
+
+      @Override
       protected void doPaintBackground(Graphics2D g2d, Rectangle clip) {
         super.doPaintBackground(g2d, clip);
         if (getTabsPosition() == JBTabsPosition.top && isSingleRow()) {
