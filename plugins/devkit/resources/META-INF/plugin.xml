@@ -12,7 +12,7 @@
 
   <depends>com.intellij.properties</depends>
 
-  <resource-bundle>DevKitBundle</resource-bundle>
+  <resource-bundle>org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
@@ -56,52 +56,44 @@
                                 implementationClass="org.jetbrains.idea.devkit.references.extensions.ExtensionPointDocumentationProvider"/>
 
     <localInspection language="XML" shortName="PluginXmlValidity" displayName="Plugin.xml Validity"
-                     bundle="DevKitBundle"
                      groupKey="inspections.group.name" enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection"/>
-    <localInspection language="JAVA" shortName="ComponentNotRegistered" bundle="DevKitBundle"
+    <localInspection language="JAVA" shortName="ComponentNotRegistered"
                      key="inspections.component.not.registered.name" groupKey="inspections.group.name" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection"/>
     <localInspection language="JAVA" shortName="InspectionDescriptionNotFoundInspection" displayName="Inspection Description Checker"
-                     bundle="DevKitBundle"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.InspectionDescriptionNotFoundInspection"/>
     <localInspection language="JAVA" shortName="InspectionUsingGrayColors" displayName="Using new Color(a,a,a)"
-                     bundle="DevKitBundle"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UseGrayInspection"/>
     <localInspection language="JAVA" shortName="IntentionDescriptionNotFoundInspection" displayName="Intention Description Checker"
-                     bundle="DevKitBundle"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.IntentionDescriptionNotFoundInspection"/>
     <localInspection language="JAVA"
                      key="inspections.component.postfix.template.not.found.description.name"
-                     bundle="DevKitBundle"
                      groupKey="inspections.group.name"
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PostfixTemplateDescriptionNotFoundInspection"/>
     <localInspection shortName="ComponentRegistrationProblems"
-                     bundle="DevKitBundle" key="inspections.registration.problems.name"
+                      key="inspections.registration.problems.name"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspection"/>
     <localInspection language="JAVA" shortName="DialogTitleCapitalization"
-                     bundle="DevKitBundle"
                      groupKey="inspections.group.name"
                      displayName="Incorrect dialog title capitalization"
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.TitleCapitalizationInspection"/>
     <localInspection language="XML" shortName="InspectionMappingConsistency"
-                     bundle="DevKitBundle"
                      groupKey="inspections.group.name"
                      displayName="&lt;inspection&gt; tag consistency"
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.InspectionMappingConsistencyInspection"/>
     <localInspection language="XML" shortName="ExtensionPointBeanClass"
-                     bundle="DevKitBundle"
                      groupKey="inspections.group.name"
                      displayName="&lt;extensionPoint&gt; beanClass specification"
                      enabledByDefault="true"
@@ -109,42 +101,34 @@
                      implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionPointBeanClassInspection"/>
 
     <localInspection language="JAVA" shortName="UndesirableClassUsage" displayName="Undesirable class usage"
-                     bundle="DevKitBundle"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UndesirableClassUsageInspection"/>
     <localInspection language="JAVA" shortName="FileEqualsUsage" displayName="File.equals() usage"
-                     bundle="DevKitBundle"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.FileEqualsUsageInspection"/>
     <localInspection language="JAVA" shortName="GtkPreferredJComboBoxRenderer" displayName="Preferred JComboBox renderer"
-                     bundle="DevKitBundle"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.GtkPreferredJComboBoxRendererInspection"/>
     <localInspection language="JAVA" shortName="UnsafeVfsRecursion" displayName="Unsafe VFS recursion"
-                     bundle="DevKitBundle"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeVfsRecursionInspection"/>
     <localInspection language="JAVA" shortName="UseJBColor" displayName="Use Darcula aware JBColor"
-                     bundle="DevKitBundle"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseJBColorInspection"/>
     <localInspection language="JAVA" shortName="UseCouple" displayName="Use Couple instead of Pair"
-                     bundle="DevKitBundle"
                      groupKey="inspections.group.name"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseCoupleInspection"/>
     <localInspection language="JAVA" shortName="DontUsePairConstructor" displayName="Don't use constructor of Pair class"
-                     bundle="DevKitBundle"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.DontUseNewPairInspection"/>
     <localInspection language="JAVA" shortName="UseVirtualFileEquals" displayName="Use VirtualFile.equals"
-                     bundle="DevKitBundle"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseVirtualFileEqualsInspection"/>
