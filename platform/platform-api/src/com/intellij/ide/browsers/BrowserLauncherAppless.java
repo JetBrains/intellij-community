@@ -74,10 +74,10 @@ public class BrowserLauncherAppless extends BrowserLauncher {
            Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action);
   }
 
-  public static boolean canStartDefaultBrowser() {
+  public static boolean canUseSystemDefaultBrowserPolicy() {
     return isDesktopActionSupported(Desktop.Action.BROWSE) ||
            SystemInfo.isMac || SystemInfo.isWindows ||
-           SystemInfo.isUnix && SystemInfo.hasXdgOpen();
+           (SystemInfo.isUnix && SystemInfo.hasXdgOpen());
   }
 
   private static GeneralSettings getGeneralSettingsInstance() {
