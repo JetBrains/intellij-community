@@ -26,7 +26,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +47,7 @@ public class FirefoxSettingsConfigurable implements Configurable {
   private final FirefoxSettings mySettings;
   private String myLastProfilesIniPath;
   private String myDefaultProfilesIniPath;
-  private String myDefaultProfile;
+  private String defaultProfile;
 
   public FirefoxSettingsConfigurable(FirefoxSettings settings) {
     mySettings = settings;
@@ -89,11 +88,8 @@ public class FirefoxSettingsConfigurable implements Configurable {
 
   @Nullable
   private String getConfiguredProfileName() {
-    final String selected = (String)myProfileCombobox.getSelectedItem();
-    if (Comparing.equal(myDefaultProfile, selected)) {
-      return null;
-    }
-    return selected;
+    String selected = (String)myProfileCombobox.getSelectedItem();
+    return Comparing.equal(defaultProfile, selected) ? null : selected;
   }
 
   @Override
@@ -110,7 +106,9 @@ public class FirefoxSettingsConfigurable implements Configurable {
     String path = mySettings.getProfilesIniPath();
     myProfilesIniPathField.setText(path != null ? FileUtilRt.toSystemDependentName(path) : myDefaultProfilesIniPath);
     updateProfilesList();
-    myProfileCombobox.setSelectedItem(ObjectUtils.notNull(mySettings.getProfile(), myDefaultProfile));
+
+    String profile = mySettings.getProfile();
+    myProfileCombobox.setSelectedItem(profile == null ? defaultProfile : profile);
   }
 
   private void updateProfilesList() {
@@ -122,7 +120,7 @@ public class FirefoxSettingsConfigurable implements Configurable {
     myProfileCombobox.removeAllItems();
     final List<FirefoxProfile> profiles = FirefoxUtil.computeProfiles(new File(profilesIniPath));
     final FirefoxProfile defaultProfile = FirefoxUtil.getDefaultProfile(profiles);
-    myDefaultProfile = defaultProfile != null ? defaultProfile.getName() : null;
+    this.defaultProfile = defaultProfile != null ? defaultProfile.getName() : null;
     for (FirefoxProfile profile : profiles) {
       //noinspection unchecked
       myProfileCombobox.addItem(profile.getName());
