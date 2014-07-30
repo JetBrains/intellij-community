@@ -9,7 +9,7 @@ import traceback #@Reimport
 import os.path
 import sys
 import pydev_log
-from pydevd_signature import sendSignatureCallTrace
+from pydevd_signature import sendSignatureCallTrace, isFirstCall, sendSignatureReturnTrace
 
 basename = os.path.basename
 
@@ -89,6 +89,7 @@ class PyDBFrame:
         mainDebugger, filename, info, thread = self._args
         try:
             info.is_tracing = True
+            is_first_call = False
 
             if mainDebugger._finishDebuggingSession:
                 return None
@@ -97,7 +98,11 @@ class PyDBFrame:
                 return None
 
             if event == 'call':
+                is_first_call = isFirstCall(mainDebugger, frame, filename)
                 sendSignatureCallTrace(mainDebugger, frame, filename)
+
+            if event == 'return':
+                sendSignatureReturnTrace(mainDebugger, frame, filename, arg)
 
             if event not in ('line', 'call', 'return'):
                 if event == 'exception':
@@ -108,6 +113,9 @@ class PyDBFrame:
                 else:
                 #I believe this can only happen in jython on some frontiers on jython and java code, which we don't want to trace.
                     return None
+
+            if is_first_call:
+                return self.trace_dispatch
 
             if event is not 'exception':
                 breakpoints_for_file = mainDebugger.breakpoints.get(filename)

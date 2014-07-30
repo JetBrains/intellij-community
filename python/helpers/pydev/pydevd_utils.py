@@ -93,7 +93,18 @@ def quote_smart(s, safe='/'):
             s =  s.encode('utf-8')
 
         return quote(s, safe)
-        
-        
+
+
+def get_type_of_value(value):
+    tp = type(value)
+    class_name = tp.__name__
+    if class_name == 'instance':
+        tp = value.__class__
+        class_name = tp.__name__
+
+    if tp.__module__ and tp.__module__ != '__main__':
+        class_name = "%s.%s"%(tp.__module__, class_name)
+
+    return class_name
 
 
