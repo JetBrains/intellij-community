@@ -40,16 +40,20 @@ public abstract class SurroundPostfixTemplateBase extends StatementWrapPostfixTe
 
 
   @Override
-  public void expand(@NotNull PsiElement context, @NotNull final Editor editor) {
+  public final void expandForChooseExpression(@NotNull PsiElement context, @NotNull final Editor editor) {
     PsiElement topmostExpression = myPsiInfo.getTopmostExpression(context);
-    PsiElement expression = getWrappedExpression(topmostExpression);
-    assert topmostExpression != null;
-    PsiElement replace = topmostExpression.replace(expression);
+    PsiElement replace = getReplacedExpression(topmostExpression);
     TextRange range = PostfixTemplatesUtils.surround(getSurrounder(), editor, replace);
 
     if (range != null) {
       editor.getCaretModel().moveToOffset(range.getStartOffset());
     }
+  }
+
+  protected PsiElement getReplacedExpression(PsiElement topmostExpression) {
+    PsiElement expression = getWrappedExpression(topmostExpression);
+    assert topmostExpression != null;
+    return topmostExpression.replace(expression);
   }
 
   public boolean isStatement() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,14 +186,11 @@ public class RecentProjectPanel extends JPanel {
 
   private String getTitle2Text(ReopenProjectAction action, JComponent pathLabel) {
     String fullText = action.getProjectPath();
-    int labelWidth = pathLabel.getWidth();
     if (fullText == null || fullText.length() == 0) return " ";
 
-    String home = SystemProperties.getUserHome();
-    if (FileUtil.startsWith(fullText, home)) {
-      fullText = "~" + fullText.substring(home.length());
-    }
+    fullText = FileUtil.getLocationRelativeToUserHome(fullText, false);
 
+    int labelWidth = pathLabel.getWidth();
     if (pathLabel.getFontMetrics(pathLabel.getFont()).stringWidth(fullText) > labelWidth) {
       return myPathShortener.getShortPath(action);
     }

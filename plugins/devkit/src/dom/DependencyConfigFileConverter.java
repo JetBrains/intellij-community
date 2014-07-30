@@ -93,12 +93,12 @@ public class DependencyConfigFileConverter extends PathReferenceConverter {
         public Collection<PsiFileSystemItem> computeDefaultContexts() {
           final PsiFile containingFile = getContainingFile();
           if (containingFile == null) {
-            return super.getDefaultContexts();
+            return Collections.emptyList();
           }
 
           final Module module = ModuleUtilCore.findModuleForPsiElement(getElement());
           if (module == null) {
-            return super.getDefaultContexts();
+            return Collections.emptyList();
           }
 
           final Set<VirtualFile> roots = new HashSet<VirtualFile>();

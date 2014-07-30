@@ -107,6 +107,8 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
     final FrameworkSupportNode node = mySettingsMap.get(providerId);
     if (node != null && enable != node.isChecked()) {
       node.setChecked(enable);
+      // ensure configurable to be created and registered to disposer
+      node.getConfigurable();
     }
   }
 

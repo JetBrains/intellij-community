@@ -55,34 +55,31 @@ public class OpenFileDescriptor implements Navigatable {
   private boolean myUseCurrentWindow = false;
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int offset) {
-    this(project, file, -1, -1, offset, null, false);
+    this(project, file, -1, -1, offset, false);
   }
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int logicalLine, int logicalColumn) {
-    this(project, file, logicalLine, logicalColumn, -1, null, false);
+    this(project, file, logicalLine, logicalColumn, -1, false);
   }
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file,
                             int logicalLine, int logicalColumn, boolean persistent) {
-    this(project, file, logicalLine, logicalColumn, -1, null, persistent);
+    this(project, file, logicalLine, logicalColumn, -1, persistent);
   }
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file) {
-    this(project, file, -1, -1, -1, null, false);
+    this(project, file, -1, -1, -1, false);
   }
 
   private OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file,
-                             int logicalLine, int logicalColumn, int offset, @Nullable RangeMarker rangeMarker, boolean persistent) {
+                             int logicalLine, int logicalColumn, int offset, boolean persistent) {
     myProject = project;
 
     myFile = file;
     myLogicalLine = logicalLine;
     myLogicalColumn = logicalColumn;
     myOffset = offset;
-    if (rangeMarker != null) {
-      myRangeMarker = rangeMarker;
-    }
-    else if (offset >= 0) {
+    if (offset >= 0) {
       myRangeMarker = LazyRangeMarkerFactory.getInstance(project).createRangeMarker(file, offset);
     }
     else if (logicalLine >= 0 ){

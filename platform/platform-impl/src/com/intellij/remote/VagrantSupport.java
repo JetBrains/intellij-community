@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +43,10 @@ public abstract class VagrantSupport {
 
   @NotNull
   public abstract RemoteCredentials getVagrantSettings(@NotNull Project project, String vagrantFolder);
+
+  public abstract void getVagrantSettingsAsync(@Nullable Project project,
+                                               @NotNull String vagrantFolder,
+                                               @NotNull Consumer<RemoteCredentials> onSuccess);
 
   @NotNull
   public abstract RemoteCredentials getCredentials(@NotNull String folder) throws IOException;

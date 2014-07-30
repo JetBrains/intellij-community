@@ -29,16 +29,20 @@ public class TrelloIntegrationTest extends LiveIntegrationTestCase<TrelloReposit
 
   @Override
   protected TrelloRepository createRepository() throws Exception {
-    TrelloRepository repository = new TrelloRepository(new TrelloRepositoryType());
-    String token = System.getProperty("tasks.tests.trello.token");
-    if (StringUtil.isEmpty(token)) {
-      throw new AssertionError("Authorization token is not set");
+    try {
+      TrelloRepository repository = new TrelloRepository(new TrelloRepositoryType());
+      String token = System.getProperty("tasks.tests.trello.token");
+      assertTrue("Authorization token is not set", !StringUtil.isEmpty(token));
+      repository.setPassword(token);
+      TrelloUser user = repository.fetchUserByToken();
+      assertNotNull(user);
+      repository.setCurrentUser(user);
+      return repository;
     }
-    repository.setPassword(token);
-    TrelloUser user = repository.fetchUserByToken();
-    assertNotNull(user);
-    repository.setCurrentUser(user);
-    return repository;
+    catch (AssertionError ae){
+      tearDown();
+      throw ae;
+    }
   }
 
   // TODO Check closed tasks exclusion

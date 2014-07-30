@@ -17,13 +17,8 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-
-import java.util.List;
 
 public abstract class DirectoryInfo {
   /**
@@ -61,16 +56,4 @@ public abstract class DirectoryInfo {
 
   @Nullable
   public abstract Module getModule();
-
-  @NotNull
-  public abstract OrderEntry[] getOrderEntries();
-
-  @Nullable
-  abstract OrderEntry findOrderEntryWithOwnerModule(@NotNull Module ownerModule);
-
-  @NotNull
-  abstract List<OrderEntry> findAllOrderEntriesWithOwnerModule(@NotNull Module ownerModule);
-
-  @TestOnly
-  abstract void assertConsistency();
 }

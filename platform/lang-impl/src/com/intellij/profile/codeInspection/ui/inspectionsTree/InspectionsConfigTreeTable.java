@@ -28,17 +28,21 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.ui.InspectionsAggregationUtil;
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.profile.codeInspection.ui.table.ThreeStateCheckBoxRenderer;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
+import com.intellij.ui.treeStructure.treetable.TreeTableTree;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
@@ -60,8 +64,8 @@ public class InspectionsConfigTreeTable extends TreeTable {
 
     final TableColumn isEnabledColumn = getColumnModel().getColumn(IS_ENABLED_COLUMN);
     isEnabledColumn.setMaxWidth(20);
-    isEnabledColumn.setCellRenderer(new ThreeStateCheckBoxRenderer());
-    isEnabledColumn.setCellEditor(new ThreeStateCheckBoxRenderer());
+    isEnabledColumn.setCellRenderer(new ThreeStateCheckBoxRenderer(false));
+    isEnabledColumn.setCellEditor(new ThreeStateCheckBoxRenderer(true));
 
     addMouseMotionListener(new MouseAdapter() {
       @Override
@@ -76,10 +80,42 @@ public class InspectionsConfigTreeTable extends TreeTable {
         if (maybeIcon instanceof MultiScopeSeverityIcon) {
           final LinkedHashMap<String, HighlightSeverity> scopeToAverageSeverityMap =
             ((MultiScopeSeverityIcon)maybeIcon).getScopeToAverageSeverityMap();
-          IdeTooltipManager.getInstance().show(new IdeTooltip(InspectionsConfigTreeTable.this, point, new ScopesAndSeveritiesHintTable(scopeToAverageSeverityMap)), false);
+          IdeTooltipManager.getInstance().show(
+            new IdeTooltip(InspectionsConfigTreeTable.this, point, new ScopesAndSeveritiesHintTable(scopeToAverageSeverityMap)), false);
         }
       }
     });
+
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent event) {
+        final TreePath path = getTree().getPathForRow(getTree().getLeadSelectionRow());
+        if (path != null) {
+          final InspectionConfigTreeNode node = (InspectionConfigTreeNode)path.getLastPathComponent();
+          if (node.isLeaf()) {
+            swapInspectionEnableState();
+          }
+        }
+        return true;
+      }
+    }.installOn(this);
+
+    registerKeyboardAction(new ActionListener() {
+                             public void actionPerformed(ActionEvent e) {
+                               swapInspectionEnableState();
+                               updateUI();
+                             }
+                           }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
+
+    getEmptyText().setText("No enabled inspections available");
+  }
+
+  private void swapInspectionEnableState() {
+    for (int selectedRow : getSelectedRows()) {
+      final Object value = getValueAt(selectedRow, IS_ENABLED_COLUMN);
+      final boolean newValue = !Boolean.TRUE.equals(value);
+      setValueAt(newValue, selectedRow, IS_ENABLED_COLUMN);
+    }
   }
 
   public abstract static class InspectionsConfigTreeTableSettings {
@@ -107,6 +143,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
   private static class InspectionsConfigTreeTableModel extends DefaultTreeModel implements TreeTableModel {
 
     private final InspectionsConfigTreeTableSettings mySettings;
+    private TreeTable myTreeTable;
 
     public InspectionsConfigTreeTableModel(final InspectionsConfigTreeTableSettings settings) {
       super(settings.getRoot());
@@ -154,7 +191,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
                      mySettings.getInspectionProfile().getNonDefaultTools(toolId, mySettings.getProject()));
           }
         }
-        return sink.constructIcon();
+        return sink.constructIcon(mySettings.getInspectionProfile());
       } else if (column == IS_ENABLED_COLUMN) {
         return isEnabled(inspectionsKeys);
       }
@@ -195,26 +232,34 @@ public class InspectionsConfigTreeTable extends TreeTable {
         aNode.dropCache();
         mySettings.onChanged(aNode);
       }
+      if (myTreeTable != null) {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          public void run() {
+            ((AbstractTableModel)myTreeTable.getModel()).fireTableDataChanged();
+          }
+        });
+      }
     }
 
     @Override
     public void setTree(final JTree tree) {
+      myTreeTable = ((TreeTableTree)tree).getTreeTable();
     }
   }
 
   private static class MultiColoredHighlightSeverityIconSink {
 
-    private final LinkedHashMap<String, HighlightSeverity> myScopeToAverageSeverityMap = new LinkedHashMap<String, HighlightSeverity>();
+    private final Map<String, HighlightSeverity> myScopeToAverageSeverityMap = new HashMap<String, HighlightSeverity>();
 
+    private String myDefaultScopeName;
     private boolean myIsFirst = true;
 
-    public Icon constructIcon() {
+    public Icon constructIcon(final InspectionProfileImpl inspectionProfile) {
       if (myScopeToAverageSeverityMap.isEmpty()) {
         return null;
       }
-      //TODO order scopes
       return !allScopesHasMixedSeverity()
-             ? new MultiScopeSeverityIcon(myScopeToAverageSeverityMap)
+             ? new MultiScopeSeverityIcon(myScopeToAverageSeverityMap, myDefaultScopeName, inspectionProfile)
              : ScopesAndSeveritiesTable.MIXED_FAKE_LEVEL.getIcon();
     }
 
@@ -229,6 +274,9 @@ public class InspectionsConfigTreeTable extends TreeTable {
 
     public void put(final ScopeToolState defaultState, final Collection<ScopeToolState> nonDefault) {
       putOne(defaultState);
+      if (myDefaultScopeName == null) {
+        myDefaultScopeName = defaultState.getScopeName();
+      }
       for (final ScopeToolState scopeToolState : nonDefault) {
         putOne(scopeToolState);
       }
@@ -237,7 +285,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
       }
     }
 
-    public void putOne(final ScopeToolState state) {
+    private void putOne(final ScopeToolState state) {
       final Icon icon = state.getLevel().getIcon();
       final String scopeName = state.getScopeName();
       if (icon instanceof HighlightDisplayLevel.SingleColorIconWithMask) {

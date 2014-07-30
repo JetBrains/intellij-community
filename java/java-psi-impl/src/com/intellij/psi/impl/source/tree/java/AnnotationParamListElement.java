@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -28,47 +29,29 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ven
  */
-public class AnnotationParamListElement extends PsiCommaSeparatedListImpl implements PsiAnnotationParameterList {
+public class AnnotationParamListElement extends CompositeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.AnnotationParamListElement");
-  private volatile PsiNameValuePair[] myCachedMembers = null;
+  private static final TokenSet NAME_VALUE_PAIR_BIT_SET = TokenSet.create(JavaElementType.NAME_VALUE_PAIR);
 
   public AnnotationParamListElement() {
-    super(ANNOTATION_PARAMETER_LIST, NAME_VALUE_PAIR_BIT_SET);
-  }
-
-  @Override
-  public void clearCaches() {
-    super.clearCaches();
-    myCachedMembers = null;
-  }
-
-  @Override
-  @NotNull
-  public PsiNameValuePair[] getAttributes() {
-    PsiNameValuePair[] cachedMembers = myCachedMembers;
-    if (cachedMembers == null) {
-      myCachedMembers = cachedMembers = getChildrenAsPsiElements(NAME_VALUE_PAIR_BIT_SET, PsiNameValuePair.ARRAY_FACTORY);
-    }
-
-    return cachedMembers;
+    super(JavaElementType.ANNOTATION_PARAMETER_LIST);
   }
 
   @Override
   public int getChildRole(ASTNode child) {
     IElementType i = child.getElementType();
-    if (i == COMMA) {
+    if (i == JavaTokenType.COMMA) {
       return ChildRole.COMMA;
     }
-    else if (i == LPARENTH) {
+    else if (i == JavaTokenType.LPARENTH) {
       return ChildRole.LPARENTH;
     }
-    else if (i == RPARENTH) {
+    else if (i == JavaTokenType.RPARENTH) {
       return ChildRole.RPARENTH;
     }
-    else if (ANNOTATION_MEMBER_VALUE_BIT_SET.contains(child.getElementType())
-             || (i == NAME_VALUE_PAIR && child.getFirstChildNode() != null
-                 && child.getFirstChildNode().getElementType() == ANNOTATION_ARRAY_INITIALIZER))
-    {
+    else if (ElementType.ANNOTATION_MEMBER_VALUE_BIT_SET.contains(i) ||
+             (i == JavaElementType.NAME_VALUE_PAIR && child.getFirstChildNode() != null &&
+              child.getFirstChildNode().getElementType() == JavaElementType.ANNOTATION_ARRAY_INITIALIZER)) {
       return ChildRole.ANNOTATION_VALUE;
     }
     else {
@@ -83,65 +66,69 @@ public class AnnotationParamListElement extends PsiCommaSeparatedListImpl implem
         LOG.assertTrue(false);
         return null;
       case ChildRole.LPARENTH:
-        return findChildByType(LPARENTH);
+        return findChildByType(JavaTokenType.LPARENTH);
 
       case ChildRole.RPARENTH:
-        return findChildByType(RPARENTH);
-    }
-  }
-
-  public String toString() {
-    return "PsiAnnotationParameterList";
-  }
-
-  @Override
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof JavaElementVisitor) {
-      ((JavaElementVisitor)visitor).visitAnnotationParameterList(this);
-    }
-    else {
-      visitor.visitElement(this);
+        return findChildByType(JavaTokenType.RPARENTH);
     }
   }
 
   @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
-    if (first.getElementType() == NAME_VALUE_PAIR && last.getElementType() == NAME_VALUE_PAIR) {
-      final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
-      ASTNode lparenth = findChildByRole(ChildRole.LPARENTH);
+    if (first.getElementType() == JavaElementType.NAME_VALUE_PAIR && last.getElementType() == JavaElementType.NAME_VALUE_PAIR) {
+      ASTNode lparenth = findChildByType(JavaTokenType.LPARENTH);
       if (lparenth == null) {
-        LeafElement created = Factory.createSingleLeafElement(LPARENTH, "(", 0, 1, treeCharTab, getManager());
+        CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
+        LeafElement created = Factory.createSingleLeafElement(JavaTokenType.LPARENTH, "(", 0, 1, treeCharTab, getManager());
         super.addInternal(created, created, getFirstChildNode(), true);
       }
-      ASTNode rparenth = findChildByRole(ChildRole.RPARENTH);
+
+      ASTNode rparenth = findChildByType(JavaTokenType.RPARENTH);
       if (rparenth == null) {
-        LeafElement created = Factory.createSingleLeafElement(RPARENTH, ")", 0, 1, treeCharTab, getManager());
+        CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
+        LeafElement created = Factory.createSingleLeafElement(JavaTokenType.RPARENTH, ")", 0, 1, treeCharTab, getManager());
         super.addInternal(created, created, getLastChildNode(), false);
       }
 
-      final ASTNode[] nodes = getChildren(NAME_VALUE_PAIR_BIT_SET);
+      ASTNode[] nodes = getChildren(NAME_VALUE_PAIR_BIT_SET);
       if (nodes.length == 1) {
-        final ASTNode node = nodes[0];
+        ASTNode node = nodes[0];
         if (node instanceof PsiNameValuePair) {
-          final PsiNameValuePair pair = (PsiNameValuePair)node;
+          PsiNameValuePair pair = (PsiNameValuePair)node;
           if (pair.getName() == null) {
-            final String text = pair.getValue().getText();
-            try {
-              final PsiAnnotation annotation = JavaPsiFacade.getInstance(getProject()).getElementFactory().createAnnotationFromText("@AAA(value = " + text + ")", null);
-              replaceChild(node, annotation.getParameterList().getAttributes()[0].getNode());
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
+            PsiAnnotationMemberValue value = pair.getValue();
+            if (value != null) {
+              try {
+                PsiElementFactory factory = JavaPsiFacade.getInstance(getPsi().getProject()).getElementFactory();
+                PsiAnnotation annotation = factory.createAnnotationFromText("@AAA(value = " + value.getText() + ")", null);
+                replaceChild(node, annotation.getParameterList().getAttributes()[0].getNode());
+              }
+              catch (IncorrectOperationException e) {
+                LOG.error(e);
+              }
             }
           }
         }
       }
 
       if (anchor == null && before != null) {
-        anchor = findChildByRole(before.booleanValue() ? ChildRole.RPARENTH : ChildRole.LPARENTH);
+        anchor = findChildByType(before ? JavaTokenType.RPARENTH : JavaTokenType.LPARENTH);
       }
+
+      TreeElement firstAdded = super.addInternal(first, last, anchor, before);
+      JavaSourceUtil.addSeparatingComma(this, first, NAME_VALUE_PAIR_BIT_SET);
+      return firstAdded;
     }
 
     return super.addInternal(first, last, anchor, before);
+  }
+
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    if (child.getElementType() == JavaElementType.NAME_VALUE_PAIR) {
+      JavaSourceUtil.deleteSeparatingComma(this, child);
+    }
+
+    super.deleteChildInternal(child);
   }
 }

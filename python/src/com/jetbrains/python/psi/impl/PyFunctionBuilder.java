@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.documentation.StructuredDocStringBase;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -82,19 +83,41 @@ public class PyFunctionBuilder {
   /**
    * Adds docstring to function. Provide doc with out of comment blocks.
    *
+   *
    * @param docString doc
    */
   public void docString(@NotNull final String docString) {
-    myDocStringLines = StringUtil.splitByLines(removeIndent(docString));
+    final String[] stringsToAdd = StringUtil.splitByLines(removeIndent(docString));
+    if (myDocStringLines == null) {
+      myDocStringLines = stringsToAdd;
+    }
+    else {
+      myDocStringLines = ArrayUtil.mergeArrays(myDocStringLines, stringsToAdd);
+    }
   }
 
   @NotNull
-  private String removeIndent(@NotNull final String string) {
+  private static String removeIndent(@NotNull final String string) {
     return INDENT_REMOVE_PATTERN.matcher(string).replaceAll("");
   }
 
   public PyFunctionBuilder(String name) {
     myName = name;
+  }
+
+  /**
+   * Adds param and its type to doc
+   * @param name param name
+   * @param type param type
+   * @param docStyle what docstyle to use to doc param type
+   */
+  @NotNull
+  public PyFunctionBuilder parameterWithType(@NotNull final String name,
+                                             @NotNull final String type,
+                                             @NotNull final StructuredDocStringBase docStyle) {
+    parameter(name);
+    docString(docStyle.createParameterType(name, type));
+    return this;
   }
 
   public PyFunctionBuilder parameter(String baseName) {
@@ -173,8 +196,9 @@ public class PyFunctionBuilder {
 
   /**
    * Adds decorator with argument
+   *
    * @param decoratorName decorator name
-   * @param value its argument
+   * @param value         its argument
    */
   public void decorate(@NotNull final String decoratorName, @NotNull final String value) {
     decorate(decoratorName);

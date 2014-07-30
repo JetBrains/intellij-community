@@ -23,7 +23,6 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
@@ -51,8 +50,9 @@ public abstract class GroovySdkWizardStepBase extends ModuleWizardStep {
 
   public GroovySdkWizardStepBase(@Nullable final MvcFramework framework, WizardContext wizardContext, String basePath) {
     myBasePath = basePath;
-    final Project project = wizardContext.getProject();
-    myLibrariesContainer = LibrariesContainerFactory.createContainer(project);
+    myLibrariesContainer = wizardContext.getModulesProvider() == null
+                           ? LibrariesContainerFactory.createContainer(wizardContext.getProject())
+                           : LibrariesContainerFactory.createContainer(wizardContext, wizardContext.getModulesProvider());
     myFramework = framework;
   }
 

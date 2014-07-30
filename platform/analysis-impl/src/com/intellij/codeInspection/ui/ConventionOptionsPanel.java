@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,6 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 import javax.swing.text.InternationalFormatter;
 import java.awt.*;
-import java.lang.reflect.Field;
 import java.text.NumberFormat;
 import java.util.regex.Pattern;
 
@@ -150,58 +150,18 @@ public class ConventionOptionsPanel extends JPanel {
   }
 
   private static void setPropertyIntegerValue(InspectionProfileEntry owner, String property, Integer value) {
-    try {
-      final Field field = getField(owner.getClass(), property);
-      field.setAccessible(true);
-      field.setInt(owner, value.intValue());
-    } catch (Exception e) {
-      LOG.error(e);
-    }
+    setPropertyValue(owner, property, value);
   }
 
   private static Integer getPropertyIntegerValue(InspectionProfileEntry owner, String property) {
-    try {
-      final Field field = getField(owner.getClass(), property);
-      field.setAccessible(true);
-      return Integer.valueOf(field.getInt(owner));
-    } catch (Exception e) {
-      LOG.error(e);
-      return 0;
-    }
+    return (Integer)getPropertyValue(owner, property);
   }
 
-  private static void setPropertyValue(InspectionProfileEntry owner, String property, Object value) {
-    try {
-      final Field field = getField(owner.getClass(), property);
-      field.setAccessible(true);
-      field.set(owner, value);
-    } catch (Exception e) {
-      LOG.error(e);
-    }
+  private static void setPropertyValue(@NotNull InspectionProfileEntry owner, String property, Object value) {
+    ReflectionUtil.setField(owner.getClass(), owner, null, property, value);
   }
 
   private static Object getPropertyValue(InspectionProfileEntry owner, String property) {
-    try {
-      final Field field = getField(owner.getClass(), property);
-      field.setAccessible(true);
-      return field.get(owner);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-      return null;
-    }
-  }
-
-  private static Field getField(Class clazz, String fieldName) throws NoSuchFieldException {
-    try {
-      return clazz.getDeclaredField(fieldName);
-    } catch (NoSuchFieldException e) {
-      Class superClass = clazz.getSuperclass();
-      if (superClass == null) {
-        throw e;
-      } else {
-        return getField(superClass, fieldName);
-      }
-    }
+    return ReflectionUtil.getField(owner.getClass(), owner, null, property);
   }
 }

@@ -96,6 +96,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   private SearchScope customScope;
   private boolean isCustomScope = false;
   private boolean isMultiline = false;
+  private boolean mySearchInProjectFiles;
 
   public boolean isMultiline() {
     return isMultiline;
@@ -215,6 +216,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     if (myStringToReplace != null ? !myStringToReplace.equals(findModel.myStringToReplace) : findModel.myStringToReplace != null) {
       return false;
     }
+    if (mySearchInProjectFiles != findModel.mySearchInProjectFiles) return false;
 
     return true;
   }
@@ -252,6 +254,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     result = 31 * result + (isCustomScope ? 1 : 0);
     result = 31 * result + (isMultiline ? 1 : 0);
     result = 31 * result + (isPreserveCase ? 1 : 0);
+    result = 31 * result + (mySearchInProjectFiles ? 1 : 0);
     result = 31 * result + (myPattern != null ? myPattern.hashCode() : 0);
     return result;
   }
@@ -658,8 +661,8 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
   @Override
-  public Object clone() {
-    return super.clone();
+  public FindModel clone() {
+    return (FindModel)super.clone();
   }
 
 
@@ -689,6 +692,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     buffer.append("fileFilter =").append(fileFilter).append("\n");
     buffer.append("moduleName =").append(moduleName).append("\n");
     buffer.append("customScopeName =").append(customScopeName).append("\n");
+    buffer.append("searchInProjectFiles =").append(mySearchInProjectFiles).append("\n");
     return buffer.toString();
   }
 
@@ -868,6 +872,18 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   public void setInCommentsOnly(boolean inCommentsOnly) {
     boolean changed = isInCommentsOnly != inCommentsOnly;
     isInCommentsOnly = inCommentsOnly;
+    if (changed) {
+      notifyObservers();
+    }
+  }
+
+  public boolean isSearchInProjectFiles() {
+    return mySearchInProjectFiles;
+  }
+
+  public void setSearchInProjectFiles(boolean searchInProjectFiles) {
+    boolean changed = mySearchInProjectFiles != searchInProjectFiles;
+    mySearchInProjectFiles = searchInProjectFiles;
     if (changed) {
       notifyObservers();
     }

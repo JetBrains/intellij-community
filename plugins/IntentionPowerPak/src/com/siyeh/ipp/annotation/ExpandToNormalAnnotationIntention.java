@@ -15,25 +15,12 @@
  */
 package com.siyeh.ipp.annotation;
 
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class ExpandToNormalAnnotationIntention extends MutablyNamedIntention {
-
-  @Override
-  protected String getTextForElement(PsiElement element) {
-    final PsiNameValuePair annotation = (PsiNameValuePair)element;
-    final String text = buildReplacementText(annotation);
-    return IntentionPowerPackBundle.message(
-      "expand.to.normal.annotation.name", text);
-  }
+public class ExpandToNormalAnnotationIntention extends Intention {
 
   @NotNull
   @Override
@@ -41,38 +28,28 @@ public class ExpandToNormalAnnotationIntention extends MutablyNamedIntention {
     return new ExpandToNormalAnnotationPredicate();
   }
 
-  public static String buildReplacementText(PsiNameValuePair attribute) {
+  public static String buildReplacementText(PsiAnnotationParameterList annotationParameterList) {
     final StringBuilder text = new StringBuilder();
-    final PsiAnnotationMemberValue value = attribute.getValue();
-    text.append("value = ");
-    if (value != null) {
-      text.append(value.getText());
+    for (PsiNameValuePair nameValuePair : annotationParameterList.getAttributes()) {
+      if (text.length() != 0) {
+        text.append(',');
+      }
+      final String name = nameValuePair.getName();
+      text.append(name != null ? name : "value").append('=');
+      final PsiAnnotationMemberValue value = nameValuePair.getValue();
+      if (value != null) {
+        text.append(value.getText());
+      }
     }
     return text.toString();
   }
 
   @Override
   protected void processIntention(@NotNull PsiElement element) {
-    final PsiNameValuePair attribute = (PsiNameValuePair)element;
-    final int textOffset = attribute.getTextOffset();
-    final Project project = attribute.getProject();
-    final String text = buildReplacementText(attribute);
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    final PsiAnnotation newAnnotation = factory.createAnnotationFromText("@A(" + text +" )", attribute);
-    final PsiAnnotationParameterList parent = (PsiAnnotationParameterList)attribute.getParent();
-    for (PsiElement child = parent.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (child instanceof PsiErrorElement) {
-        child.delete();
-        break;
-      }
-    }
-    attribute.replace(newAnnotation.getParameterList().getAttributes()[0]);
-    final FileEditorManager editorManager = FileEditorManager.getInstance(project);
-    final Editor editor = editorManager.getSelectedTextEditor();
-    if (editor == null) {
-      return;
-    }
-    final CaretModel caretModel = editor.getCaretModel();
-    caretModel.moveToOffset(textOffset + text.length() - 1);
+    final PsiAnnotationParameterList annotationParameterList = (PsiAnnotationParameterList)element.getParent();
+    final String text = buildReplacementText(annotationParameterList);
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(annotationParameterList.getProject());
+    final PsiAnnotation newAnnotation = factory.createAnnotationFromText("@A(" + text +" )", element);
+    annotationParameterList.replace(newAnnotation.getParameterList());
   }
 }

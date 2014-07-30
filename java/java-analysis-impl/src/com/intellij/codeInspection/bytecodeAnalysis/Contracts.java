@@ -49,7 +49,7 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
   }
 
   @Override
-  Result<Key, Value> combineResults(Result<Key, Value> delta, List<Result<Key, Value>> subResults) {
+  Result<Key, Value> combineResults(Result<Key, Value> delta, List<Result<Key, Value>> subResults) throws AnalyzerException {
     Result<Key, Value> result = null;
     for (Result<Key, Value> subResult : subResults) {
       if (result == null) {

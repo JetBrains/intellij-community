@@ -19,8 +19,8 @@ class OutputClassScope extends ClassScope {
       return;
     }
 
-    List<P> mandatoryParameters = new ArrayList<P>();
-    List<P> optionalParameters = new ArrayList<P>();
+    List<P> mandatoryParameters = new ArrayList<>();
+    List<P> optionalParameters = new ArrayList<>();
     for (P parameter : parameters) {
       if (parameter.optional()) {
         optionalParameters.add(parameter);
@@ -34,8 +34,8 @@ class OutputClassScope extends ClassScope {
       generateConstructor(out, mandatoryParameters, null);
       if (mandatoryParameters.size() == 1) {
         P parameter = mandatoryParameters.get(0);
-        QualifiedTypeData typeData = new OutputMemberScope(getName(parameter)).resolveType(parameter);
-        if (typeData.getJavaType().getFullText().equals("int[]")) {
+        TypeDescriptor typeData = new OutputMemberScope(getName(parameter)).resolveType(parameter);
+        if (typeData.getType().getFullText().equals("int[]")) {
           BoxableType[] types = new BoxableType[mandatoryParameters.size()];
           types[0] = new ListType(BoxableType.INT) {
             @Override
@@ -94,7 +94,7 @@ class OutputClassScope extends ClassScope {
         out.append("/**").newLine().append(" * @param v ").append(parameter.description()).newLine().append(" */").newLine();
       }
 
-      CharSequence type = new OutputMemberScope(parameter.name()).resolveType(parameter).getJavaType().getShortText(getClassContextNamespace());
+      CharSequence type = new OutputMemberScope(parameter.name()).resolveType(parameter).getType().getShortText(getClassContextNamespace());
       if (type.equals(JsonReaderEx.class.getCanonicalName())) {
         type = "String";
       }
@@ -131,9 +131,10 @@ class OutputClassScope extends ClassScope {
       mandatoryParameterTypes = new BoxableType[mandatoryParameters.size()];
     }
     for (int i = 0, length = mandatoryParameterTypes.length; i < length; i++) {
+      assert mandatoryParameterTypes != null;
       if (mandatoryParameterTypes[i] == null) {
         P parameter = mandatoryParameters.get(i);
-        mandatoryParameterTypes[i] = new OutputMemberScope(parameter.name()).resolveType(parameter).getJavaType();
+        mandatoryParameterTypes[i] = new OutputMemberScope(parameter.name()).resolveType(parameter).getType();
       }
     }
 
@@ -144,6 +145,7 @@ class OutputClassScope extends ClassScope {
         out.comma();
       }
 
+      assert mandatoryParameterTypes != null;
       out.append(mandatoryParameterTypes[i].getShortText(getClassContextNamespace()));
       out.space().append(parameter.name());
       needComa = true;
@@ -152,6 +154,7 @@ class OutputClassScope extends ClassScope {
     for (int i = 0, size = mandatoryParameters.size(); i < size; i++) {
       P parameter = mandatoryParameters.get(i);
       out.newLine();
+      assert mandatoryParameterTypes != null;
       appendWriteValueInvocation(out, parameter, parameter.name(), mandatoryParameterTypes[i]);
     }
     out.closeBlock();
@@ -159,7 +162,7 @@ class OutputClassScope extends ClassScope {
 
   private void appendWriteValueInvocation(TextOutput out, ItemDescriptor.Named parameter, String valueRefName, @Nullable BoxableType type) {
     if (type == null) {
-      type = new OutputMemberScope(parameter.name()).resolveType(parameter).getJavaType();
+      type = new OutputMemberScope(parameter.name()).resolveType(parameter).getType();
     }
 
     boolean blockOpened = false;
@@ -188,7 +191,7 @@ class OutputClassScope extends ClassScope {
     }
     // todo CallArgument (we should allow write null as value)
     out.append(parameter.name().equals("value") && type.getWriteMethodName().equals("writeString") ? "writeNullableString" : type.getWriteMethodName()).append("(");
-    out.quoute(parameter.name()).comma().append(valueRefName).append(");");
+    out.quote(parameter.name()).comma().append(valueRefName).append(");");
     if (blockOpened) {
       out.closeBlock();
     }

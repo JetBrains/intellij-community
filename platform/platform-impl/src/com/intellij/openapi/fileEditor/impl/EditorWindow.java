@@ -34,6 +34,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -319,6 +320,16 @@ public class EditorWindow {
 
           if (disposeIfNeeded && getTabCount() == 0) {
             removeFromSplitter();
+            if (UISettings.getInstance().EDITOR_TAB_PLACEMENT == UISettings.TABS_NONE) {
+              final EditorsSplitters owner = getOwner();
+              if (owner != null) {
+                final ThreeComponentsSplitter splitter = UIUtil.getParentOfType(ThreeComponentsSplitter.class, owner);
+                if (splitter != null) {
+                  splitter.revalidate();
+                  splitter.repaint();
+                }
+              }
+            }
           }
           else {
             myPanel.revalidate();

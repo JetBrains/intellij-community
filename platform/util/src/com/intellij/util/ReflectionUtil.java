@@ -426,6 +426,26 @@ public class ReflectionUtil {
     }
   }
 
+  /**
+   * {@link Class#newInstance()} cannot instantiate private classes
+   */
+  @NotNull
+  public static <T> T newInstance(@NotNull Class<T> aClass, @NotNull Class... parameterTypes) {
+    try {
+      Constructor<T> constructor = aClass.getDeclaredConstructor(parameterTypes);
+      try {
+        constructor.setAccessible(true);
+      }
+      catch (SecurityException e) {
+        return aClass.newInstance();
+      }
+      return constructor.newInstance();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   @NotNull
   public static <T> T createInstance(@NotNull Constructor<T> constructor, @NotNull Object... args) {
     try {

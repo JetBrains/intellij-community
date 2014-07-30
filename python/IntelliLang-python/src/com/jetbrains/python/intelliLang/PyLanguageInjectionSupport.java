@@ -58,6 +58,6 @@ public class PyLanguageInjectionSupport extends AbstractLanguageInjectionSupport
   @Nullable
   @Override
   public BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<PsiElement> commentRef) {
-    return null;
+    return super.findCommentInjection(host, commentRef);
   }
 }

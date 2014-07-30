@@ -20,26 +20,23 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.DebuggerSupport;
-import com.intellij.xdebugger.settings.XDebuggerSettings;
-import org.jetbrains.annotations.Nls;
+import com.intellij.xdebugger.settings.DebuggerConfigurableProvider;
+import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
-/**
- * @author Eugene Belyaev & Eugene Zhuravlev
- */
 public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   public static final String DISPLAY_NAME = XDebuggerBundle.message("debugger.configurable.display.name");
 
   static final Configurable[] EMPTY_CONFIGURABLES = new Configurable[0];
+  private static final DebuggerSettingsCategory[] MERGED_CATEGORIES = {DebuggerSettingsCategory.STEPPING, DebuggerSettingsCategory.HOTSWAP};
 
   private Configurable myRootConfigurable;
   private Configurable[] myChildren;
@@ -71,89 +68,84 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       return;
     }
 
-    List<DebuggerSettingsPanelProvider> providers = DebuggerConfigurableProvider.getSortedProviders();
-
     List<Configurable> configurables = new SmartList<Configurable>();
     configurables.add(new DataViewsConfigurable());
 
-    List<Configurable> steppingConfigurables = DebuggerConfigurableProvider.getConfigurables(XDebuggerSettings.Category.STEPPING, providers);
-    if (!steppingConfigurables.isEmpty()) {
-      configurables.add(new SteppingConfigurable(steppingConfigurables));
-    }
+    DebuggerConfigurableProvider[] providers = DebuggerConfigurableProvider.EXTENSION_POINT.getExtensions();
+    computeMergedConfigurables(providers, configurables);
 
-    Configurable rootConfigurable = computeRootConfigurable(providers, configurables);
-
-    if (configurables.isEmpty() && rootConfigurable == null) {
-      myChildren = EMPTY_CONFIGURABLES;
-    }
-    else if (rootConfigurable == null && configurables.size() == 1) {
-      myRootConfigurable = configurables.get(0);
-      myChildren = EMPTY_CONFIGURABLES;
-    }
-    else {
-      myChildren = configurables.toArray(new Configurable[configurables.size()]);
-      myRootConfigurable = rootConfigurable;
-    }
-  }
-
-  @Nullable
-  private static Configurable computeRootConfigurable(@NotNull List<DebuggerSettingsPanelProvider> providers, @NotNull List<Configurable> configurables) {
-    Configurable deprecatedRootConfigurable = null;
-    for (DebuggerSettingsPanelProvider provider : providers) {
+    //noinspection deprecation
+    for (DebuggerSettingsPanelProvider provider : getSortedProviders()) {
       configurables.addAll(provider.getConfigurables());
       @SuppressWarnings("deprecation")
       Configurable providerRootConfigurable = provider.getRootConfigurable();
       if (providerRootConfigurable != null) {
-        if (deprecatedRootConfigurable == null) {
-          deprecatedRootConfigurable = providerRootConfigurable;
-        }
-        else {
-          configurables.add(providerRootConfigurable);
-        }
+        configurables.add(providerRootConfigurable);
       }
     }
 
-    List<Configurable> rootConfigurables = DebuggerConfigurableProvider.getConfigurables(XDebuggerSettings.Category.ROOT, providers);
-    if (rootConfigurables.isEmpty()) {
-      return deprecatedRootConfigurable;
+    for (DebuggerConfigurableProvider provider : providers) {
+      configurables.addAll(provider.getConfigurables(DebuggerSettingsCategory.ROOT));
+    }
+
+    MergedCompositeConfigurable mergedGeneralConfigurable = computeGeneralConfigurables(providers);
+    if (configurables.isEmpty() && mergedGeneralConfigurable == null) {
+      myRootConfigurable = null;
+      myChildren = EMPTY_CONFIGURABLES;
+    }
+    else if (configurables.size() == 1) {
+      Configurable firstConfigurable = configurables.get(0);
+      if (mergedGeneralConfigurable == null) {
+        myRootConfigurable = firstConfigurable;
+        myChildren = EMPTY_CONFIGURABLES;
+      }
+      else {
+        Configurable[] generalConfigurables = mergedGeneralConfigurable.children;
+        Configurable[] mergedArray = new Configurable[generalConfigurables.length + 1];
+        System.arraycopy(generalConfigurables, 0, mergedArray, 0, generalConfigurables.length);
+        mergedArray[generalConfigurables.length] = firstConfigurable;
+        myRootConfigurable = new MergedCompositeConfigurable("", "", mergedArray);
+        myChildren = firstConfigurable instanceof SearchableConfigurable.Parent ? ((Parent)firstConfigurable).getConfigurables() : EMPTY_CONFIGURABLES;
+      }
     }
     else {
-      Configurable[] mergedRootConfigurables = new Configurable[rootConfigurables.size() + (deprecatedRootConfigurable == null ? 0 : 1)];
-      rootConfigurables.toArray(mergedRootConfigurables);
-      if (deprecatedRootConfigurable != null) {
-        mergedRootConfigurables[rootConfigurables.size()] = deprecatedRootConfigurable;
-      }
-
-      // move unnamed to top
-      Arrays.sort(mergedRootConfigurables, new Comparator<Configurable>() {
-        @Override
-        public int compare(Configurable o1, Configurable o2) {
-          boolean c1e = StringUtil.isEmpty(o1.getDisplayName());
-          return c1e == StringUtil.isEmpty(o2.getDisplayName()) ? 0 : (c1e ? -1 : 1);
-        }
-      });
-
-      return new MergedCompositeConfigurable(mergedRootConfigurables) {
-        @NotNull
-        @Override
-        public String getId() {
-          throw new UnsupportedOperationException();
-        }
-
-        @Nls
-        @Override
-        public String getDisplayName() {
-          throw new UnsupportedOperationException();
-        }
-      };
+      myChildren = configurables.toArray(new Configurable[configurables.size()]);
+      myRootConfigurable = mergedGeneralConfigurable;
     }
+  }
+
+  private static void computeMergedConfigurables(@NotNull DebuggerConfigurableProvider[] providers, @NotNull List<Configurable> result) {
+    for (DebuggerSettingsCategory category : MERGED_CATEGORIES) {
+      List<Configurable> configurables = getConfigurables(category, providers);
+      if (!configurables.isEmpty()) {
+        String id = category.name().toLowerCase(Locale.ENGLISH);
+        result.add(new MergedCompositeConfigurable("debugger." + id, XDebuggerBundle.message("debugger." + id + ".display.name"),
+                                                   configurables.toArray(new Configurable[configurables.size()])));
+      }
+    }
+  }
+
+  @Nullable
+  private static MergedCompositeConfigurable computeGeneralConfigurables(@NotNull DebuggerConfigurableProvider[] providers) {
+    List<Configurable> rootConfigurables = getConfigurables(DebuggerSettingsCategory.GENERAL, providers);
+    if (rootConfigurables.isEmpty()) {
+      return null;
+    }
+
+    Configurable[] mergedRootConfigurables = rootConfigurables.toArray(new Configurable[rootConfigurables.size()]);
+    // move unnamed to top
+    Arrays.sort(mergedRootConfigurables, new Comparator<Configurable>() {
+      @Override
+      public int compare(@NotNull Configurable o1, @NotNull Configurable o2) {
+        boolean c1e = StringUtil.isEmpty(o1.getDisplayName());
+        return c1e == StringUtil.isEmpty(o2.getDisplayName()) ? 0 : (c1e ? -1 : 1);
+      }
+    });
+    return new MergedCompositeConfigurable("", "", mergedRootConfigurables);
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
-      support.getSettingsPanelProvider().apply();
-    }
     if (myRootConfigurable != null) {
       myRootConfigurable.apply();
     }
@@ -205,5 +197,52 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   @NonNls
   public String getId() {
     return "project.propDebugger";
+  }
+
+  @SuppressWarnings("deprecation")
+  @NotNull
+  private static List<DebuggerSettingsPanelProvider> getSortedProviders() {
+    List<DebuggerSettingsPanelProvider> providers = null;
+    for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
+      DebuggerSettingsPanelProvider provider = support.getSettingsPanelProvider();
+      if (providers == null) {
+        providers = new SmartList<DebuggerSettingsPanelProvider>();
+      }
+      providers.add(provider);
+    }
+
+    if (ContainerUtil.isEmpty(providers)) {
+      return Collections.emptyList();
+    }
+
+    if (providers.size() > 1) {
+      Collections.sort(providers, new Comparator<DebuggerSettingsPanelProvider>() {
+        @Override
+        public int compare(@NotNull DebuggerSettingsPanelProvider o1, @NotNull DebuggerSettingsPanelProvider o2) {
+          return o2.getPriority() - o1.getPriority();
+        }
+      });
+    }
+    return providers;
+  }
+
+  @NotNull
+  static List<Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category) {
+    return getConfigurables(category, DebuggerConfigurableProvider.EXTENSION_POINT.getExtensions());
+  }
+
+  @NotNull
+  private static List<Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category, @NotNull DebuggerConfigurableProvider[] providers) {
+    List<Configurable> configurables = null;
+    for (DebuggerConfigurableProvider provider : providers) {
+      Collection<? extends Configurable> providerConfigurables = provider.getConfigurables(category);
+      if (!providerConfigurables.isEmpty()) {
+        if (configurables == null) {
+          configurables = new SmartList<Configurable>();
+        }
+        configurables.addAll(providerConfigurables);
+      }
+    }
+    return ContainerUtil.notNullize(configurables);
   }
 }

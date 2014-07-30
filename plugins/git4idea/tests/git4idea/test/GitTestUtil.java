@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.config.GitVersion;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.BuiltInServerManagerImpl;
@@ -111,6 +112,7 @@ public class GitTestUtil {
   }
 
   public static void assumeSupportedGitVersion(@NotNull GitVcs vcs) {
-    assumeTrue(vcs.getVersion().isSupported());
+    GitVersion version = vcs.getVersion();
+    assumeTrue("Unsupported Git version: " + version, version.isSupported());
   }
 }

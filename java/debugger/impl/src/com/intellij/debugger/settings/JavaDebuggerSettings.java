@@ -15,41 +15,78 @@
  */
 package com.intellij.debugger.settings;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.options.SimpleConfigurable;
+import com.intellij.openapi.util.Getter;
+import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
+import static java.util.Collections.singletonList;
+
 /**
  * We cannot now transform DebuggerSettings to XDebuggerSettings: getState/loadState is not called for EP,
  * but we cannot use standard implementation to save our state, due to backward compatibility we must use own state spec.
- *
+ * <p/>
  * But we must implement createConfigurable as part of XDebuggerSettings otherwise java general settings will be before xdebugger general setting,
  * because JavaDebuggerSettingsPanelProvider has higher priority than XDebuggerSettingsPanelProviderImpl.
  */
-class JavaDebuggerSettings extends XDebuggerSettings<Element> {
+public class JavaDebuggerSettings extends XDebuggerSettings<Element> {
   protected JavaDebuggerSettings() {
     super("java");
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public Configurable createConfigurable(@NotNull Category category) {
+  public Collection<? extends Configurable> createConfigurables(@NotNull DebuggerSettingsCategory category) {
+    Getter<DebuggerSettings> settingsGetter = new Getter<DebuggerSettings>() {
+      @Override
+      public DebuggerSettings get() {
+        return DebuggerSettings.getInstance();
+      }
+    };
+
     switch (category) {
-      case ROOT:
-        return new DebuggerLaunchingConfigurable();
+      case GENERAL:
+        return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.launching", OptionsBundle.message("options.java.display.name"),
+                                                       DebuggerLaunchingConfigurable.class, settingsGetter));
       case DATA_VIEWS:
-        return new DebuggerDataViewsConfigurable(null);
+        return createDataViewsConfigurable();
       case STEPPING:
-        return new DebuggerSteppingConfigurable();
+        return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.stepping", OptionsBundle.message("options.java.display.name"),
+                                                       DebuggerSteppingConfigurable.class, settingsGetter));
+      case HOTSWAP:
+        return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.hotswap", OptionsBundle.message("options.java.display.name"),
+                                                       JavaHotSwapConfigurableUi.class, settingsGetter));
     }
-    return null;
+    return Collections.emptyList();
+  }
+
+  @SuppressWarnings("SpellCheckingInspection")
+  @NotNull
+  public static List<Configurable> createDataViewsConfigurable() {
+    return Arrays.<Configurable>asList(new DebuggerDataViewsConfigurable(null),
+                                       SimpleConfigurable.create("reference.idesettings.debugger.typerenderers", DebuggerBundle.message("user.renderers.configurable.display.name"),
+                                                                 UserRenderersConfigurable.class, new Getter<NodeRendererSettings>() {
+                                           @Override
+                                           public NodeRendererSettings get() {
+                                             return NodeRendererSettings.getInstance();
+                                           }
+                                         }));
   }
 
   @Override
-  public void generalApplied(@NotNull XDebuggerSettings.Category category) {
-    if (category == XDebuggerSettings.Category.DATA_VIEWS) {
+  public void generalApplied(@NotNull DebuggerSettingsCategory category) {
+    if (category == DebuggerSettingsCategory.DATA_VIEWS) {
       NodeRendererSettings.getInstance().fireRenderersChanged();
     }
   }

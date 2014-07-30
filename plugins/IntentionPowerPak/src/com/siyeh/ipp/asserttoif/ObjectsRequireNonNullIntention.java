@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ipp.base.Intention;
@@ -58,6 +59,9 @@ public class ObjectsRequireNonNullIntention extends Intention {
       annotation.delete();
     } else {
       final PsiStatement referenceStatement = PsiTreeUtil.getParentOfType(referenceExpression, PsiStatement.class);
+      if (referenceStatement == null) {
+        return;
+      }
       final PsiElement parent = referenceStatement.getParent();
       if (!(parent instanceof PsiCodeBlock)) {
         return;
@@ -88,9 +92,6 @@ public class ObjectsRequireNonNullIntention extends Intention {
 
     @Override
     public boolean satisfiedBy(PsiElement element) {
-      if (!PsiUtil.isLanguageLevel7OrHigher(element)) {
-        return false;
-      }
       if (!(element instanceof PsiReferenceExpression)) {
         return false;
       }
@@ -103,6 +104,9 @@ public class ObjectsRequireNonNullIntention extends Intention {
         return false;
       }
       final PsiVariable variable = (PsiVariable)target;
+      if (ClassUtils.findClass("java.util.Objects", element) == null) {
+        return false;
+      }
       if (NullableNotNullManager.isNotNull(variable)) {
         return true;
       }

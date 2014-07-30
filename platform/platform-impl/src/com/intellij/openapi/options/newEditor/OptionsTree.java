@@ -308,7 +308,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       myHandle.setOpaque(false);
       content.add(myHandle, BorderLayout.WEST);
       content.add(myComponent, BorderLayout.CENTER);
-      myProjectIcon = new JLabel(" ", AllIcons.General.ProjectConfigurable, SwingConstants.LEFT);
+      myProjectIcon = new JLabel(" ", SwingConstants.LEFT);
       myProjectIcon.setOpaque(true);
       content.add(myProjectIcon, BorderLayout.EAST);
       myRendererComponent.add(content, BorderLayout.CENTER);
@@ -407,30 +407,15 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       Project project = getConfigurableProject(base);
       if (project != null && Registry.is("ide.file.settings.order.new")) {
         myProjectIcon.setBackground(selected ? getSelectionBackground() : getBackground());
+        myProjectIcon.setIcon(selected ? AllIcons.General.ProjectConfigurableSelected : AllIcons.General.ProjectConfigurable);
         myProjectIcon.setVisible(true);
-        tree.setToolTipText(OptionsBundle.message(project.isDefault()
+        myProjectIcon.setToolTipText(OptionsBundle.message(project.isDefault()
                                                   ? "configurable.default.project.tooltip"
                                                   : "configurable.current.project.tooltip"));
       } else {
         myProjectIcon.setVisible(false);
-        tree.setToolTipText(null);
       }
       return result;
-    }
-
-    private Project getConfigurableProject(SimpleNode node) {
-      if (node == null) {
-        return null;
-      }
-      if (node instanceof EditorNode) {
-        EditorNode editor = (EditorNode)node;
-        Configurable configurable = editor.getConfigurable();
-        if (configurable instanceof ConfigurableWrapper) {
-          ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
-          return wrapper.getExtensionPoint().getProject();
-        }
-      }
-      return getConfigurableProject(node.getParent());
     }
 
     protected JComponent createItemComponent() {
@@ -639,6 +624,24 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     private MyTree() {
       getInputMap().clear();
       setOpaque(true);
+    }
+
+    @Override
+    public final String getToolTipText(MouseEvent event) {
+      if (event != null) {
+        Point point = event.getPoint();
+        Component component = getDeepestRendererComponentAt(point.x, point.y);
+        if (component instanceof JLabel) {
+          JLabel label = (JLabel)component;
+          if (label.getIcon() != null) {
+            String text = label.getToolTipText();
+            if (text != null) {
+              return text;
+            }
+          }
+        }
+      }
+      return super.getToolTipText(event);
     }
 
     @Override
@@ -876,5 +879,28 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       }
 
     }
+  }
+
+  Project getConfigurableProject(Configurable configurable) {
+    if (configurable instanceof ConfigurableWrapper) {
+      ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+      return wrapper.getExtensionPoint().getProject();
+    }
+    return getConfigurableProject(myConfigurable2Node.get(configurable));
+  }
+
+  private static Project getConfigurableProject(SimpleNode node) {
+    if (node == null) {
+      return null;
+    }
+    if (node instanceof EditorNode) {
+      EditorNode editor = (EditorNode)node;
+      Configurable configurable = editor.getConfigurable();
+      if (configurable instanceof ConfigurableWrapper) {
+        ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+        return wrapper.getExtensionPoint().getProject();
+      }
+    }
+    return getConfigurableProject(node.getParent());
   }
 }

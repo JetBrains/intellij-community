@@ -128,8 +128,6 @@ public class BuildManager implements ApplicationComponent{
   private static final String COMPILER_PROCESS_JDK_PROPERTY = "compiler.process.jdk";
   public static final String SYSTEM_ROOT = "compile-server";
   public static final String TEMP_DIR_NAME = "_temp_";
-  private static final int MAKE_TRIGGER_DELAY = 300 /*300 ms*/;
-  private static final int DOCUMENT_SAVE_TRIGGER_DELAY = 1500 /*1.5 sec*/;
   private final boolean IS_UNIT_TEST_MODE;
   private static final String IWS_EXTENSION = ".iws";
   private static final String IPR_EXTENSION = ".ipr";
@@ -161,7 +159,7 @@ public class BuildManager implements ApplicationComponent{
   private final BuildManagerPeriodicTask myAutoMakeTask = new BuildManagerPeriodicTask() {
     @Override
     protected int getDelay() {
-      return Registry.intValue("compiler.automake.trigger.delay", MAKE_TRIGGER_DELAY);
+      return Registry.intValue("compiler.automake.trigger.delay");
     }
 
     @Override
@@ -173,7 +171,7 @@ public class BuildManager implements ApplicationComponent{
   private final BuildManagerPeriodicTask myDocumentSaveTask = new BuildManagerPeriodicTask() {
     @Override
     protected int getDelay() {
-      return Registry.intValue("compiler.document.save.trigger.delay", DOCUMENT_SAVE_TRIGGER_DELAY);
+      return Registry.intValue("compiler.document.save.trigger.delay");
     }
 
     private final Semaphore mySemaphore = new Semaphore();
@@ -624,7 +622,7 @@ public class BuildManager implements ApplicationComponent{
               data = new ProjectData(new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE));
               myProjectDataMap.put(projectPath, data);
             }
-            if (isRebuild || (isAutomake && Registry.is("compiler.automake.force.fs.rescan", false))) {
+            if (isRebuild || (isAutomake && Registry.is("compiler.automake.force.fs.rescan"))) {
               data.dropChanges();
             }
             if (IS_UNIT_TEST_MODE) {

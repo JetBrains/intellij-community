@@ -28,14 +28,18 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.selectorWithChooser;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NON_VOID;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+
 // todo: support for int[].var (parses as .class access!)
-public class IntroduceVariablePostfixTemplate extends JavaPostfixTemplateWithChooser {
+public class IntroduceVariablePostfixTemplate extends PostfixTemplateWithExpressionSelector {
   public IntroduceVariablePostfixTemplate() {
-    super("var", "T name = expr");
+    super("var", "T name = expr", JAVA_PSI_INFO, selectorWithChooser(IS_NON_VOID));
   }
 
   @Override
-  protected void doIt(@NotNull Editor editor, @NotNull PsiElement expression) {
+  protected void expandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
     // for advanced stuff use ((PsiJavaCodeReferenceElement)expression).advancedResolve(true).getElement();
     IntroduceVariableHandler handler =
       ApplicationManager.getApplication().isUnitTestMode() ? getMockHandler() : new IntroduceVariableHandler();

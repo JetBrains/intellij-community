@@ -65,6 +65,7 @@ import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
@@ -83,7 +84,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
 
@@ -1018,22 +1018,13 @@ public class FileStructurePopup implements Disposable {
     public FileStructureTree(Object rootElement, boolean fastExpand) {
       super(new DefaultMutableTreeNode(rootElement));
       if (fastExpand) {
-        boolean newValueIsSet;
-        try {
-          final Field field = JTree.class.getDeclaredField("expandedState");
-          field.setAccessible(true);
-          field.set(this, new Hashtable() {
-            @Override
-            public synchronized Object get(Object key) {
-              return Boolean.TRUE;
-            }
-          });
-          newValueIsSet = true;
-        }
-        catch (Exception e) {
-          newValueIsSet = false;
-        }
-        fast = newValueIsSet;
+        Hashtable hashtable = new Hashtable() {
+          @Override
+          public synchronized Object get(Object key) {
+            return Boolean.TRUE;
+          }
+        };
+        fast = ReflectionUtil.setField(JTree.class, this, Hashtable.class, "expandedState", hashtable);
       }
       else {
         fast = false;

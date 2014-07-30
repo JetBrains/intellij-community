@@ -15,7 +15,9 @@
  */
 package com.jetbrains.python.documentation;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,6 +29,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -54,7 +57,7 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
 
   private boolean isFormat(PsiFile file, final String format) {
     if (file instanceof PyFile) {
-      PyTargetExpression expr = ((PyFile) file).findTopLevelAttribute(PyNames.DOCFORMAT);
+      PyTargetExpression expr = ((PyFile)file).findTopLevelAttribute(PyNames.DOCFORMAT);
       if (expr != null) {
         String docformat = PyPsiUtils.strValue(expr.findAssignedValue());
         if (docformat != null) {
@@ -87,5 +90,22 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
   @Override
   public void loadState(PyDocumentationSettings state) {
     XmlSerializerUtil.copyBean(state, this);
+  }
+
+  /**
+   * TODO: Use this factory for the whole document infrastructure to simplify new documentation engine support
+   * Factory that returns appropriate instance of {@link StructuredDocStringBase} if specificed
+   *
+   * @return instance or null if no doctype os set
+   */
+  @Nullable
+  public StructuredDocStringBase getDocString() {
+    if (myDocStringFormat.equals(DocStringFormat.EPYTEXT)) {
+      return new EpydocString();
+    }
+    if (myDocStringFormat.equals(DocStringFormat.REST)) {
+      return new SphinxDocString();
+    }
+    return null;
   }
 }

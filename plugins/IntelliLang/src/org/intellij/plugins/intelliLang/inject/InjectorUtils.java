@@ -226,7 +226,7 @@ public class InjectorUtils {
   }
 
   @Nullable
-  public static BaseInjection findCommentInjection(PsiElement context, final String supportId, final Ref<PsiElement> causeRef) {
+  public static BaseInjection findCommentInjection(@NotNull PsiElement context, @NotNull String supportId, @Nullable Ref<PsiElement> causeRef) {
     PsiElement target = CompletionUtil.getOriginalOrSelf(context);
     PsiFile file = target.getContainingFile();
     TreeMap<TextRange, BaseInjection> map = getInjectionMap(file);
@@ -273,7 +273,9 @@ public class InjectorUtils {
            e instanceof PsiLanguageInjectionHost && StringUtil.isEmptyOrSpaces(e.getText());
   }
 
-  protected static TreeMap<TextRange, BaseInjection> getInjectionMap(final PsiFile file) {
+  @Nullable
+  private static TreeMap<TextRange, BaseInjection> getInjectionMap(@Nullable final PsiFile file) {
+    if (file == null) return null; //  e.g. null for synthetic groovy variables
     return CachedValuesManager.getCachedValue(file, new CachedValueProvider<TreeMap<TextRange, BaseInjection>>() {
       @Nullable
       @Override

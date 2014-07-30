@@ -757,6 +757,8 @@ public class Mappings {
       return false;
     }
 
+    final THashSet<File> toRecompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+
     // Protected branch
     if (member.isProtected()) {
       debug("Protected access, softening non-incremental decision: adding all relevant subclasses for a recompilation");
@@ -767,9 +769,9 @@ public class Mappings {
         @Override
         public boolean execute(int className) {
           final File fileName = myClassToSourceFile.get(className);
-          if (fileName != null && !currentlyCompiled.contains(fileName)) {
+          if (fileName != null) {
             debug("Adding ", fileName);
-            affectedFiles.add(fileName);
+            toRecompile.add(fileName);
           }
           return true;
         }
@@ -786,14 +788,25 @@ public class Mappings {
       @Override
       public boolean execute(int className, File fileName) {
         if (ClassRepr.getPackageName(myContext.getValue(className)).equals(packageName)) {
-          if ((filter == null || filter.accept(fileName)) && !currentlyCompiled.contains(fileName)) {
+          if (filter == null || filter.accept(fileName)) {
             debug("Adding: ", fileName);
-            affectedFiles.add(fileName);
+            toRecompile.add(fileName);
           }
         }
         return true;
       }
     });
+
+    // filtering already compiled and non-existing paths
+    toRecompile.removeAll(currentlyCompiled);
+    for (Iterator<File> it = toRecompile.iterator(); it.hasNext(); ) {
+      final File file = it.next();
+      if (!file.exists()) {
+        it.remove();
+      }
+    }
+
+    affectedFiles.addAll(toRecompile);
 
     return true;
   }

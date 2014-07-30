@@ -22,7 +22,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 
-public abstract class StatementWrapPostfixTemplate extends TypedPostfixTemplate {
+public abstract class StatementWrapPostfixTemplate extends PostfixTemplateWithExpressionSelector {
 
   @SuppressWarnings("unchecked")
   protected StatementWrapPostfixTemplate(@NotNull String name,
@@ -39,9 +39,7 @@ public abstract class StatementWrapPostfixTemplate extends TypedPostfixTemplate 
   }
 
   @Override
-  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    PsiElement topmostExpression = myPsiInfo.getTopmostExpression(context);
-    assert topmostExpression != null;
+  public void expandForChooseExpression(@NotNull PsiElement topmostExpression, @NotNull Editor editor) {
     PsiElement parent = topmostExpression.getParent();
     PsiElement expression = getWrappedExpression(topmostExpression);
     PsiElement replace = parent.replace(expression);

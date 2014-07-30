@@ -38,6 +38,11 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 /**
  * Ref resolution routines.
  * User: dcheryasov
@@ -106,16 +111,17 @@ public class PyResolveUtil {
         owner = outerScopeOwner;
       }
     }
-    scopeCrawlUp(processor, owner, originalOwner, name, roof);
+    scopeCrawlUp(processor, owner, originalOwner, name, roof, realContext);
   }
 
   public static void scopeCrawlUp(@NotNull PsiScopeProcessor processor, @NotNull ScopeOwner scopeOwner, @Nullable String name,
                                   @Nullable PsiElement roof) {
-    scopeCrawlUp(processor, scopeOwner, scopeOwner, name, roof);
+    scopeCrawlUp(processor, scopeOwner, scopeOwner, name, roof, null);
   }
 
   public static void scopeCrawlUp(@NotNull PsiScopeProcessor processor, @Nullable ScopeOwner scopeOwner,
-                                  @Nullable ScopeOwner originalScopeOwner, @Nullable String name, @Nullable PsiElement roof) {
+                                  @Nullable ScopeOwner originalScopeOwner, @Nullable String name, @Nullable PsiElement roof,
+                                  @Nullable final PsiElement anchor) {
     while (scopeOwner != null) {
       if (!(scopeOwner instanceof PyClass) || scopeOwner == originalScopeOwner) {
         final Scope scope = ControlFlowCache.getScope(scopeOwner);
@@ -136,7 +142,31 @@ public class PyResolveUtil {
             }
           }
         }
-        for (NameDefiner definer : scope.getImportedNameDefiners()) {
+        List<NameDefiner> definers = new ArrayList<NameDefiner>(scope.getImportedNameDefiners());
+        if (anchor != null && ScopeUtil.getScopeOwner(anchor) == scopeOwner) {
+          final Comparator<NameDefiner> nearestDefinerComparator = new Comparator<NameDefiner>() {
+            @Override
+            public int compare(NameDefiner a, NameDefiner b) {
+              final boolean aIsBefore = PyPsiUtils.isBefore(a, anchor);
+              final boolean bIsBefore = PyPsiUtils.isBefore(b, anchor);
+              final int diff = a.getTextOffset() - b.getTextOffset();
+              if (aIsBefore && bIsBefore) {
+                return -diff;
+              }
+              else if (aIsBefore) {
+                return -1;
+              }
+              else if (bIsBefore) {
+                return 1;
+              }
+              else {
+                return diff;
+              }
+            }
+          };
+          Collections.sort(definers, nearestDefinerComparator);
+        }
+        for (NameDefiner definer : definers) {
           if (!processor.execute(definer, ResolveState.initial())) {
             found = true;
             break;

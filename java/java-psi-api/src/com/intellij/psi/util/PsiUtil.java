@@ -1099,6 +1099,11 @@ public final class PsiUtil extends PsiUtilCore {
         return true;
       }
     }
+    else if (parent instanceof PsiConditionalExpression) {
+      if (checkSameExpression(expr, ((PsiConditionalExpression)parent).getCondition())) {
+        return true;
+      }
+    }
     return false;
   }
 

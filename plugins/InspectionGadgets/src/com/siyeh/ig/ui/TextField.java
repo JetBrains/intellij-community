@@ -16,13 +16,13 @@
 package com.siyeh.ig.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.lang.reflect.Field;
 
 public class TextField extends JTextField {
 
@@ -36,35 +36,13 @@ public class TextField extends JTextField {
 
   private static String getPropertyValue(InspectionProfileEntry owner,
                                          String property) {
-    try {
-      final Class<? extends InspectionProfileEntry> aClass =
-        owner.getClass();
-      final Field field = aClass.getField(property);
-      return (String)field.get(owner);
-    }
-    catch (IllegalAccessException ignore) {
-      return null;
-    }
-    catch (NoSuchFieldException ignore) {
-      return null;
-    }
+    return ReflectionUtil.getField(owner.getClass(), owner, String.class, property);
   }
 
   private static void setPropertyValue(InspectionProfileEntry owner,
                                        String property,
                                        String value) {
-    try {
-      final Class<? extends InspectionProfileEntry> aClass =
-        owner.getClass();
-      final Field field = aClass.getField(property);
-      field.set(owner, value);
-    }
-    catch (IllegalAccessException ignore) {
-      // do nothing
-    }
-    catch (NoSuchFieldException ignore) {
-      // do nothing
-    }
+    ReflectionUtil.setField(owner.getClass(), owner, String.class, property, value);
   }
 
   private class TextFieldDocumentListener implements DocumentListener {

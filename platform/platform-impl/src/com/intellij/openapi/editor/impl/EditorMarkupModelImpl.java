@@ -36,6 +36,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
@@ -46,6 +47,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.*;
@@ -610,6 +612,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     private void paintTrackBasement(Graphics g, Rectangle bounds) {
       if (UISettings.getInstance().PRESENTATION_MODE || SystemInfo.isMac) {
+        g.setColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
         return;
       }
 
@@ -757,12 +761,21 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                           boolean drawBottomDecoration) {
       int x = isMirrored() ? 3 : 5;
       int paintWidth = width;
+      boolean flatStyle = Registry.is("ide.new.markup.markers");
       if (thinErrorStripeMark) {
         paintWidth /= 2;
-        paintWidth += 1;
+        paintWidth += flatStyle ? 0 : 1;
         x = isMirrored() ? width + 2 : 0;
       }
       if (color == null) return;
+      Color darker = UIUtil.isUnderDarcula()? color : ColorUtil.shift(color, 0.75);
+
+      if (flatStyle) {
+        g.setColor(darker);
+        g.fillRect(x, yStart, paintWidth, yEnd - yStart + 1);
+        return;
+      }
+
       g.setColor(color);
       g.fillRect(x + 1, yStart, paintWidth - 2, yEnd - yStart + 1);
 
@@ -774,7 +787,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         //top decoration
         UIUtil.drawLine(g, x + 1, yStart, x + paintWidth - 2, yStart);
       }
-      Color darker = ColorUtil.shift(color, 0.75);
 
       g.setColor(darker);
       if (drawBottomDecoration) {

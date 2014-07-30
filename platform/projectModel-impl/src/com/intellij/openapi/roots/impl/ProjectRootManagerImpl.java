@@ -131,8 +131,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return (ProjectRootManagerImpl)getInstance(project);
   }
 
-  public ProjectRootManagerImpl(Project project,
-                                DirectoryIndex directoryIndex) {
+  public ProjectRootManagerImpl(Project project) {
     myProject = project;
     myRootsCache = new OrderRootsCache(project);
   }
@@ -142,8 +141,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   public ProjectFileIndex getFileIndex() {
     return ProjectFileIndex.SERVICE.getInstance(myProject);
   }
-
-  private final Map<ModuleRootListener, MessageBusConnection> myListenerAdapters = new HashMap<ModuleRootListener, MessageBusConnection>();
 
   @Override
   @NotNull

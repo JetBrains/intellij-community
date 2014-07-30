@@ -25,7 +25,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -223,7 +223,7 @@ public class SrcFileAnnotator implements Disposable {
   }
 
   public void showCoverageInformation(final CoverageSuitesBundle suite) {
-    if (myEditor == null) return;
+    if (myEditor == null || myFile == null) return;
     final MarkupModel markupModel = DocumentMarkupModel.forDocument(myDocument, myProject, true);
     final List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     final ProjectData data = suite.getCoverageData();
@@ -278,7 +278,7 @@ public class SrcFileAnnotator implements Disposable {
       @Nullable
       @Override
       public Module compute() {
-        return ModuleUtil.findModuleForPsiElement(myFile);
+        return ModuleUtilCore.findModuleForPsiElement(myFile);
       }
     });
     if (module != null) {

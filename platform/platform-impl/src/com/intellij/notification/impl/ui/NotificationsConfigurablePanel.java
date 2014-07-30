@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.StripeTable;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -126,6 +128,22 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
 
       final TableColumn idColumn = getColumnModel().getColumn(ID_COLUMN);
       idColumn.setPreferredWidth(200);
+      idColumn.setCellRenderer(new DefaultTableCellRenderer() {
+        @NotNull
+        @Override
+        public Component getTableCellRendererComponent(@NotNull JTable table,
+                                                       Object value,
+                                                       boolean isSelected,
+                                                       boolean hasFocus,
+                                                       int row,
+                                                       int column) {
+          Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+          if (component instanceof JComponent) {
+            ((JComponent)component).setBorder(IdeBorderFactory.createEmptyBorder(0, 4, 0, 4));
+          }
+          return component;
+        }
+      });
 
       final TableColumn displayTypeColumn = getColumnModel().getColumn(DISPLAY_TYPE_COLUMN);
       displayTypeColumn.setMaxWidth(300);

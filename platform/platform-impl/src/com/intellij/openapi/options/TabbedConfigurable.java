@@ -33,6 +33,7 @@ public abstract class TabbedConfigurable extends CompositeConfigurable<Configura
     myParent = parent;
   }
 
+  @Override
   public JComponent createComponent() {
     myTabbedPane = new TabbedPaneWrapper(myParent);
     createConfigurableTabs();

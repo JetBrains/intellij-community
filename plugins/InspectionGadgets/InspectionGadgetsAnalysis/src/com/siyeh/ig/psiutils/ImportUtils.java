@@ -416,7 +416,7 @@ public class ImportUtils {
     final List<PsiImportStaticStatement> imports = getMatchingImports(importList, qualifiedName);
     final int onDemandCount = JavaCodeStyleSettingsFacade.getInstance(project).getNamesCountToUseImportOnDemand();
     final PsiElementFactory elementFactory = psiFacade.getElementFactory();
-    if (imports.size() < onDemandCount) {
+    if (imports.size() + 1 < onDemandCount) {
       importList.add(elementFactory.createImportStaticStatement(aClass, memberName));
     }
     else {

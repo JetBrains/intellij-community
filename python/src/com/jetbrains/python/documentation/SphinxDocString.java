@@ -31,7 +31,14 @@ public class SphinxDocString extends StructuredDocStringBase {
                                                    ":type", ":raise", ":raises", ":var", ":cvar", ":ivar",
                                                    ":return", ":returns", ":rtype", ":except", ":exception" };
 
-  public SphinxDocString(@NotNull String docstringText) {
+  /**
+   * Empty doc (for {@link #createParameterType(String, String)} probably)
+   */
+  public SphinxDocString() {
+    this("");
+  }
+
+  public SphinxDocString(@NotNull final String docstringText) {
     super(docstringText, ":");
   }
 

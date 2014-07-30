@@ -1,9 +1,5 @@
 package org.jetbrains.jsonProtocol;
 
-import org.chromium.protocolReader.JsonField;
-import org.chromium.protocolReader.JsonOptionalField;
-import org.chromium.protocolReader.JsonType;
-
 import java.util.List;
 
 /**

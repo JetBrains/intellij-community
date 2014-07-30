@@ -69,10 +69,14 @@ public class AddMethodQualifierFix implements IntentionAction {
     if (element == null || !element.isValid()) {
       return false;
     }
+    return getOrFindCandidates().size() != 0;
+  }
+
+  private synchronized List<PsiVariable> getOrFindCandidates() {
     if (myCandidates == null) {
       findCandidates();
     }
-    return myCandidates.size() != 0;
+    return myCandidates;
   }
 
   private void findCandidates() {

@@ -225,7 +225,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       Map<String, String> allPathVariables = new HashMap<String, String>(pathVariables.size() + 1);
       allPathVariables.putAll(pathVariables);
       allPathVariables.put(PathMacroUtil.APPLICATION_HOME_DIR, PathManager.getHomePath());
-      addPathVariables(allPathVariables);
+      allPathVariables.putAll(getAdditionalPathVariables());
       JpsProjectLoader.loadProject(myProject, allPathVariables, fullProjectPath);
     }
     catch (IOException e) {
@@ -233,7 +233,9 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     }
   }
 
-  protected void addPathVariables(Map<String, String> pathVariables) {
+  @NotNull
+  protected Map<String, String> getAdditionalPathVariables() {
+    return Collections.emptyMap();
   }
 
   @Nullable

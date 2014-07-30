@@ -19,10 +19,12 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -38,9 +40,20 @@ public class ScopesAndSeveritiesHintTable extends JBTable {
   public ScopesAndSeveritiesHintTable(final LinkedHashMap<String, HighlightSeverity> scopeToAverageSeverityMap) {
     super(new MyModel(scopeToAverageSeverityMap));
 
-    final DefaultTableCellRenderer cellRenderer = new DefaultTableCellRenderer();
-    cellRenderer.setOpaque(false);
-    getColumnModel().getColumn(SCOPE_COLUMN).setCellRenderer(cellRenderer);
+    getColumnModel().getColumn(SCOPE_COLUMN).setCellRenderer(new DefaultTableCellRenderer() {
+      @Override
+      public Component getTableCellRendererComponent(JTable table,
+                                                     Object value,
+                                                     boolean isSelected,
+                                                     boolean hasFocus,
+                                                     int row,
+                                                     int column) {
+        super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        setOpaque(false);
+        UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, this);
+        return this;
+      }
+    });
 
     getColumnModel().getColumn(SEVERITY_COLUMN).setCellRenderer(new DefaultTableCellRenderer() {
       @Override
@@ -55,6 +68,7 @@ public class ScopesAndSeveritiesHintTable extends JBTable {
         setIcon(HighlightDisplayLevel.find(severity).getIcon());
         setText(SingleInspectionProfilePanel.renderSeverity(severity));
         setOpaque(false);
+        UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, this);
         return this;
       }
     });
@@ -62,6 +76,16 @@ public class ScopesAndSeveritiesHintTable extends JBTable {
     setRowSelectionAllowed(false);
     setColumnSelectionAllowed(false);
     setOpaque(false);
+
+    for (int i = 0; i < getColumnModel().getColumnCount(); i++) {
+      int w = 0;
+      final TableColumn column = getColumnModel().getColumn(i);
+      for (int j = 0; j < getModel().getRowCount(); j++) {
+        final Component component = prepareRenderer(column.getCellRenderer(), j, i);
+        w = Math.max(component.getPreferredSize().width, w);
+      }
+      column.setPreferredWidth(w);
+    }
   }
 
   private final static class MyModel extends AbstractTableModel {
@@ -96,7 +120,7 @@ public class ScopesAndSeveritiesHintTable extends JBTable {
     @Override
     public Object getValueAt(final int rowIndex, final int columnIndex) {
       switch (columnIndex) {
-        case SCOPE_COLUMN: return myScopes.get(rowIndex);
+        case SCOPE_COLUMN: return rowIndex < getRowCount() - 1 ? myScopes.get(rowIndex) : "Everywhere else";
         case SEVERITY_COLUMN: return myScopeToAverageSeverityMap.get(myScopes.get(rowIndex));
         default: throw new IllegalArgumentException();
       }

@@ -34,7 +34,7 @@ import java.util.Collection;
 /**
  * @author Kirill Likhodedov
  */
-public class GitRepositoryImpl extends RepositoryImpl implements GitRepository, Disposable {
+public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
 
   @NotNull private final GitPlatformFacade myPlatformFacade;
   @NotNull private final GitRepositoryReader myReader;

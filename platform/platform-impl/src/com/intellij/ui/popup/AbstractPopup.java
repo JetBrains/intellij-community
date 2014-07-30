@@ -610,8 +610,13 @@ public class AbstractPopup implements JBPopup {
       }
 
       if (myInStack) {
-        myFocusTrackback.setForcedRestore(!myOk && myFocusable);
-        myFocusTrackback.restoreFocus();
+        if (myFocusTrackback != null) {
+          myFocusTrackback.setForcedRestore(!myOk && myFocusable);
+          myFocusTrackback.restoreFocus();
+        }
+        else if (LOG.isDebugEnabled()) {
+          LOG.debug("cancel before show @ " + Thread.currentThread());
+        }
       }
 
 
@@ -758,10 +763,11 @@ public class AbstractPopup implements JBPopup {
     PopupComponent.Factory factory = getFactory(myForcedHeavyweight || myResizable, forcedDialog);
     myNativePopup = factory.isNativePopup();
     Component popupOwner = myOwner;
-    if (popupOwner instanceof RootPaneContainer) {
+    if (popupOwner instanceof RootPaneContainer && !(popupOwner instanceof IdeFrame && !Registry.is("popup.fix.ide.frame.owner"))) {
       // JDK uses cached heavyweight popup for a window ancestor
       RootPaneContainer root = (RootPaneContainer)popupOwner;
       popupOwner = root.getRootPane();
+      LOG.debug("popup owner fixed for JDK cache");
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("expected preferred size: " + myContent.getPreferredSize());
@@ -1480,8 +1486,8 @@ public class AbstractPopup implements JBPopup {
   @Override
   public Dimension getSize() {
     if (myPopup != null) {
-      final Window popupWindow = SwingUtilities.windowForComponent(myContent);
-      return popupWindow.getSize();
+      final Window popupWindow = getContentWindow(myContent);
+      return (popupWindow == null) ? myForcedSize : popupWindow.getSize();
     } else {
       return myForcedSize;
     }
@@ -1491,7 +1497,8 @@ public class AbstractPopup implements JBPopup {
   public void moveToFitScreen() {
     if (myPopup == null) return;
 
-    final Window popupWindow = SwingUtilities.windowForComponent(myContent);
+    final Window popupWindow = getContentWindow(myContent);
+    if (popupWindow == null) return;
     Rectangle bounds = popupWindow.getBounds();
 
     ScreenUtil.moveRectangleToFitTheScreen(bounds);
@@ -1501,7 +1508,8 @@ public class AbstractPopup implements JBPopup {
 
 
   public static Window setSize(JComponent content, final Dimension size) {
-    final Window popupWindow = SwingUtilities.windowForComponent(content);
+    final Window popupWindow = getContentWindow(content);
+    if (popupWindow == null) return null;
     Insets insets = content.getInsets();
     if (insets != null) {
       size.width += insets.left + insets.right;

@@ -10,6 +10,7 @@
     <extensionPoint name="xdebugger.settings" interface="com.intellij.xdebugger.settings.XDebuggerSettings"/>
     <extensionPoint name="xdebugger.breakpointType" interface="com.intellij.xdebugger.breakpoints.XBreakpointType"/>
     <extensionPoint name="xdebugger.debuggerSupport" interface="com.intellij.xdebugger.impl.DebuggerSupport"/>
+    <extensionPoint name="xdebugger.configurableProvider" interface="com.intellij.xdebugger.settings.DebuggerConfigurableProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -29,11 +30,12 @@
     <projectService serviceInterface="com.intellij.xdebugger.impl.XDebuggerHistoryManager"
                     serviceImplementation="com.intellij.xdebugger.impl.XDebuggerHistoryManager"/>
 
-    <applicationConfigurable groupId="build" dynamic="true" key="debugger.configurable.display.name" bundle="messages.XDebuggerBundle" provider="com.intellij.xdebugger.impl.settings.DebuggerConfigurableProvider"/>
+    <applicationConfigurable groupId="build" dynamic="true" key="debugger.configurable.display.name" bundle="messages.XDebuggerBundle" instance="com.intellij.xdebugger.impl.settings.DebuggerConfigurable"/>
 
     <customizableActionGroupProvider implementation="com.intellij.xdebugger.impl.ui.XDebugTabCustomizableActionGroupProvider"/>
 
     <xdebugger.debuggerSupport implementation="com.intellij.xdebugger.impl.XDebuggerSupport" order="first"/>
+    <xdebugger.configurableProvider implementation="com.intellij.xdebugger.impl.settings.XDebuggerConfigurableProvider" order="first"/>
 
     <executor implementation="com.intellij.execution.executors.DefaultDebugExecutor" order="first,after run"/>
   </extensions>

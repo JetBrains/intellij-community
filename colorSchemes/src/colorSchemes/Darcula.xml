@@ -702,9 +702,9 @@
     </option>
     <option name="IDENTIFIER_UNDER_CARET_ATTRIBUTES">
       <value>
-        <option name="EFFECT_COLOR" value="5d8730" />
-        <option name="EFFECT_TYPE" value="1" />
+        <option name="BACKGROUND" value="344134" />
         <option name="ERROR_STRIPE_COLOR" value="5d8e48" />
+        <option name="EFFECT_TYPE" value="1" />
       </value>
     </option>
     <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
@@ -1572,9 +1572,9 @@
     </option>
     <option name="WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES">
       <value>
-        <option name="EFFECT_COLOR" value="cc7832" />
-        <option name="EFFECT_TYPE" value="1" />
+        <option name="BACKGROUND" value="40332b" />
         <option name="ERROR_STRIPE_COLOR" value="cc7832" />
+        <option name="EFFECT_TYPE" value="1" />
       </value>
     </option>
     <option name="WRITE_SEARCH_RESULT_ATTRIBUTES">

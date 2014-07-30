@@ -136,7 +136,7 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
       @Override
       public void run() {
         Project project = getProject();
-        if (project == null) {
+        if (project == null || project.isDisposed()) {
           emptyTextAndTooltip();
           return;
         }

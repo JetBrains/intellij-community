@@ -144,6 +144,17 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
                                                                            RangeMarker bounds,
                                                                            ReferenceData[] referenceData);
 
+  protected PsiElement resolveReferenceIgnoreOverriding(PsiPolyVariantReference reference) {
+    PsiElement referent = reference.resolve();
+    if (referent == null) {
+      final ResolveResult[] results = reference.multiResolve(true);
+      if (results.length > 0) {
+        referent = results[0].getElement();
+      }
+    }
+    return referent;
+  }
+
   protected abstract void restoreReferences(ReferenceData[] referenceData,
                                             TRef[] refs);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Set;
@@ -60,19 +59,11 @@ public class IdeSettingsStatisticsUtils {
   @Nullable
   private static Object getPropertyValue(Object componentInstance, String propertyName) {
     final Class<? extends Object> componentInstanceClass = componentInstance.getClass();
-    Object propertyValue = null;
-    try {
-      Field field = componentInstanceClass.getDeclaredField(propertyName);
-      propertyValue = field.get(componentInstance);
-    }
-    catch (NoSuchFieldException ignored) {
-    }
-    catch (IllegalAccessException ignored) {
-    }
+    Object propertyValue = ReflectionUtil.getField(componentInstanceClass, componentInstance, null, propertyName);
     if (propertyValue == null) {
-      Method method = getMethod(componentInstanceClass, "get" + StringUtil.capitalize(propertyName));
+      Method method = ReflectionUtil.getMethod(componentInstanceClass, "get" + StringUtil.capitalize(propertyName));
       if (method == null) {
-        method = getMethod(componentInstanceClass, "is" + StringUtil.capitalize(propertyName));
+        method = ReflectionUtil.getMethod(componentInstanceClass, "is" + StringUtil.capitalize(propertyName));
       }
       if (method != null) {
         try {
@@ -83,16 +74,6 @@ public class IdeSettingsStatisticsUtils {
       }
     }
     return propertyValue;
-  }
-
-  @Nullable
-  private static Method getMethod(@NotNull Class componentInstanceClass, @NotNull String name) {
-    try {
-      return componentInstanceClass.getMethod(name);
-    }
-    catch (NoSuchMethodException ignored) {
-    }
-    return null;
   }
 
   private static String getUsageDescriptorKey(@NotNull String providerName, @NotNull String name, @NotNull String value) {

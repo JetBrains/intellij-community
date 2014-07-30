@@ -568,14 +568,20 @@ class Test {
 
   public void "test fold one-line methods"() {
     configure """class Foo {
+ @Override
  int someMethod() {
+   return 0;
+ }
+
+ int someOtherMethod(
+   int param) {
    return 0;
  }
 
 }"""
     PsiClass fooClass = JavaPsiFacade.getInstance(project).findClass('Foo', GlobalSearchScope.allScope(project))
     def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
-    assert regions.size() == 2
+    assert regions.size() == 3
     checkAccessorFolding(regions[0], regions[1], fooClass.methods[0])
   }
 
@@ -792,13 +798,14 @@ public class CharSymbol {
     assert regions[3].placeholderText == 'seq: "Hi!"'
   }
 
-  public void "test inline negative numbers (IDEA-126753)"() {
+  public void "test inline negative and positive numbers"() {
     def text = """
 public class CharSymbol {
 
   public void main() {
     Object obj = new Object();
     count(-1, obj);
+    count(+1, obj);
   }
 
   public void count(int test, Object obj) {
@@ -809,10 +816,13 @@ public class CharSymbol {
 """
     configure text
     def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
-    assert regions.size() == 3
+    assert regions.size() == 4
 
     checkRangeOffsetByPositionInText(regions[1], text, "-1")
     assert regions[1].placeholderText == "test: -1"
+
+    checkRangeOffsetByPositionInText(regions[2], text, "+1")
+    assert regions[2].placeholderText == "test: +1"
   }
 
   public void "test inline constructor literal arguments names"() {

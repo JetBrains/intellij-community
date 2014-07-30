@@ -53,11 +53,11 @@ binding.setVariable("isEap", {
   return "true" == p("component.version.eap")
 })
 
-binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=64m")
-binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=96m")
+binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=150m")
+binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=225m")
 binding.setVariable("common_vmoptions", "-ea -Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
                                         "-Djsse.enableSNIExtension=false " +
-                                        "-XX:+UseCodeCacheFlushing -XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50")
+                                        "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50")
 
 binding.setVariable("vmOptions", { "$common_vmoptions ${isEap() ? '-XX:+HeapDumpOnOutOfMemoryError' : ''}".trim() })
 binding.setVariable("vmOptions32", { "$mem32 ${vmOptions()}".trim() })
@@ -918,4 +918,17 @@ binding.setVariable("analysisApiModules", [
     "xml-analysis-api",
     "xml-psi-api",
     "xml-structure-view-api",
+])
+binding.setVariable("analysisImplModules", [
+    "analysis-impl",
+    "core-impl",
+    "indexing-impl",
+    "java-analysis-impl",
+    "java-indexing-impl",
+    "java-psi-impl",
+    "projectModel-impl",
+    "structure-view-impl",
+    "xml-analysis-impl",
+    "xml-psi-impl",
+    "xml-structure-view-impl",
 ])

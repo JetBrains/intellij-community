@@ -44,6 +44,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -62,11 +63,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InvocationEvent;
-import java.io.File;
-import java.io.IOException;
-import java.io.StringWriter;
+import java.io.*;
 import java.lang.ref.SoftReference;
-import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -823,9 +821,24 @@ public class PlatformTestUtil {
   }
 
   private static void patchSystemFileEncoding(String encoding) throws NoSuchFieldException, IllegalAccessException {
-    Field charset = Charset.class.getDeclaredField("defaultCharset");
-    charset.setAccessible(true);
-    charset.set(Charset.class, null);
+    ReflectionUtil.resetField(Charset.class, Charset.class, "defaultCharset");
     System.setProperty("file.encoding", encoding);
   }
+
+  public static void withStdErrSuppressed(@NotNull Runnable r) {
+    PrintStream std = System.err;
+    System.setErr(new PrintStream(NULL));
+    try {
+      r.run();
+    }
+    finally {
+      System.setErr(std);
+    }
+  }
+
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  private static final OutputStream NULL = new OutputStream() {
+    @Override
+    public void write(int b) throws IOException { }
+  };
 }

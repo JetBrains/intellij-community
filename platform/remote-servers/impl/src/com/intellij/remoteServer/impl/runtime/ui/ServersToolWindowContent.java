@@ -6,6 +6,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.TreeVisitor;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -13,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.impl.runtime.log.LoggingHandlerImpl;
 import com.intellij.remoteServer.impl.runtime.ui.tree.DeploymentNode;
@@ -28,6 +28,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +56,8 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
   private static final String HELP_ID = "Application_Servers_tool_window";
   private static final String MESSAGE_CARD = "message";
   private static final String EMPTY_SELECTION_MESSAGE = "Select a server or deployment in the tree to view details";
+
+  private static final int POLL_DEPLOYMENTS_DELAY = 2000;
 
   private final Tree myTree;
   private final CardLayout myPropertiesPanelLayout;
@@ -188,6 +191,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
       @Override
       public void onConnectionCreated(@NotNull ServerConnection<?> connection) {
         getBuilder().queueUpdate();
+        pollDeployments(connection);
       }
 
       @Override
@@ -208,6 +212,24 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
     if (myLastSelection instanceof ServersTreeStructure.RemoteServerNode) {
       updateServerDetails((ServersTreeStructure.RemoteServerNode)myLastSelection);
     }
+  }
+
+  private static void pollDeployments(final ServerConnection connection) {
+    connection.computeDeployments(new Runnable() {
+
+      @Override
+      public void run() {
+        new Alarm().addRequest(new Runnable() {
+
+          @Override
+          public void run() {
+            if (connection == ServerConnectionManager.getInstance().getConnection(connection.getServer())) {
+              pollDeployments(connection);
+            }
+          }
+        }, POLL_DEPLOYMENTS_DELAY, ModalityState.any());
+      }
+    });
   }
 
   private JComponent createToolbar() {

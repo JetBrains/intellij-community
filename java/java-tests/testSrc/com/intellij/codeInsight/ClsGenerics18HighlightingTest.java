@@ -20,6 +20,8 @@ import com.intellij.pom.java.LanguageLevel;
 public class ClsGenerics18HighlightingTest extends ClsGenericsHighlightingTest {
   public void testIDEA121866() { doTest(); }
 
+  public void testIDEA127714() { doTest(); }
+
   @Override
   protected LanguageLevel getLanguageLevel() {
     return LanguageLevel.JDK_1_8;

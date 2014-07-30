@@ -52,7 +52,7 @@ public class TypeMayBeWeakened {
         foo(new WeakBoolean());
     }
 
-    void foo(WeakBoolean b) {
+    void foo(WeakBoolean <warning descr="Type of parameter 'b' may be weakened to 'java.lang.Object'">b</warning>) {
         System.out.println("b: " + b);
     }
 
@@ -65,7 +65,7 @@ public class TypeMayBeWeakened {
             FileInputStream fis=new FileInputStream("/etc/modules");
         }
         catch(FileNotFoundException fnfex) {
-            IllegalArgumentException iaex=new IllegalArgumentException("Exception Message");
+            IllegalArgumentException <warning descr="Type of variable 'iaex' may be weakened to 'java.lang.RuntimeException'">iaex</warning>=new IllegalArgumentException("Exception Message");
             iaex.initCause(fnfex);
             throw iaex;
         }
@@ -82,7 +82,7 @@ public class TypeMayBeWeakened {
         void foo() { Test f = new Test(); f.x++; }
     }
 
-    void listy(ArrayList list) {
+    void listy(ArrayList <warning descr="Type of parameter 'list' may be weakened to 'java.lang.Iterable'">list</warning>) {
         for (Object o : list) {
 
         }
@@ -130,7 +130,7 @@ class MyClass  {
 
   public MyClass(java.util.Date date, String[] classNames) {}
 
-  static MyClass readMyClass(final ObjectInputStream objectInput) {
+  static MyClass readMyClass(final ObjectInputStream <warning descr="Type of parameter 'objectInput' may be weakened to 'com.siyeh.igtest.abstraction.weaken_type.DataInput'">objectInput</warning>) {
     final long time = objectInput.readLong();
     final int size = objectInput.readInt();
     final String[] classNames = new String[size];
@@ -151,3 +151,15 @@ abstract class ObjectInputStream implements DataInput {
     return null;
   }
 }
+class Test implements Foo2 {
+  void test(Test <warning descr="Type of parameter 't' may be weakened to 'com.siyeh.igtest.abstraction.weaken_type.Foo2'">t</warning>) {
+    t.bar();
+  }
+  public void bar() {
+  }
+}
+@Deprecated
+interface Foo {
+  void bar();
+}
+interface Foo2 extends Foo {}

@@ -25,9 +25,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
-import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,10 +37,12 @@ public class InheritanceImplUtil {
 
   public static boolean isInheritor(@NotNull final PsiClass candidateClass, @NotNull PsiClass baseClass, final boolean checkDeep) {
     if (baseClass instanceof PsiAnonymousClass) return false;
-    if (!checkDeep) return isInheritor(candidateClass, baseClass, false, null);
+    if (!checkDeep) {
+      return isInheritor(candidateClass.getManager(), candidateClass, baseClass, false, null);
+    }
 
-    if (CommonClassNames.JAVA_LANG_OBJECT_SHORT.equals(candidateClass.getName()) && CommonClassNames.JAVA_LANG_OBJECT.equals(candidateClass.getQualifiedName())) return false;
-    if (CommonClassNames.JAVA_LANG_OBJECT_SHORT.equals(baseClass.getName()) && CommonClassNames.JAVA_LANG_OBJECT.equals(baseClass.getQualifiedName())) return true;
+    if (hasObjectQualifiedName(candidateClass)) return false;
+    if (hasObjectQualifiedName(baseClass)) return true;
     Map<PsiClass, Boolean> map = CachedValuesManager.
       getCachedValue(candidateClass, new CachedValueProvider<Map<PsiClass, Boolean>>() {
         @Nullable
@@ -55,18 +55,29 @@ public class InheritanceImplUtil {
 
     Boolean computed = map.get(baseClass);
     if (computed == null) {
-      computed = isInheritor(candidateClass, baseClass, true, null);
+      computed = isInheritor(candidateClass.getManager(), candidateClass, baseClass, true, null);
       map.put(baseClass, computed);
     }
     return computed;
   }
 
-  private static boolean isInheritor(@NotNull PsiClass candidateClass, @NotNull PsiClass baseClass, boolean checkDeep, Set<PsiClass> checkedClasses) {
+  public static boolean hasObjectQualifiedName(@NotNull PsiClass candidateClass) {
+    if (!CommonClassNames.JAVA_LANG_OBJECT_SHORT.equals(candidateClass.getName())) {
+      return false;
+    }
+    PsiElement parent = candidateClass.getParent();
+    return parent instanceof PsiJavaFile && CommonClassNames.DEFAULT_PACKAGE.equals(((PsiJavaFile)parent).getPackageName());
+  }
+
+  private static boolean isInheritor(@NotNull PsiManager manager,
+                                     @NotNull PsiClass candidateClass,
+                                     @NotNull PsiClass baseClass,
+                                     boolean checkDeep,
+                                     @Nullable Set<PsiClass> checkedClasses) {
     if (candidateClass instanceof PsiAnonymousClass) {
       final PsiClass baseCandidateClass = ((PsiAnonymousClass)candidateClass).getBaseClassType().resolve();
       return baseCandidateClass != null && InheritanceUtil.isInheritorOrSelf(baseCandidateClass, baseClass, checkDeep);
     }
-    PsiManager manager = candidateClass.getManager();
     /* //TODO fix classhashprovider so it doesn't use class qnames only
     final ClassHashProvider provider = getHashProvider((PsiManagerImpl) manager);
     if (checkDeep && provider != null) {
@@ -81,8 +92,7 @@ public class InheritanceImplUtil {
       LOG.debug("Using uncached version for " + candidateClass.getQualifiedName() + " and " + baseClass);
     }
 
-    @NonNls final String baseName = baseClass.getName();
-    if (CommonClassNames.JAVA_LANG_OBJECT_SHORT.equals(baseName)) {
+    if (hasObjectQualifiedName(baseClass)) {
       PsiClass objectClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, candidateClass.getResolveScope());
       if (manager.areElementsEquivalent(baseClass, objectClass)) {
         if (manager.areElementsEquivalent(candidateClass, objectClass)) return false;
@@ -103,6 +113,7 @@ public class InheritanceImplUtil {
         if (cInt == bInt && checkReferenceListWithQualifiedNames(baseQName, candidateClass.getExtendsList(), manager, scope)) return true;
         return bInt && !cInt && checkReferenceListWithQualifiedNames(baseQName, candidateClass.getImplementsList(), manager, scope);
       }
+      String baseName = baseClass.getName();
       if (cInt == bInt) {
         for (PsiClassType type : candidateClass.getExtendsListTypes()) {
           if (Comparing.equal(type.getClassName(), baseName)) {
@@ -125,7 +136,7 @@ public class InheritanceImplUtil {
       return false;
     }
 
-    return isInheritorWithoutCaching(candidateClass, baseClass, checkDeep, checkedClasses);
+    return isInheritorWithoutCaching(manager, candidateClass, baseClass, checkedClasses);
   }
 
   private static boolean checkReferenceListWithQualifiedNames(final String baseQName, final PsiReferenceList extList, final PsiManager manager,
@@ -141,63 +152,50 @@ public class InheritanceImplUtil {
     return false;
   }
 
-  private static boolean isInheritorWithoutCaching(PsiClass aClass, PsiClass baseClass, boolean checkDeep, Set<PsiClass> checkedClasses) {
-    PsiManager manager = aClass.getManager();
+  private static boolean isInheritorWithoutCaching(@NotNull PsiManager manager,
+                                                   @NotNull PsiClass aClass,
+                                                   @NotNull PsiClass baseClass,
+                                                   @Nullable Set<PsiClass> checkedClasses) {
     if (manager.areElementsEquivalent(aClass, baseClass)) return false;
 
     if (aClass.isInterface() && !baseClass.isInterface()) {
       return false;
     }
 
-    //if (PsiUtil.hasModifierProperty(baseClass, PsiModifier.FINAL)) {
-    //  return false;
-    //}
-
-    if (checkDeep) {
-      if (checkedClasses == null) {
-        checkedClasses = new THashSet<PsiClass>();
-      }
-      checkedClasses.add(aClass);
+    if (checkedClasses == null) {
+      checkedClasses = new THashSet<PsiClass>();
     }
+    checkedClasses.add(aClass);
 
-    if (!aClass.isInterface() && baseClass.isInterface()) {
-      if (checkDeep && checkInheritor(aClass.getSuperClass(), baseClass, checkDeep, checkedClasses)) {
-        return true;
-      }
-      return checkInheritor(aClass.getInterfaces(), baseClass, checkDeep, checkedClasses);
-
-    }
-    else {
-      return checkInheritor(aClass.getSupers(), baseClass, checkDeep, checkedClasses);
-    }
+    return checkInheritor(manager, aClass.getExtendsListTypes(), baseClass, checkedClasses) ||
+           checkInheritor(manager, aClass.getImplementsListTypes(), baseClass, checkedClasses);
   }
 
-  private static boolean checkInheritor(PsiClass[] supers, PsiClass baseClass, boolean checkDeep, Set<PsiClass> checkedClasses) {
-    for (PsiClass aSuper : supers) {
-      if (checkInheritor(aSuper, baseClass, checkDeep, checkedClasses)) {
+  private static boolean checkInheritor(@NotNull PsiManager manager,
+                                        @NotNull PsiClassType[] supers,
+                                        @NotNull PsiClass baseClass,
+                                        @NotNull Set<PsiClass> checkedClasses) {
+    for (PsiClassType aSuper : supers) {
+      PsiClass aClass = aSuper.resolve();
+      if (aClass != null && checkInheritor(manager, aClass, baseClass, checkedClasses)) {
         return true;
       }
     }
     return false;
   }
 
-  private static boolean checkInheritor(PsiClass aClass, PsiClass baseClass, boolean checkDeep, Set<PsiClass> checkedClasses) {
+  private static boolean checkInheritor(@NotNull PsiManager manager,
+                                        @NotNull PsiClass aClass,
+                                        @NotNull PsiClass baseClass,
+                                        @NotNull Set<PsiClass> checkedClasses) {
     ProgressIndicatorProvider.checkCanceled();
-    if (aClass != null) {
-      PsiManager manager = baseClass.getManager();
-      if (manager.areElementsEquivalent(baseClass, aClass)) {
-        return true;
-      }
-      if (checkedClasses != null && checkedClasses.contains(aClass)) { // to prevent infinite recursion
-        return false;
-      }
-      if (checkDeep) {
-        if (isInheritor(aClass, baseClass, checkDeep, checkedClasses)) {
-          return true;
-        }
-      }
+    if (manager.areElementsEquivalent(baseClass, aClass)) {
+      return true;
     }
-    return false;
+    if (checkedClasses.contains(aClass)) { // to prevent infinite recursion
+      return false;
+    }
+    return isInheritor(manager, aClass, baseClass, true, checkedClasses);
   }
 
   public static boolean isInheritorDeep(@NotNull PsiClass candidateClass, @NotNull PsiClass baseClass, @Nullable final PsiClass classToByPass) {
@@ -207,9 +205,9 @@ public class InheritanceImplUtil {
 
     Set<PsiClass> checkedClasses = null;
     if (classToByPass != null) {
-      checkedClasses = new HashSet<PsiClass>();
+      checkedClasses = new THashSet<PsiClass>();
       checkedClasses.add(classToByPass);
     }
-    return isInheritor(candidateClass, baseClass, true, checkedClasses);
+    return isInheritor(candidateClass.getManager(), candidateClass, baseClass, true, checkedClasses);
   }
 }

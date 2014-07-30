@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -128,17 +129,19 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     List<AnAction> actions = ContainerUtil.newArrayList();
     if (everywhere) {
       for (String id : ((ActionManagerImpl)myActionManager).getActionIds()) {
+        ProgressManager.checkCanceled();
         ContainerUtil.addIfNotNull(actions, myActionManager.getAction(id));
       }
     } else {
-      actions.addAll(myModel.myActionsMap.keySet());
+      actions.addAll(myModel.myActionGroups.keySet());
     }
 
     List<ActionWrapper> actionWrappers = ContainerUtil.newArrayList();
     for (AnAction action : actions) {
+      ProgressManager.checkCanceled();
       MatchMode mode = myModel.actionMatches(pattern, action);
       if (mode != MatchMode.NONE) {
-        actionWrappers.add(new ActionWrapper(action, myModel.myActionsMap.get(action), mode, dataContext));
+        actionWrappers.add(new ActionWrapper(action, myModel.myActionGroups.get(action), mode, dataContext));
       }
     }
     return processItems(pattern, actionWrappers, consumer);

@@ -84,7 +84,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
   @Override
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-    String fqn, shortName;
+    String fqn;
+    String shortName;
     if (myShortName != null && name.endsWith(myShortName)) {
       shortName = myShortName;
       fqn = name.length() == shortName.length()
@@ -338,7 +339,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     if (fqn == null) return true;  // impossible case, just ignore
     if (fqn.length() != signature.length()) return false;
 
-    int p = 0, dot;
+    int p = 0;
+    int dot;
     while ((dot = fqn.indexOf('.', p)) >= 0) {
       if (!signature.regionMatches(p, fqn, p, dot - p)) {
         return false;
@@ -428,24 +430,10 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     List<String> args = new ArrayList<String>();
     List<String> throwables = exceptions != null ? new ArrayList<String>() : null;
 
-    final PsiMethodStubImpl stub = new PsiMethodStubImpl(myResult, StringRef.fromString(canonicalMethodName), flags, null);
+    int modifiersMask = packMethodFlags(access, myResult.isInterface());
+    final PsiMethodStubImpl stub = new PsiMethodStubImpl(myResult, StringRef.fromString(canonicalMethodName), flags, signature, args, throwables, desc, modifiersMask);
 
-    final PsiModifierListStub modList = new PsiModifierListStubImpl(stub, packMethodFlags(access, myResult.isInterface()));
-
-    String returnType = null;
-    boolean parsedViaGenericSignature = false;
-    if (signature != null) {
-      try {
-        returnType = parseMethodViaGenericSignature(signature, stub, args, throwables);
-        parsedViaGenericSignature = true;
-      }
-      catch (ClsFormatException ignored) { }
-    }
-    if (returnType == null) {
-      returnType = parseMethodViaDescription(desc, stub, args);
-    }
-
-    stub.setReturnType(TypeInfo.fromString(returnType));
+    PsiModifierListStub modList = (PsiModifierListStub)stub.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
 
     if (isEnum && isConstructor && signature == null && args.size() >= 2 && JAVA_LANG_STRING.equals(args.get(0)) && "int".equals(args.get(1))) {
       // exclude synthetic enum constructor parameters
@@ -454,6 +442,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     final boolean isNonStaticInnerClassConstructor =
       isConstructor && !(myParent instanceof PsiFileStub) && (myModList.getModifiersMask() & Opcodes.ACC_STATIC) == 0;
+    boolean parsedViaGenericSignature = stub.isParsedViaGenericSignature();
     final boolean shouldSkipFirstParamForNonStaticInnerClassConstructor = !parsedViaGenericSignature && isNonStaticInnerClassConstructor;
 
     final PsiParameterListStubImpl parameterList = new PsiParameterListStubImpl(stub);
@@ -502,7 +491,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
   }
 
-  private static String parseMethodViaDescription(final String desc, final PsiMethodStubImpl stub, final List<String> args) {
+  @NotNull
+  public static String parseMethodViaDescription(@NotNull String desc, @NotNull PsiMethodStubImpl stub, @NotNull List<String> args) {
     final String returnType = getTypeText(Type.getReturnType(desc));
     final Type[] argTypes = Type.getArgumentTypes(desc);
     for (Type argType : argTypes) {
@@ -512,10 +502,11 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     return returnType;
   }
 
-  private static String parseMethodViaGenericSignature(final String signature,
-                                                       final PsiMethodStubImpl stub,
-                                                       final List<String> args,
-                                                       final List<String> throwables) throws ClsFormatException {
+  @NotNull
+  public static String parseMethodViaGenericSignature(@NotNull String signature,
+                                                       @NotNull PsiMethodStubImpl stub,
+                                                       @NotNull List<String> args,
+                                                       @Nullable List<String> throwables) throws ClsFormatException {
     StringCharacterIterator iterator = new StringCharacterIterator(signature);
     SignatureParsing.parseTypeParametersDeclaration(iterator, stub);
 
@@ -651,12 +642,12 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     private int myUsedParamSize = 0;
     private int myUsedParamCount = 0;
 
-    private AnnotationParamCollectingVisitor(final PsiMethodStub owner,
-                                             final PsiModifierListStub modList,
+    private AnnotationParamCollectingVisitor(@NotNull PsiMethodStub owner,
+                                             @NotNull PsiModifierListStub modList,
                                              final int ignoreCount,
                                              final int paramIgnoreCount,
                                              final int paramCount,
-                                             final PsiParameterStubImpl[] paramStubs) {
+                                             @NotNull PsiParameterStubImpl[] paramStubs) {
       super(ASM_API);
       myOwner = owner;
       myModList = modList;
@@ -758,7 +749,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
 
     if (value instanceof Double) {
-      final double d = ((Double)value).doubleValue();
+      final double d = (Double)value;
       if (Double.isInfinite(d)) {
         return d > 0 ? DOUBLE_POSITIVE_INF : DOUBLE_NEGATIVE_INF;
       }
@@ -769,7 +760,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
 
     if (value instanceof Float) {
-      final float v = ((Float)value).floatValue();
+      final float v = (Float)value;
 
       if (Float.isInfinite(v)) {
         return v > 0 ? FLOAT_POSITIVE_INF : FLOAT_NEGATIVE_INF;

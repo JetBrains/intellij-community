@@ -72,10 +72,8 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
   private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new THashSet<LocalFileSystem.WatchRequest>();
   private final boolean myDoLogCachesUpdate;
 
-  public ProjectRootManagerComponent(Project project,
-                                     DirectoryIndex directoryIndex,
-                                     StartupManager startupManager) {
-    super(project, directoryIndex);
+  public ProjectRootManagerComponent(Project project, StartupManager startupManager) {
+    super(project);
 
     myConnection = project.getMessageBus().connect(project);
     myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {

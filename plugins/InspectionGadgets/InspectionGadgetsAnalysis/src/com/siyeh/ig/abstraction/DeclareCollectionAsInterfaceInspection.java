@@ -284,8 +284,10 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
       weaklingList.remove(objectClass);
       if (weaklingList.isEmpty()) {
         final String typeText = type.getCanonicalText();
-        final String interfaceText =
-          CollectionUtils.getInterfaceForClass(typeText);
+        final String interfaceText = CollectionUtils.getInterfaceForClass(typeText);
+        if (interfaceText == null) {
+          return;
+        }
         registerError(nameElement, interfaceText);
       }
       else {

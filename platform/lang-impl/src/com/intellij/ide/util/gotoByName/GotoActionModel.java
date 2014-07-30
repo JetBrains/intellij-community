@@ -66,16 +66,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   private Pattern myCompiledPattern;
 
   protected final SearchableOptionsRegistrar myIndex;
-  protected final Map<AnAction, String> myActionsMap = new TreeMap<AnAction, String>(new Comparator<AnAction>() {
-    @Override
-    public int compare(@NotNull AnAction o1, @NotNull AnAction o2) {
-      int compare = Comparing.compare(o1.getTemplatePresentation().getText(), o2.getTemplatePresentation().getText());
-      if (compare == 0 && !o1.equals(o2)) {
-        return o1.hashCode() - o2.hashCode();
-      }
-      return compare;
-    }
-  });
+  protected final Map<AnAction, String> myActionGroups = ContainerUtil.newHashMap();
 
   protected final Map<String, ApplyIntentionAction> myIntentions = new TreeMap<String, ApplyIntentionAction>();
   private final Map<String, String> myConfigurablesNames = ContainerUtil.newTroveMap();
@@ -88,7 +79,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     myProject = project;
     myContextComponent = component;
     final ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
-    collectActions(myActionsMap, mainMenu, mainMenu.getTemplatePresentation().getText());
+    collectActions(myActionGroups, mainMenu, mainMenu.getTemplatePresentation().getText());
     if (project != null && editor != null && file != null) {
       final ApplyIntentionAction[] children = ApplyIntentionAction.getAvailableIntentions(editor, file);
       if (children != null) {
@@ -457,11 +448,14 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     else if (description != null && !description.equals(text) && matcher.matches(description, compiledPattern)) {
       return MatchMode.DESCRIPTION;
     }
-    final String groupName = myActionsMap.get(anAction);
-    if (groupName == null) {
-      return text != null && matcher.matches(text, compiledPattern) ? MatchMode.NON_MENU : MatchMode.NONE;
+    if (text == null) {
+      return MatchMode.NONE;
     }
-    return text != null && matcher.matches(groupName + " " + text, compiledPattern) ? MatchMode.GROUP : MatchMode.NONE;
+    final String groupName = myActionGroups.get(anAction);
+    if (groupName == null) {
+      return matcher.matches(text, compiledPattern) ? MatchMode.NON_MENU : MatchMode.NONE;
+    }
+    return matcher.matches(groupName + " " + text, compiledPattern) ? MatchMode.GROUP : MatchMode.NONE;
   }
 
   @Nullable
@@ -611,7 +605,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   PatternMatcher getMatcher() {
     return myMatcher.get();
   }
-  
+
   public static class ActionWrapper implements Comparable<ActionWrapper>{
     private final AnAction myAction;
     private final MatchMode myMode;

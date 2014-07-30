@@ -114,7 +114,7 @@ public class MethodSignatureUtil {
   }
 
   public static boolean areSignaturesEqual(@NotNull PsiMethod method1, @NotNull PsiMethod method2) {
-    return method1.getSignature(PsiSubstitutor.EMPTY).equals(method2.getSignature(PsiSubstitutor.EMPTY));
+    return areSignaturesEqual(method1.getSignature(PsiSubstitutor.EMPTY), method2.getSignature(PsiSubstitutor.EMPTY));
   }
 
   public static boolean areSignaturesEqual(@NotNull MethodSignature method1, @NotNull MethodSignature method2) {
@@ -172,10 +172,10 @@ public class MethodSignatureUtil {
   public static boolean isSuperMethod(@NotNull PsiMethod superMethodCandidate, @NotNull PsiMethod derivedMethod) {
     PsiClass superClassCandidate = superMethodCandidate.getContainingClass();
     PsiClass derivedClass = derivedMethod.getContainingClass();
-    if (derivedClass == null || superClassCandidate == null) return false;
-    if (!derivedClass.isInheritor(superClassCandidate, true)) return false;
-    final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClassCandidate, derivedClass,
-                                                                                        PsiSubstitutor.EMPTY);
+    if (derivedClass == null || superClassCandidate == null || derivedClass == superClassCandidate) return false;
+    final PsiSubstitutor superSubstitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(superClassCandidate, derivedClass,
+                                                                                             PsiSubstitutor.EMPTY, null);
+    if (superSubstitutor == null) return false;
     final MethodSignature superSignature = superMethodCandidate.getSignature(superSubstitutor);
     final MethodSignature derivedSignature = derivedMethod.getSignature(PsiSubstitutor.EMPTY);
     return isSubsignature(superSignature, derivedSignature);

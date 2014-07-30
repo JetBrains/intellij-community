@@ -58,7 +58,7 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
     if (isEmptyRefs(refs, headCommit)) {
       return DEFAULT_COLOR;
     }
-    VcsRef firstRef = ContainerUtil.sorted(refs, getRefManager(refs).getComparator()).get(0);
+    VcsRef firstRef = Collections.min(refs, getRefManager(refs).getComparator());
     // TODO dark variant
     return firstRef.getName().hashCode();
   }
@@ -67,7 +67,7 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
     if (refs.isEmpty()) {
       if (!myErrorWasReported.containsKey(head)) {
         myErrorWasReported.put(head, head);
-        LOG.error("No references found at head " + head + " which corresponds to hash " + myHashGetter.fun(head));
+        LOG.warn("No references found at head " + head + " which corresponds to hash " + myHashGetter.fun(head));
       }
       return true;
     }

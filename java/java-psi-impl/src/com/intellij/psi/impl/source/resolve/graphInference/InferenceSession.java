@@ -446,7 +446,7 @@ public class InferenceSession {
   }
   
   private static boolean hasPrimitiveWrapperBound(InferenceVariable inferenceVariable) {
-    final InferenceBound[] boundTypes = {InferenceBound.UPPER, InferenceBound.LOWER};
+    final InferenceBound[] boundTypes = {InferenceBound.UPPER, InferenceBound.LOWER, InferenceBound.EQ};
     for (InferenceBound inferenceBound : boundTypes) {
       final List<PsiType> bounds = inferenceVariable.getBounds(inferenceBound);
       for (PsiType bound : bounds) {

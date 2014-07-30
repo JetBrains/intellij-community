@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@ package com.siyeh.ipp.annotation;
 
 import com.siyeh.ipp.IPPTestCase;
 
+/**
+ * @see ExpandToNormalAnnotationIntention
+ */
 public class ExpandToNormalAnnotationIntentionTest extends IPPTestCase {
   public void testOneAttr() throws Exception {
     doTest();
@@ -32,7 +35,7 @@ public class ExpandToNormalAnnotationIntentionTest extends IPPTestCase {
 
   @Override
   protected String getIntentionName() {
-    return "Expand to 'value = \"foo\"'";
+    return "Add 'value=' to annotation attribute";
   }
 
   @Override

@@ -9,7 +9,7 @@ interface ResolveAndGenerateScope {
   String getDomainName();
   TypeData.Direction getTypeDirection();
 
-  <T extends ItemDescriptor> QualifiedTypeData resolveType(T typedObject);
+  <T extends ItemDescriptor> TypeDescriptor resolveType(T typedObject);
 
   BoxableType generateNestedObject(String description,
                                    List<ProtocolMetaModel.ObjectProperty> properties);

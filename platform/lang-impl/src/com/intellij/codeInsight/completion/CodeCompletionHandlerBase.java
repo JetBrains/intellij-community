@@ -71,6 +71,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class CodeCompletionHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
+  private static final Key<Boolean> CARET_PROCESSED = Key.create("CodeCompletionHandlerBase.caretProcessed");
+
   @NotNull private final CompletionType myCompletionType;
   final boolean invokedExplicitly;
   final boolean synchronous;
@@ -108,6 +110,13 @@ public class CodeCompletionHandlerBase {
   }
 
   public final void invokeCompletion(@NotNull final Project project, @NotNull final Editor editor, int time, boolean hasModifiers, boolean restarted) {
+    clearCaretMarkers(editor);
+    invokeCompletion(project, editor, time, hasModifiers, restarted, editor.getCaretModel().getPrimaryCaret());
+  }
+
+  public final void invokeCompletion(@NotNull final Project project, @NotNull final Editor editor, int time, boolean hasModifiers, boolean restarted, @NotNull final Caret caret) {
+    markCaretAsProcessed(caret);
+
     if (invokedExplicitly) {
       CompletionLookupArranger.applyLastCompletionStatisticsUpdate();
     }
@@ -162,12 +171,12 @@ public class CodeCompletionHandlerBase {
             PsiDocumentManager.getInstance(project).commitAllDocuments();
             CompletionAssertions.checkEditorValid(editor);
 
-            final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
+            final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(caret, project);
             assert psiFile != null : "no PSI file: " + FileDocumentManager.getInstance().getFile(editor.getDocument());
             psiFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
             CompletionAssertions.assertCommitSuccessful(editor, psiFile);
 
-            initializationContext[0] = runContributorsBeforeCompletion(editor, psiFile, invocationCount);
+            initializationContext[0] = runContributorsBeforeCompletion(editor, psiFile, invocationCount, caret);
           }
         };
         ApplicationManager.getApplication().runWriteAction(runnable);
@@ -186,9 +195,9 @@ public class CodeCompletionHandlerBase {
     insertDummyIdentifier(initializationContext[0], hasModifiers, invocationCount);
   }
 
-  private CompletionInitializationContext runContributorsBeforeCompletion(Editor editor, PsiFile psiFile, int invocationCount) {
+  private CompletionInitializationContext runContributorsBeforeCompletion(Editor editor, PsiFile psiFile, int invocationCount, Caret caret) {
     final Ref<CompletionContributor> current = Ref.create(null);
-    CompletionInitializationContext context = new CompletionInitializationContext(editor, psiFile, myCompletionType, invocationCount) {
+    CompletionInitializationContext context = new CompletionInitializationContext(editor, caret, psiFile, myCompletionType, invocationCount) {
       CompletionContributor dummyIdentifierChanger;
 
       @Override
@@ -400,8 +409,15 @@ public class CodeCompletionHandlerBase {
                                     final LookupElement[] items, boolean hasModifiers) {
     if (items.length == 0) {
       LookupManager.getInstance(indicator.getProject()).hideActiveLookup();
-      indicator.handleEmptyLookup(true);
-      checkNotSync(indicator, items);
+
+      Caret nextCaret = getNextCaretToProcess(indicator.getEditor());
+      if (nextCaret != null) {
+        invokeCompletion(indicator.getProject(), indicator.getEditor(), indicator.getParameters().getInvocationCount(), hasModifiers, false, nextCaret);
+      }
+      else {
+        indicator.handleEmptyLookup(true);
+        checkNotSync(indicator, items);
+      }
       return;
     }
 
@@ -865,5 +881,24 @@ public class CodeCompletionHandlerBase {
         editor.getScrollingModel().scrollVertically(vOffset);
       }
     };
+  }
+
+  private static void clearCaretMarkers(@NotNull Editor editor) {
+    for (Caret caret : editor.getCaretModel().getAllCarets()) {
+      caret.putUserData(CARET_PROCESSED, null);
+    }
+  }
+
+  private static void markCaretAsProcessed(@NotNull Caret caret) {
+    caret.putUserData(CARET_PROCESSED, Boolean.TRUE);
+  }
+
+  private static Caret getNextCaretToProcess(@NotNull Editor editor) {
+    for (Caret caret : editor.getCaretModel().getAllCarets()) {
+      if (caret.getUserData(CARET_PROCESSED) == null) {
+        return caret;
+      }
+    }
+    return null;
   }
 }

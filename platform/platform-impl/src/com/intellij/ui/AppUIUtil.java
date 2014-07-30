@@ -29,6 +29,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.List;
 import java.util.Locale;
@@ -111,9 +111,7 @@ public class AppUIUtil {
       final Toolkit toolkit = Toolkit.getDefaultToolkit();
       final Class<? extends Toolkit> aClass = toolkit.getClass();
       if ("sun.awt.X11.XToolkit".equals(aClass.getName())) {
-        final Field awtAppClassName = aClass.getDeclaredField("awtAppClassName");
-        awtAppClassName.setAccessible(true);
-        awtAppClassName.set(toolkit, getFrameClass());
+        ReflectionUtil.setField(aClass, toolkit, null, "awtAppClassName", getFrameClass());
       }
     }
     catch (Exception ignore) { }

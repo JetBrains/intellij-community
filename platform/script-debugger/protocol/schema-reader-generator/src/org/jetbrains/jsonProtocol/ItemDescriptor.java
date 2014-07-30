@@ -1,7 +1,5 @@
 package org.jetbrains.jsonProtocol;
 
-import org.chromium.protocolReader.JsonOptionalField;
-
 import java.util.List;
 
 public interface ItemDescriptor {

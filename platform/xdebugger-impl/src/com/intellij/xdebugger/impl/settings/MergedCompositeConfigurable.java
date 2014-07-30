@@ -7,6 +7,8 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.xdebugger.settings.DebuggerConfigurableProvider;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,18 +16,34 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
-abstract class MergedCompositeConfigurable implements SearchableConfigurable {
+class MergedCompositeConfigurable implements SearchableConfigurable {
   static final EmptyBorder BOTTOM_INSETS = new EmptyBorder(0, 0, IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET, 0);
+
+  private static final Insets FIRST_COMPONENT_INSETS = new Insets(0, 0, IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET, 0);
+  private static final Insets N_COMPONENT_INSETS = new Insets(IdeBorderFactory.TITLED_BORDER_TOP_INSET, 0, IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET, 0);
 
   protected final Configurable[] children;
   protected JComponent rootComponent;
 
-  protected MergedCompositeConfigurable(@NotNull Configurable[] children) {
+  private final String id;
+  private final String displayName;
+
+  public MergedCompositeConfigurable(@NotNull String id, @NotNull String displayName, @NotNull Configurable[] children) {
     this.children = children;
+    this.id = id;
+    this.displayName = displayName;
   }
 
-  protected boolean isUseTitledBorder() {
-    return true;
+  @NotNull
+  @Override
+  public String getId() {
+    return id;
+  }
+
+  @Nls
+  @Override
+  public String getDisplayName() {
+    return displayName;
   }
 
   @Nullable
@@ -44,22 +62,34 @@ abstract class MergedCompositeConfigurable implements SearchableConfigurable {
   @Override
   public JComponent createComponent() {
     if (rootComponent == null) {
+      Configurable firstConfigurable = children[0];
       if (children.length == 1) {
-        rootComponent = children[0].createComponent();
+        rootComponent = firstConfigurable.createComponent();
+        String rootComponentDisplayName = firstConfigurable.getDisplayName();
+        if (!StringUtil.isEmpty(rootComponentDisplayName) && !isTargetedToProduct(firstConfigurable)) {
+          rootComponent.setBorder(IdeBorderFactory.createTitledBorder(rootComponentDisplayName, false, FIRST_COMPONENT_INSETS));
+        }
       }
       else {
-        JPanel panel = createPanel(isUseTitledBorder());
-        for (Configurable child : children) {
-          JComponent component = child.createComponent();
+        boolean isFirstNamed = true;
+        JPanel panel = createPanel(true);
+        for (Configurable configurable : children) {
+          JComponent component = configurable.createComponent();
           assert component != null;
-          if (isUseTitledBorder()) {
-            String displayName = child.getDisplayName();
-            if (StringUtil.isEmpty(displayName)) {
-              component.setBorder(BOTTOM_INSETS);
+          String displayName = configurable.getDisplayName();
+          if (StringUtil.isEmpty(displayName)) {
+            component.setBorder(BOTTOM_INSETS);
+          }
+          else {
+            boolean addBorder = true;
+            if (isFirstNamed) {
+              isFirstNamed = false;
+              if (isTargetedToProduct(configurable)) {
+                addBorder = false;
+              }
             }
-            else {
-              Insets insets = new Insets(children[0] == child ? 0 : IdeBorderFactory.TITLED_BORDER_TOP_INSET, 0, IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET, 0);
-              component.setBorder(IdeBorderFactory.createTitledBorder(displayName, false, insets));
+            if (addBorder) {
+              component.setBorder(IdeBorderFactory.createTitledBorder(displayName, false, firstConfigurable == configurable ? FIRST_COMPONENT_INSETS : N_COMPONENT_INSETS));
             }
           }
           panel.add(component);
@@ -68,6 +98,15 @@ abstract class MergedCompositeConfigurable implements SearchableConfigurable {
       }
     }
     return rootComponent;
+  }
+
+  static boolean isTargetedToProduct(@NotNull Configurable configurable) {
+    for (DebuggerConfigurableProvider provider : DebuggerConfigurableProvider.EXTENSION_POINT.getExtensions()) {
+      if (provider.isTargetedToProduct(configurable)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull

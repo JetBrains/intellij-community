@@ -43,7 +43,7 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
   private boolean myInvalidatesPendingFurtherRequestors = true;
   private Expirable myExpirable;
 
-  public static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.FocusCommand");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.FocusCommand");
 
   public boolean isForced() {
     return myForced;

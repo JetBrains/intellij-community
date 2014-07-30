@@ -49,7 +49,8 @@ public class SliceTreeTest extends SliceTestCase {
     SliceUsage usage = SliceUsage.createRootUsage(element, params);
 
 
-    SlicePanel panel = new SlicePanel(getProject(), true, new SliceRootNode(getProject(), new DuplicateMap(), usage), false, ToolWindowHeadlessManagerImpl.HEADLESS_WINDOW) {
+    ToolWindowHeadlessManagerImpl.MockToolWindow toolWindow = new ToolWindowHeadlessManagerImpl.MockToolWindow(myProject);
+    SlicePanel panel = new SlicePanel(getProject(), true, new SliceRootNode(getProject(), new DuplicateMap(), usage), false, toolWindow) {
       @Override
       protected void close() {
       }

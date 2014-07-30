@@ -208,6 +208,10 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
     doTest("foo2");
   }
 
+  public void testRenameMethodNoCollisionWithOtherSignatureMethodRef() throws Exception {
+    doTest("foo2");
+  }
+
   public void testRenameNoStaticOverridingInInterfaces() throws Exception {
     doTest("foo");
   }

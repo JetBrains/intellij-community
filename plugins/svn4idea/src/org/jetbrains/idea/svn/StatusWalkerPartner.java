@@ -15,12 +15,11 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -34,14 +33,14 @@ import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 public class StatusWalkerPartner {
   private final SvnVcs myVcs;
   private final ChangeListManager myClManager;
-  private final FileIndexFacade myExcludedFileIndex;
+  private final ProjectLevelVcsManager myVcsManager;
   private final ProgressIndicator myIndicator;
   private ISVNStatusFileProvider myFileProvider;
 
   public StatusWalkerPartner(final SvnVcs vcs, final ProgressIndicator pi) {
     myVcs = vcs;
     myClManager = ChangeListManager.getInstance(myVcs.getProject());
-    myExcludedFileIndex = PeriodicalTasksCloser.getInstance().safeGetService(myVcs.getProject(), FileIndexFacade.class);
+    myVcsManager = ProjectLevelVcsManager.getInstance(myVcs.getProject());
     myIndicator = pi;
   }
 
@@ -75,12 +74,12 @@ public class StatusWalkerPartner {
     }
   }
 
-  public boolean isExcluded(final VirtualFile vFile) {
+  public boolean isIgnoredByVcs(final VirtualFile vFile) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
         if (myVcs.getProject().isDisposed()) throw new ProcessCanceledException();
-        return myExcludedFileIndex.isExcludedFile(vFile);
+        return myVcsManager.isIgnoredByVcs(vFile);
       }
     });
   }

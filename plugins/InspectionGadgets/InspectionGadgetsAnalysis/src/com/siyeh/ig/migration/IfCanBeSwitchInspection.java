@@ -515,7 +515,10 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     super.readSettings(node);
     for (Element child : node.getChildren("option")) {
       if (Comparing.strEqual(child.getAttributeValue("name"), ONLY_SAFE)) {
-        onlySuggestNullSafe = Boolean.parseBoolean(child.getAttributeValue("value"));
+        final String value = child.getAttributeValue("value");
+        if (value != null) {
+          onlySuggestNullSafe = Boolean.parseBoolean(value);
+        }
         break;
       }
     }

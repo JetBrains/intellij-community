@@ -39,7 +39,8 @@ public class ParameterNameFoldingManager {
     Couple.of("first", "last"),
     Couple.of("first", "second"),
     Couple.of("from", "to"),
-    Couple.of("key", "value")
+    Couple.of("key", "value"),
+    Couple.of("min", "max")
   );
 
   private final PsiCallExpression myCallExpression;
@@ -58,7 +59,8 @@ public class ParameterNameFoldingManager {
     if (callArgument instanceof PsiPrefixExpression) {
       PsiPrefixExpression expr = (PsiPrefixExpression)callArgument;
       IElementType tokenType = expr.getOperationTokenType();
-      return JavaTokenType.MINUS.equals(tokenType) && expr.getOperand() instanceof PsiLiteralExpression;
+      return (JavaTokenType.MINUS.equals(tokenType)
+              || JavaTokenType.PLUS.equals(tokenType)) && expr.getOperand() instanceof PsiLiteralExpression;
     }
 
     return false;

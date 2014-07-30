@@ -172,7 +172,7 @@ public class JUnitConfigurationModel {
     final JUnitConfiguration.Data data = configuration.getPersistentData();
     setTestType(data.TEST_OBJECT);
     setJUnitTextValue(ALL_IN_PACKAGE, data.getPackageName());
-    setJUnitTextValue(CLASS, data.getMainClassName().replaceAll("\\$", "\\."));
+    setJUnitTextValue(CLASS, data.getMainClassName() != null ? data.getMainClassName().replaceAll("\\$", "\\.") : "");
     setJUnitTextValue(METHOD, data.getMethodName());
     setJUnitTextValue(PATTERN, data.getPatternPresentation());
     setJUnitTextValue(DIR, data.getDirName());

@@ -78,7 +78,7 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
     if (collectionItemType != null) {
       final PsiClass aClass = PsiUtil.resolveClassInType(collectionItemType);
       if (aClass != null) {
-        ClassInheritorsSearch.search(aClass).forEach(new Processor<PsiClass>() {
+        ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true, true, false).forEach(new Processor<PsiClass>() {
           @Override
           public boolean process(PsiClass aClass) {
             descriptors.add(new JavaFxClassBackedElementDescriptor(aClass.getName(), aClass));

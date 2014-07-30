@@ -20,7 +20,6 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
@@ -60,6 +59,23 @@ public class InspectionFilterAction extends DefaultActionGroup {
     addSeparator();
 
     add(new ShowAvailableOnlyOnAnalyzeInspectionsAction());
+    add(new ShowOnlyCleanupInspectionsAction());
+  }
+
+  private class ShowOnlyCleanupInspectionsAction extends CheckboxAction {
+    public ShowOnlyCleanupInspectionsAction() {
+      super("Show Only Cleanup Inspections");
+    }
+
+    @Override
+    public boolean isSelected(final AnActionEvent e) {
+      return myInspectionsFilter.isShowOnlyCleanupInspections();
+    }
+
+    @Override
+    public void setSelected(final AnActionEvent e, final boolean state) {
+      myInspectionsFilter.setShowOnlyCleanupInspections(state);
+    }
   }
 
   private class ShowAvailableOnlyOnAnalyzeInspectionsAction extends CheckboxAction {

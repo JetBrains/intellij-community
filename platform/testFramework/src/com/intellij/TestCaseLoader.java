@@ -62,15 +62,24 @@ public class TestCaseLoader {
       System.out.println("Using patterns: [" + patterns +"]");
     }
     else {
-      URL excludedStream = StringUtil.isEmpty(classFilterName) ? null : getClass().getClassLoader().getResource(classFilterName);
-      if (excludedStream != null) {
-        TestClassesFilter filter;
+      List<URL> groupingFileUrls = Collections.emptyList();
+      if (!StringUtil.isEmpty(classFilterName)) {
         try {
-          List<String> testGroupNames = StringUtil.split(System.getProperty(TARGET_TEST_GROUP, "").trim(), ";");
-          InputStreamReader reader = new InputStreamReader(excludedStream.openStream());
+          groupingFileUrls = Collections.list(getClass().getClassLoader().getResources(classFilterName));
+        }
+        catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+
+      List<String> testGroupNames = StringUtil.split(System.getProperty(TARGET_TEST_GROUP, "").trim(), ";");
+      Map<String, List<String>> groups = new LinkedHashMap<String, List<String>>();
+
+      for (URL fileUrl : groupingFileUrls) {
+        try {
+          InputStreamReader reader = new InputStreamReader(fileUrl.openStream());
           try {
-            filter = GroupBasedTestClassFilter.createOn(reader, testGroupNames);
-            System.out.println("Using test groups: " + testGroupNames);
+            groups.putAll(GroupBasedTestClassFilter.readGroups(reader));
           }
           finally {
             reader.close();
@@ -78,14 +87,17 @@ public class TestCaseLoader {
         }
         catch (IOException e) {
           e.printStackTrace();
-          filter = TestClassesFilter.ALL_CLASSES;
-          System.out.println("Using all classes");
+          System.err.println("Failed to load test groups from " + fileUrl);
         }
-        myTestClassesFilter = filter;
+      }
+
+      if (groups.isEmpty()) {
+        System.out.println("Using all classes");
+        myTestClassesFilter = TestClassesFilter.ALL_CLASSES;
       }
       else {
-        myTestClassesFilter = TestClassesFilter.ALL_CLASSES;
-        System.out.println("Using all classes");
+        System.out.println("Using test groups: " + testGroupNames);
+        myTestClassesFilter = new GroupBasedTestClassFilter(groups, testGroupNames);
       }
     }
   }

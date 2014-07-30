@@ -2,7 +2,6 @@ package com.intellij.tasks.config;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.binding.BindControl;
 import com.intellij.openapi.options.binding.BindableConfigurable;
@@ -24,8 +23,7 @@ import java.awt.event.ActionListener;
  * @author Dmitry Avdeev
  */
 @SuppressWarnings({"UnusedDeclaration"})
-public class TaskConfigurable extends BindableConfigurable implements SearchableConfigurable.Parent,
-                                                                      NonDefaultProjectConfigurable, Configurable.NoScroll {
+public class TaskConfigurable extends BindableConfigurable implements SearchableConfigurable.Parent, Configurable.NoScroll {
   
   private JPanel myPanel;
 

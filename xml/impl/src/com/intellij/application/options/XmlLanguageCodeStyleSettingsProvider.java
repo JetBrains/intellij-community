@@ -17,6 +17,7 @@ package com.intellij.application.options;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.PlatformUtils;
@@ -38,6 +39,14 @@ public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSetti
       return CodeStyleAbstractPanel.readFromFile(getClass(), "preview.xml.template");
     }
     return "";
+  }
+
+  @Override
+  public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer,
+                                @NotNull SettingsType settingsType) {
+    if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
+      consumer.showStandardOptions("RIGHT_MARGIN");
+    }
   }
 
   @Override

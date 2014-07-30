@@ -24,7 +24,6 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.annotations.NotNull
-
 /**
  * @author peter
  */
@@ -195,6 +194,33 @@ class Intf {
     assert getPopupElements(new GotoClassModel2(project), 'Bar:2:3') == [c]
     assert getPopupElements(new GotoClassModel2(project), 'Bar:[2:3]') == [c]
     assert getPopupElements(new GotoClassModel2(project), 'Bar:[2,3]') == [c]
+  }
+
+  public void "test dollar"() {
+    def bar = myFixture.addClass("package foo; class Bar { class Foo {} }")
+    def foo = bar.innerClasses[0]
+    myFixture.addClass("package goo; class Goo { }")
+    assert getPopupElements(new GotoClassModel2(project), 'Bar$Foo') == [foo]
+    assert getPopupElements(new GotoClassModel2(project), 'foo.Bar$Foo') == [foo]
+    assert getPopupElements(new GotoClassModel2(project), 'foo.B$F') == [foo]
+    assert !getPopupElements(new GotoClassModel2(project), 'foo$Foo')
+    assert !getPopupElements(new GotoClassModel2(project), 'foo$Bar')
+    assert !getPopupElements(new GotoClassModel2(project), 'foo$Bar$Foo')
+    assert !getPopupElements(new GotoClassModel2(project), 'foo$Goo')
+  }
+
+  public void "test anonymous classes"() {
+    def goo = myFixture.addClass("package goo; class Goo { Runnable r = new Runnable() {}; }")
+    assert getPopupElements(new GotoClassModel2(project), 'Goo$1') == [goo]
+  }
+
+  public void "test qualified name matching"() {
+    def bar = myFixture.addClass("package foo.bar; class Bar { }")
+    def bar2 = myFixture.addClass("package goo.baz; class Bar { }")
+    assert getPopupElements(new GotoClassModel2(project), 'foo.Bar') == [bar]
+    assert getPopupElements(new GotoClassModel2(project), 'foo.bar.Bar') == [bar]
+    assert getPopupElements(new GotoClassModel2(project), 'goo.Bar') == [bar2]
+    assert getPopupElements(new GotoClassModel2(project), 'goo.baz.Bar') == [bar2]
   }
 
   public void "test super method in jdk"() {

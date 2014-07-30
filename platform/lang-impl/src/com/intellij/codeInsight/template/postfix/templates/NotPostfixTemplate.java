@@ -16,26 +16,34 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-public class NotPostfixTemplate extends ExpressionPostfixTemplateWithChooser {
+import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.selectorWithChooser;
 
-  public NotPostfixTemplate(@NotNull PostfixTemplatePsiInfoBase info) {
-    super("not", "!expr", info);
+public class NotPostfixTemplate extends PostfixTemplateWithExpressionSelector {
+
+  public NotPostfixTemplate(@NotNull PostfixTemplatePsiInfo info, @NotNull Condition<PsiElement> typeChecker) {
+    super("not", "!expr", info, selectorWithChooser(typeChecker));
   }
 
+  public NotPostfixTemplate(@NotNull PostfixTemplatePsiInfo info) {
+    super("not", "!expr", info, selectorWithChooser());
+  }
 
   public NotPostfixTemplate(@NotNull String name,
                             @NotNull String key,
                             @NotNull String example,
-                            @NotNull PostfixTemplatePsiInfoBase info) {
-    super(name, key, example, info);
+                            @NotNull PostfixTemplatePsiInfo info,
+                            @NotNull Condition<PsiElement> typeChecker
+  ) {
+    super(name, key, example, info, selectorWithChooser(typeChecker));
   }
 
   @Override
-  protected void doIt(@NotNull Editor editor, @NotNull PsiElement expression) {
-    PsiElement element = myInfo.getNegatedExpression(expression);
+  protected void expandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
+    PsiElement element = myPsiInfo.getNegatedExpression(expression);
     expression.replace(element);
   }
 }

@@ -372,31 +372,34 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     checkValid();
 
     CollectionListModel<LookupElement> listModel = getListModel();
+
+    Pair<List<LookupElement>, Integer> pair;
     synchronized (myList) {
-      Pair<List<LookupElement>, Integer> pair = myPresentableArranger.arrangeItems(this, onExplicitAction || reused);
-      List<LookupElement> items = pair.first;
-      Integer toSelect = pair.second;
-      if (toSelect == null || toSelect < 0 || items.size() > 0 && toSelect >= items.size()) {
-        LOG.error("Arranger " + myPresentableArranger + " returned invalid selection index=" + toSelect + "; items=" + items);
-      }
-
-      myOffsets.checkMinPrefixLengthChanges(items, this);
-      List<LookupElement> oldModel = listModel.toList();
-
-      listModel.removeAll();
-      if (!items.isEmpty()) {
-        listModel.add(items);
-      }
-      else {
-        addEmptyItem(listModel);
-      }
-
-      updateListHeight(listModel);
-
-      myList.setSelectedIndex(toSelect);
-      return !ContainerUtil.equalsIdentity(oldModel, items);
+      pair = myPresentableArranger.arrangeItems(this, onExplicitAction || reused);
+    }
+    
+    List<LookupElement> items = pair.first;
+    Integer toSelect = pair.second;
+    if (toSelect == null || toSelect < 0 || items.size() > 0 && toSelect >= items.size()) {
+      LOG.error("Arranger " + myPresentableArranger + " returned invalid selection index=" + toSelect + "; items=" + items);
+      toSelect = 0;
     }
 
+    myOffsets.checkMinPrefixLengthChanges(items, this);
+    List<LookupElement> oldModel = listModel.toList();
+
+    listModel.removeAll();
+    if (!items.isEmpty()) {
+      listModel.add(items);
+    }
+    else {
+      addEmptyItem(listModel);
+    }
+
+    updateListHeight(listModel);
+
+    myList.setSelectedIndex(toSelect);
+    return !ContainerUtil.equalsIdentity(oldModel, items);
   }
 
   private boolean isSelectionVisible() {
@@ -566,7 +569,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
         public void perform(Caret caret) {
           EditorModificationUtil.deleteSelectedText(hostEditor);
           final int caretOffset = hostEditor.getCaretModel().getOffset();
-          int lookupStart = caretOffset - prefix;
+          int lookupStart = Math.max(caretOffset - prefix, 0);
 
           int len = hostEditor.getDocument().getTextLength();
           LOG.assertTrue(lookupStart >= 0 && lookupStart <= len,

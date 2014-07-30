@@ -57,6 +57,9 @@
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter" />
 
+    <applicationService serviceInterface="com.intellij.openapi.editor.EditorCopyPasteHelper"
+                        serviceImplementation="com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl" />
+
     <applicationService serviceImplementation="com.intellij.openapi.options.ex.IdeConfigurablesGroup"/>
 
     <applicationService serviceInterface="com.intellij.diagnostic.ErrorReportConfigurable"
@@ -190,7 +193,8 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.VcsFileListenerContextHelper"
                     serviceImplementation="com.intellij.openapi.vcs.VcsFileListenerContextHelper"/>
 
-    <projectService serviceImplementation="com.intellij.openapi.editor.LazyRangeMarkerFactory"/>
+    <projectService serviceInterface="com.intellij.openapi.editor.LazyRangeMarkerFactory"
+                    serviceImplementation="com.intellij.openapi.editor.impl.LazyRangeMarkerFactoryImpl"/>
 
     <!-- General -->
     <applicationConfigurable groupId="appearance" key="title.general" bundle="messages.IdeBundle" id="preferences.general" instance="com.intellij.ide.GeneralSettingsConfigurable"/>

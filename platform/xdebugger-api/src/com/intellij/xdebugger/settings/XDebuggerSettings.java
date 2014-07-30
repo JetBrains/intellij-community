@@ -23,6 +23,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * Implement this class to provide settings page for debugger. Settings page will be placed under 'Debugger' node in the 'Settings' dialog.
  * An implementation should be registered in plugin.xml:
@@ -34,10 +37,6 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public abstract class XDebuggerSettings<T> implements PersistentStateComponent<T> {
-  public enum Category {
-    ROOT, DATA_VIEWS, STEPPING
-  }
-
   public static final ExtensionPointName<XDebuggerSettings> EXTENSION_POINT = ExtensionPointName.create("com.intellij.xdebugger.settings");
 
   private final String myId;
@@ -55,15 +54,23 @@ public abstract class XDebuggerSettings<T> implements PersistentStateComponent<T
   }
 
   @Nullable
+  @Deprecated
+  /**
+   * @deprecated Please use {@link #createConfigurables(DebuggerSettingsCategory)}
+   */
   public Configurable createConfigurable() {
     return null;
   }
 
-  @Nullable
-  public Configurable createConfigurable(@NotNull Category category) {
-    return null;
+  @NotNull
+  public Collection<? extends Configurable> createConfigurables(@NotNull DebuggerSettingsCategory category) {
+    return Collections.emptyList();
   }
 
-  public void generalApplied(@NotNull Category category) {
+  public void generalApplied(@NotNull DebuggerSettingsCategory category) {
+  }
+
+  public boolean isTargetedToProduct(@NotNull Configurable configurable) {
+    return false;
   }
 }

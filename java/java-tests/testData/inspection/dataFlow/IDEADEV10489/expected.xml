@@ -7,7 +7,7 @@
   </problem>
   <problem>
     <file>IDEADEV10489.java</file>
-    <line>12</line>
+    <line>8</line>
     <description>Method invocation 's.length()' may produce NullPointerException</description>
   </problem>
 </problems>

@@ -23,8 +23,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.text.CharArrayUtil;
@@ -37,10 +39,12 @@ public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
   private static final Logger LOG = Logger.getInstance(IndentingBackspaceHandler.class);
 
   private boolean caretWasAtLineStart;
+  private int initialCaretOffset;
 
   @Override
   public void beforeCharDeleted(char c, PsiFile file, Editor editor) {
     caretWasAtLineStart = editor.getCaretModel().getLogicalPosition().column == 0;
+    initialCaretOffset = editor.getCaretModel().getOffset();
   }
 
   @Override
@@ -68,8 +72,12 @@ public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
       return false;
     }
 
-    CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(editor.getProject());
-    String indent = codeStyleFacade.getLineIndent(document, lineStartOffset);
+    Project project = file.getProject();
+    CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(project);
+    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+    // We should calculate indent at line containing the text after caret, cause that text might affect the result (e.g. closing brace in Java)
+    String indent = codeStyleFacade.getLineIndent(document, caretWasAtLineStart && psiDocumentManager.isUncommited(document)
+                                                            ? initialCaretOffset : lineStartOffset);
     if (indent == null) {
       return false;
     }

@@ -19,7 +19,7 @@ abstract class MemberScope implements ResolveAndGenerateScope {
   }
 
   @Override
-  public <T extends ItemDescriptor> QualifiedTypeData resolveType(T typedObject) {
+  public <T extends ItemDescriptor> TypeDescriptor resolveType(T typedObject) {
     return classScope.generator.generator.resolveType(typedObject, this);
   }
 

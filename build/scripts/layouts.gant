@@ -805,8 +805,9 @@ def layout_core(String home, String target) {
       module("annotations")
     }
 
-    jar("intellij-core-analysis-api.jar") {
+    jar("intellij-core-analysis.jar") {
       analysisApiModules.each { module it; }
+      analysisImplModules.each { module it; }
     }
 
     fileset(dir: "$home/lib") {
