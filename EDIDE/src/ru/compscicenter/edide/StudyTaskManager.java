@@ -47,6 +47,7 @@ import java.util.Map;
 public class StudyTaskManager implements ProjectComponent, PersistentStateComponent<Element> {
   public static final String COURSE_ELEMENT = "courseElement";
   private static Map<String, StudyTaskManager> myTaskManagers = new HashMap<String, StudyTaskManager>();
+  private static Map<String, String> myDeletedShortcuts = new HashMap<String, String>();
   private final Project myProject;
   private Course myCourse;
 
@@ -103,16 +104,15 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
                 factory.createToolWindowContent(myProject, newWindow);
                 newWindow.setIcon(StudyIcons.ShortcutReminder);
                 newWindow.show(null);
-
               }
+              addShortcut("ctrl pressed PERIOD", "NextWindow");
+              addShortcut("ctrl pressed COMMA", "PrevWindowAction");
+              addShortcut("ctrl pressed 7", "ShowHintAction");
             }
           }
         });
       }
     });
-    addShortcut("ctrl pressed PERIOD", "NextWindow");
-    addShortcut("ctrl pressed COMMA", "PrevWindowAction");
-    addShortcut("ctrl pressed 7", "ShowHintAction");
   }
 
   private void addShortcut(String shortcutString, String actionIdString) {
@@ -120,6 +120,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     Shortcut studyActionShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(shortcutString), null);
     String[] actionsIds = keymap.getActionIds(studyActionShortcut);
     for (String actionId : actionsIds) {
+      myDeletedShortcuts.put(actionId, shortcutString);
       keymap.removeShortcut(actionId, studyActionShortcut);
     }
     keymap.addShortcut(actionIdString, studyActionShortcut);
@@ -131,6 +132,13 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     if (myCourse != null) {
       ToolWindowManager.getInstance(myProject).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW).getContentManager()
         .removeAllContents(false);
+      if (!myDeletedShortcuts.isEmpty()) {
+        for (Map.Entry<String, String> shortcut : myDeletedShortcuts.entrySet()) {
+          Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+          Shortcut actionShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(shortcut.getValue()), null);
+          keymap.addShortcut(shortcut.getKey(), actionShortcut);
+        }
+      }
     }
   }
 
