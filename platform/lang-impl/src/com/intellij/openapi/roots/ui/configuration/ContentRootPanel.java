@@ -36,6 +36,7 @@ import com.intellij.ui.roots.IconActionComponent;
 import com.intellij.ui.roots.ResizingWrapper;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -59,10 +60,22 @@ import java.util.Map;
  */
 public abstract class ContentRootPanel extends JPanel {
   private static final Color EXCLUDED_COLOR = new JBColor(new Color(0x992E00), DarculaColors.RED);
-  private static final Color SELECTED_HEADER_COLOR = new JBColor(new Color(0xDEF2FF), UIUtil.getPanelBackground().darker());
+  private static final Color SELECTED_HEADER_COLOR = new JBColor(new NotNullProducer<Color>() {
+    @NotNull
+    @Override
+    public Color produce() {
+      return  UIUtil.isUnderDarcula() ? UIUtil.getPanelBackground().darker() : new Color(0xDEF2FF);
+    }
+  });
   private static final Color HEADER_COLOR = new JBColor(new Color(0xF5F5F5), Gray._82);
   private static final Color SELECTED_CONTENT_COLOR = new Color(0xF0F9FF);
-  private static final Color CONTENT_COLOR = new JBColor(Color.WHITE, UIUtil.getPanelBackground());
+  private static final Color CONTENT_COLOR = new JBColor(new NotNullProducer<Color>() {
+    @NotNull
+    @Override
+    public Color produce() {
+      return UIUtil.isUnderDarcula() ? UIUtil.getPanelBackground() : Gray._255;
+    }
+  });
   private static final Color UNSELECTED_TEXT_COLOR = Gray._51;
 
   protected final ActionCallback myCallback;
