@@ -67,7 +67,7 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
     WebBrowserManager browserManager = WebBrowserManager.getInstance();
     DefaultBrowserPolicy defaultBrowserPolicy = browserManager.getDefaultBrowserPolicy();
     if (defaultBrowserPolicy == DefaultBrowserPolicy.FIRST || (defaultBrowserPolicy == DefaultBrowserPolicy.SYSTEM && !BrowserLauncherAppless.canUseSystemDefaultBrowserPolicy())) {
-      return browserManager.getDefaultBrowser();
+      return browserManager.getFirstActiveBrowser();
     }
     else if (defaultBrowserPolicy == DefaultBrowserPolicy.ALTERNATIVE) {
       String path = GeneralSettings.getInstance().getBrowserPath();

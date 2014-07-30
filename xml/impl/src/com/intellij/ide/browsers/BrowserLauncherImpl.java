@@ -18,6 +18,7 @@ package com.intellij.ide.browsers;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -25,13 +26,29 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.URI;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 final class BrowserLauncherImpl extends BrowserLauncherAppless {
+  @Override
+  protected void browseUsingNotSystemDefaultBrowserPolicy(@NotNull URI uri, @NotNull GeneralSettings settings, @Nullable Project project) {
+    WebBrowserManager browserManager = WebBrowserManager.getInstance();
+    if (browserManager.getDefaultBrowserPolicy() == DefaultBrowserPolicy.FIRST) {
+      WebBrowser browser = browserManager.getFirstActiveBrowser();
+      if (browser != null) {
+        browseUsingPath(uri.toString(), null, browser, project, ArrayUtil.EMPTY_STRING_ARRAY);
+        return;
+      }
+    }
+
+    super.browseUsingNotSystemDefaultBrowserPolicy(uri, settings, project);
+  }
+
   @Override
   protected void doShowError(@Nullable final String error, @Nullable final WebBrowser browser, @Nullable final Project project, final String title, @Nullable final Runnable launchTask) {
     AppUIUtil.invokeOnEdt(new Runnable() {

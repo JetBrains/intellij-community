@@ -354,19 +354,18 @@ final class BrowserSettingsPanel {
   }
 
   public void reset() {
-    GeneralSettings settings = GeneralSettings.getInstance();
-
-    boolean canUseSystemDefaultBrowserPolicy = BrowserLauncherAppless.canUseSystemDefaultBrowserPolicy();
-
     DefaultBrowserPolicy defaultBrowserPolicy = WebBrowserManager.getInstance().getDefaultBrowserPolicy();
-    defaultBrowserPolicyComboBox.setSelectedItem(defaultBrowserPolicy == DefaultBrowserPolicy.SYSTEM && !canUseSystemDefaultBrowserPolicy ? DefaultBrowserPolicy.ALTERNATIVE : defaultBrowserPolicy);
+    DefaultBrowserPolicy effectiveDefaultBrowserPolicy = defaultBrowserPolicy == DefaultBrowserPolicy.SYSTEM && !BrowserLauncherAppless.canUseSystemDefaultBrowserPolicy()
+                                                         ? DefaultBrowserPolicy.ALTERNATIVE : defaultBrowserPolicy;
+    defaultBrowserPolicyComboBox.setSelectedItem(effectiveDefaultBrowserPolicy);
 
+    GeneralSettings settings = GeneralSettings.getInstance();
     confirmExtractFiles.setSelected(settings.isConfirmExtractFiles());
     browsersEditor.reset(WebBrowserManager.getInstance().getList());
 
     customPathValue = settings.getBrowserPath();
-    alternativeBrowserPathField.setEnabled(defaultBrowserPolicy == DefaultBrowserPolicy.ALTERNATIVE || !canUseSystemDefaultBrowserPolicy);
-    updateCustomPathTextFieldValue(defaultBrowserPolicy);
+    alternativeBrowserPathField.setEnabled(effectiveDefaultBrowserPolicy == DefaultBrowserPolicy.ALTERNATIVE);
+    updateCustomPathTextFieldValue(effectiveDefaultBrowserPolicy);
   }
 
   public void selectBrowser(@NotNull WebBrowser browser) {

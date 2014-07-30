@@ -345,9 +345,9 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
   }
 
   @Nullable
-  public WebBrowser getDefaultBrowser() {
+  public WebBrowser getFirstActiveBrowser() {
     for (ConfigurableWebBrowser browser : browsers) {
-      if (browser.isActive()) {
+      if (browser.isActive() && browser.getPath() != null) {
         return browser;
       }
     }

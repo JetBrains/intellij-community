@@ -145,6 +145,10 @@ public class BrowserLauncherAppless extends BrowserLauncher {
       }
     }
 
+    browseUsingNotSystemDefaultBrowserPolicy(uri, settings, project);
+  }
+
+  protected void browseUsingNotSystemDefaultBrowserPolicy(@NotNull URI uri, @NotNull GeneralSettings settings, @Nullable Project project) {
     browseUsingPath(uri.toString(), settings.getBrowserPath(), null, project, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
