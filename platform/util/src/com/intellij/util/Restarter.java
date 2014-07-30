@@ -38,7 +38,17 @@ import java.util.List;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class Restarter {
+  private static String restarterDir = null;
+
   private Restarter() {
+  }
+
+  public static void setRestarterDir(String dir) {
+    restarterDir = dir;
+  }
+
+  private static String getRestarterDir() {
+    return restarterDir;
   }
 
   private static int getRestartCode() {
@@ -170,7 +180,9 @@ public class Restarter {
 //    File dir = new File(System.getProperty("user.home") + "/." + "__TEST__");
 //    File dir = new File(System.getProperty("user.home") + File.pathSeparator + "." + ApplicationNamesInfo.getInstance().getProductName());
 //    System.out.println("pathToLauncher: " + dir.getPath());
-    File copy = new File(System.getProperty("user.home") + "/." + "__TEST__/" + executable.getName() );
+//    File copy = new File(System.getProperty("user.home") + "/." + "__TEST__/" + executable.getName() );
+    File copy = new File(getRestarterDir() + executable.getName() );
+
 /*    String ext = FileUtilRt.getExtension(executable.getName());
     File copy = FileUtilRt.createTempFile(dir, FileUtilRt.getNameWithoutExtension(executable.getName()),
                                           StringUtil.isEmptyOrSpaces(ext) ? ".tmp" : ("." + dir),

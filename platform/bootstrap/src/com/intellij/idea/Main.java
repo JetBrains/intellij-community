@@ -149,6 +149,7 @@ public class Main {
         File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
         File userDir = new File(System.getProperty("user.home") + "/." + ApplicationNamesInfo.getInstance().getProductName());
         System.out.println("pathToLauncher: " + userDir.getPath());
+        Restarter.setRestarterDir(userDir.getPath());
 //        File restarter = new File(PathManager.getBinPath(), "restarter.exe");
 //        Restarter.createTempExecutable(userDir, restarter);
         args.add(Restarter.createTempExecutableLauncher(launcher).getPath());
