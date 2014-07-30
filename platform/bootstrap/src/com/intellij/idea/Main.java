@@ -149,7 +149,7 @@ public class Main {
         String userDir = System.getProperty("user.home") + "/." + ApplicationNamesInfo.getInstance().getProductName();
         File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
         //File userDir = new File(System.getProperty("user.home") + "/." + ApplicationNamesInfo.getInstance().getProductName());
-        System.out.println("pathToLauncher: " + userDir.getPath());
+        System.out.println("pathToLauncher: " + userDir);
         if (!FileUtilRt.delete(new File(userDir + "/VistaLauncher.exe")) || !FileUtilRt.delete(new File(userDir + "/restarter.exe"))) {
           throw new IOException("Cannot delete launchers in " + userDir);
         }else {
