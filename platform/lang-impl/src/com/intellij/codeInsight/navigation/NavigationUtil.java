@@ -456,7 +456,15 @@ public final class NavigationUtil {
 
   @NotNull
   public static List<GotoRelatedItem> collectRelatedItems(@NotNull PsiElement contextElement, @Nullable DataContext dataContext) {
-    Set<GotoRelatedItem> items = ContainerUtil.newTreeSet(new Comparator<GotoRelatedItem>() {
+    Set<GotoRelatedItem> items = ContainerUtil.newLinkedHashSet();
+    for (GotoRelatedProvider provider : Extensions.getExtensions(GotoRelatedProvider.EP_NAME)) {
+      items.addAll(provider.getItems(contextElement));
+      if (dataContext != null) {
+        items.addAll(provider.getItems(dataContext));
+      }
+    }
+    GotoRelatedItem[] result = items.toArray(new GotoRelatedItem[items.size()]);
+    Arrays.sort(result, new Comparator<GotoRelatedItem>() {
       @Override
       public int compare(GotoRelatedItem i1, GotoRelatedItem i2) {
         String o1 = i1.getGroup();
@@ -464,12 +472,6 @@ public final class NavigationUtil {
         return StringUtil.isEmpty(o1) ? 1 : StringUtil.isEmpty(o2) ? -1 : o1.compareTo(o2);
       }
     });
-    for (GotoRelatedProvider provider : Extensions.getExtensions(GotoRelatedProvider.EP_NAME)) {
-      items.addAll(provider.getItems(contextElement));
-      if (dataContext != null) {
-        items.addAll(provider.getItems(dataContext));
-      }
-    }
-    return ContainerUtil.newArrayList(items);
+    return Arrays.asList(result);
   }
 }
