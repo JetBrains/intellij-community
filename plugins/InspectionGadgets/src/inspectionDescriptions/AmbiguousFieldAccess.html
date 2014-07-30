@@ -12,8 +12,8 @@ accessed, when in fact a field from the super class is accessed. To make the int
 <b>class</b> Y {
   <b>void</b> foo(String s) {
     <b>new</b> X() {{
-      System.out.println(s); // problem indicated here
-    }}
+      System.out.println(s); // here the field is accessed not the parameter
+    }};
   }
 }
 </code></pre>
