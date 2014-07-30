@@ -272,12 +272,8 @@ public class PatternCompiler {
 
     element.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
-        super.visitElement(element);
-
-        if (!(element instanceof PsiErrorElement)) {
-          return;
-        }
+      public void visitErrorElement(PsiErrorElement element) {
+        super.visitErrorElement(element);
 
         final int startOffset = element.getTextRange().getStartOffset();
 

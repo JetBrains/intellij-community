@@ -170,7 +170,7 @@ public class BuiltInServer implements Disposable {
 
     @Override
     protected boolean process(ChannelHandlerContext context, FullHttpRequest request, QueryStringDecoder urlDecoder) throws IOException {
-      return (request.getMethod() == HttpMethod.POST || request.getMethod() == HttpMethod.OPTIONS) &&
+      return (request.method() == HttpMethod.POST || request.method() == HttpMethod.OPTIONS) &&
              XmlRpcServer.SERVICE.getInstance().process(urlDecoder.path(), request, context, handlers);
     }
   }

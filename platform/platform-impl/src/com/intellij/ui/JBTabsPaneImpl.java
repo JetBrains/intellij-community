@@ -65,7 +65,7 @@ public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
           maxOffset++;
           g2d.setPaint(UIUtil.getPanelBackground());
           g2d.fillRect(clip.x + maxOffset, clip.y, clip.width - maxOffset, clip.y + maxLength - TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT);
-          g2d.setPaint(new JBColor(Gray._181, Gray._158));
+          g2d.setPaint(new JBColor(Gray._181, UIUtil.getPanelBackground()));
           g2d.drawLine(clip.x + maxOffset, clip.y + maxLength - TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT, clip.x + clip.width, clip.y + maxLength - TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT);
           g2d.setPaint(UIUtil.getPanelBackground());
           g2d.drawLine(clip.x, clip.y + maxLength, clip.width, clip.y + maxLength);

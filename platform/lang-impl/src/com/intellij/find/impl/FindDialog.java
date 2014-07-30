@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -50,8 +49,6 @@ import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
-import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
@@ -60,7 +57,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Arrays;
@@ -603,18 +599,7 @@ public class FindDialog extends DialogWrapper {
     regExPanel.setLayout(new BoxLayout(regExPanel, BoxLayout.X_AXIS));
     regExPanel.add(myCbRegularExpressions);
 
-    regExPanel.add(new LinkLabel("[Help]", null, new LinkListener() {
-      @Override
-      public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        try {
-          final JBPopup helpPopup = RegExHelpPopup.createRegExHelpPopup();
-          helpPopup.showInCenterOf(regExPanel);
-        }
-        catch (BadLocationException e) {
-          LOG.info(e);
-        }
-      }
-    }));
+    regExPanel.add(RegExHelpPopup.createRegExLink("[Help]", regExPanel, LOG));
 
     findOptionsPanel.add(regExPanel);
 

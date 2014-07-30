@@ -1205,7 +1205,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   public JComponent getTree() {
-    return myTreeTable.getTree();
+    return myTreeTable == null ? null : myTreeTable.getTree();
   }
 
   private class MyFilterComponent extends FilterComponent {

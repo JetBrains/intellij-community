@@ -26,6 +26,7 @@ import com.intellij.structuralsearch.plugin.StructuralReplaceAction;
 import com.intellij.structuralsearch.plugin.StructuralSearchAction;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
+import com.intellij.ui.HintHint;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +42,7 @@ import java.awt.*;
 public class UIUtil {
   static Key<SubstitutionShortInfoHandler> LISTENER_KEY = Key.create("sslistener.key");
   private static final String MODIFY_EDITOR_CONTENT = SSRBundle.message("modify.editor.content.command.name");
+  private static final TooltipGroup SS_INFO_TOOLTIP_GROUP = new TooltipGroup("SS_INFO_TOOLTIP_GROUP", 0);
   @NonNls private static final String SS_GROUP = "structuralsearchgroup";
 
   @NotNull
@@ -212,22 +214,27 @@ public class UIUtil {
     }
   }
 
-  static void showTooltip(@NotNull Editor editor, final int start, int end, @NotNull String text, @NotNull TooltipGroup group) {
-    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    Point top = editor.logicalPositionToXY(editor.offsetToLogicalPosition(start));
+  static void showTooltip(@NotNull Editor editor, final int start, int end, @NotNull String text) {
+    final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    final Point left = editor.logicalPositionToXY(editor.offsetToLogicalPosition(start));
     final int documentLength = editor.getDocument().getTextLength();
     if (end >= documentLength) end = documentLength;
-    Point bottom = editor.logicalPositionToXY(editor.offsetToLogicalPosition(end));
+    final Point right = editor.logicalPositionToXY(editor.offsetToLogicalPosition(end));
 
-    Point bestPoint = new Point(top.x, bottom.y + editor.getLineHeight());
+    final Point bestPoint = new Point(left.x + (right.x - left.x) / 2, right.y + editor.getLineHeight() / 2);
 
-    if (!visibleArea.contains(bestPoint)) {
-      int defaultOffset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(new Point(0, 0)));
-      bestPoint = editor.logicalPositionToXY(editor.offsetToLogicalPosition(defaultOffset));
+    if (visibleArea.x > bestPoint.x) {
+      bestPoint.x = visibleArea.x;
+    }
+    else if (visibleArea.x + visibleArea.width < bestPoint.x) {
+      bestPoint.x = visibleArea.x + visibleArea.width - 5;
     }
 
-    Point p = SwingUtilities.convertPoint(editor.getContentComponent(), bestPoint, editor.getComponent().getRootPane().getLayeredPane());
-    TooltipController.getInstance().showTooltip(editor, p, text, false, group);
+    final Point p = SwingUtilities.convertPoint(editor.getContentComponent(), bestPoint,
+                                                editor.getComponent().getRootPane().getLayeredPane());
+    final HintHint hint = new HintHint(editor, bestPoint).setAwtTooltip(true).setHighlighterType(true)
+      .setCalloutShift(editor.getLineHeight() / 2 - 1);
+    TooltipController.getInstance().showTooltip(editor, p, text, visibleArea.width, false, SS_INFO_TOOLTIP_GROUP, hint);
   }
 
   public static void updateHighlighter(Editor editor, StructuralSearchProfile profile) {

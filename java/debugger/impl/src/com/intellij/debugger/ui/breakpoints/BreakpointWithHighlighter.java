@@ -17,10 +17,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.CommonBundle;
 import com.intellij.debugger.*;
-import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.JVMNameUtil;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -300,10 +297,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   public void createRequest(@NotNull DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     // check is this breakpoint is enabled, vm reference is valid and there're no requests created yet
-    if (!isEnabled() ||
-        !debugProcess.isAttached() ||
-        isMuted(debugProcess) ||
-        !debugProcess.getRequestsManager().findRequests(this).isEmpty()) {
+    if (!shouldCreateRequest(debugProcess)) {
       return;
     }
 

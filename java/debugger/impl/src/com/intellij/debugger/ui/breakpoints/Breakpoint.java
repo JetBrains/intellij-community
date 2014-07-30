@@ -46,6 +46,7 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
@@ -95,7 +96,15 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
    * Request for creating all needed JPDA requests in the specified VM
    * @param debuggerProcess the requesting process
    */
-  public abstract void createRequest(DebugProcessImpl debuggerProcess);
+  public abstract void createRequest(DebugProcessImpl debugProcess);
+
+  protected boolean shouldCreateRequest(DebugProcessImpl debugProcess) {
+    JavaDebugProcess process = debugProcess.getXdebugProcess();
+    return process != null
+           && debugProcess.isAttached()
+           && ((XDebugSessionImpl)process.getSession()).isBreakpointActive(myXBreakpoint)
+           && debugProcess.getRequestsManager().findRequests(this).isEmpty();
+  }
 
   /**
    * Request for creating all needed JPDA requests in the specified VM

@@ -100,8 +100,7 @@ public class GeneratedParserUtilBase {
     if (!goodMarker) return false;
     ErrorState state = ErrorState.get(builder_);
 
-    Frame frame = state.frameStack.peekLast();
-    return frame == null || frame.errorReportedAt <= builder_.rawTokenIndex();
+    return !state.frameStack.isEmpty();
   }
 
   public static TokenSet create_token_set_(IElementType... tokenTypes_) {
