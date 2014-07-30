@@ -992,7 +992,16 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public void setLineNumberAreaWidth(@NotNull TIntFunction calculator) {
-    final int lineNumberAreaWidth = calculator.execute(myLineNumberConvertor.execute(endLineNumber()));
+    int maxLineNumber = 0;
+    for (int i = endLineNumber(); i >= 0; i--) {
+      int number = myLineNumberConvertor.execute(i);
+      if (number >= 0) {
+        maxLineNumber = number;
+        break;
+      }
+    }
+
+    final int lineNumberAreaWidth = calculator.execute(maxLineNumber);
     if (myLineNumberAreaWidth != lineNumberAreaWidth) {
       myLineNumberAreaWidth = lineNumberAreaWidth;
       fireResized();
