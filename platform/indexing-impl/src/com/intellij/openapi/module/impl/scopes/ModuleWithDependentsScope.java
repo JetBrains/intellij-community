@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,19 +36,21 @@ import java.util.Set;
 /**
  * @author max
  */
-class ModuleWithDependentsScope extends GlobalSearchScope {
+public class ModuleWithDependentsScope extends GlobalSearchScope {
   private final Module myModule;
+  private final boolean myOnlyTests;
 
   private final ProjectFileIndex myProjectFileIndex;
   private final Set<Module> myModules;
   private final GlobalSearchScope myProjectScope;
 
-  ModuleWithDependentsScope(@NotNull Module module) {
+  public ModuleWithDependentsScope(Module module, boolean onlyTests) {
     super(module.getProject());
     myModule = module;
+    myOnlyTests = onlyTests;
 
-    myProjectFileIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
-    myProjectScope = ProjectScope.getProjectScope(module.getProject());
+    myProjectFileIndex = ProjectRootManager.getInstance(myModule.getProject()).getFileIndex();
+    myProjectScope = ProjectScope.getProjectScope(myModule.getProject());
 
     myModules = buildDependents(myModule);
   }
@@ -56,7 +58,7 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
   private static Set<Module> buildDependents(Module module) {
     Set<Module> result = new THashSet<Module>();
     result.add(module);
-    
+
     Set<Module> processedExporting = new THashSet<Module>();
 
     ModuleIndex index = getModuleIndex(module.getProject());
@@ -85,49 +87,42 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
 
   private static ModuleIndex getModuleIndex(final Project project) {
     return CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<ModuleIndex>() {
-        @Nullable
-        @Override
-        public Result<ModuleIndex> compute() {
-          ModuleIndex index = new ModuleIndex();
-          for (Module module : ModuleManager.getInstance(project).getModules()) {
-            for (OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
-              if (orderEntry instanceof ModuleOrderEntry) {
-                Module referenced = ((ModuleOrderEntry)orderEntry).getModule();
-                if (referenced != null) {
-                  MultiMap<Module, Module> map = ((ModuleOrderEntry)orderEntry).isExported() ? index.exportingUsages : index.plainUsages;
-                  map.putValue(referenced, module);
-                }
+      @Nullable
+      @Override
+      public Result<ModuleIndex> compute() {
+        ModuleIndex index = new ModuleIndex();
+        for (Module module : ModuleManager.getInstance(project).getModules()) {
+          for (OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+            if (orderEntry instanceof ModuleOrderEntry) {
+              Module referenced = ((ModuleOrderEntry)orderEntry).getModule();
+              if (referenced != null) {
+                MultiMap<Module, Module> map = ((ModuleOrderEntry)orderEntry).isExported() ? index.exportingUsages : index.plainUsages;
+                map.putValue(referenced, module);
               }
             }
           }
-          return Result.create(index, ProjectRootManager.getInstance(project));
         }
-      });
+        return Result.create(index, ProjectRootManager.getInstance(project));
+      }
+    });
   }
 
-  @Override
   public boolean contains(@NotNull VirtualFile file) {
-    return contains(file, false);
-  }
-
-  boolean contains(@NotNull VirtualFile file, boolean myOnlyTests) {
     Module moduleOfFile = myProjectFileIndex.getModuleForFile(file);
-    if (moduleOfFile == null || !myModules.contains(moduleOfFile)) return false;
+    if (moduleOfFile == null) return false;
+    if (!myModules.contains(moduleOfFile)) return false;
     if (myOnlyTests && !myProjectFileIndex.isInTestSourceContent(file)) return false;
     return myProjectScope.contains(file);
   }
 
-  @Override
   public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
     return 0;
   }
 
-  @Override
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
     return myModules.contains(aModule);
   }
 
-  @Override
   public boolean isSearchInLibraries() {
     return false;
   }
@@ -143,7 +138,10 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
 
     final ModuleWithDependentsScope moduleWithDependentsScope = (ModuleWithDependentsScope)o;
 
-    return myModule.equals(moduleWithDependentsScope.myModule);
+    if (myOnlyTests != moduleWithDependentsScope.myOnlyTests) return false;
+    if (!myModule.equals(moduleWithDependentsScope.myModule)) return false;
+
+    return true;
   }
 
   public int hashCode() {
