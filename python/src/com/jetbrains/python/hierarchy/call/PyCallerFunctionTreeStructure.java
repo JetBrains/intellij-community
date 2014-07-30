@@ -32,10 +32,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.debugger.PyHierarchyCallCacheManager;
 import com.jetbrains.python.debugger.PyHierarchyCallerData;
-import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -73,6 +71,32 @@ public class PyCallerFunctionTreeStructure extends HierarchyTreeStructure {
     }
 
     List<PyCallHierarchyNodeDescriptor> descriptors = new ArrayList<PyCallHierarchyNodeDescriptor>();
+
+    final List<UsageInfo> usages = Lists.newArrayList();
+    usages.addAll(PyRefactoringUtil.findUsages(function, false));
+    final List<PsiElement> references = Lists.newArrayList();
+    for (UsageInfo usage: usages) {
+      PsiElement element = usage.getElement().getParent();
+
+      if (element instanceof PyArgumentList) {
+        PyCallExpression callExpression = (PyCallExpression)element.getParent();
+        PsiElement def = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
+        if (def instanceof PyFunction) {
+          descriptors.add(new PyCallHierarchyNodeDescriptor(myProject, null, def, false, false));
+        }
+      }
+
+      if (element instanceof PyCallExpression) {
+        PsiElement functionDef = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+        if (functionDef instanceof PyFunction) {
+          descriptors.add(new PyCallHierarchyNodeDescriptor(myProject, null, functionDef, false, false));
+        }
+      }
+
+      if (element != null) {
+        references.add(element);
+      }
+    }
 
     PyHierarchyCallCacheManager callCacheManager = PyHierarchyCallCacheManager.getInstance(myProject);
     Object[] callers = callCacheManager.findFunctionCallers(function);
