@@ -10,17 +10,17 @@ import ru.compscicenter.edide.StudyTaskManager;
  * data: 7/29/14.
  */
 public class StudyCondition implements Condition, DumbAware {
-  public static boolean myValue = false;
+  public static boolean VALUE = false;
   @Override
   public boolean value(Object o) {
-    if (myValue) {
+    if (VALUE) {
       return true;
     }
     if (o instanceof Project) {
       Project project = (Project) o;
       StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
       if (taskManager.getCourse() != null) {
-        myValue = true;
+        VALUE = true;
         return true;
       }
     }

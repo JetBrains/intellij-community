@@ -128,7 +128,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
 
   @Override
   public void projectClosed() {
-    StudyCondition.myValue = false;
+    StudyCondition.VALUE = false;
     if (myCourse != null) {
       ToolWindowManager.getInstance(myProject).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW).getContentManager()
         .removeAllContents(false);

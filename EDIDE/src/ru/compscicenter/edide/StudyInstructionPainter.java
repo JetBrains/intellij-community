@@ -20,7 +20,7 @@ import java.awt.*;
 public class StudyInstructionPainter extends EditorEmptyTextPainter {
   @Override
   public void paintEmptyText(final EditorsSplitters splitters, Graphics g) {
-    if (!StudyCondition.myValue) {
+    if (!StudyCondition.VALUE) {
       super.paintEmptyText(splitters, g);
       return;
     }

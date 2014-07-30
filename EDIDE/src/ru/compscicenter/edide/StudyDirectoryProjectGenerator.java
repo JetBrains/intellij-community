@@ -147,7 +147,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @Nullable Object settings, @NotNull Module module) {
 
-    StudyCondition.myValue = true;
+    StudyCondition.VALUE = true;
     myProject = project;
     mySelectedCourseFile = null;
     StudyNewCourseDialog dlg = new StudyNewCourseDialog(project, this);
