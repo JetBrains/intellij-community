@@ -16,6 +16,7 @@ import com.intellij.util.ArrayUtil;
 import junit.framework.TestSuite;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -80,6 +81,10 @@ public abstract class FileSetTestCase extends TestSuite {
     }
   }
 
+  protected String loadFile(File testFile) throws IOException {
+    return FileUtil.loadFile(testFile);
+  }
+
   protected String getDelimiter() {
     return "---";
   }
@@ -116,7 +121,7 @@ public abstract class FileSetTestCase extends TestSuite {
 
     @Override
     protected void runTest() throws Throwable {
-      String content = FileUtil.loadFile(myTestFile);
+      String content = loadFile(myTestFile);
       assertNotNull(content);
 
       List<String> input = new ArrayList<String>();
