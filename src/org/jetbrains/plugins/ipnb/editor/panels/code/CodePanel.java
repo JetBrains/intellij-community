@@ -2,6 +2,7 @@ package org.jetbrains.plugins.ipnb.editor.panels.code;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
@@ -88,4 +89,9 @@ public class CodePanel extends IpnbPanel {
     return panel;
   }
 
+  @Override
+  public void switchToEditing() {
+    super.switchToEditing();
+    UIUtil.requestFocus(myCodeSourcePanel.getEditor().getContentComponent());
+  }
 }
