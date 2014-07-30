@@ -122,10 +122,15 @@ def create_signature_message(signature):
     cmdText = ''.join(cmdTextList)
     return NetCommand(CMD_SIGNATURE_CALL_TRACE, 0, cmdText)
 
-def sendSignatureCallTrace(dbg, frame, filename):
-    if dbg.signature_factory:
-        if dbg.signature_factory.is_in_scope(filename):
-            dbg.writer.addCommand(create_signature_message(dbg.signature_factory.create_signature(frame)))
 
+def sendSignatureCallTrace(dbg, frame, filename):
+    if dbg.signature_factory and dbg.signature_factory.is_in_scope(filename):
+        signature = dbg.signature_factory.create_signature(frame)
+        if dbg.call_signature_cache_manager:
+            if not dbg.call_signature_cache_manager.is_repetition(signature):
+                dbg.call_signature_cache_manager.add(signature)
+                dbg.writer.addCommand(create_signature_message(signature))
+        else:
+            dbg.writer.addCommand(create_signature_message(signature))
 
 

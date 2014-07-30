@@ -174,7 +174,6 @@
     <inspection_tool class="FtlReferencesInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="FtlTypesInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="FtlWellformednessInspection" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="FunctionWithInconsistentReturnsJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="GWTRemoteServiceAsyncCheck" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="GWTStyleCheck" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="Geronimo" enabled="false" level="ERROR" enabled_by_default="false" />
