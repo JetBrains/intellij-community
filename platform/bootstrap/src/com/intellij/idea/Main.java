@@ -15,7 +15,6 @@
  */
 package com.intellij.idea;
 
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Comparing;
@@ -144,12 +143,11 @@ public class Main {
     int status = 0;
     if (Restarter.isSupported()) {
       List<String> args = new ArrayList<String>();
-
-      String userDir = System.getProperty("user.home") + "/." + ApplicationNamesInfo.getInstance().getProductName();
+      String userDir = PathManager.getConfigPath().replace("config", "update") + "/";
+      System.out.println("pathToLauncher: " + userDir);
       if (SystemInfoRt.isWindows) {
         File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
         //File userDir = new File(System.getProperty("user.home") + "/." + ApplicationNamesInfo.getInstance().getProductName());
-        System.out.println("pathToLauncher: " + userDir);
         if (!FileUtilRt.delete(new File(userDir + "/VistaLauncher.exe")) || !FileUtilRt.delete(new File(userDir + "/restarter.exe"))) {
           throw new IOException("Cannot delete launchers in " + userDir);
         }else {
