@@ -8,7 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="util" />
-    <orderEntry type="module" module-name="core-impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="openapi" scope="RUNTIME" />
   </component>
   <component name="copyright">
     <Base>
