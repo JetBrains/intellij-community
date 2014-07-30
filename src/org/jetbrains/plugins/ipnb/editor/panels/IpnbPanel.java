@@ -1,18 +1,14 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
-import org.jetbrains.annotations.NotNull;
-
 import javax.swing.*;
 import java.awt.*;
 
-public class IpnbPanel extends JPanel {
+public abstract class IpnbPanel<T extends JComponent> extends JPanel {
   private boolean myEditing;
+  protected T myViewPanel;
 
   public IpnbPanel() {
-    super(new BorderLayout());
-  }
-  public IpnbPanel(@NotNull final LayoutManager layoutManager) {
-    super(layoutManager);
+    super(new CardLayout());
   }
 
   public boolean contains(int y) {
@@ -35,7 +31,17 @@ public class IpnbPanel extends JPanel {
     myEditing = editing;
   }
 
-  public void switchToEditing(@NotNull final Container parent) {}
+  protected abstract T createViewPanel();
 
-  public void runCell() {}
+  public void switchToEditing() {
+    setEditing(true);
+    getParent().repaint();
+  }
+
+  public void runCell() {
+    setEditing(false);
+  }
+
+  public void updateCellView() { // TODO: make abstract
+  }
 }

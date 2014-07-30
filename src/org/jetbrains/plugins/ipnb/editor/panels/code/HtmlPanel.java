@@ -1,26 +1,26 @@
-package org.jetbrains.plugins.ipnb.editor.panels;
+package org.jetbrains.plugins.ipnb.editor.panels.code;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
+import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
 import org.jetbrains.plugins.ipnb.format.cells.output.HtmlCellOutput;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class HtmlPanel extends IpnbPanel {
-  @NotNull private final Project myProject;
+  @NotNull private final HtmlCellOutput myCell;
 
-  public HtmlPanel(@NotNull final Project project, @NotNull final HtmlCellOutput cell) {
-    myProject = project;
-    add(createPanel(cell), BorderLayout.CENTER);
+  public HtmlPanel(@NotNull final HtmlCellOutput cell) {
+    myCell = cell;
+    myViewPanel = createViewPanel();
+    add(myViewPanel);
   }
 
-  private JLabel createPanel(@NotNull final HtmlCellOutput cell) {
-    String[] htmls = cell.getHtmls();
+  @Override
+  protected JComponent createViewPanel() {
     final StringBuilder text = new StringBuilder("<html>");
-    for (String html : htmls) {
+    for (String html : myCell.getHtmls()) {
       html = html.replace("\"", "'");
       text.append(html);
     }
@@ -30,5 +30,4 @@ public class HtmlPanel extends IpnbPanel {
     label.setOpaque(true);
     return label;
   }
-
 }

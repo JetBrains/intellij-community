@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction;
 import org.jetbrains.plugins.ipnb.editor.panels.*;
+import org.jetbrains.plugins.ipnb.editor.panels.code.CodePanel;
 import org.jetbrains.plugins.ipnb.format.IpnbParser;
 import org.jetbrains.plugins.ipnb.format.cells.HeadingCell;
 

@@ -1,12 +1,12 @@
-package org.jetbrains.plugins.ipnb.editor.panels;
+package org.jetbrains.plugins.ipnb.editor.panels.code;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
+import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
 import org.jetbrains.plugins.ipnb.format.cells.output.LatexCellOutput;
 import org.scilab.forge.jlatexmath.ParseException;
 import org.scilab.forge.jlatexmath.TeXFormula;
@@ -17,19 +17,21 @@ import java.awt.*;
 
 public class LatexPanel extends IpnbPanel {
   private static final Logger LOG = Logger.getInstance(LatexPanel.class);
-  private boolean myEditing = false;
-  private Project myProject;
+  private final LatexCellOutput myCell;
 
-  public LatexPanel(Project project, LatexCellOutput cell) {
+  public LatexPanel(@NotNull final LatexCellOutput cell) {
     super();
+    myCell = cell;
     setLayout(new VerticalFlowLayout(FlowLayout.LEFT));
-    myProject = project;
-    initPanel(cell.getLatex());
 
+    myViewPanel = createViewPanel();
+    add(myViewPanel);
   }
 
-  private void initPanel(@Nullable final String[] text) {
-    if (text == null) return;
+  @Override
+  protected JComponent createViewPanel() {
+    final JPanel panel = new JPanel();
+    final String[] text = myCell.getLatex();
     StringBuilder formula = new StringBuilder();
     boolean hasFormula = false;
     boolean isEscaped = false;
@@ -70,7 +72,7 @@ public class LatexPanel extends IpnbPanel {
             TeXFormula f = new TeXFormula(formula.toString());
             final Image image = f.createBufferedImage(TeXFormula.SERIF, new Float(20.), JBColor.BLACK, JBColor.WHITE);
             JLabel picLabel = new JLabel(new ImageIcon(image));
-            add(picLabel);
+            panel.add(picLabel);
           }
           catch (ParseException x) {
             LOG.error("Error parsing " + formula.toString() + " because of:" + x.getMessage());
@@ -86,7 +88,7 @@ public class LatexPanel extends IpnbPanel {
         TeXFormula f = new TeXFormula(formula.toString());
         final TeXIcon icon = f.createTeXIcon(TeXFormula.SERIF, 20);
         JLabel picLabel = new JLabel(icon);
-        add(picLabel);
+        panel.add(picLabel);
       }
       catch (ParseException x) {
         LOG.error("Error parsing " + formula.toString() + " because of:" + x.getMessage());
@@ -94,19 +96,6 @@ public class LatexPanel extends IpnbPanel {
     }
     setBackground(IpnbEditorUtil.getBackground());
     setOpaque(true);
-
-  }
-
-  public boolean isEditing() {
-    return myEditing;
-  }
-
-  public void setEditing(boolean isEditing) {
-    myEditing = isEditing;
-    updatePanel();
-  }
-
-  private void updatePanel() {
-    removeAll();
+    return panel;
   }
 }

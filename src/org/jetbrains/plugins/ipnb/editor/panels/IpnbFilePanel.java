@@ -1,18 +1,3 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.google.common.collect.Lists;
@@ -24,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
+import org.jetbrains.plugins.ipnb.editor.panels.code.CodePanel;
 import org.jetbrains.plugins.ipnb.format.IpnbFile;
 import org.jetbrains.plugins.ipnb.format.cells.CodeCell;
 import org.jetbrains.plugins.ipnb.format.cells.HeadingCell;
@@ -37,9 +23,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-/**
- * @author traff
- */
 public class IpnbFilePanel extends JPanel {
 
   public static final int INSET_Y = 10;
@@ -107,7 +90,7 @@ public class IpnbFilePanel extends JPanel {
       myIpnbPanels.add(comp);
     }
     else if (cell instanceof MarkdownCell) {
-      comp = new MarkdownPanel(myProject, (MarkdownCell)cell);
+      comp = new MarkdownPanel((MarkdownCell)cell);
       addComponent(c, comp);
     }
     else if (cell instanceof HeadingCell) {
@@ -141,7 +124,7 @@ public class IpnbFilePanel extends JPanel {
   protected void processKeyEvent(KeyEvent e) {
     if (mySelectedCell != null && e.getID() == KeyEvent.KEY_PRESSED) {
       if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-        mySelectedCell.switchToEditing(this);
+        mySelectedCell.switchToEditing();
       }
       if (e.getKeyCode() == KeyEvent.VK_UP) {
         selectPrev(mySelectedCell);
@@ -180,12 +163,18 @@ public class IpnbFilePanel extends JPanel {
     if (e.getClickCount() > 0) {
       IpnbPanel ipnbPanel = getIpnbPanelByClick(e.getPoint());
       if (ipnbPanel != null) {
+        ipnbPanel.setEditing(false);
+        ipnbPanel.requestFocus();
+        repaint();
         setSelectedCell(ipnbPanel);
       }
     }
   }
 
   public void setSelectedCell(@NotNull final IpnbPanel ipnbPanel) {
+    if (ipnbPanel.equals(mySelectedCell)) return;
+    if (mySelectedCell != null)
+      mySelectedCell.setEditing(false);
     mySelectedCell = ipnbPanel;
     requestFocus();
     repaint();

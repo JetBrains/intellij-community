@@ -13,15 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.ipnb.editor.panels;
+package org.jetbrains.plugins.ipnb.editor.panels.code;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
+import org.jetbrains.plugins.ipnb.editor.panels.EditorPanel;
+import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,26 +36,43 @@ import java.awt.*;
  * @author traff
  */
 public class CodeSourcePanel extends IpnbPanel implements EditorPanel {
-  private final Editor myEditor;
+  private Editor myEditor;
+  @NotNull private final Project myProject;
+  @NotNull private final Disposable myParent;
+  @NotNull private final String mySource;
 
-  public CodeSourcePanel(Project project, Disposable parent, String source) {
-    if (source.startsWith("%"))
-      myEditor = IpnbEditorUtil.createPlainCodeEditor(project, source);
-    else
-      myEditor = IpnbEditorUtil.createPythonCodeEditor(project, source);
-    final JComponent component = myEditor.getComponent();
-    add(component, BorderLayout.CENTER);
-    setBorder(BorderFactory.createLineBorder(JBColor.lightGray, 1, true));
-    Disposer.register(parent, new Disposable() {
-      @Override
-      public void dispose() {
-        EditorFactory.getInstance().releaseEditor(myEditor);
-      }
-    });
+  public CodeSourcePanel(@NotNull final Project project, @NotNull final Disposable parent, @NotNull final String source) {
+    myProject = project;
+    myParent = parent;
+    mySource = source;
+    final JComponent panel = createViewPanel();
+    add(panel);
   }
 
   @Override
   public Editor getEditor() {
     return myEditor;
+  }
+
+  @Override
+  protected JComponent createViewPanel() {
+    final JPanel panel = new JPanel(new VerticalFlowLayout(FlowLayout.LEFT, false, true));
+    if (!UIUtil.isUnderDarcula())
+      panel.setBackground(Gray._247);
+
+    if (mySource.startsWith("%"))
+      myEditor = IpnbEditorUtil.createPlainCodeEditor(myProject, mySource);
+    else
+      myEditor = IpnbEditorUtil.createPythonCodeEditor(myProject, mySource);
+    final JComponent component = myEditor.getComponent();
+    panel.add(component);
+    setBorder(BorderFactory.createLineBorder(JBColor.lightGray, 1, true));
+    Disposer.register(myParent, new Disposable() {
+      @Override
+      public void dispose() {
+        EditorFactory.getInstance().releaseEditor(myEditor);
+      }
+    });
+    return panel;
   }
 }
