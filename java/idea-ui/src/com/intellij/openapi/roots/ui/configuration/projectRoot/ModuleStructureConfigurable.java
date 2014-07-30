@@ -53,7 +53,6 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -149,9 +148,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   @NotNull
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     final ArrayList<AnAction> result = super.createActions(fromPopup);
-    result.add(Separator.getInstance());
-    result.add(new MyGroupAction());
-    if (fromPopup || !(SystemInfo.isMac && Registry.is("ide.new.project.settings"))) {
+    if (fromPopup || !Registry.is("ide.new.project.settings")) {
+      result.add(Separator.getInstance());
+      result.add(new MyGroupAction());
       addCollapseExpandActions(result);
     }
     return result;
