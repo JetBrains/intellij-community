@@ -81,6 +81,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     final JPanel controlPanel = new JPanel();
     controlPanel.setBackground(IpnbEditorUtil.getBackground());
     final JButton button = new JButton();
+    button.setBackground(IpnbEditorUtil.getBackground());
     button.setPreferredSize(new Dimension(30, 30));
     button.setIcon(AllIcons.General.Run);
     button.addActionListener(new ActionListener() {

@@ -57,8 +57,7 @@ public class CodeSourcePanel extends IpnbPanel implements EditorPanel {
   @Override
   protected JComponent createViewPanel() {
     final JPanel panel = new JPanel(new VerticalFlowLayout(FlowLayout.LEFT, true, true));
-    if (!UIUtil.isUnderDarcula())
-      panel.setBackground(Gray._247);
+    panel.setBackground(UIUtil.isUnderDarcula() ? IpnbEditorUtil.getBackground() : Gray._247);
 
     if (mySource.startsWith("%"))
       myEditor = IpnbEditorUtil.createPlainCodeEditor(myProject, mySource);
