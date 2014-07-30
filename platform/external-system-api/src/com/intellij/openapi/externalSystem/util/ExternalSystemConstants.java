@@ -27,6 +27,7 @@ public class ExternalSystemConstants {
   @NonNls @NotNull public static final String EXTERNAL_SYSTEM_ID_KEY  = "external.system.id";
   @NonNls @NotNull public static final String LINKED_PROJECT_PATH_KEY = "external.linked.project.path";
   @NonNls @NotNull public static final String ROOT_PROJECT_PATH_KEY = "external.root.project.path";
+  @NonNls @NotNull public static final String LINKED_PROJECT_ID_KEY = "external.linked.project.id";
 
   @NonNls @NotNull public static final String EXTERNAL_SYSTEM_MODULE_GROUP_KEY  = "external.system.module.group";
   @NonNls @NotNull public static final String EXTERNAL_SYSTEM_MODULE_VERSION_KEY  = "external.system.module.version";

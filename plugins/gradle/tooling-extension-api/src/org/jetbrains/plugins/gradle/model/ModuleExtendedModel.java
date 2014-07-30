@@ -22,9 +22,12 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
+ * @deprecated Use {@link com.intellij.openapi.externalSystem.model.ExternalProject} model instead.
+ *
  * @author Vladislav.Soroka
  * @since 11/5/13
  */
+@Deprecated()
 public interface ModuleExtendedModel extends Serializable {
   /**
    * The group of the module.

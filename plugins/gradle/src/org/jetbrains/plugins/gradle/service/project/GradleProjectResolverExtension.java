@@ -27,6 +27,7 @@ import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
 import com.intellij.openapi.util.KeyValue;
 import com.intellij.util.Consumer;
 import org.gradle.tooling.model.idea.IdeaModule;
+import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleManager;
@@ -61,6 +62,8 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
 
   @NotNull
   JavaProjectData createJavaProjectData();
+
+  void populateProjectExtraModels(@NotNull IdeaProject gradleProject, @NotNull DataNode<ProjectData> ideProject);
 
   @NotNull
   ModuleData createModule(@NotNull IdeaModule gradleModule, @NotNull ProjectData projectData);

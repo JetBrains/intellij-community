@@ -18,6 +18,7 @@ package org.jetbrains.plugins.gradle.model;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
+import org.gradle.tooling.model.Model;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.BasicIdeaProject;
 import org.gradle.tooling.model.idea.IdeaModule;
@@ -48,8 +49,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   @Nullable
   @Override
   public AllModels execute(final BuildController controller) {
-    Class<? extends IdeaProject> aClass1 = myIsPreviewMode ? BasicIdeaProject.class : IdeaProject.class;
-    final IdeaProject ideaProject = controller.getModel(aClass1);
+    final IdeaProject ideaProject = controller.getModel(myIsPreviewMode ? BasicIdeaProject.class : IdeaProject.class);
     if (ideaProject == null || ideaProject.getModules().isEmpty()) {
       return null;
     }
@@ -59,23 +59,28 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     // TODO ask gradle guys why there is always null got for BuildEnvironment model
     //allModels.setBuildEnvironment(controller.findModel(BuildEnvironment.class));
 
+    addExtraProject(controller, allModels, null);
     for (IdeaModule module : ideaProject.getModules()) {
-      for (Class aClass : myExtraProjectModelClasses) {
-        try {
-          Object extraProject = controller.findModel(module, aClass);
-          if (extraProject == null) continue;
-          allModels.addExtraProject(extraProject, aClass, module);
-        }
-        catch (Exception e) {
-          // do not fail project import in a preview mode
-          if (!myIsPreviewMode) {
-            throw new ExternalSystemException(e);
-          }
-        }
-      }
+      addExtraProject(controller, allModels, module);
     }
 
     return allModels;
+  }
+
+  private void addExtraProject(@NotNull BuildController controller, @NotNull AllModels allModels, @Nullable IdeaModule model) {
+    for (Class aClass : myExtraProjectModelClasses) {
+      try {
+        Object extraProject = controller.findModel(model, aClass);
+        if (extraProject == null) continue;
+        allModels.addExtraProject(extraProject, aClass, model);
+      }
+      catch (Exception e) {
+        // do not fail project import in a preview mode
+        if (!myIsPreviewMode) {
+          throw new ExternalSystemException(e);
+        }
+      }
+    }
   }
 
   public static class AllModels implements Serializable {
@@ -101,9 +106,13 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       myBuildEnvironment = buildEnvironment;
     }
 
+    @Nullable
+    public <T> T getExtraProject(Class<T> modelClazz) {
+      return getExtraProject(null, modelClazz);
+    }
 
     @Nullable
-    public <T> T getExtraProject(@NotNull IdeaModule module, Class<T> modelClazz) {
+    public <T> T getExtraProject(@Nullable IdeaModule module, Class<T> modelClazz) {
       Object extraProject = projectsByPath.get(extractMapKey(modelClazz, module));
       if (modelClazz.isInstance(extraProject)) {
         //noinspection unchecked
@@ -129,13 +138,17 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       return modules;
     }
 
-    public void addExtraProject(@NotNull Object project, @NotNull Class modelClazz, @NotNull IdeaModule module) {
+    public void addExtraProject(@NotNull Object project, @NotNull Class modelClazz) {
+      projectsByPath.put(extractMapKey(modelClazz, null), project);
+    }
+
+    public void addExtraProject(@NotNull Object project, @NotNull Class modelClazz, @Nullable IdeaModule module) {
       projectsByPath.put(extractMapKey(modelClazz, module), project);
     }
 
     @NotNull
-    private static String extractMapKey(Class modelClazz, @NotNull IdeaModule module) {
-      return modelClazz.getName() + '@' + module.getGradleProject().getPath();
+    private String extractMapKey(Class modelClazz, @Nullable IdeaModule module) {
+      return modelClazz.getName() + '@' + (module != null ? module.getGradleProject().getPath() : "root" + myIdeaProject.getName().hashCode());
     }
 
     @NotNull
