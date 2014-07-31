@@ -164,6 +164,7 @@ public class Restarter {
   private static void doScheduleRestart(File restarterFile, Consumer<List<String>> argumentsBuilder) throws IOException {
     List<String> commands = new ArrayList<String>();
     commands.add(restarterFile.getPath());
+    System.out.println("doScheduleRestart " + restarterFile.getPath());
     argumentsBuilder.consume(commands);
     Runtime.getRuntime().exec(commands.toArray(new String[commands.size()]));
   }
