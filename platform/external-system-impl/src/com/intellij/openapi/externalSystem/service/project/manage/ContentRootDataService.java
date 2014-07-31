@@ -34,7 +34,10 @@ import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.IgnoredBeanFactory;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -151,7 +154,7 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
                 createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaSourceRootType.TEST_SOURCE, true, createEmptyContentRootDirectories);
               }
               for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.EXCLUDED)) {
-                createExcludedRootIfAbsent(contentEntry, path, module.getName());
+                createExcludedRootIfAbsent(contentEntry, path, module.getName(), module.getProject());
               }
               contentEntriesMap.remove(contentEntry.getUrl());
             }
@@ -214,14 +217,18 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
     }
   }
 
-  private static void createExcludedRootIfAbsent(@NotNull ContentEntry entry, @NotNull SourceRoot root, @NotNull String moduleName) {
+  private static void createExcludedRootIfAbsent(@NotNull ContentEntry entry, @NotNull SourceRoot root, @NotNull String moduleName, @NotNull Project project) {
+    String rootPath = root.getPath();
     for (VirtualFile file : entry.getExcludeFolderFiles()) {
-      if (ExternalSystemApiUtil.getLocalFileSystemPath(file).equals(root.getPath())) {
+      if (ExternalSystemApiUtil.getLocalFileSystemPath(file).equals(rootPath)) {
         return;
       }
     }
     LOG.info(String.format("Importing excluded root '%s' for content root '%s' of module '%s'", root, entry.getUrl(), moduleName));
-    entry.addExcludeFolder(toVfsUrl(root.getPath()));
+    entry.addExcludeFolder(toVfsUrl(rootPath));
+    if (!Registry.is("ide.hide.excluded.files")) {
+      ChangeListManager.getInstance(project).addFilesToIgnore(IgnoredBeanFactory.ignoreUnderDirectory(rootPath, project));
+    }
   }
 
   @Override

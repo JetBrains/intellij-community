@@ -19,12 +19,16 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.IgnoredBeanFactory;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -193,6 +197,10 @@ public class MavenRootModelAdapter {
     if (e == null) return;
     if (e.getUrl().equals(url.getUrl())) return;
     e.addExcludeFolder(url.getUrl());
+    if (!Registry.is("ide.hide.excluded.files")) {
+      Project project = myRootModel.getProject();
+      ChangeListManager.getInstance(project).addFilesToIgnore(IgnoredBeanFactory.ignoreUnderDirectory(toPath(path).getPath(), project));
+    }
   }
 
   public void unregisterAll(String path, boolean under, boolean unregisterSources) {
