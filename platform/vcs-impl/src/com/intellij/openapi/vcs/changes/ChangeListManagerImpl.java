@@ -319,19 +319,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   void convertExcludedToIgnored() {
-    List<String> projectExcludesUrls = new ArrayList<String>();
     for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(myProject)) {
       for (VirtualFile file : policy.getExcludeRootsForProject()) {
-        projectExcludesUrls.add(file.getUrl());
-        myIgnoredIdeaLevel.add(IgnoredBeanFactory.ignoreUnderDirectory(file.getPath(), myProject));
+        addDirectoryToIgnoreImplicitly(file.getPath());
       }
     }
 
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
       for (String url : ModuleRootManager.getInstance(module).getExcludeRootUrls()) {
-        if (!VfsUtilCore.isUnder(url, projectExcludesUrls)) {
-          myIgnoredIdeaLevel.add(IgnoredBeanFactory.ignoreUnderDirectory(VfsUtilCore.urlToPath(url), myProject));
-        }
+        addDirectoryToIgnoreImplicitly(VfsUtilCore.urlToPath(url));
       }
     }
   }
@@ -1384,6 +1380,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public void addFilesToIgnore(final IgnoredFileBean... filesToIgnore) {
     myIgnoredIdeaLevel.add(filesToIgnore);
     scheduleUnversionedUpdate();
+  }
+
+  @Override
+  public void addDirectoryToIgnoreImplicitly(@NotNull String path) {
+    myIgnoredIdeaLevel.addIgnoredDirectory(path, myProject, true);
   }
 
   private void scheduleUnversionedUpdate() {

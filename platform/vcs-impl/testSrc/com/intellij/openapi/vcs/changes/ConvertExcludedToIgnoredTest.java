@@ -67,6 +67,7 @@ public class ConvertExcludedToIgnoredTest extends PlatformTestCase {
     getChangeListManager().convertExcludedToIgnored();
     assertTrue(getChangeListManager().isIgnoredFile(excluded));
     assertTrue(getChangeListManager().isIgnoredFile(moduleOutput));
+    assertIgnored(excluded);
   }
 
   private void assertIgnored(VirtualFile... ignoredDirs) {

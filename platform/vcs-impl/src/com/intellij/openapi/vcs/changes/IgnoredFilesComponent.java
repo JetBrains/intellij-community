@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -51,6 +52,27 @@ public class IgnoredFilesComponent {
     synchronized (myFilesToIgnore) {
       Collections.addAll(myFilesToIgnore, filesToIgnore);
       addIgnoredFiles(filesToIgnore);
+    }
+  }
+
+  public void addIgnoredDirectory(@NotNull String path, @NotNull Project project, boolean compact) {
+    synchronized (myFilesToIgnore) {
+      if (compact) {
+        for (IgnoredFileBean bean : myFilesToIgnore) {
+          if (bean.getType() == IgnoreSettingsType.UNDER_DIR && FileUtil.isAncestor(bean.getPath(), path, false)) {
+            return;
+          }
+        }
+        List<IgnoredFileBean> toRemove = new ArrayList<IgnoredFileBean>();
+        for (IgnoredFileBean bean : myFilesToIgnore) {
+          if ((bean.getType() == IgnoreSettingsType.UNDER_DIR || bean.getType() == IgnoreSettingsType.FILE) &&
+              FileUtil.isAncestor(path, bean.getPath(), false)) {
+            toRemove.add(bean);
+          }
+        }
+        myFilesToIgnore.removeAll(toRemove);
+      }
+      myFilesToIgnore.add(IgnoredBeanFactory.ignoreUnderDirectory(path, project));
     }
   }
 
