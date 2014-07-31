@@ -23,15 +23,20 @@ import com.intellij.openapi.application.RuntimeInterruptedException;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
@@ -43,6 +48,7 @@ import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.*;
@@ -71,6 +77,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ChangeListManagerImpl extends ChangeListManagerEx implements ProjectComponent, ChangeListOwner, JDOMExternalizable,
                                                                           RoamingTypeDisabled {
   public static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListManagerImpl");
+  private static final String EXCLUDED_CONVERTED_TO_IGNORED_OPTION = "EXCLUDED_CONVERTED_TO_IGNORED";
 
   private final Project myProject;
   private final VcsConfiguration myConfig;
@@ -102,6 +109,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private final List<CommitExecutor> myExecutors = new ArrayList<CommitExecutor>();
 
   private final IgnoredFilesComponent myIgnoredIdeaLevel;
+  private boolean myExcludedConvertedToIgnored;
   private ProgressIndicator myUpdateChangesProgressIndicator;
 
   public static final Topic<LocalChangeListsLoadedListener> LISTS_LOADED = new Topic<LocalChangeListsLoadedListener>(
@@ -301,9 +309,31 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
               myIgnoredIdeaLevel.add(IgnoredBeanFactory.ignoreFile(Project.DIRECTORY_STORE_FOLDER + "/workspace.xml", myProject));
             }
           }
+          if (!Registry.is("ide.hide.excluded.files") && !myExcludedConvertedToIgnored) {
+            convertExcludedToIgnored();
+            myExcludedConvertedToIgnored = true;
+          }
         }
       }
     });
+  }
+
+  void convertExcludedToIgnored() {
+    List<String> projectExcludesUrls = new ArrayList<String>();
+    for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(myProject)) {
+      for (VirtualFile file : policy.getExcludeRootsForProject()) {
+        projectExcludesUrls.add(file.getUrl());
+        myIgnoredIdeaLevel.add(IgnoredBeanFactory.ignoreUnderDirectory(file.getPath(), myProject));
+      }
+    }
+
+    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+      for (String url : ModuleRootManager.getInstance(module).getExcludeRootUrls()) {
+        if (!VfsUtilCore.isUnder(url, projectExcludesUrls)) {
+          myIgnoredIdeaLevel.add(IgnoredBeanFactory.ignoreUnderDirectory(VfsUtilCore.urlToPath(url), myProject));
+        }
+      }
+    }
   }
 
   public void projectClosed() {
@@ -1272,6 +1302,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           setDefaultChangeList(myWorker.getListsCopy().get(0));
         }
       }
+      myExcludedConvertedToIgnored = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, EXCLUDED_CONVERTED_TO_IGNORED_OPTION));
       myConflictTracker.loadState(element);
     }
   }
@@ -1285,6 +1316,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         worker = myWorker.copy();
       }
       new ChangeListManagerSerialization(ignoredFilesComponent, worker).writeExternal(element);
+      if (myExcludedConvertedToIgnored) {
+        JDOMExternalizerUtil.writeField(element, EXCLUDED_CONVERTED_TO_IGNORED_OPTION, String.valueOf(true));
+      }
       myConflictTracker.saveState(element);
     }
   }
