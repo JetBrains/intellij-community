@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Eugene Zhuravlev
- *         Date: Feb 19, 2005
- */
 public class UserRenderersConfigurable implements ConfigurableUi<NodeRendererSettings> {
   private static final Icon ADD_ICON = IconUtil.getAddIcon();
   private static final Icon REMOVE_ICON = IconUtil.getRemoveIcon();
@@ -55,16 +51,9 @@ public class UserRenderersConfigurable implements ConfigurableUi<NodeRendererSet
   @Override
   @NotNull
   public JComponent getComponent() {
-    final JPanel panel = new JPanel(new BorderLayout(4, 0));
-
-    final JComponent renderersList = createRenderersList();
-    final JComponent toolbar = createToolbar();
-    final JComponent rendererDataPanel = myRendererDataConfigurable.createComponent();
-
-    final JPanel left = new JPanel(new BorderLayout());
-
-    left.add(toolbar, BorderLayout.NORTH);
-    left.add(renderersList, BorderLayout.CENTER);
+    JPanel left = new JPanel(new BorderLayout());
+    left.add(createToolbar(), BorderLayout.NORTH);
+    left.add(createRenderersList(), BorderLayout.CENTER);
 
     myNameField = new JTextField();
     myNameFieldPanel = new JPanel(new BorderLayout());
@@ -73,9 +62,8 @@ public class UserRenderersConfigurable implements ConfigurableUi<NodeRendererSet
     myNameFieldPanel.setVisible(false);
 
     final JPanel center = new JPanel(new BorderLayout(0, 4));
-
     center.add(myNameFieldPanel, BorderLayout.NORTH);
-    center.add(rendererDataPanel, BorderLayout.CENTER);
+    center.add(myRendererDataConfigurable, BorderLayout.CENTER);
 
     myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -87,9 +75,9 @@ public class UserRenderersConfigurable implements ConfigurableUi<NodeRendererSet
       }
     });
 
+    JPanel panel = new JPanel(new BorderLayout(4, 0));
     panel.add(left, BorderLayout.WEST);
     panel.add(center, BorderLayout.CENTER);
-
     return panel;
   }
 

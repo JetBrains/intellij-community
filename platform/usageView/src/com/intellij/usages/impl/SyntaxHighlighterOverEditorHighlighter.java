@@ -23,6 +23,8 @@ import com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,23 +38,28 @@ import org.jetbrains.annotations.NotNull;
 public class SyntaxHighlighterOverEditorHighlighter implements SyntaxHighlighter {
   private final Lexer lexer;
   private LayeredHighlighterIterator layeredHighlighterIterator = null;
-  private boolean lexerEditorHighlighterInitialized;
   private final SyntaxHighlighter highlighter;
 
   public SyntaxHighlighterOverEditorHighlighter(SyntaxHighlighter _highlighter, VirtualFile file, Project project) {
-    highlighter = _highlighter;
-    LayeredLexer.ourDisableLayersFlag.set(Boolean.TRUE);
-    EditorHighlighter editorHighlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, file);
+    if (file.getFileType() == PlainTextFileType.INSTANCE) { // optimization for large files, PlainTextSyntaxHighlighterFactory is slow
+      highlighter = new PlainSyntaxHighlighter();
+      lexer = highlighter.getHighlightingLexer();
+    } else {
+      highlighter = _highlighter;
+      LayeredLexer.ourDisableLayersFlag.set(Boolean.TRUE);
+      EditorHighlighter editorHighlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, file);
 
-    try {
-      if (editorHighlighter instanceof LayeredLexerEditorHighlighter) {
-        lexer = new LexerEditorHighlighterLexer(editorHighlighter, false);
-      } else {
-        lexer = highlighter.getHighlightingLexer();
+      try {
+        if (editorHighlighter instanceof LayeredLexerEditorHighlighter) {
+          lexer = new LexerEditorHighlighterLexer(editorHighlighter, false);
+        }
+        else {
+          lexer = highlighter.getHighlightingLexer();
+        }
       }
-    }
-    finally {
-      LayeredLexer.ourDisableLayersFlag.set(null);
+      finally {
+        LayeredLexer.ourDisableLayersFlag.set(null);
+      }
     }
   }
 

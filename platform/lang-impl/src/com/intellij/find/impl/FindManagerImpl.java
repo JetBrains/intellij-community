@@ -62,6 +62,7 @@ import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.impl.SyntaxHighlighterOverEditorHighlighter;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Predicate;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
@@ -312,24 +313,102 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       LOG.debug(model.toString());
     }
 
-    final char[] textArray = CharArrayUtil.fromSequenceWithoutCopying(text);
+    return findStringLoop(text, offset, model, file, getFindContextPredicate(model, file, text));
+  }
 
+  private FindResult findStringLoop(CharSequence text, int offset, FindModel model, VirtualFile file, @Nullable Predicate<FindResult> filter) {
+    final char[] textArray = CharArrayUtil.fromSequenceWithoutCopying(text);
     while(true) {
       FindResult result = doFindString(text, textArray, offset, model, file);
-
-      if (!model.isWholeWordsOnly()) {
-        return result;
-      }
-      if (!result.isStringFound()){
-        return result;
-      }
-      if (isWholeWord(text, result.getStartOffset(), result.getEndOffset())){
-        return result;
+      if (filter == null || filter.apply(result)) {
+        if (!model.isWholeWordsOnly()) {
+          return result;
+        }
+        if (!result.isStringFound()) {
+          return result;
+        }
+        if (isWholeWord(text, result.getStartOffset(), result.getEndOffset())) {
+          return result;
+        }
       }
 
       offset = model.isForward() ? result.getStartOffset() + 1 : result.getEndOffset() - 1;
       if (offset > text.length() || offset < 0) return NOT_FOUND_RESULT;
     }
+  }
+
+  private class FindExceptCommentsOrLiteralsData implements Predicate<FindResult> {
+    private final VirtualFile myFile;
+    private final FindModel myFindModel;
+    private final TreeMap<Integer, Integer> mySkipRangesSet;
+
+    private FindExceptCommentsOrLiteralsData(VirtualFile file, FindModel model, CharSequence text) {
+      myFile = file;
+      myFindModel = model.clone();
+
+      TreeMap<Integer, Integer> result = new TreeMap<Integer, Integer>();
+
+      if (model.isExceptComments() || model.isExceptCommentsAndStringLiterals()) {
+        addRanges(file, model, text, result, FindModel.SearchContext.IN_COMMENTS);
+      }
+
+      if (model.isExceptStringLiterals() || model.isExceptCommentsAndStringLiterals()) {
+        addRanges(file, model, text, result, FindModel.SearchContext.IN_STRINGS);
+      }
+
+      mySkipRangesSet = result;
+    }
+
+    private void addRanges(VirtualFile file,
+                           FindModel model,
+                           CharSequence text,
+                           TreeMap<Integer, Integer> result,
+                           FindModel.SearchContext searchContext) {
+      FindModel clonedModel = model.clone();
+      clonedModel.setSearchContext(searchContext);
+      clonedModel.setForward(true);
+      int offset = 0;
+
+      while(true) {
+        FindResult customResult = findStringLoop(text, offset, clonedModel, file, null);
+        if (!customResult.isStringFound()) break;
+        result.put(customResult.getStartOffset(), customResult.getEndOffset());
+        offset = Math.max(customResult.getEndOffset(), offset + 1);  // avoid loop for zero size reg exps matches
+        if (offset >= text.length()) break;
+      }
+    }
+
+    boolean isAcceptableFor(FindModel model, VirtualFile file) {
+      return Comparing.equal(myFile, file) && myFindModel.equals(model);
+    }
+
+    @Override
+    public boolean apply(@Nullable FindResult input) {
+      if (input == null || !input.isStringFound()) return true;
+      NavigableMap<Integer, Integer> map = mySkipRangesSet.headMap(input.getStartOffset(), true);
+      for(Map.Entry<Integer, Integer> e:map.descendingMap().entrySet()) {
+        if (e.getKey() <= input.getStartOffset() && e.getValue() >= input.getEndOffset()) return false;
+        if (e.getValue() <= input.getStartOffset()) break;
+      }
+      return true;
+    }
+  }
+  private static Key<FindExceptCommentsOrLiteralsData> ourExceptCommentsOrLiteralsDataKey = Key.create("except.comments.literals.search.data");
+
+  private Predicate<FindResult> getFindContextPredicate(@NotNull FindModel model, VirtualFile file, CharSequence text) {
+    if (file == null) return null;
+    FindModel.SearchContext context = model.getSearchContext();
+    if( context == FindModel.SearchContext.ANY || context == FindModel.SearchContext.IN_COMMENTS ||
+        context == FindModel.SearchContext.IN_STRINGS) {
+      return null;
+    }
+
+    FindExceptCommentsOrLiteralsData data = model.getUserData(ourExceptCommentsOrLiteralsDataKey);
+    if (data == null || !data.isAcceptableFor(model, file)) {
+      model.putUserData(ourExceptCommentsOrLiteralsDataKey, data = new FindExceptCommentsOrLiteralsData(file, model, text));
+    }
+
+    return data;
   }
 
   @Override
@@ -415,6 +494,11 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return new StringSearcher(model.getStringToFind(), model.isCaseSensitive(), model.isForward());
   }
 
+  public static void clearPreviousFindData(FindModel model) {
+    model.putUserData(ourCommentsLiteralsSearchDataKey, null);
+    model.putUserData(ourExceptCommentsOrLiteralsDataKey, null);
+  }
+
   private static class CommentsLiteralsSearchData {
     final VirtualFile lastFile;
     int startOffset = 0;
@@ -439,7 +523,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     }
   }
 
-  public static final Key<CommentsLiteralsSearchData> ourCommentsLiteralsSearchDataKey = Key.create("comments.literals.search.data");
+  private static final Key<CommentsLiteralsSearchData> ourCommentsLiteralsSearchDataKey = Key.create("comments.literals.search.data");
 
   @NotNull
   private FindResult findInCommentsAndLiterals(@NotNull CharSequence text,

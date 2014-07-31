@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.PatternUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -274,7 +275,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   public void setStringToFind(@NotNull String s) {
     boolean changed = !StringUtil.equals(s, myStringToFind);
     myStringToFind = s;
-    myPattern = NO_PATTERN;
+    myPattern = PatternUtil.NOTHING;
     if (changed) {
       notifyObservers();
     }
@@ -409,7 +410,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     boolean changed = val != isCaseSensitive;
     isCaseSensitive = val;
     if (changed) {
-      myPattern = NO_PATTERN;
+      myPattern = PatternUtil.NOTHING;
       notifyObservers();
     }
   }
@@ -901,21 +902,18 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     }
   }
 
-  private static final Pattern NO_PATTERN = Pattern.compile("");
-  private Pattern myPattern = NO_PATTERN;
+  private Pattern myPattern = PatternUtil.NOTHING;
 
   public Pattern compileRegExp() {
     String toFind = getStringToFind();
 
     Pattern pattern = myPattern;
-    if (pattern == NO_PATTERN) {
+    if (pattern == PatternUtil.NOTHING) {
       try {
         myPattern = pattern = Pattern.compile(toFind, isCaseSensitive() ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
       }
       catch (PatternSyntaxException e) {
-        LOG.error("Regexp:'" + toFind + "'", e);
-        myPattern = null;
-        return null;
+        myPattern = pattern = null;
       }
     }
 

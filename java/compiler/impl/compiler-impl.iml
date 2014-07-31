@@ -28,6 +28,7 @@
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="jps-model-impl" />
     <orderEntry type="module" module-name="java-analysis-impl" />
+    <orderEntry type="module" module-name="xml" />
   </component>
   <component name="copyright">
     <Base>
