@@ -198,13 +198,23 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     c.gridy = 1;
     c.weightx = 1.;
     panel.add(mySdkCombo, c);
-
+    final JPanel basePanelExtension = extendBasePanel();
+    if (basePanelExtension != null) {
+      c.gridwidth = 2;
+      c.gridy = 2;
+      c.gridx = 0;
+      panel.add(basePanelExtension, c);
+    }
     registerValidators();
     return panel;
   }
 
-  protected void registerValidators() {
+  @Nullable
+  protected JPanel extendBasePanel() {
+    return null;
+  }
 
+  protected void registerValidators() {
     myLocationField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
