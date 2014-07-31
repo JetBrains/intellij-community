@@ -35,33 +35,21 @@ import java.io.File;
 import java.util.List;
 
 /**
- * Adds Gradle build dependencies to the project build process' classpath if it has at least one gradle module.
+ * Adds Gradle build dependencies to the project build process' classpath.
  *
  * @author Vladislav.Soroka
  * @since 7/22/2014
  */
 public class GradleBuildProcessParametersProvider extends BuildProcessParametersProvider {
-  @NotNull private final Project myProject;
-
   private List<String> myClasspath;
-
-  public GradleBuildProcessParametersProvider(@NotNull Project project) {
-    myProject = project;
-  }
 
   @Override
   @NotNull
   public List<String> getClassPath() {
     if (myClasspath == null) {
       myClasspath = ContainerUtil.newArrayList();
-      final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-      for (Module module : moduleManager.getModules()) {
-        if (ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
-          addGradleClassPath(myClasspath);
-          addOtherClassPath(myClasspath);
-          break;
-        }
-      }
+      addGradleClassPath(myClasspath);
+      addOtherClassPath(myClasspath);
     }
     return myClasspath;
   }
