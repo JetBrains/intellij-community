@@ -150,6 +150,7 @@ public class Restarter {
     final String homePath = PathManager.getHomePath().substring(0, PathManager.getHomePath().indexOf( ".app" ) + 4);
     if (!StringUtil.endsWithIgnoreCase(homePath, ".app")) throw new IOException("Application bundle not found: " + homePath);
 
+    System.out.println("homePath " + homePath);
     doScheduleRestart(new File(PathManager.getBinPath(), "restarter"), new Consumer<List<String>>() {
       @Override
       public void consume(List<String> commands) {
@@ -161,7 +162,7 @@ public class Restarter {
 
   private static void doScheduleRestart(File restarterFile, Consumer<List<String>> argumentsBuilder) throws IOException {
     List<String> commands = new ArrayList<String>();
-    commands.add(createTempExecutable(restarterFile).getPath());
+//    commands.add(createTempExecutable(restarterFile).getPath());
     argumentsBuilder.consume(commands);
     Runtime.getRuntime().exec(commands.toArray(new String[commands.size()]));
   }
