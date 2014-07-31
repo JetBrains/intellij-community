@@ -124,7 +124,7 @@ public class Main {
   private static void installPatch() throws IOException {
     String platform = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea");
     String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase(Locale.US);
-    String tempDir = System.getProperty("java.io.tmpdir");
+    String tempDir = System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart";
 
     // always delete previous patch copy
     File patchCopy = new File(tempDir, patchFileName + "_copy");
@@ -143,21 +143,9 @@ public class Main {
     int status = 0;
     if (Restarter.isSupported()) {
       List<String> args = new ArrayList<String>();
-//      String userDir = PathManager.getConfigPath().replace("config", "update") + "/";
-      String userDir = System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/update/";
-      System.out.println("pathToLauncher: " + userDir);
       if (SystemInfoRt.isWindows) {
         File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
-        //File userDir = new File(System.getProperty("user.home") + "/." + ApplicationNamesInfo.getInstance().getProductName());
-        if (!FileUtilRt.delete(new File(userDir + "/VistaLauncher.exe")) || !FileUtilRt.delete(new File(userDir + "/restarter.exe"))) {
-          throw new IOException("Cannot delete launchers in " + userDir);
-        }else {
-          System.out.println("previous versions of launchers were deleted successfully.");
-        }
-        Restarter.setRestarterDir(userDir);
-//        File restarter = new File(PathManager.getBinPath(), "restarter.exe");
-//        Restarter.createTempExecutable(userDir, restarter);
-        args.add(Restarter.createTempExecutableLauncher(launcher).getPath());
+        args.add(Restarter.createTempExecutable(launcher).getPath());
       }
 
       //noinspection SpellCheckingInspection
@@ -166,7 +154,7 @@ public class Main {
                          "-Xmx500m",
                          "-classpath",
                          patchCopy.getPath() + File.pathSeparator + log4jCopy.getPath(),
-                         "-Djava.io.tmpdir=" + userDir,
+                         "-Djava.io.tmpdir=" + tempDir,
                          "-Didea.updater.log=" + PathManager.getLogPath(),
                          "-Dswing.defaultlaf=" + UIManager.getSystemLookAndFeelClassName(),
                          "com.intellij.updater.Runner",

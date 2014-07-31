@@ -15,7 +15,6 @@
  */
 package com.intellij.util;
 
-//import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -38,17 +37,7 @@ import java.util.List;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class Restarter {
-  private static String restarterDir = null;
-
   private Restarter() {
-  }
-
-  public static void setRestarterDir(String dir) {
-    restarterDir = dir;
-  }
-
-  private static String getRestarterDir() {
-    return restarterDir;
   }
 
   private static int getRestartCode() {
@@ -123,17 +112,18 @@ public class Restarter {
     final String[] argv = argv_ptr.getStringArray(0, argc.getValue(), true);
     kernel32.LocalFree(argv_ptr);
 
-    File restarter = new File(PathManager.getBinPath(), "restarter.exe");
-    final File restarter_copy = createTempExecutableLauncher(restarter);
+    doScheduleRestart(new File(PathManager.getBinPath(), "restarter.exe"), new Consumer<List<String>>() {
 
-    doScheduleRestart(restarter_copy, new Consumer<List<String>>() {
+/*    File restarter = new File(PathManager.getBinPath(), "restarter.exe");
+    final File restarter_copy = createTempExecutable(restarter); 
+
+    doScheduleRestart(restarter_copy, new Consumer<List<String>>() { */
       @Override
       public void consume(List<String> commands) {
         Collections.addAll(commands, String.valueOf(pid), String.valueOf(beforeRestart.length));
         Collections.addAll(commands, beforeRestart);
         Collections.addAll(commands, String.valueOf(argc.getValue()));
         Collections.addAll(commands, argv);
-//        Collections.addAll(commands, restarter_copy.getPath());
       }
     });
 
@@ -163,31 +153,32 @@ public class Restarter {
 
   private static void doScheduleRestart(File restarterFile, Consumer<List<String>> argumentsBuilder) throws IOException {
     List<String> commands = new ArrayList<String>();
-//    commands.add(restarterFile.getPath());
-    commands.add(createTempExecutableLauncher(restarterFile).getPath());
-//    System.out.println("doScheduleRestart " + restarterFile.getPath());
+    commands.add(createTempExecutable(restarterFile).getPath());
     argumentsBuilder.consume(commands);
     Runtime.getRuntime().exec(commands.toArray(new String[commands.size()]));
   }
 
   public static File createTempExecutable(File executable) throws IOException {
-    String ext = FileUtilRt.getExtension(executable.getName());
-    File copy = FileUtilRt.createTempFile(FileUtilRt.getNameWithoutExtension(executable.getName()),
-                                          StringUtil.isEmptyOrSpaces(ext) ? ".tmp" : ("." + ext),
-                                          false);
-    FileUtilRt.copy(executable, copy);
-    if (!copy.setExecutable(executable.canExecute())) throw new IOException("Cannot make file executable: " + copy);
+    File copy = new File(System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart/" + executable.getName());
+    if (FileUtilRt.ensureCanCreateFile(copy)) {
+      FileUtilRt.copy(executable, copy);
+      if (!copy.setExecutable(executable.canExecute())){
+        throw new IOException("Cannot make file executable: " + copy);
+      }
+    } else {
+      System.out.println("File " + copy.getPath() + " already exists.");
+    }
     return copy;
   }
 
-  public static File createTempExecutableLauncher(File executable) throws IOException {
+/*  public static File createTempExecutable(File executable) throws IOException {
     File copy = new File(getRestarterDir() + executable.getName() );
     System.out.println("launcher " + executable.getPath());
     System.out.println("copy launcher " + copy.getPath());
     FileUtilRt.copy(executable, copy);
     if (!copy.setExecutable(executable.canExecute())) throw new IOException("Cannot make file executable: " + copy);
     return copy;
-  }
+  }*/
 
   private interface Kernel32 extends StdCallLibrary {
     int GetCurrentProcessId();
