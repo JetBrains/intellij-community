@@ -81,8 +81,8 @@ public class BrowserSelector {
                             boolean hasFocus) {
         Icon baseIcon;
         if (value == null) {
-          WebBrowser defaultBrowser = WebBrowserManager.getInstance().getDefaultBrowser();
-          baseIcon = defaultBrowser == null ? PlatformIcons.WEB_ICON : defaultBrowser.getIcon();
+          WebBrowser firstBrowser = WebBrowserManager.getInstance().getFirstActiveBrowser();
+          baseIcon = firstBrowser == null ? PlatformIcons.WEB_ICON : firstBrowser.getIcon();
         }
         else {
           baseIcon = value.getIcon();

@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+//TODO: Remove pydoc aswell
 public class PyRemoveArgumentQuickFix implements LocalQuickFix {
 
   @NotNull

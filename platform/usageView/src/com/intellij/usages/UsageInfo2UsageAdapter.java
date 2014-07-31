@@ -38,6 +38,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.rules.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -492,5 +493,16 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   @Override
   public String getTooltipText() {
     return myUsageInfo.getTooltipText();
+  }
+
+  public @Nullable UsageType getUsageType() {
+    TextChunk[] chunks = getText();
+    for(TextChunk chunk:chunks) {
+      UsageType type = chunk.getType();
+      if (type != null) {
+        return type;
+      }
+    }
+    return null;
   }
 }

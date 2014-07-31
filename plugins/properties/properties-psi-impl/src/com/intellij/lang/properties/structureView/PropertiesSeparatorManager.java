@@ -23,11 +23,13 @@ import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.SoftFactoryMap;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Transient;
 import gnu.trove.TIntLongHashMap;
 import gnu.trove.TIntProcedure;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,17 +43,22 @@ import java.util.Map;
       file = StoragePathMacros.PROJECT_FILE
     )}
 )
-public class PropertiesSeparatorManager implements PersistentStateComponent<Element> {
-  @NonNls private static final String FILE_ELEMENT = "file";
-  @NonNls private static final String URL_ELEMENT = "url";
-  @NonNls private static final String SEPARATOR_ATTR = "separator";
+public class PropertiesSeparatorManager implements PersistentStateComponent<PropertiesSeparatorManager.PropertiesSeparatorManagerState> {
   private final Project myProject;
 
   public static PropertiesSeparatorManager getInstance(final Project project) {
     return ServiceManager.getService(project, PropertiesSeparatorManager.class);
   }
 
-  private final Map<String, String> mySeparators = new THashMap<String, String>();
+  private PropertiesSeparatorManagerState myUserDefinedSeparators = new PropertiesSeparatorManagerState();
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+  private final SoftFactoryMap<ResourceBundleImpl, String> myGuessedSeparators = new SoftFactoryMap<ResourceBundleImpl, String>() {
+    @Nullable
+    @Override
+    protected String create(ResourceBundleImpl resourceBundle) {
+      return guessSeparator(resourceBundle);
+    }
+  };
 
   public PropertiesSeparatorManager(final Project project) {
     myProject = project;
@@ -62,12 +69,9 @@ public class PropertiesSeparatorManager implements PersistentStateComponent<Elem
     if (!(resourceBundle instanceof ResourceBundleImpl)) {
       return ".";
     }
-    String separator = mySeparators.get(((ResourceBundleImpl)resourceBundle).getUrl());
-    if (separator == null) {
-      separator = guessSeparator((ResourceBundleImpl)resourceBundle);
-      setSeparator(resourceBundle, separator);
-    }
-    return separator;
+    final ResourceBundleImpl resourceBundleImpl = (ResourceBundleImpl)resourceBundle;
+    String separator = myUserDefinedSeparators.getSeparators().get(resourceBundleImpl.getUrl());
+    return separator == null ? myGuessedSeparators.get(resourceBundleImpl) : separator;
   }
 
   //returns most probable separator in properties files
@@ -108,23 +112,68 @@ public class PropertiesSeparatorManager implements PersistentStateComponent<Elem
 
   public void setSeparator(ResourceBundle resourceBundle, String separator) {
     if (resourceBundle instanceof ResourceBundleImpl) {
-      mySeparators.put(((ResourceBundleImpl)resourceBundle).getUrl(), separator);
+      myUserDefinedSeparators.getSeparators().put(((ResourceBundleImpl)resourceBundle).getUrl(), separator);
     }
   }
 
-  public void loadState(final Element element) {
-    List<Element> files = element.getChildren(FILE_ELEMENT);
-    for (Element fileElement : files) {
-      String url = fileElement.getAttributeValue(URL_ELEMENT, "");
-      String separator = fileElement.getAttributeValue(SEPARATOR_ATTR,"");
-      separator = decodeSeparator(separator);
-      if (separator == null) {
-        continue;
+  public void loadState(final PropertiesSeparatorManagerState state) {
+    myUserDefinedSeparators = state.decode(myProject);
+  }
+
+  @Nullable
+  @Override
+  public PropertiesSeparatorManagerState getState() {
+    return myUserDefinedSeparators.isEmpty() ? null : myUserDefinedSeparators.encode();
+  }
+
+  public static class PropertiesSeparatorManagerState {
+    @Property(surroundWithTag = false)
+    @MapAnnotation(surroundWithTag = false,
+                   surroundKeyWithTag = false,
+                   surroundValueWithTag = false,
+                   keyAttributeName = "url",
+                   valueAttributeName = "separator",
+                   entryTagName = "file")
+    public Map<String, String> mySeparators = new HashMap<String, String>();
+
+    public Map<String, String> getSeparators() {
+      return mySeparators;
+    }
+
+    public boolean isEmpty() {
+      return mySeparators.isEmpty();
+    }
+
+    public PropertiesSeparatorManagerState encode() {
+      PropertiesSeparatorManagerState encodedState = new PropertiesSeparatorManagerState();
+      for (final Map.Entry<String, String> entry : mySeparators.entrySet()) {
+        String separator = entry.getValue();
+        StringBuilder encoded = new StringBuilder(separator.length());
+        for (int i=0;i<separator.length();i++) {
+          char c = separator.charAt(i);
+          encoded.append("\\u");
+          encoded.append(String.format("%04x", (int) c));
+        }
+        encodedState.getSeparators().put(entry.getKey(), encoded.toString());
       }
-      ResourceBundle resourceBundle = PropertiesImplUtil.createByUrl(url, myProject);
-      if (resourceBundle != null) {
-        mySeparators.put(url, separator);
+      return encodedState;
+    }
+
+    public PropertiesSeparatorManagerState decode(final Project project) {
+      PropertiesSeparatorManagerState decoded = new PropertiesSeparatorManagerState();
+      for (final Map.Entry<String, String> entry : mySeparators.entrySet()) {
+        String separator = entry.getValue();
+        separator = decodeSeparator(separator);
+        if (separator == null) {
+          continue;
+        }
+        final String url = entry.getKey();
+        ResourceBundle resourceBundle = PropertiesImplUtil.createByUrl(url, project);
+        if (resourceBundle != null) {
+          decoded.getSeparators().put(url, separator);
+        }
       }
+      return decoded;
     }
   }
 
@@ -140,42 +189,10 @@ public class PropertiesSeparatorManager implements PersistentStateComponent<Elem
       if (!encodedCharacter.startsWith("\\u")) {
         return null;
       }
-      int d1 = Character.digit(encodedCharacter.charAt(2), 16);      
-      int d2 = Character.digit(encodedCharacter.charAt(3), 16);      
-      int d3 = Character.digit(encodedCharacter.charAt(4), 16);      
-      int d4 = Character.digit(encodedCharacter.charAt(5), 16);
-      if (d1 == -1 || d2 == -1 || d3 == -1 || d4 == -1) {
-        return null;
-      }
-      int b1 = (d1 << 12) & 0xF000;
-      int b2 = (d2 << 8) & 0x0F00;
-      int b3 = (d3 << 4) & 0x00F0;
-      int b4 = (d4 << 0) & 0x000F;
-      char code = (char) (b1 | b2 | b3 | b4);
+      char code = (char) Integer.parseInt(encodedCharacter.substring(2), 16);
       result.append(code);
       pos += 6;
     }
     return result.toString();
-  }
-
-  public Element getState() {
-    Element element = new Element("PropertiesSeparatorManager");
-    for (final String url: mySeparators.keySet()) {
-      String separator = mySeparators.get(url);
-      StringBuilder encoded = new StringBuilder(separator.length());
-      for (int i=0;i<separator.length();i++) {
-        char c = separator.charAt(i);
-        encoded.append("\\u");
-        encoded.append(Character.forDigit(c >> 12, 16));
-        encoded.append(Character.forDigit((c >> 8) & 0xf, 16));
-        encoded.append(Character.forDigit((c >> 4) & 0xf, 16));
-        encoded.append(Character.forDigit(c & 0xf, 16));
-      }
-      Element fileElement = new Element(FILE_ELEMENT);
-      fileElement.setAttribute(URL_ELEMENT, url);
-      fileElement.setAttribute(SEPARATOR_ATTR, encoded.toString());
-      element.addContent(fileElement);
-    }
-    return element;
   }
 }

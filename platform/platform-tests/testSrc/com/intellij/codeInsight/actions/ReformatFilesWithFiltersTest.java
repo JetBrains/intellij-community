@@ -202,40 +202,20 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
     TestFileStructure fileTree = new TestFileStructure(getModule(), myWorkingDirectory);
 
     fileTree.createDirectoryAndMakeItCurrent("src");
-    PsiFile java2 = fileTree.addTestFile("Test2.java", "empty content");
+    PsiFile java2 = fileTree.addTestFile("Test2.tj", "empty content");
     PsiFile php2 = fileTree.addTestFile("Pair2.php", "empty content");
     PsiFile js2 = fileTree.addTestFile("Pair2.js", "empty content");
 
     PsiDirectory test = fileTree.createDirectoryAndMakeItCurrent("test");
-    PsiFile testJava1 = fileTree.addTestFile("testJava1.java", "empty content");
+    PsiFile testJava1 = fileTree.addTestFile("testJava1.tj", "empty content");
     PsiFile testPhp1 = fileTree.addTestFile("testPhp1.php", "empty content");
     PsiFile testJs1 = fileTree.addTestFile("testJs1.js", "empty content");
 
     GlobalSearchScope testScope = directoryScope(test, true);
 
-    Logger logger = Logger.getInstance(getClass());
-    logFiles(logger, "Previously formatted files: ", myMockCodeStyleManager.getFormattedFiles());
-
-    reformatWithRearrange(myWorkingDirectory, testScope);
-    logFiles(logger, "Currently formatted files: ", myMockCodeStyleManager.getFormattedFiles());
-    logFiles(logger, "Should be formatted", ContainerUtil.newArrayList(testJava1, testPhp1, testJs1));
-
-    assertWasFormatted(testJava1, testPhp1, testJs1);
-    assertWasNotFormatted(java2, php2, js2);
-
     reformatAndOptimize(myWorkingDirectory, testScope);
     assertWasFormatted(testJava1, testPhp1, testJs1);
     assertWasNotFormatted(java2, php2, js2);
-  }
-
-  private void logFiles(Logger log, String message, Collection<PsiFile> files) {
-    StringBuilder builder;
-    builder = new StringBuilder();
-    builder.append(message).append('\n');
-    for (PsiFile file : files) {
-      builder.append(file).append('\n');
-    }
-    log.info(builder.toString());
   }
 
   public void assertWasFormatted(PsiFile... files) {

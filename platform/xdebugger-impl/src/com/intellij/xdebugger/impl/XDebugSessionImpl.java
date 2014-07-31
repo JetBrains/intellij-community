@@ -422,7 +422,7 @@ public class XDebugSessionImpl implements XDebugSession {
     }
   }
 
-  private boolean isBreakpointActive(final XBreakpoint<?> b) {
+  public boolean isBreakpointActive(final XBreakpoint<?> b) {
     return !areBreakpointsMuted() && b.isEnabled() && !myInactiveSlaveBreakpoints.contains(b);
   }
 

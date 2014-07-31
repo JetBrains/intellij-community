@@ -92,6 +92,9 @@ public class ObjectsRequireNonNullIntention extends Intention {
 
     @Override
     public boolean satisfiedBy(PsiElement element) {
+      if (!PsiUtil.isLanguageLevel7OrHigher(element)) {
+        return false;
+      }
       if (!(element instanceof PsiReferenceExpression)) {
         return false;
       }

@@ -19,16 +19,29 @@ import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.util.PsiTreeUtil;
+import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+
 
 public class RegExpFile extends PsiFileBase {
 
-    public RegExpFile(FileViewProvider viewProvider, final Language language) {
-        super(viewProvider, language);
-    }
+  public RegExpFile(FileViewProvider viewProvider, final Language language) {
+    super(viewProvider, language);
+  }
 
-    @NotNull
-    public FileType getFileType() {
-        return RegExpFileType.INSTANCE;
-    }
+  @NotNull
+  public FileType getFileType() {
+    return RegExpFileType.INSTANCE;
+  }
+
+  /**
+   * @return Regexp groups this file has
+   */
+  @NotNull
+  public Collection<RegExpGroup> getGroups() {
+    return PsiTreeUtil.findChildrenOfType(this, RegExpGroup.class);
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.jsp;
+package com.intellij.ide.browsers;
 
-import com.intellij.pom.Navigatable;
-import com.intellij.psi.ImplicitVariable;
-import com.intellij.psi.PsiElement;
-import com.intellij.navigation.NavigationItem;
-
-public interface JspImplicitVariable extends ImplicitVariable, NavigationItem {
-  JspImplicitVariable[] EMPTY_ARRAY = new JspImplicitVariable[0];
-  int INSIDE = 1;
-  int AFTER = 2;
-  int getDeclarationRange();
-
-  PsiElement getDeclaration();
+public enum DefaultBrowserPolicy {
+  SYSTEM, FIRST, ALTERNATIVE
 }

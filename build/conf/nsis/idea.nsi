@@ -562,6 +562,7 @@ ${If} $8 > $control_fields
     StrCpy $2 ""
   !insertmacro MUI_HEADER_TEXT "$(uninstall_previous_installations_title)" "$(uninstall_previous_installations)"
   !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 1" "Text" "$(uninstall_previous_installations_prompt)"
+  !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 3" "Flags" "FOCUS"
   !insertmacro INSTALLOPTIONS_DISPLAY "UninstallOldVersions.ini"
   ;uninstall chosen installation(s)
 

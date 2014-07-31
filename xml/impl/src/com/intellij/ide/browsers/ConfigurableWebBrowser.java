@@ -56,7 +56,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
   @Override
   public Icon getIcon() {
     if (family == BrowserFamily.CHROME) {
-      if (checkNameAndPath("Yandex")) {
+      if (WebBrowserManager.isYandexBrowser(this)) {
         return AllIcons.Xml.Browsers.Yandex16;
       }
       else if (checkNameAndPath("Dartium") || checkNameAndPath("Chromium")) {
@@ -76,14 +76,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
   }
 
   private boolean checkNameAndPath(@NotNull String what) {
-    if (StringUtil.containsIgnoreCase(name, what)) {
-      return true;
-    }
-    if (path != null) {
-      int index = path.lastIndexOf('/');
-      return index > 0 ? path.indexOf(what, index + 1) != -1 : path.contains(what);
-    }
-    return false;
+    return WebBrowserManager.checkNameAndPath(what, this);
   }
 
   @Nullable

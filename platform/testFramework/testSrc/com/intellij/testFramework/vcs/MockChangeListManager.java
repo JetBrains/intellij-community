@@ -271,6 +271,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
+  public void addDirectoryToIgnoreImplicitly(@NotNull String path) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public void setFilesToIgnore(IgnoredFileBean... ignoredFiles) {
     throw new UnsupportedOperationException();
   }

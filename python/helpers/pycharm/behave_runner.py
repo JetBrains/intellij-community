@@ -220,11 +220,11 @@ if __name__ == "__main__":
         """
         pass
 
-    tags = ""
+    tags = []
     if len(sys.argv) > 1:
         for arg in filter(None, sys.argv[2::]):
             if str(arg).startswith("--tags"):
-                tags += " " + str(arg)
+                tags.append(str(arg))
             else:
                 raise Exception("Not a tag expression (should be --tags=..):{}".format(str(arg)))
     my_config = configuration.Configuration(command_args=tags)

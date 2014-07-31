@@ -23,7 +23,6 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.Function;
@@ -34,6 +33,7 @@ import com.intellij.util.ui.LocalPathCellEditor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.IconTableCellRenderer;
 import com.intellij.util.ui.table.TableModelEditor;
+import org.jdesktop.swingx.combobox.ListComboBoxModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,9 +46,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
 import java.util.UUID;
 
-import static com.intellij.ide.browsers.WebBrowserManager.DefaultBrowser;
 import static com.intellij.util.ui.table.TableModelEditor.EditableColumnInfo;
 
 final class BrowserSettingsPanel {
@@ -73,7 +73,7 @@ final class BrowserSettingsPanel {
       }
     };
 
-  private static final ColumnInfo[] COLUMNS = {new EditableColumnInfo<ConfigurableWebBrowser, Boolean>() {
+  private static final EditableColumnInfo<ConfigurableWebBrowser, Boolean> ACTIVE_COLUMN_INFO = new EditableColumnInfo<ConfigurableWebBrowser, Boolean>() {
     @Override
     public Class getColumnClass() {
       return Boolean.class;
@@ -88,44 +88,49 @@ final class BrowserSettingsPanel {
     public void setValue(ConfigurableWebBrowser item, Boolean value) {
       item.setActive(value);
     }
-  }, new EditableColumnInfo<ConfigurableWebBrowser, String>("Name") {
-    @Override
-    public String valueOf(ConfigurableWebBrowser item) {
-      return item.getName();
-    }
+  };
 
-    @Override
-    public void setValue(ConfigurableWebBrowser item, String value) {
-      item.setName(value);
-    }
-  }, new ColumnInfo<ConfigurableWebBrowser, BrowserFamily>("Family") {
-    @Override
-    public Class getColumnClass() {
-      return BrowserFamily.class;
-    }
+  private static final ColumnInfo[] COLUMNS = {ACTIVE_COLUMN_INFO,
+    new EditableColumnInfo<ConfigurableWebBrowser, String>("Name") {
+      @Override
+      public String valueOf(ConfigurableWebBrowser item) {
+        return item.getName();
+      }
 
-    @Override
-    public BrowserFamily valueOf(ConfigurableWebBrowser item) {
-      return item.getFamily();
-    }
+      @Override
+      public void setValue(ConfigurableWebBrowser item, String value) {
+        item.setName(value);
+      }
+    },
+    new ColumnInfo<ConfigurableWebBrowser, BrowserFamily>("Family") {
+      @Override
+      public Class getColumnClass() {
+        return BrowserFamily.class;
+      }
 
-    @Override
-    public void setValue(ConfigurableWebBrowser item, BrowserFamily value) {
-      item.setFamily(value);
-      item.setSpecificSettings(value.createBrowserSpecificSettings());
-    }
+      @Override
+      public BrowserFamily valueOf(ConfigurableWebBrowser item) {
+        return item.getFamily();
+      }
 
-    @Nullable
-    @Override
-    public TableCellRenderer getRenderer(ConfigurableWebBrowser item) {
-      return IconTableCellRenderer.ICONABLE;
-    }
+      @Override
+      public void setValue(ConfigurableWebBrowser item, BrowserFamily value) {
+        item.setFamily(value);
+        item.setSpecificSettings(value.createBrowserSpecificSettings());
+      }
 
-    @Override
-    public boolean isCellEditable(ConfigurableWebBrowser item) {
-      return !WebBrowserManager.getInstance().isPredefinedBrowser(item);
-    }
-  }, PATH_COLUMN_INFO};
+      @Nullable
+      @Override
+      public TableCellRenderer getRenderer(ConfigurableWebBrowser item) {
+        return IconTableCellRenderer.ICONABLE;
+      }
+
+      @Override
+      public boolean isCellEditable(ConfigurableWebBrowser item) {
+        return !WebBrowserManager.getInstance().isPredefinedBrowser(item);
+      }
+    },
+    PATH_COLUMN_INFO};
 
   private JPanel root;
 
@@ -138,7 +143,7 @@ final class BrowserSettingsPanel {
   @SuppressWarnings("UnusedDeclaration")
   private JComponent browsersTable;
 
-  private ComboBox defaultBrowserComboBox;
+  private ComboBox defaultBrowserPolicyComboBox;
 
   private TableModelEditor<ConfigurableWebBrowser> browsersEditor;
 
@@ -148,53 +153,55 @@ final class BrowserSettingsPanel {
     alternativeBrowserPathField.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null, APP_FILE_CHOOSER_DESCRIPTOR);
     defaultBrowserPanel.setBorder(TitledSeparator.EMPTY_BORDER);
 
-    //noinspection unchecked
-    defaultBrowserComboBox.setModel(new EnumComboBoxModel<DefaultBrowser>(DefaultBrowser.class));
-    if (BrowserLauncherAppless.canStartDefaultBrowser()) {
-      defaultBrowserComboBox.addItemListener(new ItemListener() {
-        @Override
-        public void itemStateChanged(ItemEvent e) {
-          boolean customPathEnabled = e.getItem() == DefaultBrowser.ALTERNATIVE;
-          if (e.getStateChange() == ItemEvent.DESELECTED) {
-            if (customPathEnabled) {
-              customPathValue = alternativeBrowserPathField.getText();
-            }
-          }
-          else if (e.getStateChange() == ItemEvent.SELECTED) {
-            alternativeBrowserPathField.setEnabled(customPathEnabled);
-            updateCustomPathTextFieldValue((DefaultBrowser)e.getItem());
-          }
-        }
-      });
-
-      defaultBrowserComboBox.setRenderer(new ListCellRendererWrapper<DefaultBrowser>() {
-        @Override
-        public void customize(JList list, DefaultBrowser value, int index, boolean selected, boolean hasFocus) {
-          String name;
-          switch (value) {
-            case SYSTEM:
-              name = "System default";
-              break;
-            case FIRST:
-              name = "First listed";
-              break;
-            case ALTERNATIVE:
-              name = "Custom path";
-              break;
-            default:
-              throw new IllegalStateException();
-          }
-
-          setText(name);
-        }
-      });
-
-      if (UIUtil.isUnderAquaLookAndFeel()) {
-        defaultBrowserComboBox.setBorder(new EmptyBorder(3, 0, 0, 0));
-      }
+    ArrayList<DefaultBrowserPolicy> defaultBrowserPolicies = new ArrayList<DefaultBrowserPolicy>();
+    if (BrowserLauncherAppless.canUseSystemDefaultBrowserPolicy()) {
+      defaultBrowserPolicies.add(DefaultBrowserPolicy.SYSTEM);
     }
-    else {
-      defaultBrowserComboBox.setVisible(false);
+    defaultBrowserPolicies.add(DefaultBrowserPolicy.FIRST);
+    defaultBrowserPolicies.add(DefaultBrowserPolicy.ALTERNATIVE);
+
+    //noinspection Since15,unchecked
+    defaultBrowserPolicyComboBox.setModel(new ListComboBoxModel<DefaultBrowserPolicy>(defaultBrowserPolicies));
+    defaultBrowserPolicyComboBox.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        boolean customPathEnabled = e.getItem() == DefaultBrowserPolicy.ALTERNATIVE;
+        if (e.getStateChange() == ItemEvent.DESELECTED) {
+          if (customPathEnabled) {
+            customPathValue = alternativeBrowserPathField.getText();
+          }
+        }
+        else if (e.getStateChange() == ItemEvent.SELECTED) {
+          alternativeBrowserPathField.setEnabled(customPathEnabled);
+          updateCustomPathTextFieldValue((DefaultBrowserPolicy)e.getItem());
+        }
+      }
+    });
+
+    defaultBrowserPolicyComboBox.setRenderer(new ListCellRendererWrapper<DefaultBrowserPolicy>() {
+      @Override
+      public void customize(JList list, DefaultBrowserPolicy value, int index, boolean selected, boolean hasFocus) {
+        String name;
+        switch (value) {
+          case SYSTEM:
+            name = "System default";
+            break;
+          case FIRST:
+            name = "First listed";
+            break;
+          case ALTERNATIVE:
+            name = "Custom path";
+            break;
+          default:
+            throw new IllegalStateException();
+        }
+
+        setText(name);
+      }
+    });
+
+    if (UIUtil.isUnderAquaLookAndFeel()) {
+      defaultBrowserPolicyComboBox.setBorder(new EmptyBorder(3, 0, 0, 0));
     }
 
     clearExtractedFiles.addActionListener(new ActionListener() {
@@ -205,11 +212,11 @@ final class BrowserSettingsPanel {
     });
   }
 
-  private void updateCustomPathTextFieldValue(DefaultBrowser browser) {
-    if (browser == DefaultBrowser.ALTERNATIVE) {
+  private void updateCustomPathTextFieldValue(@NotNull DefaultBrowserPolicy browser) {
+    if (browser == DefaultBrowserPolicy.ALTERNATIVE) {
       alternativeBrowserPathField.setText(customPathValue);
     }
-    else if (browser == DefaultBrowser.FIRST) {
+    else if (browser == DefaultBrowserPolicy.FIRST) {
       setCustomPathToFirstListed();
     }
     else {
@@ -272,18 +279,18 @@ final class BrowserSettingsPanel {
       .modelListener(new TableModelEditor.DataChangedListener<ConfigurableWebBrowser>() {
         @Override
         public void tableChanged(TableModelEvent event) {
-          update(event.getFirstRow());
+          update();
         }
 
         @Override
         public void dataChanged(@NotNull ColumnInfo<ConfigurableWebBrowser, ?> columnInfo, int rowIndex) {
-          if (columnInfo == PATH_COLUMN_INFO) {
-            update(rowIndex);
+          if (columnInfo == PATH_COLUMN_INFO || columnInfo == ACTIVE_COLUMN_INFO) {
+            update();
           }
         }
 
-        private void update(int rowIndex) {
-          if (rowIndex == 0 && getDefaultBrowser() == DefaultBrowser.FIRST) {
+        private void update() {
+          if (getDefaultBrowser() == DefaultBrowserPolicy.FIRST) {
             setCustomPathToFirstListed();
           }
         }
@@ -293,7 +300,15 @@ final class BrowserSettingsPanel {
 
   private void setCustomPathToFirstListed() {
     ListTableModel<ConfigurableWebBrowser> model = browsersEditor.getModel();
-    alternativeBrowserPathField.setText(model.getRowCount() == 0 ? "" : model.getRowValue(0).getPath());
+    for (int i = 0, n = model.getRowCount(); i < n; i++) {
+      ConfigurableWebBrowser browser = model.getRowValue(i);
+      if (browser.isActive() && browser.getPath() != null) {
+        alternativeBrowserPathField.setText(browser.getPath());
+        return;
+      }
+    }
+
+    alternativeBrowserPathField.setText("");
   }
 
   @NotNull
@@ -305,12 +320,12 @@ final class BrowserSettingsPanel {
     WebBrowserManager browserManager = WebBrowserManager.getInstance();
     GeneralSettings generalSettings = GeneralSettings.getInstance();
 
-    DefaultBrowser defaultBrowser = getDefaultBrowser();
-    if (browserManager.getDefaultBrowserMode() != defaultBrowser || generalSettings.isConfirmExtractFiles() != confirmExtractFiles.isSelected()) {
+    DefaultBrowserPolicy defaultBrowserPolicy = getDefaultBrowser();
+    if (browserManager.getDefaultBrowserPolicy() != defaultBrowserPolicy || generalSettings.isConfirmExtractFiles() != confirmExtractFiles.isSelected()) {
       return true;
     }
 
-    if (defaultBrowser == DefaultBrowser.ALTERNATIVE &&
+    if (defaultBrowserPolicy == DefaultBrowserPolicy.ALTERNATIVE &&
         !Comparing.strEqual(generalSettings.getBrowserPath(), alternativeBrowserPathField.getText())) {
       return true;
     }
@@ -321,7 +336,7 @@ final class BrowserSettingsPanel {
   public void apply() {
     GeneralSettings settings = GeneralSettings.getInstance();
 
-    settings.setUseDefaultBrowser(getDefaultBrowser() == DefaultBrowser.SYSTEM);
+    settings.setUseDefaultBrowser(getDefaultBrowser() == DefaultBrowserPolicy.SYSTEM);
 
     if (alternativeBrowserPathField.isEnabled()) {
       settings.setBrowserPath(alternativeBrowserPathField.getText());
@@ -330,26 +345,27 @@ final class BrowserSettingsPanel {
     settings.setConfirmExtractFiles(confirmExtractFiles.isSelected());
 
     WebBrowserManager browserManager = WebBrowserManager.getInstance();
-    browserManager.defaultBrowser = getDefaultBrowser();
+    browserManager.defaultBrowserPolicy = getDefaultBrowser();
     browserManager.setList(browsersEditor.apply());
   }
 
-  private DefaultBrowser getDefaultBrowser() {
-    return (DefaultBrowser)defaultBrowserComboBox.getSelectedItem();
+  private DefaultBrowserPolicy getDefaultBrowser() {
+    return (DefaultBrowserPolicy)defaultBrowserPolicyComboBox.getSelectedItem();
   }
 
   public void reset() {
+    DefaultBrowserPolicy defaultBrowserPolicy = WebBrowserManager.getInstance().getDefaultBrowserPolicy();
+    DefaultBrowserPolicy effectiveDefaultBrowserPolicy = defaultBrowserPolicy == DefaultBrowserPolicy.SYSTEM && !BrowserLauncherAppless.canUseSystemDefaultBrowserPolicy()
+                                                         ? DefaultBrowserPolicy.ALTERNATIVE : defaultBrowserPolicy;
+    defaultBrowserPolicyComboBox.setSelectedItem(effectiveDefaultBrowserPolicy);
+
     GeneralSettings settings = GeneralSettings.getInstance();
-
-    DefaultBrowser defaultBrowser = WebBrowserManager.getInstance().getDefaultBrowserMode();
-    defaultBrowserComboBox.setSelectedItem(defaultBrowser);
-
     confirmExtractFiles.setSelected(settings.isConfirmExtractFiles());
     browsersEditor.reset(WebBrowserManager.getInstance().getList());
 
     customPathValue = settings.getBrowserPath();
-    alternativeBrowserPathField.setEnabled(defaultBrowser == DefaultBrowser.ALTERNATIVE);
-    updateCustomPathTextFieldValue(defaultBrowser);
+    alternativeBrowserPathField.setEnabled(effectiveDefaultBrowserPolicy == DefaultBrowserPolicy.ALTERNATIVE);
+    updateCustomPathTextFieldValue(effectiveDefaultBrowserPolicy);
   }
 
   public void selectBrowser(@NotNull WebBrowser browser) {

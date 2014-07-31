@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -27,6 +28,7 @@ import java.util.*;
 public class IgnoredFilesComponent {
   private final Set<IgnoredFileBean> myFilesToIgnore;
   private final Map<String, IgnoredFileBean> myFilesMap;
+  private final Set<String> myDirectoriesManuallyRemovedFromIgnored;
 
   public IgnoredFilesComponent(final Project project, final boolean registerListener) {
     myFilesToIgnore = new LinkedHashSet<IgnoredFileBean>();
@@ -40,17 +42,50 @@ public class IgnoredFilesComponent {
         }
       });
     }
+    myDirectoriesManuallyRemovedFromIgnored = new HashSet<String>();
   }
 
   public IgnoredFilesComponent(final IgnoredFilesComponent other) {
     myFilesToIgnore = new LinkedHashSet<IgnoredFileBean>(other.myFilesToIgnore);
     myFilesMap = new HashMap<String, IgnoredFileBean>(other.myFilesMap);
+    myDirectoriesManuallyRemovedFromIgnored = new HashSet<String>(other.myDirectoriesManuallyRemovedFromIgnored);
   }
 
   public void add(final IgnoredFileBean... filesToIgnore) {
     synchronized (myFilesToIgnore) {
       Collections.addAll(myFilesToIgnore, filesToIgnore);
       addIgnoredFiles(filesToIgnore);
+    }
+  }
+
+  public Set<String> getDirectoriesManuallyRemovedFromIgnored() {
+    return Collections.unmodifiableSet(myDirectoriesManuallyRemovedFromIgnored);
+  }
+
+  public void setDirectoriesManuallyRemovedFromIgnored(Set<String> directories) {
+    myDirectoriesManuallyRemovedFromIgnored.clear();
+    myDirectoriesManuallyRemovedFromIgnored.addAll(directories);
+  }
+
+  public void addIgnoredDirectoryImplicitly(@NotNull String path, @NotNull Project project) {
+    synchronized (myFilesToIgnore) {
+      if (myDirectoriesManuallyRemovedFromIgnored.contains(path) || myDirectoriesManuallyRemovedFromIgnored.contains(path + "/")) {
+        return;
+      }
+      for (IgnoredFileBean bean : myFilesToIgnore) {
+        if (bean.getType() == IgnoreSettingsType.UNDER_DIR && FileUtil.isAncestor(bean.getPath(), path, false)) {
+          return;
+        }
+      }
+      List<IgnoredFileBean> toRemove = new ArrayList<IgnoredFileBean>();
+      for (IgnoredFileBean bean : myFilesToIgnore) {
+        if ((bean.getType() == IgnoreSettingsType.UNDER_DIR || bean.getType() == IgnoreSettingsType.FILE) &&
+            FileUtil.isAncestor(path, bean.getPath(), false)) {
+          toRemove.add(bean);
+        }
+      }
+      myFilesToIgnore.removeAll(toRemove);
+      myFilesToIgnore.add(IgnoredBeanFactory.ignoreUnderDirectory(path, project));
     }
   }
 

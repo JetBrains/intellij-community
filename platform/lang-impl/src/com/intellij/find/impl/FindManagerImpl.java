@@ -64,6 +64,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ReplacePromptDialog;
+import com.intellij.usages.ChunkExtractor;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -572,8 +573,8 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       final TextAttributesKey[] keys = activeSyntaxHighlighter.getTokenHighlights(tokenType);
 
       if (tokens.contains(tokenType) ||
-          (model.isInStringLiteralsOnly() && isHighlightedAsString(keys)) ||
-          (model.isInCommentsOnly() && isHighlightedAsDocComment(keys))
+          (model.isInStringLiteralsOnly() && ChunkExtractor.isHighlightedAsString(keys)) ||
+          (model.isInCommentsOnly() && ChunkExtractor.isHighlightedAsComment(keys))
         ) {
         int start = lexer.getTokenStart();
         int end = lexer.getTokenEnd();
@@ -644,32 +645,6 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     }
 
     return prevFindResult;
-  }
-
-  private static boolean isHighlightedAsDocComment(TextAttributesKey... keys) {
-    for (TextAttributesKey key : keys) {
-      if (key == DefaultLanguageHighlighterColors.DOC_COMMENT || key == SyntaxHighlighterColors.DOC_COMMENT) {
-        return true;
-      }
-      final TextAttributesKey fallbackAttributeKey = key.getFallbackAttributeKey();
-      if (fallbackAttributeKey != null && isHighlightedAsDocComment(fallbackAttributeKey)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean isHighlightedAsString(TextAttributesKey... keys) {
-    for (TextAttributesKey key : keys) {
-      if (key == DefaultLanguageHighlighterColors.STRING || key == SyntaxHighlighterColors.STRING) {
-        return true;
-      }
-      final TextAttributesKey fallbackAttributeKey = key.getFallbackAttributeKey();
-      if (fallbackAttributeKey != null && isHighlightedAsString(fallbackAttributeKey)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private static TokenSet addTokenTypesForLanguage(FindModel model, Language lang, TokenSet tokensOfInterest) {

@@ -16,7 +16,10 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
 
 import java.util.List;
@@ -30,13 +33,41 @@ public class FragmentedContent {
   private final Document myBefore;
   private final Document myAfter;
   private final List<BeforeAfter<TextRange>> myRanges;
-  private boolean myOneSide;
-  private boolean myIsAddition;
 
-  public FragmentedContent(Document before, Document after, List<BeforeAfter<TextRange>> ranges) {
+  private final boolean myOneSide;
+  private final boolean myIsAddition;
+
+  private final VirtualFile myFileBefore;
+  private final VirtualFile myFileAfter;
+  private final FileType myFileTypeBefore;
+  private final FileType myFileTypeAfter;
+
+  public FragmentedContent(Document before, Document after, List<BeforeAfter<TextRange>> ranges, Change change) {
     myBefore = before;
     myAfter = after;
     myRanges = ranges;
+
+    final FileStatus fs = change.getFileStatus();
+    myIsAddition = FileStatus.ADDED.equals(fs);
+    myOneSide = FileStatus.ADDED.equals(fs) || FileStatus.DELETED.equals(fs);
+
+    if (change.getBeforeRevision() != null) {
+      myFileBefore = change.getBeforeRevision().getFile().getVirtualFile();
+      myFileTypeBefore = change.getBeforeRevision().getFile().getFileType();
+    }
+    else {
+      myFileBefore = null;
+      myFileTypeBefore = null;
+    }
+
+    if (change.getAfterRevision() != null) {
+      myFileAfter = change.getAfterRevision().getFile().getVirtualFile();
+      myFileTypeAfter = change.getAfterRevision().getFile().getFileType();
+    }
+    else {
+      myFileAfter = null;
+      myFileTypeAfter = null;
+    }
   }
 
   public Document getBefore() {
@@ -50,7 +81,7 @@ public class FragmentedContent {
   public List<BeforeAfter<TextRange>> getRanges() {
     return myRanges;
   }
-  
+
   public int getSize() {
     return myRanges.size();
   }
@@ -59,15 +90,23 @@ public class FragmentedContent {
     return myOneSide;
   }
 
-  public void setOneSide(boolean oneSide) {
-    myOneSide = oneSide;
-  }
-
   public boolean isAddition() {
     return myIsAddition;
   }
 
-  public void setIsAddition(boolean isAddition) {
-    myIsAddition = isAddition;
+  public VirtualFile getFileBefore() {
+    return myFileBefore;
+  }
+
+  public VirtualFile getFileAfter() {
+    return myFileAfter;
+  }
+
+  public FileType getFileTypeBefore() {
+    return myFileTypeBefore;
+  }
+
+  public FileType getFileTypeAfter() {
+    return myFileTypeAfter;
   }
 }

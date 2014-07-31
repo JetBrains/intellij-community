@@ -23,16 +23,13 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class ResourceBundleImpl extends ResourceBundle {
-  @NonNls public static final String RESOURCE_BUNDLE_PREFIX = "resourceBundle:";
   @NotNull private final PropertiesFile myDefaultPropertiesFile;
 
   public ResourceBundleImpl(@NotNull final PropertiesFile defaultPropertiesFile) {
@@ -106,6 +103,6 @@ public class ResourceBundleImpl extends ResourceBundle {
   }
 
   public String getUrl() {
-    return RESOURCE_BUNDLE_PREFIX + getBaseDirectory() + "/" + getBaseName();
+    return getBaseDirectory() + "/" + getBaseName();
   }
 }

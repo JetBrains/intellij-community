@@ -19,9 +19,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.HighlighterColors;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -39,11 +37,13 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.reference.SoftReference;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
+import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.lang.ref.WeakReference;
@@ -234,7 +234,7 @@ public class ChunkExtractor {
                                         @NotNull final CharSequence chars,
                                         int hiStart,
                                         final int hiEnd,
-                                        @NotNull TextAttributesKey[] tokenHighlights,
+                                        @NotNull final TextAttributesKey[] tokenHighlights,
                                         final boolean selectUsageWithBold,
                                         @NotNull final List<TextChunk> result) {
     final TextAttributes originalAttrs = convertAttributes(tokenHighlights);
@@ -249,8 +249,12 @@ public class ChunkExtractor {
         int usageStart = segment.getStartOffset();
         int usageEnd = segment.getEndOffset();
         if (rangeIntersect(lastOffset[0], hiEnd, usageStart, usageEnd)) {
-          addChunk(chars, lastOffset[0], Math.max(lastOffset[0], usageStart), originalAttrs, false, result);
-          addChunk(chars, Math.max(lastOffset[0], usageStart), Math.min(hiEnd, usageEnd), originalAttrs, selectUsageWithBold, result);
+          addChunk(chars, lastOffset[0], Math.max(lastOffset[0], usageStart), originalAttrs, false, null, result);
+
+          UsageType usageType = isHighlightedAsString(tokenHighlights)
+                           ? UsageType.LITERAL_USAGE
+                           : isHighlightedAsComment(tokenHighlights) ? UsageType.COMMENT_USAGE : null;
+          addChunk(chars, Math.max(lastOffset[0], usageStart), Math.min(hiEnd, usageEnd), originalAttrs, selectUsageWithBold, usageType, result);
           lastOffset[0] = usageEnd;
           if (usageEnd > hiEnd) {
             return false;
@@ -260,8 +264,40 @@ public class ChunkExtractor {
       }
     });
     if (lastOffset[0] < hiEnd) {
-      addChunk(chars, lastOffset[0], hiEnd, originalAttrs, false, result);
+      addChunk(chars, lastOffset[0], hiEnd, originalAttrs, false, null, result);
     }
+  }
+
+  public static boolean isHighlightedAsComment(TextAttributesKey... keys) {
+    for (TextAttributesKey key : keys) {
+      if (key == DefaultLanguageHighlighterColors.DOC_COMMENT ||
+          key == SyntaxHighlighterColors.DOC_COMMENT ||
+          key == DefaultLanguageHighlighterColors.LINE_COMMENT ||
+          key == SyntaxHighlighterColors.LINE_COMMENT ||
+          key == DefaultLanguageHighlighterColors.BLOCK_COMMENT ||
+          key == SyntaxHighlighterColors.JAVA_BLOCK_COMMENT
+        ) {
+        return true;
+      }
+      final TextAttributesKey fallbackAttributeKey = key.getFallbackAttributeKey();
+      if (fallbackAttributeKey != null && isHighlightedAsComment(fallbackAttributeKey)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean isHighlightedAsString(TextAttributesKey... keys) {
+    for (TextAttributesKey key : keys) {
+      if (key == DefaultLanguageHighlighterColors.STRING || key == SyntaxHighlighterColors.STRING) {
+        return true;
+      }
+      final TextAttributesKey fallbackAttributeKey = key.getFallbackAttributeKey();
+      if (fallbackAttributeKey != null && isHighlightedAsString(fallbackAttributeKey)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void addChunk(@NotNull CharSequence chars,
@@ -269,13 +305,14 @@ public class ChunkExtractor {
                                int end,
                                @NotNull TextAttributes originalAttrs,
                                boolean bold,
+                               @Nullable UsageType usageType,
                                @NotNull List<TextChunk> result) {
     if (start >= end) return;
 
     TextAttributes attrs = bold
                            ? TextAttributes.merge(originalAttrs, new TextAttributes(null, null, null, null, Font.BOLD))
                            : originalAttrs;
-    result.add(new TextChunk(attrs, StringFactory.createShared(CharArrayUtil.fromSequence(chars, start, end))));
+    result.add(new TextChunk(attrs, StringFactory.createShared(CharArrayUtil.fromSequence(chars, start, end)), usageType));
   }
 
   private static boolean rangeIntersect(int s1, int e1, int s2, int e2) {
