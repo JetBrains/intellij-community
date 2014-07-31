@@ -84,20 +84,20 @@ public class SimplifiableAnnotationInspection extends BaseInspection {
         return;
       }
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final String annotationText = buildAnnotationText(annotation, new StringBuilder()).toString();
+      final String annotationText = buildAnnotationText(annotation);
       final PsiAnnotation newAnnotation = factory.createAnnotationFromText(annotationText, element);
       annotation.replace(newAnnotation);
     }
 
-    private static StringBuilder buildAnnotationText(PsiAnnotation annotation, StringBuilder out) {
-      out.append('@');
+    private static String buildAnnotationText(PsiAnnotation annotation) {
+      final StringBuilder out = new StringBuilder("@");
       final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
       assert nameReferenceElement != null;
       out.append(nameReferenceElement.getText());
       final PsiAnnotationParameterList parameterList = annotation.getParameterList();
       final PsiNameValuePair[] attributes = parameterList.getAttributes();
       if (attributes.length == 0) {
-        return out;
+        return out.toString();
       }
       out.append('(');
       if (attributes.length == 1) {
@@ -119,7 +119,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection {
         }
       }
       out.append(')');
-      return out;
+      return out.toString();
     }
 
     private static StringBuilder buildAttributeValueText(PsiAnnotationMemberValue value, StringBuilder out) {
@@ -131,7 +131,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection {
         }
       }
       else if (value instanceof PsiAnnotation) {
-        return buildAnnotationText((PsiAnnotation)value, out);
+        return out.append(buildAnnotationText((PsiAnnotation)value));
       }
       return out.append(value.getText());
     }
