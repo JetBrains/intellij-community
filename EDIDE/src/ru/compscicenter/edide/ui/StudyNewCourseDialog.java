@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import ru.compscicenter.edide.StudyDirectoryProjectGenerator;
 import ru.compscicenter.edide.StudyUtils;
+import ru.compscicenter.edide.course.CourseInfo;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -25,6 +26,8 @@ public class StudyNewCourseDialog extends DialogWrapper {
   private TextFieldWithBrowseButton myCourseLocationField;
   private JLabel myErrorLabel;
   private JLabel myErrorIconLabel;
+  private JLabel myAuthorLabel;
+  private JLabel myDescriptionLabel;
   private final StudyDirectoryProjectGenerator myGenerator;
   private static final String CONNECTION_ERROR = "<html>Failed to download courses.<br>Check your Internet connection.</html>";
   private static final String INVALID_COURSE = "The course you chosen is invalid";
@@ -34,15 +37,17 @@ public class StudyNewCourseDialog extends DialogWrapper {
     setTitle(DIALOG_TITLE);
     init();
     myGenerator = generator;
-    Map<String, File> courses = myGenerator.getCourses();
+    Map<CourseInfo, File> courses = myGenerator.getCourses();
     if (courses.isEmpty()) {
       setError(CONNECTION_ERROR);
     }
     else {
-      Set<String> availableCourses = courses.keySet();
-      for (String courseName : availableCourses) {
-        myDefaultCoursesComboBox.addItem(courseName);
+      Set<CourseInfo> availableCourses = courses.keySet();
+      for (CourseInfo courseInfo : availableCourses) {
+        myDefaultCoursesComboBox.addItem(courseInfo);
       }
+      myAuthorLabel.setText("Author: " + StudyUtils.getFirst(availableCourses).getAuthor());
+      myDescriptionLabel.setText(StudyUtils.getFirst(availableCourses).getDescription());
       //setting the first course in list as selected
       myGenerator.setSelectedCourse(StudyUtils.getFirst(availableCourses));
       setOK();
@@ -77,18 +82,17 @@ public class StudyNewCourseDialog extends DialogWrapper {
     @Override
     public void actionPerformed(ActionEvent e) {
       String fileName = myCourseLocationField.getText();
-      if (!StudyUtils.isZip(fileName)) {
-        setError(INVALID_COURSE);
-        return;
-      }
-      String courseName = myGenerator.addLocalCourse(fileName);
-      if (courseName != null) {
-        myDefaultCoursesComboBox.addItem(courseName);
-        myDefaultCoursesComboBox.setSelectedItem(courseName);
+      CourseInfo courseInfo = myGenerator.addLocalCourse(fileName);
+      if (courseInfo != null) {
+        myDefaultCoursesComboBox.addItem(courseInfo);
+        myDefaultCoursesComboBox.setSelectedItem(courseInfo);
         setOK();
       }
       else {
         setError(INVALID_COURSE);
+        if (myGenerator.getSelectedCourseFile() != null) {
+          myOKAction.setEnabled(true);
+        }
       }
     }
   }
@@ -102,8 +106,15 @@ public class StudyNewCourseDialog extends DialogWrapper {
     @Override
     public void actionPerformed(ActionEvent e) {
       JComboBox cb = (JComboBox)e.getSource();
-      String selectedCourseName = (String)cb.getSelectedItem();
-      myGenerator.setSelectedCourse(selectedCourseName);
+      CourseInfo selectedCourse = (CourseInfo)cb.getSelectedItem();
+      if (selectedCourse == null) {
+        myAuthorLabel.setText("");
+        myDescriptionLabel.setText("");
+        return;
+      }
+      myAuthorLabel.setText("Author: " + selectedCourse.getAuthor());
+      myDescriptionLabel.setText(selectedCourse.getDescription());
+      myGenerator.setSelectedCourse(selectedCourse);
     }
   }
 
@@ -116,26 +127,32 @@ public class StudyNewCourseDialog extends DialogWrapper {
     @Override
     public void actionPerformed(ActionEvent e) {
       myGenerator.downloadAndUnzip(true);
-      Map<String, File> downloadedCourses = myGenerator.loadCourses();
+      Map<CourseInfo, File> downloadedCourses = myGenerator.loadCourses();
       if (downloadedCourses.isEmpty()) {
         setError(CONNECTION_ERROR);
         return;
       }
-      Map<String, File> oldCourses = myGenerator.getLoadedCourses();
-      Map<String, File> newCourses = new HashMap<String, File>();
-      for (Map.Entry<String, File> course : oldCourses.entrySet()) {
+      Map<CourseInfo, File> oldCourses = myGenerator.getLoadedCourses();
+      Map<CourseInfo, File> newCourses = new HashMap<CourseInfo, File>();
+      for (Map.Entry<CourseInfo, File> course : oldCourses.entrySet()) {
         File courseFile = course.getValue();
         if (courseFile.exists()) {
           newCourses.put(course.getKey(), courseFile);
         }
       }
-      for (Map.Entry<String, File> course : downloadedCourses.entrySet()) {
-        String courseName = course.getKey();
+      for (Map.Entry<CourseInfo, File> course : downloadedCourses.entrySet()) {
+        CourseInfo courseName = course.getKey();
         if (newCourses.get(courseName) == null) {
           newCourses.put(courseName, course.getValue());
-          myDefaultCoursesComboBox.addItem(courseName);
         }
       }
+      myDefaultCoursesComboBox.removeAllItems();
+
+      for (CourseInfo courseInfo:newCourses.keySet()) {
+        myDefaultCoursesComboBox.addItem(courseInfo);
+      }
+      myGenerator.setSelectedCourse(StudyUtils.getFirst(newCourses.keySet()));
+
       myGenerator.setCourses(newCourses);
       myGenerator.flushCache();
     }

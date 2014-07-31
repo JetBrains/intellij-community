@@ -1,333 +1,323 @@
 {
-    "name": "Introduction to Python",
-    "description": "Introduction to Python",
-    "lessons": [
+  "name": "Introduction to Python",
+  "author": "Ekaterina Tuzova",
+  "description": "Introduction to Python",
+  "lessons": [
+    {
+      "name": "Introduction",
+      "task_list": [
         {
-            "name": "Introduction",
-            "task_list": [
+          "name": "Our first program",
+          "text": "task1.html",
+          "test_file": "task1_test.py",
+          "task_files": {
+            "helloworld.py": {
+              "task_windows": [
                 {
-                    "name": "Our first program",
-                    "text": "task1.html",
-                    "test_file": "task1_test.py",
-                    "task_files": [
-                        {
-                            "name": "helloworld.py",
-                            "windows": [
-                                {
-                                    "line": 0,
-                                    "start": 33,
-                                    "text": "type your name",
-                                    "hint": "lesson1.task1.docs",
-                                    "possible_answer": "Liana"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "Comments",
-                    "text": "task2.html",
-                    "test_file": "task2_test.py",
-                    "task_files": [
-                        {
-                            "name": "comments.py",
-                            "windows": [
-                                {
-                                    "line": 1,
-                                    "start": 2,
-                                    "text": "type here",
-                                    "hint": "lesson1.task2.docs",
-                                    "possible_answer": "new comment"
-                                }
-                            ]
-                        }
-                    ]
+                  "line": 0,
+                  "start": 33,
+                  "text": "type your name",
+                  "hint": "lesson1.task1.docs",
+                  "possible_answer": "Liana"
                 }
-            ]
+              ]
+            }
+          }
         },
         {
-            "name": "Variables",
-            "task_list": [
+          "name": "Comments",
+          "text": "task2.html",
+          "test_file": "task2_test.py",
+          "task_files": {
+            "comments.py": {
+              "task_windows": [
                 {
-                    "name": "Variable definition",
-                    "text": "task1.html",
-                    "test_file": "task1_test.py",
-                    "task_files": [
-                        {
-                            "name": "variable_definition.py",
-                            "windows": [
-                                {
-                                    "line": 1,
-                                    "start": 12,
-                                    "text": "another value",
-                                    "hint": "lesson2.task1.docs",
-                                    "possible_answer": "5"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "Undefined variable",
-                    "text": "task2.html",
-                    "test_file": "task2_test.py",
-                    "task_files": [
-                        {
-                            "name": "undefined_variable.py",
-                            "windows": [
-                                {
-                                    "line": 1,
-                                    "start": 7,
-                                    "text": "other variable",
-                                    "hint": "lesson2.task2.docs",
-                                    "possible_answer": "other_variable"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "Variable types",
-                    "text": "task3.html",
-                    "test_file": "task3_test.py",
-                    "task_files": [
-                        {
-                            "name": "variable_type.py",
-                            "windows": [
-                                {
-                                    "line": 4,
-                                    "start": 6,
-                                    "text": "float_number type",
-                                    "hint": "lesson2.task3.docs",
-                                    "possible_answer": "type(float_number)"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "Arithmetic Operators",
-                    "text": "task4.html",
-                    "test_file": "task4_test.py",
-                    "task_files": [
-                        {
-                            "name": "arithmetic_operators.py",
-                            "windows": [
-                                {
-                                    "line": 2,
-                                    "start": 11,
-                                    "text": "divide 'number' by two",
-                                    "hint": "lesson2.task4.1.docs",
-                                    "possible_answer": "number/2"
-                                },
-                                {
-                                    "line": 4,
-                                    "start": 12,
-                                    "text": "calculate the remainder",
-                                    "hint": "lesson2.task4.2.docs",
-                                    "possible_answer": "number%2"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "Assignments",
-                    "text": "task5.html",
-                    "test_file": "task5_test.py",
-                    "task_files": [
-                        {
-                            "name": "assignments.py",
-                            "windows": [
-                                {
-                                    "line": 2,
-                                    "start": 6,
-                                    "text": "operator",
-                                    "hint": "lesson2.task5.docs",
-                                    "possible_answer": "+="
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "Boolean operators",
-                    "text": "task6.html",
-                    "test_file": "task6_test.py",
-                    "task_files": [
-                        {
-                            "name": "boolean_operators.py",
-                            "windows": [
-                                {
-                                    "line": 3,
-                                    "start": 15,
-                                    "text": "operator",
-                                    "hint": "lesson2.task6.docs",
-                                    "possible_answer": "=="
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "Comparison operators",
-                    "text": "task7.html",
-                    "test_file": "task7_test.py",
-                    "task_files": [
-                        {
-                            "name": "comparison_operators.py",
-                            "windows": [
-                                {
-                                    "line": 3,
-                                    "start": 19,
-                                    "text": "operator",
-                                    "hint": "lesson2.task7.docs",
-                                    "possible_answer": ">="
-                                }
-                            ]
-                        }
-                    ]
+                  "line": 1,
+                  "start": 2,
+                  "text": "type here",
+                  "hint": "lesson1.task2.docs",
+                  "possible_answer": "new comment"
                 }
-            ]
-
-        },
-        {
-            "name": "Strings",
-            "task_list": [
-                {
-                    "name": "Concatenation",
-                    "text": "task1.html",
-                    "test_file": "task1_test.py",
-                    "task_files": [
-                        {
-                            "name": "concatenation.py",
-                            "windows": [
-                                {
-                                    "line": 3,
-                                    "start": 14,
-                                    "text": "type here",
-                                    "hint": "lesson3.task1.docs",
-                                    "possible_answer": "hello + ' ' + world"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "String multiplication",
-                    "text": "task2.html",
-                    "test_file": "task2_test.py",
-                    "task_files": [
-                        {
-                            "name": "string_multiplication.py",
-                            "windows": [
-                                {
-                                    "line": 1,
-                                    "start": 20,
-                                    "text": "operator",
-                                    "hint": "lesson3.task2.docs",
-                                    "possible_answer": "hello * 10"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "String indexing",
-                    "text": "task3.html",
-                    "test_file": "task3_test.py",
-                    "task_files": [
-                        {
-                            "name": "string_indexing.py",
-                            "windows": [
-                                {
-                                    "line": 1,
-                                    "start": 11,
-                                    "text": "type here",
-                                    "hint": "lesson3.task3.docs",
-                                    "possible_answer": "python[0]"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "String negative indexing",
-                    "text": "task4.html",
-                    "test_file": "task4_test.py",
-                    "task_files": [
-                        {
-                            "name": "negative_indexing.py",
-                            "windows": [
-                                {
-                                    "line": 1,
-                                    "start": 14,
-                                    "text": "type here",
-                                    "hint": "lesson3.task4.docs",
-                                    "possible_answer": "long_string[-1]"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "String slicing",
-                    "text": "task5.html",
-                    "test_file": "task5_test.py",
-                    "task_files": [
-                        {
-                            "name": "slicing.py",
-                            "windows": [
-                                {
-                                    "line": 1,
-                                    "start": 9,
-                                    "text": "type here",
-                                    "hint": "lesson3.task5.docs",
-                                    "possible_answer": "monty_python[6:]"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "In operator",
-                    "text": "task6.html",
-                    "test_file": "task6_test.py",
-                    "task_files": [
-                        {
-                            "name": "in_operator.py",
-                            "windows": [
-                                {
-                                    "line": 1,
-                                    "start": 11,
-                                    "text": "type here",
-                                    "hint": "lesson3.task6.docs",
-                                    "possible_answer": "'ice' in ice_cream"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "String length",
-                    "text": "task7.html",
-                    "test_file": "task7_test.py",
-                    "task_files": [
-                        {
-                            "name": "len_function.py",
-                            "windows": [
-                                {
-                                    "line": 3,
-                                    "start": 13,
-                                    "text": "type here",
-                                    "hint": "lesson3.task7.docs",
-                                    "possible_answer": "phrase[:len(phrase)/2]"
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
+              ]
+            }
+          }
         }
-    ]
+      ]
+    },
+    {
+      "name": "Variables",
+      "task_list": [
+        {
+          "name": "Variable definition",
+          "text": "task1.html",
+          "test_file": "task1_test.py",
+          "task_files": {
+            "variable_definition.py": {
+              "task_windows": [
+                {
+                  "line": 1,
+                  "start": 12,
+                  "text": "another value",
+                  "hint": "lesson2.task1.docs",
+                  "possible_answer": "5"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Undefined variable",
+          "text": "task2.html",
+          "test_file": "task2_test.py",
+          "task_files": {
+            "undefined_variable.py": {
+              "task_windows": [
+                {
+                  "line": 1,
+                  "start": 7,
+                  "text": "other variable",
+                  "hint": "lesson2.task2.docs",
+                  "possible_answer": "other_variable"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Variable types",
+          "text": "task3.html",
+          "test_file": "task3_test.py",
+          "task_files": {
+            "variable_type.py": {
+              "task_windows": [
+                {
+                  "line": 4,
+                  "start": 6,
+                  "text": "float_number type",
+                  "hint": "lesson2.task3.docs",
+                  "possible_answer": "type(float_number)"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Arithmetic Operators",
+          "text": "task4.html",
+          "test_file": "task4_test.py",
+          "task_files": {
+            "arithmetic_operators.py": {
+              "task_windows": [
+                {
+                  "line": 2,
+                  "start": 11,
+                  "text": "divide 'number' by two",
+                  "hint": "lesson2.task4.1.docs",
+                  "possible_answer": "number/2"
+                },
+                {
+                  "line": 4,
+                  "start": 12,
+                  "text": "calculate the remainder",
+                  "hint": "lesson2.task4.2.docs",
+                  "possible_answer": "number%2"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Assignments",
+          "text": "task5.html",
+          "test_file": "task5_test.py",
+          "task_files": {
+            "assignments.py": {
+              "task_windows": [
+                {
+                  "line": 2,
+                  "start": 6,
+                  "text": "operator",
+                  "hint": "lesson2.task5.docs",
+                  "possible_answer": "+="
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Boolean operators",
+          "text": "task6.html",
+          "test_file": "task6_test.py",
+          "task_files": {
+            "boolean_operators.py": {
+              "task_windows": [
+                {
+                  "line": 3,
+                  "start": 15,
+                  "text": "operator",
+                  "hint": "lesson2.task6.docs",
+                  "possible_answer": "=="
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Comparison operators",
+          "text": "task7.html",
+          "test_file": "task7_test.py",
+          "task_files": {
+            "comparison_operators.py": {
+              "task_windows": [
+                {
+                  "line": 3,
+                  "start": 19,
+                  "text": "operator",
+                  "hint": "lesson2.task7.docs",
+                  "possible_answer": ">="
+                }
+              ]
+            }
+          }
+        }
+      ]
+
+    },
+    {
+      "name": "Strings",
+      "task_list": [
+        {
+          "name": "Concatenation",
+          "text": "task1.html",
+          "test_file": "task1_test.py",
+          "task_files": {
+            "concatenation.py": {
+              "name": "concatenation.py",
+              "task_windows": [
+                {
+                  "line": 3,
+                  "start": 14,
+                  "text": "type here",
+                  "hint": "lesson3.task1.docs",
+                  "possible_answer": "hello + ' ' + world"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "String multiplication",
+          "text": "task2.html",
+          "test_file": "task2_test.py",
+          "task_files": {
+            "string_multiplication.py": {
+              "task_windows": [
+                {
+                  "line": 1,
+                  "start": 20,
+                  "text": "operator",
+                  "hint": "lesson3.task2.docs",
+                  "possible_answer": "hello * 10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "String indexing",
+          "text": "task3.html",
+          "test_file": "task3_test.py",
+          "task_files": {
+            "string_indexing.py": {
+              "task_windows": [
+                {
+                  "line": 1,
+                  "start": 11,
+                  "text": "type here",
+                  "hint": "lesson3.task3.docs",
+                  "possible_answer": "python[0]"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "String negative indexing",
+          "text": "task4.html",
+          "test_file": "task4_test.py",
+          "task_files": {
+            "negative_indexing.py": {
+              "name": "negative_indexing.py",
+              "task_windows": [
+                {
+                  "line": 1,
+                  "start": 14,
+                  "text": "type here",
+                  "hint": "lesson3.task4.docs",
+                  "possible_answer": "long_string[-1]"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "String slicing",
+          "text": "task5.html",
+          "test_file": "task5_test.py",
+          "task_files": {
+            "slicing.py": {
+              "name": "slicing.py",
+              "task_windows": [
+                {
+                  "line": 1,
+                  "start": 9,
+                  "text": "type here",
+                  "hint": "lesson3.task5.docs",
+                  "possible_answer": "monty_python[6:]"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "In operator",
+          "text": "task6.html",
+          "test_file": "task6_test.py",
+          "task_files": {
+            "in_operator.py": {
+              "name": "in_operator.py",
+              "task_windows": [
+                {
+                  "line": 1,
+                  "start": 11,
+                  "text": "type here",
+                  "hint": "lesson3.task6.docs",
+                  "possible_answer": "'ice' in ice_cream"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "String length",
+          "text": "task7.html",
+          "test_file": "task7_test.py",
+          "task_files": {
+            "len_function.py": {
+              "name": "len_function.py",
+              "task_windows": [
+                {
+                  "line": 3,
+                  "start": 13,
+                  "text": "type here",
+                  "hint": "lesson3.task7.docs",
+                  "possible_answer": "phrase[:len(phrase)/2]"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
 }

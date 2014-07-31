@@ -13,7 +13,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.DirectoryProjectGenerator;
@@ -23,6 +22,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.compscicenter.edide.course.Course;
+import ru.compscicenter.edide.course.CourseInfo;
 import ru.compscicenter.edide.ui.StudyNewCourseDialog;
 
 import java.io.*;
@@ -40,11 +40,12 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
   private static final String USER_NAME = "medvector";
   private static final String COURSE_META_FILE = "course.json";
   private static final String COURSE_NAME_ATTRIBUTE = "name";
-  private static final Pattern CACHE_PATTERN = Pattern.compile("(name=(.*)) (path=(.*course.json))");
+  private static final Pattern CACHE_PATTERN = Pattern.compile("(name=(.*)) (path=(.*course.json)) (author=(.*)) (description=(.*))");
   private static final String REPOSITORY_NAME = "initial-python-course";
+  public static final String AUTHOR_ATTRIBUTE = "author";
   private final File myCoursesDir = new File(PathManager.getLibPath(), "courses");
   private static final String CACHE_NAME = "courseNames.txt";
-  private Map<String, File> myCourses = new HashMap<String, File>();
+  private Map<CourseInfo, File> myCourses = new HashMap<CourseInfo, File>();
   private File mySelectedCourseFile;
   private Project myProject;
 
@@ -55,7 +56,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
     return "Study project";
   }
 
-  public void setCourses(Map<String, File> courses) {
+  public void setCourses(Map<CourseInfo, File> courses) {
     myCourses = courses;
   }
 
@@ -64,12 +65,16 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
    *
    * @param courseName name of selected course
    */
-  public void setSelectedCourse(@NotNull String courseName) {
+  public void setSelectedCourse(@NotNull CourseInfo courseName) {
     File courseFile = myCourses.get(courseName);
     if (courseFile == null) {
       LOG.error("invalid course in list");
     }
     mySelectedCourseFile = courseFile;
+  }
+
+  public File getSelectedCourseFile() {
+    return mySelectedCourseFile;
   }
 
   /**
@@ -79,7 +84,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
    * @return added course name or null if course is invalid
    */
   @Nullable
-  private String addCourse(Map<String, File> courses, File courseDir) {
+  private CourseInfo addCourse(Map<CourseInfo, File> courses, File courseDir) {
     if (courseDir.isDirectory()) {
       File[] courseFiles = courseDir.listFiles(new FilenameFilter() {
         @Override
@@ -88,24 +93,15 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
         }
       });
       if (courseFiles.length != 1) {
-        LOG.error("User tried to add course with more than one or without course files");
+        LOG.info("User tried to add course with more than one or without course files");
         return null;
       }
       File courseFile = courseFiles[0];
-      String courseName = getCourseName(courseFile);
-      if (courseName != null) {
-        //appending index to courseName if there is another course with such name already
-        String newName = courseName;
-        int i = 2;
-        File item = courses.get(newName);
-        while (item != null && !FileUtil.filesEqual(item, courseFile)) {
-          newName = courseName + String.valueOf(i);
-          i++;
-          item = courses.get(newName);
-        }
-        courses.put(newName, courseFile);
+      CourseInfo courseInfo = getCourseInfo(courseFile);
+      if (courseInfo != null) {
+        courses.put(courseInfo, courseFile);
       }
-      return courseName;
+      return courseInfo;
     }
     return null;
   }
@@ -117,14 +113,14 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
    * @return added course name or null if course is invalid
    */
   @Nullable
-  public String addLocalCourse(String zipFilePath) {
+  public CourseInfo addLocalCourse(String zipFilePath) {
     File file = new File(zipFilePath);
     try {
       String fileName = file.getName();
       String unzippedName = fileName.substring(0, fileName.indexOf("."));
       File courseDir = new File(myCoursesDir, unzippedName);
       ZipUtil.unzip(null, courseDir, file, null, null, true);
-      String courseName = addCourse(myCourses, courseDir);
+      CourseInfo courseName = addCourse(myCourses, courseDir);
       flushCache();
       return courseName;
     }
@@ -221,7 +217,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
     }
   }
 
-  public Map<String, File> getLoadedCourses() {
+  public Map<CourseInfo, File> getLoadedCourses() {
     return myCourses;
   }
 
@@ -231,8 +227,8 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
    *
    * @return map with course names and course files location
    */
-  public Map<String, File> loadCourses() {
-    Map<String, File> courses = new HashMap<String, File>();
+  public Map<CourseInfo, File> loadCourses() {
+    Map<CourseInfo, File> courses = new HashMap<CourseInfo, File>();
     if (myCoursesDir.exists()) {
       File[] courseDirs = myCoursesDir.listFiles(new FileFilter() {
         @Override
@@ -250,11 +246,11 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
   /**
    * Parses course json meta file and finds course name
    *
-   * @return course name or null if course file is invalid
+   * @return information about course or null if course file is invalid
    */
   @Nullable
-  private String getCourseName(File courseFile) {
-    String courseName = null;
+  private CourseInfo getCourseInfo(File courseFile) {
+    CourseInfo courseInfo = null;
     BufferedReader reader = null;
     try {
       if (courseFile.getName().equals(COURSE_META_FILE)) {
@@ -262,7 +258,10 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
         com.google.gson.stream.JsonReader r = new com.google.gson.stream.JsonReader(reader);
         JsonParser parser = new JsonParser();
         com.google.gson.JsonElement el = parser.parse(r);
-        courseName = el.getAsJsonObject().get(COURSE_NAME_ATTRIBUTE).getAsString();
+        String courseName = el.getAsJsonObject().get(COURSE_NAME_ATTRIBUTE).getAsString();
+        String courseAuthor = el.getAsJsonObject().get(AUTHOR_ATTRIBUTE).getAsString();
+        String courseDescription = el.getAsJsonObject().get("description").getAsString();
+        courseInfo = new CourseInfo(courseName, courseAuthor, courseDescription);
       }
     }
     catch (FileNotFoundException e) {
@@ -271,7 +270,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
     finally {
       StudyUtils.closeSilently(reader);
     }
-    return courseName;
+    return courseInfo;
   }
 
   @NotNull
@@ -283,7 +282,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
   /**
    * @return courses from memory or from cash file or parses course directory
    */
-  public Map<String, File> getCourses() {
+  public Map<CourseInfo, File> getCourses() {
     if (!myCourses.isEmpty()) {
       return myCourses;
     }
@@ -314,8 +313,11 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
     PrintWriter writer = null;
     try {
       writer = new PrintWriter(cashFile);
-      for (Map.Entry<String, File> course : myCourses.entrySet()) {
-        String line = String.format("name=%s path=%s", course.getKey(), course.getValue());
+      for (Map.Entry<CourseInfo, File> course : myCourses.entrySet()) {
+        CourseInfo courseInfo = course.getKey();
+        String line = String
+          .format("name=%s path=%s author=%s description=%s", courseInfo.getName(), course.getValue(), courseInfo.getAuthor(),
+                  courseInfo.getDescription());
         writer.println(line);
       }
     }
@@ -332,8 +334,8 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
    *
    * @return map of course names and course files
    */
-  private Map<String, File> getCoursesFromCache(File cashFile) {
-    Map<String, File> coursesFromCash = new HashMap<String, File>();
+  private Map<CourseInfo, File> getCoursesFromCache(File cashFile) {
+    Map<CourseInfo, File> coursesFromCash = new HashMap<CourseInfo, File>();
     try {
       BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(cashFile)));
       String line;
@@ -343,8 +345,11 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
         if (matcher.matches()) {
           String courseName = matcher.group(2);
           File file = new File(matcher.group(4));
+          String author = matcher.group(6);
+          String description = matcher.group(8);
+          CourseInfo courseInfo = new CourseInfo(courseName, author, description);
           if (file.exists()) {
-            coursesFromCash.put(courseName, file);
+            coursesFromCash.put(courseInfo, file);
           }
         }
       }

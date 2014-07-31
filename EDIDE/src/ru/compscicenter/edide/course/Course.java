@@ -21,6 +21,7 @@ public class Course {
   public String description;
   public String name;
   public String myResourcePath = "";
+  public String author;
   public static final String COURSE_DIR = "course";
   public static final String HINTS_DIR = "hints";
 
@@ -38,6 +39,9 @@ public class Course {
     }
   }
 
+  public String getAuthor() {
+    return author;
+  }
 
   /**
    * Creates course directory in project user created
