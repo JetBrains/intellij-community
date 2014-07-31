@@ -119,4 +119,13 @@ public abstract class FindSettings{
 
   public abstract boolean isInCommentsOnly();
   public abstract void setInCommentsOnly(boolean selected);
+
+  public abstract boolean isExceptStringLiterals();
+  public abstract void setExceptStringLiterals(boolean selected);
+
+  public abstract boolean isExceptComments();
+  public abstract void setExceptComments(boolean selected);
+
+  public abstract boolean isExceptCommentsAndLiterals();
+  public abstract void setExceptCommentsAndLiterals(boolean selected);
 }

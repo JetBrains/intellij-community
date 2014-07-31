@@ -18,8 +18,6 @@ public class ToggleInCommentsAction extends EditorHeaderToggleAction implements 
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    FindModel findModel = getEditorSearchComponent().getFindModel();
-    findModel.setInCommentsOnly(state);
-    if (state) findModel.setInStringLiteralsOnly(false);
+    getEditorSearchComponent().getFindModel().setSearchContext(state ? FindModel.SearchContext.IN_COMMENTS : FindModel.SearchContext.ANY);
   }
 }
