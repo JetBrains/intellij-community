@@ -46,7 +46,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -439,7 +438,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       errorIconBounds.y = bounds.height / 2 - errorIconBounds.height / 2;
       
       try {
-        if (UISettings.getInstance().PRESENTATION_MODE || SystemInfo.isMac) {
+        if (UISettings.getInstance().PRESENTATION_MODE || ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) {
           g.setColor(getEditor().getColorsScheme().getDefaultBackground());
           g.fillRect(0, 0, bounds.width, bounds.height);
 
@@ -530,7 +529,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
-      if (UISettings.getInstance().PRESENTATION_MODE || SystemInfo.isMac) {
+      if (UISettings.getInstance().PRESENTATION_MODE || ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) {
         super.paintThumb(g, c, thumbBounds);
         return;
       }
@@ -567,13 +566,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected int getThickness() {
-      if (UISettings.getInstance().PRESENTATION_MODE || SystemInfo.isMac) return super.getThickness();
+      if (UISettings.getInstance().PRESENTATION_MODE || ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) return super.getThickness();
       return super.getThickness() + (isMacOverlayScrollbar() ? 2 : 7);
     }
 
     @Override
     protected void doPaintTrack(Graphics g, JComponent c, Rectangle bounds) {
-      if (UISettings.getInstance().PRESENTATION_MODE || SystemInfo.isMac) {
+      if (UISettings.getInstance().PRESENTATION_MODE || ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) {
         g.setColor(getEditor().getColorsScheme().getDefaultBackground());
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
         //return;
@@ -611,7 +610,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private void paintTrackBasement(Graphics g, Rectangle bounds) {
-      if (UISettings.getInstance().PRESENTATION_MODE || SystemInfo.isMac) {
+      if (UISettings.getInstance().PRESENTATION_MODE || ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) {
         g.setColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
         return;
