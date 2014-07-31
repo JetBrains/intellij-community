@@ -14,6 +14,7 @@
     <orderEntry type="module" module-name="external-system-impl" exported="" />
     <orderEntry type="module" module-name="gradle-tooling-extension-api" exported="" />
     <orderEntry type="module" module-name="gradle-tooling-extension-impl" />
+    <orderEntry type="module" module-name="gradle-jps-plugin" />
     <orderEntry type="module" module-name="idea-ui" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="compiler-openapi" />
@@ -105,6 +106,9 @@
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="junit" />
     <orderEntry type="module" module-name="smRunner" />
+    <orderEntry type="library" name="Kryo" level="project" />
+    <orderEntry type="library" name="Ant" level="project" />
+    <orderEntry type="library" name="gson" level="project" />
   </component>
 </module>
 

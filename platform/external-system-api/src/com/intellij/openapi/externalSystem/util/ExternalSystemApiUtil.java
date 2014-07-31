@@ -681,4 +681,9 @@ public class ExternalSystemApiUtil {
   public static String getExternalProjectPath(@Nullable Module module) {
     return module != null ? module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY) : null;
   }
+
+  @Nullable
+  public static String getExternalProjectId(@Nullable Module module) {
+    return module != null ? module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_ID_KEY) : null;
+  }
 }
