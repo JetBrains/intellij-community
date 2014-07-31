@@ -124,7 +124,7 @@ public class Restarter {
     kernel32.LocalFree(argv_ptr);
 
     File restarter = new File(PathManager.getBinPath(), "restarter.exe");
-    File restarter_copy = createTempExecutableLauncher(restarter);
+    final File restarter_copy = createTempExecutableLauncher(restarter);
 
     doScheduleRestart(restarter_copy, new Consumer<List<String>>() {
       @Override
@@ -133,6 +133,7 @@ public class Restarter {
         Collections.addAll(commands, beforeRestart);
         Collections.addAll(commands, String.valueOf(argc.getValue()));
         Collections.addAll(commands, argv);
+        Collections.addAll(commands, restarter_copy.getPath());
       }
     });
 
