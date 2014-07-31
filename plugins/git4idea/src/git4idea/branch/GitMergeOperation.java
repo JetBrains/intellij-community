@@ -196,7 +196,7 @@ class GitMergeOperation extends GitBranchOperation {
     List<Change> affectedChanges = conflictingRepositoriesAndAffectedChanges.getSecond();
 
     Collection<String> absolutePaths = GitUtil.toAbsolute(repository.getRoot(), localChangesOverwrittenByMerge.getRelativeFilePaths());
-    int smartCheckoutDecision = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths, "merge", false);
+    int smartCheckoutDecision = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths, "merge", null);
     if (smartCheckoutDecision == GitSmartOperationDialog.SMART_EXIT_CODE) {
       return doSmartMerge(allConflictingRepositories);
     }

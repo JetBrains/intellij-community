@@ -94,7 +94,8 @@ public interface Git {
   GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName);
 
   @NotNull
-  GitCommandResult reset(@NotNull GitRepository repository, @NotNull GitResetMode mode, @NotNull String target);
+  GitCommandResult reset(@NotNull GitRepository repository, @NotNull GitResetMode mode, @NotNull String target,
+                         @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
   GitCommandResult resetMerge(@NotNull GitRepository repository, @Nullable String revision);

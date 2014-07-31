@@ -57,7 +57,7 @@ public class GitResetAction extends VcsLogAction<GitRepository> {
       new Task.Backgroundable(project, "Git reset", false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          new GitResetOperation(project, commits, selectedMode).execute();
+          new GitResetOperation(project, commits, selectedMode, indicator).execute();
         }
       }.queue();
     }

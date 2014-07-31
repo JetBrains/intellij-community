@@ -339,8 +339,9 @@ public class GitImpl implements Git {
 
   @Override
   @NotNull
-  public GitCommandResult reset(@NotNull GitRepository repository, @NotNull GitResetMode mode, @NotNull String target) {
-    return reset(repository, mode.getArgument(), target);
+  public GitCommandResult reset(@NotNull GitRepository repository, @NotNull GitResetMode mode, @NotNull String target,
+                                @NotNull GitLineHandlerListener... listeners) {
+    return reset(repository, mode.getArgument(), target, listeners);
   }
 
   @Override
@@ -350,12 +351,14 @@ public class GitImpl implements Git {
   }
 
   @NotNull
-  private static GitCommandResult reset(@NotNull GitRepository repository, @NotNull String argument, @Nullable String target) {
+  private static GitCommandResult reset(@NotNull GitRepository repository, @NotNull String argument, @Nullable String target,
+                                        @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.RESET);
     handler.addParameters(argument);
     if (target != null) {
       handler.addParameters(target);
     }
+    addListeners(handler, listeners);
     return run(handler);
   }
 
