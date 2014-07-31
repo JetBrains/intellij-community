@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,7 @@ public class PackagesNotificationPanel {
     myEditorPane.setBackground(UIManager.getColor("ArrowButton.background"));
     myEditorPane.setContentType("text/html");
     myEditorPane.setEditable(false);
+    myEditorPane.setVisible(false);
     myEditorPane.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
@@ -107,7 +109,7 @@ public class PackagesNotificationPanel {
     String htmlText = text.startsWith("<html>") ? text : UIUtil.toHtml(text);
     myEditorPane.setText(htmlText);
     myEditorPane.setBackground(background);
-    myEditorPane.setVisible(true);
+    setVisibleEditorPane(true);
     myErrorTitle = null;
     myErrorDescription = null;
   }
@@ -123,7 +125,20 @@ public class PackagesNotificationPanel {
   }
 
   public void hide() {
-    myEditorPane.setVisible(false);
+    setVisibleEditorPane(false);
+  }
+
+  private void setVisibleEditorPane(boolean visible) {
+    boolean oldVisible = myEditorPane.isVisible();
+    myEditorPane.setVisible(visible);
+    if (oldVisible != visible) {
+      JComponent comp = ObjectUtils.tryCast(myEditorPane.getParent(), JComponent.class);
+      if (comp == null) {
+        comp = myEditorPane;
+      }
+      comp.revalidate();
+      comp.repaint();
+    }
   }
 
   public boolean hasLinkHandler(String key) {
