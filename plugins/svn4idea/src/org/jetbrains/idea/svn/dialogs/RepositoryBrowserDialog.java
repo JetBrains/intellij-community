@@ -93,7 +93,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   private final boolean myShowFiles;
 
-  @NonNls private static final String PLACE_TOOLBAR = "RepositoryBrowser.Toolbar";
+  @NonNls public static final String PLACE_TOOLBAR = "RepositoryBrowser.Toolbar";
   @NonNls private static final String PLACE_MENU = "RepositoryBrowser.Menu";
   private final String myRepositoriesLabelText;
   protected JLabel myRepositoriesLabel;
@@ -138,7 +138,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     DefaultActionGroup group = new DefaultActionGroup();
     final RepositoryBrowserComponent browser = getRepositoryBrowser();
     group.add(new AddLocationAction(browser));
-    group.add(new EditLocationAction());
+    group.add(new EditLocationAction(browser));
     group.add(new DiscardLocationAction(browser));
     group.add(new DetailsAction());
     group.addSeparator();
@@ -216,7 +216,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     group.add(copyUrlAction);
     group.addSeparator();
     group.add(new RefreshAction(browser));
-    group.add(new EditLocationAction());
+    group.add(new EditLocationAction(browser));
     group.add(new DiscardLocationAction(browser));
     ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(PLACE_MENU, group);
     return menu.getComponent();
@@ -413,13 +413,17 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  protected class EditLocationAction extends AnAction {
-    public EditLocationAction() {
+  protected static class EditLocationAction extends AnAction {
+
+    @NotNull private final RepositoryBrowserComponent myBrowserComponent;
+
+    public EditLocationAction(@NotNull RepositoryBrowserComponent browserComponent) {
       super(SvnBundle.message("repository.browser.edit.location.menu.item"));
+      myBrowserComponent = browserComponent;
     }
 
     public void update(AnActionEvent e) {
-      RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
+      RepositoryTreeNode node = myBrowserComponent.getSelectedNode();
       if (e.getPlace().equals(PLACE_TOOLBAR)) {
         e.getPresentation().setDescription(SvnBundle.message("repository.browser.edit.location.menu.item"));
         e.getPresentation().setText(SvnBundle.message("repository.browser.edit.location.menu.item"));
@@ -429,13 +433,14 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
+      RepositoryTreeNode node = myBrowserComponent.getSelectedNode();
       if (node == null || (! (node.getParent() instanceof RepositoryTreeRootNode))) {
         return;
       }
       final String oldUrl = node.getURL().toString();
       final SvnApplicationSettings settings = SvnApplicationSettings.getInstance();
-      final AddRepositoryLocationDialog dialog = new AddRepositoryLocationDialog(myProject, settings.getTypedUrlsListCopy()) {
+      final AddRepositoryLocationDialog dialog =
+        new AddRepositoryLocationDialog(myBrowserComponent.getProject(), settings.getTypedUrlsListCopy()) {
         @Override
         protected String initText() {
           return oldUrl;
@@ -453,9 +458,9 @@ public class RepositoryBrowserDialog extends DialogWrapper {
           settings.addTypedUrl(url);
           settings.removeCheckoutURL(oldUrl);
           settings.addCheckoutURL(url);
-          final RepositoryBrowserComponent browser = getRepositoryBrowser();
-          browser.removeURL(oldUrl);
-          browser.addURL(url);
+
+          myBrowserComponent.removeURL(oldUrl);
+          myBrowserComponent.addURL(url);
         }
       }
     }
