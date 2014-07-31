@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -362,7 +363,8 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
 
     public Button(AnAction action, Presentation presentation) {
       super(action, presentation, "NewProject", new Dimension(70, 50));
-      myBorder = UIUtil.isUnderDarcula() ? UIUtil.getButtonBorder() : BorderFactory.createLineBorder(UIUtil.getBorderColor());
+      final Border border = new LineBorder(JBColor.border(), 1, true);
+      myBorder = UIUtil.isUnderDarcula() ? UIUtil.getButtonBorder() : border;
       setBorder(myBorder);
     }
 
