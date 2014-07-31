@@ -62,8 +62,8 @@ import java.util.List;
 public class PyCharmNewProjectStep extends DefaultActionGroup implements DumbAware {
   private static final Logger LOG = Logger.getInstance(PyCharmNewProjectStep.class);
 
-  public PyCharmNewProjectStep(@Nullable final Runnable runnable) {
-    super("Select Project Type", true);
+  public PyCharmNewProjectStep(@NotNull final String name, @Nullable final Runnable runnable) {
+    super(name, true);
 
     final NullableConsumer<AbstractProjectSettingsStep> callback = new NullableConsumer<AbstractProjectSettingsStep>() {
       @Override
@@ -192,7 +192,7 @@ public class PyCharmNewProjectStep extends DefaultActionGroup implements DumbAwa
   }
 
   public PyCharmNewProjectStep() {
-    this(null);
+    this("Select Project Type", null);
 
   }
 

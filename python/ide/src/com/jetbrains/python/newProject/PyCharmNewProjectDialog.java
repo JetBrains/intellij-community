@@ -16,9 +16,11 @@
 package com.jetbrains.python.newProject;
 
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.impl.welcomeScreen.CardActionsPanel;
+import com.intellij.platform.DirectoryProjectGenerator;
 import com.jetbrains.python.newProject.actions.PyCharmNewProjectStep;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +44,8 @@ public class PyCharmNewProjectDialog extends DialogWrapper {
         PyCharmNewProjectDialog.this.close(OK_EXIT_CODE);
       }
     };
-    final DefaultActionGroup root = new PyCharmNewProjectStep(runnable);
+    final DirectoryProjectGenerator[] generators = Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
+    final DefaultActionGroup root = new PyCharmNewProjectStep(generators.length == 0 ? "Create Project" : "Select Project Type", runnable);
 
     return new CardActionsPanel(root) {
 
@@ -53,6 +56,7 @@ public class PyCharmNewProjectDialog extends DialogWrapper {
 
       @Override
       public Dimension getMinimumSize() {
+        if (generators.length == 0) return new Dimension(550, 200);
         return new Dimension(650, 450);
       }
     };
