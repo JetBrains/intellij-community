@@ -155,7 +155,22 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myLocationField.addBrowseFolderListener("Select base directory", "Select base directory for the Project",
                                             null, descriptor);
-
+    myLocationField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        if (myProjectGenerator instanceof PythonProjectGenerator) {
+          String path = myLocationField.getText().trim();
+          if (path.endsWith(File.separator)) {
+            path = path.substring(0, path.length() - File.separator.length());
+          }
+          int ind = path.lastIndexOf(File.separator);
+          if (ind != -1) {
+            String projectName = path.substring(ind + 1, path.length());
+            ((PythonProjectGenerator)myProjectGenerator).locationChanged(projectName);
+          }
+        }
+      }
+    });
     final JLabel locationLabel = new JLabel("Location:");
     c.gridx = 0;
     c.gridy = 0;
