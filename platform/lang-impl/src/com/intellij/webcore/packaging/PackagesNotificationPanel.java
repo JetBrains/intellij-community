@@ -87,7 +87,7 @@ public class PackagesNotificationPanel {
       if (packageName != null) {
         title = "Failed to install package '" + packageName + "'";
       }
-      String firstLine = title + ": Error occurred when installing package " + packageName + ". ";
+      String firstLine = "Error occurred when installing package '" + packageName + "'. ";
       showError(firstLine + "<a href=\"xxx\">Details...</a>",
                 title,
                 firstLine + errorDescription);
