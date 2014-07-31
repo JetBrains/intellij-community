@@ -38,7 +38,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.AsynchConsumer;
 import org.jetbrains.annotations.Contract;
 
-import java.io.IOException;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,7 +50,7 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
 
   private InferredAnnotationsManager myInferredAnnotationsManager;
   private ExternalAnnotationsManager myExternalAnnotationsManager;
-
+  private MessageDigest myMessageDigest;
   private List<String> diffs = new ArrayList<String>();
 
   @Override
@@ -62,6 +62,7 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
 
     myInferredAnnotationsManager = InferredAnnotationsManager.getInstance(myModule.getProject());
     myExternalAnnotationsManager = ExternalAnnotationsManager.getInstance(myModule.getProject());
+    myMessageDigest = BytecodeAnalysisConverter.getMessageDigest();
   }
 
   private void setUpLibraries() {
@@ -127,13 +128,9 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
   }
 
   private void checkMethodAnnotations(PsiMethod method) {
-    try {
-      if (ProjectBytecodeAnalysis.getKey(method) == -1) {
-        return;
-      }
-    }
-    catch (IOException e) {
-      fail();
+
+    if (ProjectBytecodeAnalysis.getKey(method, myMessageDigest) == null) {
+      return;
     }
 
     // not null-result

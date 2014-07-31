@@ -37,6 +37,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
+import java.security.MessageDigest;
 import java.util.HashMap;
 
 /**
@@ -47,15 +48,15 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
   private final String myClassesProjectRelativePath = "/classes/" + Test01.class.getPackage().getName().replace('.', '/');
   private JavaPsiFacade myJavaPsiFacade;
   private InferredAnnotationsManager myInferredAnnotationsManager;
-  private BytecodeAnalysisConverter myBytecodeAnalysisConverter;
+  private MessageDigest myMessageDigest;
+
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     myJavaPsiFacade = JavaPsiFacade.getInstance(myModule.getProject());
     myInferredAnnotationsManager = InferredAnnotationsManager.getInstance(myModule.getProject());
-    myBytecodeAnalysisConverter = BytecodeAnalysisConverter.getInstance();
-
+    myMessageDigest = MessageDigest.getInstance("MD5");
     setUpDataClasses();
   }
 
@@ -183,17 +184,21 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
 
   private void checkCompoundId(Method method, PsiMethod psiMethod, boolean noKey) throws IOException {
     Direction direction = new Out();
-    long psiKey = myBytecodeAnalysisConverter.mkPsiKey(psiMethod, direction);
+    System.out.println();
+    System.out.println(method.internalClassName);
+    System.out.println(method.methodName);
+    System.out.println(method.methodDesc);
+
+
+    HKey psiKey = BytecodeAnalysisConverter.psiKey(psiMethod, direction, myMessageDigest);
     if (noKey) {
-      assertTrue(-1 == psiKey);
+      assertTrue(null == psiKey);
       return;
     }
     else {
-      assertFalse(-1 == psiKey);
+      assertFalse(null == psiKey);
     }
-
-    long asmKey = myBytecodeAnalysisConverter.mkAsmKey(new Key(method, direction, true));
-
+    HKey asmKey = BytecodeAnalysisConverter.asmKey(new Key(method, direction, true), myMessageDigest);
     Assert.assertEquals(asmKey, psiKey);
   }
 

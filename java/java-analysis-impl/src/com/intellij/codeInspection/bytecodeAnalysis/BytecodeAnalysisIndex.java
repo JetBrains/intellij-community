@@ -34,12 +34,11 @@ import java.io.IOException;
 /**
  * @author lambdamix
  */
-public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Long, IdEquation> {
-  public static final ID<Long, IdEquation> NAME = ID.create("bytecodeAnalysis");
-  private final EquationExternalizer myExternalizer = new EquationExternalizer();
-  private static final DataIndexer<Long, IdEquation, FileContent> INDEXER =
-    new ClassDataIndexer(BytecodeAnalysisConverter.getInstance());
-  private static final SmartLongKeyDescriptor KEY_DESCRIPTOR = new SmartLongKeyDescriptor();
+public class BytecodeAnalysisIndex extends FileBasedIndexExtension<HKey, HResult> {
+  public static final ID<HKey, HResult> NAME = ID.create("bytecodeAnalysis");
+  private final HEquationExternalizer myExternalizer = new HEquationExternalizer();
+  private static final ClassDataIndexer INDEXER = new ClassDataIndexer();
+  private static final HKeyDescriptor KEY_DESCRIPTOR = new HKeyDescriptor();
 
   private static final int ourInternalVersion = 3;
   private static boolean ourEnabled = SystemProperties.getBooleanProperty("idea.enable.bytecode.contract.inference", isEnabledByDefault());
@@ -51,25 +50,25 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Long, IdEquat
 
   @NotNull
   @Override
-  public ID<Long, IdEquation> getName() {
+  public ID<HKey, HResult> getName() {
     return NAME;
   }
 
   @NotNull
   @Override
-  public DataIndexer<Long, IdEquation, FileContent> getIndexer() {
+  public DataIndexer<HKey, HResult, FileContent> getIndexer() {
     return INDEXER;
   }
 
   @NotNull
   @Override
-  public KeyDescriptor<Long> getKeyDescriptor() {
+  public KeyDescriptor<HKey> getKeyDescriptor() {
     return KEY_DESCRIPTOR;
   }
 
   @NotNull
   @Override
-  public DataExternalizer<IdEquation> getValueExternalizer() {
+  public DataExternalizer<HResult> getValueExternalizer() {
     return myExternalizer;
   }
 
@@ -91,111 +90,85 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Long, IdEquat
 
   @Override
   public int getVersion() {
-    return ourInternalVersion + BytecodeAnalysisConverter.getInstance().getVersion() + (ourEnabled ? 0xFF : 0);
+    return ourInternalVersion + (ourEnabled ? 0xFF : 0);
   }
 
-  public static class EquationExternalizer implements DataExternalizer<IdEquation>, DifferentSerializableBytesImplyNonEqualityPolicy {
+  private static class HKeyDescriptor implements KeyDescriptor<HKey>, DifferentSerializableBytesImplyNonEqualityPolicy {
+
     @Override
-    public void save(@NotNull DataOutput out, IdEquation equation) throws IOException {
-      long id = equation.id;
-      int sign = id > 0 ? 1 : -1;
-      id = Math.abs(id);
-      int primaryId = (int)(id / BytecodeAnalysisConverter.SHIFT);
-      int secondaryId = (int)(id % BytecodeAnalysisConverter.SHIFT);
-      out.writeInt(sign * primaryId);
-      DataInputOutputUtil.writeINT(out, secondaryId);
-      IdResult rhs = equation.rhs;
-      if (rhs instanceof IdFinal) {
-        IdFinal finalResult = (IdFinal)rhs;
+    public void save(@NotNull DataOutput out, HKey value) throws IOException {
+      out.write(value.key);
+      DataInputOutputUtil.writeINT(out, value.dirKey);
+      out.writeBoolean(value.stable);
+    }
+
+    @Override
+    public HKey read(@NotNull DataInput in) throws IOException {
+      byte[] bytes = new byte[BytecodeAnalysisConverter.HASH_SIZE];
+      for (int i = 0; i < bytes.length; i++) {
+        bytes[i] = in.readByte();
+      }
+      return new HKey(bytes, DataInputOutputUtil.readINT(in), in.readBoolean());
+    }
+
+    @Override
+    public int getHashCode(HKey value) {
+      return value.hashCode();
+    }
+
+    @Override
+    public boolean isEqual(HKey val1, HKey val2) {
+      return val1.equals(val2);
+    }
+  }
+
+  public static class HEquationExternalizer implements DataExternalizer<HResult>, DifferentSerializableBytesImplyNonEqualityPolicy {
+    @Override
+    public void save(@NotNull DataOutput out, HResult rhs) throws IOException {
+      if (rhs instanceof HFinal) {
+        HFinal finalResult = (HFinal)rhs;
         out.writeBoolean(true); // final flag
         DataInputOutputUtil.writeINT(out, finalResult.value.ordinal());
       } else {
-        IdPending pendResult = (IdPending)rhs;
+        HPending pendResult = (HPending)rhs;
         out.writeBoolean(false); // pending flag
         DataInputOutputUtil.writeINT(out, pendResult.delta.length);
 
-        for (IntIdComponent component : pendResult.delta) {
+        for (HComponent component : pendResult.delta) {
           DataInputOutputUtil.writeINT(out, component.value.ordinal());
-          long[] ids = component.ids;
+          HKey[] ids = component.ids;
           DataInputOutputUtil.writeINT(out, ids.length);
-          for (long id1 : ids) {
-            sign = id1 > 0 ? 1 : -1;
-            id = Math.abs(id1);
-            primaryId = (int)(id / BytecodeAnalysisConverter.SHIFT);
-            secondaryId = (int)(id % BytecodeAnalysisConverter.SHIFT);
-            out.writeInt(sign * primaryId);
-            DataInputOutputUtil.writeINT(out, secondaryId);
+          for (HKey id1 : ids) {
+            KEY_DESCRIPTOR.save(out, id1);
           }
         }
       }
     }
 
     @Override
-    public IdEquation read(@NotNull DataInput in) throws IOException {
-      long primaryId = in.readInt();
-      int sign = primaryId > 0 ? 1 : -1;
-      primaryId = Math.abs(primaryId);
-      int secondaryId = DataInputOutputUtil.readINT(in);
-      long equationId = sign * (primaryId * BytecodeAnalysisConverter.SHIFT + secondaryId);
+    public HResult read(@NotNull DataInput in) throws IOException {
       boolean isFinal = in.readBoolean(); // flag
       if (isFinal) {
         int ordinal = DataInputOutputUtil.readINT(in);
         Value value = Value.values()[ordinal];
-        return new IdEquation(equationId, new IdFinal(value));
+        return new HFinal(value);
       } else {
 
         int sumLength = DataInputOutputUtil.readINT(in);
-        IntIdComponent[] components = new IntIdComponent[sumLength];
+        HComponent[] components = new HComponent[sumLength];
 
         for (int i = 0; i < sumLength; i++) {
           int ordinal = DataInputOutputUtil.readINT(in);
           Value value = Value.values()[ordinal];
           int componentSize = DataInputOutputUtil.readINT(in);
-          long[] ids = new long[componentSize];
+          HKey[] ids = new HKey[componentSize];
           for (int j = 0; j < componentSize; j++) {
-            primaryId = in.readInt();
-            sign = primaryId > 0 ? 1 : -1;
-            primaryId = Math.abs(primaryId);
-            secondaryId = DataInputOutputUtil.readINT(in);
-            long id = sign * (primaryId * BytecodeAnalysisConverter.SHIFT + secondaryId);
-            ids[j] = id;
+            ids[j] = KEY_DESCRIPTOR.read(in);
           }
-          components[i] = new IntIdComponent(value, ids);
+          components[i] = new HComponent(value, ids);
         }
-        return new IdEquation(equationId, new IdPending(components));
+        return new HPending(components);
       }
-    }
-  }
-
-  private static class SmartLongKeyDescriptor implements KeyDescriptor<Long>, DifferentSerializableBytesImplyNonEqualityPolicy {
-    @Override
-    public void save(@NotNull DataOutput out, Long value) throws IOException {
-      long id = value.longValue();
-      int sign = id > 0 ? 1 : -1;
-      id = Math.abs(id);
-      int primaryId = (int)(id / BytecodeAnalysisConverter.SHIFT);
-      int secondaryId = (int)(id % BytecodeAnalysisConverter.SHIFT);
-      out.writeInt(primaryId * sign);
-      DataInputOutputUtil.writeINT(out, secondaryId);
-    }
-
-    @Override
-    public Long read(@NotNull DataInput in) throws IOException {
-      long primaryId = in.readInt();
-      int sign = primaryId > 0 ? 1 : -1;
-      primaryId = Math.abs(primaryId);
-      int secondaryId = DataInputOutputUtil.readINT(in);
-      return sign * (primaryId * BytecodeAnalysisConverter.SHIFT + secondaryId);
-    }
-
-    @Override
-    public int getHashCode(Long value) {
-      return value.hashCode();
-    }
-
-    @Override
-    public boolean isEqual(Long val1, Long val2) {
-      return val1.longValue() == val2.longValue();
     }
   }
 }

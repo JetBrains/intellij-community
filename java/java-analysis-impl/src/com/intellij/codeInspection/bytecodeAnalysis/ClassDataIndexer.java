@@ -27,6 +27,7 @@ import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,29 +38,25 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
 /**
  * @author lambdamix
  */
-public class ClassDataIndexer implements DataIndexer<Long, IdEquation, FileContent> {
-  final BytecodeAnalysisConverter myConverter;
-
-  public ClassDataIndexer(BytecodeAnalysisConverter converter) {
-    myConverter = converter;
-  }
+public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent> {
 
   @NotNull
   @Override
-  public Map<Long, IdEquation> map(@NotNull FileContent inputData) {
-    HashMap<Long, IdEquation> map = new HashMap<Long, IdEquation>();
+  public Map<HKey, HResult> map(@NotNull FileContent inputData) {
+    HashMap<HKey, HResult> map = new HashMap<HKey, HResult>();
     try {
-      ClassEquations rawEquations = processClass(new ClassReader(inputData.getContent()));
+      MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
+      ClassEquations rawEquations = processClass(new ClassReader(inputData.getContent()), inputData.getFile().getPresentableUrl());
       List<Equation<Key, Value>> rawParameterEquations = rawEquations.parameterEquations;
       List<Equation<Key, Value>> rawContractEquations = rawEquations.contractEquations;
 
       for (Equation<Key, Value> rawParameterEquation: rawParameterEquations) {
-        IdEquation equation = myConverter.convert(rawParameterEquation);
-        map.put(equation.id, equation);
+        HEquation equation = BytecodeAnalysisConverter.convert(rawParameterEquation, md);
+        map.put(equation.key, equation.result);
       }
       for (Equation<Key, Value> rawContractEquation: rawContractEquations) {
-        IdEquation equation = myConverter.convert(rawContractEquation);
-        map.put(equation.id, equation);
+        HEquation equation = BytecodeAnalysisConverter.convert(rawContractEquation, md);
+        map.put(equation.key, equation.result);
       }
     }
     catch (ProcessCanceledException e) {
@@ -83,7 +80,7 @@ public class ClassDataIndexer implements DataIndexer<Long, IdEquation, FileConte
     }
   }
 
-  public static ClassEquations processClass(final ClassReader classReader) {
+  public static ClassEquations processClass(final ClassReader classReader, final String presentableUrl) {
     final List<Equation<Key, Value>> parameterEquations = new ArrayList<Equation<Key, Value>>();
     final List<Equation<Key, Value>> contractEquations = new ArrayList<Equation<Key, Value>>();
 
@@ -180,6 +177,10 @@ public class ClassDataIndexer implements DataIndexer<Long, IdEquation, FileConte
 
               boolean[] leakingParameters = maybeLeakingParameter ? cfg.leakingParameters(className, methodNode) : null;
 
+              if (isReferenceResult) {
+                contractEquations.add(resultEquation.getValue());
+              }
+
               for (int i = 0; i < argumentTypes.length; i++) {
                 Type argType = argumentTypes[i];
                 int argSort = argType.getSort();
@@ -188,31 +189,50 @@ public class ClassDataIndexer implements DataIndexer<Long, IdEquation, FileConte
                 if (isReferenceArg) {
                   if (leakingParameters[i]) {
                     parameterEquations.add(new NonNullInAnalysis(new RichControlFlow(graph, dfs), new In(i), stable).analyze());
-                  } else {
+                  }
+                  else {
+                    // parameter is not leaking, so it is definitely NOT @NotNull
                     parameterEquations.add(new Equation<Key, Value>(new Key(method, new In(i), stable), new Final<Key, Value>(Value.Top)));
                   }
                 }
                 if (isReferenceArg && isInterestingResult) {
                   if (leakingParameters[i]) {
-                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.Null), resultOrigins.getValue(), stable).analyze());
-                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.NotNull), resultOrigins.getValue(), stable).analyze());
-                  } else {
+                    if (resultOrigins.getValue() != null) {
+                      // result origins analysis was ok
+                      contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.Null), resultOrigins.getValue(), stable).analyze());
+                      contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.NotNull), resultOrigins.getValue(), stable).analyze());
+                    }
+                    else {
+                      // result origins  analysis failed, approximating to Top
+                      contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), new Final<Key, Value>(Value.Top)));
+                      contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), new Final<Key, Value>(Value.Top)));
+                    }
+                  }
+                  else {
+                    // parameter is not leaking, so a contract is the same as for the whole method
                     contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), resultEquation.getValue().rhs));
                     contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), resultEquation.getValue().rhs));
                   }
                 }
                 if (isBooleanArg && isInterestingResult) {
                   if (leakingParameters[i]) {
-                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.False), resultOrigins.getValue(), stable).analyze());
-                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.True), resultOrigins.getValue(), stable).analyze());
-                  } else {
+                    if (resultOrigins.getValue() != null) {
+                      // result origins analysis was ok
+                      contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.False), resultOrigins.getValue(), stable).analyze());
+                      contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.True), resultOrigins.getValue(), stable).analyze());
+                    }
+                    else {
+                      // result origins  analysis failed, approximating to Top
+                      contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), new Final<Key, Value>(Value.Top)));
+                      contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), new Final<Key, Value>(Value.Top)));
+                    }
+                  }
+                  else {
+                    // parameter is not leaking, so a contract is the same as for the whole method
                     contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), resultEquation.getValue().rhs));
                     contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), resultEquation.getValue().rhs));
                   }
                 }
-              }
-              if (isReferenceResult) {
-                contractEquations.add(resultEquation.getValue());
               }
               added = true;
             }
@@ -222,6 +242,9 @@ public class ClassDataIndexer implements DataIndexer<Long, IdEquation, FileConte
           }
 
           if (!added) {
+            if (isReferenceResult) {
+              contractEquations.add(new Equation<Key, Value>(new Key(method, new Out(), stable), new Final<Key, Value>(Value.Top)));
+            }
             for (int i = 0; i < argumentTypes.length; i++) {
               Type argType = argumentTypes[i];
               int argSort = argType.getSort();
@@ -240,9 +263,6 @@ public class ClassDataIndexer implements DataIndexer<Long, IdEquation, FileConte
                 contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), new Final<Key, Value>(Value.Top)));
               }
             }
-            if (isReferenceResult) {
-              contractEquations.add(new Equation<Key, Value>(new Key(method, new Out(), stable), new Final<Key, Value>(Value.Top)));
-            }
           }
         }
         catch (ProcessCanceledException e) {
@@ -251,7 +271,7 @@ public class ClassDataIndexer implements DataIndexer<Long, IdEquation, FileConte
         catch (Throwable e) {
           // incorrect bytecode may result in Runtime exceptions during analysis
           // so here we suppose that exception is due to incorrect bytecode
-          LOG.debug("Unexpected Error during processing of " + method, e);
+          LOG.debug("Unexpected Error during processing of " + method + " in " + presentableUrl, e);
         }
       }
     }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
