@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
@@ -71,12 +72,16 @@ public class ConvertExcludedToIgnoredTest extends PlatformTestCase {
   }
 
   private void assertIgnored(VirtualFile... ignoredDirs) {
+    assertIgnoredDirectories(getProject(), ignoredDirs);
+  }
+
+  public static void assertIgnoredDirectories(final Project project, VirtualFile... ignoredDirs) {
     List<String> expectedIgnoredPaths = new ArrayList<String>();
     for (VirtualFile dir : ignoredDirs) {
       expectedIgnoredPaths.add(dir.getPath() + "/");
     }
     List<String> actualIgnoredPaths = new ArrayList<String>();
-    for (IgnoredFileBean fileBean : getChangeListManager().getFilesToIgnore()) {
+    for (IgnoredFileBean fileBean : ChangeListManagerImpl.getInstanceImpl(project).getFilesToIgnore()) {
       assertEquals("Unexpected ignore: " + fileBean, IgnoreSettingsType.UNDER_DIR, fileBean.getType());
       actualIgnoredPaths.add(fileBean.getPath());
     }

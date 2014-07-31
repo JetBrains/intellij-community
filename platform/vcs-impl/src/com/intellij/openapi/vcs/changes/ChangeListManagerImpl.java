@@ -1384,7 +1384,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void addDirectoryToIgnoreImplicitly(@NotNull String path) {
-    myIgnoredIdeaLevel.addIgnoredDirectory(path, myProject, true);
+    myIgnoredIdeaLevel.addIgnoredDirectoryImplicitly(path, myProject);
+  }
+
+  public IgnoredFilesComponent getIgnoredFilesComponent() {
+    return myIgnoredIdeaLevel;
   }
 
   private void scheduleUnversionedUpdate() {
