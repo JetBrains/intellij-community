@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -36,8 +35,6 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +43,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -117,7 +113,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     withinCombo.getComboBox().setEditable(true);
 
     withinCombo.getButton().addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
+      public void actionPerformed(@NotNull final ActionEvent e) {
         final SelectTemplateDialog dialog = new SelectTemplateDialog(project, false, false);
         dialog.show();
         if (dialog.getExitCode() == OK_EXIT_CODE) {
@@ -191,7 +187,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       new ListSelectionListener() {
         boolean rollingBackSelection;
 
-        public void valueChanged(ListSelectionEvent e) {
+        public void valueChanged(@NotNull ListSelectionEvent e) {
           if (e.getValueIsAdjusting()) return;
           if (rollingBackSelection) {
             rollingBackSelection=false;
@@ -212,7 +208,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
     parameterList.setCellRenderer(
       new DefaultListCellRenderer() {
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(@NotNull JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
           String name = ((Variable)value).getName();
           if (Configuration.CONTEXT_VAR_NAME.equals(name)) name = SSRBundle.message("complete.match.variable.name");
           if (isReplacementVariable(name)) {
@@ -226,7 +222,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     maxoccursUnlimited.addChangeListener(new MyChangeListener(maxoccurs, true));
 
     customScriptCode.getButton().addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
+      public void actionPerformed(@NotNull final ActionEvent e) {
         final EditScriptDialog dialog = new EditScriptDialog(project, customScriptCode.getChildComponent().getText());
         dialog.show();
         if (dialog.getExitCode() == OK_EXIT_CODE) {
@@ -505,18 +501,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     formalArgType = createRegexComponent();
     customScriptCode = new ComponentWithBrowseButton<EditorTextField>(createScriptComponent(), null);
 
-    myRegExHelpLabel = new LinkLabel(SSRBundle.message("regular.expression.help.label"), null, new LinkListener() {
-      public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        try {
-          final JBPopup helpPopup = RegExHelpPopup.createRegExHelpPopup();
-          helpPopup.showInCenterOf(mainForm);
-        }
-        catch (BadLocationException e) {
-          LOG.info(e);
-        }
-      }
-    });
-
+    myRegExHelpLabel = RegExHelpPopup.createRegExLink(SSRBundle.message("regular.expression.help.label"), regexp, LOG);
     myRegExHelpLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
   }
 
@@ -559,7 +544,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       inverted = _inverted;
     }
 
-    public void stateChanged(ChangeEvent e) {
+    public void stateChanged(@NotNull ChangeEvent e) {
       final JCheckBox jCheckBox = (JCheckBox)e.getSource();
       component.setEnabled(inverted ^ jCheckBox.isSelected());
     }

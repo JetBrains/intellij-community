@@ -140,12 +140,9 @@ public class PyDocstringGenerator {
 
       final VirtualFile virtualFile = myFile.getVirtualFile();
       if (virtualFile == null) return;
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(
-        myProject, virtualFile, myDocStringOwner.getTextOffset() + myDocStringOwner.getTextLength()
-      );
+      OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, virtualFile, myDocStringExpression.getTextOffset());
       Editor targetEditor = FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
       if (targetEditor != null) {
-        targetEditor.getCaretModel().moveToOffset(myDocStringExpression.getTextOffset());
         TemplateManager.getInstance(myProject).startTemplate(targetEditor, template);
       }
     }

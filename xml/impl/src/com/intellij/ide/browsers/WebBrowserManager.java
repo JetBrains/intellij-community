@@ -45,7 +45,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
 
   private List<ConfigurableWebBrowser> browsers;
 
-  DefaultBrowser defaultBrowser = DefaultBrowser.SYSTEM;
+  DefaultBrowserPolicy defaultBrowserPolicy = DefaultBrowserPolicy.SYSTEM;
 
   public WebBrowserManager() {
     browsers = new ArrayList<ConfigurableWebBrowser>();
@@ -69,20 +69,16 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
            id.equals(DEFAULT_EXPLORER_ID);
   }
 
-  public enum DefaultBrowser {
-    SYSTEM, FIRST, ALTERNATIVE
-  }
-
   @NotNull
-  public DefaultBrowser getDefaultBrowserMode() {
-    return defaultBrowser;
+  public DefaultBrowserPolicy getDefaultBrowserPolicy() {
+    return defaultBrowserPolicy;
   }
 
   @Override
   public Element getState() {
     Element state = new Element("state");
-    if (defaultBrowser != DefaultBrowser.SYSTEM) {
-      state.setAttribute("default", defaultBrowser.name().toLowerCase(Locale.ENGLISH));
+    if (defaultBrowserPolicy != DefaultBrowserPolicy.SYSTEM) {
+      state.setAttribute("default", defaultBrowserPolicy.name().toLowerCase(Locale.ENGLISH));
     }
 
     for (ConfigurableWebBrowser browser : browsers) {
@@ -180,7 +176,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     String defaultValue = element.getAttributeValue("default");
     if (!StringUtil.isEmpty(defaultValue)) {
       try {
-        defaultBrowser = DefaultBrowser.valueOf(defaultValue.toUpperCase(Locale.ENGLISH));
+        defaultBrowserPolicy = DefaultBrowserPolicy.valueOf(defaultValue.toUpperCase(Locale.ENGLISH));
       }
       catch (IllegalArgumentException e) {
         LOG.warn(e);
@@ -349,9 +345,9 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
   }
 
   @Nullable
-  public WebBrowser getDefaultBrowser() {
+  public WebBrowser getFirstActiveBrowser() {
     for (ConfigurableWebBrowser browser : browsers) {
-      if (browser.isActive()) {
+      if (browser.isActive() && browser.getPath() != null) {
         return browser;
       }
     }

@@ -151,7 +151,7 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
     boolean applicable = false;
     WebBrowserUrlProvider provider = null;
     if (request != null) {
-      applicable = HtmlUtil.isHtmlFile(request.getFile()) && !(request.getVirtualFile() instanceof LightVirtualFile);
+      applicable = WebBrowserServiceImpl.isHtmlOrXmlFile(request.getFile()) && !(request.getVirtualFile() instanceof LightVirtualFile);
       if (!applicable) {
         provider = WebBrowserServiceImpl.getProvider(request);
         applicable = provider != null;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -140,6 +141,7 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
 
   @Override
   protected JPanel createBottomControl(Module module) {
+    if (Registry.is("ide.new.project.settings")) return null;
     final JPanel innerPanel = new JPanel(new GridBagLayout());
     innerPanel.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 6));
     return innerPanel;

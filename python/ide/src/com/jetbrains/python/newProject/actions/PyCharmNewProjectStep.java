@@ -87,6 +87,7 @@ public class PyCharmNewProjectStep extends DefaultActionGroup implements DumbAwa
           sdk = SdkConfigurationUtil.setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, PythonSdkType.getInstance(), true, null,
                                               null);
           model.addSdk(sdk);
+          settingsStep.setSdk(sdk);
           try {
             model.apply();
           }

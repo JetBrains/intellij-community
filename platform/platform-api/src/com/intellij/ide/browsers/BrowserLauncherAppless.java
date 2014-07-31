@@ -74,10 +74,10 @@ public class BrowserLauncherAppless extends BrowserLauncher {
            Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action);
   }
 
-  public static boolean canStartDefaultBrowser() {
+  public static boolean canUseSystemDefaultBrowserPolicy() {
     return isDesktopActionSupported(Desktop.Action.BROWSE) ||
            SystemInfo.isMac || SystemInfo.isWindows ||
-           SystemInfo.isUnix && SystemInfo.hasXdgOpen();
+           (SystemInfo.isUnix && SystemInfo.hasXdgOpen());
   }
 
   private static GeneralSettings getGeneralSettingsInstance() {
@@ -145,6 +145,10 @@ public class BrowserLauncherAppless extends BrowserLauncher {
       }
     }
 
+    browseUsingNotSystemDefaultBrowserPolicy(uri, settings, project);
+  }
+
+  protected void browseUsingNotSystemDefaultBrowserPolicy(@NotNull URI uri, @NotNull GeneralSettings settings, @Nullable Project project) {
     browseUsingPath(uri.toString(), settings.getBrowserPath(), null, project, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 

@@ -150,6 +150,9 @@ public class BrowserUtil {
     else if (SystemInfo.isMac) {
       return "open";
     }
+    else if (SystemInfo.isUnix) {
+      return "/usr/bin/firefox";
+    }
     else {
       return "";
     }

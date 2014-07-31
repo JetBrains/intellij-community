@@ -477,11 +477,7 @@ public class GenericsUtil {
           if (substituted instanceof PsiWildcardType) {
             substituted = ((PsiWildcardType)substituted).getBound();
             if (substituted instanceof PsiCapturedWildcardType) {
-              PsiType bound = ((PsiCapturedWildcardType)substituted).getLowerBound();
-              if (bound == null || bound == PsiType.NULL) {
-                bound = ((PsiCapturedWildcardType)substituted).getUpperBound();
-              }
-              substituted = bound;
+              substituted = ((PsiCapturedWildcardType)substituted).getWildcard().getBound();
             }
             if (substituted == null) substituted = TypeConversionUtil.typeParameterErasure(typeParam);
           }

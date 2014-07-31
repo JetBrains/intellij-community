@@ -65,6 +65,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   private ActionButtonWithText myCreateButton;
   private JLabel myErrorLabel;
   private AnAction myCreateAction;
+  private Sdk mySdk;
 
   public AbstractProjectSettingsStep(DirectoryProjectGenerator projectGenerator, NullableConsumer<AbstractProjectSettingsStep> callback) {
     super();
@@ -394,7 +395,12 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   }
 
   public Sdk getSdk() {
+    if (mySdk != null) return mySdk;
     return (Sdk)mySdkCombo.getComboBox().getSelectedItem();
+  }
+
+  public void setSdk(final Sdk sdk) {
+    mySdk = sdk;
   }
 
   public String getProjectLocation() {
