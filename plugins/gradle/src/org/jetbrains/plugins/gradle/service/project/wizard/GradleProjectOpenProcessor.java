@@ -71,6 +71,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
   @Override
   protected boolean doQuickImport(VirtualFile file, WizardContext wizardContext) {
     final GradleProjectImportProvider projectImportProvider = new GradleProjectImportProvider(getBuilder());
+    getBuilder().setFileToImport(file.getPath());
     getBuilder().prepare(wizardContext);
     getBuilder().getControl(null).setLinkedProjectPath(file.getPath());
 
@@ -98,7 +99,6 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
   private boolean setupGradleProjectSettingsInHeadlessMode(VirtualFile file,
                                                            GradleProjectImportProvider projectImportProvider,
                                                            WizardContext wizardContext) {
-    getBuilder().setFileToImport(file.getPath());
     final ModuleWizardStep[] wizardSteps = projectImportProvider.createSteps(wizardContext);
     if (wizardSteps.length > 0 && wizardSteps[0] instanceof SelectExternalProjectStep) {
       SelectExternalProjectStep selectExternalProjectStep = (SelectExternalProjectStep)wizardSteps[0];

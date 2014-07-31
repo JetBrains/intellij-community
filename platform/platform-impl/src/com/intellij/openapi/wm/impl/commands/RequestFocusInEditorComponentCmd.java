@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,7 +102,8 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
       }
 
       if(myComponent != null){
-        myFocusManager.requestFocus(myComponent, myForced).notifyWhenDone(myDoneCallback).doWhenDone(new Runnable() {
+        final boolean forced = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == null;
+        myFocusManager.requestFocus(myComponent, myForced || forced).notifyWhenDone(myDoneCallback).doWhenDone(new Runnable() {
           public void run() {
             // if owner is active window or it has active child window which isn't floating decorator then
             // don't bring owner window to font. If we will make toFront every time then it's possible

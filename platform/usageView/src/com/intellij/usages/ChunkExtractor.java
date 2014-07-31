@@ -37,6 +37,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.reference.SoftReference;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
+import com.intellij.usages.impl.SyntaxHighlighterOverEditorHighlighter;
 import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.FactoryMap;
@@ -64,9 +65,7 @@ public class ChunkExtractor {
 
   private final Document myDocument;
   private long myDocumentStamp;
-  private final SyntaxHighlighter myHighlighter;
-
-  private final Lexer myLexer;
+  private final SyntaxHighlighterOverEditorHighlighter myHighlighter;
 
   private abstract static class WeakFactory<T> {
     private WeakReference<T> myRef;
@@ -119,11 +118,10 @@ public class ChunkExtractor {
     myDocument = PsiDocumentManager.getInstance(project).getDocument(file);
     LOG.assertTrue(myDocument != null);
     final FileType fileType = file.getFileType();
-    final SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, project, file.getVirtualFile());
-    myHighlighter = highlighter == null ? new PlainSyntaxHighlighter() : highlighter;
-    myLexer = myHighlighter.getHighlightingLexer();
-    myLexer.start(myDocument.getCharsSequence());
-    myDocumentStamp = myDocument.getModificationStamp();
+    SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, project, file.getVirtualFile());
+    highlighter = highlighter == null ? new PlainSyntaxHighlighter() : highlighter;
+    myHighlighter = new SyntaxHighlighterOverEditorHighlighter(highlighter, file.getVirtualFile(), project);
+    myDocumentStamp = -1;
   }
 
   public static int getStartOffset(final List<RangeMarker> rangeMarkers) {
@@ -194,18 +192,21 @@ public class ChunkExtractor {
                                       int end,
                                       boolean selectUsageWithBold,
                                       @NotNull List<TextChunk> result) {
-    final Lexer lexer = myLexer;
-    final SyntaxHighlighter highlighter = myHighlighter;
+    final Lexer lexer = myHighlighter.getHighlightingLexer();
+    final SyntaxHighlighterOverEditorHighlighter highlighter = myHighlighter;
 
     LOG.assertTrue(start <= end);
 
     int i = StringUtil.indexOf(chars, '\n', start, end);
     if (i != -1) end = i;
 
-    if (lexer.getTokenStart() > start || myDocumentStamp != myDocument.getModificationStamp()) {
-      lexer.start(chars);
+    if (myDocumentStamp != myDocument.getModificationStamp()) {
+      highlighter.restart(chars);
       myDocumentStamp = myDocument.getModificationStamp();
+    } else if(lexer.getTokenStart() > start) {
+      highlighter.resetPosition(0);
     }
+
     boolean isBeginning = true;
 
     for(;lexer.getTokenType() != null; lexer.advance()) {
@@ -218,8 +219,10 @@ public class ChunkExtractor {
       hiEnd = Math.min(hiEnd, end);
       if (hiStart >= hiEnd) { continue; }
 
-      String text = chars.subSequence(hiStart, hiEnd).toString();
-      if (isBeginning && text.trim().isEmpty()) continue;
+      if (isBeginning) {
+        String text = chars.subSequence(hiStart, hiEnd).toString();
+        if(text.trim().isEmpty()) continue;
+      }
       isBeginning = false;
       IElementType tokenType = lexer.getTokenType();
       TextAttributesKey[] tokenHighlights = highlighter.getTokenHighlights(tokenType);

@@ -80,7 +80,7 @@ public class FindResultUsageInfo extends UsageInfo {
     Long data = myFindModel.getUserData(ourDocumentTimestampKey);
     if (data == null || data != myTimestamp) {
       data = myTimestamp;
-      myFindModel.putUserData(FindManagerImpl.ourCommentsLiteralsSearchDataKey, null);
+      FindManagerImpl.clearPreviousFindData(myFindModel);
     }
     myFindModel.putUserData(ourDocumentTimestampKey, data);
     FindResult result;

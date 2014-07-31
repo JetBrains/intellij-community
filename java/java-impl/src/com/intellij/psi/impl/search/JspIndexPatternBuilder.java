@@ -18,6 +18,7 @@ package com.intellij.psi.impl.search;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.editor.impl.EditorHighlighterCache;
 import com.intellij.psi.JspPsiUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
@@ -34,7 +35,7 @@ public class JspIndexPatternBuilder implements IndexPatternBuilder {
   @Override
   public Lexer getIndexingLexer(@NotNull final PsiFile file) {
     if (JspPsiUtil.isInJspFile(file)) {
-      return LexerEditorHighlighterLexer.getLexerBasedOnLexerHighlighter(file.getText(), file.getVirtualFile(), file.getProject());
+      return EditorHighlighterCache.getLexerBasedOnLexerHighlighter(file.getText(), file.getVirtualFile(), file.getProject());
     }
 
     return null;
