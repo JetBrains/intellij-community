@@ -308,7 +308,7 @@ abstract class Analysis<Res> {
         List<Conf> history = state.history;
 
         boolean fold = false;
-        if (dfsTree.loopEnters.contains(insnIndex)) {
+        if (dfsTree.loopEnters[insnIndex]) {
           for (Conf prev : history) {
             if (AbstractValues.isInstance(conf, prev)) {
               fold = true;

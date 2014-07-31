@@ -81,13 +81,13 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
     int stateIndex = state.index;
     Conf preConf = state.conf;
     int insnIndex = preConf.insnIndex;
-    boolean loopEnter = dfsTree.loopEnters.contains(insnIndex);
+    boolean loopEnter = dfsTree.loopEnters[insnIndex];
     Conf conf = loopEnter ? generalize(preConf) : preConf;
     List<Conf> history = state.history;
     boolean taken = state.taken;
     Frame<BasicValue> frame = conf.frame;
     AbstractInsnNode insnNode = methodNode.instructions.get(insnIndex);
-    List<Conf> nextHistory = dfsTree.loopEnters.contains(insnIndex) ? append(history, conf) : history;
+    List<Conf> nextHistory = loopEnter ? append(history, conf) : history;
     Frame<BasicValue> nextFrame = execute(frame, insnNode);
 
     if (interpreter.deReferenced) {

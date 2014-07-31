@@ -198,7 +198,7 @@ final class cfg {
     int completed = 0;
 
     Deque<Action> stack = new LinkedList<Action>();
-    Set<Integer> loopEnters = new HashSet<Integer>();
+    boolean[] loopEnters = new boolean[transitions.length];
 
     // enter 0
     entered ++;
@@ -237,7 +237,7 @@ final class cfg {
         }
         else if (preOrder[to] < preOrder[from] && !scanned[to]) {
           back.add(new Edge(from, to));
-          loopEnters.add(to);
+          loopEnters[to] = true;
         } else {
           cross.add(new Edge(from, to));
         }
@@ -408,7 +408,7 @@ final class ControlFlowBuilder extends CfgAnalyzer {
 final class DFSTree {
   final int[] preOrder, postOrder;
   final Set<Edge> tree, forward, back, cross;
-  final Set<Integer> loopEnters;
+  final boolean[] loopEnters;
 
   DFSTree(int[] preOrder,
           int[] postOrder,
@@ -416,7 +416,7 @@ final class DFSTree {
           Set<Edge> forward,
           Set<Edge> back,
           Set<Edge> cross,
-          Set<Integer> loopEnters) {
+          boolean[] loopEnters) {
     this.preOrder = preOrder;
     this.postOrder = postOrder;
     this.tree = tree;

@@ -185,7 +185,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
     boolean taken = state.taken;
     Frame<BasicValue> frame = conf.frame;
     AbstractInsnNode insnNode = methodNode.instructions.get(insnIndex);
-    List<Conf> nextHistory = dfsTree.loopEnters.contains(insnIndex) ? append(history, conf) : history;
+    List<Conf> nextHistory = dfsTree.loopEnters[insnIndex] ? append(history, conf) : history;
     boolean hasCompanions = state.hasCompanions;
     execute(frame, insnNode);
 
