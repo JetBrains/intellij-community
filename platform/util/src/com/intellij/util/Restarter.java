@@ -113,11 +113,6 @@ public class Restarter {
     kernel32.LocalFree(argv_ptr);
 
     doScheduleRestart(new File(PathManager.getBinPath(), "restarter.exe"), new Consumer<List<String>>() {
-
-/*    File restarter = new File(PathManager.getBinPath(), "restarter.exe");
-    final File restarter_copy = createTempExecutable(restarter); 
-
-    doScheduleRestart(restarter_copy, new Consumer<List<String>>() { */
       @Override
       public void consume(List<String> commands) {
         Collections.addAll(commands, String.valueOf(pid), String.valueOf(beforeRestart.length));
@@ -160,9 +155,11 @@ public class Restarter {
 
   public static File createTempExecutable(File executable) throws IOException {
     File copy = new File(System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart/" + executable.getName());
+    System.out.println("createTempExecutable: " + copy.getPath());
     if (FileUtilRt.ensureCanCreateFile(copy)) {
       FileUtilRt.copy(executable, copy);
       if (!copy.setExecutable(executable.canExecute())){
+        System.out.println("Cannot make file executable: " + copy.getPath());
         throw new IOException("Cannot make file executable: " + copy);
       }
     } else {
