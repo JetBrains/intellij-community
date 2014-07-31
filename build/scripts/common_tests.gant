@@ -51,6 +51,7 @@ target('run_tests': 'Run java tests') {
       pass("idea.test.group")
       pass("idea.test.patterns")
       pass("idea.fast.only")
+      pass("idea.coverage.enabled.build")
       pass("teamcity.build.tempDir")
       pass("teamcity.tests.recentlyFailedTests.file")
       jvmarg(value: "-Didea.platform.prefix=Idea")
