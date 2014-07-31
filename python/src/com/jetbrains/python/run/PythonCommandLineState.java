@@ -141,7 +141,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   protected void addTracebackFilter(Project project, ConsoleView consoleView, ProcessHandler processHandler) {
     if (PySdkUtil.isRemote(myConfig.getSdk())) {
       assert processHandler instanceof RemoteProcessHandlerBase;
-      consoleView.addMessageFilter(new PyRemoteTracebackFilter(project, (RemoteProcessHandlerBase) processHandler));
+      consoleView.addMessageFilter(new PyRemoteTracebackFilter(project, null, (RemoteProcessHandlerBase) processHandler));
     }
     else {
       consoleView.addMessageFilter(new PythonTracebackFilter(project, myConfig.getWorkingDirectory()));
