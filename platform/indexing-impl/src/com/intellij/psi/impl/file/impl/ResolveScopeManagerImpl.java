@@ -76,7 +76,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
 
   }
 
-  private GlobalSearchScope getDefaultResolveScope(@NotNull PsiFile psiFile, @NotNull final VirtualFile vFile) {
+  private GlobalSearchScope getResolveScopeFromProviders(@NotNull final VirtualFile vFile) {
     return myDefaultResolveScopesCache.get(vFile);
   }
 
@@ -85,8 +85,6 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
     Module module = projectFileIndex.getModuleForFile(vFile);
     if (module != null) {
       boolean includeTests = projectFileIndex.isInTestSourceContent(vFile);
-                             // TODO: dmitrylomov: removed this line to see what fails.
-                             //!(vFile.getFileType() == StdFileTypes.JAVA && projectFileIndex.isContentSourceFile(vFile));
       return GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, includeTests);
     }
     else {
@@ -167,7 +165,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
       return GlobalSearchScope.allScope(myProject);
     }
 
-    return getDefaultResolveScope(contextFile, vFile);
+    return getResolveScopeFromProviders(vFile);
   }
 
 
@@ -175,7 +173,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
   public GlobalSearchScope getDefaultResolveScope(final VirtualFile vFile) {
     final PsiFile psiFile = myManager.findFile(vFile);
     assert psiFile != null;
-    return getDefaultResolveScope(psiFile, vFile);
+    return getResolveScopeFromProviders(vFile);
   }
 
 
