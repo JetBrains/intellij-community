@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.compscicenter.edide.course.Course;
-import ru.compscicenter.edide.ui.StudyCondition;
 import ru.compscicenter.edide.ui.StudyNewCourseDialog;
 
 import java.io.*;
@@ -147,7 +146,6 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @Nullable Object settings, @NotNull Module module) {
 
-    StudyCondition.VALUE = true;
     myProject = project;
     mySelectedCourseFile = null;
     StudyNewCourseDialog dlg = new StudyNewCourseDialog(project, this);

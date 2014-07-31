@@ -11,6 +11,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.xmlb.XmlSerializer;
 import icons.StudyIcons;
@@ -88,7 +89,30 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
 
   @Override
   public void projectOpened() {
-
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            if (myCourse != null) {
+              UISettings.getInstance().HIDE_TOOL_STRIPES = false;
+              UISettings.getInstance().fireUISettingsChanged();
+              ToolWindowManager.getInstance(myProject).registerToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW, true, ToolWindowAnchor.RIGHT);
+              final ToolWindow newWindow = ToolWindowManager.getInstance(myProject).getToolWindow("StudyToolWindow");
+              if (newWindow != null) {
+                StudyUtils.updateStudyToolWindow(myProject);
+                newWindow.setIcon(StudyIcons.ShortcutReminder);
+                newWindow.show(null);
+              }
+              addShortcut("ctrl pressed PERIOD", "NextWindow");
+              addShortcut("ctrl pressed COMMA", "PrevWindowAction");
+              addShortcut("ctrl pressed 7", "ShowHintAction");
+            }
+          }
+        });
+      }
+    });
   }
 
   private void addShortcut(String shortcutString, String actionIdString) {
@@ -121,29 +145,6 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
   @Override
   public void initComponent() {
     EditorFactory.getInstance().addEditorFactoryListener(new StudyEditorFactoryListener(), myProject);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            if (myCourse != null) {
-              UISettings.getInstance().HIDE_TOOL_STRIPES = false;
-              UISettings.getInstance().fireUISettingsChanged();
-              final ToolWindow newWindow = ToolWindowManager.getInstance(myProject).getToolWindow("StudyToolWindow");
-              if (newWindow != null) {
-                StudyUtils.updateStudyToolWindow(myProject);
-                newWindow.setIcon(StudyIcons.ShortcutReminder);
-                newWindow.show(null);
-              }
-              addShortcut("ctrl pressed PERIOD", "NextWindow");
-              addShortcut("ctrl pressed COMMA", "PrevWindowAction");
-              addShortcut("ctrl pressed 7", "ShowHintAction");
-            }
-          }
-        });
-      }
-    });
   }
 
   @Override
