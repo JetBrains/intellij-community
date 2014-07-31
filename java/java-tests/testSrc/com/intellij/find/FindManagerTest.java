@@ -27,7 +27,6 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -39,7 +38,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightVirtualFile;
@@ -303,9 +301,6 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setGlobal(true);
     findModel.setMultipleFiles(true);
     findModel.setCustomScope(true);
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, nonProjectFile);
-    descriptor.navigate(true);
-    GlobalSearchScopes.openFilesScope(myProject);
     findModel.setCustomScope(new GlobalSearchScope.FilesScope(myProject, ContainerUtil.list(nonProjectFile)));
 
     assertSize(1, findUsages(findModel));
