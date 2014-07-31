@@ -49,6 +49,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Set;
 
 public class MavenRootModelAdapter {
@@ -180,10 +181,7 @@ public class MavenRootModelAdapter {
 
   public boolean isAlreadyExcluded(File f) {
     String url = toUrl(f.getPath()).getUrl();
-    for (String excludedUrl : myRootModel.getExcludeRootUrls()) {
-      if (VfsUtilCore.isEqualOrAncestor(excludedUrl, url)) return true;
-    }
-    return false;
+    return VfsUtilCore.isUnder(url, Arrays.asList(myRootModel.getExcludeRootUrls()));
   }
 
   private boolean exists(String path) {

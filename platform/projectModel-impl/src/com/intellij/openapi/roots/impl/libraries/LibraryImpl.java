@@ -522,10 +522,8 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   private boolean isUnderRoots(@NotNull String url) {
     for (VirtualFilePointerContainer container : myRoots.values()) {
-      for (String rootUrl : container.getUrls()) {
-        if (VfsUtilCore.isEqualOrAncestor(rootUrl, url)) {
-          return true;
-        }
+      if (VfsUtilCore.isUnder(url, Arrays.asList(container.getUrls()))) {
+        return true;
       }
     }
     return false;
