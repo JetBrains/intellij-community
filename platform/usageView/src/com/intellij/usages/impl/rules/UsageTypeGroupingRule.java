@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
@@ -42,7 +43,13 @@ public class UsageTypeGroupingRule implements UsageGroupingRuleEx {
     if (usage instanceof PsiElementUsage) {
       PsiElementUsage elementUsage = (PsiElementUsage)usage;
 
-      UsageType usageType = getUsageType(elementUsage.getElement(), targets);
+      PsiElement element = elementUsage.getElement();
+      UsageType usageType = getUsageType(element, targets);
+
+      if (usageType == null && element instanceof PsiFile && elementUsage instanceof UsageInfo2UsageAdapter) {
+        usageType = ((UsageInfo2UsageAdapter)elementUsage).getUsageType();
+      }
+
       if (usageType != null) return new UsageTypeGroup(usageType);
 
       if (usage instanceof ReadWriteAccessUsage) {
