@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,8 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.*;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.JBEditorTabs;
+import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +39,45 @@ public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
   private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
 
   public JBTabsPaneImpl(@Nullable Project project, int tabPlacement, @NotNull Disposable parent) {
-    myTabs = new JBTabsImpl(project, ActionManager.getInstance(), project == null ? null : IdeFocusManager.getInstance(project), parent);
+    myTabs = new JBEditorTabs(project, ActionManager.getInstance(), project == null ? null : IdeFocusManager.getInstance(project), parent) {
+      @Override
+      public boolean isAlphabeticalMode() {
+        return false;
+      }
+
+      @Override
+      protected void doPaintBackground(Graphics2D g2d, Rectangle clip) {
+        super.doPaintBackground(g2d, clip);
+        if (getTabsPosition() == JBTabsPosition.top && isSingleRow()) {
+          int maxOffset = 0;
+          int maxLength = 0;
+
+          for (int i = getVisibleInfos().size() - 1; i >= 0; i--) {
+            TabInfo visibleInfo = getVisibleInfos().get(i);
+            TabLabel tabLabel = myInfo2Label.get(visibleInfo);
+            Rectangle r = tabLabel.getBounds();
+            if (r.width == 0 || r.height == 0) continue;
+            maxOffset = r.x + r.width;
+            maxLength = r.height;
+            break;
+          }
+
+          maxOffset++;
+          g2d.setPaint(UIUtil.getPanelBackground());
+          g2d.fillRect(clip.x + maxOffset, clip.y, clip.width - maxOffset, clip.y + maxLength - TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT);
+          g2d.setPaint(new JBColor(Gray._181, UIUtil.getPanelBackground()));
+          g2d.drawLine(clip.x + maxOffset, clip.y + maxLength - TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT, clip.x + clip.width, clip.y + maxLength - TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT);
+          g2d.setPaint(UIUtil.getPanelBackground());
+          g2d.drawLine(clip.x, clip.y + maxLength, clip.width, clip.y + maxLength);
+        }
+      }
+
+      @Override
+      protected void paintSelectionAndBorder(Graphics2D g2d) {
+        super.paintSelectionAndBorder(g2d);
+      }
+    };
+
     myTabs.addListener(new TabsListener.Adapter() {
       @Override
       public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {

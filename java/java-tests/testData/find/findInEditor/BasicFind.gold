@@ -22,6 +22,7 @@ isWithSubdirectories =true
 fileFilter =null
 moduleName =null
 customScopeName =null
+searchInProjectFiles =false
 
 --
 

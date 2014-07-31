@@ -461,6 +461,27 @@ public class PsiBuilderQuickTest extends LightPlatformLangTestCase {
            "    PsiElement(OTHER)('}')\n");
   }
 
+  public void testEndMarkersOverlapping() {
+    doTest("a ",
+           new Parser() {
+             @Override
+             public void parse(PsiBuilder builder) {
+               PsiBuilder.Marker e1 = builder.mark();
+               PsiBuilder.Marker e2 = builder.mark();
+               builder.advanceLexer();
+               e2.done(OTHER);
+               e2.setCustomEdgeTokenBinders(null, WhitespacesBinders.GREEDY_RIGHT_BINDER);
+               e1.done(OTHER);
+               e1.setCustomEdgeTokenBinders(null, WhitespacesBinders.DEFAULT_RIGHT_BINDER);
+               assertTrue(builder.eof());
+             }
+           },
+           "Element(ROOT)\n" +
+           "  Element(OTHER)\n" +
+           "    Element(OTHER)\n" +
+           "      PsiElement(LETTER)('a')\n" +
+           "      PsiWhiteSpace(' ')\n");
+  }
 
   private interface Parser {
     void parse(PsiBuilder builder);

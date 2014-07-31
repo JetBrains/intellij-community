@@ -15,9 +15,6 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.find.EditorSearchComponent;
-import com.intellij.find.editorHeaderActions.EditorHeaderAction;
-import com.intellij.find.editorHeaderActions.RemoveOccurrenceAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -38,8 +35,6 @@ public class UnselectPreviousOccurrenceAction extends EditorAction {
 
     @Override
     public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      if (executeEquivalentFindPanelAction(editor, dataContext)) return;
-
       if (editor.getCaretModel().getCaretCount() > 1) {
         editor.getCaretModel().removeCaret(editor.getCaretModel().getPrimaryCaret());
       }
@@ -48,11 +43,6 @@ public class UnselectPreviousOccurrenceAction extends EditorAction {
       }
       getAndResetNotFoundStatus(editor);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    }
-
-    @Override
-    protected EditorHeaderAction getEquivalentFindPanelAction(EditorSearchComponent searchComponent) {
-      return new RemoveOccurrenceAction(searchComponent);
     }
   }
 }

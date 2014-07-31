@@ -31,17 +31,21 @@ public class ErrorMessageBuilder {
   public static final String EOL_TAG = "<eol>";
 
   @NotNull private final Project myProject;
-  @NotNull private final Exception myException;
+  @Nullable private final Exception myException;
   @NotNull private final String myGroup;
   @Nullable private String myDescription;
 
-  private ErrorMessageBuilder(@NotNull Project project, @NotNull Exception exception, @NotNull String group) {
+  private ErrorMessageBuilder(@NotNull Project project, @Nullable Exception exception, @NotNull String group) {
     myProject = project;
     myException = exception;
     myGroup = group;
   }
 
-  public static ErrorMessageBuilder create(@NotNull Project project, @NotNull Exception exception, @NotNull String group) {
+  public static ErrorMessageBuilder create(@NotNull Project project, @NotNull String group) {
+    return new ErrorMessageBuilder(project, null, group);
+  }
+
+  public static ErrorMessageBuilder create(@NotNull Project project, @Nullable Exception exception, @NotNull String group) {
     return new ErrorMessageBuilder(project, exception, group);
   }
 
@@ -59,7 +63,7 @@ public class ErrorMessageBuilder {
       (
         "<i>" +
         "<b>" + myProject + ((myDescription != null) ? ": " + myDescription : "") + "</b>" +
-        "\nDetails: " + getErrorMessage(myException) +
+        (myException != null ? "\nDetails: " + getErrorMessage(myException) : "") +
         "</i>"
       ).replaceAll("\r\n|\n\r|\n|\r", EOL_TAG)
     );

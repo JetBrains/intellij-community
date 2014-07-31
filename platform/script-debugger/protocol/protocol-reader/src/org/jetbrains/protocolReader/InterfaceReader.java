@@ -1,10 +1,10 @@
 package org.jetbrains.protocolReader;
 
 import gnu.trove.THashSet;
-import org.chromium.protocolReader.JsonField;
-import org.chromium.protocolReader.JsonSubtype;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonReaderEx;
+import org.jetbrains.jsonProtocol.JsonField;
+import org.jetbrains.jsonProtocol.JsonSubtype;
 import org.jetbrains.jsonProtocol.StringIntPair;
 
 import java.lang.annotation.RetentionPolicy;
@@ -249,7 +249,7 @@ class InterfaceReader {
             argumentType = wildcard.getUpperBounds()[0];
           }
         }
-        return new ArrayReader(getFieldTypeParser(argumentType, false, false, null), true, declaredNullable);
+        return new ArrayReader(getFieldTypeParser(argumentType, false, false, method), true, declaredNullable);
       }
       else if (parameterizedType.getRawType() == Map.class) {
         return declaredNullable ? NULLABLE_MAP_PARSER : MAP_PARSER;

@@ -17,10 +17,7 @@ package com.intellij.ide.browsers;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -36,53 +33,75 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
   private static final Logger LOG = Logger.getInstance(WebBrowserManager.class);
 
   // default standard browser ID must be constant across all IDE versions on all machines for all users
-  private static final UUID DEFAULT_CHROME_ID = UUID.fromString("98CA6316-2F89-46D9-A9E5-FA9E2B0625B3");
+  private static final UUID PREDEFINED_CHROME_ID = UUID.fromString("98CA6316-2F89-46D9-A9E5-FA9E2B0625B3");
   // public, but only internal use
-  public static final UUID DEFAULT_FIREFOX_ID = UUID.fromString("A7BB68E0-33C0-4D6F-A81A-AAC1FDB870C8");
-  private static final UUID DEFAULT_SAFARI_ID = UUID.fromString("E5120D43-2C3F-47EF-9F26-65E539E05186");
-  private static final UUID DEFAULT_OPERA_ID = UUID.fromString("53E2F627-B1A7-4DFA-BFA7-5B83CC034776");
-  private static final UUID DEFAULT_EXPLORER_ID = UUID.fromString("16BF23D4-93E0-4FFC-BFD6-CB13575177B0");
+  public static final UUID PREDEFINED_FIREFOX_ID = UUID.fromString("A7BB68E0-33C0-4D6F-A81A-AAC1FDB870C8");
+  private static final UUID PREDEFINED_SAFARI_ID = UUID.fromString("E5120D43-2C3F-47EF-9F26-65E539E05186");
+  private static final UUID PREDEFINED_OPERA_ID = UUID.fromString("53E2F627-B1A7-4DFA-BFA7-5B83CC034776");
+  private static final UUID PREDEFINED_YANDEX_ID = UUID.fromString("B1B2EC2C-20BD-4EE2-89C4-616DB004BCD4");
+  private static final UUID PREDEFINED_EXPLORER_ID = UUID.fromString("16BF23D4-93E0-4FFC-BFD6-CB13575177B0");
+
+  private static final List<ConfigurableWebBrowser> PREDEFINED_BROWSERS = Arrays.asList(
+    new ConfigurableWebBrowser(PREDEFINED_CHROME_ID, BrowserFamily.CHROME),
+    new ConfigurableWebBrowser(PREDEFINED_FIREFOX_ID, BrowserFamily.FIREFOX),
+    new ConfigurableWebBrowser(PREDEFINED_SAFARI_ID, BrowserFamily.SAFARI),
+    new ConfigurableWebBrowser(PREDEFINED_OPERA_ID, BrowserFamily.OPERA),
+    new ConfigurableWebBrowser(PREDEFINED_YANDEX_ID, BrowserFamily.CHROME, "Yandex", SystemInfo.isWindows ? "browser" : (SystemInfo.isMac ? "Yandex" : "yandex"), false, BrowserFamily.CHROME.createBrowserSpecificSettings()),
+    new ConfigurableWebBrowser(PREDEFINED_EXPLORER_ID, BrowserFamily.EXPLORER)
+  );
 
   private List<ConfigurableWebBrowser> browsers;
 
-  DefaultBrowser defaultBrowser = DefaultBrowser.SYSTEM;
+  DefaultBrowserPolicy defaultBrowserPolicy = DefaultBrowserPolicy.SYSTEM;
 
   public WebBrowserManager() {
-    browsers = new ArrayList<ConfigurableWebBrowser>();
-    browsers.add(new ConfigurableWebBrowser(DEFAULT_CHROME_ID, BrowserFamily.CHROME));
-    browsers.add(new ConfigurableWebBrowser(DEFAULT_FIREFOX_ID, BrowserFamily.FIREFOX));
-    browsers.add(new ConfigurableWebBrowser(DEFAULT_SAFARI_ID, BrowserFamily.SAFARI));
-    browsers.add(new ConfigurableWebBrowser(DEFAULT_OPERA_ID, BrowserFamily.OPERA));
-    browsers.add(new ConfigurableWebBrowser(DEFAULT_EXPLORER_ID, BrowserFamily.EXPLORER));
+    browsers = new ArrayList<ConfigurableWebBrowser>(PREDEFINED_BROWSERS);
   }
 
   public static WebBrowserManager getInstance() {
     return ServiceManager.getService(WebBrowserManager.class);
   }
 
-  boolean isPredefinedBrowser(@NotNull ConfigurableWebBrowser browser) {
-    UUID id = browser.getId();
-    return id.equals(DEFAULT_CHROME_ID) ||
-           id.equals(DEFAULT_FIREFOX_ID) ||
-           id.equals(DEFAULT_SAFARI_ID) ||
-           id.equals(DEFAULT_OPERA_ID) ||
-           id.equals(DEFAULT_EXPLORER_ID);
+  public static boolean isYandexBrowser(@NotNull WebBrowser browser) {
+    return browser.getFamily().equals(BrowserFamily.CHROME) && (browser.getId().equals(PREDEFINED_YANDEX_ID) || checkNameAndPath("Yandex", browser));
   }
 
-  public enum DefaultBrowser {
-    SYSTEM, FIRST, ALTERNATIVE
+  public static boolean isDartium(@NotNull WebBrowser browser) {
+    return browser.getFamily().equals(BrowserFamily.CHROME) && checkNameAndPath("Dartium", browser);
+  }
+
+  static boolean checkNameAndPath(@NotNull String what, @NotNull WebBrowser browser) {
+    if (StringUtil.containsIgnoreCase(browser.getName(), what)) {
+      return true;
+    }
+    String path = browser.getPath();
+    if (path != null) {
+      int index = path.lastIndexOf('/');
+      return index > 0 ? path.indexOf(what, index + 1) != -1 : path.contains(what);
+    }
+    return false;
+  }
+
+  boolean isPredefinedBrowser(@NotNull ConfigurableWebBrowser browser) {
+    UUID id = browser.getId();
+    for (ConfigurableWebBrowser predefinedBrowser : PREDEFINED_BROWSERS) {
+      if (id.equals(predefinedBrowser.getId())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull
-  public DefaultBrowser getDefaultBrowserMode() {
-    return defaultBrowser;
+  public DefaultBrowserPolicy getDefaultBrowserPolicy() {
+    return defaultBrowserPolicy;
   }
 
   @Override
   public Element getState() {
     Element state = new Element("state");
-    if (defaultBrowser != DefaultBrowser.SYSTEM) {
-      state.setAttribute("default", defaultBrowser.name().toLowerCase(Locale.ENGLISH));
+    if (defaultBrowserPolicy != DefaultBrowserPolicy.SYSTEM) {
+      state.setAttribute("default", defaultBrowserPolicy.name().toLowerCase(Locale.ENGLISH));
     }
 
     for (ConfigurableWebBrowser browser : browsers) {
@@ -137,19 +156,19 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
       UUID id;
       switch (family) {
         case CHROME:
-          id = DEFAULT_CHROME_ID;
+          id = PREDEFINED_CHROME_ID;
           break;
         case EXPLORER:
-          id = DEFAULT_EXPLORER_ID;
+          id = PREDEFINED_EXPLORER_ID;
           break;
         case FIREFOX:
-          id = DEFAULT_FIREFOX_ID;
+          id = PREDEFINED_FIREFOX_ID;
           break;
         case OPERA:
-          id = DEFAULT_OPERA_ID;
+          id = PREDEFINED_OPERA_ID;
           break;
         case SAFARI:
-          id = DEFAULT_SAFARI_ID;
+          id = PREDEFINED_SAFARI_ID;
           break;
 
         default:
@@ -180,7 +199,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     String defaultValue = element.getAttributeValue("default");
     if (!StringUtil.isEmpty(defaultValue)) {
       try {
-        defaultBrowser = DefaultBrowser.valueOf(defaultValue.toUpperCase(Locale.ENGLISH));
+        defaultBrowserPolicy = DefaultBrowserPolicy.valueOf(defaultValue.toUpperCase(Locale.ENGLISH));
       }
       catch (IllegalArgumentException e) {
         LOG.warn(e);
@@ -223,6 +242,18 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
                                           path,
                                           activeValue == null || Boolean.parseBoolean(activeValue),
                                           specificSettings));
+    }
+
+    // add removed/new predefined browsers
+    int n = list.size();
+    pb: for (ConfigurableWebBrowser predefinedBrowser : PREDEFINED_BROWSERS) {
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0; i < n; i++) {
+        if (list.get(i).getId().equals(predefinedBrowser.getId())) {
+          continue pb;
+        }
+      }
+      list.add(predefinedBrowser);
     }
 
     setList(list);
@@ -349,9 +380,9 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
   }
 
   @Nullable
-  public WebBrowser getDefaultBrowser() {
+  public WebBrowser getFirstActiveBrowser() {
     for (ConfigurableWebBrowser browser : browsers) {
-      if (browser.isActive()) {
+      if (browser.isActive() && browser.getPath() != null) {
         return browser;
       }
     }

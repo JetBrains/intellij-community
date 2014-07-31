@@ -59,10 +59,18 @@ public class HtmlFileImpl extends XmlFileImpl implements FileReferenceResolver {
       return null;
     }
 
-    VirtualFile childFile = file.findChild(name);
-    HttpFileSystem fileSystem = (HttpFileSystem)getVirtualFile().getFileSystem();
+    VirtualFile parent = file;
+    if (!parent.isDirectory()) {
+      parent = parent.getParent();
+      if (parent == null) {
+        parent = file;
+      }
+    }
+
+    VirtualFile childFile = parent.findChild(name);
+    HttpFileSystem fileSystem = (HttpFileSystem)parent.getFileSystem();
     if (childFile == null) {
-      childFile = fileSystem.createChild(getVirtualFile(), name, !reference.isLast());
+      childFile = fileSystem.createChild(parent, name, !reference.isLast());
     }
     if (childFile.isDirectory()) {
       // pre create children
@@ -72,7 +80,6 @@ public class HtmlFileImpl extends XmlFileImpl implements FileReferenceResolver {
         FileReference childReference = references[i];
         childParent = fileSystem.createChild(childParent, childReference.decode(childReference.getText()), i != (n - 1));
       }
-
       return getManager().findDirectory(childFile);
     }
     else {

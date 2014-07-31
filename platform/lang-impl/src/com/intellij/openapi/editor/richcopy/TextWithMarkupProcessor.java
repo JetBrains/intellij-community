@@ -23,6 +23,7 @@ import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.DisposableIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -418,7 +419,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
 
     private MarkupIterator(@NotNull CharSequence charSequence, @NotNull RangeIterator rangeIterator, @NotNull EditorColorsScheme colorsScheme) {
       myRangeIterator = rangeIterator;
-      mySegmentIterator = new SegmentIterator(charSequence, colorsScheme.getEditorFontName(), colorsScheme.getEditorFontSize());
+      mySegmentIterator = new SegmentIterator(charSequence, colorsScheme.getFontPreferences());
     }
 
     public boolean atEnd() {
@@ -812,8 +813,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
 
   private static class SegmentIterator {
     private final CharSequence myCharSequence;
-    private final String myDefaultFontFamilyName;
-    private final int myFontSize;
+    private final FontPreferences myFontPreferences;
 
     private int myCurrentStartOffset;
     private int myCurrentOffset;
@@ -822,10 +822,9 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
     private String myCurrentFontFamilyName;
     private String myNextFontFamilyName;
 
-    private SegmentIterator(CharSequence charSequence, String defaultFontFamilyName, int fontSize) {
+    private SegmentIterator(CharSequence charSequence, FontPreferences fontPreferences) {
       myCharSequence = charSequence;
-      myDefaultFontFamilyName = defaultFontFamilyName;
-      myFontSize = fontSize;
+      myFontPreferences = fontPreferences;
     }
 
     public void reset(int startOffset, int endOffset, int fontStyle) {
@@ -843,9 +842,8 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
       myCurrentStartOffset = myCurrentOffset;
       for (; myCurrentOffset < myEndOffset; myCurrentOffset++) {
         FontInfo fontInfo = ComplementaryFontsRegistry.getFontAbleToDisplay(myCharSequence.charAt(myCurrentOffset),
-                                                                            myFontSize,
                                                                             myFontStyle,
-                                                                            myDefaultFontFamilyName);
+                                                                            myFontPreferences);
         String fontFamilyName = fontInfo.getFont().getFamily();
 
         if (myCurrentFontFamilyName == null) {

@@ -16,9 +16,10 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -46,30 +47,30 @@ public class SimplifiableAnnotationInspection extends BaseInspection {
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("simplifiable.annotation.problem.descriptor");
+    if (((Boolean)infos[0]).booleanValue()) {
+      return InspectionGadgetsBundle.message("simplifiable.annotation.whitespace.problem.descriptor");
+    }
+    else {
+      return InspectionGadgetsBundle.message("simplifiable.annotation.problem.descriptor");
+    }
   }
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final PsiAnnotation annotation = (PsiAnnotation)infos[0];
-    return new SimplifiableAnnotationFix(annotation);
+    return new SimplifiableAnnotationFix();
   }
 
   private static class SimplifiableAnnotationFix extends InspectionGadgetsFix {
 
-    private final String replacement;
-
-    public SimplifiableAnnotationFix(PsiAnnotation annotation) {
-      this.replacement = buildAnnotationText(annotation, new StringBuilder()).toString();
-    }
+    public SimplifiableAnnotationFix() {}
 
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message("simplifiable.annotation.quickfix",
-                                             StringUtil.shortenTextWithEllipsis(replacement, 50, 0, true));
+      return InspectionGadgetsBundle.message("simplifiable.annotation.quickfix");
     }
-     @Override
+
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();
@@ -78,23 +79,25 @@ public class SimplifiableAnnotationInspection extends BaseInspection {
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiAnnotation)) {
+      final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(element, PsiAnnotation.class);
+      if (annotation == null) {
         return;
       }
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiAnnotation annotation = factory.createAnnotationFromText(replacement, element);
-      element.replace(annotation);
+      final String annotationText = buildAnnotationText(annotation);
+      final PsiAnnotation newAnnotation = factory.createAnnotationFromText(annotationText, element);
+      annotation.replace(newAnnotation);
     }
 
-    private static StringBuilder buildAnnotationText(PsiAnnotation annotation, StringBuilder out) {
-      out.append('@');
+    private static String buildAnnotationText(PsiAnnotation annotation) {
+      final StringBuilder out = new StringBuilder("@");
       final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
       assert nameReferenceElement != null;
       out.append(nameReferenceElement.getText());
       final PsiAnnotationParameterList parameterList = annotation.getParameterList();
       final PsiNameValuePair[] attributes = parameterList.getAttributes();
       if (attributes.length == 0) {
-        return out;
+        return out.toString();
       }
       out.append('(');
       if (attributes.length == 1) {
@@ -116,7 +119,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection {
         }
       }
       out.append(')');
-      return out;
+      return out.toString();
     }
 
     private static StringBuilder buildAttributeValueText(PsiAnnotationMemberValue value, StringBuilder out) {
@@ -128,7 +131,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection {
         }
       }
       else if (value instanceof PsiAnnotation) {
-        return buildAnnotationText((PsiAnnotation)value, out);
+        return out.append(buildAnnotationText((PsiAnnotation)value));
       }
       return out.append(value.getText());
     }
@@ -151,36 +154,36 @@ public class SimplifiableAnnotationInspection extends BaseInspection {
       }
       final PsiNameValuePair[] attributes = parameterList.getAttributes();
       final PsiElement[] annotationChildren = annotation.getChildren();
-      if (annotationChildren.length >= 2 && annotationChildren[1] instanceof PsiWhiteSpace) {
-        if (!containsError(annotation)) {
-          registerError(annotation, annotation);
-        }
+      if (annotationChildren.length >= 2 && annotationChildren[1] instanceof PsiWhiteSpace && !containsError(annotation)) {
+        registerError(annotationChildren[1], Boolean.TRUE);
       }
-      else if (attributes.length == 0) {
-        final PsiElement[] children = parameterList.getChildren();
-        if (children.length <= 0) {
-          return;
-        }
-        if (!containsError(annotation)) {
-          registerError(annotation, annotation);
+      if (attributes.length == 0) {
+        if (parameterList.getChildren().length > 0 && !containsError(annotation)) {
+          registerError(parameterList, ProblemHighlightType.LIKE_UNUSED_SYMBOL, Boolean.FALSE);
         }
       }
       else if (attributes.length == 1) {
         final PsiNameValuePair attribute = attributes[0];
-        @NonNls final String name = attribute.getName();
+        final PsiIdentifier identifier = attribute.getNameIdentifier();
         final PsiAnnotationMemberValue attributeValue = attribute.getValue();
-        if (!PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(name)) {
-          if (!(attributeValue instanceof PsiArrayInitializerMemberValue)) {
-            return;
-          }
-          final PsiArrayInitializerMemberValue arrayValue = (PsiArrayInitializerMemberValue)attributeValue;
-          final PsiAnnotationMemberValue[] initializers = arrayValue.getInitializers();
-          if (initializers.length != 1) {
-            return;
+        if (identifier != null && attributeValue != null) {
+          @NonNls final String name = attribute.getName();
+          if (PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(name) && !containsError(annotation)) {
+            registerErrorAtOffset(attribute, 0, attributeValue.getStartOffsetInParent(), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                  Boolean.FALSE);
           }
         }
+        if (!(attributeValue instanceof PsiArrayInitializerMemberValue)) {
+          return;
+        }
+        final PsiArrayInitializerMemberValue arrayValue = (PsiArrayInitializerMemberValue)attributeValue;
+        final PsiAnnotationMemberValue[] initializers = arrayValue.getInitializers();
+        if (initializers.length != 1) {
+          return;
+        }
         if (!containsError(annotation)) {
-          registerError(annotation, annotation);
+          registerError(arrayValue.getFirstChild(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, Boolean.FALSE);
+          registerError(arrayValue.getLastChild(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, Boolean.FALSE);
         }
       }
       else if (attributes.length > 1) {
@@ -189,15 +192,15 @@ public class SimplifiableAnnotationInspection extends BaseInspection {
           if (!(value instanceof PsiArrayInitializerMemberValue)) {
             continue;
           }
-          final PsiArrayInitializerMemberValue arrayInitializerMemberValue = (PsiArrayInitializerMemberValue)value;
-          final PsiAnnotationMemberValue[] initializers = arrayInitializerMemberValue.getInitializers();
+          final PsiArrayInitializerMemberValue arrayValue = (PsiArrayInitializerMemberValue)value;
+          final PsiAnnotationMemberValue[] initializers = arrayValue.getInitializers();
           if (initializers.length != 1) {
             continue;
           }
           if (!containsError(annotation)) {
-            registerError(annotation, annotation);
+            registerError(arrayValue.getFirstChild(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, Boolean.FALSE);
+            registerError(arrayValue.getLastChild(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, Boolean.FALSE);
           }
-          return;
         }
       }
     }

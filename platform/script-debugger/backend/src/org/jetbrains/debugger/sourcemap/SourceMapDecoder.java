@@ -135,6 +135,10 @@ public final class SourceMapDecoder {
     }
 
     List<String> sources = readSources(sourcesReader, sourceRoot);
+    if (sources.isEmpty()) {
+      // empty map, meteor can report such ugly maps
+      return null;
+    }
 
     @SuppressWarnings("unchecked")
     List<MappingEntry>[] reverseMappingsBySourceUrl = new List[sources.size()];

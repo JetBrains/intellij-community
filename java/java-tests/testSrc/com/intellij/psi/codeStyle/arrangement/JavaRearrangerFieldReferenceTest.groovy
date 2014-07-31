@@ -385,4 +385,28 @@ public class test {
       ]
     )
   }
+  
+  void "test IDEA-128071"() {
+    doTest(
+      initial: '''
+public class FormatTest {
+    public int a = 3;
+    private static final String FACEBOOK_CLIENT_ID = "";
+    public static final String FACEBOOK_OAUTH_URL = "".concat(FACEBOOK_CLIENT_ID).concat("");
+}
+''',
+      expected: '''
+public class FormatTest {
+    private static final String FACEBOOK_CLIENT_ID = "";
+    public static final String FACEBOOK_OAUTH_URL = "".concat(FACEBOOK_CLIENT_ID).concat("");
+    public int a = 3;
+}
+''',
+      rules: [
+        rule(PUBLIC, STATIC, FINAL),
+        rule(PRIVATE, STATIC, FINAL),
+        rule(PUBLIC)
+      ]
+    )
+  }
 }

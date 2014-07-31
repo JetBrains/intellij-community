@@ -67,7 +67,9 @@ public abstract class HttpFileSystemBase extends HttpFileSystem {
   @Override
   @NotNull
   public VirtualFile createChild(@NotNull VirtualFile parent, @NotNull String name, boolean isDirectory) {
-    return getRemoteFileManager().getOrCreateFile((VirtualFileImpl)parent, Urls.newFromIdea(parent.getUrl() + '/' + name), parent.getPath() + '/' + name, isDirectory);
+    String parentPath = parent.getPath();
+    boolean hasEndSlash = parentPath.charAt(parentPath.length() - 1) == '/';
+    return getRemoteFileManager().getOrCreateFile((HttpVirtualFileImpl)parent, Urls.newFromIdea(parent.getUrl() + (hasEndSlash ? "" : '/') + name), parentPath + (hasEndSlash ? "" : '/') + name, isDirectory);
   }
 
   @Override

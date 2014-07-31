@@ -43,7 +43,7 @@ import java.util.List;
  * @author pegov
  */
 public class JBEditorTabs extends JBTabsImpl {
-  private static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
+  public static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
   private JBEditorTabsPainter myDarkPainter = new DarculaEditorTabsPainter();
   private JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter();
 
@@ -130,7 +130,7 @@ public class JBEditorTabs extends JBTabsImpl {
     return UIUtil.isUnderDarcula() ? myDarkPainter : myDefaultPainter;
   }
 
-  public static boolean isAlphabeticalMode() {
+  public boolean isAlphabeticalMode() {
     return Registry.is(TABS_ALPHABETICAL_KEY);
   }
 

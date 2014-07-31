@@ -44,8 +44,7 @@ public class GrFindManagerTest extends DaemonAnalyzerTestCase {
   public void testFindInLiteralToSkipQuotes() {
     FindModel findModel = FindManagerTestUtils.configureFindModel("^done$");
     findModel.setRegularExpressions(true);
-    findModel.setInStringLiteralsOnly(true);
-    findModel.setInCommentsOnly(false);
+    findModel.setSearchContext(FindModel.SearchContext.IN_STRINGS);
     String text = "def n = \"\"\"done\"\"\"\n def n = /done/\n def n = \"done\"\n def n = \"done2\"";
     FindManagerTestUtils.runFindForwardAndBackward(myFindManager, findModel, text, "groovy");
   }
@@ -53,7 +52,7 @@ public class GrFindManagerTest extends DaemonAnalyzerTestCase {
   public void testFindInShellCommentsOfGroovy() {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
     findModel.setWholeWordsOnly(true);
-    findModel.setInCommentsOnly(true);
+    findModel.setSearchContext(FindModel.SearchContext.IN_COMMENTS);
     String text = "#! done done done\n";
     FindManagerTestUtils.runFindForwardAndBackward(myFindManager, findModel, text, "groovy");
   }

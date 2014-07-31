@@ -147,7 +147,7 @@ public class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
                                          @Nullable  final String hash1, @Nullable final String hash2,
                                          final Consumer<List<Change>> successHandler) {
     new Task.Backgroundable(myProject, "Comparing revisions...") {
-      private List<Change> myChanges;
+      private List<Change> myChanges = Collections.emptyList();
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {

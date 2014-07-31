@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.testFramework.EditorTestUtil;
@@ -63,6 +64,29 @@ public class EditorImplTest extends AbstractEditorTest {
     }
 
     verifySoftWrapPositions(58, 93);
+  }
+
+  public void testCorrectVisibleLineCountCalculation() throws Exception {
+    init("line containing FOLDED_REGION\n" +
+         "next <caret>line\n" +
+         "last line");
+    foldOccurrences("FOLDED_REGION", "...");
+    EditorTestUtil.configureSoftWraps(myEditor, 16); // wrap right at folded region start
+    verifySoftWrapPositions(16);
+
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
+    checkResultByText("line containing FOLDED_REGION\n" +
+                      "next line\n" +
+                      "last <caret>line");
+  }
+
+  public void testInsertingFirstTab() throws Exception {
+    init(" <caret>space-indented line");
+    EditorTestUtil.configureSoftWraps(myEditor, 100);
+    myEditor.getSettings().setUseTabCharacter(true);
+
+    executeAction(IdeActions.ACTION_EDITOR_TAB);
+    checkResultByText(" \t<caret>space-indented line");
   }
 
   private void init(String text) throws IOException {

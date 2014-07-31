@@ -1,9 +1,11 @@
 # coding=utf-8
 """
 Behave BDD runner.
-TODO: Support other params (like tags) as well.
-Supports only 1 param now: folder to search "features" for.
+*FIRST* param now: folder to search "features" for.
 Each "features" folder should have features and "steps" subdir.
+
+Other args are tag expressionsin format (--tags=.. --tags=..).
+See https://pythonhosted.org/behave/behave.html#tag-expression
 """
 import functools
 import sys
@@ -12,6 +14,7 @@ import traceback
 
 from behave.formatter.base import Formatter
 from behave.model import Step, ScenarioOutline, Feature, Scenario
+from behave.tag_expression import TagExpression
 
 import _bdd_utils
 
@@ -147,7 +150,7 @@ class _BehaveRunner(_bdd_utils.BddRunner):
             # To process scenarios with undefined/skipped tests
             for step in element.steps:
                 assert isinstance(step, Step), step
-                if step.status != 'passed':
+                if step.status not in ['passed', 'failed']:  # Something strange, probably skipped or undefined
                     self.__process_hook(False, context, step)
             self._feature_or_scenario(is_started, element.name, element.location)
         elif isinstance(element, ScenarioOutline):
@@ -156,7 +159,11 @@ class _BehaveRunner(_bdd_utils.BddRunner):
             self._feature_or_scenario(is_started, element.name, element.location)
 
     def __init__(self, config, base_dir):
+        """
+        :type config configuration.Configuration
+        """
         super(_BehaveRunner, self).__init__(base_dir)
+        self.__config = config
         # Install hooks
         self.__real_runner = _RunnerWrapper(config, {
             "before_feature": functools.partial(self.__process_hook, True),
@@ -169,6 +176,20 @@ class _BehaveRunner(_bdd_utils.BddRunner):
 
     def _run_tests(self):
         self.__real_runner.run()
+
+
+    def __filter_scenarios_by_tag(self, scenario):
+        """
+        Filters out scenarios that should be skipped by tags
+        :param scenario scenario to check
+        :return true if should pass
+        """
+        assert isinstance(scenario, Scenario), scenario
+        expected_tags = self.__config.tags
+        if not expected_tags:
+            return True  # No tags are required
+        return isinstance(expected_tags, TagExpression) and expected_tags.check(scenario.tags)
+
 
     def _get_features_to_run(self):
         self.__real_runner.dry_run = True
@@ -185,7 +206,7 @@ class _BehaveRunner(_bdd_utils.BddRunner):
                     scenarios.extend(scenario.scenarios)
                 else:
                     scenarios.append(scenario)
-            feature.scenarios = scenarios
+            feature.scenarios = filter(self.__filter_scenarios_by_tag, scenarios)
 
         return features_to_run
 
@@ -199,7 +220,14 @@ if __name__ == "__main__":
         """
         pass
 
-    my_config = configuration.Configuration()
+    tags = []
+    if len(sys.argv) > 1:
+        for arg in filter(None, sys.argv[2::]):
+            if str(arg).startswith("--tags"):
+                tags.append(str(arg))
+            else:
+                raise Exception("Not a tag expression (should be --tags=..):{}".format(str(arg)))
+    my_config = configuration.Configuration(command_args=tags)
     formatters.register_as(_Null, "com.intellij.python.null")
     my_config.format = ["com.intellij.python.null"]  # To prevent output to stdout
     my_config.reporters = []  # To prevent summary to stdout

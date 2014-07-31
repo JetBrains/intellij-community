@@ -50,7 +50,9 @@ public abstract class GroovySdkWizardStepBase extends ModuleWizardStep {
 
   public GroovySdkWizardStepBase(@Nullable final MvcFramework framework, WizardContext wizardContext, String basePath) {
     myBasePath = basePath;
-    myLibrariesContainer = LibrariesContainerFactory.createContainer(wizardContext, wizardContext.getModulesProvider());
+    myLibrariesContainer = wizardContext.getModulesProvider() == null
+                           ? LibrariesContainerFactory.createContainer(wizardContext.getProject())
+                           : LibrariesContainerFactory.createContainer(wizardContext, wizardContext.getModulesProvider());
     myFramework = framework;
   }
 

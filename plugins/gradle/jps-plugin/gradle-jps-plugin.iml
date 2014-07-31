@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="util" />
+    <orderEntry type="module" module-name="jps-builders" />
+    <orderEntry type="module" module-name="jps-model-impl" />
+    <orderEntry type="module" module-name="jps-model-api" />
+    <orderEntry type="module" module-name="jps-model-serialization" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../lib/gradle-tooling-api-2.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-core-2.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-messaging-2.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-wrapper-2.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-2.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-groovy-2.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-native-2.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-resources-2.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.0-src.zip!/gradle-2.0/subprojects/tooling-api/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.0-src.zip!/gradle-2.0/subprojects/core/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.0-src.zip!/gradle-2.0/subprojects/messaging/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.0-src.zip!/gradle-2.0/subprojects/wrapper/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.0-src.zip!/gradle-2.0/subprojects/base-services/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.0-src.zip!/gradle-2.0/subprojects/base-services-groovy/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.0-src.zip!/gradle-2.0/subprojects/native/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.0-src.zip!/gradle-2.0/subprojects/resources/src/main/java" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="library" exported="" name="Ant" level="project" />
+    <orderEntry type="library" name="gson" level="project" />
+  </component>
+</module>
+

@@ -18,6 +18,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,6 +64,14 @@ public abstract class OrderEnumerationHandler {
   public boolean addCustomRootsForLibrary(@NotNull OrderEntry forOrderEntry,
                                           @NotNull OrderRootType type,
                                           @NotNull Collection<String> urls) {
+    return false;
+  }
+
+  public boolean addCustomModuleRoots(@NotNull OrderRootType type,
+                                      @NotNull ModuleRootModel rootModel,
+                                      @NotNull Collection<String> result,
+                                      boolean includeProduction,
+                                      boolean includeTests) {
     return false;
   }
 }

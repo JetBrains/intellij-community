@@ -51,7 +51,7 @@ public class AnyExceptionBreakpoint extends ExceptionBreakpoint {
 
   public void createRequest(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (!isEnabled() || !debugProcess.isAttached() || debugProcess.areBreakpointsMuted() || !debugProcess.getRequestsManager().findRequests(this).isEmpty()) {
+    if (!shouldCreateRequest(debugProcess)) {
       return;
     }
     super.processClassPrepare(debugProcess, null);

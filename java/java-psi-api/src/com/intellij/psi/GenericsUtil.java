@@ -476,6 +476,9 @@ public class GenericsUtil {
           PsiType substituted = resolveResult.getSubstitutor().substitute(typeParam);
           if (substituted instanceof PsiWildcardType) {
             substituted = ((PsiWildcardType)substituted).getBound();
+            if (substituted instanceof PsiCapturedWildcardType) {
+              substituted = ((PsiCapturedWildcardType)substituted).getWildcard().getBound();
+            }
             if (substituted == null) substituted = TypeConversionUtil.typeParameterErasure(typeParam);
           }
           map.put(typeParam, substituted);

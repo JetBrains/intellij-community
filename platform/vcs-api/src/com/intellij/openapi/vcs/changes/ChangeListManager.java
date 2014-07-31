@@ -134,6 +134,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract List<CommitExecutor> getRegisteredExecutors();
 
   public abstract void addFilesToIgnore(final IgnoredFileBean... ignoredFiles);
+  public abstract void addDirectoryToIgnoreImplicitly(@NotNull String path);
   public abstract void setFilesToIgnore(final IgnoredFileBean... ignoredFiles);
   public abstract IgnoredFileBean[] getFilesToIgnore();
   public abstract boolean isIgnoredFile(@NotNull VirtualFile file);

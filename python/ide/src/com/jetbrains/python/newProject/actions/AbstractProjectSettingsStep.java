@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAware;
@@ -65,6 +66,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   private ActionButtonWithText myCreateButton;
   private JLabel myErrorLabel;
   private AnAction myCreateAction;
+  private Sdk mySdk;
 
   public AbstractProjectSettingsStep(DirectoryProjectGenerator projectGenerator, NullableConsumer<AbstractProjectSettingsStep> callback) {
     super();
@@ -107,7 +109,9 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     final JPanel mainPanel = new JPanel(new BorderLayout());
     final JPanel scrollPanel = new JPanel(new BorderLayout());
 
-    mainPanel.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, 400));
+    final DirectoryProjectGenerator[] generators = Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
+    final int height = generators.length == 0 ? 150 : 400;
+    mainPanel.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, height));
     myErrorLabel = new JLabel("");
     myErrorLabel.setForeground(JBColor.RED);
     myCreateButton = new Button(myCreateAction, myCreateAction.getTemplatePresentation());
@@ -394,7 +398,12 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   }
 
   public Sdk getSdk() {
+    if (mySdk != null) return mySdk;
     return (Sdk)mySdkCombo.getComboBox().getSelectedItem();
+  }
+
+  public void setSdk(final Sdk sdk) {
+    mySdk = sdk;
   }
 
   public String getProjectLocation() {

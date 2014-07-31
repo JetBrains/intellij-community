@@ -19,7 +19,9 @@ import com.intellij.find.editorHeaderActions.*;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.Getter;
+import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 import javax.swing.text.JTextComponent;
@@ -58,7 +60,7 @@ public class FindInEditorMultiCaretTest extends LightPlatformCodeInsightFixtureT
     assertNull(getEditorSearchComponent());
   }
 
-  public void testActionsWorkFromEditor() throws IOException {
+  public void testActionsInEditorWorkIndependently() throws IOException {
     init("abc\n" +
          "abc\n" +
          "abc");
@@ -67,27 +69,29 @@ public class FindInEditorMultiCaretTest extends LightPlatformCodeInsightFixtureT
     checkResultByText("a<selection>b<caret></selection>c\n" +
                       "abc\n" +
                       "abc");
+    new EditorMouseFixture((EditorImpl)myFixture.getEditor()).clickAt(0, 1);
     addOccurrenceFromEditor();
-    checkResultByText("a<selection>b<caret></selection>c\n" +
-                      "a<selection>b<caret></selection>c\n" +
+    addOccurrenceFromEditor();
+    checkResultByText("<selection>a<caret>bc</selection>\n" +
+                      "<selection>a<caret>bc</selection>\n" +
                       "abc");
     nextOccurrenceFromEditor();
-    checkResultByText("a<selection>b<caret></selection>c\n" +
+    checkResultByText("<selection>a<caret>bc</selection>\n" +
                       "abc\n" +
-                      "a<selection>b<caret></selection>c");
+                      "<selection>a<caret>bc</selection>");
     prevOccurrenceFromEditor();
-    checkResultByText("a<selection>b<caret></selection>c\n" +
-                      "a<selection>b<caret></selection>c\n" +
+    checkResultByText("<selection>a<caret>bc</selection>\n" +
+                      "<selection>a<caret>bc</selection>\n" +
                       "abc");
     removeOccurrenceFromEditor();
-    checkResultByText("a<selection>b<caret></selection>c\n" +
+    checkResultByText("<selection>a<caret>bc</selection>\n" +
                       "abc\n" +
                       "abc");
     allOccurrencesFromEditor();
-    checkResultByText("a<selection>b<caret></selection>c\n" +
-                      "a<selection>b<caret></selection>c\n" +
-                      "a<selection>b<caret></selection>c");
-    assertNull(getEditorSearchComponent());
+    checkResultByText("<selection>a<caret>bc</selection>\n" +
+                      "<selection>a<caret>bc</selection>\n" +
+                      "<selection>a<caret>bc</selection>");
+    assertNotNull(getEditorSearchComponent());
   }
 
   public void testCloseRetainsMulticaretSelection() throws IOException {

@@ -151,6 +151,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
         getEditor().getSettings().setRefrainFromScrolling(false);
         getEditor().getSettings().setLineNumbersShown(true);
         getEditor().getSettings().setFoldingOutlineShown(false);
+        ((EditorEx)getEditor()).getFoldingModel().setFoldingEnabled(false);
 
         add(getEditor().getComponent(), BorderLayout.CENTER);
       }

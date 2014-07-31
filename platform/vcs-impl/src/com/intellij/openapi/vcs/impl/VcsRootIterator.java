@@ -37,8 +37,10 @@ public class VcsRootIterator {
   private final Map<String, MyRootFilter> myOtherVcsFolders;
   private final FileIndexFacade myExcludedFileIndex;
   private final ProjectLevelVcsManager myVcsManager;
+  private final Project myProject;
 
   public VcsRootIterator(final Project project, final AbstractVcs vcs) {
+    myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myOtherVcsFolders = new HashMap<String, MyRootFilter>();
     myExcludedFileIndex = PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class);
@@ -58,14 +60,14 @@ public class VcsRootIterator {
     if ((rootFilter != null) && (!rootFilter.accept(file))) {
       return false;
     }
-    return !isIgnoredByVcs(myVcsManager, file);
+    return !isIgnoredByVcs(myVcsManager, myProject, file);
   }
 
-  private static boolean isIgnoredByVcs(final ProjectLevelVcsManager vcsManager, final VirtualFile file) {
+  private static boolean isIgnoredByVcs(final ProjectLevelVcsManager vcsManager, final Project project, final VirtualFile file) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        return vcsManager.isIgnoredByVcs(file);
+        return !project.isDisposed() && vcsManager.isIgnoredByVcs(file);
       }
     });
   }
@@ -174,7 +176,7 @@ public class VcsRootIterator {
         @NotNull
         @Override
         public Result visitFileEx(@NotNull VirtualFile file) {
-          if (isIgnoredByVcs(myVcsManager, file)) return SKIP_CHILDREN;
+          if (isIgnoredByVcs(myVcsManager, myProject, file)) return SKIP_CHILDREN;
           if (myRootPresentFilter != null && !myRootPresentFilter.accept(file)) return SKIP_CHILDREN;
           if (myProject.isDisposed() || !process(file)) return skipTo(myRoot);
           if (myDirectoryFilter != null && file.isDirectory() && !myDirectoryFilter.shouldGoIntoDirectory(file)) return SKIP_CHILDREN;

@@ -110,7 +110,13 @@ public class FindResultUsageInfo extends UsageInfo {
 
     assert result.isStringFound();
 
-    if (myFindModel.isRegularExpressions() || myFindModel.isInCommentsOnly() || myFindModel.isInStringLiteralsOnly()) {
+    if (myFindModel.isRegularExpressions() ||
+        myFindModel.isInCommentsOnly() ||
+        myFindModel.isInStringLiteralsOnly() ||
+        myFindModel.isExceptStringLiterals() ||
+        myFindModel.isExceptCommentsAndStringLiterals() ||
+        myFindModel.isExceptComments()
+      ) {
       myAnchor = SmartPointerManager.getInstance(getProject()).createSmartPsiFileRangePointer(file, TextRange.from(offset, 0));
     }
 

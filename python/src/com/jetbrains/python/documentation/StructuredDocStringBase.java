@@ -76,12 +76,7 @@ public abstract class StructuredDocStringBase implements StructuredDocString {
     myDescription = builder.toString();
   }
 
-  /**
-   * Creates parameter type documentation specific for certain doct type
-   * @param name param name
-   * @param type param type
-   * @return text to add to docsting
-   */
+  @Override
   @NotNull
   public String createParameterType(@NotNull final String name, @NotNull final String type) {
     return myTagPrefix + TYPE + String.format(" %s %s", name, type);

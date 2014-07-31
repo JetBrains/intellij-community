@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,8 @@ public class SearchAgainAction extends AnAction implements DumbAware {
         public void run() {
           PsiDocumentManager.getInstance(project).commitAllDocuments();
           IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
-          if(FindManager.getInstance(project).findNextUsageInEditor(editor)) {
+          FindManager findManager = FindManager.getInstance(project);
+          if(!findManager.selectNextOccurrenceWasPerformed() && findManager.findNextUsageInEditor(editor)) {
             return;
           }
 

@@ -208,7 +208,8 @@ class MakeResult<Res> implements PendingAction<Res> {
 }
 
 abstract class Analysis<Res> {
-  private static final int STEPS_LIMIT = 30000;
+  public static final int STEPS_LIMIT = 30000;
+  public static final int EQUATION_SIZE_LIMIT = 30;
   final RichControlFlow richControlFlow;
   final Direction direction;
   final ControlFlowGraph controlFlow;
@@ -225,7 +226,7 @@ abstract class Analysis<Res> {
   Res earlyResult = null;
 
   abstract Res identity();
-  abstract Res combineResults(Res delta, List<Res> subResults);
+  abstract Res combineResults(Res delta, List<Res> subResults) throws AnalyzerException;
   abstract boolean isEarlyResult(Res res);
   abstract Equation<Key, Value> mkEquation(Res result);
   abstract void processState(State state) throws AnalyzerException;

@@ -22,17 +22,16 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Set;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Collections;
 
@@ -71,6 +70,13 @@ public abstract class ScopesChooser extends ComboBoxAction {
       predefinedScopes.addAll(holder.getPredefinedScopes());
     }
     predefinedScopes.remove(CustomScopesProviderEx.getAllScope());
+    for (NamedScope predefinedScope : predefinedScopes) {
+      if (predefinedScope instanceof NonProjectFilesScope) {
+        predefinedScopes.remove(predefinedScope);
+        break;
+      }
+    }
+
     fillActionGroup(group, predefinedScopes, myDefaultDescriptors, myInspectionProfile, myExcludedScopeNames);
     group.addSeparator();
     fillActionGroup(group, customScopes, myDefaultDescriptors, myInspectionProfile, myExcludedScopeNames);

@@ -99,7 +99,7 @@ public class PyShadowingNamesInspection extends PyInspection {
           final ScopeOwner nextOwner = ScopeUtil.getScopeOwner(owner);
           if (nextOwner != null) {
             final ResolveProcessor processor = new ResolveProcessor(name);
-            PyResolveUtil.scopeCrawlUp(processor, nextOwner, null, name, null);
+            PyResolveUtil.scopeCrawlUp(processor, nextOwner, null, name, null, null);
             final PsiElement resolved = processor.getResult();
             if (resolved != null) {
               final PyComprehensionElement comprehension = PsiTreeUtil.getParentOfType(resolved, PyComprehensionElement.class);

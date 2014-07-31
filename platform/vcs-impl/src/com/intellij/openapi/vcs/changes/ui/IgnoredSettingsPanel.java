@@ -27,7 +27,8 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.IgnoreSettingsType;
 import com.intellij.openapi.vcs.changes.IgnoredFileBean;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -37,13 +38,16 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class IgnoredSettingsPanel implements SearchableConfigurable, Configurable.NoScroll {
   private JBList myList;
   private JPanel myPanel;
   private final Project myProject;
   private DefaultListModel myModel;
-  private final ChangeListManager myChangeListManager;
+  private final ChangeListManagerImpl myChangeListManager;
+  private final Set<String> myDirectoriesManuallyRemovedFromIgnored = new HashSet<String>();
 
   public IgnoredSettingsPanel(Project project) {
     myList = new JBList();
@@ -51,7 +55,7 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
     myList.getEmptyText().setText(VcsBundle.message("no.ignored.files"));
 
     myProject = project;
-    myChangeListManager = ChangeListManager.getInstance(myProject);
+    myChangeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
   }
 
   private void setItems(final IgnoredFileBean[] filesToIgnore) {
@@ -97,32 +101,30 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
   }
 
   private void deleteItems() {
-    boolean contigiousSelection = true;
-    int minSelectionIndex = myList.getSelectionModel().getMinSelectionIndex();
-    int maxSelectionIndex = myList.getSelectionModel().getMaxSelectionIndex();
-    for (int i = minSelectionIndex; i <= maxSelectionIndex; i++) {
-      if (!myList.getSelectionModel().isSelectedIndex(i)) {
-        contigiousSelection = false;
-        break;
+    for (Object o : myList.getSelectedValues()) {
+      IgnoredFileBean bean = (IgnoredFileBean)o;
+      if (bean.getType() == IgnoreSettingsType.UNDER_DIR) {
+        myDirectoriesManuallyRemovedFromIgnored.add(bean.getPath());
       }
     }
-    if (contigiousSelection) {
-      myModel.removeRange(minSelectionIndex, maxSelectionIndex);
-    }
-    else {
-      final Object[] selection = myList.getSelectedValues();
-      for (Object item : selection) {
-        myModel.removeElement(item);
-      }
-    }
+    ListUtil.removeSelectedItems(myList);
   }
 
   public void reset() {
     setItems(myChangeListManager.getFilesToIgnore());
+    myDirectoriesManuallyRemovedFromIgnored.clear();
+    myDirectoriesManuallyRemovedFromIgnored.addAll(myChangeListManager.getIgnoredFilesComponent().getDirectoriesManuallyRemovedFromIgnored());
   }
 
   public void apply() {
-    myChangeListManager.setFilesToIgnore(getItems());
+    IgnoredFileBean[] toIgnore = getItems();
+    myChangeListManager.setFilesToIgnore(toIgnore);
+    for (IgnoredFileBean bean : toIgnore) {
+      if (bean.getType() == IgnoreSettingsType.UNDER_DIR) {
+        myDirectoriesManuallyRemovedFromIgnored.remove(bean.getPath());
+      }
+    }
+    myChangeListManager.getIgnoredFilesComponent().setDirectoriesManuallyRemovedFromIgnored(myDirectoriesManuallyRemovedFromIgnored);
   }
 
   public boolean isModified() {

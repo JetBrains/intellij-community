@@ -828,6 +828,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   public static <T> List<T> findAll(@NotNull Collection<? extends T> collection, @NotNull Condition<? super T> condition) {
+    if (collection.isEmpty()) return emptyList();
     final List<T> result = new SmartList<T>();
     for (final T t : collection) {
       if (condition.value(t)) {

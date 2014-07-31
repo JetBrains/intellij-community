@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.codeInspection.deprecation.DeprecationInspection;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -43,11 +42,6 @@ public class DeprecatedClassUsageInspection extends XmlSuppressableInspectionToo
         if (tag.getValue().getTextElements().length > 0) {
           checkReferences(tag, holder);
         }
-      }
-
-      @Override
-      public void visitXmlAttribute(XmlAttribute attribute) {
-        checkReferences(attribute, holder);
       }
 
       @Override

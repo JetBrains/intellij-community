@@ -17,8 +17,9 @@ package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -29,30 +30,22 @@ import java.util.regex.PatternSyntaxException;
 
 public class PatternUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.PatternUtil");
-  private static final HashMap<String, String> ourEscapeRules = new HashMap<String, String>();
+
+  public static final Pattern NOTHING = Pattern.compile("(a\\A)");
+
+  private static final Map<String, String> ourEscapeRules = ContainerUtil.newLinkedHashMap();
 
   static {
     // '.' should be escaped first
     ourEscapeRules.put("*", ".*");
     ourEscapeRules.put("?", ".");
-    escape2('+');
-    escape2('(');
-    escape2(')');
-    escape2('[');
-    escape2(']');
-    escape2('/');
-    escape2('^');
-    escape2('$');
-    escape2('{');
-    escape2('}');
-    escape2('|');
+    for (char c : "+()[]/^${}|".toCharArray()) {
+      ourEscapeRules.put(String.valueOf(c), "\\" + c);
+    }
   }
 
-  private static void escape2(char symbol) {
-    ourEscapeRules.put(String.valueOf(symbol), "\\" + symbol);
-  }
-
-  public static String convertToRegex(String mask) {
+  @NotNull
+  public static String convertToRegex(@NotNull String mask) {
     List<String> strings = StringUtil.split(mask, "\\");
     StringBuilder pattern = new StringBuilder();
     String separator = "";
@@ -69,17 +62,26 @@ public class PatternUtil {
     return pattern.toString();
   }
 
-  public static Pattern fromMask(@NonNls String mask) {
-//    String pattern = mask.replaceAll("\\.", "\\.").replaceAll("\\*", ".*").replaceAll("\\?", ".");
+  @NotNull
+  public static Pattern fromMask(@NotNull String mask) {
     try {
       return Pattern.compile(convertToRegex(mask));
     }
     catch (PatternSyntaxException e) {
       LOG.error(mask, e);
-      return Pattern.compile("");
+      return NOTHING;
     }
   }
 
+  @Contract("_, !null->!null")
+  public static Pattern compileSafe(String pattern, Pattern def) {
+    try {
+      return Pattern.compile(pattern);
+    }
+    catch (Exception e) {
+      return def;
+    }
+  }
   /**
    * Finds the first match in a list os Strings.
    *

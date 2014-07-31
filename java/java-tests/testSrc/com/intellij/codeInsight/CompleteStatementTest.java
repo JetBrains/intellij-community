@@ -17,9 +17,6 @@ package com.intellij.codeInsight;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -53,6 +50,18 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testCompleteCatch() throws Exception { doTest(); }
   
   public void testCompleteCatchLParen() throws Exception { doTest(); }
+
+  public void testAlreadyCompleteCatch() throws Exception {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    int old = settings.BRACE_STYLE;
+    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    try {
+      doTest();
+    }
+    finally {
+      settings.BRACE_STYLE = old;
+    }
+  }
 
   public void testCompleteCatchWithExpression() throws Exception { doTest(); }
 
@@ -171,8 +180,6 @@ public class CompleteStatementTest extends EditorActionTestCase {
   }
 
   public void testSCR36110() throws Exception {
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    LanguageLevel old = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
     doTest();
   }
 

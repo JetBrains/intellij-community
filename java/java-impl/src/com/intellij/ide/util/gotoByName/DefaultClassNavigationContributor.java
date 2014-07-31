@@ -19,10 +19,14 @@ import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -31,6 +35,8 @@ import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.regex.Matcher;
 
 public class DefaultClassNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor {
   @Override
@@ -74,7 +80,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
 
   @Override
   public String getQualifiedNameSeparator() {
-    return ".";
+    return "$";
   }
 
   @Override
@@ -86,12 +92,28 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
   public void processElementsWithName(@NotNull String name,
                                       @NotNull final Processor<NavigationItem> processor,
                                       @NotNull final FindSymbolParameters parameters) {
+    String namePattern = StringUtil.getShortName(parameters.getCompletePattern());
+    boolean hasDollar = namePattern.contains("$");
+    if (hasDollar) {
+      Matcher matcher = ChooseByNamePopup.patternToDetectAnonymousClasses.matcher(namePattern);
+      if (matcher.matches()) {
+        namePattern = matcher.group(1);
+        hasDollar = namePattern.contains("$");
+      }
+    }
+    final MinusculeMatcher innerMatcher = hasDollar ? new MinusculeMatcher("*" + namePattern, NameUtil.MatchingCaseSensitivity.NONE) : null;
     PsiShortNamesCache.getInstance(parameters.getProject()).processClassesWithName(name, new Processor<PsiClass>() {
       final boolean isAnnotation = parameters.getLocalPatternName().startsWith("@");
+
       @Override
       public boolean process(PsiClass aClass) {
         if (aClass.getContainingFile().getVirtualFile() == null || !aClass.isPhysical()) return true;
         if (isAnnotation && !aClass.isAnnotationType()) return true;
+        if (innerMatcher != null) {
+          if (aClass.getContainingClass() == null) return true;
+          String jvmQName = ClassUtil.getJVMClassName(aClass);
+          if (jvmQName == null || !innerMatcher.matches(StringUtil.getShortName(jvmQName))) return true;
+        }
         return processor.process(aClass);
       }
     }, parameters.getSearchScope(), parameters.getIdFilter());

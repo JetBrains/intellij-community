@@ -24,7 +24,6 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -57,7 +56,6 @@ import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
 
 public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, Comparator<Object>, EdtSortingModel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.GotoActionModel");
   @Nullable private final Project myProject;
   private final Component myContextComponent;
 
@@ -68,16 +66,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   private Pattern myCompiledPattern;
 
   protected final SearchableOptionsRegistrar myIndex;
-  protected final Map<AnAction, String> myActionsMap = new TreeMap<AnAction, String>(new Comparator<AnAction>() {
-    @Override
-    public int compare(@NotNull AnAction o1, @NotNull AnAction o2) {
-      int compare = Comparing.compare(o1.getTemplatePresentation().getText(), o2.getTemplatePresentation().getText());
-      if (compare == 0 && !o1.equals(o2)) {
-        return o1.hashCode() - o2.hashCode();
-      }
-      return compare;
-    }
-  });
+  protected final Map<AnAction, String> myActionGroups = ContainerUtil.newHashMap();
 
   protected final Map<String, ApplyIntentionAction> myIntentions = new TreeMap<String, ApplyIntentionAction>();
   private final Map<String, String> myConfigurablesNames = ContainerUtil.newTroveMap();
@@ -90,7 +79,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     myProject = project;
     myContextComponent = component;
     final ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
-    collectActions(myActionsMap, mainMenu, mainMenu.getTemplatePresentation().getText());
+    collectActions(myActionGroups, mainMenu, mainMenu.getTemplatePresentation().getText());
     if (project != null && editor != null && file != null) {
       final ApplyIntentionAction[] children = ApplyIntentionAction.getAvailableIntentions(editor, file);
       if (children != null) {
@@ -460,10 +449,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       return MatchMode.DESCRIPTION;
     }
     if (text == null) {
-      LOG.error("Null text for action " + anAction + " of class " + anAction.getClass());
       return MatchMode.NONE;
     }
-    final String groupName = myActionsMap.get(anAction);
+    final String groupName = myActionGroups.get(anAction);
     if (groupName == null) {
       return matcher.matches(text, compiledPattern) ? MatchMode.NON_MENU : MatchMode.NONE;
     }
@@ -617,7 +605,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   PatternMatcher getMatcher() {
     return myMatcher.get();
   }
-  
+
   public static class ActionWrapper implements Comparable<ActionWrapper>{
     private final AnAction myAction;
     private final MatchMode myMode;

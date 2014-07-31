@@ -4,6 +4,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jsonProtocol.ProtocolMetaModel;
 
 class TypeData {
+  public static final StandaloneTypeBinding ANY = new StandaloneTypeBinding() {
+    @Override
+    public BoxableType getJavaType() {
+      return BoxableType.ANY_STRING;
+    }
+
+    @Override
+    public void generate() {
+    }
+
+    @Override
+    public Direction getDirection() {
+      return null;
+    }
+  };
   private final String name;
 
   private Input input;
@@ -119,21 +134,7 @@ class TypeData {
           };
         }
         else if (name.equals("any")) {
-          return new StandaloneTypeBinding() {
-            @Override
-            public BoxableType getJavaType() {
-              return BoxableType.STRING;
-            }
-
-            @Override
-            public void generate() {
-            }
-
-            @Override
-            public Direction getDirection() {
-              return null;
-            }
-          };
+          return ANY;
         }
 
         throw new RuntimeException();
@@ -164,21 +165,7 @@ class TypeData {
           };
         }
         else if (name.equals("any")) {
-          return new StandaloneTypeBinding() {
-            @Override
-            public BoxableType getJavaType() {
-              return BoxableType.STRING;
-            }
-
-            @Override
-            public void generate() {
-            }
-
-            @Override
-            public Direction getDirection() {
-              return null;
-            }
-          };
+          return ANY;
         }
 
         throw new RuntimeException();

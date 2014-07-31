@@ -100,8 +100,7 @@ public class GeneratedParserUtilBase {
     if (!goodMarker) return false;
     ErrorState state = ErrorState.get(builder_);
 
-    Frame frame = state.frameStack.peekLast();
-    return frame == null || frame.errorReportedAt <= builder_.rawTokenIndex();
+    return !state.frameStack.isEmpty();
   }
 
   public static TokenSet create_token_set_(IElementType... tokenTypes_) {
@@ -399,6 +398,11 @@ public class GeneratedParserUtilBase {
   private static void enter_section_impl_(PsiBuilder builder_, int level, int modifiers, @Nullable String frameName) {
     ErrorState state = ErrorState.get(builder_);
     Frame frame = state.FRAMES.alloc().init(builder_, state, level, modifiers, frameName);
+    Frame prevFrame = state.frameStack.peekLast();
+    if (prevFrame != null && prevFrame.errorReportedAt > frame.position) {
+      // report error for previous unsuccessful frame
+      reportError(builder_, state, frame, true, false);
+    }
     if (((frame.modifiers & _LEFT_) | (frame.modifiers & _LEFT_INNER_)) != 0) {
       PsiBuilder.Marker left = (PsiBuilder.Marker)builder_.getLatestDoneMarker();
       if (invalid_left_marker_guard_(builder_, left, frameName)) {
@@ -456,10 +460,10 @@ public class GeneratedParserUtilBase {
       state.clearVariants(true, frame.variantCount);
       addVariantInner(state, initialPos, frame.name);
     }
+    int lastErrorPos = getLastVariantPos(state, initialPos);
     if (!state.suppressErrors && eatMore != null) {
       state.suppressErrors = true;
       final boolean eatMoreFlagOnce = !builder_.eof() && eatMore.parse(builder_, frame.level + 1);
-      final int lastErrorPos = getLastVariantPos(state, initialPos);
       boolean eatMoreFlag = eatMoreFlagOnce || !result && frame.position == initialPos && lastErrorPos > frame.position;
 
       PsiBuilderImpl.ProductionMarker latestDoneMarker =
@@ -497,7 +501,7 @@ public class GeneratedParserUtilBase {
         errorReported = reportError(builder_, state, frame, true, true);
         parseAsTree(state, builder_, frame.level + 1, DUMMY_BLOCK, true, TOKEN_ADVANCER, eatMore);
       }
-      else if (eatMoreFlagOnce || (!result && frame.position != builder_.rawTokenIndex())) {
+      else if (eatMoreFlagOnce || (!result && frame.position != builder_.rawTokenIndex()) || frame.errorReportedAt > initialPos) {
         errorReported = reportError(builder_, state, frame, true, false);
       }
       if (extensionMarker != null) {
@@ -512,9 +516,13 @@ public class GeneratedParserUtilBase {
     }
     else if (!result && pinned && frame.errorReportedAt < 0) {
       // do not report if there are errors beyond current position
-      if (getLastVariantPos(state, initialPos) == initialPos) {
+      if (lastErrorPos == initialPos) {
         // do not force, inner recoverRoot might have skipped some tokens
         reportError(builder_, state, frame, false, false);
+      }
+      else if (lastErrorPos > initialPos) {
+        // set error pos here as if it is reported for future reference
+        frame.errorReportedAt = lastErrorPos;
       }
     }
     // propagate errorReportedAt up the stack to avoid duplicate reporting
@@ -607,7 +615,7 @@ public class GeneratedParserUtilBase {
       return;
     }
     int position = builder_.rawTokenIndex();
-    if (frame.errorReportedAt < position && getLastVariantPos(state, position) <= position) {
+    if (frame.errorReportedAt < position && getLastVariantPos(state, position + 1) <= position) {
       reportError(builder_, state, frame, true, advance);
     }
   }
@@ -865,7 +873,7 @@ public class GeneratedParserUtilBase {
         ((modifiers & _LEFT_INNER_) != 0? "_LEFT_INNER_, ": "") +
         ((modifiers & _AND_) != 0? "_AND_, ": "") +
         ((modifiers & _NOT_) != 0? "_NOT_, ": "");
-      return "<" + offset + ", " + mod + level + (errorReportedAt > -1 ? ", [" + errorReportedAt + "]" : "") + ">";
+      return String.format("{%s:%s:%d, %d, %s%s}", offset, position, level, errorReportedAt, mod, name);
     }
   }
 

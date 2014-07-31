@@ -1,7 +1,5 @@
 class IDEADEV10489 {
-    static String getS() {
-        return null;
-    }
+    static native String getS();
 
     static void f() {
         String s = getS();
@@ -17,7 +15,5 @@ class IDEADEV10489 {
         }
     }
 
-    private static boolean foo() {
-      return false;
-    }
+    private static native boolean foo();
 }

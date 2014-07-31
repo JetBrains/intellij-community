@@ -297,13 +297,11 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myData.setContents(content1, content2);
     Project project = myData.getProject();
     FileType[] types = DiffUtil.chooseContentTypes(new DiffContent[]{content1, content2});
-    VirtualFile baseFile = content1.getFile();
-    if (baseFile == null && myDiffRequest != null) {
-      String path = myDiffRequest.getWindowTitle();
-      if (path != null) baseFile = LocalFileSystem.getInstance().findFileByPath(path);
-    }
-    myLeftSide.setHighlighterFactory(createHighlighter(types[0], baseFile, project));
-    myRightSide.setHighlighterFactory(createHighlighter(types[1], baseFile, project));
+    VirtualFile beforeFile = content1.getFile();
+    VirtualFile afterFile = content2.getFile();
+    String path = myDiffRequest == null ? null : myDiffRequest.getWindowTitle();
+    myLeftSide.setHighlighterFactory(createHighlighter(types[0], beforeFile, afterFile, path, project));
+    myRightSide.setHighlighterFactory(createHighlighter(types[1], afterFile, beforeFile, path, project));
     setSplitterProportion(content1, content2);
     rediff();
     if (myIsRequestFocus) {
@@ -343,8 +341,16 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
   }
   // todo pay attention here
-  private static DiffHighlighterFactory createHighlighter(FileType contentType, VirtualFile file, Project project) {
-    return new DiffHighlighterFactoryImpl(contentType, file, project);
+  private static DiffHighlighterFactory createHighlighter(FileType contentType,
+                                                          VirtualFile file,
+                                                          VirtualFile otherFile,
+                                                          String path,
+                                                          Project project) {
+    VirtualFile baseFile = file;
+    if (baseFile == null) baseFile = otherFile;
+    if (baseFile == null && path != null) baseFile = LocalFileSystem.getInstance().findFileByPath(path);
+
+    return new DiffHighlighterFactoryImpl(contentType, baseFile, project);
   }
 
   void rediff() {

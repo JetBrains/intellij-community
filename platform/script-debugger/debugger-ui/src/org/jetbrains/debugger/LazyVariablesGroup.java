@@ -21,24 +21,24 @@ public final class LazyVariablesGroup extends XValueGroup {
 
   private final ObjectValue value;
 
-  private final int start;
-  private final int end;
+  private final int startInclusive;
+  private final int endInclusive;
   private final VariableContext context;
 
   private final ValueType componentType;
   private final boolean sparse;
 
-  public LazyVariablesGroup(@NotNull ObjectValue value, int start, int end, @NotNull VariableContext context) {
-    this(value, start, end, context, null, true);
+  public LazyVariablesGroup(@NotNull ObjectValue value, int startInclusive, int endInclusive, @NotNull VariableContext context) {
+    this(value, startInclusive, endInclusive, context, null, true);
   }
 
-  public LazyVariablesGroup(@NotNull ObjectValue value, int start, int end, @NotNull VariableContext context, @Nullable ValueType componentType, boolean sparse) {
-    super(String.format("[%,d \u2026 %,d]", start, end));
+  public LazyVariablesGroup(@NotNull ObjectValue value, int startInclusive, int endInclusive, @NotNull VariableContext context, @Nullable ValueType componentType, boolean sparse) {
+    super(String.format("[%,d \u2026 %,d]", startInclusive, endInclusive));
 
     this.value = value;
 
-    this.start = start;
-    this.end = end;
+    this.startInclusive = startInclusive;
+    this.endInclusive = endInclusive;
 
     this.context = context;
 
@@ -51,18 +51,17 @@ public final class LazyVariablesGroup extends XValueGroup {
     node.setAlreadySorted(true);
 
     int bucketThreshold = XCompositeNode.MAX_CHILDREN_TO_SHOW;
-    int size = end - start;
-    if (!sparse && size > bucketThreshold) {
-      node.addChildren(XValueChildrenList.topGroups(computeNotSparseGroups(value, context, start, end, bucketThreshold)), true);
+    if (!sparse && (endInclusive - startInclusive) > bucketThreshold) {
+      node.addChildren(XValueChildrenList.topGroups(computeNotSparseGroups(value, context, startInclusive, endInclusive + 1, bucketThreshold)), true);
       return;
     }
 
-    value.getIndexedProperties(start, end + 1, bucketThreshold, new VariableView.ObsolescentIndexedVariablesConsumer(node) {
+    value.getIndexedProperties(startInclusive, endInclusive + 1, bucketThreshold, new VariableView.ObsolescentIndexedVariablesConsumer(node) {
       @Override
       public void consumeRanges(@Nullable int[] ranges) {
         if (ranges == null) {
           XValueChildrenList groupList = new XValueChildrenList();
-          addGroups(value, GROUP_FACTORY, groupList, start, end, XCompositeNode.MAX_CHILDREN_TO_SHOW, context);
+          addGroups(value, GROUP_FACTORY, groupList, startInclusive, endInclusive, XCompositeNode.MAX_CHILDREN_TO_SHOW, context);
           node.addChildren(groupList, true);
         }
         else {
@@ -78,12 +77,12 @@ public final class LazyVariablesGroup extends XValueGroup {
   }
 
   @NotNull
-  public static List<XValueGroup> computeNotSparseGroups(@NotNull ObjectValue value, @NotNull VariableContext context, int from, int to, int bucketThreshold) {
-    int size = to - from;
+  public static List<XValueGroup> computeNotSparseGroups(@NotNull ObjectValue value, @NotNull VariableContext context, int fromInclusive, int toExclusive, int bucketThreshold) {
+    int size = toExclusive - fromInclusive;
     int bucketSize = (int)Math.pow(bucketThreshold, Math.ceil(Math.log(size) / Math.log(bucketThreshold)) - 1);
     List<XValueGroup> groupList = new ArrayList<XValueGroup>((int)Math.ceil(size / bucketSize));
-    for (; from < to; from += bucketSize) {
-      groupList.add(new LazyVariablesGroup(value, from, from + (Math.min(bucketSize, to - from) - 1), context, ValueType.NUMBER, false));
+    for (; fromInclusive < toExclusive; fromInclusive += bucketSize) {
+      groupList.add(new LazyVariablesGroup(value, fromInclusive, fromInclusive + (Math.min(bucketSize, toExclusive - fromInclusive) - 1), context, ValueType.NUMBER, false));
     }
     return groupList;
   }

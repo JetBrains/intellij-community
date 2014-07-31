@@ -62,8 +62,8 @@ import java.util.List;
 public class PyCharmNewProjectStep extends DefaultActionGroup implements DumbAware {
   private static final Logger LOG = Logger.getInstance(PyCharmNewProjectStep.class);
 
-  public PyCharmNewProjectStep(@Nullable final Runnable runnable) {
-    super("Select Project Type", true);
+  public PyCharmNewProjectStep(@NotNull final String name, @Nullable final Runnable runnable) {
+    super(name, true);
 
     final NullableConsumer<AbstractProjectSettingsStep> callback = new NullableConsumer<AbstractProjectSettingsStep>() {
       @Override
@@ -87,6 +87,7 @@ public class PyCharmNewProjectStep extends DefaultActionGroup implements DumbAwa
           sdk = SdkConfigurationUtil.setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, PythonSdkType.getInstance(), true, null,
                                               null);
           model.addSdk(sdk);
+          settingsStep.setSdk(sdk);
           try {
             model.apply();
           }
@@ -165,6 +166,9 @@ public class PyCharmNewProjectStep extends DefaultActionGroup implements DumbAwa
     add(action);
 
     final DirectoryProjectGenerator[] generators = Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
+    if (generators.length == 0) {
+      action.setPopup(false);
+    }
     Arrays.sort(generators, new Comparator<DirectoryProjectGenerator>() {
       @Override
       public int compare(DirectoryProjectGenerator o1, DirectoryProjectGenerator o2) {
@@ -188,7 +192,7 @@ public class PyCharmNewProjectStep extends DefaultActionGroup implements DumbAwa
   }
 
   public PyCharmNewProjectStep() {
-    this(null);
+    this("Select Project Type", null);
 
   }
 

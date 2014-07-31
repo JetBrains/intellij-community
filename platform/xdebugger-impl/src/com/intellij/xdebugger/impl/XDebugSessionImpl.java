@@ -422,7 +422,7 @@ public class XDebugSessionImpl implements XDebugSession {
     }
   }
 
-  private boolean isBreakpointActive(final XBreakpoint<?> b) {
+  public boolean isBreakpointActive(final XBreakpoint<?> b) {
     return !areBreakpointsMuted() && b.isEnabled() && !myInactiveSlaveBreakpoints.contains(b);
   }
 
@@ -847,7 +847,9 @@ public class XDebugSessionImpl implements XDebugSession {
     if (myStopped) return;
 
     myDebugProcess.stop();
-    myProject.getMessageBus().syncPublisher(XDebuggerManager.TOPIC).processStopped(myDebugProcess);
+    if (!myProject.isDisposed()) {
+      myProject.getMessageBus().syncPublisher(XDebuggerManager.TOPIC).processStopped(myDebugProcess);
+    }
     myCurrentPosition = null;
     myCurrentExecutionStack = null;
     myCurrentStackFrame = null;

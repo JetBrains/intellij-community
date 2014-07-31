@@ -164,7 +164,7 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
   }
 
   public static boolean isTrackingInvalidation() {
-    return Registry.is("psi.track.invalidation", true);
+    return Registry.is("psi.track.invalidation");
   }
 
   @Nullable

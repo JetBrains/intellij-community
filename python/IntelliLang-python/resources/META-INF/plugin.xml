@@ -1,0 +1,16 @@
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <name>Python IntelliLang</name>
+  <id>org.jetbrains.plugins.python-intelliLang</id>
+  <version>VERSION</version>
+  <description>This plugin enables language injections</description>
+  <vendor>JetBrains</vendor>
+
+  <depends>com.intellij.modules.python</depends>
+  <depends>org.intellij.intelliLang</depends>
+
+  <xi:include href="/META-INF/intellilang-python-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+  </extensions>
+</idea-plugin>

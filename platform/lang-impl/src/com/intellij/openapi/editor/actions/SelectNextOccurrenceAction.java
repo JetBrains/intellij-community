@@ -40,8 +40,6 @@ public class SelectNextOccurrenceAction extends EditorAction {
 
     @Override
     public void doExecute(Editor editor, @Nullable Caret c, DataContext dataContext) {
-      if (executeEquivalentFindPanelAction(editor, dataContext)) return;
-
       Caret caret = c == null ? editor.getCaretModel().getPrimaryCaret() : c;
       TextRange wordSelectionRange = getSelectionRange(editor, caret);
       boolean notFoundPreviously = getAndResetNotFoundStatus(editor);
@@ -56,7 +54,7 @@ public class SelectNextOccurrenceAction extends EditorAction {
 
         FindModel model = getFindModel(selectedText, wholeWordSearch);
 
-        findManager.setFindWasPerformed();
+        findManager.setSelectNextOccurrenceWasPerformed();
         findManager.setFindNextModel(model);
 
         int searchStartOffset = notFoundPreviously ? 0 : caret.getSelectionEnd();
@@ -83,11 +81,6 @@ public class SelectNextOccurrenceAction extends EditorAction {
         setWholeWordSearch(editor, true);
       }
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    }
-
-    @Override
-    protected EditorHeaderAction getEquivalentFindPanelAction(EditorSearchComponent searchComponent) {
-      return new AddOccurrenceAction(searchComponent);
     }
   }
 }

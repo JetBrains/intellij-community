@@ -500,21 +500,19 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     PsiType varType = var.getVariableType();
     if (!(varType instanceof PsiPrimitiveType)) return null;
+    
+    if (varType == PsiType.FLOAT || varType == PsiType.DOUBLE) return null;
 
     double minValue = varType == PsiType.BYTE ? Byte.MIN_VALUE :
                       varType == PsiType.SHORT ? Short.MIN_VALUE :
                       varType == PsiType.INT ? Integer.MIN_VALUE :
                       varType == PsiType.CHAR ? Character.MIN_VALUE :
-                      varType == PsiType.LONG ? Long.MIN_VALUE :
-                      varType == PsiType.FLOAT ? Float.MIN_VALUE :
-                      Double.MIN_VALUE;
+                      Long.MIN_VALUE;
     double maxValue = varType == PsiType.BYTE ? Byte.MAX_VALUE :
                       varType == PsiType.SHORT ? Short.MAX_VALUE :
                       varType == PsiType.INT ? Integer.MAX_VALUE :
                       varType == PsiType.CHAR ? Character.MAX_VALUE :
-                      varType == PsiType.LONG ? Long.MAX_VALUE :
-                      varType == PsiType.FLOAT ? Float.MAX_VALUE :
-                      Double.MAX_VALUE;
+                      Long.MAX_VALUE;
 
     return checkComparisonWithKnownRange(instruction, runner, memState, opSign, comparedWith, minValue, maxValue);
   }

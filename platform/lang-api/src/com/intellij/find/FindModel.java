@@ -72,8 +72,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   private boolean isSearchHighlighters = false;
   private boolean isReplaceState = false;
   private boolean isWholeWordsOnly = false;
-  private boolean isInCommentsOnly;
-  private boolean isInStringLiteralsOnly;
+  private SearchContext searchContext = SearchContext.ANY;
   private boolean isFromCursor = true;
   private boolean isForward = true;
   private boolean isGlobal = true;
@@ -96,6 +95,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   private SearchScope customScope;
   private boolean isCustomScope = false;
   private boolean isMultiline = false;
+  private boolean mySearchInProjectFiles;
 
   public boolean isMultiline() {
     return isMultiline;
@@ -170,8 +170,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     isCustomScope = model.isCustomScope;
     isFindAll = model.isFindAll;
 
-    isInCommentsOnly = model.isInCommentsOnly;
-    isInStringLiteralsOnly = model.isInStringLiteralsOnly;
+    searchContext = model.searchContext;
 
     isMultiline = model.isMultiline;
   }
@@ -190,8 +189,8 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     if (isForward != findModel.isForward) return false;
     if (isFromCursor != findModel.isFromCursor) return false;
     if (isGlobal != findModel.isGlobal) return false;
-    if (isInCommentsOnly != findModel.isInCommentsOnly) return false;
-    if (isInStringLiteralsOnly != findModel.isInStringLiteralsOnly) return false;
+    if (searchContext != findModel.searchContext) return false;
+
     if (isMultiline != findModel.isMultiline) return false;
     if (isMultipleFiles != findModel.isMultipleFiles) return false;
     if (isOpenInNewTabEnabled != findModel.isOpenInNewTabEnabled) return false;
@@ -215,6 +214,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     if (myStringToReplace != null ? !myStringToReplace.equals(findModel.myStringToReplace) : findModel.myStringToReplace != null) {
       return false;
     }
+    if (mySearchInProjectFiles != findModel.mySearchInProjectFiles) return false;
 
     return true;
   }
@@ -227,8 +227,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     result = 31 * result + (isSearchHighlighters ? 1 : 0);
     result = 31 * result + (isReplaceState ? 1 : 0);
     result = 31 * result + (isWholeWordsOnly ? 1 : 0);
-    result = 31 * result + (isInCommentsOnly ? 1 : 0);
-    result = 31 * result + (isInStringLiteralsOnly ? 1 : 0);
+    result = 31 * result + (searchContext.ordinal());
     result = 31 * result + (isFromCursor ? 1 : 0);
     result = 31 * result + (isForward ? 1 : 0);
     result = 31 * result + (isGlobal ? 1 : 0);
@@ -252,6 +251,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     result = 31 * result + (isCustomScope ? 1 : 0);
     result = 31 * result + (isMultiline ? 1 : 0);
     result = 31 * result + (isPreserveCase ? 1 : 0);
+    result = 31 * result + (mySearchInProjectFiles ? 1 : 0);
     result = 31 * result + (myPattern != null ? myPattern.hashCode() : 0);
     return result;
   }
@@ -658,8 +658,8 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
   @Override
-  public Object clone() {
-    return super.clone();
+  public FindModel clone() {
+    return (FindModel)super.clone();
   }
 
 
@@ -670,8 +670,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     buffer.append("myStringToReplace =").append(myStringToReplace).append("\n");
     buffer.append("isReplaceState =").append(isReplaceState).append("\n");
     buffer.append("isWholeWordsOnly =").append(isWholeWordsOnly).append("\n");
-    buffer.append("isInStringLiterals =").append(isInStringLiteralsOnly).append("\n");
-    buffer.append("isInComments =").append(isInCommentsOnly).append("\n");
+    buffer.append("searchContext =").append(searchContext).append("\n");
     buffer.append("isFromCursor =").append(isFromCursor).append("\n");
     buffer.append("isForward =").append(isForward).append("\n");
     buffer.append("isGlobal =").append(isGlobal).append("\n");
@@ -689,6 +688,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     buffer.append("fileFilter =").append(fileFilter).append("\n");
     buffer.append("moduleName =").append(moduleName).append("\n");
     buffer.append("customScopeName =").append(customScopeName).append("\n");
+    buffer.append("searchInProjectFiles =").append(mySearchInProjectFiles).append("\n");
     return buffer.toString();
   }
 
@@ -849,25 +849,53 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     }
   }
 
-  public boolean isInStringLiteralsOnly() {
-    return isInStringLiteralsOnly;
+  public enum SearchContext {
+    ANY, IN_STRINGS, IN_COMMENTS, EXCEPT_STRINGS, EXCEPT_COMMENTS, EXCEPT_STRINGS_AND_COMMENTS
   }
 
-  public void setInStringLiteralsOnly(boolean inStringLiteralsOnly) {
-    boolean changed = isInStringLiteralsOnly != inStringLiteralsOnly;
-    isInStringLiteralsOnly = inStringLiteralsOnly;
+  public boolean isInStringLiteralsOnly() {
+    return searchContext == SearchContext.IN_STRINGS;
+  }
+
+  public boolean isExceptComments() {
+    return searchContext == SearchContext.EXCEPT_COMMENTS;
+  }
+
+  public boolean isExceptStringLiterals() {
+    return searchContext == SearchContext.EXCEPT_STRINGS;
+  }
+
+  public boolean isInCommentsOnly() {
+    return searchContext == SearchContext.IN_COMMENTS;
+  }
+
+  public boolean isExceptCommentsAndStringLiterals() {
+    return searchContext == SearchContext.EXCEPT_STRINGS_AND_COMMENTS;
+  }
+
+  public @NotNull SearchContext getSearchContext() {
+    return searchContext;
+  }
+
+  public void setSearchContext(@NotNull SearchContext _searchContext) {
+    doSetContext(_searchContext);
+  }
+
+  private void doSetContext(SearchContext newSearchContext) {
+    boolean changed = newSearchContext != searchContext;
+    searchContext = newSearchContext;
     if (changed) {
       notifyObservers();
     }
   }
 
-  public boolean isInCommentsOnly() {
-    return isInCommentsOnly;
+  public boolean isSearchInProjectFiles() {
+    return mySearchInProjectFiles;
   }
 
-  public void setInCommentsOnly(boolean inCommentsOnly) {
-    boolean changed = isInCommentsOnly != inCommentsOnly;
-    isInCommentsOnly = inCommentsOnly;
+  public void setSearchInProjectFiles(boolean searchInProjectFiles) {
+    boolean changed = mySearchInProjectFiles != searchInProjectFiles;
+    mySearchInProjectFiles = searchInProjectFiles;
     if (changed) {
       notifyObservers();
     }

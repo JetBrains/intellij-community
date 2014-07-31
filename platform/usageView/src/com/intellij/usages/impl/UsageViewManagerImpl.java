@@ -268,7 +268,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
       return isFileInScope(file, searchScope);
     }
     else if(element != null) {
-      return searchScope instanceof ProjectScopeImpl || searchScope instanceof ProjectAndLibrariesScope;
+      return searchScope instanceof EverythingGlobalScope ||
+             searchScope instanceof ProjectScopeImpl ||
+             searchScope instanceof ProjectAndLibrariesScope;
     }
     return false;
   }

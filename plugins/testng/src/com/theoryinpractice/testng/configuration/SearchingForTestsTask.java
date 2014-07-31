@@ -122,7 +122,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
     writeTempFile();
     finish();
 
-    if (!Registry.is("testng_sm_runner", false)) myClient.startListening(myConfig);
+    if (!Registry.is("testng_sm_runner")) myClient.startListening(myConfig);
   }
 
   @Override

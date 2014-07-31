@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 import java.util.regex.MatchResult;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -92,6 +93,20 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
       "Can't find fold region with start offset %d. Registered fold regions: %s. Document text: '%s'",
       startOffset, Arrays.toString(foldRegions), myEditor.getDocument().getCharsSequence()
     ));
+  }
+
+  protected static void foldOccurrences(String textToFoldRegexp, final String placeholder) {
+    final Matcher matcher = Pattern.compile(textToFoldRegexp).matcher(myEditor.getDocument().getCharsSequence());
+    myEditor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
+      @Override
+      public void run() {
+        while(matcher.find()) {
+          FoldRegion foldRegion = myEditor.getFoldingModel().addFoldRegion(matcher.start(), matcher.end(), placeholder);
+          assertNotNull(foldRegion);
+          foldRegion.setExpanded(false);
+        }
+      }
+    });
   }
 
   /**

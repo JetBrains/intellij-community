@@ -25,6 +25,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.problems.Problem;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.rt.ant.execution.IdeaAntLogger2;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NonNls;
@@ -32,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class OutputParser{
@@ -193,7 +196,7 @@ public class OutputParser{
     return -1;
   }
 
-  private static void processJavacMessages(final List<String> javacMessages, final AntBuildMessageView messageView, Project project) {
+  private static void processJavacMessages(final List<String> javacMessages, final AntBuildMessageView messageView, final Project project) {
     if (javacMessages == null) {
       return;
     }
@@ -241,6 +244,12 @@ public class OutputParser{
           public void run() {
             VirtualFile file = url == null ? null : VirtualFileManager.getInstance().findFileByUrl(url);
             messageView.outputJavacMessage(convertCategory(category), strings, file, url, lineNum, columnNum);
+
+            if (file != null && category == CompilerMessageCategory.ERROR) {
+              final WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(project);
+              final Problem problem = wolf.convertToProblem(file, lineNum, columnNum, strings);
+              wolf.weHaveGotNonIgnorableProblems(file, Collections.singletonList(problem));
+            }
           }
         });
       }

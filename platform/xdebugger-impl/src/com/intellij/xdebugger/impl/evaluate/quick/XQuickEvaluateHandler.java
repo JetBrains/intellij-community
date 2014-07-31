@@ -100,14 +100,7 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
   }
 
   @Override
-  public int getValueLookupDelay(final Project project) {
-    XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
-    if (session != null) {
-      XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
-      if (evaluator != null) {
-        return evaluator.getValuePopupDelay();
-      }
-    }
+  public int getValueLookupDelay(Project project) {
     return XDebuggerSettingsManager.getInstance().getDataViewSettings().getValueLookupDelay();
   }
 }

@@ -75,6 +75,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private final List<EditReadOnlyListener> myReadOnlyListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
+  private volatile boolean myMightContainTabs = true; // optimisation flag: when document contains no tabs it is dramatically easier to calculate positions in editor
+  private int myTabTrackingRequestors = 0;
+
   private int myCheckGuardedBlocks = 0;
   private boolean myGuardsSuppressed = false;
   private boolean myEventsHandling = false;
@@ -763,6 +766,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       if (LOG.isDebugEnabled()) LOG.debug(event.toString());
 
       getLineSet().changedUpdate(event);
+      if (myTabTrackingRequestors > 0) {
+        updateMightContainTabs(event.getNewFragment());
+      }
       setModificationStamp(newModificationStamp);
 
       if (!ShutDownTracker.isShutdownHookRunning()) {
@@ -1050,5 +1056,30 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @Override
   public String toString() {
     return "DocumentImpl[" + FileDocumentManager.getInstance().getFile(this) + "]";
+  }
+
+  public void requestTabTracking() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myTabTrackingRequestors++ == 0) {
+      myMightContainTabs = false;
+      updateMightContainTabs(myText);
+    }
+  }
+
+  public void giveUpTabTracking() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (--myTabTrackingRequestors == 0) {
+      myMightContainTabs = true;
+    }
+  }
+
+  public boolean mightContainTabs() {
+    return myMightContainTabs;
+  }
+
+  private void updateMightContainTabs(CharSequence text) {
+    if (!myMightContainTabs) {
+      myMightContainTabs = StringUtil.contains(text, 0, text.length(), '\t');
+    }
   }
 }

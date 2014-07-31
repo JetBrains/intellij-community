@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
@@ -138,52 +138,40 @@ public class NamePathComponent extends JPanel{
     return component;
   }
 
-  private String getProjectFilePath(boolean isDefault) {
-    if (isDefault) {
-      return getPath() + "/" + getNameValue() + ProjectFileType.DOT_DEFAULT_EXTENSION;
-    }
-    else {
-      return getPath() + "/" + Project.DIRECTORY_STORE_FOLDER;
-    }
-  }
-
-  public boolean validateNameAndPath(WizardContext context, boolean defaultFormat) throws
-                                                                                    ConfigurationException {
-    final String name = getNameValue();
-    if (name.length() == 0) {
-      final ApplicationInfo info = ApplicationManager.getApplication().getComponent(ApplicationInfo.class);
-      throw new ConfigurationException(
-        IdeBundle.message("prompt.new.project.file.name", info.getVersionName(), context.getPresentationName()));
+  public boolean validateNameAndPath(WizardContext context, boolean defaultFormat) throws ConfigurationException {
+    String name = getNameValue();
+    if (StringUtil.isEmptyOrSpaces(name)) {
+      ApplicationInfo info = ApplicationInfo.getInstance();
+      throw new ConfigurationException(IdeBundle.message("prompt.new.project.file.name", info.getVersionName(), context.getPresentationName()));
     }
 
-    final String projectFileDirectory = getPath();
-    if (projectFileDirectory.length() == 0) {
+    String projectDirectory = getPath();
+    if (StringUtil.isEmptyOrSpaces(projectDirectory)) {
       throw new ConfigurationException(IdeBundle.message("prompt.enter.project.file.location", context.getPresentationName()));
     }
-    if (myShouldBeAbsolute && !new File(projectFileDirectory).isAbsolute()) {
+    if (myShouldBeAbsolute && !new File(projectDirectory).isAbsolute()) {
       throw new ConfigurationException(StringUtil.capitalize(IdeBundle.message("file.location.should.be.absolute", context.getPresentationName())));
     }
-    final boolean shouldPromptCreation = isPathChangedByUser();
-    if (!ProjectWizardUtil
-      .createDirectoryIfNotExists(IdeBundle.message("directory.project.file.directory", context.getPresentationName()),
-                                  projectFileDirectory, shouldPromptCreation)) {
+
+    boolean shouldPromptCreation = isPathChangedByUser();
+    String message = IdeBundle.message("directory.project.file.directory", context.getPresentationName());
+    if (!ProjectWizardUtil.createDirectoryIfNotExists(message, projectDirectory, shouldPromptCreation)) {
       return false;
     }
 
-    final File file = new File(projectFileDirectory);
+    File file = new File(projectDirectory);
     if (file.exists() && !file.canWrite()) {
-      throw new ConfigurationException(String.format("Directory '%s' is not writable!\nPlease choose another project location.", projectFileDirectory));
+      throw new ConfigurationException(String.format("Directory '%s' is not writable!\nPlease choose another project location.", projectDirectory));
     }
 
     boolean shouldContinue = true;
-    final File projectFile = new File(getProjectFilePath(defaultFormat));
+    String fileName = defaultFormat ? name + ProjectFileType.DOT_DEFAULT_EXTENSION : Project.DIRECTORY_STORE_FOLDER;
+    File projectFile = new File(file, fileName);
     if (projectFile.exists()) {
-      int answer = Messages.showYesNoDialog(
-        IdeBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath(), context.getPresentationName()),
-        IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
+      message = IdeBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath(), context.getPresentationName());
+      int answer = Messages.showYesNoDialog(message, IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
       shouldContinue = (answer == Messages.YES);
     }
-
     return shouldContinue;
   }
 
@@ -204,14 +192,15 @@ public class NamePathComponent extends JPanel{
   }
 
   public String getPath() {
-    return myTfPath.getText().trim().replace(File.separatorChar, '/');
+    String text = myTfPath.getText().trim();
+    return FileUtil.expandUserHome(FileUtil.toSystemIndependentName(text));
   }
 
   public void setPath(String path) {
     final boolean isPathChangedByUser = myIsPathChangedByUser;
     setPathNameSyncEnabled(false);
     try {
-      myTfPath.setText(path);
+      myTfPath.setText(FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(path)));
     }
     finally {
       myIsPathChangedByUser = isPathChangedByUser;

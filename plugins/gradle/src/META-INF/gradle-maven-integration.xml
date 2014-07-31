@@ -21,7 +21,6 @@
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.integrations.maven.GradleProjectStartupActivity"/>
     <externalSystemTaskNotificationListener
         implementation="org.jetbrains.plugins.gradle.integrations.maven.GradleMavenProjectImportNotificationListener"/>
-    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService"/>
     <completion.contributor language="Groovy" order="first"
                             implementationClass="org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion.MavenDependenciesGradleCompletionContributor"/>
   </extensions>

@@ -716,7 +716,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testMethodColon() throws Exception { doFirstItemTest(':'); }
   public void testVariableColon() throws Exception { doFirstItemTest(':'); }
 
-  private void doFirstItemTest(char c) throws Exception {
+  private void doFirstItemTest(char c) {
     configureByTestName();
     select(c);
     checkResultByTestName();
@@ -823,6 +823,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testIDEADEV2626() throws Exception {
     doActionTest();
   }
+
+  public void testDontSuggestWildcardGenerics() { doItemTest(); }
 
   public void testCastWith2TypeParameters() throws Throwable { doTest(); }
   public void testClassLiteralInArrayAnnoInitializer() throws Throwable { doTest(); }
@@ -1141,7 +1143,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByTestName();
   }
 
-  private void doItemTest() throws Exception {
+  private void doItemTest() {
     doFirstItemTest('\n');
   }
 

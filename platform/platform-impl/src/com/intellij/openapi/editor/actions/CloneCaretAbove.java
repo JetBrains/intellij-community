@@ -15,31 +15,10 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import org.jetbrains.annotations.NotNull;
 
 public class CloneCaretAbove extends EditorAction {
   public CloneCaretAbove() {
-    super(new Handler());
-  }
-
-  private static class Handler extends EditorActionHandler {
-    public Handler() {
-      super(true);
-    }
-
-    @Override
-    public void doExecute(Editor editor, @NotNull Caret caret, DataContext dataContext) {
-      caret.clone(true);
-    }
-
-    @Override
-    public boolean isEnabled(Editor editor, DataContext dataContext) {
-      return editor.getCaretModel().supportsMultipleCarets();
-    }
+    super(new CloneCaretActionHandler(true));
   }
 }

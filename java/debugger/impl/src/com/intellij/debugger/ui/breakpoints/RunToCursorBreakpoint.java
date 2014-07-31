@@ -123,4 +123,9 @@ public class RunToCursorBreakpoint extends LineBreakpoint {
 
     return new RunToCursorBreakpoint(project, pos, restoreBreakpoints);
   }
+
+  @Override
+  protected boolean shouldCreateRequest(DebugProcessImpl debugProcess) {
+    return debugProcess.isAttached() && debugProcess.getRequestsManager().findRequests(this).isEmpty();
+  }
 }

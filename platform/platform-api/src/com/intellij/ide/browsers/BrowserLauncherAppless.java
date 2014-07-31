@@ -74,10 +74,10 @@ public class BrowserLauncherAppless extends BrowserLauncher {
            Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action);
   }
 
-  public static boolean canStartDefaultBrowser() {
+  public static boolean canUseSystemDefaultBrowserPolicy() {
     return isDesktopActionSupported(Desktop.Action.BROWSE) ||
            SystemInfo.isMac || SystemInfo.isWindows ||
-           SystemInfo.isUnix && SystemInfo.hasXdgOpen();
+           (SystemInfo.isUnix && SystemInfo.hasXdgOpen());
   }
 
   private static GeneralSettings getGeneralSettingsInstance() {
@@ -109,7 +109,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
 
   @Override
   public void open(@NotNull String url) {
-    openOrBrowse(url, false);
+    openOrBrowse(url, false, null);
   }
 
   @Override
@@ -119,6 +119,10 @@ public class BrowserLauncherAppless extends BrowserLauncher {
 
   @Override
   public void browse(@NotNull URI uri) {
+    browse(uri, null);
+  }
+
+  public void browse(@NotNull URI uri, @Nullable Project project) {
     LOG.debug("Launch browser: [" + uri + "]");
 
     GeneralSettings settings = getGeneralSettingsInstance();
@@ -136,15 +140,19 @@ public class BrowserLauncherAppless extends BrowserLauncher {
 
       List<String> command = getDefaultBrowserCommand();
       if (command != null) {
-        doLaunch(uri.toString(), command, null, null, ArrayUtil.EMPTY_STRING_ARRAY, null);
+        doLaunch(uri.toString(), command, null, project, ArrayUtil.EMPTY_STRING_ARRAY, null);
         return;
       }
     }
 
-    browseUsingPath(uri.toString(), settings.getBrowserPath(), null, null, ArrayUtil.EMPTY_STRING_ARRAY);
+    browseUsingNotSystemDefaultBrowserPolicy(uri, settings, project);
   }
 
-  private void openOrBrowse(@NotNull String url, boolean browse) {
+  protected void browseUsingNotSystemDefaultBrowserPolicy(@NotNull URI uri, @NotNull GeneralSettings settings, @Nullable Project project) {
+    browseUsingPath(uri.toString(), settings.getBrowserPath(), null, project, ArrayUtil.EMPTY_STRING_ARRAY);
+  }
+
+  private void openOrBrowse(@NotNull String url, boolean browse, @Nullable Project project) {
     url = url.trim();
 
     if (url.startsWith("jar:")) {
@@ -181,7 +189,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
     }
 
     if (uri == null) {
-      doShowError(IdeBundle.message("error.malformed.url", url), null, null, null, null);
+      doShowError(IdeBundle.message("error.malformed.url", url), null, project, null, null);
     }
     else {
       browse(uri);
@@ -380,7 +388,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
   @Override
   public void browse(@NotNull String url, @Nullable WebBrowser browser, @Nullable Project project) {
     if (browser == null) {
-      openOrBrowse(url, true);
+      openOrBrowse(url, true, project);
     }
     else {
       for (UrlOpener urlOpener : UrlOpener.EP_NAME.getExtensions()) {
@@ -436,8 +444,8 @@ public class BrowserLauncherAppless extends BrowserLauncher {
 
   private boolean doLaunch(@Nullable String url,
                            @NotNull List<String> command,
-                           @Nullable final WebBrowser browser,
-                           @Nullable final Project project,
+                           @Nullable WebBrowser browser,
+                           @Nullable Project project,
                            @NotNull String[] additionalParameters,
                            @Nullable Runnable launchTask) {
     GeneralCommandLine commandLine = new GeneralCommandLine(command);
@@ -454,7 +462,13 @@ public class BrowserLauncherAppless extends BrowserLauncher {
       commandLine.addParameter(url);
     }
 
-    addArgs(commandLine, browser == null ? null : browser.getSpecificSettings(), additionalParameters);
+    final BrowserSpecificSettings browserSpecificSettings = browser == null ? null : browser.getSpecificSettings();
+    if (browserSpecificSettings != null) {
+      commandLine.getEnvironment().putAll(browserSpecificSettings.getEnvironmentVariables());
+    }
+
+    addArgs(commandLine, browserSpecificSettings, additionalParameters);
+
     try {
       Process process = commandLine.createProcess();
       checkCreatedProcess(browser, project, commandLine, process, launchTask);

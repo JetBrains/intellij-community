@@ -20,10 +20,6 @@ abstract class ClassScope {
     return contextNamespace.getLastComponent();
   }
 
-  String getFullName() {
-    return contextNamespace.getFullText();
-  }
-
   NamePath getClassContextNamespace() {
     return contextNamespace;
   }

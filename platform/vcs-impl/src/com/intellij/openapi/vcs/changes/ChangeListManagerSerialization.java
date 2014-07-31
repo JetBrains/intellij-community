@@ -25,10 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 class ChangeListManagerSerialization {
   @NonNls static final String ATT_ID = "id";
@@ -45,6 +42,8 @@ class ChangeListManagerSerialization {
   @NonNls static final String NODE_LIST = "list";
   @NonNls static final String NODE_IGNORED = "ignored";
   @NonNls static final String NODE_CHANGE = "change";
+  @NonNls static final String MANUALLY_REMOVED_FROM_IGNORED = "manually-removed-from-ignored";
+  @NonNls static final String DIRECTORY_TAG = "directory";
 
   private final IgnoredFilesComponent myIgnoredIdeaLevel;
   private final ChangeListWorker myWorker;
@@ -64,6 +63,14 @@ class ChangeListManagerSerialization {
     for (Element ignoredNode : ignoredNodes) {
       readFileToIgnore(ignoredNode);
     }
+    Element manuallyRemovedFromIgnoredTag = element.getChild(MANUALLY_REMOVED_FROM_IGNORED);
+    Set<String> manuallyRemovedFromIgnoredPaths = new HashSet<String>();
+    if (manuallyRemovedFromIgnoredTag != null) {
+      for (Element tag : manuallyRemovedFromIgnoredTag.getChildren(DIRECTORY_TAG)) {
+        manuallyRemovedFromIgnoredPaths.add(tag.getAttributeValue(ATT_PATH));
+      }
+    }
+    myIgnoredIdeaLevel.setDirectoriesManuallyRemovedFromIgnored(manuallyRemovedFromIgnoredPaths);
   }
 
   private void readChangeList(final Element listNode) {
@@ -145,6 +152,14 @@ class ChangeListManagerSerialization {
       if (mask != null) {
         fileNode.setAttribute("mask", mask);
       }
+    }
+    Set<String> manuallyRemovedFromIgnored = myIgnoredIdeaLevel.getDirectoriesManuallyRemovedFromIgnored();
+    if (!manuallyRemovedFromIgnored.isEmpty()) {
+      Element list = new Element(MANUALLY_REMOVED_FROM_IGNORED);
+      for (String path : manuallyRemovedFromIgnored) {
+        list.addContent(new Element(DIRECTORY_TAG).setAttribute(ATT_PATH, path));
+      }
+      element.addContent(list);
     }
   }
 

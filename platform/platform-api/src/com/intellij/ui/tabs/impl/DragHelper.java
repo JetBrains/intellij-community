@@ -240,7 +240,7 @@ class DragHelper extends MouseDragHelper {
 
     final JBTabsPosition position = myTabs.getTabsPosition();
 
-    if (!willDragOutStart && JBEditorTabs.isAlphabeticalMode() && position != JBTabsPosition.top && position != JBTabsPosition.bottom) {
+    if (!willDragOutStart && myTabs.isAlphabeticalMode() && position != JBTabsPosition.top && position != JBTabsPosition.bottom) {
       Point p = new Point(event.getPoint());
       p = SwingUtilities.convertPoint(event.getComponent(), p, myTabs);
       if (myTabs.getVisibleRect().contains(p) && myPressedOnScreenPoint.distance(new RelativePoint(event).getScreenPoint()) > 15) {

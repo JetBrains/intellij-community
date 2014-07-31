@@ -56,6 +56,8 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
   private static Set<Module> buildDependents(Module module) {
     Set<Module> result = new THashSet<Module>();
     result.add(module);
+    
+    Set<Module> processedExporting = new THashSet<Module>();
 
     ModuleIndex index = getModuleIndex(module.getProject());
 
@@ -64,9 +66,11 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
 
     while (!walkingQueue.isEmpty()) {
       Module current = walkingQueue.pullFirst();
+      processedExporting.add(current);
       result.addAll(index.plainUsages.get(current));
       for (Module dependent : index.exportingUsages.get(current)) {
-        if (result.add(dependent)) {
+        result.add(dependent);
+        if (processedExporting.add(dependent)) {
           walkingQueue.addLast(dependent);
         }
       }

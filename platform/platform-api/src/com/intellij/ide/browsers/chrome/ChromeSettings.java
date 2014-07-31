@@ -21,7 +21,9 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +35,7 @@ public final class ChromeSettings extends BrowserSpecificSettings {
   private @Nullable String myCommandLineOptions;
   private @Nullable String myUserDataDirectoryPath;
   private boolean myUseCustomProfile;
+  private @NotNull THashMap<String, String> myEnvironmentVariables = new THashMap<String, String>();
 
   public ChromeSettings() {
   }
@@ -85,10 +88,29 @@ public final class ChromeSettings extends BrowserSpecificSettings {
     return cliOptions;
   }
 
+  @Override
+  @NotNull
+  @Tag("environment-variables")
+  @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
+  public THashMap<String, String> getEnvironmentVariables() {
+    return myEnvironmentVariables;
+  }
+
+  public void setEnvironmentVariables(@NotNull final THashMap<String, String> environmentVariables) {
+    myEnvironmentVariables = environmentVariables;
+  }
+
   @NotNull
   @Override
   public ChromeSettingsConfigurable createConfigurable() {
     return new ChromeSettingsConfigurable(this);
+  }
+
+  @Override
+  public ChromeSettings clone() {
+    ChromeSettings clone = (ChromeSettings)super.clone();
+    clone.myEnvironmentVariables = myEnvironmentVariables.clone();
+    return clone;
   }
 
   @Override
@@ -103,6 +125,7 @@ public final class ChromeSettings extends BrowserSpecificSettings {
     ChromeSettings settings = (ChromeSettings)o;
     return myUseCustomProfile == settings.myUseCustomProfile &&
            Comparing.equal(myCommandLineOptions, settings.myCommandLineOptions) &&
-           (!myUseCustomProfile || Comparing.equal(myUserDataDirectoryPath, settings.myUserDataDirectoryPath));
+           (!myUseCustomProfile || Comparing.equal(myUserDataDirectoryPath, settings.myUserDataDirectoryPath)) &&
+           myEnvironmentVariables.equals(settings.myEnvironmentVariables);
   }
 }

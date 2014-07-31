@@ -234,7 +234,7 @@ public final class JsonReaders {
     return list;
   }
 
-  public static List<String> readListOfPrimitive(JsonReaderEx reader) {
+  public static List<String> readRawStringArray(JsonReaderEx reader) {
     reader.beginArray();
     if (!reader.hasNext()) {
       reader.endArray();

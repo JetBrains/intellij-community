@@ -62,8 +62,12 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     this(new DefaultTableModel());
   }
 
-  public JBTable(final TableModel model) {
-    super(model);
+  public JBTable(TableModel model) {
+    this(model, null);
+  }
+
+  public JBTable(final TableModel model, final TableColumnModel columnModel) {
+    super(model, columnModel);
 
     myEmptyText = new StatusText(this) {
       @Override

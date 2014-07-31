@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 
 import javax.swing.*;
@@ -28,7 +29,7 @@ import javax.swing.*;
 public class TabsAlphabeticalModeSwitcher extends ToggleAction {
   @Override
   public boolean isSelected(AnActionEvent e) {
-    return JBEditorTabs.isAlphabeticalMode();
+    return Registry.is(JBEditorTabs.TABS_ALPHABETICAL_KEY);
   }
 
   @Override

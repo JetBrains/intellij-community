@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -25,22 +26,25 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * @deprecated API compatibility. Utility methods will be moved to NavigationUtil
+ * @deprecated API compatibility. Utility methods moved to NavigationUtil.
+ * todo [neuro] REMOVE-ME when September Ends..
  * @author gregsh
  */
 public class GotoRelatedFileAction {
 
   /**
-   * @deprecated This method will be moved to NavigationUtil
+   * @deprecated
+   * @see com.intellij.codeInsight.navigation.NavigationUtil#getRelatedItemsPopup(java.util.List, String)
    */
   public static JBPopup createPopup(List<? extends GotoRelatedItem> items, final String title) {
-    return GotoRelatedSymbolAction.createPopup(items, title);
+    return NavigationUtil.getRelatedItemsPopup(items, title);
   }
 
   /**
-   * @deprecated This method will be moved to NavigationUtil
+   * @deprecated
+   * @see com.intellij.codeInsight.navigation.NavigationUtil#collectRelatedItems(com.intellij.psi.PsiElement, com.intellij.openapi.actionSystem.DataContext)
    */
   public static List<GotoRelatedItem> getItems(@NotNull PsiElement contextElement, @Nullable DataContext dataContext) {
-    return GotoRelatedSymbolAction.getItems(contextElement, dataContext);
+    return NavigationUtil.collectRelatedItems(contextElement, dataContext);
   }
 }

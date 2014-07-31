@@ -20,7 +20,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.*;
@@ -96,11 +95,11 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   }
 
   public static int getGlobalUndoLimit() {
-    return Registry.intValue("undo.globalUndoLimit", 10);
+    return Registry.intValue("undo.globalUndoLimit");
   }
 
   public static int getDocumentUndoLimit() {
-    return Registry.intValue("undo.documentUndoLimit", 100);
+    return Registry.intValue("undo.documentUndoLimit");
   }
 
   public UndoManagerImpl(Application application, CommandProcessor commandProcessor) {
