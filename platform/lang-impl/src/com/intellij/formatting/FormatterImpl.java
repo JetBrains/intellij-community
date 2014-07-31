@@ -128,7 +128,7 @@ public class FormatterImpl extends FormatterEx
     if (spacing == null) {
       return 0;
     }
-    return spacing.getMinSpaces();
+    return Math.max(spacing.getMinSpaces(), 0);
   }
 
   private static Couple<Block> getBlockAtOffset(Block parent, Block block, int offset) {
