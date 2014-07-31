@@ -166,6 +166,9 @@ public class PyCharmNewProjectStep extends DefaultActionGroup implements DumbAwa
     add(action);
 
     final DirectoryProjectGenerator[] generators = Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
+    if (generators.length == 0) {
+      action.setPopup(false);
+    }
     Arrays.sort(generators, new Comparator<DirectoryProjectGenerator>() {
       @Override
       public int compare(DirectoryProjectGenerator o1, DirectoryProjectGenerator o2) {
