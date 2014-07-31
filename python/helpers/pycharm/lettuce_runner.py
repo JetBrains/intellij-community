@@ -18,17 +18,23 @@ class _LettuceRunner(_bdd_utils.BddRunner):
     Lettuce runner (BddRunner for lettuce)
     """
 
-    def __init__(self, base_dir):
+    def __init__(self, base_dir, what_to_run):
         """
-            :param base_dir base directory to run tests in
-            :type base_dir: str
 
+        :param base_dir base directory to run tests in
+        :type base_dir: str
+        :param what_to_run folder or file to run
+        :type what_to_run str
         """
         super(_LettuceRunner, self).__init__(base_dir)
-        self.__runner = lettuce.Runner(base_dir)
+        self.__runner = lettuce.Runner(what_to_run)
 
     def _get_features_to_run(self):
         super(_LettuceRunner, self)._get_features_to_run()
+        if self.__runner.single_feature:  # We need to run one and only one feature
+            return [core.Feature.from_file(self.__runner.single_feature)]
+
+        # Find all features in dir
         features = []
         for feature_file in self.__runner.loader.find_feature_files():
             feature = core.Feature.from_file(feature_file)
@@ -59,6 +65,8 @@ class _LettuceRunner(_bdd_utils.BddRunner):
             reason = step.why
             assert isinstance(reason, ReasonToFail), reason
             self._test_failed(test_name, message=reason.exception, details=reason.traceback)
+        elif step.has_definition:
+            self._test_skipped(test_name, "In lettuce, we do know the reason", step.described_at)
         else:
             self._test_undefined(test_name, step.described_at)
 
@@ -100,4 +108,5 @@ class _LettuceRunner(_bdd_utils.BddRunner):
 
 
 if __name__ == "__main__":
-    _LettuceRunner(_bdd_utils.get_path_by_args(sys.argv)).run()
+    (base_dir, what_to_run) = _bdd_utils.get_path_by_args(sys.argv)
+    _LettuceRunner(base_dir, what_to_run).run()
