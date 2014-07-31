@@ -45,6 +45,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.io.SafeFileOutputStream;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
@@ -394,7 +395,15 @@ public class ConsoleHistoryController {
         }
       }
       catch (Exception ex) {
-        LOG.error(ex);
+        //noinspection ThrowableResultOfMethodCallIgnored
+        Throwable cause = ExceptionUtil.getRootCause(ex);
+        if (cause instanceof EOFException) {
+          LOG.warn(ex);
+          return false;
+        }
+        else {
+          LOG.error(ex);
+        }
       }
       finally {
         if (xmlReader != null) {
