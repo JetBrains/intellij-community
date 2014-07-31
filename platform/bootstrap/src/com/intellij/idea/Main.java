@@ -143,7 +143,8 @@ public class Main {
     int status = 0;
     if (Restarter.isSupported()) {
       List<String> args = new ArrayList<String>();
-      String userDir = PathManager.getConfigPath().replace("config", "update") + "/";
+//      String userDir = PathManager.getConfigPath().replace("config", "update") + "/";
+      String userDir = System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/update/";
       System.out.println("pathToLauncher: " + userDir);
       if (SystemInfoRt.isWindows) {
         File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
