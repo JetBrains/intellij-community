@@ -18,11 +18,8 @@ package com.jetbrains.python.run;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.ParamsGroup;
-import com.intellij.execution.filters.Filter;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.text.StringUtil;
-
-import java.util.List;
 
 /**
  * @author yole
@@ -30,8 +27,8 @@ import java.util.List;
 public class PythonScriptCommandLineState extends PythonCommandLineState {
   private final PythonRunConfiguration myConfig;
 
-  public PythonScriptCommandLineState(PythonRunConfiguration runConfiguration, ExecutionEnvironment env, List<Filter> filters) {
-    super(runConfiguration, env, filters);
+  public PythonScriptCommandLineState(PythonRunConfiguration runConfiguration, ExecutionEnvironment env) {
+    super(runConfiguration, env);
     myConfig = runConfiguration;
   }
 
