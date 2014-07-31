@@ -53,10 +53,10 @@ public class GradleBuildProcessParametersProvider extends BuildProcessParameters
   @NotNull
   public List<String> getClassPath() {
     if (myClasspath == null) {
+      myClasspath = ContainerUtil.newArrayList();
       final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
       for (Module module : moduleManager.getModules()) {
         if (ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
-          myClasspath = ContainerUtil.newArrayList();
           addGradleClassPath(myClasspath);
           addOtherClassPath(myClasspath);
           break;
