@@ -28,9 +28,8 @@ import org.jetbrains.annotations.Nullable;
 public class PyRemoteTracebackFilter extends PythonTracebackFilter {
   private final RemoteProcessHandlerBase myHandler;
 
-  public PyRemoteTracebackFilter(Project project, RemoteProcessHandlerBase remoteProcessHandler) {
-    super(project);
-
+  public PyRemoteTracebackFilter(Project project, String workingDirectory, RemoteProcessHandlerBase remoteProcessHandler) {
+    super(project, workingDirectory);
 
     myHandler = remoteProcessHandler;
   }
@@ -38,6 +37,10 @@ public class PyRemoteTracebackFilter extends PythonTracebackFilter {
   @Override
   @Nullable
   protected VirtualFile findFileByName(String fileName) {
+    VirtualFile vFile = super.findFileByName(fileName);
+    if (vFile != null) {
+      return vFile;
+    }
     for (PathMappingSettings.PathMapping m : myHandler.getMappingSettings().getPathMappings()) {
       if (m.canReplaceRemote(fileName)) {
         VirtualFile file = LocalFileSystem.getInstance().findFileByPath(m.mapToLocal(fileName));
@@ -46,6 +49,8 @@ public class PyRemoteTracebackFilter extends PythonTracebackFilter {
         }
       }
     }
+
+
 
     return null;
   }
