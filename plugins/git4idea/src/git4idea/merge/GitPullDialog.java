@@ -44,66 +44,23 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Git pull dialog
- */
 public class GitPullDialog extends DialogWrapper {
 
   private static final Logger LOG = Logger.getInstance(GitPullDialog.class);
 
-  /**
-   * root panel
-   */
   private JPanel myPanel;
-  /**
-   * The selected git root
-   */
   private JComboBox myGitRoot;
-  /**
-   * Current branch label
-   */
   private JLabel myCurrentBranch;
-  /**
-   * The merge strategy
-   */
   private JComboBox myStrategy;
-  /**
-   * No commit option
-   */
   private JCheckBox myNoCommitCheckBox;
-  /**
-   * Squash commit option
-   */
   private JCheckBox mySquashCommitCheckBox;
-  /**
-   * No fast forward option
-   */
   private JCheckBox myNoFastForwardCheckBox;
-  /**
-   * Add log info to commit option
-   */
   private JCheckBox myAddLogInformationCheckBox;
-  /**
-   * Selected remote option
-   */
   private JComboBox myRemote;
-  /**
-   * The branch chooser
-   */
   private ElementsChooser<String> myBranchChooser;
-  /**
-   * The context project
-   */
   private final Project myProject;
   private final GitRepositoryManager myRepositoryManager;
 
-  /**
-   * A constructor
-   *
-   * @param project     a project to select
-   * @param roots       a git repository roots for the project
-   * @param defaultRoot a guessed default root
-   */
   public GitPullDialog(Project project, List<VirtualFile> roots, VirtualFile defaultRoot) {
     super(project, true);
     setTitle(GitBundle.getString("pull.title"));
@@ -138,9 +95,6 @@ public class GitPullDialog extends DialogWrapper {
     init();
   }
 
-  /**
-   * Validate dialog and enable buttons
-   */
   private void validateDialog() {
     String selectedRemote = getRemote();
     if (StringUtil.isEmptyOrSpaces(selectedRemote)) {
@@ -150,9 +104,6 @@ public class GitPullDialog extends DialogWrapper {
     setOKActionEnabled(myBranchChooser.getMarkedElements().size() != 0);
   }
 
-  /**
-   * @return a pull handler configured according to dialog options
-   */
   public GitLineHandler makeHandler(@NotNull String url) {
     GitLineHandler h = new GitLineHandler(myProject, gitRoot(), GitCommand.PULL);
     // ignore merge failure for the pull
@@ -232,9 +183,6 @@ public class GitPullDialog extends DialogWrapper {
     return branch.getName().startsWith(remote + "/");
   }
 
-  /**
-   * Update remotes for the git root
-   */
   private void updateRemotes() {
     GitRepository repository = getRepository();
     if (repository == null) {
@@ -331,39 +279,23 @@ public class GitPullDialog extends DialogWrapper {
     };
   }
 
-  /**
-   * @return a currently selected git root
-   */
   public VirtualFile gitRoot() {
     return (VirtualFile)myGitRoot.getSelectedItem();
   }
 
-
-  /**
-   * Create branch chooser
-   */
   private void createUIComponents() {
     myBranchChooser = new ElementsChooser<String>(true);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   protected JComponent createCenterPanel() {
     return myPanel;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected String getDimensionServiceKey() {
     return getClass().getName();
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected String getHelpId() {
     return "reference.VersionControl.Git.Pull";
