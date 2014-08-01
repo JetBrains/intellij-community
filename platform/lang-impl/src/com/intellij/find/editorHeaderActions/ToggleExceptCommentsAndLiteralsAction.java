@@ -33,6 +33,6 @@ public class ToggleExceptCommentsAndLiteralsAction extends EditorHeaderToggleAct
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    getEditorSearchComponent().getFindModel().setSearchContext(state ? FindModel.SearchContext.EXCEPT_STRINGS_AND_COMMENTS : FindModel.SearchContext.ANY);
+    getEditorSearchComponent().getFindModel().setSearchContext(state ? FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS : FindModel.SearchContext.ANY);
   }
 }

@@ -613,6 +613,8 @@ public class AbstractPopup implements JBPopup {
 
     if (myPopup != null) {
       if (!canClose()) {
+        debugState("cannot cancel popup", State.CANCEL);
+        myState = State.SHOWN;
         return;
       }
       storeDimensionSize(myContent.getSize());

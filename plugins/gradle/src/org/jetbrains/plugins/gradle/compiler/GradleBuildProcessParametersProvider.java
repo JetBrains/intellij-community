@@ -41,7 +41,13 @@ import java.util.List;
  * @since 7/22/2014
  */
 public class GradleBuildProcessParametersProvider extends BuildProcessParametersProvider {
+  @NotNull private final Project myProject;
+
   private List<String> myClasspath;
+
+  public GradleBuildProcessParametersProvider(@NotNull Project project) {
+    myProject = project;
+  }
 
   @Override
   @NotNull
@@ -49,7 +55,13 @@ public class GradleBuildProcessParametersProvider extends BuildProcessParameters
     if (myClasspath == null) {
       myClasspath = ContainerUtil.newArrayList();
       addGradleClassPath(myClasspath);
-      addOtherClassPath(myClasspath);
+      final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+      for (Module module : moduleManager.getModules()) {
+        if (ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
+          addOtherClassPath(myClasspath);
+          break;
+        }
+      }
     }
     return myClasspath;
   }

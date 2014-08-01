@@ -86,6 +86,10 @@ public class NestedCopiesBuilder implements StatusReceiver {
     }
   }
 
+  @Override
+  public void finish() {
+  }
+
   public Set<NestedCopyInfo> getCopies() {
     return mySet;
   }

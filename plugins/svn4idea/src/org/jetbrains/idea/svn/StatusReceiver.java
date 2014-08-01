@@ -29,4 +29,5 @@ public interface StatusReceiver extends EventListener {
   void processUnversioned(final VirtualFile vFile);
   void processCopyRoot(VirtualFile file, SVNURL url, WorkingCopyFormat format, SVNURL rootURL);
   void bewareRoot(VirtualFile vf, SVNURL url);
+  void finish();
 }

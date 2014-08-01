@@ -40,6 +40,13 @@ public class GitLocalChangesWouldBeOverwrittenDetector extends GitMessageWithFil
     ".*Your local changes to '(.*)' would be overwritten by merge.*"
   );
 
+  private static final Pattern[] RESET_PATTERNS = new Pattern[]{Pattern.compile(
+    ".*Entry '(.*)' not uptodate. Cannot merge.*"
+  ),
+  Pattern.compile(
+    ".*Entry '(.*)' would be overwritten by merge.*"
+  )};
+
   // common for checkout and merge
   public static final Event NEW_PATTERN = new Event(
     "Your local changes to the following files would be overwritten by",
@@ -49,17 +56,18 @@ public class GitLocalChangesWouldBeOverwrittenDetector extends GitMessageWithFil
 
   public enum Operation {
     CHECKOUT(OLD_CHECKOUT_PATTERN),
-    MERGE(OLD_MERGE_PATTERN);
+    MERGE(OLD_MERGE_PATTERN),
+    RESET(RESET_PATTERNS);
 
-    @NotNull private final Pattern myPattern;
+    @NotNull private final Pattern[] myPatterns;
 
-    Operation(@NotNull Pattern pattern) {
-      myPattern = pattern;
+    Operation(@NotNull Pattern... patterns) {
+      myPatterns = patterns;
     }
 
     @NotNull
-    public Pattern getPattern() {
-      return myPattern;
+    Pattern[] getPatterns() {
+      return myPatterns;
     }
   }
 
@@ -71,10 +79,13 @@ public class GitLocalChangesWouldBeOverwrittenDetector extends GitMessageWithFil
   @Override
   public void onLineAvailable(@NotNull String line, @NotNull Key outputType) {
     super.onLineAvailable(line, outputType);
-    Matcher m = myOperation.getPattern().matcher(line);
-    if (m.matches()) {
-      myMessageDetected = true;
-      myAffectedFiles.add(m.group(1));
+    for (Pattern pattern : myOperation.getPatterns()) {
+      Matcher m = pattern.matcher(line);
+      if (m.matches()) {
+        myMessageDetected = true;
+        myAffectedFiles.add(m.group(1));
+        break;
+      }
     }
   }
 }

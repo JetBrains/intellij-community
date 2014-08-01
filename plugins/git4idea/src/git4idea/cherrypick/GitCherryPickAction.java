@@ -49,6 +49,8 @@ import java.util.*;
  * @author Kirill Likhodedov
  */
 public class GitCherryPickAction extends DumbAwareAction {
+
+  private static final String NAME = "Cherry-Pick";
   private static final Logger LOG = Logger.getInstance(GitCherryPickAction.class);
 
   @NotNull private final GitPlatformFacade myPlatformFacade;
@@ -56,7 +58,7 @@ public class GitCherryPickAction extends DumbAwareAction {
   @NotNull private final Set<Hash> myIdsInProgress;
 
   public GitCherryPickAction() {
-    super("Cherry-pick", "Cherry-pick", Git4ideaIcons.CherryPick);
+    super(NAME, null, Git4ideaIcons.CherryPick);
     myGit = ServiceManager.getService(Git.class);
     myPlatformFacade = ServiceManager.getService(GitPlatformFacade.class);
     myIdsInProgress = ContainerUtil.newHashSet();
@@ -81,9 +83,8 @@ public class GitCherryPickAction extends DumbAwareAction {
     new Task.Backgroundable(project, "Cherry-picking", false) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          boolean autoCommit = GitVcsSettings.getInstance(myProject).isAutoCommitOnCherryPick();
           Map<GitRepository, List<VcsFullCommitDetails>> commitsInRoots = sortCommits(groupCommitsByRoots(project, commits));
-          new GitCherryPicker(myProject, myGit, myPlatformFacade, autoCommit).cherryPick(commitsInRoots);
+          new GitCherryPicker(project, myGit, myPlatformFacade, isAutoCommit(project)).cherryPick(commitsInRoots);
         }
         finally {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -130,15 +131,21 @@ public class GitCherryPickAction extends DumbAwareAction {
     return groupedCommits;
   }
 
+  private static boolean isAutoCommit(@NotNull Project project) {
+    return GitVcsSettings.getInstance(project).isAutoCommitOnCherryPick();
+  }
+
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    final VcsLog log = getVcsLog(e);
-    if (log != null && !DvcsUtil.logHasRootForVcs(log, GitVcs.getKey())) {
+    VcsLog log = getVcsLog(e);
+    Project project = getEventProject(e);
+    if (project == null || log == null || !DvcsUtil.logHasRootForVcs(log, GitVcs.getKey())) {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {
       e.getPresentation().setEnabled(enabled(e));
+      e.getPresentation().setText(isAutoCommit(project) ? NAME : NAME + "...");
     }
   }
 

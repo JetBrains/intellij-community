@@ -348,7 +348,13 @@ public def layoutCommunityPlugins(String home) {
         module("gradle-tooling-extension-impl")
       }
       fileset(dir: "$home/plugins/gradle/lib") { include(name: "*.jar") }
-      fileset(dir: "$home/lib/") { include(name: "kryo-*.jar") }
+      // add kryo lib
+      fileset(dir: "$home/lib/") {
+        include(name: "kryo-*.jar")
+        include(name: "reflectasm-*.jar")
+        include(name: "objenesis-*.jar")
+        include(name: "minlog-*.jar")
+      }
     }
 
     layoutPlugin("git4idea") {

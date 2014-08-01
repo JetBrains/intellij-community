@@ -73,7 +73,7 @@ public class SvnHistoryProvider
 
   @Override
   public DiffFromHistoryHandler getHistoryDiffHandler() {
-    return null;
+    return new SvnDiffFromHistoryHandler(myVcs);
   }
 
   @Override

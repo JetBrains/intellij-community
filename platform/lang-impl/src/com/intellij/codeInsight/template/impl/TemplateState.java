@@ -212,8 +212,11 @@ public class TemplateState implements Disposable {
     if (variableName.equals(TemplateImpl.END)) {
       return new TextResult("");
     }
-    if (myPredefinedVariableValues != null && myPredefinedVariableValues.containsKey(variableName)) {
-      return new TextResult(myPredefinedVariableValues.get(variableName));
+    if (myPredefinedVariableValues != null) {
+      String text = myPredefinedVariableValues.get(variableName);
+      if (text != null) {
+        return new TextResult(text);
+      }
     }
     CharSequence text = myDocument.getCharsSequence();
     int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);

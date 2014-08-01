@@ -104,8 +104,8 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   @SuppressWarnings({"WeakerAccess"}) public boolean COMMENTS_ONLY = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean STRING_LITERALS_ONLY = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean EXCEPT_COMMENTS = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean EXCEPT_COMMENTS_AND_LITERALS = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean EXCEPT_LITERALS = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean EXCEPT_COMMENTS_AND_STRING_LITERALS = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean EXCEPT_STRING_LITERALS = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean LOCAL_WHOLE_WORDS_ONLY = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean REGULAR_EXPRESSIONS = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean LOCAL_REGULAR_EXPRESSIONS = false;
@@ -282,13 +282,13 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     FindModel.SearchContext searchContext = isInCommentsOnly() ?
                                       FindModel.SearchContext.IN_COMMENTS :
                                       isInStringLiteralsOnly() ?
-                                      FindModel.SearchContext.IN_STRINGS :
+                                      FindModel.SearchContext.IN_STRING_LITERALS :
                                       isExceptComments() ?
                                       FindModel.SearchContext.EXCEPT_COMMENTS :
                                       isExceptStringLiterals() ?
-                                      FindModel.SearchContext.EXCEPT_STRINGS :
+                                      FindModel.SearchContext.EXCEPT_STRING_LITERALS :
                                       isExceptCommentsAndLiterals() ?
-                                      FindModel.SearchContext.EXCEPT_STRINGS_AND_COMMENTS :
+                                      FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS :
                                       FindModel.SearchContext.ANY;
     model.setSearchContext(searchContext);
     model.setWithSubdirectories(isWithSubdirectories());
@@ -405,12 +405,12 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
 
   @Override
   public void setExceptCommentsAndLiterals(boolean selected) {
-    EXCEPT_COMMENTS_AND_LITERALS = selected;
+    EXCEPT_COMMENTS_AND_STRING_LITERALS = selected;
   }
 
   @Override
   public boolean isExceptCommentsAndLiterals() {
-    return EXCEPT_COMMENTS_AND_LITERALS;
+    return EXCEPT_COMMENTS_AND_STRING_LITERALS;
   }
 
   @Override
@@ -420,11 +420,11 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
 
   @Override
   public boolean isExceptStringLiterals() {
-    return EXCEPT_LITERALS;
+    return EXCEPT_STRING_LITERALS;
   }
 
   @Override
   public void setExceptStringLiterals(boolean selected) {
-    EXCEPT_LITERALS = selected;
+    EXCEPT_STRING_LITERALS = selected;
   }
 }

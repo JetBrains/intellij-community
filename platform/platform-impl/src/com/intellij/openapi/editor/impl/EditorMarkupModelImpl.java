@@ -46,7 +46,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -430,7 +429,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     @Override
-    public void paint(Graphics g) {
+    public void paint(@NotNull Graphics g) {
       ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
 
       final Rectangle bounds = getBounds();
@@ -439,7 +438,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       errorIconBounds.y = bounds.height / 2 - errorIconBounds.height / 2;
       
       try {
-        if (UISettings.getInstance().PRESENTATION_MODE || SystemInfo.isMac) {
+        if (UISettings.getInstance().PRESENTATION_MODE || ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) {
           g.setColor(getEditor().getColorsScheme().getDefaultBackground());
           g.fillRect(0, 0, bounds.width, bounds.height);
 
@@ -495,7 +494,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     @Override
-    public void uninstallUI(JComponent c) {
+    public void uninstallUI(@NotNull JComponent c) {
       super.uninstallUI(c);
       myCachedTrack = null;
     }
@@ -530,7 +529,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
-      if (UISettings.getInstance().PRESENTATION_MODE || SystemInfo.isMac) {
+      if (UISettings.getInstance().PRESENTATION_MODE || ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) {
         super.paintThumb(g, c, thumbBounds);
         return;
       }
@@ -567,13 +566,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected int getThickness() {
-      if (UISettings.getInstance().PRESENTATION_MODE || SystemInfo.isMac) return super.getThickness();
+      if (UISettings.getInstance().PRESENTATION_MODE || ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) return super.getThickness();
       return super.getThickness() + (isMacOverlayScrollbar() ? 2 : 7);
     }
 
     @Override
     protected void doPaintTrack(Graphics g, JComponent c, Rectangle bounds) {
-      if (UISettings.getInstance().PRESENTATION_MODE || SystemInfo.isMac) {
+      if (UISettings.getInstance().PRESENTATION_MODE || ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) {
         g.setColor(getEditor().getColorsScheme().getDefaultBackground());
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
         //return;
@@ -611,7 +610,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private void paintTrackBasement(Graphics g, Rectangle bounds) {
-      if (UISettings.getInstance().PRESENTATION_MODE || SystemInfo.isMac) {
+      if (UISettings.getInstance().PRESENTATION_MODE || ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) {
         g.setColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
         return;
@@ -651,13 +650,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     private void drawMarkup(final Graphics g, final int width, int startOffset, int endOffset, MarkupModelEx markup) {
       final Queue<PositionedStripe> thinEnds = new PriorityQueue<PositionedStripe>(5, new Comparator<PositionedStripe>() {
         @Override
-        public int compare(PositionedStripe o1, PositionedStripe o2) {
+        public int compare(@NotNull PositionedStripe o1, @NotNull PositionedStripe o2) {
           return o1.yEnd - o2.yEnd;
         }
       });
       final Queue<PositionedStripe> wideEnds = new PriorityQueue<PositionedStripe>(5, new Comparator<PositionedStripe>() {
         @Override
-        public int compare(PositionedStripe o1, PositionedStripe o2) {
+        public int compare(@NotNull PositionedStripe o1, @NotNull PositionedStripe o2) {
           return o1.yEnd - o2.yEnd;
         }
       });
@@ -799,7 +798,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     // mouse events
     @Override
-    public void mouseClicked(final MouseEvent e) {
+    public void mouseClicked(@NotNull final MouseEvent e) {
       CommandProcessor.getInstance().executeCommand(myEditor.getProject(), new Runnable() {
         @Override
         public void run() {
@@ -813,11 +812,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     @Override
-    public void mousePressed(MouseEvent e) {
+    public void mousePressed(@NotNull MouseEvent e) {
     }
 
     @Override
-    public void mouseReleased(MouseEvent e) {
+    public void mouseReleased(@NotNull MouseEvent e) {
     }
 
     private int getWidth() {
@@ -836,7 +835,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     @Override
-    public void mouseMoved(MouseEvent e) {
+    public void mouseMoved(@NotNull MouseEvent e) {
       EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
       int buttonHeight = scrollBar.getDecScrollButtonHeight();
       int lineCount = getDocument().getLineCount() + myEditor.getSettings().getAdditionalLinesCount();
@@ -909,16 +908,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     @Override
-    public void mouseEntered(MouseEvent e) {
+    public void mouseEntered(@NotNull MouseEvent e) {
     }
 
     @Override
-    public void mouseExited(MouseEvent e) {
+    public void mouseExited(@NotNull MouseEvent e) {
       cancelMyToolTips(e, true);
     }
 
     @Override
-    public void mouseDragged(MouseEvent e) {
+    public void mouseDragged(@NotNull MouseEvent e) {
       cancelMyToolTips(e, true);
     }
 
@@ -1149,7 +1148,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           myHighlighters.add(rangeHighlighter);
       }
       Collections.sort(myHighlighters, new Comparator<RangeHighlighterEx>() {
-        public int compare(RangeHighlighterEx ex1, RangeHighlighterEx ex2) {
+        public int compare(@NotNull RangeHighlighterEx ex1, @NotNull RangeHighlighterEx ex2) {
           LogicalPosition startPos1 = myEditor.offsetToLogicalPosition(ex1.getAffectedAreaStartOffset());
           LogicalPosition startPos2 = myEditor.offsetToLogicalPosition(ex2.getAffectedAreaStartOffset());
           if (startPos1.line != startPos2.line) return 0;
@@ -1179,7 +1178,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           }
 
           @Override
-          protected void paintComponent(Graphics g) {
+          protected void paintComponent(@NotNull Graphics g) {
             if (myVisualLine ==-1) return;
             Dimension size = getPreferredSize();
             EditorGutterComponentEx gutterComponentEx = myEditor.getGutterComponentEx();

@@ -223,6 +223,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     if (selected == null
         || !myComponent.isEnabled()
         || !myComponent.isShowing()
+        || !myComponent.getVisibleRect().intersects(getVisibleRect(selected))
         || !myComponent.isFocusOwner() && !processIfUnfocused
         || isPopup()) {
       hideHint();

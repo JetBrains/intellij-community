@@ -40,8 +40,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -145,7 +145,7 @@ public class SvnEditCommitMessageAction extends AnAction {
         }
         SvnTarget target = SvnTarget.fromURL(root);
         myVcs.getFactory(target).createPropertyClient()
-          .setRevisionProperty(target, SvnPropertyKeys.LOG, SVNRevision.create(myNumber), SVNPropertyValue.create(myNewMessage), false);
+          .setRevisionProperty(target, SvnPropertyKeys.LOG, SVNRevision.create(myNumber), PropertyValue.create(myNewMessage), false);
       }
       catch (SVNException e) {
         myException = new VcsException(e);
