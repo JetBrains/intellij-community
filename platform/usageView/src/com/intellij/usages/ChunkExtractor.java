@@ -186,7 +186,7 @@ public class ChunkExtractor {
   }
 
   @NotNull
-  public synchronized TextChunk[] createTextChunks(@NotNull UsageInfo2UsageAdapter usageInfo2UsageAdapter,
+  public TextChunk[] createTextChunks(@NotNull UsageInfo2UsageAdapter usageInfo2UsageAdapter,
                                       @NotNull CharSequence chars,
                                       int start,
                                       int end,
