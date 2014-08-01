@@ -1,18 +1,10 @@
 package org.jetbrains.idea.svn.properties;
 
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.SvnClient;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
-import org.tmatesoft.svn.core.wc.ISVNOptions;
-import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -23,40 +15,33 @@ import java.io.File;
  */
 public interface PropertyClient extends SvnClient {
 
-  ISVNOptions LF_SEPARATOR_OPTIONS = new DefaultSVNOptions() {
-    @Override
-    public byte[] getNativeEOL() {
-      return CharsetToolkit.getUtf8Bytes(LineSeparator.LF.getSeparatorString());
-    }
-  };
-
   @Nullable
-  SVNPropertyData getProperty(@NotNull final SvnTarget target,
-                              @NotNull final String property,
-                              boolean revisionProperty,
-                              @Nullable SVNRevision revision) throws VcsException;
+  PropertyValue getProperty(@NotNull final SvnTarget target,
+                            @NotNull final String property,
+                            boolean revisionProperty,
+                            @Nullable SVNRevision revision) throws VcsException;
 
   void getProperty(@NotNull SvnTarget target, @NotNull String property,
                    @Nullable SVNRevision revision,
                    @Nullable Depth depth,
-                   @Nullable ISVNPropertyHandler handler) throws VcsException;
+                   @Nullable PropertyConsumer handler) throws VcsException;
 
   void list(@NotNull SvnTarget target,
             @Nullable SVNRevision revision,
             @Nullable Depth depth,
-            @Nullable ISVNPropertyHandler handler) throws VcsException;
+            @Nullable PropertyConsumer handler) throws VcsException;
 
   void setProperty(@NotNull File file,
                    @NotNull String property,
-                   @Nullable SVNPropertyValue value,
+                   @Nullable PropertyValue value,
                    @Nullable Depth depth,
                    boolean force) throws VcsException;
 
-  void setProperties(@NotNull File file, @NotNull SVNProperties properties) throws VcsException;
+  void setProperties(@NotNull File file, @NotNull PropertiesMap properties) throws VcsException;
 
   void setRevisionProperty(@NotNull SvnTarget target,
                            @NotNull String property,
                            @NotNull SVNRevision revision,
-                           @Nullable SVNPropertyValue value,
+                           @Nullable PropertyValue value,
                            boolean force) throws VcsException;
 }

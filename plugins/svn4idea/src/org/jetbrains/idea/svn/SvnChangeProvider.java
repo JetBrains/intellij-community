@@ -95,6 +95,8 @@ public class SvnChangeProvider implements ChangeProvider {
         walker.go(item.getDir(), Depth.IMMEDIATES);
       }
 
+      statusReceiver.getMulticaster().finish();
+
       processCopiedAndDeleted(context, dirtyScope);
       processUnsaved(dirtyScope, addGate, context);
 

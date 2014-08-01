@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn;
+package org.jetbrains.idea.svn.properties;
 
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.svn.status.Status;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
-import java.util.EventListener;
+import java.io.File;
 
-public interface StatusReceiver extends EventListener {
-  void process(final FilePath path, final Status status) throws SVNException;
-  void processIgnored(final VirtualFile vFile);
-  void processUnversioned(final VirtualFile vFile);
-  void processCopyRoot(VirtualFile file, SVNURL url, WorkingCopyFormat format, SVNURL rootURL);
-  void bewareRoot(VirtualFile vf, SVNURL url);
-  void finish();
+/**
+ * @author Konstantin Kolosovsky.
+ */
+public interface PropertyConsumer {
+
+  void handleProperty(File path, PropertyData property) throws SVNException;
+
+  void handleProperty(SVNURL url, PropertyData property) throws SVNException;
+
+  void handleProperty(long revision, PropertyData property) throws SVNException;
 }
