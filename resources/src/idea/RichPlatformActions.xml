@@ -389,12 +389,6 @@
       <add-to-group group-id="NavbarPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
     </action>
 
-
-    <group id="DiffPanel.Toolbar.IDEA">
-      <reference ref="Find"/>
-      <add-to-group group-id="DiffPanel.Toolbar" anchor="after" relative-to-action="$Copy"/>
-    </group>
-
     <group>
       <group id="MarkSourceRootGroup" class="com.intellij.ide.projectView.actions.MarkSourceRootActionGroup"/>
       <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction" icon="AllIcons.Modules.ExcludeRoot"/>
