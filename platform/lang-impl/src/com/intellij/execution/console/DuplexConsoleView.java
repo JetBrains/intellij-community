@@ -9,6 +9,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -34,6 +35,8 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
   private final S myPrimaryConsoleView;
   @NotNull
   private final T mySecondaryConsoleView;
+  @Nullable
+  private final String myStateStorageKey;
 
   private boolean myPrimary;
   @Nullable
@@ -41,25 +44,46 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
   @NotNull
   private final SwitchDuplexConsoleViewAction mySwitchConsoleAction;
 
+
   public DuplexConsoleView(@NotNull S primaryConsoleView, @NotNull T secondaryConsoleView) {
+    this(primaryConsoleView, secondaryConsoleView, null);
+  }
+
+  public DuplexConsoleView(@NotNull S primaryConsoleView, @NotNull T secondaryConsoleView, @Nullable String stateStorageKey) {
     super(new CardLayout());
     myPrimaryConsoleView = primaryConsoleView;
     mySecondaryConsoleView = secondaryConsoleView;
+    myStateStorageKey = stateStorageKey;
 
     add(myPrimaryConsoleView.getComponent(), PRIMARY_CONSOLE_PANEL);
     add(mySecondaryConsoleView.getComponent(), SECONDARY_CONSOLE_PANEL);
 
-    mySwitchConsoleAction = new SwitchDuplexConsoleViewAction(this);
+    mySwitchConsoleAction = new SwitchDuplexConsoleViewAction();
 
     myPrimary = true;
-    enableConsole(false);
+    enableConsole(getStoredState());
 
     Disposer.register(this, myPrimaryConsoleView);
     Disposer.register(this, mySecondaryConsoleView);
   }
 
-  public static <S extends ConsoleView, T extends ConsoleView> DuplexConsoleView<S, T> create(S primary, T secondary) {
-    return new DuplexConsoleView<S, T>(primary, secondary);
+  public static <S extends ConsoleView, T extends ConsoleView> DuplexConsoleView<S, T> create(@NotNull S primary,
+                                                                                              @NotNull T secondary,
+                                                                                              @Nullable String stateStorageKey) {
+    return new DuplexConsoleView<S, T>(primary, secondary, stateStorageKey);
+  }
+
+  private void setStoredState(boolean primary) {
+    if (myStateStorageKey != null) {
+      PropertiesComponent.getInstance().setValue(myStateStorageKey, String.valueOf(primary));
+    }
+  }
+
+  private boolean getStoredState() {
+    if (myStateStorageKey == null) {
+      return false;
+    }
+    return PropertiesComponent.getInstance().getBoolean(myStateStorageKey, false);
   }
 
   public void enableConsole(boolean primary) {
@@ -215,23 +239,22 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     return mySwitchConsoleAction.getTemplatePresentation();
   }
 
-  private static class SwitchDuplexConsoleViewAction extends ToggleAction implements DumbAware {
-    private final DuplexConsoleView myConsole;
+  private class SwitchDuplexConsoleViewAction extends ToggleAction implements DumbAware {
 
-    public SwitchDuplexConsoleViewAction(final DuplexConsoleView console) {
+    public SwitchDuplexConsoleViewAction() {
       super(ExecutionBundle.message("run.configuration.show.command.line.action.name"), null,
             AllIcons.Debugger.ToolConsole);
-      myConsole = console;
     }
 
     @Override
     public boolean isSelected(final AnActionEvent event) {
-      return !myConsole.isPrimaryConsoleEnabled();
+      return !isPrimaryConsoleEnabled();
     }
 
     @Override
     public void setSelected(final AnActionEvent event, final boolean flag) {
-      myConsole.enableConsole(!flag);
+      enableConsole(!flag);
+      setStoredState(!flag);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
@@ -244,12 +267,12 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     public void update(final AnActionEvent event) {
       super.update(event);
       final Presentation presentation = event.getPresentation();
-      final boolean isRunning = myConsole.myProcessHandler != null && !myConsole.myProcessHandler.isProcessTerminated();
+      final boolean isRunning = myProcessHandler != null && !myProcessHandler.isProcessTerminated();
       if (isRunning) {
         presentation.setEnabled(true);
       }
       else {
-        myConsole.enableConsole(true);
+        enableConsole(true);
         presentation.putClientProperty(SELECTED_PROPERTY, false);
         presentation.setEnabled(false);
       }
