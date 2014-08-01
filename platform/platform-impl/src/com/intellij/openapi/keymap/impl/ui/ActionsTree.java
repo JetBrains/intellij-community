@@ -481,6 +481,7 @@ public class ActionsTree {
       Icon icon = null;
       String text;
       boolean bound = false;
+      setToolTipText(null);
 
       if (value instanceof DefaultMutableTreeNode) {
         Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
@@ -508,6 +509,7 @@ public class ActionsTree {
             if (actionIcon != null) {
               icon = actionIcon;
             }
+            setToolTipText(action.getTemplatePresentation().getDescription());
           }
           else {
             text = actionId;
