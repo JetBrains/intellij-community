@@ -33,6 +33,6 @@ public class ToggleExceptLiteralsAction extends EditorHeaderToggleAction impleme
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    getEditorSearchComponent().getFindModel().setSearchContext(state ? FindModel.SearchContext.EXCEPT_STRINGS : FindModel.SearchContext.ANY);
+    getEditorSearchComponent().getFindModel().setSearchContext(state ? FindModel.SearchContext.EXCEPT_STRING_LITERALS : FindModel.SearchContext.ANY);
   }
 }

@@ -240,6 +240,7 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
         }
       }
     }
+    myOrderEnumerator.addCustomRootsForModule(type, rootModel, result, includeProduction, includeTests);
   }
 
   private void collectModuleRootsUrls(OrderRootType type,

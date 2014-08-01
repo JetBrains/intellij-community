@@ -1000,7 +1000,7 @@ public class FindDialog extends DialogWrapper {
     String selectedSearchContextInUi = (String)mySearchContext.getSelectedItem();
     FindModel.SearchContext searchContext = FindModel.SearchContext.ANY;
     if (FindBundle.message("find.context.in.literals.scope.label").equals(selectedSearchContextInUi)) {
-      searchContext = FindModel.SearchContext.IN_STRINGS;
+      searchContext = FindModel.SearchContext.IN_STRING_LITERALS;
     }
     else if (FindBundle.message("find.context.in.comments.scope.label").equals(selectedSearchContextInUi)) {
       searchContext = FindModel.SearchContext.IN_COMMENTS;
@@ -1009,9 +1009,9 @@ public class FindDialog extends DialogWrapper {
       searchContext = FindModel.SearchContext.EXCEPT_COMMENTS;
     }
     else if (FindBundle.message("find.context.except.literals.scope.label").equals(selectedSearchContextInUi)) {
-      searchContext = FindModel.SearchContext.EXCEPT_STRINGS;
+      searchContext = FindModel.SearchContext.EXCEPT_STRING_LITERALS;
     } else if (FindBundle.message("find.context.except.comments.and.literals.scope.label").equals(selectedSearchContextInUi)) {
-      searchContext = FindModel.SearchContext.EXCEPT_STRINGS_AND_COMMENTS;
+      searchContext = FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS;
     }
 
     model.setSearchContext(searchContext);

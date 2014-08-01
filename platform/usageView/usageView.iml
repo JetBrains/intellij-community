@@ -9,6 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="core-impl" />
+    <orderEntry type="module" module-name="editor-ui-ex" />
   </component>
 </module>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,7 +149,7 @@ abstract class CodeStyleManagerRunnable<T> {
       SourceTreeToPsiMap.psiElementToTree(CodeStyleManagerImpl.findElementInTreeWithFormatterEnabled(file, offset));
     if (elementAtOffset == null) {
       int significantRangeStart = CharArrayUtil.shiftBackward(file.getText(), offset - 1, "\r\t ");
-      return new TextRange(significantRangeStart, offset);
+      return new TextRange(Math.max(significantRangeStart, 0), offset);
     }
 
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);

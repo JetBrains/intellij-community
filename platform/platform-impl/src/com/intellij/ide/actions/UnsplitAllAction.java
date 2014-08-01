@@ -32,8 +32,8 @@ public final class UnsplitAllAction extends SplitterActionBase {
   }
 
   @Override
-  protected boolean isActionEnabled(Project project, boolean context) {
+  protected boolean isActionEnabled(Project project, boolean inContextMenu) {
     final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
-    return context ? fileEditorManager.getWindowSplitCount() > 2 : fileEditorManager.isInSplitter();
+    return inContextMenu ? fileEditorManager.getWindowSplitCount() > 2 : fileEditorManager.isInSplitter();
   }
 }

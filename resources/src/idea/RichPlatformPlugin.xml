@@ -372,6 +372,8 @@
     <projectStructure.sourceRootEditHandler implementation="com.intellij.openapi.roots.ui.configuration.JavaTestResourceRootEditHandler"/>
 
     <buildProcess.parametersProvider implementation="com.intellij.compiler.classFilesIndex.api.index.ClassFilesIndexerBuilderParametersProvider"/>
+
+    <org.jetbrains.webServerProjectRootsProvider implementation="org.jetbrains.builtInWebServer.ArtifactProjectRootsProvider" order="last"/>
   </extensions>
 
   <xi:include href="/META-INF/xdebugger.xml" xpointer="xpointer(/idea-plugin/*)"/>

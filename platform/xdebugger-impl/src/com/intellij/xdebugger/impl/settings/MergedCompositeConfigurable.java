@@ -58,6 +58,15 @@ class MergedCompositeConfigurable implements SearchableConfigurable {
     return children.length == 1 ? children[0].getHelpTopic() : null;
   }
 
+  /**
+   * false by default.
+   *
+   * If Ruby general settings will be without titled border in RubyMine, user could think that all other debugger categories also about Ruby.
+   */
+  protected boolean isUseTargetedProductPolicyIfSeveralChildren() {
+    return false;
+  }
+
   @Nullable
   @Override
   public JComponent createComponent() {
@@ -82,7 +91,7 @@ class MergedCompositeConfigurable implements SearchableConfigurable {
           }
           else {
             boolean addBorder = true;
-            if (isFirstNamed) {
+            if (isUseTargetedProductPolicyIfSeveralChildren() && isFirstNamed) {
               isFirstNamed = false;
               if (isTargetedToProduct(configurable)) {
                 addBorder = false;

@@ -23,6 +23,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.EventDispatcher;
@@ -36,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -152,7 +154,18 @@ public class CommandExecutor {
 
   protected void beforeCreateProcess() throws SvnBindException {
     EncodingEnvironmentUtil.fixDefaultEncodingIfMac(myCommandLine, null);
+    setupLocale();
     ensureMessageFile();
+  }
+
+  private void setupLocale() {
+    String locale = Registry.stringValue("svn.executable.locale");
+    Map<String, String> environment = myCommandLine.getEnvironment();
+
+    // TODO: check if we need to set LC_ALL to configured locale or just clear it
+    environment.put("LC_ALL", "");
+    environment.put("LC_MESSAGES", locale);
+    environment.put("LANG", locale);
   }
 
   private void ensureMessageFile() throws SvnBindException {

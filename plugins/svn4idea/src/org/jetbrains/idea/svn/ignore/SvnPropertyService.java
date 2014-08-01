@@ -24,8 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -68,7 +67,7 @@ public class SvnPropertyService {
     protected final boolean myCanUseCachedProperty;
     
     protected abstract void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data,
-                                          final SVNPropertyValue propertyValue) throws VcsException;
+                                          final PropertyValue propertyValue) throws VcsException;
 
     protected abstract void onAfterProcessing(final VirtualFile[] file) throws VcsException;
 
@@ -92,14 +91,12 @@ public class SvnPropertyService {
         }
         final File dir = new File(entry.getKey().getPath());
         try {
-          final SVNPropertyValue value;
+          final PropertyValue value;
           if (myCanUseCachedProperty) {
             value = myVcs.getPropertyWithCaching(entry.getKey(), SvnPropertyKeys.SVN_IGNORE);
           } else {
-            final SVNPropertyData data =
-              myVcs.getFactory(dir).createPropertyClient()
-                .getProperty(SvnTarget.fromFile(dir), SvnPropertyKeys.SVN_IGNORE, false, SVNRevision.WORKING);
-            value = data == null ? null : data.getValue();
+            value = myVcs.getFactory(dir).createPropertyClient()
+              .getProperty(SvnTarget.fromFile(dir), SvnPropertyKeys.SVN_IGNORE, false, SVNRevision.WORKING);
           }
           processFolder(entry.getKey(), dir, entry.getValue(), value);
         }
@@ -127,7 +124,7 @@ public class SvnPropertyService {
       return (! myFilesOk) && (! myExtensionOk);
     }
 
-    protected void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data, final SVNPropertyValue propertyValue)
+    protected void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data, final PropertyValue propertyValue)
       throws VcsException {
       if (propertyValue == null) {
         myFilesOk = false;
@@ -135,7 +132,7 @@ public class SvnPropertyService {
         return;
       }
       final Set<String> ignorePatterns = new HashSet<String>();
-      final StringTokenizer st = new StringTokenizer(SVNPropertyValue.getPropertyAsString(propertyValue), "\r\n ");
+      final StringTokenizer st = new StringTokenizer(PropertyValue.toString(propertyValue), "\r\n ");
       while (st.hasMoreElements()) {
         final String ignorePattern = (String)st.nextElement();
         ignorePatterns.add(ignorePattern);
@@ -180,14 +177,14 @@ public class SvnPropertyService {
       return false;
     }
 
-    protected abstract String getNewPropertyValue(final Set<String> data, final SVNPropertyValue propertyValue);
+    protected abstract String getNewPropertyValue(final Set<String> data, final PropertyValue propertyValue);
 
-    protected void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data, final SVNPropertyValue propertyValue)
+    protected void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data, final PropertyValue propertyValue)
       throws VcsException {
       String newValue = getNewPropertyValue(data, propertyValue);
       newValue = (newValue.trim().isEmpty()) ? null : newValue;
       myVcs.getFactory(folderDir).createPropertyClient()
-        .setProperty(folderDir, SvnPropertyKeys.SVN_IGNORE, SVNPropertyValue.create(newValue), Depth.EMPTY, false);
+        .setProperty(folderDir, SvnPropertyKeys.SVN_IGNORE, PropertyValue.create(newValue), Depth.EMPTY, false);
 
       if (myUseCommonExtension) {
         dirtyScopeManager.dirDirtyRecursively(folder);
@@ -216,9 +213,9 @@ public class SvnPropertyService {
       super(activeVcs, project, useCommonExtension);
     }
 
-    protected String getNewPropertyValue(final Set<String> data, final SVNPropertyValue propertyValue) {
+    protected String getNewPropertyValue(final Set<String> data, final PropertyValue propertyValue) {
       if (propertyValue != null) {
-        return getNewPropertyValueForRemove(data, SVNPropertyValue.getPropertyAsString(propertyValue));
+        return getNewPropertyValueForRemove(data, PropertyValue.toString(propertyValue));
       }
       return "";
     }
@@ -241,7 +238,7 @@ public class SvnPropertyService {
       super(activeVcs, project, useCommonExtension);
     }
 
-    protected String getNewPropertyValue(final Set<String> data, final SVNPropertyValue propertyValue) {
+    protected String getNewPropertyValue(final Set<String> data, final PropertyValue propertyValue) {
       final String ignoreString;
       if (data.size() == 1) {
         ignoreString = data.iterator().next();
@@ -252,7 +249,7 @@ public class SvnPropertyService {
         }
         ignoreString = sb.toString();
       }
-      return (propertyValue == null) ? ignoreString : (SVNPropertyValue.getPropertyAsString(propertyValue) + '\n' + ignoreString);
+      return (propertyValue == null) ? ignoreString : (PropertyValue.toString(propertyValue) + '\n' + ignoreString);
     }
   }
 }

@@ -356,6 +356,38 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
     return false;
   }
 
+  boolean addCustomRootsForModule(OrderRootType type,
+                                  ModuleRootModel rootModel,
+                                  Collection<VirtualFile> result,
+                                  boolean includeProduction,
+                                  boolean includeTests) {
+    for (OrderEnumerationHandler handler : myCustomHandlers) {
+      final List<String> urls = new ArrayList<String>();
+      final boolean added = handler.addCustomModuleRoots(type, rootModel, urls, includeProduction, includeTests);
+      for (String url : urls) {
+        ContainerUtil.addIfNotNull(VirtualFileManager.getInstance().findFileByUrl(url), result);
+      }
+
+      if (added) return true;
+    }
+    return false;
+  }
+
+  boolean addCustomRootUrlsForModule(OrderRootType type,
+                                     ModuleRootModel rootModel,
+                                     Collection<String> result,
+                                     boolean includeProduction,
+                                     boolean includeTests) {
+    for (OrderEnumerationHandler handler : myCustomHandlers) {
+      final List<String> urls = new ArrayList<String>();
+      final boolean added = handler.addCustomModuleRoots(type, rootModel, urls, includeProduction, includeTests);
+      result.addAll(urls);
+
+      if (added) return true;
+    }
+    return false;
+  }
+
   @Override
   public boolean isRuntimeOnly() {
     return myRuntimeOnly;

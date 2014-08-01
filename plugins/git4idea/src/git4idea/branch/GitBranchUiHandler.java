@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitCommit;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -68,14 +69,15 @@ public interface GitBranchUiHandler {
    * Shows the dialog proposing to execute the operation (checkout or merge) smartly, i.e. stash-execute-unstash.
    *
    * @param project
-   * @param changes         local changes that would be overwritten by checkout or merge.
-   * @param paths           paths reported by Git (in most cases this is covered by {@code changes}.
-   * @param operation       operation name: checkout or merge
-   * @param isForcePossible can the operation be executed force (force checkout is possible, force merge - not).
+   * @param changes          local changes that would be overwritten by checkout or merge.
+   * @param paths            paths reported by Git (in most cases this is covered by {@code changes}.
+   * @param operation        operation name: checkout or merge
+   * @param forceButtonTitle if the operation can be executed force (force checkout is possible),
+   *                         specify the title of the force button; otherwise (force merge is not possible) pass null.
    * @return the code of the decision.
    */
   int showSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull Collection<String> paths,
-                               @NotNull String operation, boolean isForcePossible);
+                               @NotNull String operation, @Nullable String forceButtonTitle);
 
   boolean showBranchIsNotFullyMergedDialog(@NotNull Project project, @NotNull Map<GitRepository, List<GitCommit>> history,
                                            @NotNull String unmergedBranch, @NotNull List<String> mergedToBranches,

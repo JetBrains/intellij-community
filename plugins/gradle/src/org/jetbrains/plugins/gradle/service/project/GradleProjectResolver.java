@@ -199,6 +199,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     projectDataNode.createChild(JavaProjectData.KEY, javaProjectData);
 
     IdeaProject ideaProject = resolverCtx.getModels().getIdeaProject();
+
+    projectResolverChain.populateProjectExtraModels(ideaProject, projectDataNode);
+
     DomainObjectSet<? extends IdeaModule> gradleModules = ideaProject.getModules();
     if (gradleModules == null || gradleModules.isEmpty()) {
       throw new IllegalStateException("No modules found for the target project: " + ideaProject);

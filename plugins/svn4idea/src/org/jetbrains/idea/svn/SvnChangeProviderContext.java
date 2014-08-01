@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.actions.AbstractShowPropertiesDiffAction;
@@ -48,6 +49,7 @@ class SvnChangeProviderContext implements StatusReceiver {
   private Map<FilePath, String> myCopyFromURLs = null;
   private final SvnVcs myVcs;
   private final SvnBranchConfigurationManager myBranchConfigurationManager;
+  private final List<File> filesToRefresh = ContainerUtil.newArrayList();
 
   private final ProgressIndicator myProgress;
 
@@ -77,6 +79,11 @@ class SvnChangeProviderContext implements StatusReceiver {
 
   @Override
   public void bewareRoot(VirtualFile vf, SVNURL url) {
+  }
+
+  @Override
+  public void finish() {
+    LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh, true, false, null);
   }
 
   public ChangelistBuilder getBuilder() {
@@ -302,7 +309,7 @@ class SvnChangeProviderContext implements StatusReceiver {
    *
    * @param filePath the path of a changed file.
    */
-  private static void loadEntriesFile(final FilePath filePath) {
+  private void loadEntriesFile(final FilePath filePath) {
     final FilePath parentPath = filePath.getParentPath();
     if (parentPath == null) {
       return;
@@ -313,9 +320,11 @@ class SvnChangeProviderContext implements StatusReceiver {
     }
   }
 
-  private static void refreshDotSvnAndEntries(FilePath filePath) {
+  private void refreshDotSvnAndEntries(FilePath filePath) {
     final File svn = new File(filePath.getPath(), SvnUtil.SVN_ADMIN_DIR_NAME);
-    LocalFileSystem.getInstance().refreshIoFiles(Arrays.asList(svn, new File(svn, SvnUtil.ENTRIES_FILE_NAME)), true, false, null);
+
+    filesToRefresh.add(svn);
+    filesToRefresh.add(new File(svn, SvnUtil.ENTRIES_FILE_NAME));
   }
 
   // seems here we can only have a tree conflict; which can be marked on either path (?)

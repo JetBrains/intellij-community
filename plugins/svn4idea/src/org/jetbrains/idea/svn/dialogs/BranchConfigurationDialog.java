@@ -22,10 +22,12 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,16 +102,23 @@ public class BranchConfigurationDialog extends DialogWrapper {
     myListPanel.add(
       ToolbarDecorator.createDecorator(myLocationList)
         .setAddAction(new AnActionButtonRunnable() {
+
+          @Nullable private SVNURL usedRootUrl;
+
           @Override
           public void run(AnActionButton button) {
-            final String selectedUrl = SelectLocationDialog.selectLocation(project, rootUrl.toDecodedString());
-            if (selectedUrl != null) {
-              if (!configuration.getBranchUrls().contains(selectedUrl)) {
-                configuration
-                  .addBranches(selectedUrl, new InfoStorage<List<SvnBranchItem>>(new ArrayList<SvnBranchItem>(), InfoReliability.empty));
-                mySvnBranchConfigManager.reloadBranches(myRoot, selectedUrl, null);
-                listModel.fireItemAdded();
-                myLocationList.setSelectedIndex(listModel.getSize() - 1);
+            Pair<String, SVNURL> result = SelectLocationDialog.selectLocation(project, ObjectUtils.notNull(usedRootUrl, rootUrl));
+            if (result != null) {
+              String selectedUrl = result.getFirst();
+              usedRootUrl = result.getSecond();
+              if (selectedUrl != null) {
+                if (!configuration.getBranchUrls().contains(selectedUrl)) {
+                  configuration
+                    .addBranches(selectedUrl, new InfoStorage<List<SvnBranchItem>>(new ArrayList<SvnBranchItem>(), InfoReliability.empty));
+                  mySvnBranchConfigManager.reloadBranches(myRoot, selectedUrl, null);
+                  listModel.fireItemAdded();
+                  myLocationList.setSelectedIndex(listModel.getSize() - 1);
+                }
               }
             }
           }

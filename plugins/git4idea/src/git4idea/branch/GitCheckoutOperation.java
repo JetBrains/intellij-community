@@ -121,7 +121,8 @@ class GitCheckoutOperation extends GitBranchOperation {
     List<Change> affectedChanges = conflictingRepositoriesAndAffectedChanges.getSecond();
 
     Collection<String> absolutePaths = GitUtil.toAbsolute(repository.getRoot(), localChangesOverwrittenByCheckout.getRelativeFilePaths());
-    int smartCheckoutDecision = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths, "checkout", true);
+    int smartCheckoutDecision = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths, "checkout",
+                                                                     "&Force Checkout");
     if (smartCheckoutDecision == GitSmartOperationDialog.SMART_EXIT_CODE) {
       boolean smartCheckedOutSuccessfully = smartCheckout(allConflictingRepositories, myStartPointReference, myNewBranch, getIndicator());
       if (smartCheckedOutSuccessfully) {

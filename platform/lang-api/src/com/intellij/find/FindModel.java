@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.PatternUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -274,7 +275,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   public void setStringToFind(@NotNull String s) {
     boolean changed = !StringUtil.equals(s, myStringToFind);
     myStringToFind = s;
-    myPattern = NO_PATTERN;
+    myPattern = PatternUtil.NOTHING;
     if (changed) {
       notifyObservers();
     }
@@ -409,7 +410,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     boolean changed = val != isCaseSensitive;
     isCaseSensitive = val;
     if (changed) {
-      myPattern = NO_PATTERN;
+      myPattern = PatternUtil.NOTHING;
       notifyObservers();
     }
   }
@@ -850,11 +851,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
   public enum SearchContext {
-    ANY, IN_STRINGS, IN_COMMENTS, EXCEPT_STRINGS, EXCEPT_COMMENTS, EXCEPT_STRINGS_AND_COMMENTS
+    ANY, IN_STRING_LITERALS, IN_COMMENTS, EXCEPT_STRING_LITERALS, EXCEPT_COMMENTS, EXCEPT_COMMENTS_AND_STRING_LITERALS
   }
 
   public boolean isInStringLiteralsOnly() {
-    return searchContext == SearchContext.IN_STRINGS;
+    return searchContext == SearchContext.IN_STRING_LITERALS;
   }
 
   public boolean isExceptComments() {
@@ -862,7 +863,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
   public boolean isExceptStringLiterals() {
-    return searchContext == SearchContext.EXCEPT_STRINGS;
+    return searchContext == SearchContext.EXCEPT_STRING_LITERALS;
   }
 
   public boolean isInCommentsOnly() {
@@ -870,7 +871,32 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
   public boolean isExceptCommentsAndStringLiterals() {
-    return searchContext == SearchContext.EXCEPT_STRINGS_AND_COMMENTS;
+    return searchContext == SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS;
+  }
+
+  @Deprecated
+  public void setInCommentsOnly(boolean inCommentsOnly) {
+    doApplyContextChange(inCommentsOnly, SearchContext.IN_COMMENTS);
+  }
+
+  @Deprecated
+  public void setInStringLiteralsOnly(boolean inStringLiteralsOnly) {
+    doApplyContextChange(inStringLiteralsOnly, SearchContext.IN_STRING_LITERALS);
+  }
+
+  public void doApplyContextChange(boolean inCommentsOnly, SearchContext option) {
+    boolean changed = false;
+    if (inCommentsOnly) {
+      changed = searchContext == option;
+      searchContext = option;
+    } else if (searchContext == option) { // do not reset unrelated value
+      changed = true;
+      searchContext = SearchContext.ANY;
+    }
+
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   public @NotNull SearchContext getSearchContext() {
@@ -901,21 +927,18 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     }
   }
 
-  private static final Pattern NO_PATTERN = Pattern.compile("");
-  private Pattern myPattern = NO_PATTERN;
+  private Pattern myPattern = PatternUtil.NOTHING;
 
   public Pattern compileRegExp() {
     String toFind = getStringToFind();
 
     Pattern pattern = myPattern;
-    if (pattern == NO_PATTERN) {
+    if (pattern == PatternUtil.NOTHING) {
       try {
         myPattern = pattern = Pattern.compile(toFind, isCaseSensitive() ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
       }
       catch (PatternSyntaxException e) {
-        LOG.error("Regexp:'" + toFind + "'", e);
-        myPattern = null;
-        return null;
+        myPattern = pattern = null;
       }
     }
 
