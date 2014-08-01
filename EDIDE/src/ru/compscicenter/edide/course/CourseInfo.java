@@ -8,6 +8,7 @@ public class CourseInfo {
   private String myName;
   private String myAuthor;
   private String myDescription;
+  public static CourseInfo INVALID_COURSE = new CourseInfo("", "", "");
 
   public CourseInfo(String name, String author, String description) {
     myName = name;

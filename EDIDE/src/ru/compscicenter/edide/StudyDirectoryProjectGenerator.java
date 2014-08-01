@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.compscicenter.edide.course.Course;
 import ru.compscicenter.edide.course.CourseInfo;
-import ru.compscicenter.edide.ui.StudyNewCourseDialog;
+import ru.compscicenter.edide.ui.StudyNewProjectDialog;
 
 import java.io.*;
 import java.util.HashMap;
@@ -144,7 +144,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
 
     myProject = project;
     mySelectedCourseFile = null;
-    StudyNewCourseDialog dlg = new StudyNewCourseDialog(project, this);
+    StudyNewProjectDialog dlg = new StudyNewProjectDialog(project, this);
     dlg.show();
     if (dlg.getExitCode() == DialogWrapper.CANCEL_EXIT_CODE) {
       LOG.info("User canceled creation study project");
