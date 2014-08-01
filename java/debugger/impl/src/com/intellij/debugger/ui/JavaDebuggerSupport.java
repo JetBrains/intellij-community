@@ -111,13 +111,13 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   @Override
   @NotNull
   public DebuggerActionHandler getRunToCursorHandler() {
-    return myRunToCursorActionHandler;
+    return DISABLED;
   }
 
   @Override
   @NotNull
   public DebuggerActionHandler getForceRunToCursorHandler() {
-    return myForceRunToCursorActionHandler;
+    return DISABLED;
   }
 
   @Override
