@@ -97,7 +97,7 @@ public class MarkdownPanel extends IpnbEditablePanel<JPanel, MarkdownCell> {
             string = IpnbUtils.markdown2Html(string);
           else
             string = "<p>"+string+"</p>";
-          final JLabel comp = new JLabel("<html><body style='width: 900px'>" + string + "</body></html>");
+          final JLabel comp = new JLabel("<html><body style='width: " + IpnbEditorUtil.PANEL_WIDTH + "px'>" + string + "</body></html>");
           final Font font = new Font(Font.SERIF, Font.PLAIN, 16);
           comp.setFont(font);
           panel.add(comp);

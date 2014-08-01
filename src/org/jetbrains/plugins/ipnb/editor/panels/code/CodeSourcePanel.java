@@ -75,7 +75,9 @@ public class CodeSourcePanel extends IpnbPanel implements EditorPanel {
         UIUtil.requestFocus(component);
       }
     });
-    panel.add(myEditor.getComponent());
+    final JComponent comp = myEditor.getComponent();
+    panel.add(comp);
+    comp.setPreferredSize(new Dimension(IpnbEditorUtil.PANEL_WIDTH, panel.getPreferredSize().height));
     setBorder(BorderFactory.createLineBorder(JBColor.lightGray, 1, true));
     return panel;
   }

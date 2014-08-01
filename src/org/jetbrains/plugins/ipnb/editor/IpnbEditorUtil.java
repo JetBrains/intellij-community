@@ -43,6 +43,7 @@ public class IpnbEditorUtil {
   public enum PromptType { In, Out }
 
   public static Dimension PROMPT_SIZE = new Dimension(80, 30);
+  public static int PANEL_WIDTH = 900;
 
   public static Editor createPythonCodeEditor(@NotNull Project project, @NotNull String text) {
     EditorEx editor = (EditorEx)EditorFactory.getInstance().createEditor(createPythonCodeDocument(project, text), project,
@@ -72,6 +73,7 @@ public class IpnbEditorUtil {
     editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
     editor.getScrollPane().setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     editor.getScrollPane().setWheelScrollingEnabled(false);
+
     List<MouseWheelListener> listeners = Lists.newArrayList(editor.getScrollPane().getMouseWheelListeners());
     for (MouseWheelListener l : listeners) {
       editor.getScrollPane().removeMouseWheelListener(l);

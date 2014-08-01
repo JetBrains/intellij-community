@@ -20,7 +20,7 @@ public class HeadingPanel extends IpnbEditablePanel<JBLabel, HeadingCell> {
   }
 
   private String renderCellText() {
-    return "<html><body style='width: 900px'><h" + myCell.getLevel() + ">" + myCell.getSourceAsString() + "</h" + myCell.getLevel() +
+    return "<html><body style='width: " + IpnbEditorUtil.PANEL_WIDTH + "px'><h" + myCell.getLevel() + ">" + myCell.getSourceAsString() + "</h" + myCell.getLevel() +
            "></body></html>";
   }
 
