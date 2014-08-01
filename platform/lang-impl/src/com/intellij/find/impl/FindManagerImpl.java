@@ -353,7 +353,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       }
 
       if (model.isExceptStringLiterals() || model.isExceptCommentsAndStringLiterals()) {
-        addRanges(file, model, text, result, FindModel.SearchContext.IN_STRINGS);
+        addRanges(file, model, text, result, FindModel.SearchContext.IN_STRING_LITERALS);
       }
 
       mySkipRangesSet = result;
@@ -399,7 +399,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     if (file == null) return null;
     FindModel.SearchContext context = model.getSearchContext();
     if( context == FindModel.SearchContext.ANY || context == FindModel.SearchContext.IN_COMMENTS ||
-        context == FindModel.SearchContext.IN_STRINGS) {
+        context == FindModel.SearchContext.IN_STRING_LITERALS) {
       return null;
     }
 

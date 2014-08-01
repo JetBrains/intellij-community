@@ -24,7 +24,7 @@ public class FindManagerTestUtils {
   }
 
   public static void runFindInCommentsAndLiterals(FindManager findManager, FindModel findModel, String text, String ext) {
-    findModel.setSearchContext(FindModel.SearchContext.IN_STRINGS);
+    findModel.setSearchContext(FindModel.SearchContext.IN_STRING_LITERALS);
     runFindForwardAndBackward(findManager, findModel, text, ext);
 
     findModel.setSearchContext(FindModel.SearchContext.IN_COMMENTS);

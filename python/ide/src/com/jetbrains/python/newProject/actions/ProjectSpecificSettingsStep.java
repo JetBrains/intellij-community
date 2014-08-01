@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.newProject.actions;
 
+import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -46,6 +47,12 @@ public class ProjectSpecificSettingsStep extends AbstractProjectSettingsStep imp
     if (advancedSettings != null) {
       final JPanel jPanel = new JPanel(new VerticalFlowLayout());
       final HideableDecorator deco = new HideableDecorator(jPanel, "Mor&e Settings", false);
+      boolean isValid = checkValid();
+      deco.setOn(!isValid);
+      if (myProjectGenerator instanceof PythonProjectGenerator && !deco.isExpanded()) {
+        final ValidationResult result = ((PythonProjectGenerator)myProjectGenerator).warningValidation(getSdk());
+        deco.setOn(!result.isOk());
+      }
       deco.setContentComponent(advancedSettings);
       return jPanel;
     }

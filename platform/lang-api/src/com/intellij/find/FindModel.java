@@ -851,11 +851,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
   public enum SearchContext {
-    ANY, IN_STRINGS, IN_COMMENTS, EXCEPT_STRINGS, EXCEPT_COMMENTS, EXCEPT_STRINGS_AND_COMMENTS
+    ANY, IN_STRING_LITERALS, IN_COMMENTS, EXCEPT_STRING_LITERALS, EXCEPT_COMMENTS, EXCEPT_COMMENTS_AND_STRING_LITERALS
   }
 
   public boolean isInStringLiteralsOnly() {
-    return searchContext == SearchContext.IN_STRINGS;
+    return searchContext == SearchContext.IN_STRING_LITERALS;
   }
 
   public boolean isExceptComments() {
@@ -863,7 +863,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
   public boolean isExceptStringLiterals() {
-    return searchContext == SearchContext.EXCEPT_STRINGS;
+    return searchContext == SearchContext.EXCEPT_STRING_LITERALS;
   }
 
   public boolean isInCommentsOnly() {
@@ -871,7 +871,32 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
   public boolean isExceptCommentsAndStringLiterals() {
-    return searchContext == SearchContext.EXCEPT_STRINGS_AND_COMMENTS;
+    return searchContext == SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS;
+  }
+
+  @Deprecated
+  public void setInCommentsOnly(boolean inCommentsOnly) {
+    doApplyContextChange(inCommentsOnly, SearchContext.IN_COMMENTS);
+  }
+
+  @Deprecated
+  public void setInStringLiteralsOnly(boolean inStringLiteralsOnly) {
+    doApplyContextChange(inStringLiteralsOnly, SearchContext.IN_STRING_LITERALS);
+  }
+
+  public void doApplyContextChange(boolean inCommentsOnly, SearchContext option) {
+    boolean changed = false;
+    if (inCommentsOnly) {
+      changed = searchContext == option;
+      searchContext = option;
+    } else if (searchContext == option) { // do not reset unrelated value
+      changed = true;
+      searchContext = SearchContext.ANY;
+    }
+
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   public @NotNull SearchContext getSearchContext() {
