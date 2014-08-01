@@ -15,12 +15,11 @@ import org.scilab.forge.jlatexmath.TeXIcon;
 import javax.swing.*;
 import java.awt.*;
 
-public class MarkdownPanel extends IpnbEditablePanel<JPanel> {
+public class MarkdownPanel extends IpnbEditablePanel<JPanel, MarkdownCell> {
   private static final Logger LOG = Logger.getInstance(MarkdownPanel.class);
-  private final MarkdownCell myCell;
 
   public MarkdownPanel(@NotNull final MarkdownCell cell) {
-    myCell = cell;
+    super(cell);
     initPanel();
   }
 
@@ -98,7 +97,7 @@ public class MarkdownPanel extends IpnbEditablePanel<JPanel> {
             string = IpnbUtils.markdown2Html(string);
           else
             string = "<p>"+string+"</p>";
-          final JLabel comp = new JLabel("<html><body style='width: 900px'" + string + "</body></html>");
+          final JLabel comp = new JLabel("<html><body style='width: 900px'>" + string + "</body></html>");
           final Font font = new Font(Font.SERIF, Font.PLAIN, 16);
           comp.setFont(font);
           panel.add(comp);

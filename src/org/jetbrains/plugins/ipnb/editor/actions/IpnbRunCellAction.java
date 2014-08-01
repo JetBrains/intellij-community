@@ -21,7 +21,7 @@ public class IpnbRunCellAction extends AnAction {
     final DataContext context = event.getDataContext();
     final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(context);
     if (editor instanceof IpnbFileEditor) {
-      final IpnbFilePanel component = ((IpnbFileEditor)editor).getIpnbEditorPanel();
+      final IpnbFilePanel component = ((IpnbFileEditor)editor).getIpnbFilePanel();
       runCell(component);
     }
   }

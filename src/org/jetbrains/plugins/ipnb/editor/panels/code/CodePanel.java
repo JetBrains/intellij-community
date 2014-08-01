@@ -6,7 +6,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
+import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
 import org.jetbrains.plugins.ipnb.format.cells.CodeCell;
 import org.jetbrains.plugins.ipnb.format.cells.output.CellOutput;
@@ -17,15 +19,13 @@ import org.jetbrains.plugins.ipnb.format.cells.output.LatexCellOutput;
 import javax.swing.*;
 import java.awt.*;
 
-public class CodePanel extends IpnbPanel {
-
+public class CodePanel extends IpnbEditablePanel<JComponent, CodeCell> {
   private final Project myProject;
   private final Disposable myParent;
-  @NotNull private final CodeCell myCell;
   private CodeSourcePanel myCodeSourcePanel;
 
-  public CodePanel(@NotNull final Project project, @NotNull final Disposable parent, @NotNull final CodeCell cell) {
-    super();
+  public CodePanel(@NotNull final Project project, @Nullable final Disposable parent, @NotNull final CodeCell cell) {
+    super(cell);
     myProject = project;
     myParent = parent;
     myCell = cell;
@@ -64,7 +64,8 @@ public class CodePanel extends IpnbPanel {
     c.gridwidth = 1;
 
     myCodeSourcePanel = new CodeSourcePanel(myProject, this, myCell.getSourceAsString());
-    Disposer.register(myParent, new Disposable() {
+    if (myParent != null)
+      Disposer.register(myParent, new Disposable() {
       @Override
       public void dispose() {
         EditorFactory.getInstance().releaseEditor(myCodeSourcePanel.getEditor());

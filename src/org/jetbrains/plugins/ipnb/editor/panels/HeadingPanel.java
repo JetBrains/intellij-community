@@ -6,11 +6,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.format.cells.HeadingCell;
 
-public class HeadingPanel extends IpnbEditablePanel<JBLabel> {
-  private final HeadingCell myCell;
+public class HeadingPanel extends IpnbEditablePanel<JBLabel, HeadingCell> {
 
   public HeadingPanel(@NotNull final HeadingCell cell) {
-    super();
+    super(cell);
     myCell = cell;
     initPanel();
   }
@@ -21,7 +20,8 @@ public class HeadingPanel extends IpnbEditablePanel<JBLabel> {
   }
 
   private String renderCellText() {
-    return "<html><h" + myCell.getLevel() + ">" + myCell.getSourceAsString() + "</h" + myCell.getLevel() + "></html>";
+    return "<html><body style='width: 900px'><h" + myCell.getLevel() + ">" + myCell.getSourceAsString() + "</h" + myCell.getLevel() +
+           "></body></html>";
   }
 
   @Override
@@ -29,10 +29,6 @@ public class HeadingPanel extends IpnbEditablePanel<JBLabel> {
     final String text = myEditablePanel.getText();
     myCell.setSource(StringUtil.splitByLines(text));
     myViewPanel.setText(renderCellText());
-  }
-
-  public HeadingCell getCell() {
-    return myCell;
   }
 
   @Override

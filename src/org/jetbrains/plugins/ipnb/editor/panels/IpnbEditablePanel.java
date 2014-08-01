@@ -3,6 +3,8 @@ package org.jetbrains.plugins.ipnb.editor.panels;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,10 +13,19 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public abstract class IpnbEditablePanel<T extends JComponent> extends IpnbPanel<T> {
+public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbCell> extends IpnbPanel<T> {
   protected JTextArea myEditablePanel;
   public final static String EDITABLE_PANEL = "Editable panel";
   public final static String VIEW_PANEL = "View panel";
+  protected K myCell;
+
+  public IpnbEditablePanel(@NotNull K cell) {
+    myCell = cell;
+  }
+
+  public K getCell() {
+    return myCell;
+  }
 
   protected void initPanel() {
     myViewPanel = createViewPanel();

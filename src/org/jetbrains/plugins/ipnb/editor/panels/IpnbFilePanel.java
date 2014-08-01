@@ -70,6 +70,7 @@ public class IpnbFilePanel extends JPanel {
     final JPanel panel = new JPanel();
     panel.setPreferredSize(IpnbEditorUtil.PROMPT_SIZE);
     panel.setBackground(getBackground());
+    panel.setOpaque(false);
     add(panel);
 
     for (IpnbCell cell : file.getCells()) {
@@ -104,6 +105,41 @@ public class IpnbFilePanel extends JPanel {
       setSelectedCell(comp);
     }
     return c.gridy + 1;
+  }
+
+  public void replaceComponent(@NotNull final IpnbPanel from, @NotNull final IpnbCell cell) {
+    final GridBagConstraints c = ((GridBagLayout)getLayout()).getConstraints(from);
+    final int index = myIpnbPanels.indexOf(from);
+    IpnbPanel comp;
+    if (cell instanceof CodeCell) {
+      comp = new CodePanel(myProject, myParent, (CodeCell)cell);
+      c.gridwidth = 2;
+      c.gridx = 0;
+      add(comp, c);
+    }
+    else if (cell instanceof MarkdownCell) {
+      comp = new MarkdownPanel((MarkdownCell)cell);
+      c.gridwidth = 1;
+      c.gridx = 1;
+      add(comp, c);
+    }
+    else if (cell instanceof HeadingCell) {
+      comp = new HeadingPanel((HeadingCell)cell);
+      c.gridwidth = 1;
+      c.gridx = 1;
+      add(comp, c);
+    }
+    else {
+      throw new UnsupportedOperationException(cell.getClass().toString());
+    }
+    if (index >= 0) {
+      myIpnbPanels.remove(index);
+      myIpnbPanels.add(index, comp);
+    }
+    setSelectedCell(comp);
+    remove(from);
+    revalidate();
+    repaint();
   }
 
   private void addComponent(@NotNull final GridBagConstraints c, @NotNull final IpnbPanel comp) {
