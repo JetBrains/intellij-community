@@ -91,7 +91,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private XDebugProcess myDebugProcess;
   private final Map<XBreakpoint<?>, CustomizedBreakpointPresentation> myRegisteredBreakpoints =
     new THashMap<XBreakpoint<?>, CustomizedBreakpointPresentation>();
-  private final Set<XBreakpoint<?>> myInactiveSlaveBreakpoints = new SmartHashSet<XBreakpoint<?>>();
+  private final Set<XBreakpoint<?>> myInactiveSlaveBreakpoints = Collections.synchronizedSet(new SmartHashSet<XBreakpoint<?>>());
   private boolean myBreakpointsDisabled;
   private final XDebuggerManagerImpl myDebuggerManager;
   private MyBreakpointListener myBreakpointListener;
@@ -295,12 +295,15 @@ public class XDebugSessionImpl implements XDebugSession {
     XBreakpointManagerImpl breakpointManager = myDebuggerManager.getBreakpointManager();
     XDependentBreakpointManager dependentBreakpointManager = breakpointManager.getDependentBreakpointManager();
     disableSlaveBreakpoints(dependentBreakpointManager);
-    processAllBreakpoints(true, false);
 
+    // listeners have to be applied before processing all existing breakpoints,
+    // otherwise we may not process breakpoints added during the processing
     myBreakpointListener = new MyBreakpointListener();
     breakpointManager.addBreakpointListener(myBreakpointListener);
     myDependentBreakpointListener = new MyDependentBreakpointListener();
     dependentBreakpointManager.addListener(myDependentBreakpointListener);
+
+    processAllBreakpoints(true, false);
   }
 
   @Override
