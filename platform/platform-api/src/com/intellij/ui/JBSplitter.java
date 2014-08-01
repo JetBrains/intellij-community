@@ -95,7 +95,7 @@ public class JBSplitter extends Splitter {
   }
 
   public void setOnePixelMode() {
-    setDividerWidth(1);
+
     setShowDividerIcon(false);
     getDivider().setBackground(new JBColor(Gray._153.withAlpha(128), Gray._100.withAlpha(128)));
     setShowDividerControls(false);
