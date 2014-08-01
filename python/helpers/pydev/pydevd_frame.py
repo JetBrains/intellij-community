@@ -290,12 +290,20 @@ class PyDBFrame:
                         stop = False
                     elif is_jinja2_suspended(thread):
                         stop = False
-                        if event in ('line', 'return') and is_jinja2_render_call(frame) and info.pydev_call_inside_jinja2 is not None:
-                            if info.pydev_call_inside_jinja2 is frame:
-                                jinja2_stop = True
 
-                        if event in ('call', 'line') and is_jinja2_render_call(frame) and info.pydev_call_inside_jinja2 is None:
-                            info.pydev_call_inside_jinja2 = frame
+                        if info.pydev_call_inside_jinja2 is None:
+                            if is_jinja2_render_call(frame):
+                                if event == 'call':
+                                    info.pydev_call_inside_jinja2 = frame.f_back
+                                if event in ('line', 'return'):
+                                    info.pydev_call_inside_jinja2 = frame
+                        else:
+                            if event == 'line':
+                                if is_jinja2_render_call(frame) and info.pydev_call_inside_jinja2 is frame:
+                                    jinja2_stop = True
+                            if event == 'return':
+                                if frame is info.pydev_call_inside_jinja2 and not DictContains(frame.f_back.f_locals,'event'):
+                                    info.pydev_call_inside_jinja2 = find_jinja2_render_frame(frame.f_back)
 
                     else:
                         if event == 'return' and info.pydev_django_resolve_frame is not None and is_django_resolve_call(frame.f_back):
@@ -306,15 +314,20 @@ class PyDBFrame:
 
                         stop = info.pydev_step_stop is frame and event in ('line', 'return')
 
-                        if event == 'return' and is_jinja2_context_call(frame.f_back) and info.pydev_call_from_jinja2 is not None:
+                        if event == 'return' and is_jinja2_context_call(frame.f_back):
                             #we return from python code to Jinja2 rendering frame
                             info.pydev_call_from_jinja2 = None
                             thread.additionalInfo.suspend_type = JINJA2_SUSPEND
                             stop = False
 
+
                     #print "info.pydev_call_from_jinja2", info.pydev_call_from_jinja2, "stop", stop, "jinja_stop", jinja2_stop, \
                     #    "thread.additionalInfo.suspend_type", thread.additionalInfo.suspend_type
-                    #print "event", event, "info.pydev_call_inside_jinja2", info.pydev_call_inside_jinja2, "frame", frame #, "farme.locals", frame.f_locals
+                    #print "event", event, "info.pydev_call_inside_jinja2", info.pydev_call_inside_jinja2
+                    #print "frame", frame, "frame.f_back", frame.f_back, "step_stop", info.pydev_step_stop
+                    #print "is_context_call", is_jinja2_context_call(frame)
+                    #print "render", is_jinja2_render_call(frame)
+                    #print "-------------"
 
                 elif info.pydev_step_cmd == CMD_SMART_STEP_INTO:
                     stop = False
