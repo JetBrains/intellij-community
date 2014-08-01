@@ -186,7 +186,7 @@ public class ChunkExtractor {
   }
 
   @NotNull
-  public TextChunk[] createTextChunks(@NotNull UsageInfo2UsageAdapter usageInfo2UsageAdapter,
+  public synchronized TextChunk[] createTextChunks(@NotNull UsageInfo2UsageAdapter usageInfo2UsageAdapter,
                                       @NotNull CharSequence chars,
                                       int start,
                                       int end,
@@ -204,7 +204,7 @@ public class ChunkExtractor {
       highlighter.restart(chars);
       myDocumentStamp = myDocument.getModificationStamp();
     } else if(lexer.getTokenStart() > start) {
-      highlighter.resetPosition(0);
+      highlighter.resetPosition(0);  // todo restart from nearest position with initial state
     }
 
     boolean isBeginning = true;
