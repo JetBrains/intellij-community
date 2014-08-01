@@ -270,7 +270,6 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   }
 
   public String toString() {
-    if (true) return "";
     TextChunk[] textChunks = getPresentation().getText();
     StringBuilder result = new StringBuilder();
     for (int j = 0; j < textChunks.length; j++) {

@@ -82,7 +82,7 @@ public abstract class CompiledPattern {
   public boolean isRealTypedVar(PsiElement element) {
     if (element!=null && element.getTextLength()>0) {
       String str = getTypedVarString(element);
-      if (str.length()==0) {
+      if (str == null || str.length()==0) {
         return false;
       }
       return isTypedVar( str );
