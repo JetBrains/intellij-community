@@ -367,7 +367,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
                     "Unexpected difference in indexing of %s by index %s, file type %s, charset %s\ndiff %s\nprevious indexed info %s",
                     fileContent.getFile(),
                     myIndexId,
-                    fileContent.getFileType(),
+                    fileContent.getFileType().getName(),
                     ((FileContentImpl)fileContent).getCharset(),
                     buildDiff(data, contentData),
                     myIndexingTrace.get(hashId)
@@ -396,7 +396,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
           FileContent fileContent = (FileContent)content;
           try {
-            myIndexingTrace.put(hashId, ((FileContentImpl)fileContent).getCharset() + "," + fileContent.getFileType()+"," + fileContent.getFile().getPath() + "," +
+            myIndexingTrace.put(hashId, ((FileContentImpl)fileContent).getCharset() + "," + fileContent.getFileType().getName()+"," + fileContent.getFile().getPath() + "," +
                                         ExceptionUtil.getThrowableText(new Throwable()));
           } catch (IOException ex) {
             LOG.error(ex);
