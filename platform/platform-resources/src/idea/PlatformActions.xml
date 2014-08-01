@@ -563,7 +563,6 @@
     </group>
 
     <group id="DiffPanel.Toolbar">
-      <reference ref="$Copy"/>
       <reference ref="PreviousDiff"/>
       <reference ref="NextDiff"/>
       <separator/>
