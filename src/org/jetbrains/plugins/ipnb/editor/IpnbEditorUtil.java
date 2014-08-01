@@ -70,6 +70,7 @@ public class IpnbEditorUtil {
 
   private static void noScrolling(EditorEx editor) {
     editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+    editor.getScrollPane().setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     editor.getScrollPane().setWheelScrollingEnabled(false);
     List<MouseWheelListener> listeners = Lists.newArrayList(editor.getScrollPane().getMouseWheelListeners());
     for (MouseWheelListener l : listeners) {
