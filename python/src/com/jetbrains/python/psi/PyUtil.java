@@ -1645,6 +1645,11 @@ public class PyUtil {
     return Collections2.filter(pyMemberInfos, new ObjectPredicate(false));
   }
 
+  public static boolean isStarImportableFrom(@NotNull String name, @NotNull PyFile file) {
+    final List<String> dunderAll = file.getDunderAll();
+    return dunderAll != null ? dunderAll.contains(name) : !name.startsWith("_");
+  }
+
   /**
    * Filters only pyclass object (new class)
    */
