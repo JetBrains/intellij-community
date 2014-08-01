@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.PseudoSplitter;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
@@ -41,7 +42,7 @@ public abstract class SplitterWithSecondHideable {
   private final boolean myVertical;
   private final OnOffListener<Integer> myListener;
   private final JPanel myFictivePanel;
-  private Splitter.Divider mySuperDivider;
+  private Splitter.DividerImpl mySuperDivider;
   private float myPreviousProportion;
 
   public SplitterWithSecondHideable(final boolean vertical,
@@ -185,7 +186,7 @@ public abstract class SplitterWithSecondHideable {
         return vertical ? myTitledSeparator.getHeight() : myTitledSeparator.getWidth();
       }
 
-      class MyDivider extends Divider {
+      class MyDivider extends DividerImpl {
         @Override
         public void processMouseMotionEvent(MouseEvent e) {
           super.processMouseMotionEvent(e);
