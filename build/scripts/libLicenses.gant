@@ -50,7 +50,8 @@ def String getLibraryName(JpsLibrary lib) {
   def name = lib.name
   if (name.startsWith("#")) {
     if (lib.getRoots(JpsOrderRootType.COMPILED).size() != 1) {
-      projectBuilder.warning("Non-single entry module library $name: $lib.classpath");
+      def urls = lib.getRoots(JpsOrderRootType.COMPILED).collect {it.url}
+      projectBuilder.warning("Non-single entry module library $name: $urls");
     }
     File file = lib.getFiles(JpsOrderRootType.COMPILED)[0]
     return file.name
