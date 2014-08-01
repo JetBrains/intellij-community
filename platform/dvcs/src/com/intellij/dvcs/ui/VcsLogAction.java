@@ -77,14 +77,14 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
     if (grouped.isEmpty()) {
       return false;
     }
-    Mode mode = getMode();
-    if (mode == Mode.SINGLE_COMMIT) {
-      return grouped.size() == 1;
+    switch (getMode()) {
+      case SINGLE_COMMIT:
+        return grouped.size() == 1;
+      case SINGLE_PER_REPO:
+        return allValuesAreSingletons(grouped);
+      default:
+        return false;
     }
-    if (mode == Mode.SINGLE_PER_REPO) {
-      return allValuesAreSingletons(grouped);
-    }
-    return false;
   }
 
   @Nullable
