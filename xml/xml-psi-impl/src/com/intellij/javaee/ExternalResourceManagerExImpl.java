@@ -47,7 +47,7 @@ import java.util.*;
 
 @State(name = "ExternalResourceManagerImpl",
        storages = {@Storage( file = StoragePathMacros.APP_CONFIG + "/other.xml")})
-public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
+public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx implements JDOMExternalizable {
   static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl");
 
   @NonNls public static final String J2EE_1_3 = "http://java.sun.com/dtd/";
@@ -374,6 +374,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
     return getProjectResources(project).getModificationCount();
   }
 
+  @Override
   public void readExternal(Element element) {
     final ExpandMacroToPathMap macroExpands = new ExpandMacroToPathMap();
     myPathMacros.addMacroExpands(macroExpands);
@@ -404,6 +405,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
     }
   }
 
+  @Override
   public void writeExternal(Element element) {
     final String[] urls = getAvailableUrls();
     for (String url : urls) {
