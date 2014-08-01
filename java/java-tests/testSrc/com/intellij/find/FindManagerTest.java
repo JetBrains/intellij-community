@@ -615,7 +615,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     FindModel findModel = FindManagerTestUtils.configureFindModel("^done$");
 
     findModel.setRegularExpressions(true);
-    findModel.setSearchContext(FindModel.SearchContext.IN_STRINGS);
+    findModel.setSearchContext(FindModel.SearchContext.IN_STRING_LITERALS);
     String text = "\"done\"; 'done'; 'done' \"done2\"";
     FindManagerTestUtils.runFindForwardAndBackward(myFindManager, findModel, text, "java");
 
@@ -676,7 +676,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     String prefix = "\"";
     String text = prefix + "done\"done";
 
-    findModel.setSearchContext(FindModel.SearchContext.EXCEPT_STRINGS);
+    findModel.setSearchContext(FindModel.SearchContext.EXCEPT_STRING_LITERALS);
     LightVirtualFile file = new LightVirtualFile("A.java", text);
 
     FindResult findResult = myFindManager.findString(text, prefix.length(), findModel, file);

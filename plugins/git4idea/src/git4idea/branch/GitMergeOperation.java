@@ -34,6 +34,7 @@ import git4idea.commands.*;
 import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.repo.GitRepository;
+import git4idea.reset.GitResetMode;
 import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.NotNull;
 
@@ -195,7 +196,7 @@ class GitMergeOperation extends GitBranchOperation {
     List<Change> affectedChanges = conflictingRepositoriesAndAffectedChanges.getSecond();
 
     Collection<String> absolutePaths = GitUtil.toAbsolute(repository.getRoot(), localChangesOverwrittenByMerge.getRelativeFilePaths());
-    int smartCheckoutDecision = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths, "merge", false);
+    int smartCheckoutDecision = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths, "merge", null);
     if (smartCheckoutDecision == GitSmartOperationDialog.SMART_EXIT_CODE) {
       return doSmartMerge(allConflictingRepositories);
     }
@@ -323,7 +324,7 @@ class GitMergeOperation extends GitBranchOperation {
 
   @NotNull
   private GitCommandResult rollback(@NotNull GitRepository repository) {
-    return myGit.resetHard(repository, myCurrentRevisionsBeforeMerge.get(repository));
+    return myGit.reset(repository, GitResetMode.HARD, myCurrentRevisionsBeforeMerge.get(repository));
   }
 
   @NotNull

@@ -63,16 +63,10 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
 
   public void onError(final String text, final JComponent component, final boolean forbidSave) {
     myTabbedPane.setSelectedComponent(component);
-    String prefixString = "";
-    for (int i = 0; i < myTabbedPane.getComponentCount(); i++) {
-      final Component currentComponent = myTabbedPane.getComponentAt(i);
-      // compare referencies - same objects
-      if (currentComponent == component) {
-        prefixString = myTabbedPane.getTitleAt(i) + ": ";
-      }
-    }
+    String errorPrefix = myTabbedPane.getTitleAt(myTabbedPane.indexOfComponent(component)) + ": ";
+
     setOKActionEnabled(! forbidSave);
-    setInvalid(prefixString + text);
+    setInvalid(errorPrefix + text);
   }
 
   public void onSuccess() {

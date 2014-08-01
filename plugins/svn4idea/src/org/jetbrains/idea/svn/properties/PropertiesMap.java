@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package icons;
+package org.jetbrains.idea.svn.properties;
 
-import com.intellij.openapi.util.IconLoader;
-
-import javax.swing.*;
+import com.intellij.util.containers.HashMap;
 
 /**
- * NOTE THIS FILE IS AUTO-GENERATED
- * DO NOT EDIT IT BY HAND, run build/scripts/icons.gant instead
+ * @author Konstantin Kolosovsky.
  */
-public class PropertiesIcons {
-  private static Icon load(String path) {
-    return IconLoader.getIcon(path, PropertiesIcons.class);
-  }
-
-  public static final Icon XmlProperties = load("/icons/xmlProperties.png"); // 16x16
+public class PropertiesMap extends HashMap<String, PropertyValue> {
 }

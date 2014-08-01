@@ -31,6 +31,8 @@ public abstract class PythonProjectGenerator {
     myListeners.add(listener);
   }
 
+  public void locationChanged(@NotNull final String newLocation) {}
+
   public interface SettingsListener {
     void stateChanged();
   }

@@ -31,4 +31,22 @@ public class IndentingBackspaceHandlerUncommittedDocumentTest extends LightPlatf
     checkResultByText("class Foo {\n" +
                       "<caret>}");
   }
+
+  public void testMulticaretSequentialBackspaceInvocation() throws IOException {
+    configureFromFileText(getTestName(false) + ".java",
+                          "class Foo {\n" +
+                          "    void m1() {\n" +
+                          "    \n" +
+                          "    <caret>}\n" +
+                          "    void m2() {\n" +
+                          "    \n" +
+                          "    <caret>}\n" +
+                          "}");
+    backspace();
+    backspace();
+    checkResultByText("class Foo {\n" +
+                      "    void m1() {<caret>}\n" +
+                      "    void m2() {<caret>}\n" +
+                      "}");
+  }
 }

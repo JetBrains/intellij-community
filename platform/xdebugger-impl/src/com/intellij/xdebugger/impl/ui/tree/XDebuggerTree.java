@@ -35,10 +35,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
-import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -253,6 +250,12 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   public Object getData(@NonNls final String dataId) {
     if (XDEBUGGER_TREE_KEY.is(dataId)) {
       return this;
+    }
+    if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
+      XValueNodeImpl[] selectedNodes = getSelectedNodes(XValueNodeImpl.class, null);
+      if (selectedNodes.length == 1 && selectedNodes[0].getFullValueEvaluator() == null) {
+        return selectedNodes[0].getRawValue();
+      }
     }
     return null;
   }
