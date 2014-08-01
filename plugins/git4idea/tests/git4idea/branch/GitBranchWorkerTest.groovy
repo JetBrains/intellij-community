@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package git4idea.branch
+
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
@@ -32,6 +33,7 @@ import git4idea.config.GitVersionSpecialty
 import git4idea.repo.GitRepository
 import git4idea.test.GitPlatformTest
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 
 import java.util.regex.Matcher
 
@@ -243,7 +245,7 @@ class GitBranchWorkerTest extends GitPlatformTest {
 
     List<Change> changes = null;
     checkoutOrMerge(operation, "feature", [
-      showSmartOperationDialog: { Project p, List<Change> cs, Collection<String> paths, String op, boolean force ->
+      showSmartOperationDialog: { Project p, List<Change> cs, Collection<String> paths, String op, String force ->
               changes = cs
               DialogWrapper.CANCEL_EXIT_CODE
             }
@@ -329,7 +331,7 @@ class GitBranchWorkerTest extends GitPlatformTest {
     prepareLocalChangesOverwrittenBy(myUltimate)
 
     checkoutOrMerge(operation, "feature", [
-      showSmartOperationDialog: { Project p, List<Change> cs, Collection<String> paths, String op, boolean f
+      showSmartOperationDialog: { Project p, List<Change> cs, Collection<String> paths, String op, String force
         -> GitSmartOperationDialog.CANCEL_EXIT_CODE
       },
     ] as GitBranchUiHandler )
@@ -355,7 +357,7 @@ class GitBranchWorkerTest extends GitPlatformTest {
     def rollbackMsg = null
     checkoutOrMerge(operation, "feature", [
       showSmartOperationDialog       : {
-        Project p, List<Change> cs, Collection<String> paths, String op, boolean f -> GitSmartOperationDialog.CANCEL_EXIT_CODE
+        Project p, List<Change> cs, Collection<String> paths, String op, String f -> GitSmartOperationDialog.CANCEL_EXIT_CODE
       },
       notifyErrorWithRollbackProposal: { String t, String m, String rp -> rollbackMsg = m; false }
     ] as GitBranchUiHandler )
@@ -368,7 +370,7 @@ class GitBranchWorkerTest extends GitPlatformTest {
     prepareLocalChangesOverwrittenBy(myUltimate)
 
     def uiHandler = [
-      showSmartOperationDialog: { Project p, List<Change> cs, Collection<String> paths, String op, boolean force ->
+      showSmartOperationDialog: { Project p, List<Change> cs, Collection<String> paths, String op, String force ->
         GitSmartOperationDialog.FORCE_EXIT_CODE;
       },
     ] as GitBranchUiHandler
@@ -733,7 +735,7 @@ class GitBranchWorkerTest extends GitPlatformTest {
       @NotNull List<Change> changes,
       @NotNull Collection<String> paths,
       @NotNull String operation,
-      boolean isForcePossible) {
+      @Nullable String forceButton) {
       GitSmartOperationDialog.SMART_EXIT_CODE
     }
 

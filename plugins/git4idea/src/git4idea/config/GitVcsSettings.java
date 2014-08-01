@@ -19,6 +19,7 @@ import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
+import git4idea.reset.GitResetMode;
 import git4idea.ui.branch.GitBranchSyncSetting;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +62,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public String RECENT_COMMON_BRANCH = null;
     public boolean AUTO_COMMIT_ON_CHERRY_PICK = false;
     public boolean WARN_ABOUT_CRLF = true;
+    public GitResetMode RESET_MODE = null;
   }
 
   public GitVcsSettings(GitVcsApplicationSettings appSettings) {
@@ -175,6 +177,15 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public void setWarnAboutCrlf(boolean warn) {
     myState.WARN_ABOUT_CRLF = warn;
+  }
+
+  @Nullable
+  public GitResetMode getResetMode() {
+    return myState.RESET_MODE;
+  }
+
+  public void setResetMode(@NotNull GitResetMode mode) {
+    myState.RESET_MODE = mode;
   }
 
   /**

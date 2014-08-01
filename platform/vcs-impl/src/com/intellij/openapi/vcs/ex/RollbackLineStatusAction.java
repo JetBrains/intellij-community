@@ -13,6 +13,7 @@
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,7 +33,9 @@ import java.util.List;
 
 public class RollbackLineStatusAction extends DumbAwareAction {
   public RollbackLineStatusAction() {
-    super("Rollback", "Rollback selected changes", AllIcons.Actions.Reset);
+    super(ActionsBundle.actionText("Vcs.RollbackChangedLines"),
+          ActionsBundle.actionDescription("Vcs.RollbackChangedLines"),
+          AllIcons.Actions.Reset);
   }
 
   @Override

@@ -226,10 +226,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   @NotNull
   private static VcsException cleanupExceptionText(VcsException original) {
     String msg = original.getMessage();
-    final String FATAL_PREFIX = "fatal:";
-    if (msg.startsWith(FATAL_PREFIX)) {
-      msg = msg.substring(FATAL_PREFIX.length());
-    }
+    msg = GitUtil.cleanupErrorPrefixes(msg);
     final String DURING_EXECUTING_SUFFIX = GitSimpleHandler.DURING_EXECUTING_ERROR_MESSAGE;
     int suffix = msg.indexOf(DURING_EXECUTING_SUFFIX);
     if (suffix > 0) {
