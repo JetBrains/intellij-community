@@ -135,7 +135,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
         myIpnbFilePanel.replaceComponent(selectedCell, new MarkdownCell(cell.getSource()));
       }
       else if (selectedItem.equals(codeCellType)) {
-        myIpnbFilePanel.replaceComponent(selectedCell, new CodeCell("python", cell.getSource(), 1, Lists.<CellOutput>newArrayList()));
+        myIpnbFilePanel.replaceComponent(selectedCell, new CodeCell("python", cell.getSource(), -1, Lists.<CellOutput>newArrayList()));
       }
     }
     else if (selectedCell instanceof MarkdownPanel) {
@@ -146,7 +146,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
         myIpnbFilePanel.replaceComponent(selectedCell, new HeadingCell(cell.getSource(), level));
       }
       else if (selectedItem.equals(codeCellType)) {
-        myIpnbFilePanel.replaceComponent(selectedCell, new CodeCell("python", cell.getSource(), 1, Lists.<CellOutput>newArrayList()));
+        myIpnbFilePanel.replaceComponent(selectedCell, new CodeCell("python", cell.getSource(), -1, Lists.<CellOutput>newArrayList()));
       }
     }
     else if (selectedCell instanceof CodePanel) {

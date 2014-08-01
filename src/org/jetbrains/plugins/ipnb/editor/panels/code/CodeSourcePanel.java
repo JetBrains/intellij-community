@@ -63,7 +63,7 @@ public class CodeSourcePanel extends IpnbPanel implements EditorPanel {
       myEditor = IpnbEditorUtil.createPlainCodeEditor(myProject, mySource);
     else
       myEditor = IpnbEditorUtil.createPythonCodeEditor(myProject, mySource);
-    final JComponent component = myEditor.getContentComponent();
+    final JComponent component = myEditor.getComponent();
     component.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
