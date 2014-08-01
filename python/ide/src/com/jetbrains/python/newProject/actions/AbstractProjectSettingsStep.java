@@ -108,7 +108,14 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
 
   @Override
   public JPanel createPanel() {
-    final JPanel mainPanel = new JPanel(new BorderLayout());
+    final JPanel basePanel = createBasePanel();
+    final JPanel mainPanel = new JPanel(new BorderLayout()) {
+      @Override
+      protected void paintComponent(Graphics g) {
+        myLocationField.requestFocus();
+      }
+    };
+
     final JPanel scrollPanel = new JPanel(new BorderLayout());
 
     final DirectoryProjectGenerator[] generators = Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
@@ -118,8 +125,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     myErrorLabel.setForeground(JBColor.RED);
     myCreateButton = new Button(myCreateAction, myCreateAction.getTemplatePresentation());
 
-    final JPanel panel = createBasePanel();
-    scrollPanel.add(panel, BorderLayout.NORTH);
+    scrollPanel.add(basePanel, BorderLayout.NORTH);
     final JPanel advancedSettings = createAdvancedSettings();
     if (advancedSettings != null) {
       scrollPanel.add(advancedSettings, BorderLayout.CENTER);
@@ -130,7 +136,6 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     mainPanel.add(scrollPane, BorderLayout.CENTER);
 
     final JPanel bottomPanel = new JPanel(new BorderLayout());
-
 
     bottomPanel.add(myErrorLabel, BorderLayout.NORTH);
     bottomPanel.add(myCreateButton, BorderLayout.EAST);
