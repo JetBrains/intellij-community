@@ -19,11 +19,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.properties.PropertyValue;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNMergeRange;
+import org.tmatesoft.svn.core.SVNMergeRangeList;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -209,7 +213,8 @@ public class BranchInfo {
     SvnTarget target = SvnTarget.fromURL(branchUrl);
 
     try {
-      mergeinfoProperty = myVcs.getFactory(target).createPropertyClient().getProperty(target, SVNProperty.MERGE_INFO, false, SVNRevision.create(targetRevision));
+      mergeinfoProperty = myVcs.getFactory(target).createPropertyClient().getProperty(target, SvnPropertyKeys.MERGE_INFO, false,
+                                                                                      SVNRevision.create(targetRevision));
     }
     catch (VcsException e) {
       LOG.info(e);
@@ -283,13 +288,13 @@ public class BranchInfo {
         // look in WC
         SvnTarget target = SvnTarget.fromFile(pathFile, SVNRevision.WORKING);
         mergeinfoProperty =
-          myVcs.getFactory(target).createPropertyClient().getProperty(target, SVNProperty.MERGE_INFO, false, SVNRevision.WORKING);
+          myVcs.getFactory(target).createPropertyClient().getProperty(target, SvnPropertyKeys.MERGE_INFO, false, SVNRevision.WORKING);
       } else {
         // in repo
         myMixedRevisionsFound = true;
         SvnTarget target = SvnTarget.fromURL(svnInfo.getURL());
         mergeinfoProperty = myVcs.getFactory(target).createPropertyClient()
-          .getProperty(target, SVNProperty.MERGE_INFO, false, SVNRevision.create(targetRevisionCorrected));
+          .getProperty(target, SvnPropertyKeys.MERGE_INFO, false, SVNRevision.create(targetRevisionCorrected));
       }
     }
     catch (VcsException e) {
