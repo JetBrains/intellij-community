@@ -51,6 +51,7 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -64,7 +65,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   private boolean myInstallFramework;
   private TextFieldWithBrowseButton myLocationField;
   protected final File myProjectDirectory;
-  private ActionButtonWithText myCreateButton;
+  private Button myCreateButton;
   private JLabel myErrorLabel;
   private AnAction myCreateAction;
   private Sdk mySdk;
@@ -131,7 +132,6 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     final JPanel bottomPanel = new JPanel(new BorderLayout());
 
 
-    myCreateButton.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, 40));
     bottomPanel.add(myErrorLabel, BorderLayout.NORTH);
     bottomPanel.add(myCreateButton, BorderLayout.EAST);
     mainPanel.add(bottomPanel, BorderLayout.SOUTH);
@@ -399,6 +399,23 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     }
 
     @Override
+    public boolean isFocusable() {
+      return true;
+    }
+
+    @Override
+    protected void processFocusEvent(FocusEvent e) {
+      super.processFocusEvent(e);
+      if (e.getID() == FocusEvent.FOCUS_GAINED) {
+        processMouseEvent(new MouseEvent(this, MouseEvent.MOUSE_ENTERED, System.currentTimeMillis(), 0, 0, 0, 0, false));
+
+      }
+      else if (e.getID() == FocusEvent.FOCUS_LOST) {
+        processMouseEvent(new MouseEvent(this, MouseEvent.MOUSE_EXITED, System.currentTimeMillis(), 0, 0, 0, 0, false));
+      }
+    }
+
+    @Override
     public Insets getInsets() {
       return new Insets(5,10,5,5);
     }
@@ -406,11 +423,6 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     @Override
     protected int horizontalTextAlignment() {
       return SwingConstants.LEFT;
-    }
-
-    @Override
-    public String getToolTipText() {
-      return null;
     }
 
     protected void processMouseEvent(MouseEvent e) {
