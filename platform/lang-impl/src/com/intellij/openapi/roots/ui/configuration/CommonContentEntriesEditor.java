@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.ui.JBSplitter;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.roots.ToolbarPanel;
@@ -171,10 +172,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     }
     entriesPanel.add(toolbarPanel, BorderLayout.CENTER);
 
-    final JBSplitter splitter = new JBSplitter(false);
-    if (Registry.is("ide.new.project.settings")) {
-      splitter.setOnePixelMode();
-    }
+    final JBSplitter splitter = Registry.is("ide.new.project.settings") ? new OnePixelSplitter(false) : new JBSplitter(false);
     splitter.setProportion(0.6f);
     splitter.setHonorComponentsMinimumSize(true);
 

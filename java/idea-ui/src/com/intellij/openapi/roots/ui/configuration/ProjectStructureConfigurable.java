@@ -44,6 +44,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.ui.JBSplitter;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.navigation.BackAction;
 import com.intellij.ui.navigation.ForwardAction;
@@ -174,12 +175,9 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   public JComponent createComponent() {
     myComponent = new MyPanel();
 
-    mySplitter = new JBSplitter(false, .15f);
+    mySplitter = Registry.is("ide.new.project.settings") ? new OnePixelSplitter(false, .15f) : new JBSplitter(false, .15f);
     mySplitter.setSplitterProportionKey("ProjectStructure.TopLevelElements");
     mySplitter.setHonorComponentsMinimumSize(true);
-    if (Registry.is("ide.new.project.settings")) {
-      mySplitter.setOnePixelMode();
-    }
 
     initSidePanel();
 
