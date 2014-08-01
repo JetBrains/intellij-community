@@ -18,6 +18,6 @@ public class ToggleInLiteralsOnlyAction extends EditorHeaderToggleAction  implem
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    getEditorSearchComponent().getFindModel().setSearchContext(state ? FindModel.SearchContext.IN_STRINGS : FindModel.SearchContext.ANY);
+    getEditorSearchComponent().getFindModel().setSearchContext(state ? FindModel.SearchContext.IN_STRING_LITERALS : FindModel.SearchContext.ANY);
   }
 }
