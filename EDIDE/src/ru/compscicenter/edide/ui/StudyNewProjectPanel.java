@@ -66,12 +66,12 @@ public class StudyNewProjectPanel{
     final FileChooserDescriptor fileChooser = new FileChooserDescriptor(true, false, false, true, false, false) {
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        return super.isFileVisible(file, showHiddenFiles) || StudyUtils.isZip(file.getName());
+        return file.isDirectory() || StudyUtils.isZip(file.getName());
       }
 
       @Override
       public boolean isFileSelectable(VirtualFile file) {
-        return super.isFileSelectable(file)|| file.getName().contains(".zip");
+        return StudyUtils.isZip(file.getName());
       }
     };
     myBrowseButton.addActionListener(new ActionListener() {
