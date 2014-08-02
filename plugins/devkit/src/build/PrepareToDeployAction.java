@@ -164,6 +164,7 @@ public class PrepareToDeployAction extends AnAction {
           else {
             FileUtil.copy(jarFile, dstFile);
           }
+          LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(dstFile), true, false, null);
           successMessages.add(DevKitBundle.message("saved.message", isZip ? 1 : 2, pluginName, dstPath));
         }
         catch (final IOException e) {
