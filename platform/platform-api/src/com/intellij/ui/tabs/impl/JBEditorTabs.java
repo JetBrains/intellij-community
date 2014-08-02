@@ -44,7 +44,7 @@ import java.util.List;
  */
 public class JBEditorTabs extends JBTabsImpl {
   public static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
-  static final String TABS_CHORTEN_TITLE_IF_NEED = "tabs.shorten.title.if.need";
+  static final String TABS_SHORTEN_TITLE_IF_NEED = "tabs.shorten.title.if.need";
   private JBEditorTabsPainter myDarkPainter = new DarculaEditorTabsPainter();
   private JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter();
 
@@ -64,7 +64,7 @@ public class JBEditorTabs extends JBTabsImpl {
   @Override
   protected TabLabel createTabLabel(TabInfo info) {
     TabLabel label = super.createTabLabel(info);
-    label.putClientProperty(TABS_CHORTEN_TITLE_IF_NEED, Boolean.TRUE);
+    label.putClientProperty(TABS_SHORTEN_TITLE_IF_NEED, Boolean.TRUE);
     return label;
   }
 

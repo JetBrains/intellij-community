@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -319,7 +319,7 @@ public class TabLabel extends JPanel {
 
   public void setText(final SimpleColoredText text) {
     myInfo.setTitleIsShortened(false);
-    if (text != null && text.getTexts().size() == 1 && Boolean.TRUE == getClientProperty(JBEditorTabs.TABS_CHORTEN_TITLE_IF_NEED)) {
+    if (text != null && text.getTexts().size() == 1 && Boolean.TRUE == getClientProperty(JBEditorTabs.TABS_SHORTEN_TITLE_IF_NEED)) {
       String title = text.getTexts().get(0);
       if (title.length() > UISettings.getInstance().EDITOR_TAB_TITLE_LIMIT) {
         SimpleTextAttributes attributes = text.getAttributes().get(0);
