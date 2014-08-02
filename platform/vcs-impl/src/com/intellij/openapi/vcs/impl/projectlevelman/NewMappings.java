@@ -234,7 +234,7 @@ public class NewMappings {
   @Nullable
   public VcsDirectoryMapping getMappingFor(final VirtualFile file, final Object parentModule) {
     // if parentModule is not null it means that file belongs to the module so it isn't excluded
-    if (parentModule == null && myVcsManager.isIgnoredByVcs(file)) {
+    if (parentModule == null && myVcsManager.isIgnored(file)) {
       return null;
     }
 
