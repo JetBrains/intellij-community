@@ -16,14 +16,13 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.update.Activatable;
-import com.intellij.util.ui.update.UiNotifyConnector;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,7 +32,7 @@ import java.awt.event.MouseEvent;
 /**
  * @author Konstantin Bulenkov
  */
-public class OnePixelDivider extends Divider implements Disposable {
+public class OnePixelDivider extends Divider {
   private boolean myVertical;
   private Splitter mySplitter;
   private boolean myResizeEnabled;
@@ -41,6 +40,7 @@ public class OnePixelDivider extends Divider implements Disposable {
   protected Point myPoint;
   private IdeGlassPane myGlassPane;
   private final MouseAdapter myListener = new MyMouseAdapter();
+  private Disposable myDisposable;
 
   public OnePixelDivider(boolean vertical, Splitter splitter) {
     super(new GridBagLayout());
@@ -51,17 +51,21 @@ public class OnePixelDivider extends Divider implements Disposable {
     enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
     //setOpaque(false);
     setOrientation(vertical);
-    new UiNotifyConnector.Once(this, new Activatable.Adapter() {
-            @Override
-            public void showNotify() {
-              init();
-            }
-          });
     setBackground(new JBColor(Gray._153.withAlpha(128), Gray._100.withAlpha(128)));
   }
 
   @Override
-  public void dispose() {
+  public void addNotify() {
+    super.addNotify();
+    init();
+  }
+
+  @Override
+  public void removeNotify() {
+    super.removeNotify();
+    if (myDisposable != null && !Disposer.isDisposed(myDisposable)) {
+      Disposer.dispose(myDisposable);
+    }
   }
 
   private boolean dragging = false;
@@ -137,8 +141,9 @@ public class OnePixelDivider extends Divider implements Disposable {
 
   private void init() {
     myGlassPane = IdeGlassPaneUtil.find(this);
-    myGlassPane.addMouseMotionPreprocessor(myListener, this);
-    myGlassPane.addMousePreprocessor(myListener, this);
+    myDisposable = Disposer.newDisposable();
+    myGlassPane.addMouseMotionPreprocessor(myListener, myDisposable);
+    myGlassPane.addMousePreprocessor(myListener, myDisposable);
   }
 
   public void setOrientation(boolean vertical) {
