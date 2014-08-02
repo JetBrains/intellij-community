@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode;
 import org.jetbrains.org.objectweb.asm.tree.JumpInsnNode;
@@ -154,6 +155,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
     return false;
   }
 
+  @NotNull
   @Override
   Equation<Key, Value> mkEquation(PResult result) {
     if (Identity == result || Return == result) {

@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
@@ -229,6 +230,7 @@ abstract class Analysis<Res> {
   abstract Res identity();
   abstract Res combineResults(Res delta, List<Res> subResults) throws AnalyzerException;
   abstract boolean isEarlyResult(Res res);
+  @NotNull
   abstract Equation<Key, Value> mkEquation(Res result);
   abstract void processState(State state) throws AnalyzerException;
 
@@ -270,6 +272,7 @@ abstract class Analysis<Res> {
     return true;
   }
 
+  @NotNull
   final Equation<Key, Value> analyze() throws AnalyzerException {
     pending.push(new ProceedState<Res>(createStartState()));
     int steps = 0;

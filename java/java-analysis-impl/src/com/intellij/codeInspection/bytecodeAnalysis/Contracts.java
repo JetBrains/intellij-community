@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Handle;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.*;
@@ -69,6 +70,7 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
     return false;
   }
 
+  @NotNull
   @Override
   Equation<Key, Value> mkEquation(Result<Key, Value> res) {
     return new Equation<Key, Value>(aKey, res);
