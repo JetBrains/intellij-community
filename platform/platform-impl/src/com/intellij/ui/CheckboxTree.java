@@ -15,8 +15,6 @@
  */
 package com.intellij.ui;
 
-import java.awt.event.KeyEvent;
-
 /**
  * User: lex
  * Date: Sep 18, 2003
@@ -56,11 +54,4 @@ public class CheckboxTree extends CheckboxTreeBase {
   protected void installSpeedSearch() {
     new TreeSpeedSearch(this);
   }
-
-
-  protected boolean isToggleEvent(KeyEvent e) {
-    return super.isToggleEvent(e) &&  !SpeedSearchBase.hasActiveSpeedSearch(this);
-  }
-
-
 }
