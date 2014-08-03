@@ -119,6 +119,10 @@ public class Executor {
     }
   }
 
+  public static void overwrite(@NotNull String fileName, @NotNull String content) throws IOException {
+    overwrite(child(fileName), content);
+  }
+
   public static void overwrite(@NotNull File file, @NotNull String content) throws IOException {
     FileUtil.writeToFile(file, content.getBytes(), false);
   }
