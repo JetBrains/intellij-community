@@ -204,7 +204,7 @@ public class ChunkExtractor {
       highlighter.restart(chars);
       myDocumentStamp = myDocument.getModificationStamp();
     } else if(lexer.getTokenStart() > start) {
-      highlighter.resetPosition(0);
+      highlighter.resetPosition(0);  // todo restart from nearest position with initial state
     }
 
     boolean isBeginning = true;

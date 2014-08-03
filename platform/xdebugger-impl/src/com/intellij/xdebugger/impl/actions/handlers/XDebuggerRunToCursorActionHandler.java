@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.actions.handlers;
 
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.XDebugSession;
@@ -33,7 +34,9 @@ public class XDebuggerRunToCursorActionHandler extends XDebuggerSuspendedActionH
   }
 
   protected boolean isEnabled(final @NotNull XDebugSession session, final DataContext dataContext) {
-    return super.isEnabled(session, dataContext) && XDebuggerUtilImpl.getCaretPosition(session.getProject(), dataContext) != null;
+    if (!super.isEnabled(session, dataContext)) return false;
+    XSourcePosition position = XDebuggerUtilImpl.getCaretPosition(session.getProject(), dataContext);
+    return position != null && XDebuggerUtil.getInstance().canPutBreakpointAt(session.getProject(), position.getFile(), position.getLine());
   }
 
   protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {

@@ -845,13 +845,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         return vf != null && (myExcludedIndex.isInContent(vf) || isFileInBaseDir(vf) || vf.equals(myProject.getBaseDir()) ||
                               hasExplicitMapping(vf) || isInDirectoryBasedRoot(vf)
                               || !Registry.is("ide.hide.excluded.files") && myExcludedIndex.isExcludedFile(vf))
-               && !isIgnoredByVcs(vf);
+               && !isIgnored(vf);
       }
     });
   }
 
   @Override
-  public boolean isIgnoredByVcs(VirtualFile vf) {
+  public boolean isIgnored(VirtualFile vf) {
     if (Registry.is("ide.hide.excluded.files")) {
       return myExcludedIndex.isExcludedFile(vf);
     }

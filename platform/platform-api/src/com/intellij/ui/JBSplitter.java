@@ -94,14 +94,6 @@ public class JBSplitter extends Splitter {
     saveProportion();
   }
 
-  public void setOnePixelMode() {
-    setDividerWidth(1);
-    setShowDividerIcon(false);
-    getDivider().setBackground(new JBColor(Gray._153.withAlpha(128), Gray._100.withAlpha(128)));
-    setShowDividerControls(false);
-    setOrientation(getOrientation());
-  }
-
   protected void loadProportion() {
     if (! StringUtil.isEmpty(mySplitterProportionKey)) {
       setProportion(PropertiesComponent.getInstance().getFloat(mySplitterProportionKey, myProportion));

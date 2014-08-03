@@ -131,12 +131,9 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected MasterDetailsComponent(MasterDetailsState state) {
     myState = state;
 
-    mySplitter = new JBSplitter(false, .2f);
+    mySplitter = Registry.is("ide.new.project.settings") ? new OnePixelSplitter(false, .2f) : new JBSplitter(false, .2f);
     mySplitter.setSplitterProportionKey("ProjectStructure.SecondLevelElements");
     mySplitter.setHonorComponentsMinimumSize(true);
-    if (Registry.is("ide.new.project.settings")) {
-      mySplitter.setOnePixelMode();
-    }
 
     installAutoScroll();
     reInitWholePanelIfNeeded();

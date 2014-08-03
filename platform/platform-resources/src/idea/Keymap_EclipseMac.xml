@@ -312,6 +312,10 @@
       <keyboard-shortcut first-keystroke="meta 3"/>
     </action>
 
+    <action id="Vcs.RollbackChangedLines">
+      <keyboard-shortcut first-keystroke="control shift alt Z"/>
+    </action>
+
     <action id="ActivateProjectToolWindow"/>
     <action id="ActivateFavoritesToolWindow"/>
     <action id="ActivateFindToolWindow">

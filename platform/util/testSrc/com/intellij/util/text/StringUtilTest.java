@@ -195,4 +195,15 @@ public class StringUtilTest extends TestCase {
     assertEquals(Arrays.asList("\n", "\r\n", "\n", "\r\n", "\r", "\r", "aa\r", "bb\r\n", "cc\n", "\r", "dd\n", "\n", "\r\n", "\r"),
                  Arrays.asList(StringUtil.splitByLinesKeepSeparators("\n\r\n\n\r\n\r\raa\rbb\r\ncc\n\rdd\n\n\r\n\r")));
   }
+
+  public void testShortened() {
+    String[] names = {"AVeryVeeryLongClassName.java", "com.test.SomeJAVAClassName.java", "strangelowercaseclassname.java"};
+    for (String name : names) {
+      for (int i = name.length() + 1; i > 15; i--) {
+        String shortened = StringUtil.getShortened(name, i);
+        assertTrue(shortened.length() <= i);
+        assertTrue(!shortened.contains("...."));
+      }
+    }
+  }
 }

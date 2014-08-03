@@ -354,7 +354,7 @@ public class GithubShareAction extends DumbAwareAction {
     return ContainerUtil.filter(files, new Condition<VirtualFile>() {
       @Override
       public boolean value(VirtualFile file) {
-        return !changeListManager.isIgnoredFile(file) && !vcsManager.isIgnoredByVcs(file);
+        return !changeListManager.isIgnoredFile(file) && !vcsManager.isIgnored(file);
       }
     });
   }
