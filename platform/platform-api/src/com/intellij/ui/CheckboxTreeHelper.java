@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -59,24 +58,21 @@ class CheckboxTreeHelper {
     setupMouseListener(tree, mainComponent, cellRenderer);
   }
 
-  private boolean toggleNode(Tree tree, CheckedTreeNode node) {
-    boolean checked = !node.isChecked();
-    checkNode(tree, node, checked);
+  public void setNodeState(Tree tree, CheckedTreeNode node, boolean checked) {
+    changeNodeState(node, checked);
+    adjustParentsAndChildren(node, checked);
+    tree.repaint();
 
     // notify model listeners about model change
     final TreeModel model = tree.getModel();
     model.valueForPathChanged(new TreePath(node.getPath()), node.getUserObject());
-
-    return checked;
   }
 
-  private void checkNode(Tree tree, CheckedTreeNode node, boolean checked) {
-    adjustParentsAndChildren(node, checked);
-    tree.repaint();
+  private void toggleNode(Tree tree, CheckedTreeNode node) {
+    setNodeState(tree, node, !node.isChecked());
   }
 
   private void adjustParentsAndChildren(final CheckedTreeNode node, final boolean checked) {
-    changeNodeState(node, checked);
     if (!checked) {
       if (myCheckPolicy.uncheckParentWithUncheckedChild) {
         TreeNode parent = node.getParent();
@@ -147,7 +143,8 @@ class CheckboxTreeHelper {
           final Object o = treePath.getLastPathComponent();
           if (!(o instanceof CheckedTreeNode)) return;
           CheckedTreeNode firstNode = (CheckedTreeNode)o;
-          boolean checked = toggleNode(tree, firstNode);
+          toggleNode(tree, firstNode);
+          boolean checked = firstNode.isChecked();
 
           TreePath[] selectionPaths = tree.getSelectionPaths();
           for (int i = 0; selectionPaths != null && i < selectionPaths.length; i++) {
@@ -155,8 +152,7 @@ class CheckboxTreeHelper {
             final Object o1 = selectionPath.getLastPathComponent();
             if (!(o1 instanceof CheckedTreeNode)) continue;
             CheckedTreeNode node = (CheckedTreeNode)o1;
-            checkNode(tree, node, checked);
-            ((DefaultTreeModel)tree.getModel()).nodeChanged(node);
+            setNodeState(tree, node, checked);
           }
 
           e.consume();
