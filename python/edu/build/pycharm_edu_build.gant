@@ -132,16 +132,16 @@ target('default': "Build artifacts") {
 
   layoutEducational("${paths.sandbox}/classes/production", usedJars)
 
-  /*
-  buildNSIS([paths.distAll, paths.distWin],
-            "$home/python/build/strings.nsi", "$home/python/build/paths.nsi",
-            "pycharm", false, true, system_selector)
-  */
 
-  /*
+  buildNSIS([paths.distAll, paths.distWin],
+            "${pythonEduHome}/build/strings.nsi", "${pythonEduHome}/build/paths.nsi",
+            "pycharm", false, true, system_selector)
+
+
+
   signMacZip("pycharm")
-  buildDmg("pycharm", "${home}/python/build/DMG_background.png")
-  */
+  buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png")
+
 }
 
 public layoutEducational(String classesPath, Set usedJars) {
