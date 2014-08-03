@@ -54,7 +54,7 @@ public class TerminalView {
 
 
   public void initTerminal(final ToolWindow toolWindow) {
-    LocalTerminalDirectRunner terminalRunner = OpenLocalTerminalAction.createTerminalRunner(myProject);
+    LocalTerminalDirectRunner terminalRunner = LocalTerminalDirectRunner.createTerminalRunner(myProject);
 
     toolWindow.setToHideOnEmptyContent(true);
 
@@ -162,7 +162,7 @@ public class TerminalView {
   }
 
   public void openLocalSession(Project project, ToolWindow terminal) {
-    LocalTerminalDirectRunner terminalRunner = OpenLocalTerminalAction.createTerminalRunner(project);
+    LocalTerminalDirectRunner terminalRunner = LocalTerminalDirectRunner.createTerminalRunner(project);
     openSession(terminal, terminalRunner);
   }
 

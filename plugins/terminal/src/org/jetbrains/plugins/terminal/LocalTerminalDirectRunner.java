@@ -16,6 +16,7 @@ import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
 import com.pty4j.util.PtyUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -61,6 +62,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       LOG.warn("Unable to get jar folder", e);
     }
     return null;
+  }
+
+  @NotNull
+  public static LocalTerminalDirectRunner createTerminalRunner(Project project) {
+    return new LocalTerminalDirectRunner(project);
   }
 
   @Override
