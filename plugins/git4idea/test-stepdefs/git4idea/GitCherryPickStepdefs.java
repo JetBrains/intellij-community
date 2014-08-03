@@ -15,10 +15,9 @@
  */
 package git4idea;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
 import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePathImpl;
@@ -40,6 +39,7 @@ import cucumber.annotation.en.When;
 import git4idea.cherrypick.GitCherryPicker;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.test.MockVcsHelper;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -214,30 +214,22 @@ public class GitCherryPickStepdefs {
     assertTrue("Commit dialog was not shown", myVcsHelper.commitDialogWasShown());
   }
 
-  @Then("^active changelist is '(.+)'$")
-  public void active_changelist_is(String name) throws Throwable {
-    assertActiveChangeList(virtualCommits.replaceVirtualHashes(name));
+  @Then("^there is changelist '(.*)'$")
+  public void there_is_changelist(@NotNull final String name) throws Throwable {
+    List<LocalChangeList> changeLists = myChangeListManager.getChangeListsCopy();
+    assertTrue("Didn't find changelist with name '" + name + "' among :" + changeLists,
+               ContainerUtil.exists(changeLists, new Condition<LocalChangeList>() {
+                 @Override
+                 public boolean value(LocalChangeList list) {
+                   return list.getName().equals(virtualCommits.replaceVirtualHashes(name));
+                 }
+               }));
   }
 
   private static void assertOnlyDefaultChangelist() {
     String DEFAULT = MockChangeListManager.DEFAULT_CHANGE_LIST_NAME;
-    assertChangeLists(Collections.singleton(DEFAULT), DEFAULT);
-  }
-
-  private static void assertChangeLists(Collection<String> changeLists, String activeChangelist) {
-    List<LocalChangeList> lists = myChangeListManager.getChangeLists();
-    Collection<String> listNames = Collections2.transform(lists, new Function<LocalChangeList, String>() {
-      @Override
-      public String apply(LocalChangeList input) {
-        return input.getName();
-      }
-    });
-    assertEquals("Change lists are different", new ArrayList<String>(changeLists), new ArrayList<String>(listNames));
-    assertActiveChangeList(activeChangelist);
-  }
-
-  private static void assertActiveChangeList(String name) {
-    assertEquals("Wrong active changelist", name, myChangeListManager.getDefaultChangeList().getName());
+    assertEquals("Only default change list is expected", 1, myChangeListManager.getChangeListsNumber());
+    assertEquals("Default changelist is not active", DEFAULT, myChangeListManager.getDefaultChangeList().getName());
   }
 
   private static void cherryPick(List<String> virtualHashes) {
