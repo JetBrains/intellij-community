@@ -182,7 +182,7 @@ public layoutEducational(String classesPath, Set usedJars) {
     "$ch/platform/icons/src",
     "$pythonEduHome/resources"]
   buildWinLauncher("$ch", "$ch/bin/WinLauncher/WinLauncher.exe", launcher,
-                   appInfo, "$pythonCommunityHome/build/pycharm_edu_launcher.properties", system_selector, resourcePaths)
+                   appInfo, "$pythonEduHome/build/pycharm_edu_launcher.properties", system_selector, resourcePaths)
 
   buildWinZip("${paths.artifacts}/pycharmPE-${buildNumber}.zip", [paths.distAll, paths.distWin])
 
