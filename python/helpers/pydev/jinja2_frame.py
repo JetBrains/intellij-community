@@ -22,9 +22,9 @@ class Jinja2TemplateFrame:
     def collect_context(self, frame):
         res = {}
         if self.back_context is not None:
-            for k, v in self.back_context.iteritems():
+            for k, v in self.back_context.items():
                 res[k] = v
-        for k, v in frame.f_locals.iteritems():
+        for k, v in frame.f_locals.items():
             if not k.startswith('l_'):
                 if not k in res:
                     #local variables should shadow globals from context
