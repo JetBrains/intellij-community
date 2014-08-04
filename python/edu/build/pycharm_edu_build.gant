@@ -29,7 +29,7 @@ setProperty("pythonCommunityHome", "$home/python")
 setProperty("pythonEduHome", "$home/python/edu")
 
 // load ApplicationInfo.xml properties
-ant.xmlproperty(file: "$pythonCommunityHome/resources/idea/PyCharmEduApplicationInfo.xml", collapseAttributes: "true")
+ant.xmlproperty(file: "$pythonEduHome/resources/idea/PyCharmEduApplicationInfo.xml", collapseAttributes: "true")
 
 setProperty("system_selector", "PyCharm${p("component.version.major")}0")
 setProperty("dryRun", false)
