@@ -41,29 +41,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public abstract class CloudModuleBuilderContributionBase<
+public abstract class CloudModuleBuilderSourceContribution<
   SC extends CloudConfigurationBase,
   DC extends CloudDeploymentNameConfiguration,
-  AC extends CloudApplicationConfiguration,
+  AC extends CloudSourceApplicationConfiguration,
   SR extends CloudMultiSourceServerRuntimeInstance<DC, ?, ?, ?>>
   extends CloudModuleBuilderContribution {
 
   private CloudNotifier myNotifier;
 
-  private CloudNotifier getNotifier() {
-    if (myNotifier == null) {
-      myNotifier = new CloudNotifier(getCloudType().getPresentableName());
-    }
-    return myNotifier;
+  public CloudModuleBuilderSourceContribution(CloudModuleBuilder moduleBuilder, ServerType<SC> cloudType) {
+    super(moduleBuilder, cloudType);
   }
 
   @Override
-  public void configureModule(final Module module,
-                              RemoteServer<?> account,
-                              CloudApplicationConfiguration applicationConfiguration,
-                              final String contentPath) {
-    RemoteServer<SC> castedAccount = (RemoteServer<SC>)account;
-    final AC castedApplicationConfiguration = (AC)applicationConfiguration;
+  public void configureModule(final Module module) {
+    final CloudModuleBuilder moduleBuilder = getModuleBuilder();
+    RemoteServer<SC> account = (RemoteServer<SC>)moduleBuilder.getAccount();
+    final AC applicationConfiguration = (AC)moduleBuilder.getApplicationConfiguration();
 
     DC deploymentConfiguration = createDeploymentConfiguration();
 
@@ -73,19 +68,19 @@ public abstract class CloudModuleBuilderContributionBase<
     }
 
     final DeployToServerRunConfiguration<SC, DC> runConfiguration
-      = CloudAccountSelectionEditor.createRunConfiguration(castedAccount, module, deploymentConfiguration);
+      = CloudRunConfigurationUtil.createRunConfiguration(account, module, deploymentConfiguration);
 
     final ServerType<?> cloudType = account.getType();
     final Project project = module.getProject();
     new CloudConnectionTask<Object, SC, DC, SR>(project,
                                                 CloudBundle.getText("cloud.support", cloudType.getPresentableName()),
-                                                castedAccount) {
+                                                account) {
 
       boolean myFirstAttempt = true;
 
       @Override
       protected Object run(SR serverRuntime) throws ServerRuntimeException {
-        doConfigureModule(castedApplicationConfiguration, runConfiguration, myFirstAttempt, serverRuntime);
+        doConfigureModule(applicationConfiguration, runConfiguration, myFirstAttempt, serverRuntime);
         return null;
       }
 
@@ -97,7 +92,7 @@ public abstract class CloudModuleBuilderContributionBase<
 
       @Override
       protected void postPerform(Object result) {
-        detectModuleStructure(module, contentPath);
+        detectModuleStructure(module, moduleBuilder.getContentEntryPath());
       }
 
       @Override
@@ -105,6 +100,13 @@ public abstract class CloudModuleBuilderContributionBase<
         return false;
       }
     }.performAsync();
+  }
+
+  private CloudNotifier getNotifier() {
+    if (myNotifier == null) {
+      myNotifier = new CloudNotifier(getCloudType().getPresentableName());
+    }
+    return myNotifier;
   }
 
   private void detectModuleStructure(Module module, final String contentPath) {
@@ -177,11 +179,8 @@ public abstract class CloudModuleBuilderContributionBase<
   }
 
   @Override
-  public abstract ServerType<SC> getCloudType();
-
-  @Override
-  public abstract CloudApplicationConfigurable<SC, DC, SR, AC> createApplicationConfigurable(@Nullable Project project,
-                                                                                             Disposable parentDisposable);
+  protected abstract CloudSourceApplicationConfigurable<SC, DC, SR, AC> createApplicationConfigurable(@Nullable Project project,
+                                                                                                      Disposable parentDisposable);
 
   protected abstract DC createDeploymentConfiguration();
 

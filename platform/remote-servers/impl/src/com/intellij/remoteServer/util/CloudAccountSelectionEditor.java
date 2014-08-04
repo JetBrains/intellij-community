@@ -15,9 +15,6 @@
  */
 package com.intellij.remoteServer.util;
 
-import com.intellij.execution.RunManagerEx;
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -25,11 +22,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModulePointer;
-import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
@@ -38,12 +32,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
-import com.intellij.remoteServer.configuration.ServerConfiguration;
-import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.impl.configuration.RemoteServerConfigurable;
-import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationType;
-import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfiguration;
-import com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
@@ -224,52 +213,7 @@ public class CloudAccountSelectionEditor {
     if (account == null) {
       return;
     }
-    createRunConfiguration(account, module, configuration);
-  }
-
-  public static <SC extends ServerConfiguration, DC extends DeploymentConfiguration>
-  DeployToServerRunConfiguration<SC, DC> createRunConfiguration(RemoteServer<SC> account, Module module, DC deploymentConfiguration) {
-
-    Project project = module.getProject();
-
-    String accountName = account.getName();
-
-    String name = generateRunConfigurationName(accountName, module.getName());
-
-    final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
-    final RunnerAndConfigurationSettings runSettings
-      = runManager.createRunConfiguration(name, getRunConfigurationType(account.getType()).getConfigurationFactories()[0]);
-
-    final DeployToServerRunConfiguration<SC, DC> result = (DeployToServerRunConfiguration<SC, DC>)runSettings.getConfiguration();
-
-    result.setServerName(accountName);
-
-    final ModulePointer modulePointer = ModulePointerManager.getInstance(project).create(module);
-    result.setDeploymentSource(new ModuleDeploymentSourceImpl(modulePointer));
-
-    result.setDeploymentConfiguration(deploymentConfiguration);
-
-    runManager.addConfiguration(runSettings, false);
-    runManager.setSelectedConfiguration(runSettings);
-
-    return result;
-  }
-
-  private static DeployToServerConfigurationType getRunConfigurationType(ServerType<?> cloudType) {
-    String id = DeployToServerConfigurationType.getId(cloudType);
-    for (ConfigurationType configurationType : ConfigurationType.CONFIGURATION_TYPE_EP.getExtensions()) {
-      if (configurationType instanceof DeployToServerConfigurationType) {
-        DeployToServerConfigurationType deployConfigurationType = (DeployToServerConfigurationType)configurationType;
-        if (deployConfigurationType.getId().equals(id)) {
-          return deployConfigurationType;
-        }
-      }
-    }
-    return null;
-  }
-
-  private static String generateRunConfigurationName(String serverName, String moduleName) {
-    return CloudBundle.getText("run.configuration.name", serverName, moduleName);
+    CloudRunConfigurationUtil.createRunConfiguration(account, module, configuration);
   }
 
   private static class AccountItem {
