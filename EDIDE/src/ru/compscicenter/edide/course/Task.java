@@ -11,12 +11,10 @@ import ru.compscicenter.edide.StudyUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
- * User: lia
- * Date: 21.06.14
- * Time: 18:42
  * Implementation of task which contains task files, tests, input file for tests
  */
 public class Task {
@@ -53,7 +51,7 @@ public class Task {
     return StudyStatus.Solved;
   }
 
-  public void setStatus(StudyStatus status) {
+  public void setStatus(@NotNull final StudyStatus status) {
     LessonInfo lessonInfo = myLesson.getLessonInfo();
     StudyStatus oldStatus = getStatus();
     if (status != oldStatus) {
@@ -86,14 +84,15 @@ public class Task {
    * @param resourceRoot directory where original task file stored
    * @throws IOException
    */
-  public void create(VirtualFile lessonDir, File resourceRoot) throws IOException {
+  public void create(@NotNull final VirtualFile lessonDir, @NotNull final File resourceRoot) throws IOException {
     VirtualFile taskDir = lessonDir.createChildDirectory(this, TASK_DIR + Integer.toString(myIndex + 1));
     File newResourceRoot = new File(resourceRoot, taskDir.getName());
     int i = 0;
     for (Map.Entry<String, TaskFile> taskFile : taskFiles.entrySet()) {
-      taskFile.getValue().setIndex(i);
+      TaskFile taskFileContent = taskFile.getValue();
+      taskFileContent.setIndex(i);
       i++;
-      taskFile.getValue().create(taskDir, newResourceRoot, taskFile.getKey());
+      taskFileContent.create(taskDir, newResourceRoot, taskFile.getKey());
     }
     File[] filesInTask = newResourceRoot.listFiles();
     if (filesInTask != null) {
@@ -108,13 +107,13 @@ public class Task {
     }
   }
 
-  private boolean isTaskFile(@NotNull String fileName) {
+  private boolean isTaskFile(@NotNull final String fileName) {
     return taskFiles.get(fileName) != null;
   }
 
   @Nullable
-  public TaskFile getFile(@NotNull String fileName) {
-    return  taskFiles.get(fileName);
+  public TaskFile getFile(@NotNull final String fileName) {
+    return taskFiles.get(fileName);
   }
 
   /**
@@ -122,7 +121,7 @@ public class Task {
    *
    * @param lesson lesson which task belongs to
    */
-  public void init(Lesson lesson, boolean isRestarted) {
+  public void init(final Lesson lesson, boolean isRestarted) {
     myLesson = lesson;
     for (TaskFile taskFile : taskFiles.values()) {
       taskFile.init(this, isRestarted);
@@ -131,8 +130,9 @@ public class Task {
 
   public Task next() {
     Lesson currentLesson = this.myLesson;
-    if (myIndex + 1 < myLesson.getTaskList().size()) {
-      return myLesson.getTaskList().get(myIndex + 1);
+    List<Task> taskList = myLesson.getTaskList();
+    if (myIndex + 1 < taskList.size()) {
+      return taskList.get(myIndex + 1);
     }
     Lesson nextLesson = currentLesson.next();
     if (nextLesson == null) {
@@ -183,7 +183,7 @@ public class Task {
    * @return text of resource file wrapped with html tags if necessary
    */
   @Nullable
-  public String getResourceText(Project project, String fileName, boolean wrapHTML) {
+  public String getResourceText(@NotNull final Project project, @NotNull final String fileName, boolean wrapHTML) {
     String lessonDirName = Lesson.LESSON_DIR + String.valueOf(myLesson.getIndex() + 1);
     String taskDirName = TASK_DIR + String.valueOf(myIndex + 1);
     VirtualFile courseDir = project.getBaseDir().findChild(Course.COURSE_DIR);

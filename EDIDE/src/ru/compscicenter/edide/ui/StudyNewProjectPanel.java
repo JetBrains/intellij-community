@@ -167,7 +167,7 @@ public class StudyNewProjectPanel{
       myAvailableCourses = newCourses.keySet();
       myGenerator.flushCache();
     }
-  };
+  }
 
 
   /**

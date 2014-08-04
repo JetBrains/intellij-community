@@ -39,6 +39,7 @@ public class RefreshTaskAction extends DumbAwareAction {
               @Override
               public void run() {
                 Editor editor = StudyEditor.getSelectedEditor(project);
+                assert editor != null;
                 Document document = editor.getDocument();
                 StudyDocumentListener listener = StudyEditor.getListener(document);
                 if (listener != null) {
@@ -46,15 +47,18 @@ public class RefreshTaskAction extends DumbAwareAction {
                 }
                 document.deleteString(0, document.getLineEndOffset(document.getLineCount() - 1));
                 StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-                File resourceFile = new File(taskManager.getCourse().getResourcePath());
+                Course course = taskManager.getCourse();
+                assert course != null;
+                File resourceFile = new File(course.getResourcePath());
                 File resourceRoot = resourceFile.getParentFile();
                 FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
                 VirtualFile openedFile = fileDocumentManager.getFile(document);
+                assert openedFile != null;
                 TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
+                assert selectedTaskFile != null;
                 Task currentTask = selectedTaskFile.getTask();
                 String lessonDir = Lesson.LESSON_DIR + String.valueOf(currentTask.getLesson().getIndex() + 1);
                 String taskDir = Task.TASK_DIR + String.valueOf(currentTask.getIndex() + 1);
-                if (openedFile != null) {
                   File pattern = new File(new File(new File(resourceRoot, lessonDir), taskDir), openedFile.getName());
                   BufferedReader reader = null;
                   try {
@@ -92,6 +96,7 @@ public class RefreshTaskAction extends DumbAwareAction {
                       JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("You can now start again", MessageType.INFO, null);
                     Balloon balloon = balloonBuilder.createBalloon();
                     StudyEditor selectedStudyEditor = StudyEditor.getSelectedStudyEditor(project);
+                    assert selectedStudyEditor != null;
                     balloon.showInCenterOf(selectedStudyEditor.getRefreshButton());
                   }
                   catch (FileNotFoundException e1) {
@@ -110,7 +115,6 @@ public class RefreshTaskAction extends DumbAwareAction {
                       }
                     }
                   }
-                }
               }
             }, null, null);
           }

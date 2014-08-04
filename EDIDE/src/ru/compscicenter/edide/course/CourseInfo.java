@@ -1,8 +1,8 @@
 package ru.compscicenter.edide.course;
 
 /**
- * author: liana
- * data: 7/31/14.
+ * Implementation of class which contains information to be shawn in course description in tool window
+ * and when project is being created
  */
 public class CourseInfo {
   private String myName;
@@ -37,14 +37,9 @@ public class CourseInfo {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-
     CourseInfo that = (CourseInfo)o;
-
-    if (myAuthor != null ? !myAuthor.equals(that.myAuthor) : that.myAuthor != null) return false;
-    if (myDescription != null ? !myDescription.equals(that.myDescription) : that.myDescription != null) return false;
-    if (myName != null ? !myName.equals(that.myName) : that.myName != null) return false;
-
-    return true;
+    return that.getName().equals(myName) && that.getAuthor().equals(myAuthor)
+           && that.getDescription().equals(myDescription);
   }
 
   @Override

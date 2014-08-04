@@ -22,6 +22,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.NotNull;
 import ru.compscicenter.edide.StudyDocumentListener;
 import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.StudyUtils;
@@ -35,14 +36,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 
-/**
- * User: lia
- * Date: 23.05.14
- * Time: 20:33
- */
 public class CheckAction extends DumbAwareAction {
 
-  public static final Logger LOG = Logger.getInstance(CheckAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(CheckAction.class.getName());
 
   class StudyTestRunner {
     private static final String TEST_OK = "#study_plugin test OK";
@@ -116,7 +112,7 @@ public class CheckAction extends DumbAwareAction {
     }
   }
 
-  public void check(final Project project) {
+  public void check(@NotNull final Project project) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -124,66 +120,63 @@ public class CheckAction extends DumbAwareAction {
           @Override
           public void run() {
             final Editor selectedEditor = StudyEditor.getSelectedEditor(project);
-            if (selectedEditor == null) {
-              return;
-            }
-            final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-            final VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
-            StudyTaskManager taskManager = StudyTaskManager.getInstance(selectedEditor.getProject());
-            final TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
-            FileDocumentManager.getInstance().saveAllDocuments();
-            if (!(project != null && project.isOpen())) {
-              return;
-            }
-            String basePath = project.getBasePath();
-            if (basePath == null) return;
-            if (openedFile == null) return;
-            final VirtualFile taskDir = openedFile.getParent();
-            Task currentTask = selectedTaskFile.getTask();
-            final StudyTestRunner testRunner = new StudyTestRunner(currentTask, taskDir);
-            Process testProcess = null;
-            try {
-              testProcess = testRunner.launchTests(project, openedFile.getNameWithoutExtension());
-            }
-            catch (ExecutionException e) {
-              LOG.error(e);
-            }
-            if (testProcess != null) {
-              final int testNum = currentTask.getTestNum();
-              final int testPassed = testRunner.getPassedTests(testProcess);
-              if (testPassed == testNum) {
-                currentTask.setStatus(StudyStatus.Solved);
-                StudyUtils.updateStudyToolWindow(project);
-                selectedTaskFile.drawAllWindows(selectedEditor);
-                ProjectView.getInstance(project).refresh();
-                createTestResultPopUp("Congratulations!", JBColor.GREEN, project);
-                return;
-              }
+            if (selectedEditor != null) {
+              final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+              final VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
+              if (openedFile != null) {
+                StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+                final TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
+                if (selectedTaskFile != null) {
+                  FileDocumentManager.getInstance().saveAllDocuments();
+                  final VirtualFile taskDir = openedFile.getParent();
+                  Task currentTask = selectedTaskFile.getTask();
+                  final StudyTestRunner testRunner = new StudyTestRunner(currentTask, taskDir);
+                  Process testProcess = null;
+                  try {
+                    testProcess = testRunner.launchTests(project, openedFile.getNameWithoutExtension());
+                  }
+                  catch (ExecutionException e) {
+                    LOG.error(e);
+                  }
+                  if (testProcess != null) {
+                    final int testNum = currentTask.getTestNum();
+                    final int testPassed = testRunner.getPassedTests(testProcess);
+                    if (testPassed == testNum) {
+                      currentTask.setStatus(StudyStatus.Solved);
+                      StudyUtils.updateStudyToolWindow(project);
+                      selectedTaskFile.drawAllWindows(selectedEditor);
+                      ProjectView.getInstance(project).refresh();
+                      createTestResultPopUp("Congratulations!", JBColor.GREEN, project);
+                      return;
+                    }
 
-              final TaskFile taskFileCopy = new TaskFile();
-              final VirtualFile copyWithAnswers = getCopyWithAnswers(taskDir, openedFile, selectedTaskFile, taskFileCopy);
-              for (final TaskWindow taskWindow : taskFileCopy.getTaskWindows()) {
-                check(project, taskWindow, copyWithAnswers, taskFileCopy, selectedTaskFile, selectedEditor.getDocument(), testRunner);
-              }
-              try {
-                copyWithAnswers.delete(this);
-              }
-              catch (IOException e) {
-                LOG.error(e);
-              }
-              if (testPassed == 0) {
-                String message = testRunner.getRunFailedMessage(testProcess);
-                if (message.length() != 0) {
-                  Messages.showErrorDialog(project, message, "Failed to Run");
-                  selectedTaskFile.drawAllWindows(selectedEditor);
-                  ProjectView.getInstance(project).refresh();
-                  return;
+                    final TaskFile taskFileCopy = new TaskFile();
+                    final VirtualFile copyWithAnswers = getCopyWithAnswers(taskDir, openedFile, selectedTaskFile, taskFileCopy);
+                    for (final TaskWindow taskWindow : taskFileCopy.getTaskWindows()) {
+                      check(project, taskWindow, copyWithAnswers, taskFileCopy, selectedTaskFile, selectedEditor.getDocument(), testRunner);
+                    }
+                    try {
+                      copyWithAnswers.delete(this);
+                    }
+                    catch (IOException e) {
+                      LOG.error(e);
+                    }
+                    if (testPassed == 0) {
+                      String message = testRunner.getRunFailedMessage(testProcess);
+                      if (message.length() != 0) {
+                        Messages.showErrorDialog(project, message, "Failed to Run");
+                        selectedTaskFile.drawAllWindows(selectedEditor);
+                        ProjectView.getInstance(project).refresh();
+                        return;
+                      }
+                    }
+
+                    selectedTaskFile.drawAllWindows(selectedEditor);
+                    String result = String.format("%d from %d tests failed", testNum - testPassed, testNum);
+                    createTestResultPopUp(result, JBColor.RED, project);
+                  }
                 }
               }
-
-              selectedTaskFile.drawAllWindows(selectedEditor);
-              String result = String.format("%d from %d tests failed", testNum - testPassed, testNum);
-              createTestResultPopUp(result, JBColor.RED, project);
             }
           }
         }, null, null);
@@ -272,16 +265,21 @@ public class CheckAction extends DumbAwareAction {
     return copy;
   }
 
-  private void createTestResultPopUp(String text, Color color, Project project) {
+  private void createTestResultPopUp(final String text, Color color, @NotNull final Project project) {
     BalloonBuilder balloonBuilder =
       JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text, null, color, null);
     Balloon balloon = balloonBuilder.createBalloon();
-    JButton checkButton = StudyEditor.getSelectedStudyEditor(project).getCheckButton();
+    StudyEditor studyEditor = StudyEditor.getSelectedStudyEditor(project);
+    assert studyEditor != null;
+    JButton checkButton = studyEditor.getCheckButton();
     balloon.showInCenterOf(checkButton);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    check(e.getProject());
+    Project project = e.getProject();
+    if (project != null) {
+      check(project);
+    }
   }
 }

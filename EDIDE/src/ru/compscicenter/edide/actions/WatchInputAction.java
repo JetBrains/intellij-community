@@ -10,15 +10,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.course.Task;
+import ru.compscicenter.edide.course.TaskFile;
 import ru.compscicenter.edide.editor.StudyEditor;
 
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * author: liana
- * data: 7/9/14.
- */
 public class WatchInputAction extends DumbAwareAction {
 
   private void initContentLabel(String header, String contentFileText, JPanel parentComponent, Font headerFont) {
@@ -42,7 +39,11 @@ public class WatchInputAction extends DumbAwareAction {
     if (selectedEditor != null) {
       FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
       VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
-      Task currentTask = StudyTaskManager.getInstance(project).getTaskFile(openedFile).getTask();
+      StudyTaskManager studyTaskManager = StudyTaskManager.getInstance(project);
+      assert openedFile != null;
+      TaskFile taskFile = studyTaskManager.getTaskFile(openedFile);
+      assert taskFile != null;
+      Task currentTask = taskFile.getTask();
       String inputFileText = currentTask.getResourceText(project, currentTask.getInput(), true);
       String outputFileText = currentTask.getResourceText(project, currentTask.getOutput(), true);
       JPanel myContentPanel = new JPanel();
@@ -54,6 +55,7 @@ public class WatchInputAction extends DumbAwareAction {
           .setRequestFocus(true)
           .createPopup();
       StudyEditor selectedStudyEditor = StudyEditor.getSelectedStudyEditor(project);
+      assert selectedStudyEditor != null;
       hint.showInCenterOf(selectedStudyEditor.getWatchInputButton());
     }
   }

@@ -31,9 +31,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * User: lia
- * Date: 23.05.14
- * Time: 14:16
+ * Implementation of StudyEditor which has panel with special buttons and task text
+ * also @see {@link ru.compscicenter.edide.editor.StudyFileEditorProvider}
  */
 public class StudyEditor implements FileEditor {
   private static final String TASK_TEXT_HEADER = "Task Text";
@@ -44,7 +43,7 @@ public class StudyEditor implements FileEditor {
   private JButton myPrevTaskButton;
   private JButton myRefreshButton;
   private JButton myWatchInputButton;
-  private static Map<Document, StudyDocumentListener> myDocumentListeners = new HashMap<Document, StudyDocumentListener>();
+  private static final Map<Document, StudyDocumentListener> myDocumentListeners = new HashMap<Document, StudyDocumentListener>();
 
   public JButton getWatchInputButton() {
     return myWatchInputButton;
@@ -58,7 +57,7 @@ public class StudyEditor implements FileEditor {
     return myPrevTaskButton;
   }
 
-  private JButton addButton(JComponent parentComponent, String toolTipText, Icon icon) {
+  private JButton addButton(@NotNull final JComponent parentComponent, String toolTipText, Icon icon) {
     JButton newButton = new JButton();
     newButton.setToolTipText(toolTipText);
     newButton.setIcon(icon);
@@ -67,38 +66,41 @@ public class StudyEditor implements FileEditor {
     return newButton;
   }
 
-  public static void addDocumentListener(Document document, StudyDocumentListener listener) {
+  public static void addDocumentListener(@NotNull final Document document, @NotNull final StudyDocumentListener listener) {
     myDocumentListeners.put(document, listener);
   }
 
   @Nullable
-  public static StudyDocumentListener getListener(Document document) {
+  public static StudyDocumentListener getListener(@NotNull final Document document) {
     return myDocumentListeners.get(document);
   }
 
-  public StudyEditor(final Project project, VirtualFile file) {
+  public StudyEditor(@NotNull final Project project, @NotNull final VirtualFile file) {
     myDefaultEditor = TextEditorProvider.getInstance().createEditor(project, file);
     myComponent = myDefaultEditor.getComponent();
     JPanel studyPanel = new JPanel();
     studyPanel.setLayout(new BoxLayout(studyPanel, BoxLayout.Y_AXIS));
     TaskFile taskFile = StudyTaskManager.getInstance(project).getTaskFile(file);
-    Task currentTask = taskFile.getTask();
-    final JLabel taskText = new JLabel(currentTask.getResourceText(project, currentTask.getText(), false));
-    int fontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
-    String fontName = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName();
-    taskText.setFont(new Font(fontName, Font.PLAIN, fontSize));
-    HideableTitledPanel taskTextPanel = new HideableTitledPanel(TASK_TEXT_HEADER, taskText, true);
-    studyPanel.add(taskTextPanel);
-    JPanel studyButtonPanel = new JPanel(new GridLayout(1, 2));
-    JPanel taskActionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    studyButtonPanel.add(taskActionsPanel);
-    studyButtonPanel.add(new JPanel());
-    initializeButtons(project, taskActionsPanel, taskFile);
-    studyPanel.add(studyButtonPanel);
-    myComponent.add(studyPanel, BorderLayout.NORTH);
+    if (taskFile != null) {
+      Task currentTask = taskFile.getTask();
+      String taskText = currentTask.getResourceText(project, currentTask.getText(), false);
+      final JLabel taskTextLabel = new JLabel(taskText);
+      int fontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
+      String fontName = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName();
+      taskTextLabel.setFont(new Font(fontName, Font.PLAIN, fontSize));
+      HideableTitledPanel taskTextPanel = new HideableTitledPanel(TASK_TEXT_HEADER, taskTextLabel, true);
+      studyPanel.add(taskTextPanel);
+      JPanel studyButtonPanel = new JPanel(new GridLayout(1, 2));
+      JPanel taskActionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+      studyButtonPanel.add(taskActionsPanel);
+      studyButtonPanel.add(new JPanel());
+      initializeButtons(project, taskActionsPanel, taskFile);
+      studyPanel.add(studyButtonPanel);
+      myComponent.add(studyPanel, BorderLayout.NORTH);
+    }
   }
 
-  private void initializeButtons(final Project project, JPanel taskActionsPanel, TaskFile taskFile) {
+  private void initializeButtons(@NotNull final Project project, @NotNull final JPanel taskActionsPanel, @NotNull final TaskFile taskFile) {
     myCheckButton = addButton(taskActionsPanel, "Check task", StudyIcons.Resolve);
     myPrevTaskButton = addButton(taskActionsPanel, "Prev Task", StudyIcons.Prev);
     myNextTaskButton = addButton(taskActionsPanel, "Next Task", StudyIcons.Next);
@@ -162,7 +164,7 @@ public class StudyEditor implements FileEditor {
     return myRefreshButton;
   }
 
-  public FileEditor getDefaultEditor() {
+  FileEditor getDefaultEditor() {
     return myDefaultEditor;
   }
 
@@ -260,8 +262,8 @@ public class StudyEditor implements FileEditor {
   }
 
 
-  //TODO:handle exceptions
-  public static StudyEditor getSelectedStudyEditor(Project project) {
+  @Nullable
+  public static StudyEditor getSelectedStudyEditor(@NotNull final Project project) {
     try {
       FileEditor fileEditor =
         FileEditorManagerImpl.getInstanceEx(project).getSplitters().getCurrentWindow().getSelectedEditor().getSelectedEditorWithProvider()
@@ -275,7 +277,8 @@ public class StudyEditor implements FileEditor {
     return null;
   }
 
-  public static Editor getSelectedEditor(final Project project) {
+  @Nullable
+  public static Editor getSelectedEditor(@NotNull final Project project) {
     StudyEditor studyEditor = getSelectedStudyEditor(project);
     if (studyEditor != null) {
       FileEditor defaultEditor = studyEditor.getDefaultEditor();

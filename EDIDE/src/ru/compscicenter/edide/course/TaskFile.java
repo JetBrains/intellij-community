@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -15,12 +16,10 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * User: liana
- * Date: 21.06.14
- * Time: 18:53
  * Implementation of task file which contains task windows for student to type in and
  * which is visible to student in project view
  */
+
 public class TaskFile {
   public List<TaskWindow> taskWindows = new ArrayList<TaskWindow>();
   private Task myTask;
@@ -57,7 +56,7 @@ public class TaskFile {
   /**
    * @param selectedTaskWindow window from this task file to be set as selected
    */
-  public void setSelectedTaskWindow(TaskWindow selectedTaskWindow) {
+  public void setSelectedTaskWindow(@NotNull final TaskWindow selectedTaskWindow) {
     if (selectedTaskWindow.getTaskFile() == this) {
       mySelectedTaskWindow = selectedTaskWindow;
     }
@@ -77,7 +76,8 @@ public class TaskFile {
    * @param resourceRoot directory where original task file stored
    * @throws IOException
    */
-  public void create(VirtualFile taskDir, File resourceRoot, String name) throws IOException {
+  public void create(@NotNull final VirtualFile taskDir, @NotNull final File resourceRoot,
+                     @NotNull final String name) throws IOException {
     String systemIndependentName = FileUtil.toSystemIndependentName(name);
     final int index = systemIndependentName.lastIndexOf("/");
     if (index > 0) {
@@ -100,7 +100,7 @@ public class TaskFile {
    * @return task window located in specified position or null if there is no task window in this position
    */
   @Nullable
-  public TaskWindow getTaskWindow(Document document, LogicalPosition pos) {
+  public TaskWindow getTaskWindow(@NotNull final Document document, @NotNull final LogicalPosition pos) {
     int line = pos.line;
     if (line >= document.getLineCount()) {
       return null;
@@ -139,7 +139,7 @@ public class TaskFile {
    * @param task task which task file belongs to
    */
 
-  public void init(Task task, boolean isRestarted) {
+  public void init(final Task task, boolean isRestarted) {
     myTask = task;
     for (TaskWindow taskWindow : taskWindows) {
       taskWindow.init(this, isRestarted);
@@ -175,7 +175,7 @@ public class TaskFile {
     }
   }
 
-  public static void copy(TaskFile source, TaskFile target) {
+  public static void copy(@NotNull final TaskFile source, @NotNull final TaskFile target) {
     List<TaskWindow> sourceTaskWindows = source.getTaskWindows();
     List<TaskWindow> windowsCopy = new ArrayList<TaskWindow>(sourceTaskWindows.size());
     for (TaskWindow taskWindow : sourceTaskWindows) {
@@ -194,7 +194,7 @@ public class TaskFile {
     this.taskWindows = taskWindows;
   }
 
-  public void setStatus(StudyStatus status) {
+  public void setStatus(@NotNull final StudyStatus status) {
     for (TaskWindow taskWindow : taskWindows) {
       taskWindow.setStatus(status);
     }

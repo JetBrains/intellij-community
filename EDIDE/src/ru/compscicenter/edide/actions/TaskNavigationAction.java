@@ -30,9 +30,12 @@ abstract public class TaskNavigationAction extends DumbAwareAction {
   public void navigateTask(Project project) {
     Editor selectedEditor = StudyEditor.getSelectedEditor(project);
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    assert selectedEditor != null;
     VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
-    StudyTaskManager taskManager = StudyTaskManager.getInstance(selectedEditor.getProject());
+    StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+    assert openedFile != null;
     TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
+    assert selectedTaskFile != null;
     Task currentTask = selectedTaskFile.getTask();
     Task nextTask = getTargetTask(currentTask);
     if (nextTask == null) {

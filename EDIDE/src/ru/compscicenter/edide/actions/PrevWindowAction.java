@@ -18,8 +18,11 @@ import ru.compscicenter.edide.editor.StudyEditor;
  * data: 6/30/14.
  */
 public class PrevWindowAction extends DumbAwareAction {
+  public static final String ACTION_ID = "PrevWindowAction";
+  public static final String SHORTCUT = "ctrl pressed COMMA";
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
+    assert project != null;
     Editor selectedEditor = StudyEditor.getSelectedEditor(project);
     if (selectedEditor != null) {
       FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();

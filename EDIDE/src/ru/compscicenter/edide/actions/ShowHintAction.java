@@ -23,12 +23,10 @@ import ru.compscicenter.edide.editor.StudyEditor;
 
 import java.io.File;
 
-/**
- * author: liana
- * data: 7/21/14.
- */
-
 public class ShowHintAction extends DumbAwareAction {
+  public static final String ACTION_ID = "ShowHintAction";
+  public static final String SHORTCUT = "ctrl pressed 7";
+
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
     if (project != null) {
@@ -36,36 +34,42 @@ public class ShowHintAction extends DumbAwareAction {
       DocumentationComponent component = new DocumentationComponent(documentationManager);
       Editor selectedEditor = StudyEditor.getSelectedEditor(project);
       FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+      assert selectedEditor != null;
       VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
       if (openedFile != null) {
         StudyTaskManager taskManager = StudyTaskManager.getInstance(e.getProject());
         TaskFile taskFile = taskManager.getTaskFile(openedFile);
-        PsiFile file = PsiManager.getInstance(project).findFile(openedFile);
-        if (file != null) {
-          LogicalPosition pos = selectedEditor.getCaretModel().getLogicalPosition();
-          TaskWindow taskWindow = taskFile.getTaskWindow(selectedEditor.getDocument(), pos);
-          if (taskWindow != null) {
-            String hint = taskWindow.getHint();
-            File resourceFile = new File(taskManager.getCourse().getResourcePath());
-            File resourceRoot = resourceFile.getParentFile();
-            if (resourceRoot != null && resourceRoot.exists()) {
-              File hintsDir = new File(resourceRoot, Course.HINTS_DIR);
-              if (hintsDir.exists()) {
-                String hintText = StudyUtils.getFileText(hintsDir.getAbsolutePath(), hint, true);
-                if (hintText != null) {
-                  int offset = selectedEditor.getDocument().getLineStartOffset(pos.line) + pos.column;
-                  PsiElement element = file.findElementAt(offset);
-                  if (element != null) {
-                    component.setData(element, hintText, true);
-                    final JBPopup popup =
-                      JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
-                        .setDimensionServiceKey(project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
-                        .setResizable(true)
-                        .setMovable(true)
-                        .setRequestFocus(true)
-                        .createPopup();
-                    component.setHint(popup);
-                    popup.showInFocusCenter();
+        if (taskFile != null) {
+          PsiFile file = PsiManager.getInstance(project).findFile(openedFile);
+          if (file != null) {
+            LogicalPosition pos = selectedEditor.getCaretModel().getLogicalPosition();
+            TaskWindow taskWindow = taskFile.getTaskWindow(selectedEditor.getDocument(), pos);
+            if (taskWindow != null) {
+              String hint = taskWindow.getHint();
+              Course course = taskManager.getCourse();
+              if (course != null) {
+                File resourceFile = new File(course.getResourcePath());
+                File resourceRoot = resourceFile.getParentFile();
+                if (resourceRoot != null && resourceRoot.exists()) {
+                  File hintsDir = new File(resourceRoot, Course.HINTS_DIR);
+                  if (hintsDir.exists()) {
+                    String hintText = StudyUtils.getFileText(hintsDir.getAbsolutePath(), hint, true);
+                    if (hintText != null) {
+                      int offset = selectedEditor.getDocument().getLineStartOffset(pos.line) + pos.column;
+                      PsiElement element = file.findElementAt(offset);
+                      if (element != null) {
+                        component.setData(element, hintText, true);
+                        final JBPopup popup =
+                          JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
+                            .setDimensionServiceKey(project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
+                            .setResizable(true)
+                            .setMovable(true)
+                            .setRequestFocus(true)
+                            .createPopup();
+                        component.setHint(popup);
+                        popup.showInFocusCenter();
+                      }
+                    }
                   }
                 }
               }

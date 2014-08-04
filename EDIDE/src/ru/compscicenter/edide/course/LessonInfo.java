@@ -1,8 +1,7 @@
 package ru.compscicenter.edide.course;
 
 /**
- * author: liana
- * data: 7/28/14.
+ * Implementation of class which contains information about student progress in current lesson
  */
 public class LessonInfo {
   private int myTaskNum;

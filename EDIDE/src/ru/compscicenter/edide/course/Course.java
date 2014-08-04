@@ -3,16 +3,13 @@ package ru.compscicenter.edide.course;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: lia
- * Date: 21.06.14
- */
 public class Course {
 
   private static final Logger LOG = Logger.getInstance(Course.class.getName());
@@ -47,9 +44,9 @@ public class Course {
    * Creates course directory in project user created
    *
    * @param baseDir      project directory
-   * @param resourceRoot directory where original course stored
+   * @param resourceRoot directory where original course is stored
    */
-  public void create(final VirtualFile baseDir, final File resourceRoot) {
+  public void create(@NotNull final VirtualFile baseDir, @NotNull final File resourceRoot) {
     ApplicationManager.getApplication().invokeLater(
       new Runnable() {
         @Override
@@ -60,10 +57,10 @@ public class Course {
               try {
                 VirtualFile courseDir = baseDir.createChildDirectory(this, COURSE_DIR);
                 for (int i = 0; i < lessons.size(); i++) {
-                  lessons.get(i).setIndex(i);
-                  lessons.get(i).create(courseDir, resourceRoot);
+                  Lesson lesson = lessons.get(i);
+                  lesson.setIndex(i);
+                  lesson.create(courseDir, resourceRoot);
                 }
-                //we need z because we want this folder shown last in project tree
                 baseDir.createChildDirectory(this, PLAYGROUND_DIR);
               }
               catch (IOException e) {
@@ -79,7 +76,7 @@ public class Course {
     return name;
   }
 
-  public void setResourcePath(String resourcePath) {
+  public void setResourcePath(@NotNull final String resourcePath) {
     myResourcePath = resourcePath;
   }
 

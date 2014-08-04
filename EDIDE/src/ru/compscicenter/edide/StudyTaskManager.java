@@ -20,6 +20,9 @@ import icons.StudyIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.compscicenter.edide.actions.NextWindowAction;
+import ru.compscicenter.edide.actions.PrevWindowAction;
+import ru.compscicenter.edide.actions.ShowHintAction;
 import ru.compscicenter.edide.course.Course;
 import ru.compscicenter.edide.course.Lesson;
 import ru.compscicenter.edide.course.Task;
@@ -32,11 +35,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * User: lia
- * Date: 26.12.13
- * Time: 20:37
+ * Implementation of class which contains all the information
+ * about study in context of current project
  */
-
 
 @State(
   name = "StudySettings",
@@ -59,12 +60,13 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     myCourse = course;
   }
 
-  private StudyTaskManager(Project project) {
+  private StudyTaskManager(@NotNull final Project project) {
     myTaskManagers.put(project.getBasePath(), this);
     myProject = project;
   }
 
 
+  @Nullable
   public Course getCourse() {
     return myCourse;
   }
@@ -100,25 +102,27 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
             if (myCourse != null) {
               UISettings.getInstance().HIDE_TOOL_STRIPES = false;
               UISettings.getInstance().fireUISettingsChanged();
-              ToolWindowManager.getInstance(myProject).registerToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW, true, ToolWindowAnchor.RIGHT, myProject, true);
-              final ToolWindow newWindow = ToolWindowManager.getInstance(myProject).getToolWindow("StudyToolWindow");
-              if (newWindow != null) {
+              ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+              String toolWindowId = StudyToolWindowFactory.STUDY_TOOL_WINDOW;
+              toolWindowManager
+                .registerToolWindow(toolWindowId, true, ToolWindowAnchor.RIGHT, myProject, true);
+              final ToolWindow studyToolWindow = toolWindowManager.getToolWindow(toolWindowId);
+              if (studyToolWindow != null) {
                 StudyUtils.updateStudyToolWindow(myProject);
-                newWindow.setIcon(StudyIcons.ShortcutReminder);
-                newWindow.show(null);
+                studyToolWindow.setIcon(StudyIcons.ShortcutReminder);
+                studyToolWindow.show(null);
               }
-              addShortcut("ctrl pressed PERIOD", "NextWindow");
-              addShortcut("ctrl pressed COMMA", "PrevWindowAction");
-              addShortcut("ctrl pressed 7", "ShowHintAction");
+              addShortcut(NextWindowAction.SHORTCUT, NextWindowAction.ACTION_ID);
+              addShortcut(PrevWindowAction.SHORTCUT, PrevWindowAction.ACTION_ID);
+              addShortcut(ShowHintAction.SHORTCUT, ShowHintAction.ACTION_ID);
             }
           }
         });
       }
     });
-    System.out.println();
   }
 
-  private void addShortcut(String shortcutString, String actionIdString) {
+  private void addShortcut(@NotNull final String shortcutString, @NotNull final String actionIdString) {
     Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
     Shortcut studyActionShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(shortcutString), null);
     String[] actionsIds = keymap.getActionIds(studyActionShortcut);
@@ -160,24 +164,32 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     return "StudyTaskManager";
   }
 
-  public static StudyTaskManager getInstance(Project project) {
+  public static StudyTaskManager getInstance(@NotNull final Project project) {
     StudyTaskManager item = myTaskManagers.get(project.getBasePath());
-    if (item != null) {
-      return item;
-    }
-    return new StudyTaskManager(project);
+    return item != null ? item : new StudyTaskManager(project);
   }
 
-  private int getIndex(String fullName, String logicalName) {
+  /**
+   * Gets number index in directory names like "task1", "lesson2"
+   *
+   * @param fullName    full name of directory
+   * @param logicalName part of name without index
+   * @return index of object
+   */
+  private int getIndex(@NotNull final String fullName, @NotNull final String logicalName) {
+    if (!fullName.contains(logicalName)) {
+      throw new IllegalArgumentException();
+    }
     return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
   }
 
-  public TaskFile getTaskFile(VirtualFile file) {
-    VirtualFile fileParent = file.getParent();
-    if (fileParent != null) {
-      String taskDirName = fileParent.getName();
+  @Nullable
+  public TaskFile getTaskFile(@NotNull final VirtualFile file) {
+    VirtualFile taskDir = file.getParent();
+    if (taskDir != null) {
+      String taskDirName = taskDir.getName();
       if (taskDirName.contains(Task.TASK_DIR)) {
-        VirtualFile lessonDir = fileParent.getParent();
+        VirtualFile lessonDir = taskDir.getParent();
         if (lessonDir != null) {
           String lessonDirName = lessonDir.getName();
           int lessonIndex = getIndex(lessonDirName, Lesson.LESSON_DIR);

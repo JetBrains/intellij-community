@@ -1,8 +1,7 @@
 package ru.compscicenter.edide.course;
 
 /**
- * author: liana
- * data: 7/24/14.
+ * @see {@link ru.compscicenter.edide.course.TaskWindow#myStatus}
  */
 public enum StudyStatus {
   Unchecked, Solved, Failed

@@ -24,15 +24,18 @@ public class StudyRunAction extends DumbAwareAction {
   public void run(Project project) {
     Editor selectedEditor = StudyEditor.getSelectedEditor(project);
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    assert selectedEditor != null;
     VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
-    StudyTaskManager taskManager = StudyTaskManager.getInstance(selectedEditor.getProject());
+    StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
     if (openedFile != null && openedFile.getCanonicalPath() != null) {
       String filePath = openedFile.getCanonicalPath();
       GeneralCommandLine cmd = new GeneralCommandLine();
       cmd.setWorkDirectory(openedFile.getParent().getCanonicalPath());
+      //TODO: find SDK
       cmd.setExePath("python");
       cmd.addParameter(filePath);
       TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
+      assert selectedTaskFile != null;
       Task currentTask = selectedTaskFile.getTask();
       if (currentTask.getInput() != null) {
         cmd.addParameter(currentTask.getInput());
@@ -50,6 +53,6 @@ public class StudyRunAction extends DumbAwareAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    // TODO: insert action logic here
+    run(e.getProject());
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,23 +32,29 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
     Collection<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
     for (AbstractTreeNode node : children) {
       Project project = node.getProject();
-      if (node.getValue() instanceof PsiDirectory) {
-        PsiDirectory nodeValue = (PsiDirectory)node.getValue();
-        StudyDirectoryNode newNode = new StudyDirectoryNode(project, nodeValue, settings);
-        nodes.add(newNode);
-      }
-      else {
-        if (parent instanceof StudyDirectoryNode) {
-          if (node instanceof PsiFileNode) {
-            PsiFileNode psiFileNode = (PsiFileNode)node;
-            TaskFile taskFile = StudyTaskManager.getInstance(project).getTaskFile(psiFileNode.getVirtualFile());
-            if (taskFile != null) {
-              nodes.add(node);
-            }
-            String parentName = parent.getName();
-            if (parentName != null) {
-              if (parentName.equals("Playground")) {
+      if (project != null) {
+        if (node.getValue() instanceof PsiDirectory) {
+          PsiDirectory nodeValue = (PsiDirectory)node.getValue();
+          StudyDirectoryNode newNode = new StudyDirectoryNode(project, nodeValue, settings);
+          nodes.add(newNode);
+        }
+        else {
+          if (parent instanceof StudyDirectoryNode) {
+            if (node instanceof PsiFileNode) {
+              PsiFileNode psiFileNode = (PsiFileNode)node;
+              VirtualFile virtualFile = psiFileNode.getVirtualFile();
+              if (virtualFile == null) {
+                return nodes;
+              }
+              TaskFile taskFile = StudyTaskManager.getInstance(project).getTaskFile(virtualFile);
+              if (taskFile != null) {
                 nodes.add(node);
+              }
+              String parentName = parent.getName();
+              if (parentName != null) {
+                if (parentName.equals("Playground")) {
+                  nodes.add(node);
+                }
               }
             }
           }

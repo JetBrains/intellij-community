@@ -1,17 +1,13 @@
 package ru.compscicenter.edide.course;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: lia
- * Date: 21.06.14
- * Time: 18:40
- */
 public class Lesson {
   public String name;
   public List<Task> taskList = new ArrayList<Task>();
@@ -46,12 +42,13 @@ public class Lesson {
    * @param resourceRoot directory where original lesson stored
    * @throws IOException
    */
-  public void create(VirtualFile courseDir, File resourceRoot) throws IOException {
+  public void create(@NotNull final VirtualFile courseDir, @NotNull final File resourceRoot) throws IOException {
     String lessonDirName = LESSON_DIR + Integer.toString(myIndex + 1);
     VirtualFile lessonDir = courseDir.createChildDirectory(this, lessonDirName);
     for (int i = 0; i < taskList.size(); i++) {
-      taskList.get(i).setIndex(i);
-      taskList.get(i).create(lessonDir, new File(resourceRoot, lessonDir.getName()));
+      Task task = taskList.get(i);
+      task.setIndex(i);
+      task.create(lessonDir, new File(resourceRoot, lessonDir.getName()));
     }
   }
 
@@ -61,7 +58,7 @@ public class Lesson {
    *
    * @param course course which lesson belongs to
    */
-  public void init(Course course, boolean isRestarted) {
+  public void init(final Course course, boolean isRestarted) {
     myCourse = course;
     myLessonInfo.setTaskNum(taskList.size());
     myLessonInfo.setTaskUnchecked(taskList.size());
@@ -71,10 +68,11 @@ public class Lesson {
   }
 
   public Lesson next() {
-    if (myIndex + 1 >= myCourse.getLessons().size()) {
+    List<Lesson> lessons = myCourse.getLessons();
+    if (myIndex + 1 >= lessons.size()) {
       return null;
     }
-    return myCourse.getLessons().get(myIndex + 1);
+    return lessons.get(myIndex + 1);
   }
 
   public void setIndex(int index) {

@@ -6,6 +6,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.ui.UIUtil;
 import ru.compscicenter.edide.editor.StudyEditor;
 import ru.compscicenter.edide.ui.StudyToolWindowFactory;
 
@@ -38,9 +39,6 @@ public class StudyUtils {
   public static String getFileText(String parentDir, String fileName, boolean wrapHTML) {
     File inputFile = new File(parentDir, fileName);
     StringBuilder taskText = new StringBuilder();
-    if (wrapHTML) {
-      taskText.append("<html>");
-    }
     BufferedReader reader = null;
     try {
       reader = new BufferedReader(new InputStreamReader(new FileInputStream(inputFile)));
@@ -51,10 +49,7 @@ public class StudyUtils {
           taskText.append("<br>");
         }
       }
-      if (wrapHTML) {
-        taskText.append("</html>");
-      }
-      return taskText.toString();
+      return UIUtil.toHtml(taskText.toString());
     }
     catch (IOException e) {
       e.printStackTrace();

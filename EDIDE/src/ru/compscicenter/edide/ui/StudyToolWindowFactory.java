@@ -32,6 +32,9 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
       contentPanel.add(Box.createRigidArea(new Dimension(10, 0)));
       StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
       Course course = taskManager.getCourse();
+      if (course == null) {
+        return;
+      }
       String courseName = UIUtil.toHtml("<h1>" + course.getName() + "</h1>", 10);
       String description = UIUtil.toHtml(course.getDescription(), 5);
       String author = taskManager.getCourse().getAuthor();
@@ -43,14 +46,13 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
 
       int taskNum = 0;
       int taskSolved = 0;
-      int taskFailed = 0;
+      //int taskFailed = 0;
       for (Lesson lesson : course.getLessons()) {
         LessonInfo lessonInfo = lesson.getLessonInfo();
         taskNum += lessonInfo.getTaskNum();
-        taskFailed += lessonInfo.getTaskFailed();
+        //taskFailed += lessonInfo.getTaskFailed();
         taskSolved += lessonInfo.getTaskSolved();
       }
-      int taskUnchecked = taskNum - taskSolved - taskFailed;
       double percent = (taskSolved * 100.0) / taskNum;
       String statistics = UIUtil.toHtml(Math.floor(percent) + "% of course is passed", 5);
       contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -58,7 +60,6 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
       contentPanel.add(statisticLabel);
       contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
       StudyProgressBar studyProgressBar = new StudyProgressBar(percent / 100, JBColor.GREEN, 40, 10);
-      //studyProgressBar.setFraction(percent);
       contentPanel.add(studyProgressBar);
 
       ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();

@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import icons.StudyIcons;
+import org.jetbrains.annotations.NotNull;
 import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.course.*;
 
@@ -20,7 +21,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
   private PsiDirectory myValue;
   private Project myProject;
 
-  public StudyDirectoryNode(Project project,
+  public StudyDirectoryNode(@NotNull final Project project,
                             PsiDirectory value,
                             ViewSettings viewSettings) {
     super(project, value, viewSettings);
@@ -33,11 +34,12 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
   protected void updateImpl(PresentationData data) {
     data.setIcon(StudyIcons.UncheckedTask);
     String valueName = myValue.getName();
+    StudyTaskManager studyTaskManager = StudyTaskManager.getInstance(myProject);
     if (valueName.contains(Task.TASK_DIR)) {
       TaskFile file = null;
       for (PsiElement child : myValue.getChildren()) {
         VirtualFile virtualFile = child.getContainingFile().getVirtualFile();
-        file = StudyTaskManager.getInstance(myProject).getTaskFile(virtualFile);
+        file = studyTaskManager.getTaskFile(virtualFile);
         if (file != null) {
           break;
         }
@@ -53,9 +55,13 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
       }
     }
 
+    Course course = studyTaskManager.getCourse();
+    if (course == null) {
+      return;
+    }
     if (valueName.contains(Lesson.LESSON_DIR)) {
       int lessonIndex = Integer.parseInt(valueName.substring(Lesson.LESSON_DIR.length())) - 1;
-      Lesson lesson = StudyTaskManager.getInstance(myProject).getCourse().getLessons().get(lessonIndex);
+      Lesson lesson = course.getLessons().get(lessonIndex);
       if (lesson.getStatus() == StudyStatus.Solved) {
         data.setIcon(StudyIcons.CheckedTask);
       }
@@ -73,7 +79,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     PsiDirectory parent = myValue.getParent();
     if (parent != null) {
       if (myProject.getName().equals(parent.getName()) && valueName.contains(Course.COURSE_DIR)) {
-        data.setPresentableText(StudyTaskManager.getInstance(myProject).getCourse().getName());
+        data.setPresentableText(course.getName());
         return;
       }
     }

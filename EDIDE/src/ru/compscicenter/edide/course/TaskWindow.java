@@ -12,9 +12,6 @@ import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * User: lia
- * Date: 21.06.14
- * Time: 18:54
  * Implementation of windows which user should type in
  */
 
@@ -74,14 +71,15 @@ public class TaskWindow implements Comparable {
   /**
    * Draw task window with color according to its status
    */
-  public void draw(Editor editor, boolean drawSelection, boolean moveCaret) {
-    if (!isValid(editor.getDocument())) {
+  public void draw(@NotNull final Editor editor, boolean drawSelection, boolean moveCaret) {
+    Document document = editor.getDocument();
+    if (!isValid(document)) {
       return;
     }
     TextAttributes defaultTestAttributes =
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.LIVE_TEMPLATE_ATTRIBUTES);
     JBColor color = getColor();
-    int startOffset = editor.getDocument().getLineStartOffset(line) + start;
+    int startOffset = document.getLineStartOffset(line) + start;
     RangeHighlighter
       rh = editor.getMarkupModel().addRangeHighlighter(startOffset, startOffset + myLength, HighlighterLayer.LAST + 1,
                                                        new TextAttributes(defaultTestAttributes.getForegroundColor(),
@@ -99,12 +97,11 @@ public class TaskWindow implements Comparable {
     rh.setGreedyToRight(true);
   }
 
-  private boolean isValid(Document document) {
+  private boolean isValid(@NotNull final Document document) {
     boolean isLineValid = line < document.getLineCount() && line >= 0;
-    boolean isStartValid = start >=0 && start < document.getLineEndOffset(line);
+    boolean isStartValid = start >= 0 && start < document.getLineEndOffset(line);
     boolean isLengthValid = (getRealStartOffset(document) + myLength) < document.getTextLength();
     return isLengthValid && isStartValid && isLineValid;
-
   }
 
   private JBColor getColor() {
@@ -117,7 +114,7 @@ public class TaskWindow implements Comparable {
     return JBColor.BLUE;
   }
 
-  public int getRealStartOffset(Document document) {
+  public int getRealStartOffset(@NotNull final Document document) {
     return document.getLineStartOffset(line) + start;
   }
 
@@ -126,7 +123,7 @@ public class TaskWindow implements Comparable {
    *
    * @param file task file which window belongs to
    */
-  public void init(TaskFile file, boolean isRestarted) {
+  public void init(final TaskFile file, boolean isRestarted) {
     if (!isRestarted) {
       myInitialLine = line;
       myLength = text.length();
