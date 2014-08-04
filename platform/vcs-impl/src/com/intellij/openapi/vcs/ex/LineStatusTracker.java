@@ -62,7 +62,7 @@ public class LineStatusTracker {
   private BaseLoadState myBaseLoaded;
 
   private final Document myDocument;
-  private final Document myUpToDateDocument;
+  private final Document myVcsDocument;
 
   private List<Range> myRanges;
 
@@ -82,14 +82,14 @@ public class LineStatusTracker {
   private boolean myReleased = false;
 
   private LineStatusTracker(@NotNull final Document document,
-                            @NotNull final Document upToDateDocument,
+                            @NotNull final Document vcsDocument,
                             final Project project,
                             @Nullable final VirtualFile virtualFile) {
     myVirtualFile = virtualFile;
     myApplication = ApplicationManager.getApplication();
     myDocument = document;
-    myUpToDateDocument = upToDateDocument;
-    myUpToDateDocument.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
+    myVcsDocument = vcsDocument;
+    myVcsDocument.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
     myProject = project;
     myBaseLoaded = BaseLoadState.LOADING;
     myRanges = new ArrayList<Range>();
@@ -98,7 +98,7 @@ public class LineStatusTracker {
     myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
   }
 
-  public void initialize(@NotNull final String upToDateContent, @NotNull RevisionPack baseRevisionNumber) {
+  public void initialize(@NotNull final String vcsContent, @NotNull RevisionPack baseRevisionNumber) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     synchronized (myLock) {
@@ -109,9 +109,9 @@ public class LineStatusTracker {
         myBaseRevisionNumber = baseRevisionNumber;
         myPreviousBaseRevision = null;
 
-        myUpToDateDocument.setReadOnly(false);
-        myUpToDateDocument.replaceString(0, myUpToDateDocument.getTextLength(), upToDateContent);
-        myUpToDateDocument.setReadOnly(true);
+        myVcsDocument.setReadOnly(false);
+        myVcsDocument.replaceString(0, myVcsDocument.getTextLength(), vcsContent);
+        myVcsDocument.setReadOnly(true);
         reinstallRanges();
 
         if (myDocumentListener == null) {
@@ -146,7 +146,7 @@ public class LineStatusTracker {
       removeAnathema();
       removeHighlightersFromMarkupModel();
       try {
-        myRanges = new RangesBuilder(myDocument, myUpToDateDocument).getRanges();
+        myRanges = new RangesBuilder(myDocument, myVcsDocument).getRanges();
       }
       catch (FilesTooBigForDiffException e) {
         myRanges.clear();
@@ -177,10 +177,10 @@ public class LineStatusTracker {
     LOG.assertTrue(!myReleased, "Already released");
 
     int first =
-      range.getOffset1() >= getLineCount(myDocument) ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getOffset1());
+      range.getLine1() >= getLineCount(myDocument) ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getLine1());
 
     int second =
-      range.getOffset2() >= getLineCount(myDocument) ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getOffset2());
+      range.getLine2() >= getLineCount(myDocument) ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getLine2());
 
     final RangeHighlighter highlighter = DocumentMarkupModel.forDocument(myDocument, myProject, true)
       .addRangeHighlighter(first, second, HighlighterLayer.FIRST - 1, null, HighlighterTargetArea.LINES_IN_RANGE);
@@ -194,19 +194,19 @@ public class LineStatusTracker {
     highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
 
     final String tooltip;
-    if (range.getOffset1() == range.getOffset2()) {
-      if (range.getUOffset1() + 1 == range.getUOffset2()) {
-        tooltip = VcsBundle.message("tooltip.text.line.before.deleted", range.getOffset1() + 1);
+    if (range.getLine1() == range.getLine2()) {
+      if (range.getVcsLine1() + 1 == range.getVcsLine2()) {
+        tooltip = VcsBundle.message("tooltip.text.line.before.deleted", range.getLine1() + 1);
       }
       else {
-        tooltip = VcsBundle.message("tooltip.text.lines.before.deleted", range.getOffset1() + 1, range.getUOffset2() - range.getUOffset1());
+        tooltip = VcsBundle.message("tooltip.text.lines.before.deleted", range.getLine1() + 1, range.getVcsLine2() - range.getVcsLine1());
       }
     }
-    else if (range.getOffset1() + 1 == range.getOffset2()) {
-      tooltip = VcsBundle.message("tooltip.text.line.changed", range.getOffset1() + 1);
+    else if (range.getLine1() + 1 == range.getLine2()) {
+      tooltip = VcsBundle.message("tooltip.text.line.changed", range.getLine1() + 1);
     }
     else {
-      tooltip = VcsBundle.message("tooltip.text.lines.changed", range.getOffset1() + 1, range.getOffset2());
+      tooltip = VcsBundle.message("tooltip.text.lines.changed", range.getLine1() + 1, range.getLine2());
     }
 
     highlighter.setErrorStripeTooltip(tooltip);
@@ -240,9 +240,9 @@ public class LineStatusTracker {
     }
   }
 
-  public Document getUpToDateDocument() {
+  public Document getVcsDocument() {
     myApplication.assertIsDispatchThread();
-    return myUpToDateDocument;
+    return myVcsDocument;
   }
 
   public void startBulkUpdate() {
@@ -287,11 +287,11 @@ public class LineStatusTracker {
       // there can be multiple resets before init -> take from document only firts time -> when right after install(),
       // where myPreviousBaseRevision become null
       if (BaseLoadState.LOADED.equals(myBaseLoaded) && myPreviousBaseRevision == null) {
-        myPreviousBaseRevision = myUpToDateDocument.getText();
+        myPreviousBaseRevision = myVcsDocument.getText();
       }
-      myUpToDateDocument.setReadOnly(false);
-      myUpToDateDocument.setText("");
-      myUpToDateDocument.setReadOnly(true);
+      myVcsDocument.setReadOnly(false);
+      myVcsDocument.setText("");
+      myVcsDocument.setReadOnly(true);
       removeAnathema();
       removeHighlightersFromMarkupModel();
       myBaseLoaded = BaseLoadState.LOADING;
@@ -300,13 +300,13 @@ public class LineStatusTracker {
 
   private class MyDocumentListener extends DocumentAdapter {
     // We have 3 document versions:
-    // * VCS version - upToDate*
-    // * before change - my*
-    // * after change - current*
+    // * VCS version
+    // * before change
+    // * after change
 
-    private int myFirstChangedLine;
-    private int myLastChangedLine;
-    private int myTotalLines;
+    private int myBeforeFirstChangedLine;
+    private int myBeforeLastChangedLine;
+    private int myBeforeTotalLines;
 
     @Override
     public void beforeDocumentChange(DocumentEvent e) {
@@ -318,10 +318,10 @@ public class LineStatusTracker {
         assert myDocument == e.getDocument();
 
         try {
-          myFirstChangedLine = myDocument.getLineNumber(e.getOffset());
-          myLastChangedLine = e.getOldLength() == 0 ? myFirstChangedLine : myDocument.getLineNumber(e.getOffset() + e.getOldLength() - 1);
-          if (StringUtil.endsWithChar(e.getOldFragment(), '\n')) myLastChangedLine++;
-          myTotalLines = getLineCount(myDocument);
+          myBeforeFirstChangedLine = myDocument.getLineNumber(e.getOffset());
+          myBeforeLastChangedLine = e.getOldLength() == 0 ? myBeforeFirstChangedLine : myDocument.getLineNumber(e.getOffset() + e.getOldLength() - 1);
+          if (StringUtil.endsWithChar(e.getOldFragment(), '\n')) myBeforeLastChangedLine++;
+          myBeforeTotalLines = getLineCount(myDocument);
         }
         catch (ProcessCanceledException ignore) {
         }
@@ -337,56 +337,55 @@ public class LineStatusTracker {
         if (myBulkUpdate || mySuppressUpdate || myAnathemaThrown || BaseLoadState.LOADED != myBaseLoaded) return;
         assert myDocument == e.getDocument();
 
-        int currentFirstChangedLine = myFirstChangedLine;
-        int currentLastChangedLine =
-          e.getNewLength() == 0 ? currentFirstChangedLine : myDocument.getLineNumber(e.getOffset() + e.getNewLength() - 1);
-        if (StringUtil.endsWithChar(e.getNewFragment(), '\n')) currentLastChangedLine++;
+        int afterFirstChangedLine = myBeforeFirstChangedLine;
+        int afterLastChangedLine =
+          e.getNewLength() == 0 ? afterFirstChangedLine : myDocument.getLineNumber(e.getOffset() + e.getNewLength() - 1);
+        if (StringUtil.endsWithChar(e.getNewFragment(), '\n')) afterLastChangedLine++;
 
 
-        doUpdateRanges(myFirstChangedLine, myLastChangedLine, myTotalLines,
-                       currentFirstChangedLine, currentLastChangedLine);
+        doUpdateRanges(myBeforeFirstChangedLine, myBeforeLastChangedLine, myBeforeTotalLines,
+                       afterFirstChangedLine, afterLastChangedLine);
       }
     }
   }
 
-  private void doUpdateRanges(int myFirstChangedLine,
-                              int myLastChangedLine,
-                              int myTotalLines,
-                              int currentFirstChangedLine,
-                              int currentLastChangedLine) {
+  private void doUpdateRanges(int beforeFirstChangedLine,
+                              int beforeLastChangedLine,
+                              int beforeTotalLines,
+                              int afterFirstChangedLine,
+                              int afterLastChangedLine) {
     try {
-      int upToDateTotalLines = getLineCount(myUpToDateDocument);
+      int vcsTotalLines = getLineCount(myVcsDocument);
 
-      int currentChangedLines = currentLastChangedLine - currentFirstChangedLine;
+      int afterChangedLines = afterLastChangedLine - afterFirstChangedLine;
 
-      int myChangedLines = myLastChangedLine - myFirstChangedLine;
-      int linesShift = currentChangedLines - myChangedLines;
+      int beforeChangedLines = beforeLastChangedLine - beforeFirstChangedLine;
+      int linesShift = afterChangedLines - beforeChangedLines;
 
       List<Range> rangesBeforeChange = new ArrayList<Range>();
       List<Range> rangesAfterChange = new ArrayList<Range>();
       List<Range> changedRanges = new ArrayList<Range>();
-      sortRanges(myRanges, myFirstChangedLine, myLastChangedLine, rangesBeforeChange, changedRanges, rangesAfterChange);
+      sortRanges(myRanges, beforeFirstChangedLine, beforeLastChangedLine, rangesBeforeChange, changedRanges, rangesAfterChange);
 
       Range firstChangedRange = ContainerUtil.getFirstItem(changedRanges);
       Range lastChangedRange = ContainerUtil.getLastItem(changedRanges);
       Range lastRangeBefore = ContainerUtil.getLastItem(rangesBeforeChange);
       Range firstRangeAfter = ContainerUtil.getFirstItem(rangesAfterChange);
 
-      if (firstChangedRange != null && firstChangedRange.getOffset1() < myFirstChangedLine) {
-        myFirstChangedLine = firstChangedRange.getOffset1();
+      if (firstChangedRange != null && firstChangedRange.getLine1() < beforeFirstChangedLine) {
+        beforeFirstChangedLine = firstChangedRange.getLine1();
       }
-      if (lastChangedRange != null && lastChangedRange.getOffset2() > myLastChangedLine) {
-        myLastChangedLine = lastChangedRange.getOffset2() - 1;
+      if (lastChangedRange != null && lastChangedRange.getLine2() > beforeLastChangedLine) {
+        beforeLastChangedLine = lastChangedRange.getLine2() - 1;
       }
 
-      currentFirstChangedLine = myFirstChangedLine;
-      currentLastChangedLine = myLastChangedLine + linesShift;
+      afterFirstChangedLine = beforeFirstChangedLine;
+      afterLastChangedLine = beforeLastChangedLine + linesShift;
 
-      int upToDateFirstLine = getUpToDateLine1(lastRangeBefore, myFirstChangedLine);
-      int upToDateLastLine = getUpToDateLine2(firstRangeAfter, myLastChangedLine, myTotalLines, upToDateTotalLines);
+      int vcsFirstLine = getVcsLine1(lastRangeBefore, beforeFirstChangedLine);
+      int vcsLastLine = getVcsLine2(firstRangeAfter, beforeLastChangedLine, beforeTotalLines, vcsTotalLines);
 
-      List<Range> newChangedRanges =
-        getNewChangedRanges(currentFirstChangedLine, currentLastChangedLine, upToDateFirstLine, upToDateLastLine);
+      List<Range> newChangedRanges = getNewChangedRanges(afterFirstChangedLine, afterLastChangedLine, vcsFirstLine, vcsLastLine);
 
       shiftRanges(rangesAfterChange, linesShift);
 
@@ -429,19 +428,19 @@ public class LineStatusTracker {
     }
   }
 
-  private static int getUpToDateLine1(@Nullable Range range, int line) {
-    return range == null ? line : line + range.getUOffset2() - range.getOffset2();
+  private static int getVcsLine1(@Nullable Range range, int line) {
+    return range == null ? line : line + range.getVcsLine2() - range.getLine2();
   }
 
-  private static int getUpToDateLine2(@Nullable Range range, int line, int totalLinesBefore, int totalLinesAfter) {
-    return range == null ? totalLinesAfter - totalLinesBefore + line : line + range.getUOffset1() - range.getOffset1();
+  private static int getVcsLine2(@Nullable Range range, int line, int totalLinesBefore, int totalLinesAfter) {
+    return range == null ? totalLinesAfter - totalLinesBefore + line : line + range.getVcsLine1() - range.getLine1();
   }
 
-  private List<Range> getNewChangedRanges(int firstChangedLine, int lastChangedLine, int upToDateFirstLine, int upToDateLastLine)
+  private List<Range> getNewChangedRanges(int firstChangedLine, int lastChangedLine, int vcsFirstLine, int vcsLastLine)
     throws FilesTooBigForDiffException {
     List<String> lines = new DocumentWrapper(myDocument).getLines(firstChangedLine, lastChangedLine);
-    List<String> uLines = new DocumentWrapper(myUpToDateDocument).getLines(upToDateFirstLine, upToDateLastLine);
-    return new RangesBuilder(lines, uLines, firstChangedLine, upToDateFirstLine).getRanges();
+    List<String> uLines = new DocumentWrapper(myVcsDocument).getLines(vcsFirstLine, vcsLastLine);
+    return new RangesBuilder(lines, uLines, firstChangedLine, vcsFirstLine).getRanges();
   }
 
   private void replaceRanges(@NotNull List<Range> rangesInChange, @NotNull List<Range> newRangesInChange) {
@@ -470,13 +469,13 @@ public class LineStatusTracker {
                                 @NotNull List<Range> changedRanges,
                                 @NotNull List<Range> rangesAfterChange) {
     for (Range range : ranges) {
-      int offset1 = range.getOffset1() - 1;
-      int offset2 = range.getOffset2();
+      int line1 = range.getLine1() - 1;
+      int line2 = range.getLine2();
 
-      if (offset2 < firstChangedLine) {
+      if (line2 < firstChangedLine) {
         rangesBeforeChange.add(range);
       }
-      else if (offset1 > lastChangedLine) {
+      else if (line1 > lastChangedLine) {
         rangesAfterChange.add(range);
       }
       else {
@@ -512,7 +511,7 @@ public class LineStatusTracker {
       }
 
       for (final Range range : myRanges) {
-        if (line > range.getOffset1() || line > range.getOffset2()) {
+        if (line > range.getLine1() || line > range.getLine2()) {
           continue;
         }
         return range;
@@ -531,7 +530,7 @@ public class LineStatusTracker {
 
       for (ListIterator<Range> iterator = myRanges.listIterator(myRanges.size()); iterator.hasPrevious(); ) {
         final Range range = iterator.previous();
-        if (range.getOffset1() > line) {
+        if (range.getLine1() > line) {
           continue;
         }
         return range;
@@ -544,10 +543,10 @@ public class LineStatusTracker {
   public Range getRangeForLine(final int line) {
     synchronized (myLock) {
       for (final Range range : myRanges) {
-        if (range.getType() == Range.DELETED && line == range.getOffset1()) {
+        if (range.getType() == Range.DELETED && line == range.getLine1()) {
           return range;
         }
-        else if (line >= range.getOffset1() && line < range.getOffset2()) {
+        else if (line >= range.getLine1() && line < range.getLine2()) {
           return range;
         }
       }
@@ -561,8 +560,8 @@ public class LineStatusTracker {
       int offset1 = currentTextRange.getStartOffset();
       int offset2 = currentTextRange.getEndOffset();
 
-      CharSequence upToDateContent = getUpToDateContent(range);
-      myDocument.replaceString(offset1, offset2, upToDateContent);
+      CharSequence vcsContent = getVcsContent(range);
+      myDocument.replaceString(offset1, offset2, vcsContent);
     }
     else if (range.getType() == Range.INSERTED) {
       TextRange currentTextRange = getCurrentTextRange(range);
@@ -578,12 +577,12 @@ public class LineStatusTracker {
       myDocument.deleteString(offset1, offset2);
     }
     else if (range.getType() == Range.DELETED) {
-      CharSequence content = getUpToDateContent(range);
-      if (range.getOffset2() == getLineCount(myDocument)) {
+      CharSequence content = getVcsContent(range);
+      if (range.getLine2() == getLineCount(myDocument)) {
         myDocument.insertString(myDocument.getTextLength(), "\n" + content);
       }
       else {
-        myDocument.insertString(myDocument.getLineStartOffset(range.getOffset2()), content + "\n");
+        myDocument.insertString(myDocument.getLineStartOffset(range.getLine2()), content + "\n");
       }
     }
     else {
@@ -625,11 +624,11 @@ public class LineStatusTracker {
         }
 
         boolean check;
-        if (range.getOffset1() == range.getOffset2()) {
-          check = lines.get(range.getOffset1());
+        if (range.getLine1() == range.getLine2()) {
+          check = lines.get(range.getLine1());
         }
         else {
-          check = checkRange(lines, range.getOffset1(), range.getOffset2());
+          check = checkRange(lines, range.getLine1(), range.getLine2());
         }
 
         if (check) {
@@ -641,20 +640,20 @@ public class LineStatusTracker {
           Range shiftedRange = new Range(range);
           shiftedRange.shift(shift);
           doRollbackRange(shiftedRange);
-          shift += (range.getUOffset2() - range.getUOffset1()) - (range.getOffset2() - range.getOffset1());
+          shift += (range.getVcsLine2() - range.getVcsLine1()) - (range.getLine2() - range.getLine1());
         }
       }
 
       if (first != null) {
-        int myFirstChangedLine = first.getOffset1();
-        int myLastChangedLine = first.getOffset1() == last.getOffset2() ? myFirstChangedLine : last.getOffset2() - 1;
-        int currentFirstChangedLine = myFirstChangedLine;
-        int currentLastChangedLine = myLastChangedLine + shift;
+        int beforeFirstChangedLine = first.getLine1();
+        int beforeLastChangedLine = first.getLine1() == last.getLine2() ? beforeFirstChangedLine : last.getLine2() - 1;
+        int afterFirstChangedLine = beforeFirstChangedLine;
+        int afterLastChangedLine = beforeLastChangedLine + shift;
 
-        int myTotalLines = getLineCount(myDocument) - shift;
+        int beforeTotalLines = getLineCount(myDocument) - shift;
 
-        doUpdateRanges(myFirstChangedLine, myLastChangedLine, myTotalLines,
-                       currentFirstChangedLine, currentLastChangedLine);
+        doUpdateRanges(beforeFirstChangedLine, beforeLastChangedLine, beforeTotalLines,
+                       afterFirstChangedLine, afterLastChangedLine);
       }
 
       mySuppressUpdate = false;
@@ -667,12 +666,12 @@ public class LineStatusTracker {
     return next < end;
   }
 
-  public CharSequence getUpToDateContent(@NotNull Range range) {
+  public CharSequence getVcsContent(@NotNull Range range) {
     synchronized (myLock) {
-      TextRange textRange = getUpToDateRange(range);
+      TextRange textRange = getVcsRange(range);
       final int startOffset = textRange.getStartOffset();
       final int endOffset = textRange.getEndOffset();
-      return myUpToDateDocument.getCharsSequence().subSequence(startOffset, endOffset);
+      return myVcsDocument.getCharsSequence().subSequence(startOffset, endOffset);
     }
   }
 
@@ -683,18 +682,18 @@ public class LineStatusTracker {
         LOG.warn("Current TextRange of invalid range");
       }
 
-      return getRange(range.getOffset1(), range.getOffset2(), myDocument);
+      return getRange(range.getLine1(), range.getLine2(), myDocument);
     }
   }
 
   @NotNull
-  TextRange getUpToDateRange(@NotNull Range range) {
+  TextRange getVcsRange(@NotNull Range range) {
     synchronized (myLock) {
       if (!range.isValid()) {
-        LOG.warn("UpToDate TextRange of invalid range");
+        LOG.warn("Vcs TextRange of invalid range");
       }
 
-      return getRange(range.getUOffset1(), range.getUOffset2(), myUpToDateDocument);
+      return getRange(range.getVcsLine1(), range.getVcsLine2(), myVcsDocument);
     }
   }
 
@@ -705,14 +704,14 @@ public class LineStatusTracker {
    * So we consider '\n' not as a part of line, but a separator between lines
    */
   @NotNull
-  private static TextRange getRange(int offset1, int offset2, @NotNull Document document) {
-    if (offset1 == offset2) {
-      int lineStartOffset = offset1 < getLineCount(document) ? document.getLineStartOffset(offset1) : document.getTextLength();
+  private static TextRange getRange(int line1, int line2, @NotNull Document document) {
+    if (line1 == line2) {
+      int lineStartOffset = line1 < getLineCount(document) ? document.getLineStartOffset(line1) : document.getTextLength();
       return new TextRange(lineStartOffset, lineStartOffset);
     }
     else {
-      int startOffset = document.getLineStartOffset(offset1);
-      int endOffset = document.getLineEndOffset(offset2 - 1);
+      int startOffset = document.getLineStartOffset(line1);
+      int endOffset = document.getLineEndOffset(line2 - 1);
       return new TextRange(startOffset, endOffset);
     }
   }

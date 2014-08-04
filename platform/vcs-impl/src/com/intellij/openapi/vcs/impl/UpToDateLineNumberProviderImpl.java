@@ -54,15 +54,15 @@ public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvide
       if (lineInRange(range, start) || lineInRange(range, end)) {
         return true;
       }
-      if (range.getOffset1() > start) {
-        return range.getOffset1() < end;
+      if (range.getLine1() > start) {
+        return range.getLine1() < end;
       }
     }
     return false;
   }
   
   private static boolean lineInRange(final Range range, final int currentNumber) {
-    return range.getOffset1() <= currentNumber && range.getOffset2() >= currentNumber;
+    return range.getLine1() <= currentNumber && range.getLine2() >= currentNumber;
   }
 
   @Override
@@ -72,7 +72,7 @@ public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvide
       return false;
     }
     for (Range range : tracker.getRanges()) {
-      if (range.getOffset1() <= currentNumber && range.getOffset2() >= currentNumber) {
+      if (range.getLine1() <= currentNumber && range.getLine2() >= currentNumber) {
         return true;
       }
     }
@@ -111,8 +111,8 @@ public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvide
 
     for (final Object range1 : ranges) {
       Range range = (Range)range1;
-      int startOffset = range.getOffset1();
-      int endOffset = range.getOffset2();
+      int startOffset = range.getLine1();
+      int endOffset = range.getLine2();
 
       if ((startOffset <= currentNumber) && (endOffset > currentNumber)) {
         return ABSENT_LINE_NUMBER;
