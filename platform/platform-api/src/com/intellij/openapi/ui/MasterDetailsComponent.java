@@ -960,7 +960,11 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
                                                                 myPreselection != null ? myPreselection.getDefaultIndex() : 0, true);
       final ListPopup listPopup = popupFactory.createListPopup(step);
       listPopup.setHandleAutoSelectionBeforeShow(true);
-      listPopup.showUnderneathOf(myNorthPanel);
+      if (e instanceof AnActionButton.AnActionEventWrapper) {
+        ((AnActionButton.AnActionEventWrapper)e).showPopup(listPopup);
+      } else {
+        listPopup.showUnderneathOf(myNorthPanel);
+      }
     }
   }
 
