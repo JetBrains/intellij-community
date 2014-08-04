@@ -75,6 +75,9 @@ public class TaskWindow implements Comparable {
    * Draw task window with color according to its status
    */
   public void draw(Editor editor, boolean drawSelection, boolean moveCaret) {
+    if (!isValid(editor.getDocument())) {
+      return;
+    }
     TextAttributes defaultTestAttributes =
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.LIVE_TEMPLATE_ATTRIBUTES);
     JBColor color = getColor();
@@ -94,6 +97,14 @@ public class TaskWindow implements Comparable {
     }
     rh.setGreedyToLeft(true);
     rh.setGreedyToRight(true);
+  }
+
+  private boolean isValid(Document document) {
+    boolean isLineValid = line < document.getLineCount() && line >= 0;
+    boolean isStartValid = start >=0 && start < document.getLineEndOffset(line);
+    boolean isLengthValid = (getRealStartOffset(document) + myLength) < document.getTextLength();
+    return isLengthValid && isStartValid && isLineValid;
+
   }
 
   private JBColor getColor() {

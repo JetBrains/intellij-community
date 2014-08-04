@@ -18,6 +18,7 @@ import ru.compscicenter.edide.course.TaskWindow;
 public class StudyDocumentListener extends DocumentAdapter {
   private final TaskFile myTaskFile;
   private int oldLine;
+  private int oldLineStartOffset;
 
   public StudyDocumentListener(TaskFile taskFile) {
     myTaskFile = taskFile;
@@ -29,7 +30,9 @@ public class StudyDocumentListener extends DocumentAdapter {
   @Override
   public void beforeDocumentChange(DocumentEvent e) {
     int oldEnd = e.getOffset() + e.getOldLength();
-    oldLine = e.getDocument().getLineNumber(oldEnd);
+    Document document = e.getDocument();
+    oldLine = document.getLineNumber(oldEnd);
+    oldLineStartOffset = document.getLineStartOffset(oldLine);
   }
 
   @Override
@@ -52,7 +55,7 @@ public class StudyDocumentListener extends DocumentAdapter {
       int lineChange = newLine - oldLine;
       myTaskFile.incrementLines(oldLine + 1, lineChange);
       int newEndOffsetInLine = offset + e.getNewLength() - document.getLineStartOffset(newLine);
-      int oldEndOffsetInLine = offset + e.getOldLength() - document.getLineStartOffset(oldLine);
+      int oldEndOffsetInLine = offset + e.getOldLength() - oldLineStartOffset;
       myTaskFile.updateLine(lineChange, oldLine, newEndOffsetInLine, oldEndOffsetInLine);
     }
   }

@@ -8,6 +8,8 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -45,7 +47,7 @@ import java.util.Map;
       scheme = StorageScheme.DIRECTORY_BASED
     )}
 )
-public class StudyTaskManager implements ProjectComponent, PersistentStateComponent<Element> {
+public class StudyTaskManager implements ProjectComponent, PersistentStateComponent<Element>, DumbAware {
   public static final String COURSE_ELEMENT = "courseElement";
   private static Map<String, StudyTaskManager> myTaskManagers = new HashMap<String, StudyTaskManager>();
   private static Map<String, String> myDeletedShortcuts = new HashMap<String, String>();
@@ -89,10 +91,10 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
 
   @Override
   public void projectOpened() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        ApplicationManager.getApplication().runWriteAction(new DumbAwareRunnable() {
           @Override
           public void run() {
             if (myCourse != null) {

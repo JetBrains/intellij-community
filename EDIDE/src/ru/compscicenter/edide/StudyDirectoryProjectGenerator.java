@@ -73,10 +73,6 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
     mySelectedCourseFile = courseFile;
   }
 
-  public File getSelectedCourseFile() {
-    return mySelectedCourseFile;
-  }
-
   /**
    * Adds course to courses specified in params
    *
