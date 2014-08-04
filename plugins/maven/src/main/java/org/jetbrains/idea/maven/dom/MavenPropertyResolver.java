@@ -81,10 +81,10 @@ public class MavenPropertyResolver {
                                    @Nullable Map<String, String> resolvedPropertiesParam,
                                    Appendable out) throws IOException {
     Map<String, String> resolvedProperties = resolvedPropertiesParam;
-    
+
     Matcher matcher = pattern.matcher(text);
     int groupCount = matcher.groupCount();
-    
+
     int last = 0;
     while (matcher.find()) {
       if (escapeString != null) {
@@ -116,7 +116,7 @@ public class MavenPropertyResolver {
       if (resolvedProperties == null) {
         resolvedProperties = new HashMap<String, String>();
       }
-      
+
       String propertyValue = resolvedProperties.get(propertyName);
       if (propertyValue == null) {
         if (resolvedProperties.containsKey(propertyName)) { // if cyclic property dependencies
@@ -146,7 +146,7 @@ public class MavenPropertyResolver {
         out.append(propertyValue);
       }
     }
-    
+
     out.append(text, last, text.length());
   }
 
@@ -177,10 +177,10 @@ public class MavenPropertyResolver {
 
     collectPropertiesFromDOM(projectDom.getProperties(), result);
 
-    Collection<String> activePropfiles = project.getActivatedProfilesIds();
+    Collection<String> activeProfiles = project.getActivatedProfilesIds().getEnabledProfiles();
     for (MavenDomProfile each : projectDom.getProfiles().getProfiles()) {
       XmlTag idTag = each.getId().getXmlTag();
-      if (idTag == null || !activePropfiles.contains(idTag.getValue().getTrimmedText())) continue;
+      if (idTag == null || !activeProfiles.contains(idTag.getValue().getTrimmedText())) continue;
       collectPropertiesFromDOM(each.getProperties(), result);
     }
 

@@ -33,6 +33,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
@@ -133,10 +134,12 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
       for (MavenCompilerTask each : tasks) {
         VirtualFile file = LocalFileSystem.getInstance().findFileByPath(each.getProjectPath());
         if (file == null) continue;
+        MavenExplicitProfiles explicitProfiles = myProjectsManager.getExplicitProfiles();
         parametersList.add(new MavenRunnerParameters(true,
                                                      file.getParent().getPath(),
                                                      Arrays.asList(each.getGoal()),
-                                                     myProjectsManager.getExplicitProfiles()));
+                                                     explicitProfiles.getEnabledProfiles(),
+                                                     explicitProfiles.getDisabledProfiles()));
       }
     }
     return myRunner.runBatch(parametersList, null, null, TasksBundle.message("maven.tasks.executing"), context.getProgressIndicator());

@@ -173,15 +173,18 @@ public class MavenEmbedder {
   }
 
   @NotNull
-  public MavenExecutionResult resolveProject(@NotNull final File file, @NotNull final List<String> activeProfiles) {
-    return resolveProject(file, activeProfiles, Collections.<ResolutionListener>emptyList());
+  public MavenExecutionResult resolveProject(@NotNull final File file,
+                                             @NotNull final List<String> activeProfiles,
+                                             @NotNull final List<String> inactiveProfiles) {
+    return resolveProject(file, activeProfiles, inactiveProfiles, Collections.<ResolutionListener>emptyList());
   }
 
   @NotNull
   public MavenExecutionResult resolveProject(@NotNull final File file,
                                              @NotNull final List<String> activeProfiles,
+                                             @NotNull final List<String> inactiveProfiles,
                                              List<ResolutionListener> listeners) {
-    MavenExecutionRequest request = createRequest(file, activeProfiles, Collections.<String>emptyList(), Collections.<String>emptyList());
+    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, Collections.<String>emptyList());
     ProjectBuilderConfiguration config = request.getProjectBuilderConfiguration();
 
     request.getGlobalProfileManager().loadSettingsProfiles(mySettings);

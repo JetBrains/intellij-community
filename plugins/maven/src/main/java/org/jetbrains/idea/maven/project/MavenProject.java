@@ -19,7 +19,6 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.LightFilePointer;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -29,13 +28,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.*;
@@ -607,7 +604,7 @@ public class MavenProject {
 
   @NotNull
   public MavenProjectChanges read(@NotNull MavenGeneralSettings generalSettings,
-                                  @NotNull Collection<String> profiles,
+                                  @NotNull MavenExplicitProfiles profiles,
                                   @NotNull MavenProjectReader reader,
                                   @NotNull MavenProjectReaderProjectLocator locator) {
     return set(reader.readProject(generalSettings, myFile, profiles, locator), generalSettings, true, false, true);
@@ -805,7 +802,7 @@ public class MavenProject {
   }
 
   @NotNull
-  public Collection<String> getActivatedProfilesIds() {
+  public MavenExplicitProfiles getActivatedProfilesIds() {
     return myState.myActivatedProfilesIds;
   }
 
@@ -1089,7 +1086,7 @@ public class MavenProject {
     Map<String, String> myModelMap;
 
     Collection<String> myProfilesIds;
-    Collection<String> myActivatedProfilesIds;
+    MavenExplicitProfiles myActivatedProfilesIds;
 
     Collection<MavenProjectProblem> myReadingProblems;
     Set<MavenId> myUnresolvedArtifactIds;
