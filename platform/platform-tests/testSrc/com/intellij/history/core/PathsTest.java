@@ -103,6 +103,11 @@ public class PathsTest extends LocalHistoryTestCase {
     assertEquals(array("/", "foo"), ContainerUtil.collect(Paths.split("/foo").iterator()));
     assertEquals(array("/"), ContainerUtil.collect(Paths.split("/").iterator()));
     assertEquals(array("c:", "foo", "bar"), ContainerUtil.collect(Paths.split("c:/foo/bar").iterator()));
+
+    assertEquals(array("//"), ContainerUtil.collect(Paths.split("//").iterator()));
+    assertEquals(array("//foo"), ContainerUtil.collect(Paths.split("//foo").iterator()));
+    assertEquals(array("//foo"), ContainerUtil.collect(Paths.split("//foo/").iterator()));
+    assertEquals(array("//foo", "bar"), ContainerUtil.collect(Paths.split("//foo/bar").iterator()));
   }
 
   @Test
