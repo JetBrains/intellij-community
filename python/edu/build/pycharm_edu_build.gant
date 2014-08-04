@@ -199,7 +199,7 @@ private layoutPlugins(layouts) {
     layouts.layoutPlugin("python-rest")
   }
 
-  layouts.layoutEducationalPlugins(ch)
+  layouts.layoutCommunityPlugins(ch)
 }
 
 private String appInfoFile(String classesPath) {
