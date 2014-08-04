@@ -5,6 +5,7 @@ package ru.compscicenter.edide.ui;
  * data: 7/29/14.
  */
 
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
@@ -16,7 +17,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
 
-public class StudyProgressBar extends JComponent {
+public class StudyProgressBar extends JComponent implements DumbAware {
   public static final Color BLUE = JBColor.BLUE;
   private static final Color SHADOW1 = new JBColor(Gray._190, UIUtil.getBorderColor());
   private static final Color SHADOW2 = Gray._105;

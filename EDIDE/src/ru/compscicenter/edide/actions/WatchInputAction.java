@@ -1,16 +1,16 @@
 package ru.compscicenter.edide.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
-import ru.compscicenter.edide.editor.StudyEditor;
 import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.course.Task;
+import ru.compscicenter.edide.editor.StudyEditor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,7 +19,7 @@ import java.awt.*;
  * author: liana
  * data: 7/9/14.
  */
-public class WatchInputAction extends AnAction {
+public class WatchInputAction extends DumbAwareAction {
 
   private void initContentLabel(String header, String contentFileText, JPanel parentComponent, Font headerFont) {
     JLabel headerLabel = new JLabel(header);

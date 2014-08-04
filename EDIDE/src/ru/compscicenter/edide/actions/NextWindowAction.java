@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import ru.compscicenter.edide.StudyTaskManager;
@@ -18,7 +19,7 @@ import ru.compscicenter.edide.editor.StudyEditor;
  * data: 6/27/14.
  * move caret to next task window
  */
-public class NextWindowAction extends AnAction {
+public class NextWindowAction extends DumbAwareAction {
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();

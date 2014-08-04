@@ -3,7 +3,6 @@ package ru.compscicenter.edide.actions;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -12,6 +11,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
@@ -40,7 +40,7 @@ import java.io.*;
  * Date: 23.05.14
  * Time: 20:33
  */
-public class CheckAction extends AnAction {
+public class CheckAction extends DumbAwareAction {
 
   public static final Logger LOG = Logger.getInstance(CheckAction.class.getName());
 

@@ -1,13 +1,13 @@
 package ru.compscicenter.edide.actions;
 
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -26,7 +26,7 @@ import java.io.*;
  * author: liana
  * data: 7/8/14.
  */
-public class RefreshTaskAction extends AnAction {
+public class RefreshTaskAction extends DumbAwareAction {
 
   public void refresh(final Project project) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {

@@ -100,7 +100,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
             if (myCourse != null) {
               UISettings.getInstance().HIDE_TOOL_STRIPES = false;
               UISettings.getInstance().fireUISettingsChanged();
-              ToolWindowManager.getInstance(myProject).registerToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW, true, ToolWindowAnchor.RIGHT);
+              ToolWindowManager.getInstance(myProject).registerToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW, true, ToolWindowAnchor.RIGHT, myProject, true);
               final ToolWindow newWindow = ToolWindowManager.getInstance(myProject).getToolWindow("StudyToolWindow");
               if (newWindow != null) {
                 StudyUtils.updateStudyToolWindow(myProject);
@@ -115,6 +115,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
         });
       }
     });
+    System.out.println();
   }
 
   private void addShortcut(String shortcutString, String actionIdString) {
