@@ -15,17 +15,13 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.plugin.StructuralReplaceAction;
 import com.intellij.structuralsearch.plugin.StructuralSearchAction;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
-import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import com.intellij.ui.HintHint;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -191,18 +187,6 @@ public class UIUtil {
   private static void append(final StringBuilder buf, final String str) {
     if (buf.length() > 0) buf.append(", ");
     buf.append(str);
-  }
-
-  public static void navigate(PsiElement result) {
-    FileEditorManager.getInstance(result.getProject()).openTextEditor(
-        new OpenFileDescriptor(result.getProject(), result.getContainingFile().getVirtualFile(), result.getTextOffset()), true);
-  }
-
-  public static void navigate(MatchResult result) {
-    final SmartPsiPointer ref = result.getMatchRef();
-
-    FileEditorManager.getInstance(ref.getProject())
-        .openTextEditor(new OpenFileDescriptor(ref.getProject(), ref.getFile(), ref.getOffset()), true);
   }
 
   public static void invokeAction(Configuration config, SearchContext context) {
