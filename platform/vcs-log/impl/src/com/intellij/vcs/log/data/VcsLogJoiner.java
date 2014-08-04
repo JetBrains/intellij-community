@@ -31,7 +31,6 @@ import java.util.*;
  */
 public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
 
-  public final static String NOT_ENOUGH_FIRST_BLOCK = "Not enough first block";
   public final static String ILLEGAL_DATA_RELOAD_ALL = "All data is illegal - request reload all";
 
   /**
@@ -154,7 +153,7 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
 
     private void markRealRedNode(@NotNull CommitId node) {
       if (!currentRed.remove(node))
-        throw new IllegalStateException(NOT_ENOUGH_FIRST_BLOCK);
+        throw new VcsLogRefreshNotEnoughDataException();
       allRedCommit.add(node);
     }
 

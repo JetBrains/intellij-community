@@ -373,10 +373,13 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
         sw.report();
         return commits;
       }
+      catch (VcsLogRefreshNotEnoughDataException e) {
+        LOG.error(e); // collecting information : how often this situation happens, do we need to try to load more or can safely reload all
+      }
       catch (IllegalStateException e) {
         LOG.info(e);
-        return null;
       }
+      return null;
     }
 
     @NotNull
