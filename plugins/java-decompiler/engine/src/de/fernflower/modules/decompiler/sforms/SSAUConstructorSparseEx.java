@@ -110,9 +110,9 @@ public class SSAUConstructorSparseEx {
 		
 		HashSet<String> updated = new HashSet<String>();
 		do {
-			//System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
+//			System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
 			ssaStatements(dgraph, updated, false);
-			//System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
+//			System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
 		} while(!updated.isEmpty());
 
 
@@ -140,6 +140,15 @@ public class SSAUConstructorSparseEx {
 				
 			if(varmaparr[1] == null) {
 				varmaparr[1] = varmaparr[0];
+			}
+			
+			// quick solution: 'dummy' field variables should not cross basic block borders (otherwise problems e.g. with finally loops - usage without assignment in a loop) 
+			// For the full solution consider adding a dummy assignment at the entry point of the method
+			boolean allow_field_propagation = node.succs.isEmpty() || (node.succs.size() == 1 && node.succs.get(0).preds.size() == 1);
+			
+			if(!allow_field_propagation && varmaparr[0] != null) {  
+    			varmaparr[0].removeAllFields();
+    			varmaparr[1].removeAllFields();
 			}
 			
 			boolean this_updated = !mapsEqual(varmaparr[0], outVarVersions.get(node.id))

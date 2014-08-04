@@ -490,6 +490,16 @@ public class FunctionExprent extends Exprent {
 			return "--"+wrapOperandString(lstOperands.get(0), true, indent);
 		case FUNCTION_INSTANCEOF:
 			return wrapOperandString(lstOperands.get(0), true, indent)+" instanceof "+wrapOperandString(lstOperands.get(1), true, indent);
+		case FUNCTION_LCMP: // shouldn't appear in the final code
+			return "__lcmp__("+wrapOperandString(lstOperands.get(0), true, indent)+","+wrapOperandString(lstOperands.get(1), true, indent)+")"; 
+		case FUNCTION_FCMPL: // shouldn't appear in the final code
+			return "__fcmpl__("+wrapOperandString(lstOperands.get(0), true, indent)+","+wrapOperandString(lstOperands.get(1), true, indent)+")"; 
+		case FUNCTION_FCMPG: // shouldn't appear in the final code
+			return "__fcmpg__("+wrapOperandString(lstOperands.get(0), true, indent)+","+wrapOperandString(lstOperands.get(1), true, indent)+")"; 
+		case FUNCTION_DCMPL: // shouldn't appear in the final code
+			return "__dcmpl__("+wrapOperandString(lstOperands.get(0), true, indent)+","+wrapOperandString(lstOperands.get(1), true, indent)+")"; 
+		case FUNCTION_DCMPG: // shouldn't appear in the final code
+			return "__dcmpg__("+wrapOperandString(lstOperands.get(0), true, indent)+","+wrapOperandString(lstOperands.get(1), true, indent)+")"; 
 		}
 		
 		if(functype <= FUNCTION_I2S) {
