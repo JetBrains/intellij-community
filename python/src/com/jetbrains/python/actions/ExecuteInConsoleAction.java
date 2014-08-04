@@ -17,7 +17,6 @@ package com.jetbrains.python.actions;
 
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.console.LanguageConsoleView;
-import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.*;
@@ -215,7 +214,7 @@ public class ExecuteInConsoleAction extends AnAction {
   private static void startConsole(final Project project,
                                    final Consumer<PyCodeExecutor> consumer,
                                    Module context) {
-    PydevConsoleRunner runner = RunPythonConsoleAction.runPythonConsole(project, context);
+    PydevConsoleRunner runner = RunPythonConsoleAction.runPythonConsole(project, context, null);
     runner.addConsoleListener(new PydevConsoleRunner.ConsoleListener() {
       @Override
       public void handleConsoleInitialized(LanguageConsoleView consoleView) {
