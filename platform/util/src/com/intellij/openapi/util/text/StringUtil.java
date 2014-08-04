@@ -2686,7 +2686,7 @@ public class StringUtil extends StringUtilRt {
     String toPaste = "...";
     int index;
     while (true) {
-      index = Math.max(0, words.size() / 2 - 1);
+      index = Math.max(0, (words.size() - 1) / 2);
       String aWord = words.get(index);
       words.remove(index);
       if (words.size() < 2) {

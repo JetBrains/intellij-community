@@ -197,12 +197,20 @@ public class StringUtilTest extends TestCase {
   }
 
   public void testShortened() {
-    String[] names = {"AVeryVeeryLongClassName.java", "com.test.SomeJAVAClassName.java", "strangelowercaseclassname.java"};
+    String[] names = {"AVeryVeeryLongClassName.java", "com.test.SomeJAVAClassName.java", "strangelowercaseclassname.java", "PrefixPostfix.java"};
     for (String name : names) {
       for (int i = name.length() + 1; i > 15; i--) {
         String shortened = StringUtil.getShortened(name, i);
         assertTrue(shortened.length() <= i);
         assertTrue(!shortened.contains("...."));
+        int pos = shortened.indexOf("...");
+        if (pos != -1) {
+          assertTrue(name.startsWith(shortened.substring(0, pos)));
+          assertTrue(name.endsWith(shortened.substring(pos + 3)));
+        }
+        else {
+          assertEquals(shortened,  name);
+        }
       }
     }
   }

@@ -39,6 +39,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
@@ -455,9 +456,11 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   protected void assertArtifactOutput(String artifactName, TestFileSystemItem fs) {
-    final String outputPath = ArtifactsTestUtil.findArtifact(myProject, artifactName).getOutputPath();
-    assert outputPath != null;
-    fs.assertDirectoryEqual(new File(outputPath));
+    final Artifact artifact = ArtifactsTestUtil.findArtifact(myProject, artifactName);
+    final VirtualFile outputFile = artifact.getOutputFile();
+    assert outputFile != null;
+    final File file = VfsUtilCore.virtualToIoFile(outputFile);
+    fs.assertFileEqual(file);
   }
 
   private static void setFileContent(final VirtualFile file, final String content, final boolean advanceStamps) throws IOException {

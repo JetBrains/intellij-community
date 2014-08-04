@@ -67,9 +67,18 @@ public class Paths {
   }
 
   public static Iterable<String> split(String path) {
-    Iterable<String> result = StringUtil.tokenize(path, String.valueOf(DELIM));
-    if (path.indexOf(DELIM) == 0) {
-      result = ContainerUtil.concat(Collections.singleton(String.valueOf(DELIM)), result);
+    //must be consistent with LocalFileSystemBase.extractRootPath()
+    int prefixLen = 0;
+    if (path.startsWith("//")) {
+      prefixLen = path.indexOf(DELIM, 2);
+      if (prefixLen == -1) prefixLen = path.length();
+    }
+    else if (StringUtil.startsWithChar(path, DELIM)) {
+      prefixLen = 1;
+    }
+    Iterable<String> result = StringUtil.tokenize(path.substring(prefixLen), String.valueOf(DELIM));
+    if (prefixLen > 0) {
+      result = ContainerUtil.concat(Collections.singleton(path.substring(0, prefixLen)), result);
     }
     return result;
   }
