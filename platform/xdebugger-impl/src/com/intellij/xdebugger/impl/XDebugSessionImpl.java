@@ -289,6 +289,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void initBreakpoints() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     LOG.assertTrue(!breakpointsInitialized);
     breakpointsInitialized = true;
 
@@ -368,12 +369,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private <B extends XBreakpoint<?>> void processBreakpoints(final XBreakpointHandler<B> handler,
                                                              boolean register,
                                                              final boolean temporary) {
-    Collection<? extends B> breakpoints = ApplicationManager.getApplication().runReadAction(new Computable<Collection<? extends B>>() {
-      @Override
-      public Collection<? extends B> compute() {
-        return myDebuggerManager.getBreakpointManager().getBreakpoints(handler.getBreakpointTypeClass());
-      }
-    });
+    Collection<? extends B> breakpoints = myDebuggerManager.getBreakpointManager().getBreakpoints(handler.getBreakpointTypeClass());
     for (B b : breakpoints) {
       handleBreakpoint(handler, b, register, temporary);
     }
@@ -423,6 +419,7 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   public boolean isBreakpointActive(final XBreakpoint<?> b) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     return !areBreakpointsMuted() && b.isEnabled() && !myInactiveSlaveBreakpoints.contains(b);
   }
 
@@ -448,6 +445,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void setBreakpointMuted(boolean muted) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (areBreakpointsMuted() == muted) return;
     mySessionData.setBreakpointsMuted(muted);
     processAllBreakpoints(!muted, muted);
