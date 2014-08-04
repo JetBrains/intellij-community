@@ -35,7 +35,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -358,9 +357,44 @@ public class LineStatusTracker {
         int line1 = myLine1;
         int line2 = line1 + myBeforeChangedLines; // TODO: optimize some whole-line-changed cases
 
+        int[] fixed = fixRanges(e, line1, line2);
+        line1 = fixed[0];
+        line2 = fixed[1];
+
         doUpdateRanges(line1, line2, linesShift, myBeforeTotalLines);
       }
     }
+  }
+
+  @NotNull
+  private int[] fixRanges(@NotNull DocumentEvent e, int line1, int line2) {
+    CharSequence document = myDocument.getCharsSequence();
+    int offset = e.getOffset();
+
+    if (e.getOldLength() == 0 && e.getNewLength() != 0) {
+      if (StringUtil.endsWithChar(e.getNewFragment(), '\n') && isNewline(offset - 1, document)) {
+        return new int[]{line1, line2 - 1};
+      }
+      if (StringUtil.startsWithChar(e.getNewFragment(), '\n') && isNewline(offset + e.getNewLength(), document)) {
+        return new int[]{line1 + 1, line2};
+      }
+    }
+    if (e.getOldLength() != 0 && e.getNewLength() == 0) {
+      if (StringUtil.endsWithChar(e.getOldFragment(), '\n') && isNewline(offset - 1, document)) {
+        return new int[]{line1, line2 - 1};
+      }
+      if (StringUtil.startsWithChar(e.getOldFragment(), '\n') && isNewline(offset + e.getNewLength(), document)) {
+        return new int[]{line1 + 1, line2};
+      }
+    }
+
+    return new int[]{line1, line2};
+  }
+
+  private static boolean isNewline(int offset, @NotNull CharSequence sequence) {
+    if (offset < 0) return false;
+    if (offset >= sequence.length()) return false;
+    return sequence.charAt(offset) == '\n';
   }
 
   private void doUpdateRanges(int beforeChangedLine1,
@@ -370,7 +404,7 @@ public class LineStatusTracker {
     List<Range> rangesBeforeChange = new ArrayList<Range>();
     List<Range> rangesAfterChange = new ArrayList<Range>();
     List<Range> changedRanges = new ArrayList<Range>();
-    
+
     sortRanges(beforeChangedLine1, beforeChangedLine2, linesShift, rangesBeforeChange, changedRanges, rangesAfterChange);
 
     Range firstChangedRange = ContainerUtil.getFirstItem(changedRanges);
