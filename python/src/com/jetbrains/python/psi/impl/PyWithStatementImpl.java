@@ -63,6 +63,14 @@ public class PyWithStatementImpl extends PyElementImpl implements PyWithStatemen
   }
 
   public PyWithItem[] getWithItems() {
-    return childrenToPsi(WITH_ITEM, PyWithItem.EMPTY_ARRAY); 
+    return childrenToPsi(WITH_ITEM, PyWithItem.EMPTY_ARRAY);
+  }
+
+  @Override
+  @NotNull
+  public PyStatementList getStatementList() {
+    final PyStatementList statementList = childToPsi(PyElementTypes.STATEMENT_LIST);
+    assert statementList != null : "Statement list missing for with statement " + getText();
+    return statementList;
   }
 }

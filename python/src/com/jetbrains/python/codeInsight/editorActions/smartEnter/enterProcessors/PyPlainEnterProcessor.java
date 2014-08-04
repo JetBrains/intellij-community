@@ -35,14 +35,8 @@ public class PyPlainEnterProcessor implements EnterProcessor {
     if (psiElement instanceof PyStatementPart) {
       return ((PyStatementPart)psiElement).getStatementList();
     }
-    else if (psiElement instanceof PyFunction) {
-      return ((PyFunction)psiElement).getStatementList();
-    }
-    else if (psiElement instanceof PyClass) {
-      return ((PyClass)psiElement).getStatementList();
-    }
-    else if (psiElement instanceof PyWithStatement) {
-      return PsiTreeUtil.getChildOfType(psiElement, PyStatementList.class);
+    else if (psiElement instanceof PyStatementListContainer) {
+      return ((PyStatementListContainer)psiElement).getStatementList();
     }
     else {
       final CaretModel caretModel = editor.getCaretModel();
