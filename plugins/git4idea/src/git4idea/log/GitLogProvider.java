@@ -154,18 +154,23 @@ public class GitLogProvider implements VcsLogProvider {
     });
   }
 
-  @NotNull
   @Override
-  public List<TimedVcsCommit> readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<VcsUser> userRegistry) throws VcsException {
+  public void readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<VcsUser> userRegistry,
+                            @NotNull final Consumer<TimedVcsCommit> commitConsumer) throws VcsException {
     if (!isRepositoryReady(root)) {
-      return Collections.emptyList();
+      return;
     }
 
     List<String> parameters = new ArrayList<String>(GitHistoryUtils.LOG_ALL);
     parameters.add("--sparse");
 
-    List<TimedVcsCommit> timedVcsCommits = GitHistoryUtils.readCommits(myProject, root, userRegistry, parameters);
-    return new GitBekParentFixer(root, this, timedVcsCommits).getCorrectCommits();
+    final GitBekParentFixer parentFixer = GitBekParentFixer.prepare(root, this);
+    GitHistoryUtils.readCommits(myProject, root, userRegistry, parameters, new Consumer<TimedVcsCommit>() {
+      @Override
+      public void consume(TimedVcsCommit commit) {
+        commitConsumer.consume(parentFixer.fixCommit(commit));
+      }
+    });
   }
 
   @NotNull
