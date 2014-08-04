@@ -147,6 +147,7 @@ class TeamcityTestResult(TestResult):
 
   def addSkip(self, test, reason):
     self.init_suite(test)
+    self.current_failed = True
     self.messages.testIgnored(self.getTestName(test), message=reason)
 
   def __getSuite(self, test):
