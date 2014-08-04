@@ -20,7 +20,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.SmartEnterUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyStatementListContainer;
+import com.jetbrains.python.psi.PyStatementPart;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -32,10 +34,7 @@ import org.jetbrains.annotations.Nullable;
 public class PyPlainEnterProcessor implements EnterProcessor {
   @Nullable
   private static PyStatementList getStatementList(PsiElement psiElement, Editor editor) {
-    if (psiElement instanceof PyStatementPart) {
-      return ((PyStatementPart)psiElement).getStatementList();
-    }
-    else if (psiElement instanceof PyStatementListContainer) {
+    if (psiElement instanceof PyStatementListContainer) {
       return ((PyStatementListContainer)psiElement).getStatementList();
     }
     else {
