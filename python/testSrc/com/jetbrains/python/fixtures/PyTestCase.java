@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python.fixtures;
 
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -28,6 +31,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestCase;
@@ -131,8 +135,32 @@ public abstract class PyTestCase extends UsefulTestCase {
     }
   }
 
-  protected static void assertNotParsed(PyFile file) {
-    assertNull(PARSED_ERROR_MSG, ((PyFileImpl)file).getTreeElement());
+  /**
+   * Searches for quickfix itetion by its class
+   * @param clazz quick fix class
+   * @param <T> quick fix class
+   * @return quick fix or null if nothing found
+   */
+  @Nullable
+  public <T extends LocalQuickFix> T findQuickFixByClassInIntentions(@NotNull final Class<T> clazz) {
+
+    for (final IntentionAction action : myFixture.getAvailableIntentions()) {
+      if ((action instanceof QuickFixWrapper)) {
+        final QuickFixWrapper quickFixWrapper = (QuickFixWrapper)action;
+        final LocalQuickFix fix = quickFixWrapper.getFix();
+        if (clazz.isInstance(fix)) {
+          @SuppressWarnings("unchecked")
+          final T result = (T)fix;
+          return result;
+        }
+      }
+    }
+    return null;
+  }
+
+
+    protected static void assertNotParsed(PyFile file) {
+      assertNull(PARSED_ERROR_MSG, ((PyFileImpl)file).getTreeElement());
   }
 
   /**
@@ -142,6 +170,18 @@ public abstract class PyTestCase extends UsefulTestCase {
   @NotNull
   protected PyClass getClassByName(@NotNull final String name) {
     return myFixture.findElementByText("class " + name, PyClass.class);
+  }
+
+  /**
+   * Finds some text and moves cursor to it (if found)
+   *
+   * @param testToFind text to find
+   * @throws AssertionError if element not found
+   */
+  protected void moveByText(@NotNull final String testToFind) {
+    final PsiElement element = myFixture.findElementByText(testToFind, PsiElement.class);
+    assert element != null : "No element found by text: " + testToFind;
+    myFixture.getEditor().getCaretModel().moveToOffset(element.getTextOffset());
   }
 
   protected static class PyLightProjectDescriptor implements LightProjectDescriptor {
