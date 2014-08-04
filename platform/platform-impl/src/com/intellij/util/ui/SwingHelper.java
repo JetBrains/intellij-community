@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.ui;
 
 import com.intellij.ide.BrowserUtil;
@@ -48,7 +63,7 @@ public class SwingHelper {
    * stacked vertically each on another in a given order.
    *
    * @param childAlignmentX Component.LEFT_ALIGNMENT, Component.CENTER_ALIGNMENT or Component.RIGHT_ALIGNMENT
-   * @param children children components
+   * @param children        children components
    * @return created panel
    */
   @NotNull
@@ -76,7 +91,7 @@ public class SwingHelper {
    * stacked each on another in a given order.
    *
    * @param childAlignmentY Component.TOP_ALIGNMENT, Component.CENTER_ALIGNMENT or Component.BOTTOM_ALIGNMENT
-   * @param children children components
+   * @param children        children components
    * @return created panel
    */
   @NotNull
@@ -98,10 +113,11 @@ public class SwingHelper {
     for (Component child : children) {
       panel.add(child, childAlignment);
       if (child instanceof JComponent) {
-        JComponent jChild = (JComponent) child;
+        JComponent jChild = (JComponent)child;
         if (verticalOrientation) {
           jChild.setAlignmentX(childAlignment);
-        } else {
+        }
+        else {
           jChild.setAlignmentY(childAlignment);
         }
       }
@@ -291,7 +307,7 @@ public class SwingHelper {
     Object prototypeDisplayValue = comboBox.getPrototypeDisplayValue();
     String prototypeDisplayValueStr = null;
     if (prototypeDisplayValue instanceof String) {
-      prototypeDisplayValueStr = (String) prototypeDisplayValue;
+      prototypeDisplayValueStr = (String)prototypeDisplayValue;
     }
     else if (prototypeDisplayValue != null) {
       return;
@@ -422,6 +438,24 @@ public class SwingHelper {
       bodyInnerHtml
     );
     editorPane.setText(html);
+  }
+
+  public static TextFieldWithHistoryWithBrowseButton createTextFieldWithHistoryWithBrowseButton(@Nullable Project project,
+                                                                                                @NotNull String browseDialogTitle,
+                                                                                                @NotNull FileChooserDescriptor fileChooserDescriptor,
+                                                                                                @NotNull NotNullProducer<List<String>> historyProvider) {
+    TextFieldWithHistoryWithBrowseButton textFieldWithHistoryWithBrowseButton = new TextFieldWithHistoryWithBrowseButton();
+    final TextFieldWithHistory textFieldWithHistory = textFieldWithHistoryWithBrowseButton.getChildComponent();
+    textFieldWithHistory.setHistorySize(-1);
+    textFieldWithHistory.setMinimumAndPreferredWidth(0);
+    addHistoryOnExpansion(textFieldWithHistory, historyProvider);
+    installFileCompletionAndBrowseDialog(
+      project,
+      textFieldWithHistoryWithBrowseButton,
+      browseDialogTitle, fileChooserDescriptor
+
+    );
+    return textFieldWithHistoryWithBrowseButton;
   }
 
   private static class CopyLinkAction extends AnAction {

@@ -64,10 +64,13 @@ public class HgLogProvider implements VcsLogProvider {
     return HgHistoryUtil.loadMetadata(myProject, root, requirements.getCommitCount(), Collections.<String>emptyList());
   }
 
-  @NotNull
   @Override
-  public List<TimedVcsCommit> readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<VcsUser> userRegistry) throws VcsException {
-    return HgHistoryUtil.readAllHashes(myProject, root, userRegistry, Collections.<String>emptyList());
+  public void readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<VcsUser> userRegistry,
+                            @NotNull Consumer<TimedVcsCommit> commitConsumer) throws VcsException {
+    List<TimedVcsCommit> commits = HgHistoryUtil.readAllHashes(myProject, root, userRegistry, Collections.<String>emptyList());
+    for (TimedVcsCommit commit : commits) {
+      commitConsumer.consume(commit);
+    }
   }
 
   @NotNull

@@ -1,7 +1,0 @@
-def func2(x, y):
-    return (x+y)/y
-
-def func(seq):
-    ...
-    newlist = reduce(func2, seq)
-    ...

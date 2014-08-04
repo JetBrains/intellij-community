@@ -13,28 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.graph;
+package com.intellij.remoteServer.impl.module;
 
-import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+public abstract class CloudSourceApplicationConfiguration extends CloudApplicationConfiguration {
 
-/**
- */
-public interface GraphCommit<CommitId> {
+  private boolean myExisting;
+  private final String myExistingAppName;
 
-  @NotNull
-  CommitId getId();
+  protected CloudSourceApplicationConfiguration(boolean existing, String existingAppName) {
+    myExisting = existing;
+    myExistingAppName = existingAppName;
+  }
 
-  @NotNull
-  List<CommitId> getParents();
+  public boolean isExisting() {
+    return myExisting;
+  }
 
-  /**
-   * <p>Returns the timestamp indicating the date & time when this commit was made.</p>
-   * <p>This time is displayed in the table by default;
-   *    it is used for joining commits from different repositories;
-   *    it is used for ordering commits in a single repository (keeping the preference of the topological ordering of course).</p>
-   */
-  long getTimestamp();
-
+  public String getExistingAppName() {
+    return myExistingAppName;
+  }
 }

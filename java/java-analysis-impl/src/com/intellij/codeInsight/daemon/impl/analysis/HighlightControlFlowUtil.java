@@ -696,14 +696,17 @@ public class HighlightControlFlowUtil {
         return true;
       }
 
-      if (ControlFlowUtil.isVariableDefinitelyAssigned(variable, controlFlow)) {
-        final Collection<ControlFlowUtil.VariableInfo> initializedTwice = ControlFlowUtil.getInitializedTwice(controlFlow);
-        effectivelyFinal = !initializedTwice.contains(new ControlFlowUtil.VariableInfo(variable, null));
-        if (effectivelyFinal) {
-          effectivelyFinal = notAccessedForWriting(variable, new LocalSearchScope(scope));
+      final List<PsiReferenceExpression> readBeforeWriteLocals = ControlFlowUtil.getReadBeforeWriteLocals(controlFlow);
+      for (PsiReferenceExpression expression : readBeforeWriteLocals) {
+        if (expression.resolve() == variable) {
+          return PsiUtil.isAccessedForReading(expression);
         }
-      } else {
-        effectivelyFinal = false;
+      }
+
+      final Collection<ControlFlowUtil.VariableInfo> initializedTwice = ControlFlowUtil.getInitializedTwice(controlFlow);
+      effectivelyFinal = !initializedTwice.contains(new ControlFlowUtil.VariableInfo(variable, null));
+      if (effectivelyFinal) {
+        effectivelyFinal = notAccessedForWriting(variable, new LocalSearchScope(scope));
       }
     }
     return effectivelyFinal;

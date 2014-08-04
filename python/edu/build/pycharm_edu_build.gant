@@ -29,7 +29,7 @@ setProperty("pythonCommunityHome", "$home/python")
 setProperty("pythonEduHome", "$home/python/edu")
 
 // load ApplicationInfo.xml properties
-ant.xmlproperty(file: "$pythonCommunityHome/resources/idea/PyCharmEduApplicationInfo.xml", collapseAttributes: "true")
+ant.xmlproperty(file: "$pythonEduHome/resources/idea/PyCharmEduApplicationInfo.xml", collapseAttributes: "true")
 
 setProperty("system_selector", "PyCharm${p("component.version.major")}0")
 setProperty("dryRun", false)
@@ -44,8 +44,8 @@ private List<String> pycharmPlatformApiModules() {
 
 
 private List pycharmImplementationModules() {   //modules to put into pycharm.jar
-  return [platformImplementationModules, "dom-impl", "python-community", "python-ide-community", "python-openapi", "python-psi-api",
-    "platform-main", "python-educational"].flatten()
+  return [platformImplementationModules, "dom-impl", "python-community", "python-ide-community", "python-educational", "python-openapi", "python-psi-api",
+    "platform-main"].flatten()
 }
 
 private List modules() {
@@ -182,7 +182,7 @@ public layoutEducational(String classesPath, Set usedJars) {
     "$ch/platform/icons/src",
     "$pythonEduHome/resources"]
   buildWinLauncher("$ch", "$ch/bin/WinLauncher/WinLauncher.exe", launcher,
-                   appInfo, "$pythonCommunityHome/build/pycharm_edu_launcher.properties", system_selector, resourcePaths)
+                   appInfo, "$pythonEduHome/build/pycharm_edu_launcher.properties", system_selector, resourcePaths)
 
   buildWinZip("${paths.artifacts}/pycharmPE-${buildNumber}.zip", [paths.distAll, paths.distWin])
 
@@ -199,11 +199,11 @@ private layoutPlugins(layouts) {
     layouts.layoutPlugin("python-rest")
   }
 
-  layouts.layoutEducationalPlugins(ch)
+  layouts.layoutCommunityPlugins(ch)
 }
 
 private String appInfoFile(String classesPath) {
-  return "$classesPath/python-community/idea/PyCharmEduApplicationInfo.xml"
+  return "$classesPath/python-educational/idea/PyCharmEduApplicationInfo.xml"
 }
 
 private layoutFull(Map args, String target, Set usedJars) {

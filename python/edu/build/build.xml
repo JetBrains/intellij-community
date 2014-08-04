@@ -1,5 +1,5 @@
 <project name="PyCharm Educational Edition" default="all">
-  <property name="project.home" value="${basedir}/../.."/>
+  <property name="project.home" value="${basedir}/../../.."/>
   <property name="python.home" value="${basedir}"/>
   <property name="out.dir" value="${project.home}/out"/>
   <property name="tmp.dir" value="${project.home}/out/tmp"/>
@@ -30,7 +30,7 @@
   </macrodef>
 
   <target name="build" depends="init">
-    <call_gant script="${python.home}/build/pycharm_edu_build.gant"/>
+    <call_gant script="${python.home}/pycharm_edu_build.gant"/>
   </target>
 
   <!--<target name="plugin" depends="init">-->
