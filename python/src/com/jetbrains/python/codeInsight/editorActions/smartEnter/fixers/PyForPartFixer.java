@@ -19,11 +19,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import com.jetbrains.python.psi.PyForPart;
 import com.jetbrains.python.psi.PyUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -31,11 +31,14 @@ import com.jetbrains.python.psi.PyUtil;
  * Date:   16.04.2010
  * Time:   16:03:43
  */
-public class PyForPartFixer implements PyFixer {
-  public void apply(Editor editor, PySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
-    if (psiElement instanceof PyForPart) {
-      final PyForPart forPart = (PyForPart)psiElement;
-      final PsiElement colon = PyUtil.getChildByFilter(psiElement, TokenSet.create(PyTokenTypes.COLON), 0);
+public class PyForPartFixer extends PyFixer<PyForPart> {
+  public PyForPartFixer() {
+    super(PyForPart.class);
+  }
+
+  @Override
+  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyForPart forPart) {
+      final PsiElement colon = PyUtil.getChildByFilter(forPart, TokenSet.create(PyTokenTypes.COLON), 0);
       final Document document = editor.getDocument();
       final PsiElement forToken = PyUtil.getChildByFilter(forPart,
                                                           TokenSet.create(PyTokenTypes.FOR_KEYWORD), 0);
@@ -67,5 +70,4 @@ public class PyForPartFixer implements PyFixer {
         document.insertString(positionToInsert.getTextRange().getEndOffset(), textToInsert);
       }
     }
-  }
 }

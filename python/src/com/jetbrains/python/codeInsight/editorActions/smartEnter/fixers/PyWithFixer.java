@@ -34,40 +34,42 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 /**
  * @author Mikhail Golubev
  */
-public class PyWithFixer implements PyFixer {
-  public void apply(Editor editor, PySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
-    if (psiElement instanceof PyWithStatement) {
-      final PyWithStatement withStatement = (PyWithStatement)psiElement;
-      final PsiElement colonToken = getFirstChildOfType(psiElement, PyTokenTypes.COLON);
-      final PsiElement withToken = getFirstChildOfType(withStatement, PyTokenTypes.WITH_KEYWORD);
-      final Document document = editor.getDocument();
-      if (colonToken == null) {
-        int insertAt = sure(withToken).getTextRange().getEndOffset();
-        String textToInsert = ":";
-        final PyWithItem[] withItems = withStatement.getWithItems();
-        final PyWithItem lastItem = withItems.length != 0 ? withItems[withItems.length - 1] : null;
-        if (lastItem == null || lastItem.getExpression() == null) {
-          textToInsert = " :";
-          processor.registerUnresolvedError(insertAt + 1);
-        }
-        else {
-          final PyExpression expression = lastItem.getExpression();
-          insertAt = expression.getTextRange().getEndOffset();
-          final PsiElement asToken = getFirstChildOfType(lastItem, PyTokenTypes.AS_KEYWORD);
-          if (asToken != null) {
-            insertAt = asToken.getTextRange().getEndOffset();
-            final PyExpression target = lastItem.getTarget();
-            if (target != null) {
-              insertAt = target.getTextRange().getEndOffset();
-            }
-            else {
-              textToInsert = " :";
-              processor.registerUnresolvedError(insertAt + 1);
-            }
+public class PyWithFixer extends PyFixer<PyWithStatement> {
+  public PyWithFixer() {
+    super(PyWithStatement.class);
+  }
+
+  @Override
+  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyWithStatement withStatement) throws IncorrectOperationException {
+    final PsiElement colonToken = getFirstChildOfType(withStatement, PyTokenTypes.COLON);
+    final PsiElement withToken = getFirstChildOfType(withStatement, PyTokenTypes.WITH_KEYWORD);
+    final Document document = editor.getDocument();
+    if (colonToken == null) {
+      int insertAt = sure(withToken).getTextRange().getEndOffset();
+      String textToInsert = ":";
+      final PyWithItem[] withItems = withStatement.getWithItems();
+      final PyWithItem lastItem = withItems.length != 0 ? withItems[withItems.length - 1] : null;
+      if (lastItem == null || lastItem.getExpression() == null) {
+        textToInsert = " :";
+        processor.registerUnresolvedError(insertAt + 1);
+      }
+      else {
+        final PyExpression expression = lastItem.getExpression();
+        insertAt = expression.getTextRange().getEndOffset();
+        final PsiElement asToken = getFirstChildOfType(lastItem, PyTokenTypes.AS_KEYWORD);
+        if (asToken != null) {
+          insertAt = asToken.getTextRange().getEndOffset();
+          final PyExpression target = lastItem.getTarget();
+          if (target != null) {
+            insertAt = target.getTextRange().getEndOffset();
+          }
+          else {
+            textToInsert = " :";
+            processor.registerUnresolvedError(insertAt + 1);
           }
         }
-        document.insertString(insertAt, textToInsert);
       }
+      document.insertString(insertAt, textToInsert);
     }
   }
 

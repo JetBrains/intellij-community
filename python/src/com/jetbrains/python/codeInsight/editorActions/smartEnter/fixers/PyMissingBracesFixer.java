@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,8 +28,13 @@ import com.jetbrains.python.psi.*;
  * Date:   15.04.2010
  * Time:   17:55:46
  */
-public class PyMissingBracesFixer implements PyFixer {
-  public void apply(Editor editor, PySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+public class PyMissingBracesFixer extends PyFixer<PyElement> {
+  public PyMissingBracesFixer() {
+    super(PyElement.class);
+  }
+
+  @Override
+  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyElement psiElement) throws IncorrectOperationException {
     if (psiElement instanceof PySetLiteralExpression || psiElement instanceof PyDictLiteralExpression) {
       PsiElement lastChild = PyUtil.getFirstNonCommentBefore(psiElement.getLastChild());
       if (lastChild != null && !"}".equals(lastChild.getText())) {

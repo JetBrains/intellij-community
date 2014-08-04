@@ -25,6 +25,7 @@ import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterPro
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.PyUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,16 +33,19 @@ import com.jetbrains.python.psi.PyUtil;
  * Date:   16.04.2010
  * Time:   16:59:07
  */
-public class PyFunctionFixer implements PyFixer {
-  public void apply(Editor editor, PySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
-    if (psiElement instanceof PyFunction) {
-      final PsiElement colon = PyUtil.getChildByFilter(psiElement, TokenSet.create(PyTokenTypes.COLON), 0);
-      if (colon == null) {
-        final PyFunction function = (PyFunction)psiElement;
-        final PyParameterList parameterList = function.getParameterList();
-        final Document document = editor.getDocument();
-        document.insertString(parameterList.getTextRange().getEndOffset(), ":");
-      }
+public class PyFunctionFixer extends PyFixer<PyFunction> {
+  public PyFunctionFixer() {
+    super(PyFunction.class);
+  }
+
+  @Override
+  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyFunction function)
+    throws IncorrectOperationException {
+    final PsiElement colon = PyUtil.getChildByFilter(function, TokenSet.create(PyTokenTypes.COLON), 0);
+    if (colon == null) {
+      final PyParameterList parameterList = function.getParameterList();
+      final Document document = editor.getDocument();
+      document.insertString(parameterList.getTextRange().getEndOffset(), ":");
     }
   }
 }
