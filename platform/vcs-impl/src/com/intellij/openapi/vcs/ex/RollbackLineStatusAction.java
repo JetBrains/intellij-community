@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.BitSet;
 import java.util.List;
 
 public class RollbackLineStatusAction extends DumbAwareAction {
@@ -69,19 +70,19 @@ public class RollbackLineStatusAction extends DumbAwareAction {
     Document document = editor.getDocument();
     int totalLines = getLineCount(document);
 
-    SegmentTree lines = new SegmentTree(totalLines + 1);
+    BitSet lines = new BitSet(totalLines + 1);
 
     List<Caret> carets = editor.getCaretModel().getAllCarets();
     for (Caret caret : carets) {
       if (caret.hasSelection()) {
         int line1 = editor.offsetToLogicalPosition(caret.getSelectionStart()).line;
         int line2 = editor.offsetToLogicalPosition(caret.getSelectionEnd()).line;
-        lines.mark(line1, line2 + 1);
-        if (caret.getSelectionEnd() == document.getTextLength()) lines.mark(totalLines);
+        lines.set(line1, line2 + 1);
+        if (caret.getSelectionEnd() == document.getTextLength()) lines.set(totalLines);
       }
       else {
-        lines.mark(caret.getLogicalPosition().line);
-        if (caret.getOffset() == document.getTextLength()) lines.mark(totalLines);
+        lines.set(caret.getLogicalPosition().line);
+        if (caret.getOffset() == document.getTextLength()) lines.set(totalLines);
       }
     }
 
@@ -97,7 +98,7 @@ public class RollbackLineStatusAction extends DumbAwareAction {
     });
   }
 
-  private static void doRollback(@NotNull final LineStatusTracker tracker, @NotNull final SegmentTree lines) {
+  private static void doRollback(@NotNull final LineStatusTracker tracker, @NotNull final BitSet lines) {
     execute(tracker, new Runnable() {
       @Override
       public void run() {

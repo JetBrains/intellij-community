@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -584,7 +585,7 @@ public class LineStatusTracker {
     }
   }
 
-  public void rollbackChanges(@NotNull SegmentTree lines) {
+  public void rollbackChanges(@NotNull BitSet lines) {
     myApplication.assertWriteAccessAllowed();
 
     synchronized (myLock) {
@@ -600,10 +601,10 @@ public class LineStatusTracker {
 
         boolean check;
         if (range.getOffset1() == range.getOffset2()) {
-          check = lines.check(range.getOffset1());
+          check = lines.get(range.getOffset1());
         }
         else {
-          check = lines.check(range.getOffset1(), range.getOffset2());
+          check = checkRange(lines, range.getOffset1(), range.getOffset2());
         }
         if (check) {
           if (wasEnd) simple = false;
@@ -621,6 +622,12 @@ public class LineStatusTracker {
         rollbackChangesComplex(affectedRanges);
       }
     }
+  }
+
+  private static boolean checkRange(@NotNull BitSet lines, int start, int end) {
+    int next = lines.nextSetBit(start);
+    if (next == -1) return false;
+    return next < end;
   }
 
   private void rollbackChangesSimple(@NotNull List<Range> ranges) {
