@@ -29,8 +29,8 @@ public interface VcsLogProvider {
    * <p>Reads the whole history, but only hashes & parents.</p>
    * <p>Also reports authors/committers of this repository to the given user registry.</p>
    */
-  @NotNull
-  List<TimedVcsCommit> readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<VcsUser> userRegistry) throws VcsException;
+  void readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<VcsUser> userRegistry,
+                     @NotNull Consumer<TimedVcsCommit> commitConsumer) throws VcsException;
 
   /**
    * Reads those details of the given commits, which are necessary to be shown in the log table.
