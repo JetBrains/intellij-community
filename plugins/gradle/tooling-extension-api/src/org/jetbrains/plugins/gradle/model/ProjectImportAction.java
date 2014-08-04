@@ -18,7 +18,6 @@ package org.jetbrains.plugins.gradle.model;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
-import org.gradle.tooling.model.Model;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.BasicIdeaProject;
 import org.gradle.tooling.model.idea.IdeaModule;
@@ -49,7 +48,8 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   @Nullable
   @Override
   public AllModels execute(final BuildController controller) {
-    final IdeaProject ideaProject = controller.getModel(myIsPreviewMode ? BasicIdeaProject.class : IdeaProject.class);
+    //outer conditional is needed to be compatible with 1.8
+    final IdeaProject ideaProject = myIsPreviewMode ? controller.getModel(BasicIdeaProject.class) : controller.getModel(IdeaProject.class);
     if (ideaProject == null || ideaProject.getModules().isEmpty()) {
       return null;
     }
