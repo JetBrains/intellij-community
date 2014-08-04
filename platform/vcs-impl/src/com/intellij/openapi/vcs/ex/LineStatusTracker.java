@@ -32,6 +32,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -371,7 +373,7 @@ public class LineStatusTracker {
     List<Range> rangesAfterChange = new ArrayList<Range>();
     List<Range> changedRanges = new ArrayList<Range>();
     
-    sortRanges(myRanges, beforeChangedLine1, beforeChangedLine2, rangesBeforeChange, changedRanges, rangesAfterChange);
+    sortRanges(beforeChangedLine1, beforeChangedLine2, linesShift, rangesBeforeChange, changedRanges, rangesAfterChange);
 
     Range firstChangedRange = ContainerUtil.getFirstItem(changedRanges);
     Range lastChangedRange = ContainerUtil.getLastItem(changedRanges);
@@ -483,24 +485,117 @@ public class LineStatusTracker {
     }
   }
 
-  public static void sortRanges(@NotNull List<Range> ranges,
-                                int changedLine1,
-                                int changedLine2,
-                                @NotNull List<Range> rangesBeforeChange,
-                                @NotNull List<Range> changedRanges,
-                                @NotNull List<Range> rangesAfterChange) {
-    for (Range range : ranges) {
-      int line1 = range.getLine1();
-      int line2 = range.getLine2();
+  private void sortRanges(int beforeChangedLine1,
+                          int beforeChangedLine2,
+                          int linesShift,
+                          @NotNull List<Range> rangesBeforeChange,
+                          @NotNull List<Range> changedRanges,
+                          @NotNull List<Range> rangesAfterChange) {
+    if (!Registry.is("diff.status.tracker.skip.spaces")) {
+      for (Range range : myRanges) {
+        if (range.getLine2() < beforeChangedLine1) {
+          rangesBeforeChange.add(range);
+        }
+        else if (range.getLine1() > beforeChangedLine2) {
+          rangesAfterChange.add(range);
+        }
+        else {
+          changedRanges.add(range);
+        }
+      }
+    }
+    else {
+      int lastBefore = -1;
+      int firstAfter = myRanges.size();
+      for (int i = 0; i < myRanges.size(); i++) {
+        Range range = myRanges.get(i);
 
-      if (line2 < changedLine1) {
-        rangesBeforeChange.add(range);
+        if (range.getLine2() < beforeChangedLine1) {
+          lastBefore = i;
+        }
+        else if (range.getLine1() > beforeChangedLine2) {
+          firstAfter = i;
+          break;
+        }
       }
-      else if (line1 > changedLine2) {
-        rangesAfterChange.add(range);
+
+
+      // Expand on ranges, that are separated from changes only by empty/whitespaces lines
+      // This is needed to reduce amount of confusing cases, when changed blocks are matched wrong due to matched empty lines between them
+      CharSequence sequence = myDocument.getCharsSequence();
+
+      while (true) {
+        if (lastBefore == -1) break;
+
+        if (lastBefore < myRanges.size() - 1 && firstAfter - lastBefore > 1) {
+          Range firstChangedRange = myRanges.get(lastBefore + 1);
+          if (firstChangedRange.getLine1() < beforeChangedLine1) {
+            beforeChangedLine1 = firstChangedRange.getLine1();
+          }
+        }
+
+        if (beforeChangedLine1 >= getLineCount(myDocument)) break;
+        int offset1 = myDocument.getLineStartOffset(beforeChangedLine1) - 2;
+
+        int deltaLines = 0;
+        while (offset1 > 0) {
+          char c = sequence.charAt(offset1);
+          if (!StringUtil.isWhiteSpace(c)) break;
+          if (c == '\n') deltaLines++;
+          offset1--;
+        }
+
+        if (deltaLines == 0) break;
+        beforeChangedLine1 -= deltaLines;
+
+        if (myRanges.get(lastBefore).getLine2() < beforeChangedLine1) break;
+        while (lastBefore != -1 && myRanges.get(lastBefore).getLine2() >= beforeChangedLine1) {
+          lastBefore--;
+        }
       }
-      else {
-        changedRanges.add(range);
+
+      while (true) {
+        if (firstAfter == myRanges.size()) break;
+
+        if (firstAfter > 0 && firstAfter - lastBefore > 1) {
+          Range lastChangedRange = myRanges.get(firstAfter - 1);
+          if (lastChangedRange.getLine2() > beforeChangedLine2) {
+            beforeChangedLine2 = lastChangedRange.getLine2();
+          }
+        }
+
+        if (beforeChangedLine2 + linesShift < 1) break;
+        int offset2 = myDocument.getLineEndOffset(beforeChangedLine2 + linesShift - 1) + 1;
+
+        int deltaLines = 0;
+        while (offset2 < sequence.length()) {
+          char c = sequence.charAt(offset2);
+          if (!StringUtil.isWhiteSpace(c)) break;
+          if (c == '\n') deltaLines++;
+          offset2++;
+        }
+
+        if (deltaLines == 0) break;
+        beforeChangedLine2 += deltaLines;
+
+        if (myRanges.get(firstAfter).getLine1() > beforeChangedLine2) break;
+        while (firstAfter != myRanges.size() && myRanges.get(firstAfter).getLine1() <= beforeChangedLine2) {
+          firstAfter++;
+        }
+      }
+
+
+      for (int i = 0; i < myRanges.size(); i++) {
+        Range range = myRanges.get(i);
+        if (i <= lastBefore) {
+          rangesBeforeChange.add(range);
+        }
+        else if (i >= firstAfter) {
+          rangesAfterChange.add(range);
+        }
+        else {
+          changedRanges.add(range);
+        }
       }
     }
   }
