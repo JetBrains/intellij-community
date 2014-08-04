@@ -44,7 +44,7 @@ private List<String> pycharmPlatformApiModules() {
 
 
 private List pycharmImplementationModules() {   //modules to put into pycharm.jar
-  return [platformImplementationModules, "dom-impl", "python-community", "python-ide-community", "python-openapi", "python-psi-api",
+  return [platformImplementationModules, "dom-impl", "python-community", "python-ide-community", "python-educational", "python-openapi", "python-psi-api",
     "platform-main"].flatten()
 }
 
@@ -154,7 +154,7 @@ public layoutEducational(String classesPath, Set usedJars) {
   def appInfo = appInfoFile(classesPath)
   def paths = new Paths(home)
   buildSearchableOptions("${projectBuilder.moduleOutput(findModule("platform-resources"))}/search", [], {
-    projectBuilder.moduleRuntimeClasspath(findModule("main_pycharm_edu"), false).each {
+    projectBuilder.moduleRuntimeClasspath(findModule("main_pycharm_ce"), false).each {
       ant.pathelement(location: it)
     }
   }, "-Didea.platform.prefix=PyCharmEdu -Didea.no.jre.check=true")
