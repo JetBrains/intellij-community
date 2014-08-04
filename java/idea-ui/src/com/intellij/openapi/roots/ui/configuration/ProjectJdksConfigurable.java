@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,6 +161,9 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
   @Override
   @Nullable
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
+    if (myProjectJdksModel == null) {
+      return null;
+    }
     final ArrayList<AnAction> actions = new ArrayList<AnAction>();
     DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.jdk.text"), true);
     group.getTemplatePresentation().setIcon(IconUtil.getAddIcon());
