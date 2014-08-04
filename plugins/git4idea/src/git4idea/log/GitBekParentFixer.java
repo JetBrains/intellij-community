@@ -27,49 +27,34 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 class GitBekParentFixer {
-  @NotNull
-  private final static String MAGIC_TEXT = "Merge remote";
-  @NotNull
-  private final VcsLogFilterCollection MAGIC_FILTER = createVcsLogFilterCollection();
+  @NotNull private static final String MAGIC_TEXT = "Merge remote";
+  @NotNull private static final VcsLogFilterCollection MAGIC_FILTER = createVcsLogFilterCollection();
 
-  @NotNull
-  private final VirtualFile myRoot;
-  @NotNull
-  private final GitLogProvider myGitLogProvider;
-  @NotNull
-  private final List<TimedVcsCommit> myAllCommits;
+  @NotNull private final Set<Hash> myWrongCommits;
 
-  GitBekParentFixer(@NotNull VirtualFile root, @NotNull GitLogProvider gitLogProvider, @NotNull List<TimedVcsCommit> allCommits) {
-    myRoot = root;
-    myGitLogProvider = gitLogProvider;
-    myAllCommits = allCommits;
+  private GitBekParentFixer(@NotNull Set<Hash> wrongCommits) {
+    myWrongCommits = wrongCommits;
   }
 
   @NotNull
-  List<TimedVcsCommit> getCorrectCommits() throws VcsException {
-    if (!BekSorter.isBekEnabled())
-      return myAllCommits;
-
-    final Set<Hash> wrongCommits = getWrongCommits();
-    return new AbstractList<TimedVcsCommit>() {
-      @Override
-      public TimedVcsCommit get(int index) {
-        TimedVcsCommit commit = myAllCommits.get(index);
-        if (!wrongCommits.contains(commit.getId()))
-          return commit;
-
-        return reverseParents(commit);
-      }
-
-      @Override
-      public int size() {
-        return myAllCommits.size();
-      }
-    };
+  static GitBekParentFixer prepare(@NotNull VirtualFile root, @NotNull GitLogProvider provider) throws VcsException {
+    if (!BekSorter.isBekEnabled()) {
+      return new GitBekParentFixer(Collections.<Hash>emptySet());
+    }
+    return new GitBekParentFixer(getWrongCommits(provider, root));
   }
 
-  private Set<Hash> getWrongCommits() throws VcsException {
-    List<TimedVcsCommit> commitsMatchingFilter = myGitLogProvider.getCommitsMatchingFilter(myRoot, MAGIC_FILTER, -1);
+  @NotNull
+  TimedVcsCommit fixCommit(@NotNull TimedVcsCommit commit) {
+    if (!myWrongCommits.contains(commit.getId())) {
+      return commit;
+    }
+    return reverseParents(commit);
+  }
+
+  @NotNull
+  private static Set<Hash> getWrongCommits(@NotNull GitLogProvider provider, @NotNull VirtualFile root) throws VcsException {
+    List<TimedVcsCommit> commitsMatchingFilter = provider.getCommitsMatchingFilter(root, MAGIC_FILTER, -1);
     return ContainerUtil.map2Set(commitsMatchingFilter, new Function<TimedVcsCommit, Hash>() {
       @Override
       public Hash fun(TimedVcsCommit timedVcsCommit) {

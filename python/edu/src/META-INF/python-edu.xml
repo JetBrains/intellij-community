@@ -532,8 +532,6 @@
     <!-- Console -->
     <toolWindow id="Python Console" anchor="bottom" icon=""
                 factoryClass="com.jetbrains.python.console.PythonConsoleToolWindowFactory" secondary="false"/>
-
-
   </extensions>
 
   <extensionPoints>    
@@ -621,6 +619,7 @@
     </component>
   </project-components>
 
+
   <project-components>
     <component>
       <implementation-class>com.jetbrains.python.console.PythonConsoleToolWindow</implementation-class>
@@ -649,23 +648,9 @@
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <separator/>
-      <reference ref="ExternalToolsGroup"/>
-      <separator/>
       <reference ref="CompareTwoFiles"/>
       <reference ref="CompareFileWithEditor"/>
     </group>
-
-    <action id="com.jetbrains.python.console.RunPythonConsoleAction"
-            class="com.jetbrains.python.console.RunPythonConsoleAction"
-            text="Run Python Console..." description="Allows to quickly run Python console">
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </action>
-
-    <action id="com.jetbrains.python.console.PyOpenDebugConsoleAction"
-            class="com.jetbrains.python.console.PyOpenDebugConsoleAction"
-            text="Open Debug Command Line" description="Opens debug command line for running process">
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </action>
 
 
     <action id="ExecuteInPyConsoleAction"
@@ -696,12 +681,6 @@
             description="Delete compiled bytecode files in selected directory and its subdirectories">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ProjectViewPopupMenuRefactoringGroup"/>
     </action>
-
-    <group id="PyPackagingMenu" text="Packaging">
-      <action id="CreateSetupPy" class="com.jetbrains.python.packaging.setupPy.CreateSetupPyAction"/>
-      <action id="RunSetupPyTask" class="com.jetbrains.python.packaging.setupPy.SetupTaskChooserAction"/>
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </group>
 
     <action id="PythonGenerateDictionaries" class="com.jetbrains.python.spellchecker.PythonSpellcheckerGenerateDictionariesAction"
             text="Generate Python Spellchecker Dictionaries" internal="true">

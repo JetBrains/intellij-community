@@ -13,28 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.graph;
+package com.jetbrains.python.console;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowFactory;
 
 /**
+ * @author traff
  */
-public interface GraphCommit<CommitId> {
+public class PythonConsoleToolWindowFactory implements ToolWindowFactory, DumbAware {
+  public static final String ID = "Python Console";
 
-  @NotNull
-  CommitId getId();
-
-  @NotNull
-  List<CommitId> getParents();
-
-  /**
-   * <p>Returns the timestamp indicating the date & time when this commit was made.</p>
-   * <p>This time is displayed in the table by default;
-   *    it is used for joining commits from different repositories;
-   *    it is used for ordering commits in a single repository (keeping the preference of the topological ordering of course).</p>
-   */
-  long getTimestamp();
-
+  @Override
+  public void createToolWindowContent(Project project, ToolWindow toolWindow) {
+    RunPythonConsoleAction.runPythonConsole(project, null, toolWindow);
+  }
 }

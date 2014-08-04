@@ -1,0 +1,51 @@
+<component xmlns:xi="http://www.w3.org/2001/XInclude">
+  <actions>
+    <group id="LookupActions">
+      <!-- these must be declared before standard EnterAction and TabAction -->
+      <action id="EditorChooseLookupItem" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$FocusedOnly"/>
+      <action id="EditorChooseLookupItemReplace" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$Replacing"/>
+      <action id="EditorChooseLookupItemCompleteStatement" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$CompletingStatement"/>
+      <action id="EditorChooseLookupItemDot" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$ChooseWithDot"/>
+
+      <action id="ExpandLiveTemplateByTab" class="com.intellij.codeInsight.template.impl.editorActions.ExpandLiveTemplateByTabAction" use-shortcut-of="EditorTab"/>
+
+      <action id="NextTemplateVariable" class="com.intellij.codeInsight.template.impl.actions.NextVariableAction"/>
+      <action id="PreviousTemplateVariable" class="com.intellij.codeInsight.template.impl.actions.PreviousVariableAction"/>
+
+      <action id="NextParameter" class="com.intellij.codeInsight.hint.actions.NextParameterAction"/>
+      <action id="PrevParameter" class="com.intellij.codeInsight.hint.actions.PrevParameterAction"/>
+    </group>
+
+    <action id="EditorIndentSelection" class="com.intellij.openapi.editor.actions.LangIndentSelectionAction"/>
+
+    <action id="EditorLookupUp" class="com.intellij.codeInsight.lookup.impl.LookupActionHandler$UpAction"/>
+    <action id="EditorLookupDown" class="com.intellij.codeInsight.lookup.impl.LookupActionHandler$DownAction"/>
+
+  </actions>
+
+  <xi:include href="/META-INF/edu/PlatformActions.xml" xpointer="xpointer(/component/*)"/>
+  <xi:include href="/META-INF/edu/VcsActions.xml" xpointer="xpointer(/component/*)"/>
+  <xi:include href="/META-INF/edu/LangActions.xml" xpointer="xpointer(/component/*)"/>
+
+  <actions>
+    <group id="WelcomeScreen.QuickStart.Platform">
+      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
+    </group>
+
+    <group id="InspectCodeGroup">
+      <separator/>
+      <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
+      <action id="CodeCleanup" class="com.intellij.codeInspection.actions.CodeCleanupAction"/>
+      <action id="RunInspection" class="com.intellij.codeInspection.actions.RunInspectionAction" />
+      <action id="PopupHector" class="com.intellij.codeInsight.daemon.impl.PopupHectorAction"/>
+      <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
+
+      <add-to-group group-id="CodeMenu" anchor="last"/>
+    </group>
+
+    <reference ref="InspectCode">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
+    </reference>
+  </actions>
+
+</component>
