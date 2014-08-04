@@ -1,0 +1,63 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="checkoutProvider"
+                    interface="com.intellij.openapi.vcs.CheckoutProvider"/>
+    <extensionPoint name="vcsRootChecker"
+                    interface="com.intellij.openapi.vcs.VcsRootChecker"/>
+    <extensionPoint name="checkoutListener"
+                    interface="com.intellij.openapi.vcs.checkout.CheckoutListener"/>
+    <extensionPoint name="vcsAwareCheckoutListener"
+                    interface="com.intellij.openapi.vcs.checkout.VcsAwareCheckoutListener"/>
+    <extensionPoint name="checkoutCompletedListener"
+                    interface="com.intellij.openapi.vcs.checkout.CheckoutListener"/>
+
+    <extensionPoint name="vcs"
+                    beanClass="com.intellij.openapi.vcs.impl.VcsEP"
+                    area="IDEA_PROJECT">
+      <with attribute="vcsClass" implements="com.intellij.openapi.vcs.AbstractVcs"/>
+    </extensionPoint>
+
+    <extensionPoint name="checkinHandlerFactory"
+                    interface="com.intellij.openapi.vcs.checkin.CheckinHandlerFactory"
+                    area="IDEA_PROJECT"/>
+
+    <extensionPoint name="vcsCheckinHandlerFactory"
+                    interface="com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory"/>
+
+    <extensionPoint name="changesViewContent"
+                    beanClass="com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP"
+                    area="IDEA_PROJECT">
+      <with attribute="className" implements="com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider"/>
+      <with attribute="predicateClassName" implements="com.intellij.util.NotNullFunction"/>
+    </extensionPoint>
+
+    <extensionPoint name="editChangelistSupport"
+                    interface="com.intellij.openapi.vcs.changes.ui.EditChangelistSupport"
+                    area="IDEA_PROJECT"/>
+
+    <extensionPoint name="vcsSelectionProvider"
+                    interface="com.intellij.vcsUtil.VcsSelectionProvider"/>
+
+    <extensionPoint name="vcsConfigurableProvider"
+                    interface="com.intellij.openapi.vcs.VcsConfigurableProvider"/>
+
+    <!--<extensionPoint name="writingAccessProvider"-->
+    <!--interface="com.intellij.openapi.vfs.WritingAccessProvider"-->
+    <!--area="IDEA_PROJECT"/>-->
+
+    <extensionPoint name="vcs.fileStatusProvider"
+                    interface="com.intellij.openapi.vcs.impl.FileStatusProvider"
+                    area="IDEA_PROJECT"/>
+
+    <extensionPoint name="vcsPopupProvider"
+                    interface="com.intellij.openapi.vcs.actions.VcsQuickListContentProvider"/>
+    <extensionPoint name="patch.extension" interface="com.intellij.openapi.diff.impl.patch.PatchEP" area="IDEA_PROJECT"/>
+    <extensionPoint name="vcsChangesViewRefresher" interface="com.intellij.openapi.vcs.changes.ChangesViewRefresher"/>
+    <extensionPoint name="vcsAnnotationGutterActionProvider" interface="com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider"/>
+    <extensionPoint name="vcschangedetails" interface="com.intellij.openapi.vcs.changes.VcsChangeDetailsProvider" area="IDEA_PROJECT"/>
+
+    <extensionPoint name="vcs.taskHandler" interface="com.intellij.openapi.vcs.VcsTaskHandler" area="IDEA_PROJECT"/>
+    
+    <extensionPoint name="vcs.rootFinder" interface="com.intellij.openapi.vcs.VcsRootFinder" area="IDEA_PROJECT"/>
+  </extensionPoints>
+</idea-plugin>
