@@ -93,6 +93,7 @@ public class PyCharmEduInitialConfigurator {
       propertiesComponent.setValue(CONFIGURED, "true");
       recentProjectsManager.loadState(new RecentProjectsManagerBase.State());
       propertiesComponent.setValue("toolwindow.stripes.buttons.info.shown", "true");
+      UISettings.getInstance().HIDE_TOOL_STRIPES = false;
       uiSettings.SHOW_MEMORY_INDICATOR = false;
       uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
       codeInsightSettings.REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
