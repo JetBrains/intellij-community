@@ -17,6 +17,7 @@ package com.intellij.uiDesigner;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
@@ -74,7 +75,12 @@ public final class PsiPropertiesProvider implements PropertiesProvider {
       }
 
       final PsiType type = getter.getReturnType();
-      final String propertyClassName = type.getCanonicalText();
+      final String propertyClassName;
+      if (type instanceof PsiClassReferenceType) {
+        propertyClassName = ((PsiClassReferenceType)type).rawType().getCanonicalText();
+      } else {
+        propertyClassName = type.getCanonicalText();
+      }
 
       LwIntrospectedProperty property = CompiledClassPropertiesProvider.propertyFromClassName(propertyClassName, name);
       if (property == null) {
