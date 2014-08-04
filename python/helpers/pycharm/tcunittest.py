@@ -42,6 +42,7 @@ class TeamcityTestResult(TestResult):
     self.messages = TeamcityServiceMessages(self.output, prepend_linebreak=True)
     self.messages.testMatrixEntered()
     self.current_suite = None
+    self.subtest_suite = None
 
   def find_first(self, val):
     quot = val[0]
@@ -76,7 +77,10 @@ class TeamcityTestResult(TestResult):
     exctype, value, tb = err
     return ''.join(traceback.format_exception(exctype, value, tb))
 
-  def getTestName(self, test):
+  def getTestName(self, test, is_subtest=False):
+    if is_subtest:
+        test_name = self.getTestName(test.test_case)
+        return "{} {}".format(test_name, test._subDescription())
     if hasattr(test, '_testMethodName'):
       if test._testMethodName == "runTest":
         return str(test)
@@ -163,20 +167,46 @@ class TeamcityTestResult(TestResult):
     return (suite, location, suite_location)
 
   def startTest(self, test):
-    suite, location, suite_location = self.__getSuite(test)
-    if suite != self.current_suite:
-      if self.current_suite:
-        self.messages.testSuiteFinished(self.current_suite)
-      self.current_suite = suite
-      self.messages.testSuiteStarted(self.current_suite, location=suite_location)
     setattr(test, "startTime", datetime.datetime.now())
-    self.messages.testStarted(self.getTestName(test), location=location)
 
   def stopTest(self, test):
     start = getattr(test, "startTime", datetime.datetime.now())
     d = datetime.datetime.now() - start
     duration=d.microseconds / 1000 + d.seconds * 1000 + d.days * 86400000
-    self.messages.testFinished(self.getTestName(test), duration=int(duration))
+    if not self.subtest_suite:
+        suite, location, suite_location = self.__getSuite(test)
+        if suite != self.current_suite:
+          if self.current_suite:
+            self.messages.testSuiteFinished(self.current_suite)
+          self.current_suite = suite
+          self.messages.testSuiteStarted(self.current_suite, location=suite_location)
+        self.messages.testStarted(self.getTestName(test), location=location)
+        self.messages.testFinished(self.getTestName(test), duration=int(duration))
+    else:
+      self.messages.testSuiteFinished(self.subtest_suite)
+      self.subtest_suite = None
+
+
+  def addSubTest(self, test, subtest, err):
+    suite_name = self.getTestName(test) #+ " (subTests)"
+    if not self.subtest_suite:
+        self.subtest_suite = suite_name
+        self.messages.testSuiteStarted(self.subtest_suite)
+    else:
+        if suite_name != self.subtest_suite:
+            self.messages.testSuiteFinished(self.subtest_suite)
+            self.subtest_suite = suite_name
+            self.messages.testSuiteStarted(self.subtest_suite)
+
+    name = self.getTestName(subtest, True)
+    if err is not None:
+      error = self._exc_info_to_string(err, test)
+      self.messages.testStarted(name)
+      self.messages.testFailed(name, message='Failure', details=error)
+    else:
+      self.messages.testStarted(name)
+      self.messages.testFinished(name)
+
 
   def endLastSuite(self):
     if self.current_suite:
