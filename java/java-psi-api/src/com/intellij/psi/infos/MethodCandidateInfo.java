@@ -180,7 +180,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   @NotNull
   public PsiSubstitutor getSubstitutor(boolean includeReturnConstraint) {
     PsiSubstitutor substitutor = myCalcedSubstitutor;
-    if (substitutor == null || !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+    if (substitutor == null || !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) || isOverloadCheck()) {
       PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
       PsiMethod method = getElement();
       if (myTypeArguments == null) {
@@ -189,7 +189,7 @@ public class MethodCandidateInfo extends CandidateInfo{
         final PsiSubstitutor inferredSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE, includeReturnConstraint);
 
          if (!stackStamp.mayCacheNow() ||
-             !ourOverloadGuard.currentStack().isEmpty() ||
+             isOverloadCheck() ||
              !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) ||
              getMarkerList() != null && PsiResolveHelper.ourGraphGuard.currentStack().contains(getMarkerList().getParent())) {
           return inferredSubstitutor;
@@ -207,6 +207,10 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
 
     return substitutor;
+  }
+
+  public static boolean isOverloadCheck() {
+    return !ourOverloadGuard.currentStack().isEmpty();
   }
 
 
