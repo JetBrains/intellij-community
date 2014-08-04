@@ -343,60 +343,67 @@ public class LineStatusTracker {
         if (StringUtil.endsWithChar(e.getNewFragment(), '\n')) afterLastChangedLine++;
 
 
-        doUpdateRanges(myBeforeFirstChangedLine, myBeforeLastChangedLine, myBeforeTotalLines,
-                       afterFirstChangedLine, afterLastChangedLine);
+        int linesShift = (afterLastChangedLine - afterFirstChangedLine) - (myBeforeLastChangedLine - myBeforeFirstChangedLine);
+
+        doUpdateRanges(myBeforeFirstChangedLine, myBeforeLastChangedLine, linesShift, myBeforeTotalLines);
       }
     }
   }
 
   private void doUpdateRanges(int beforeFirstChangedLine,
                               int beforeLastChangedLine,
+                              int linesShift,
+                              int beforeTotalLines) {
+    List<Range> rangesBeforeChange = new ArrayList<Range>();
+    List<Range> rangesAfterChange = new ArrayList<Range>();
+    List<Range> changedRanges = new ArrayList<Range>();
+    sortRanges(myRanges, beforeFirstChangedLine, beforeLastChangedLine, rangesBeforeChange, changedRanges, rangesAfterChange);
+
+    Range firstChangedRange = ContainerUtil.getFirstItem(changedRanges);
+    Range lastChangedRange = ContainerUtil.getLastItem(changedRanges);
+
+    if (firstChangedRange != null && firstChangedRange.getLine1() < beforeFirstChangedLine) {
+      beforeFirstChangedLine = firstChangedRange.getLine1();
+    }
+    if (lastChangedRange != null && lastChangedRange.getLine2() > beforeLastChangedLine) {
+      beforeLastChangedLine = lastChangedRange.getLine2() - 1;
+    }
+    
+    doUpdateRanges(beforeFirstChangedLine, beforeLastChangedLine + 1, linesShift, beforeTotalLines,
+                   rangesBeforeChange, changedRanges, rangesAfterChange);
+  }
+
+  private void doUpdateRanges(int beforeChangedLine1,
+                              int beforeChangedLine2,
+                              int linesShift, // before -> after
                               int beforeTotalLines,
-                              int afterFirstChangedLine,
-                              int afterLastChangedLine) {
+                              @NotNull List<Range> rangesBefore,
+                              @NotNull List<Range> changedRanges,
+                              @NotNull List<Range> rangesAfter) {
     try {
       int vcsTotalLines = getLineCount(myVcsDocument);
 
-      int afterChangedLines = afterLastChangedLine - afterFirstChangedLine;
+      Range lastRangeBefore = ContainerUtil.getLastItem(rangesBefore);
+      Range firstRangeAfter = ContainerUtil.getFirstItem(rangesAfter);
 
-      int beforeChangedLines = beforeLastChangedLine - beforeFirstChangedLine;
-      int linesShift = afterChangedLines - beforeChangedLines;
+      int afterChangedLine1 = beforeChangedLine1;
+      int afterChangedLine2 = beforeChangedLine2 + linesShift;
 
-      List<Range> rangesBeforeChange = new ArrayList<Range>();
-      List<Range> rangesAfterChange = new ArrayList<Range>();
-      List<Range> changedRanges = new ArrayList<Range>();
-      sortRanges(myRanges, beforeFirstChangedLine, beforeLastChangedLine, rangesBeforeChange, changedRanges, rangesAfterChange);
+      int vcsFirstLine = getVcsLine1(lastRangeBefore, beforeChangedLine1);
+      int vcsLastLine = getVcsLine2(firstRangeAfter, beforeChangedLine2, beforeTotalLines, vcsTotalLines);
 
-      Range firstChangedRange = ContainerUtil.getFirstItem(changedRanges);
-      Range lastChangedRange = ContainerUtil.getLastItem(changedRanges);
-      Range lastRangeBefore = ContainerUtil.getLastItem(rangesBeforeChange);
-      Range firstRangeAfter = ContainerUtil.getFirstItem(rangesAfterChange);
+      List<Range> newChangedRanges = getNewChangedRanges(afterChangedLine1, afterChangedLine2, vcsFirstLine, vcsLastLine);
 
-      if (firstChangedRange != null && firstChangedRange.getLine1() < beforeFirstChangedLine) {
-        beforeFirstChangedLine = firstChangedRange.getLine1();
-      }
-      if (lastChangedRange != null && lastChangedRange.getLine2() > beforeLastChangedLine) {
-        beforeLastChangedLine = lastChangedRange.getLine2() - 1;
-      }
-
-      afterFirstChangedLine = beforeFirstChangedLine;
-      afterLastChangedLine = beforeLastChangedLine + linesShift;
-
-      int vcsFirstLine = getVcsLine1(lastRangeBefore, beforeFirstChangedLine);
-      int vcsLastLine = getVcsLine2(firstRangeAfter, beforeLastChangedLine, beforeTotalLines, vcsTotalLines);
-
-      List<Range> newChangedRanges = getNewChangedRanges(afterFirstChangedLine, afterLastChangedLine, vcsFirstLine, vcsLastLine);
-
-      shiftRanges(rangesAfterChange, linesShift);
+      shiftRanges(rangesAfter, linesShift);
 
       if (!changedRanges.equals(newChangedRanges)) {
         replaceRanges(changedRanges, newChangedRanges);
 
-        myRanges = new ArrayList<Range>(rangesBeforeChange.size() + newChangedRanges.size() + rangesAfterChange.size());
+        myRanges = new ArrayList<Range>(rangesBefore.size() + newChangedRanges.size() + rangesAfter.size());
 
-        myRanges.addAll(rangesBeforeChange);
+        myRanges.addAll(rangesBefore);
         myRanges.addAll(newChangedRanges);
-        myRanges.addAll(rangesAfterChange);
+        myRanges.addAll(rangesAfter);
 
         for (Range range : myRanges) {
           if (!range.hasHighlighter()) range.setHighlighter(createHighlighter(range));
@@ -438,9 +445,9 @@ public class LineStatusTracker {
 
   private List<Range> getNewChangedRanges(int firstChangedLine, int lastChangedLine, int vcsFirstLine, int vcsLastLine)
     throws FilesTooBigForDiffException {
-    List<String> lines = new DocumentWrapper(myDocument).getLines(firstChangedLine, lastChangedLine);
-    List<String> uLines = new DocumentWrapper(myVcsDocument).getLines(vcsFirstLine, vcsLastLine);
-    return new RangesBuilder(lines, uLines, firstChangedLine, vcsFirstLine).getRanges();
+    List<String> lines = new DocumentWrapper(myDocument).getLines(firstChangedLine, lastChangedLine - 1);
+    List<String> vcsLines = new DocumentWrapper(myVcsDocument).getLines(vcsFirstLine, vcsLastLine - 1);
+    return new RangesBuilder(lines, vcsLines, firstChangedLine, vcsFirstLine).getRanges();
   }
 
   private void replaceRanges(@NotNull List<Range> rangesInChange, @NotNull List<Range> newRangesInChange) {
@@ -652,8 +659,7 @@ public class LineStatusTracker {
 
         int beforeTotalLines = getLineCount(myDocument) - shift;
 
-        doUpdateRanges(beforeFirstChangedLine, beforeLastChangedLine, beforeTotalLines,
-                       afterFirstChangedLine, afterLastChangedLine);
+        doUpdateRanges(beforeFirstChangedLine, beforeLastChangedLine, shift, beforeTotalLines);
       }
 
       mySuppressUpdate = false;
