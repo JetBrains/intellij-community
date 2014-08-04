@@ -35,7 +35,8 @@ public abstract class CloudModuleBuilderContribution {
 
   public abstract void configureModule(Module module,
                                        RemoteServer<?> account,
-                                       CloudApplicationConfiguration configuration);
+                                       CloudApplicationConfiguration configuration,
+                                       String contentPath);
 
   public static CloudModuleBuilderContribution getInstanceByType(ServerType<?> cloudType) {
     for (CloudModuleBuilderContribution contribution : EP_NAME.getExtensions()) {

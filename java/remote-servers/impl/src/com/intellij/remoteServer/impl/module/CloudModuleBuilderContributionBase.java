@@ -15,22 +15,28 @@
  */
 package com.intellij.remoteServer.impl.module;
 
-import com.intellij.execution.RunManagerEx;
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.ide.util.newProjectWizard.StepSequence;
+import com.intellij.ide.util.newProjectWizard.modes.CreateFromSourcesMode;
+import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.ProjectBuilder;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModulePointer;
-import com.intellij.openapi.module.ModulePointerManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
-import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationType;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfiguration;
-import com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceImpl;
 import com.intellij.remoteServer.util.*;
 import com.intellij.remoteServer.util.ssh.SshKeyChecker;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,10 +48,20 @@ public abstract class CloudModuleBuilderContributionBase<
   SR extends CloudMultiSourceServerRuntimeInstance<DC, ?, ?, ?>>
   extends CloudModuleBuilderContribution {
 
+  private CloudNotifier myNotifier;
+
+  private CloudNotifier getNotifier() {
+    if (myNotifier == null) {
+      myNotifier = new CloudNotifier(getCloudType().getPresentableName());
+    }
+    return myNotifier;
+  }
+
   @Override
-  public void configureModule(Module module,
+  public void configureModule(final Module module,
                               RemoteServer<?> account,
-                              CloudApplicationConfiguration applicationConfiguration) {
+                              CloudApplicationConfiguration applicationConfiguration,
+                              final String contentPath) {
     RemoteServer<SC> castedAccount = (RemoteServer<SC>)account;
     final AC castedApplicationConfiguration = (AC)applicationConfiguration;
 
@@ -56,74 +72,108 @@ public abstract class CloudModuleBuilderContributionBase<
       deploymentConfiguration.setDeploymentName(applicationConfiguration.getExistingAppName());
     }
 
-    final DeployToServerRunConfiguration<SC, DC> runConfiguration = createRunConfiguration(module, castedAccount, deploymentConfiguration);
+    final DeployToServerRunConfiguration<SC, DC> runConfiguration
+      = CloudAccountSelectionEditor.createRunConfiguration(castedAccount, module, deploymentConfiguration);
 
-    final String cloudName = account.getType().getPresentableName();
+    final ServerType<?> cloudType = account.getType();
     final Project project = module.getProject();
-    new CloudConnectionTask<Object, SC, DC, SR>(project, CloudBundle.getText("cloud.support", cloudName), castedAccount) {
-
-      CloudNotifier myNotifier = new CloudNotifier(cloudName);
+    new CloudConnectionTask<Object, SC, DC, SR>(project,
+                                                CloudBundle.getText("cloud.support", cloudType.getPresentableName()),
+                                                castedAccount) {
 
       boolean myFirstAttempt = true;
 
       @Override
       protected Object run(SR serverRuntime) throws ServerRuntimeException {
         doConfigureModule(castedApplicationConfiguration, runConfiguration, myFirstAttempt, serverRuntime);
-        myNotifier.showMessage(CloudBundle.getText("cloud.support.added", cloudName), MessageType.INFO);
         return null;
       }
 
       @Override
       protected void runtimeErrorOccurred(@NotNull String errorMessage) {
         myFirstAttempt = false;
-        new SshKeyChecker().checkServerError(errorMessage, myNotifier, project, this);
+        new SshKeyChecker().checkServerError(errorMessage, getNotifier(), project, this);
+      }
+
+      @Override
+      protected void postPerform(Object result) {
+        detectModuleStructure(module, contentPath);
+      }
+
+      @Override
+      protected boolean shouldStartInBackground() {
+        return false;
       }
     }.performAsync();
   }
 
-  private DeployToServerRunConfiguration<SC, DC> createRunConfiguration(Module module,
-                                                                        RemoteServer<SC> server,
-                                                                        DC deploymentConfiguration) {
-    Project project = module.getProject();
+  private void detectModuleStructure(Module module, final String contentPath) {
+    final Project project = module.getProject();
 
-    String serverName = server.getName();
+    final CreateFromSourcesMode mode = new CreateFromSourcesMode() {
 
-    String name = generateRunConfigurationName(serverName, module.getName());
+      @Override
+      public boolean isAvailable(WizardContext context) {
+        return true;
+      }
 
-    final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
-    final RunnerAndConfigurationSettings runSettings
-      = runManager.createRunConfiguration(name, getRunConfigurationType().getConfigurationFactories()[0]);
+      @Override
+      public void addSteps(WizardContext context, ModulesProvider modulesProvider, StepSequence sequence, String specific) {
+        super.addSteps(context, modulesProvider, sequence, specific);
+        myProjectBuilder.setFileToImport(contentPath);
+      }
+    };
 
-    final DeployToServerRunConfiguration<SC, DC> result = (DeployToServerRunConfiguration<SC, DC>)runSettings.getConfiguration();
+    final WizardContext context = new WizardContext(project);
 
-    result.setServerName(serverName);
+    final StepSequence stepSequence = mode.getSteps(context, DefaultModulesProvider.createForProject(context.getProject()));
+    if (stepSequence == null) {
+      return;
+    }
 
-    final ModulePointer modulePointer = ModulePointerManager.getInstance(project).create(module);
-    result.setDeploymentSource(new ModuleDeploymentSourceImpl(modulePointer));
+    Disposer.register(project, new Disposable() {
 
-    result.setDeploymentConfiguration(deploymentConfiguration);
-
-    runManager.addConfiguration(runSettings, false);
-    runManager.setSelectedConfiguration(runSettings);
-
-    return result;
-  }
-
-  private static String generateRunConfigurationName(String serverName, String moduleName) {
-    return CloudBundle.getText("run.configuration.name", serverName, moduleName);
-  }
-
-  private DeployToServerConfigurationType getRunConfigurationType() {
-    String id = DeployToServerConfigurationType.getId(getCloudType());
-    for (ConfigurationType configurationType : ConfigurationType.CONFIGURATION_TYPE_EP.getExtensions()) {
-      if (configurationType instanceof DeployToServerConfigurationType) {
-        DeployToServerConfigurationType deployConfigurationType = (DeployToServerConfigurationType)configurationType;
-        if (deployConfigurationType.getId().equals(id)) {
-          return deployConfigurationType;
+      @Override
+      public void dispose() {
+        for (ModuleWizardStep step : stepSequence.getAllSteps()) {
+          step.disposeUIResources();
         }
       }
-    }
-    return null;
+    });
+
+    ProgressManager.getInstance()
+      .run(new Task.Backgroundable(project, CloudBundle.getText("detect.module.structure", getCloudType().getPresentableName()), false) {
+
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          for (ModuleWizardStep step = ContainerUtil.getFirstItem(stepSequence.getSelectedSteps());
+               step != null;
+               step = stepSequence.getNextStep(step)) {
+            if (step instanceof AbstractStepWithProgress<?>) {
+              ((AbstractStepWithProgress)step).performStep();
+            }
+            else {
+              step.updateDataModel();
+            }
+          }
+          CloudAccountSelectionEditor.unsetAccountOnContext(context, getCloudType());
+        }
+
+        @Override
+        public boolean shouldStartInBackground() {
+          return false;
+        }
+
+        @Override
+        public void onSuccess() {
+          ProjectBuilder moduleBuilder = mode.getModuleBuilder();
+          if (moduleBuilder == null) {
+            return;
+          }
+          moduleBuilder.commit(project);
+          getNotifier().showMessage(CloudBundle.getText("cloud.support.added", getCloudType().getPresentableName()), MessageType.INFO);
+        }
+      });
   }
 
   @Override

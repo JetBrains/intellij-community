@@ -100,15 +100,12 @@ public class CloudModuleBuilder extends JavaModuleBuilder {
     myAccount = account;
   }
 
-  public RemoteServer<?> getAccount() {
-    return myAccount;
-  }
-
   public void setApplicationConfiguration(CloudApplicationConfiguration applicationConfiguration) {
     myApplicationConfiguration = applicationConfiguration;
   }
 
   private void configureModule(final Module module) {
-    CloudModuleBuilderContribution.getInstanceByType(myAccount.getType()).configureModule(module, myAccount, myApplicationConfiguration);
+    CloudModuleBuilderContribution
+      .getInstanceByType(myAccount.getType()).configureModule(module, myAccount, myApplicationConfiguration, getContentEntryPath());
   }
 }
