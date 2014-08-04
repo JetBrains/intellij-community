@@ -244,7 +244,13 @@ class SvnChangeProviderContext implements StatusReceiver {
         myChangelistBuilder.processLocallyDeletedFile(createLocallyDeletedChange(filePath, status));
       }
       else if (status.is(StatusType.STATUS_IGNORED)) {
-        if (!myVcs.isWcRoot(filePath)) {
+        if (filePath.getVirtualFile() == null) {
+          filePath.hardRefresh();
+        }
+        if (filePath.getVirtualFile() == null) {
+          LOG.error("No virtual file for ignored file: " + filePath.getPresentableUrl() + ", isNonLocal: " + filePath.isNonLocal());
+        }
+        else if (!myVcs.isWcRoot(filePath)) {
           myChangelistBuilder.processIgnoredFile(filePath.getVirtualFile());
         }
       }

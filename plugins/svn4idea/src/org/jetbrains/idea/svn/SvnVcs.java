@@ -81,7 +81,6 @@ import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.info.InfoConsumer;
 import org.jetbrains.idea.svn.properties.PropertyClient;
-import org.jetbrains.idea.svn.properties.PropertyData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.status.Status;
@@ -89,7 +88,10 @@ import org.jetbrains.idea.svn.status.StatusType;
 import org.jetbrains.idea.svn.svnkit.SvnKitManager;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -723,9 +725,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return WorkingCopyFormat.UNKNOWN.equals(format) ? SvnFormatSelector.findRootAndGetFormat(ioFile) : format;
   }
 
-  public boolean isWcRoot(FilePath filePath) {
+  public boolean isWcRoot(@NotNull FilePath filePath) {
     boolean isWcRoot = false;
-    WorkingCopy wcRoot = myRootsToWorkingCopies.getWcRoot(filePath.getVirtualFile());
+    VirtualFile file = filePath.getVirtualFile();
+    WorkingCopy wcRoot = file != null ? myRootsToWorkingCopies.getWcRoot(file) : null;
     if (wcRoot != null) {
       isWcRoot = wcRoot.getFile().getAbsolutePath().equals(filePath.getIOFile().getAbsolutePath());
     }
@@ -917,7 +920,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Override
-  public boolean isVcsBackgroundOperationsAllowed(VirtualFile root) {
+  public boolean isVcsBackgroundOperationsAllowed(@NotNull VirtualFile root) {
     // TODO: Currently myAuthNotifier.isAuthenticatedFor directly uses SVNKit to check credentials - so assume for now that background
     // TODO: operations are always allowed for command line. As sometimes this leads to errors - for instance, incoming changes are not
     // TODO: displayed in "Incoming" tab - incoming changes are collected using command line but not displayed because
