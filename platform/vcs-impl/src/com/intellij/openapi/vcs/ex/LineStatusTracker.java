@@ -35,6 +35,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,10 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
 
 /**
  * @author irengrig
@@ -459,11 +457,23 @@ public class LineStatusTracker {
     return range == null ? totalLinesAfter - totalLinesBefore + line : line + range.getVcsLine1() - range.getLine1();
   }
 
-  private List<Range> getNewChangedRanges(int firstChangedLine, int lastChangedLine, int vcsFirstLine, int vcsLastLine)
+  private List<Range> getNewChangedRanges(int changedLine1, int changedLine2, int vcsLine1, int vcsLine2)
     throws FilesTooBigForDiffException {
-    List<String> lines = new DocumentWrapper(myDocument).getLines(firstChangedLine, lastChangedLine - 1);
-    List<String> vcsLines = new DocumentWrapper(myVcsDocument).getLines(vcsFirstLine, vcsLastLine - 1);
-    return new RangesBuilder(lines, vcsLines, firstChangedLine, vcsFirstLine).getRanges();
+
+    if (changedLine1 == changedLine2 && vcsLine1 == vcsLine2) {
+      return Collections.emptyList();
+    }
+    if (changedLine1 == changedLine2) {
+      return Collections.singletonList(new Range(changedLine1, changedLine2, vcsLine1, vcsLine2, Range.DELETED));
+    }
+    if (vcsLine1 == vcsLine2) {
+      return Collections.singletonList(new Range(changedLine1, changedLine2, vcsLine1, vcsLine2, Range.INSERTED));
+    }
+
+    List<String> lines = new DocumentWrapper(myDocument).getLines(changedLine1, changedLine2 - 1);
+    List<String> vcsLines = new DocumentWrapper(myVcsDocument).getLines(vcsLine1, vcsLine2 - 1);
+
+    return new RangesBuilder(lines, vcsLines, changedLine1, vcsLine1).getRanges();
   }
 
   private void replaceRanges(@NotNull List<Range> rangesInChange, @NotNull List<Range> newRangesInChange) {
