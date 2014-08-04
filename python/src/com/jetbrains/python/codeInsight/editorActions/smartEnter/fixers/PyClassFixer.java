@@ -17,7 +17,6 @@ package com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
@@ -26,6 +25,8 @@ import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
+
+import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,10 +40,10 @@ public class PyClassFixer extends PyFixer<PyClass> {
   }
 
   public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyClass pyClass) throws IncorrectOperationException {
-    final PsiElement colon = PyUtil.getChildByFilter(pyClass, TokenSet.create(PyTokenTypes.COLON), 0);
+    final PsiElement colon = PyUtil.getFirstChildOfType(pyClass, PyTokenTypes.COLON);
     if (colon == null) {
       final PyArgumentList argList = PsiTreeUtil.getChildOfType(pyClass, PyArgumentList.class);
-      final int offset = argList.getTextRange().getEndOffset();
+      final int offset = sure(argList).getTextRange().getEndOffset();
       String textToInsert = ":";
       if (pyClass.getNameNode() == null) {
         processor.registerUnresolvedError(argList.getTextRange().getEndOffset() + 1);

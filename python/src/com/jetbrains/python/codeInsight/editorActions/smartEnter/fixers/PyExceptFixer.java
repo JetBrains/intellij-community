@@ -17,7 +17,6 @@ package com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
@@ -25,6 +24,8 @@ import com.jetbrains.python.psi.PyExceptPart;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
+
+import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,9 +40,10 @@ public class PyExceptFixer extends PyFixer<PyExceptPart> {
 
   @Override
   public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyExceptPart exceptPart) throws IncorrectOperationException {
-    final PsiElement colon = PyUtil.getChildByFilter(exceptPart, TokenSet.create(PyTokenTypes.COLON), 0);
+    final PsiElement colon = PyUtil.getFirstChildOfType(exceptPart, PyTokenTypes.COLON);
     if (colon == null) {
-      int offset = PyUtil.getChildByFilter(exceptPart, TokenSet.create(PyTokenTypes.EXCEPT_KEYWORD), 0).getTextRange().getEndOffset();
+      final PsiElement exceptToken = PyUtil.getFirstChildOfType(exceptPart, PyTokenTypes.EXCEPT_KEYWORD);
+      int offset = sure(exceptToken).getTextRange().getEndOffset();
       final PyExpression exceptClass = exceptPart.getExceptClass();
       if (exceptClass != null) {
         offset = exceptClass.getTextRange().getEndOffset();

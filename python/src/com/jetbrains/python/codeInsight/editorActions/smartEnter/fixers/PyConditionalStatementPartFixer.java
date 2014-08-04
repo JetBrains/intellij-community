@@ -27,6 +27,8 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
+import static com.jetbrains.python.psi.PyUtil.sure;
+
 /**
  * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
@@ -43,7 +45,7 @@ public class PyConditionalStatementPartFixer extends PyFixer<PyConditionalStatem
     throws IncorrectOperationException {
     final PyExpression condition = statementPart.getCondition();
     final Document document = editor.getDocument();
-    final PsiElement colon = PyUtil.getChildByFilter(statementPart, TokenSet.create(PyTokenTypes.COLON), 0);
+    final PsiElement colon = PyUtil.getFirstChildOfType(statementPart, PyTokenTypes.COLON);
     if (colon == null) {
       if (condition != null) {
         final PsiElement firstNonComment = PyUtil.getFirstNonCommentAfter(condition.getNextSibling());
@@ -55,7 +57,7 @@ public class PyConditionalStatementPartFixer extends PyFixer<PyConditionalStatem
         final TokenSet keywords = TokenSet.create(PyTokenTypes.IF_KEYWORD, PyTokenTypes.ELIF_KEYWORD, PyTokenTypes.WHILE_KEYWORD);
         final PsiElement keywordToken = PyUtil.getChildByFilter(statementPart,
                                                                 keywords, 0);
-        final int offset = keywordToken.getTextRange().getEndOffset();
+        final int offset = sure(keywordToken).getTextRange().getEndOffset();
         document.insertString(offset, " :");
         processor.registerUnresolvedError(offset + 1);
       }

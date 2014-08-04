@@ -18,7 +18,6 @@ package com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
@@ -41,7 +40,7 @@ public class PyFunctionFixer extends PyFixer<PyFunction> {
   @Override
   public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyFunction function)
     throws IncorrectOperationException {
-    final PsiElement colon = PyUtil.getChildByFilter(function, TokenSet.create(PyTokenTypes.COLON), 0);
+    final PsiElement colon = PyUtil.getFirstChildOfType(function, PyTokenTypes.COLON);
     if (colon == null) {
       final PyParameterList parameterList = function.getParameterList();
       final Document document = editor.getDocument();

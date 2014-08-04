@@ -24,6 +24,8 @@ import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterPro
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
+import static com.jetbrains.python.psi.PyUtil.sure;
+
 /**
  * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
@@ -39,11 +41,11 @@ public class PyUnconditionalStatementPartFixer extends PyFixer<PyElement> {
   public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyElement psiElement)
     throws IncorrectOperationException {
     if (PyUtil.instanceOf(psiElement, PyElsePart.class, PyTryPart.class, PyFinallyPart.class)) {
-      final PsiElement colon = PyUtil.getChildByFilter(psiElement, TokenSet.create(PyTokenTypes.COLON), 0);
+      final PsiElement colon = PyUtil.getFirstChildOfType(psiElement, PyTokenTypes.COLON);
       if (colon == null) {
         final TokenSet keywords = TokenSet.create(PyTokenTypes.ELSE_KEYWORD, PyTokenTypes.TRY_KEYWORD, PyTokenTypes.FINALLY_KEYWORD);
         final PsiElement keywordToken = PyUtil.getChildByFilter(psiElement, keywords, 0);
-        editor.getDocument().insertString(keywordToken.getTextRange().getEndOffset(), ":");
+        editor.getDocument().insertString(sure(keywordToken).getTextRange().getEndOffset(), ":");
       }
     }
   }

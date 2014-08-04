@@ -15,19 +15,17 @@
  */
 package com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
-import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.PyWithItem;
 import com.jetbrains.python.psi.PyWithStatement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import static com.jetbrains.python.psi.PyUtil.sure;
 
@@ -41,8 +39,8 @@ public class PyWithFixer extends PyFixer<PyWithStatement> {
 
   @Override
   public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyWithStatement withStatement) throws IncorrectOperationException {
-    final PsiElement colonToken = getFirstChildOfType(withStatement, PyTokenTypes.COLON);
-    final PsiElement withToken = getFirstChildOfType(withStatement, PyTokenTypes.WITH_KEYWORD);
+    final PsiElement colonToken = PyUtil.getFirstChildOfType(withStatement, PyTokenTypes.COLON);
+    final PsiElement withToken = PyUtil.getFirstChildOfType(withStatement, PyTokenTypes.WITH_KEYWORD);
     final Document document = editor.getDocument();
     if (colonToken == null) {
       int insertAt = sure(withToken).getTextRange().getEndOffset();
@@ -56,7 +54,7 @@ public class PyWithFixer extends PyFixer<PyWithStatement> {
       else {
         final PyExpression expression = lastItem.getExpression();
         insertAt = expression.getTextRange().getEndOffset();
-        final PsiElement asToken = getFirstChildOfType(lastItem, PyTokenTypes.AS_KEYWORD);
+        final PsiElement asToken = PyUtil.getFirstChildOfType(lastItem, PyTokenTypes.AS_KEYWORD);
         if (asToken != null) {
           insertAt = asToken.getTextRange().getEndOffset();
           final PyExpression target = lastItem.getTarget();
@@ -71,11 +69,5 @@ public class PyWithFixer extends PyFixer<PyWithStatement> {
       }
       document.insertString(insertAt, textToInsert);
     }
-  }
-
-  @Nullable
-  private static PsiElement getFirstChildOfType(@NotNull final PsiElement element, @NotNull PyElementType type) {
-    final ASTNode child = element.getNode().findChildByType(type);
-    return child != null ? child.getPsi() : null;
   }
 }
