@@ -2674,11 +2674,18 @@ public class StringUtil extends StringUtilRt {
         continue;
       }
 
-      if (i > 0 && (ch == '/' || ch == '.' || Character.isUpperCase(ch))) {
+      if (i > 0 && (ch == '/' || ch == '\\' || ch == '.' || Character.isUpperCase(ch))) {
         words.add(builder.toString());
         builder.delete(0, builder.length());
       }
       builder.append(ch);
+    }
+    for (int i = 0; i < words.size(); i++) {
+      String word = words.get(i);
+      if (i < words.size() - 1 && word.length() == 1) {
+        words.remove(i);
+        words.set(i, word + words.get(i));
+      }
     }
 
     int removedLength = 0;
