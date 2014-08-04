@@ -31,14 +31,6 @@
 
     <action overrides="true" class="com.intellij.openapi.actionSystem.EmptyAction" id="NewHtmlFile"/>
 
-    <!-- Hide VCS menu if there's no VCS plugins and keep Local History in File menu -->
-    <group overrides="true" keep-content="true" class="com.intellij.database.ide.actions.PlatformActions$VcsMenuGroup" id="VcsGroups"/>
-    <group id="FileMenu.VcsGroup" class="com.intellij.database.ide.actions.PlatformActions$FileMenuGroup">
-      <reference ref="LocalHistory"/>
-      <!--<reference ref="ChangesView.ApplyPatch"/>-->
-      <separator/>
-      <add-to-group group-id="FileMenu" anchor="before" relative-to-action="SaveAll"/>
-    </group>
 
   </actions>
 </idea-plugin>
