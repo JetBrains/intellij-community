@@ -57,7 +57,7 @@ public class IndentSelectionAction extends EditorAction {
     @Override
     public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      if (isEnabled(editor, dataContext)) {
+      if (isEnabled(editor, caret, dataContext)) {
         indentSelection(editor, project);
       }
     }
