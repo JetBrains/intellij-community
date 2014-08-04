@@ -29,6 +29,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -42,20 +43,41 @@ import org.jetbrains.annotations.NotNull;
 public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
   private static final Logger LOG = Logger.getInstance(IndentingBackspaceHandler.class);
 
+  private boolean isApplicable;
   private boolean caretWasAtLineStart;
+  private String precalculatedSpacing;
 
   @Override
   public void beforeCharDeleted(char c, PsiFile file, Editor editor) {
-    caretWasAtLineStart = editor.getCaretModel().getLogicalPosition().column == 0;
+    if (CodeInsightSettings.getInstance().SMART_BACKSPACE != CodeInsightSettings.AUTOINDENT || !StringUtil.isWhiteSpace(c)) {
+      isApplicable = false;
+      return;
+    }
+    LanguageCodeStyleSettingsProvider codeStyleSettingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(file.getLanguage());
+    if (codeStyleSettingsProvider != null && codeStyleSettingsProvider.isIndentBasedLanguageSemantics()) {
+      isApplicable = false;
+      return;
+    }
+    Document document = editor.getDocument();
+    CharSequence charSequence = document.getCharsSequence();
+    CaretModel caretModel = editor.getCaretModel();
+    int caretOffset = caretModel.getOffset();
+    LogicalPosition pos = caretModel.getLogicalPosition();
+    isApplicable = true;
+    caretWasAtLineStart = pos.column == 0;
+    precalculatedSpacing = null;
+    if (caretWasAtLineStart && pos.line > 0 && caretOffset < charSequence.length() && !StringUtil.isWhiteSpace(charSequence.charAt(caretOffset))) {
+      int prevLineEnd = document.getLineEndOffset(pos.line - 1);
+      if (prevLineEnd > 0 && !StringUtil.isWhiteSpace(charSequence.charAt(prevLineEnd - 1))) {
+        PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
+        precalculatedSpacing = getSpacing(file, caretOffset);
+      }
+    }
   }
 
   @Override
   public boolean charDeleted(char c, PsiFile file, Editor editor) {
-    if (CodeInsightSettings.getInstance().SMART_BACKSPACE != CodeInsightSettings.AUTOINDENT || !StringUtil.isWhiteSpace(c)) {
-      return false;
-    }
-    LanguageCodeStyleSettingsProvider codeStyleSettingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(file.getLanguage());
-    if (codeStyleSettingsProvider != null && codeStyleSettingsProvider.isIndentBasedLanguageSemantics()) {
+    if (!isApplicable) {
       return false;
     }
 
@@ -65,13 +87,19 @@ public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
 
     int caretOffset = caretModel.getOffset();
     int offset = CharArrayUtil.shiftForward(document.getCharsSequence(), caretOffset, " \t");
-    int offsetInPsi = getOffsetInPsi(document, file, offset);
     int beforeWhitespaceOffset = CharArrayUtil.shiftBackward(document.getCharsSequence(), offset - 1, " \t") + 1;
     LogicalPosition logicalPosition = caretOffset < offset ? editor.offsetToLogicalPosition(offset) : caretModel.getLogicalPosition();
     int lineStartOffset = document.getLineStartOffset(logicalPosition.line);
     if (lineStartOffset < beforeWhitespaceOffset) {
       if (caretWasAtLineStart && beforeWhitespaceOffset <= offset) {
-        String spacing = getSpacing(file, offsetInPsi);
+        String spacing;
+        if (precalculatedSpacing == null) {
+          PsiDocumentManager.getInstance(project).commitDocument(document);
+          spacing = getSpacing(file, offset);
+        }
+        else {
+          spacing = precalculatedSpacing;
+        }
         if (beforeWhitespaceOffset < offset || !spacing.isEmpty()) {
           document.replaceString(beforeWhitespaceOffset, offset, spacing);
           caretModel.moveToOffset(beforeWhitespaceOffset + spacing.length());
@@ -81,9 +109,9 @@ public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
       return false;
     }
 
+    PsiDocumentManager.getInstance(project).commitDocument(document);
     CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(project);
-    // We should calculate indent at line containing the text after caret, cause that text might affect the result (e.g. closing brace in Java)
-    String indent = codeStyleFacade.getLineIndent(document, offsetInPsi);
+    String indent = codeStyleFacade.getLineIndent(document, offset);
     if (indent == null) {
       return false;
     }
@@ -114,7 +142,7 @@ public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
     int targetOffset = CharArrayUtil.shiftBackward(document.getCharsSequence(), prevLineEndOffset - 1, " \t") + 1;
 
     if (prevLineStartOffset < targetOffset) {
-      String spacing = getSpacing(file, offsetInPsi);
+      String spacing = getSpacing(file, offset);
       document.replaceString(targetOffset, offset, spacing);
       caretModel.moveToOffset(targetOffset + spacing.length());
     }
@@ -123,11 +151,6 @@ public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
       caretModel.moveToLogicalPosition(new LogicalPosition(logicalPosition.line - 1, targetColumn));
     }
     return true;
-  }
-
-  private static int getOffsetInPsi(Document document, PsiFile file, int offset) {
-    int psiLength = file.getTextLength();
-    return Math.max(0, Math.min(psiLength, offset + psiLength - document.getTextLength()));
   }
 
   private static int getTabSize(@NotNull CodeStyleFacade codeStyleFacade, @NotNull Document document) {

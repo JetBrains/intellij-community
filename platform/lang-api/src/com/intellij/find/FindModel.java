@@ -884,10 +884,10 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     doApplyContextChange(inStringLiteralsOnly, SearchContext.IN_STRING_LITERALS);
   }
 
-  public void doApplyContextChange(boolean inCommentsOnly, SearchContext option) {
+  private void doApplyContextChange(boolean newOptionValue, SearchContext option) {
     boolean changed = false;
-    if (inCommentsOnly) {
-      changed = searchContext == option;
+    if (newOptionValue) {
+      changed = searchContext != option;
       searchContext = option;
     } else if (searchContext == option) { // do not reset unrelated value
       changed = true;

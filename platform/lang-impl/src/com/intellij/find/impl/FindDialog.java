@@ -1084,7 +1084,7 @@ public class FindDialog extends DialogWrapper {
     if (myModel.isInCommentsOnly()) searchContext = FindBundle.message("find.context.in.comments.scope.label");
     else if (myModel.isInStringLiteralsOnly()) searchContext = FindBundle.message("find.context.in.literals.scope.label");
     else if (myModel.isExceptStringLiterals()) searchContext = FindBundle.message("find.context.except.literals.scope.label");
-    else if (myModel.isExceptComments()) searchContext = FindBundle.message("find.context.except.literals.scope.label");
+    else if (myModel.isExceptComments()) searchContext = FindBundle.message("find.context.except.comments.scope.label");
     else if (myModel.isExceptCommentsAndStringLiterals()) searchContext = FindBundle.message("find.context.except.comments.and.literals.scope.label");
     mySearchContext.setSelectedItem(searchContext);
 

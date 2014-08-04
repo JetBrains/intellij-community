@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.webcore.packaging;
 
 import com.intellij.icons.AllIcons;
@@ -93,6 +108,7 @@ public class ManagePackagesDialog extends DialogWrapper {
           public void run() {
             try {
               myController.reloadAllPackages();
+              initModel();
               myPackages.setPaintBusy(false);
             }
             catch (final IOException e) {
@@ -310,6 +326,7 @@ public class ManagePackagesDialog extends DialogWrapper {
             @Override
             public void run() {
               myPackages.setModel(myPackagesModel);
+              ((MyPackageFilter)myFilter).filter();
               doSelectPackage(mySelectedPackageName);
               setDownloadStatus(false);
             }
@@ -473,6 +490,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       final Object pyPackage = myPackages.getSelectedValue();
       if (pyPackage instanceof RepoPackage) {
         final String packageName = ((RepoPackage)pyPackage).getName();
+        mySelectedPackageName = packageName;
         myVersionComboBox.removeAllItems();
         if (myVersionCheckBox.isEnabled()) {
           myController.fetchPackageVersions(packageName, new CatchingConsumer<List<String>, Exception>() {

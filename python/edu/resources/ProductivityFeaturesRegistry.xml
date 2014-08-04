@@ -1,0 +1,293 @@
+<component>
+  <group id="navigation">
+    <feature
+      id="navigation.popup.class"
+      tip-file="GoToClass.html"
+      min-usage-count="3"
+      first-show="1"
+      successive-show="5"/>
+    <feature
+      id="navigation.popup.file"
+      tip-file="GoToClass.html"
+      min-usage-count="2"
+      first-show="3"
+      successive-show="5"/>
+    <feature
+      id="navigation.popup.symbol"
+      tip-file="GoToSymbol.html"
+      first-show="5"
+      successive-show="8"/>
+    <feature
+        id="SearchEverywhere"
+        tip-file="SearchEverywhere.html"
+        first-show="1"
+        successive-show="1"
+        min-usage-count="1"
+        />
+    <feature
+      id="navigation.popup.camelprefix"
+      tip-file="CamelPrefixesInNavigationPopups.html"
+      min-usage-count="3"
+      first-show="4"
+      successive-show="7">
+      <dependency id="navigation.popup.class"/>
+      <dependency id="navigation.popup.file"/>
+      <dependency id="navigation.popup.symbol"/>
+    </feature>
+    <feature
+      id="navigation.popup.wildcards"
+      tip-file="WildcardsInNavigationPopups.html"
+      min-usage-count="2"
+      first-show="3"
+      successive-show="5">
+      <dependency id="navigation.popup.class"/>
+      <dependency id="navigation.popup.file"/>
+      <dependency id="navigation.popup.symbol"/>
+    </feature>
+    <feature
+      id="navigation.popup.file.structure"
+      tip-file="FileStructurePopup.html"
+      min-usage-count="3"
+      first-show="2"
+      successive-show="5"
+      />
+    <feature
+      id="navigation.recent.files"
+      tip-file="RecentFiles.html"
+      min-usage-count="3"
+      first-show="3"
+      successive-show="5"
+      />
+    <feature
+      id="navigation.select.in"
+      tip-file="SelectIn.html"
+      min-usage-count="3"
+      first-show="4"
+      successive-show="7"
+      />
+    <feature
+      id="navigation.goto.declaration"
+      tip-file="GoToDeclaration.html"
+      min-usage-count="15"
+      first-show="1"
+      successive-show="4"
+      />
+    <feature
+      id="navigation.goto.usages"
+      tip-file="ShowUsages.html"
+      min-usage-count="3"
+      first-show="5"
+      successive-show="5"/>
+  </group>
+
+  <group id="completion">
+    <feature
+      id="editing.completion.basic"
+      tip-file="CodeCompletion.html"
+      min-usage-count="15"
+      first-show="1"
+      successive-show="3"/>
+    <feature
+      id="editing.completion.replace"
+      tip-file="TabInLookups.html"
+      min-usage-count="10"
+      first-show="6"
+      successive-show="8"
+      />
+    <feature
+        id="editing.completion.finishByCtrlDot"
+        tip-file="CtrlDotInLookups.html"
+        min-usage-count="7"
+        first-show="4"
+        successive-show="8"
+        />
+    <feature
+      id="editing.completion.finishByDotEtc"
+      tip-file="DotEtcInLookups.html"
+      min-usage-count="7"
+      first-show="4"
+      successive-show="8"
+      />
+    <feature
+      id="editing.completion.camelHumps"
+      tip-file="CamelHumpsInCodeCompletion.html"
+      min-usage-count="8"
+      first-show="5"
+      successive-show="7"
+      />
+    <feature
+      id="editing.completion.cancelByControlArrows"
+      tip-file="CancelByControlArrows.html"
+      min-usage-count="10"
+      first-show="2"
+      successive-show="3"/>
+    <feature
+        id="editing.completion.changeSorting"
+        tip-file="ChangeSorting.html"
+        min-usage-count="10"
+        first-show="2"
+        successive-show="3"/>
+  </group>
+
+  <group id="editing">
+    <feature
+      id="editing.select.word"
+      tip-file="CtrlW.html"
+      min-usage-count="10"
+      first-show="2"
+      successive-show="4"/>
+  </group>
+
+  <group id="codeassists">
+    <feature
+      id="codeassists.quickjavadoc"
+      tip-file="QuickJavaDoc.html"
+      min-usage-count="3"
+      first-show="3"
+      successive-show="5"
+    />
+    <feature
+      id="codeassists.quickdefinition"
+      tip-file="CtrlShiftI.html"
+      min-usage-count="9"
+      first-show="3"
+      successive-show="5"
+    />
+    <feature
+      id="codeassists.quickdefinition.lookup"
+      tip-file="CtrlShiftIForLookup.html"
+      min-usage-count="1"
+      first-show="5"
+      successive-show="7">
+      <dependency id="codeassists.quickdefinition"/>
+    </feature>
+    <feature
+      id="codeassists.quickjavadoc.lookup"
+      tip-file="QuickJavaDocInLookups.html"
+      min-usage-count="1"
+      first-show="5"
+      successive-show="7">
+      <dependency id="codeassists.quickjavadoc"/>
+    </feature>
+    <feature
+      id="codeassists.quickjavadoc.ctrln"
+      tip-file="QuickJavaDocInLookups.html"
+      min-usage-count="1"
+      first-show="5"
+      successive-show="7">
+      <dependency id="codeassists.quickjavadoc"/>
+    </feature>
+    <feature
+      id="codeassists.surroundwith.statement"
+      tip-file="Surround.html"
+      first-show="5"
+      successive-show="5"
+      min-usage-count="4"
+      />
+    <!--
+    <feature
+      id="codeassists.surroundwith.expression"
+      tip-file="Surround.html"
+      first-show="6"
+      successive-show="5"
+      min-usage-count="3"
+      />
+    <feature
+      id="codeassists.comment.block"
+      tip-file="CommentCode.html"
+      first-show="6"
+      successive-show="5"
+      min-usage-count="3"
+      />
+    -->
+    <feature
+      id="codeassists.comment.line"
+      tip-file="Comment.html"
+      first-show="6"
+      successive-show="5"
+      min-usage-count="3"
+      />
+  </group>
+
+  <group id="refactoring">
+    <feature
+      id="refactoring.introduceVariable"
+      tip-file="IntroduceVariable.html"
+      min-usage-count="5"
+      first-show="1"
+      successive-show="3"
+      />
+
+    <feature
+      id="refactoring.rename"
+      tip-file="Rename.html"
+      min-usage-count="2"
+      first-show="1"
+      successive-show="3"
+      />
+
+  </group>
+
+
+  <group id="ui">
+    <feature
+      id="ui.tree.speedsearch"
+      tip-file="SpeedSearch.html"
+      first-show="5"
+      successive-show="4"
+      min-usage-count="6"
+      />
+    <feature
+      id="ui.scheme.quickswitch"
+      tip-file="QuickSwitchScheme.html"
+      first-show="7"
+      successive-show="3"
+      min-usage-count="1"
+      />
+    <feature
+      id="ui.recentchanges"
+      tip-file="RecentChanges.html"
+      first-show="5"
+      successive-show="5"
+      min-usage-count="1"
+      />
+    <feature
+      id="ui.horizontal.scrolling"
+      tip-file="HorizontalScrolling.html"
+      first-show="1"
+      successive-show="1"
+      min-usage-count="1"
+      />
+    <!-- TODO: Uncomment usage in InsertPathAction when FeatureUsageTracker goes to OpenApi
+    <feature
+      id="ui.commandLine.insertPath"
+      name="Insert path in command line"
+      tip-file="InsertPathShortcut.html"
+      first-show="6"
+      successive-show="5"
+      min-usage-count="3"
+      />
+    -->
+    <feature id="navigation.popup.action"
+      tip-file="GoToAction.html"
+      first-show="7"
+      successive-show="3"
+      min-usage-count="1"/>
+    <feature
+      id="navigation.goto.inspection"
+      tip-file="GoToInspection.html"
+      min-usage-count="3"
+      first-show="5"
+      successive-show="5"/>
+    <feature id="find.recent.search"
+      tip-file="RecentSearch.html"
+      first-show="10"
+      successive-show="3"
+      min-usage-count="5"/>
+    <feature id="find.completion"
+      tip-file="CodeCompletionInSearch.html"
+      first-show="10"
+      successive-show="3"
+      min-usage-count="5"/>
+  </group>
+</component>

@@ -1,0 +1,2 @@
+def foo(foo):
+    doSomething(foo)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -177,7 +177,7 @@ public class Splitter extends JPanel {
   }
 
   protected Divider createDivider() {
-    return new Divider();
+    return new DividerImpl();
   }
 
   @Override
@@ -481,12 +481,12 @@ public class Splitter extends JPanel {
     return myDivider;
   }
 
-  public class Divider extends JPanel {
+  public class DividerImpl extends Divider {
     private boolean myResizeEnabled;
     private boolean mySwitchOrientationEnabled;
     protected Point myPoint;
 
-    public Divider() {
+    public DividerImpl() {
       super(new GridBagLayout());
       myResizeEnabled = true;
       mySwitchOrientationEnabled = false;
@@ -496,7 +496,7 @@ public class Splitter extends JPanel {
       setOrientation(myVerticalSplit);
     }
 
-    private void setOrientation(boolean isVerticalSplit) {
+    public void setOrientation(boolean isVerticalSplit) {
       removeAll();
 
       setCursor(isVertical() ?

@@ -74,14 +74,17 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
   }
 
   private boolean isEnabled(@NotNull MultiMap<Repo, VcsFullCommitDetails> grouped) {
-    Mode mode = getMode();
-    if (mode == Mode.SINGLE_COMMIT) {
-      return grouped.size() == 1;
+    if (grouped.isEmpty()) {
+      return false;
     }
-    if (mode == Mode.SINGLE_PER_REPO) {
-      return allValuesAreSingletons(grouped);
+    switch (getMode()) {
+      case SINGLE_COMMIT:
+        return grouped.size() == 1;
+      case SINGLE_PER_REPO:
+        return allValuesAreSingletons(grouped);
+      default:
+        return false;
     }
-    return false;
   }
 
   @Nullable
