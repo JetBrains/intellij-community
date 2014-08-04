@@ -1,5 +1,0 @@
-def foo(var):
-  """
-  @type var: string
-  """
-  <spot>var.</spot>

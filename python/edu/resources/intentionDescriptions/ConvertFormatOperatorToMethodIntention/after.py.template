@@ -1,1 +1,0 @@
-print(<spot>"{0: 5.3F}".format(12)</spot>)

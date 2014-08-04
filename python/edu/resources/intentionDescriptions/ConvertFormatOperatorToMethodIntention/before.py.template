@@ -1,1 +1,0 @@
-print(<spot>"% 5.3F" % 12</spot>)

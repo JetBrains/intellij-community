@@ -1,2 +1,0 @@
-from urllib import <spot>url2pathname as u2p</spot>
-name = u2p("/")
