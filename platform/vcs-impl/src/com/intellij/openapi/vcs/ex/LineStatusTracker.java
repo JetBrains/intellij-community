@@ -70,12 +70,14 @@ public class LineStatusTracker {
 
   private MyDocumentListener myDocumentListener;
 
+  private boolean mySuppressUpdate;
   private boolean myBulkUpdate;
   private final Application myApplication;
   @Nullable private RevisionPack myBaseRevisionNumber;
   private String myPreviousBaseRevision;
   private boolean myAnathemaThrown;
   private FileEditorManager myFileEditorManager;
+  private final VcsDirtyScopeManager myVcsDirtyScopeManager;
   private final VirtualFile myVirtualFile;
   private boolean myReleased = false;
 
@@ -90,11 +92,10 @@ public class LineStatusTracker {
     myUpToDateDocument.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
     myProject = project;
     myBaseLoaded = BaseLoadState.LOADING;
-    synchronized (myLock) {
-      myRanges = new ArrayList<Range>();
-    }
+    myRanges = new ArrayList<Range>();
     myAnathemaThrown = false;
     myFileEditorManager = FileEditorManager.getInstance(myProject);
+    myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
   }
 
   public void initialize(@NotNull final String upToDateContent, @NotNull RevisionPack baseRevisionNumber) {
@@ -305,9 +306,7 @@ public class LineStatusTracker {
 
     private int myFirstChangedLine;
     private int myLastChangedLine;
-    private int myChangedLines;
     private int myTotalLines;
-    private final VcsDirtyScopeManager myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
 
     @Override
     public void beforeDocumentChange(DocumentEvent e) {
@@ -315,13 +314,14 @@ public class LineStatusTracker {
 
       synchronized (myLock) {
         if (myReleased) return;
-        if (myBulkUpdate || myAnathemaThrown || BaseLoadState.LOADED != myBaseLoaded) return;
+        if (myBulkUpdate || mySuppressUpdate || myAnathemaThrown || BaseLoadState.LOADED != myBaseLoaded) return;
+        assert myDocument == e.getDocument();
+
         try {
           myFirstChangedLine = myDocument.getLineNumber(e.getOffset());
           myLastChangedLine = e.getOldLength() == 0 ? myFirstChangedLine : myDocument.getLineNumber(e.getOffset() + e.getOldLength() - 1);
           if (StringUtil.endsWithChar(e.getOldFragment(), '\n')) myLastChangedLine++;
-          myChangedLines = myLastChangedLine - myFirstChangedLine;
-          myTotalLines = getLineCount(e.getDocument());
+          myTotalLines = getLineCount(myDocument);
         }
         catch (ProcessCanceledException ignore) {
         }
@@ -334,117 +334,132 @@ public class LineStatusTracker {
 
       synchronized (myLock) {
         if (myReleased) return;
-        if (myBulkUpdate || myAnathemaThrown || BaseLoadState.LOADED != myBaseLoaded) return;
-        try {
-          int currentFirstChangedLine = myFirstChangedLine;
-          int currentLastChangedLine =
-            e.getNewLength() == 0 ? currentFirstChangedLine : myDocument.getLineNumber(e.getOffset() + e.getNewLength() - 1);
-          if (StringUtil.endsWithChar(e.getNewFragment(), '\n')) currentLastChangedLine++;
-          int currentChangedLines = currentLastChangedLine - currentFirstChangedLine;
-          int upToDateTotalLine = getLineCount(myUpToDateDocument);
+        if (myBulkUpdate || mySuppressUpdate || myAnathemaThrown || BaseLoadState.LOADED != myBaseLoaded) return;
+        assert myDocument == e.getDocument();
 
-          int linesShift = currentChangedLines - myChangedLines;
+        int currentFirstChangedLine = myFirstChangedLine;
+        int currentLastChangedLine =
+          e.getNewLength() == 0 ? currentFirstChangedLine : myDocument.getLineNumber(e.getOffset() + e.getNewLength() - 1);
+        if (StringUtil.endsWithChar(e.getNewFragment(), '\n')) currentLastChangedLine++;
 
-          List<Range> rangesBeforeChange = new ArrayList<Range>();
-          List<Range> rangesAfterChange = new ArrayList<Range>();
-          List<Range> changedRanges = new ArrayList<Range>();
-          sortRanges(myRanges, myFirstChangedLine, myLastChangedLine, rangesBeforeChange, changedRanges, rangesAfterChange);
 
-          Range firstChangedRange = ContainerUtil.getFirstItem(changedRanges);
-          Range lastChangedRange = ContainerUtil.getLastItem(changedRanges);
-          Range lastRangeBefore = ContainerUtil.getLastItem(rangesBeforeChange);
-          Range firstRangeAfter = ContainerUtil.getFirstItem(rangesAfterChange);
+        doUpdateRanges(myFirstChangedLine, myLastChangedLine, myTotalLines,
+                       currentFirstChangedLine, currentLastChangedLine);
+      }
+    }
+  }
 
-          if (firstChangedRange != null && firstChangedRange.getOffset1() < myFirstChangedLine) {
-            myFirstChangedLine = firstChangedRange.getOffset1();
-          }
-          if (lastChangedRange != null && lastChangedRange.getOffset2() > myLastChangedLine) {
-            myLastChangedLine = lastChangedRange.getOffset2() - 1;
-          }
+  private void doUpdateRanges(int myFirstChangedLine,
+                              int myLastChangedLine,
+                              int myTotalLines,
+                              int currentFirstChangedLine,
+                              int currentLastChangedLine) {
+    try {
+      int upToDateTotalLines = getLineCount(myUpToDateDocument);
 
-          currentFirstChangedLine = myFirstChangedLine;
-          currentLastChangedLine = myLastChangedLine + linesShift;
+      int currentChangedLines = currentLastChangedLine - currentFirstChangedLine;
 
-          int upToDateFirstLine = getUpToDateLine1(lastRangeBefore, myFirstChangedLine);
-          int upToDateLastLine = getUpToDateLine2(firstRangeAfter, myLastChangedLine, myTotalLines, upToDateTotalLine);
+      int myChangedLines = myLastChangedLine - myFirstChangedLine;
+      int linesShift = currentChangedLines - myChangedLines;
 
-          List<Range> newChangedRanges =
-            getNewChangedRanges(currentFirstChangedLine, currentLastChangedLine, upToDateFirstLine, upToDateLastLine);
+      List<Range> rangesBeforeChange = new ArrayList<Range>();
+      List<Range> rangesAfterChange = new ArrayList<Range>();
+      List<Range> changedRanges = new ArrayList<Range>();
+      sortRanges(myRanges, myFirstChangedLine, myLastChangedLine, rangesBeforeChange, changedRanges, rangesAfterChange);
 
-          shiftRanges(rangesAfterChange, linesShift);
+      Range firstChangedRange = ContainerUtil.getFirstItem(changedRanges);
+      Range lastChangedRange = ContainerUtil.getLastItem(changedRanges);
+      Range lastRangeBefore = ContainerUtil.getLastItem(rangesBeforeChange);
+      Range firstRangeAfter = ContainerUtil.getFirstItem(rangesAfterChange);
 
-          if (!changedRanges.equals(newChangedRanges)) {
-            replaceRanges(changedRanges, newChangedRanges);
+      if (firstChangedRange != null && firstChangedRange.getOffset1() < myFirstChangedLine) {
+        myFirstChangedLine = firstChangedRange.getOffset1();
+      }
+      if (lastChangedRange != null && lastChangedRange.getOffset2() > myLastChangedLine) {
+        myLastChangedLine = lastChangedRange.getOffset2() - 1;
+      }
 
-            myRanges = new ArrayList<Range>(rangesBeforeChange.size() + newChangedRanges.size() + rangesAfterChange.size());
+      currentFirstChangedLine = myFirstChangedLine;
+      currentLastChangedLine = myLastChangedLine + linesShift;
 
-            myRanges.addAll(rangesBeforeChange);
-            myRanges.addAll(newChangedRanges);
-            myRanges.addAll(rangesAfterChange);
+      int upToDateFirstLine = getUpToDateLine1(lastRangeBefore, myFirstChangedLine);
+      int upToDateLastLine = getUpToDateLine2(firstRangeAfter, myLastChangedLine, myTotalLines, upToDateTotalLines);
 
-            for (Range range : myRanges) {
-              if (!range.hasHighlighter()) range.setHighlighter(createHighlighter(range));
+      List<Range> newChangedRanges =
+        getNewChangedRanges(currentFirstChangedLine, currentLastChangedLine, upToDateFirstLine, upToDateLastLine);
+
+      shiftRanges(rangesAfterChange, linesShift);
+
+      if (!changedRanges.equals(newChangedRanges)) {
+        replaceRanges(changedRanges, newChangedRanges);
+
+        myRanges = new ArrayList<Range>(rangesBeforeChange.size() + newChangedRanges.size() + rangesAfterChange.size());
+
+        myRanges.addAll(rangesBeforeChange);
+        myRanges.addAll(newChangedRanges);
+        myRanges.addAll(rangesAfterChange);
+
+        for (Range range : myRanges) {
+          if (!range.hasHighlighter()) range.setHighlighter(createHighlighter(range));
+        }
+
+        if (myRanges.isEmpty() && myVirtualFile != null) {
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              FileDocumentManager.getInstance().saveDocument(myDocument);
+              boolean stillEmpty;
+              synchronized (myLock) {
+                stillEmpty = myRanges.isEmpty();
+              }
+              if (stillEmpty) {
+                // file was modified, and now it's not -> dirty local change
+                myVcsDirtyScopeManager.fileDirty(myVirtualFile);
+              }
             }
-
-            if (myRanges.isEmpty() && myVirtualFile != null) {
-              SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  FileDocumentManager.getInstance().saveDocument(e.getDocument());
-                  boolean[] stillEmpty = new boolean[1];
-                  synchronized (myLock) {
-                    stillEmpty[0] = myRanges.isEmpty();
-                  }
-                  if (stillEmpty[0]) {
-                    // file was modified, and now it's not -> dirty local change
-                    myVcsDirtyScopeManager.fileDirty(myVirtualFile);
-                  }
-                }
-              });
-            }
-          }
-        }
-        catch (ProcessCanceledException ignore) {
-        }
-        catch (FilesTooBigForDiffException e1) {
-          installAnathema();
-          removeHighlightersFromMarkupModel();
+          });
         }
       }
     }
-
-    private int getUpToDateLine1(@Nullable Range range, int line) {
-      return range == null ? line : line + range.getUOffset2() - range.getOffset2();
+    catch (ProcessCanceledException ignore) {
     }
-
-    private int getUpToDateLine2(@Nullable Range range, int line, int totalLinesBefore, int totalLinesAfter) {
-      return range == null ? totalLinesAfter - totalLinesBefore + line : line + range.getUOffset1() - range.getOffset1();
+    catch (FilesTooBigForDiffException e1) {
+      installAnathema();
+      removeHighlightersFromMarkupModel();
     }
+  }
 
-    private List<Range> getNewChangedRanges(int firstChangedLine, int lastChangedLine, int upToDateFirstLine, int upToDateLastLine)
-      throws FilesTooBigForDiffException {
-      List<String> lines = new DocumentWrapper(myDocument).getLines(firstChangedLine, lastChangedLine);
-      List<String> uLines = new DocumentWrapper(myUpToDateDocument).getLines(upToDateFirstLine, upToDateLastLine);
-      return new RangesBuilder(lines, uLines, firstChangedLine, upToDateFirstLine).getRanges();
-    }
+  private static int getUpToDateLine1(@Nullable Range range, int line) {
+    return range == null ? line : line + range.getUOffset2() - range.getOffset2();
+  }
 
-    private void replaceRanges(@NotNull List<Range> rangesInChange, @NotNull List<Range> newRangesInChange) {
-      for (Range range : rangesInChange) {
-        if (range.getHighlighter() != null) {
-          range.getHighlighter().dispose();
-        }
-        range.setHighlighter(null);
-        range.invalidate();
+  private static int getUpToDateLine2(@Nullable Range range, int line, int totalLinesBefore, int totalLinesAfter) {
+    return range == null ? totalLinesAfter - totalLinesBefore + line : line + range.getUOffset1() - range.getOffset1();
+  }
+
+  private List<Range> getNewChangedRanges(int firstChangedLine, int lastChangedLine, int upToDateFirstLine, int upToDateLastLine)
+    throws FilesTooBigForDiffException {
+    List<String> lines = new DocumentWrapper(myDocument).getLines(firstChangedLine, lastChangedLine);
+    List<String> uLines = new DocumentWrapper(myUpToDateDocument).getLines(upToDateFirstLine, upToDateLastLine);
+    return new RangesBuilder(lines, uLines, firstChangedLine, upToDateFirstLine).getRanges();
+  }
+
+  private void replaceRanges(@NotNull List<Range> rangesInChange, @NotNull List<Range> newRangesInChange) {
+    for (Range range : rangesInChange) {
+      if (range.getHighlighter() != null) {
+        range.getHighlighter().dispose();
       }
-      for (Range range : newRangesInChange) {
-        range.setHighlighter(createHighlighter(range));
-      }
+      range.setHighlighter(null);
+      range.invalidate();
     }
+    for (Range range : newRangesInChange) {
+      range.setHighlighter(createHighlighter(range));
+    }
+  }
 
-    private void shiftRanges(@NotNull List<Range> rangesAfterChange, int shift) {
-      for (final Range aRangesAfterChange : rangesAfterChange) {
-        aRangesAfterChange.shift(shift);
-      }
+  private static void shiftRanges(@NotNull List<Range> rangesAfterChange, int shift) {
+    for (final Range range : rangesAfterChange) {
+      range.shift(shift);
     }
   }
 
@@ -540,48 +555,54 @@ public class LineStatusTracker {
     }
   }
 
+  private void doRollbackRange(@NotNull Range range) {
+    if (range.getType() == Range.MODIFIED) {
+      TextRange currentTextRange = getCurrentTextRange(range);
+      int offset1 = currentTextRange.getStartOffset();
+      int offset2 = currentTextRange.getEndOffset();
+
+      CharSequence upToDateContent = getUpToDateContent(range);
+      myDocument.replaceString(offset1, offset2, upToDateContent);
+    }
+    else if (range.getType() == Range.INSERTED) {
+      TextRange currentTextRange = getCurrentTextRange(range);
+      int offset1 = currentTextRange.getStartOffset();
+      int offset2 = currentTextRange.getEndOffset();
+
+      if (offset1 > 0) {
+        offset1--;
+      }
+      else if (offset2 < myDocument.getTextLength()) {
+        offset2++;
+      }
+      myDocument.deleteString(offset1, offset2);
+    }
+    else if (range.getType() == Range.DELETED) {
+      CharSequence content = getUpToDateContent(range);
+      if (range.getOffset2() == getLineCount(myDocument)) {
+        myDocument.insertString(myDocument.getTextLength(), "\n" + content);
+      }
+      else {
+        myDocument.insertString(myDocument.getLineStartOffset(range.getOffset2()), content + "\n");
+      }
+    }
+    else {
+      throw new IllegalArgumentException("Unknown range type: " + range.getType());
+    }
+  }
+
   public void rollbackChanges(@NotNull Range range) {
     myApplication.assertWriteAccessAllowed();
 
     synchronized (myLock) {
+      if (myBulkUpdate) return;
+
       if (!range.isValid()) {
         LOG.warn("Rollback of invalid range");
         return;
       }
 
-      if (range.getType() == Range.MODIFIED) {
-        TextRange currentTextRange = getCurrentTextRange(range);
-        int offset1 = currentTextRange.getStartOffset();
-        int offset2 = currentTextRange.getEndOffset();
-
-        CharSequence upToDateContent = getUpToDateContent(range);
-        myDocument.replaceString(offset1, offset2, upToDateContent);
-      }
-      else if (range.getType() == Range.INSERTED) {
-        TextRange currentTextRange = getCurrentTextRange(range);
-        int offset1 = currentTextRange.getStartOffset();
-        int offset2 = currentTextRange.getEndOffset();
-
-        if (offset1 > 0) {
-          offset1--;
-        }
-        else if (offset2 < myDocument.getTextLength()) {
-          offset2++;
-        }
-        myDocument.deleteString(offset1, offset2);
-      }
-      else if (range.getType() == Range.DELETED) {
-        CharSequence content = getUpToDateContent(range);
-        if (range.getOffset2() == getLineCount(myDocument)) {
-          myDocument.insertString(myDocument.getTextLength(), "\n" + content);
-        }
-        else {
-          myDocument.insertString(myDocument.getLineStartOffset(range.getOffset2()), content + "\n");
-        }
-      }
-      else {
-        throw new IllegalArgumentException("Unknown range type: " + range.getType());
-      }
+      doRollbackRange(range);
     }
   }
 
@@ -589,14 +610,18 @@ public class LineStatusTracker {
     myApplication.assertWriteAccessAllowed();
 
     synchronized (myLock) {
-      List<Range> affectedRanges = new ArrayList<Range>();
+      if (myBulkUpdate) return;
 
-      boolean wasEnd = false;
-      boolean simple = true;
+      mySuppressUpdate = true;
+
+      Range first = null;
+      Range last = null;
+
+      int shift = 0;
       for (Range range : myRanges) {
         if (!range.isValid()) {
           LOG.warn("Rollback of invalid range");
-          return;
+          break;
         }
 
         boolean check;
@@ -606,21 +631,33 @@ public class LineStatusTracker {
         else {
           check = checkRange(lines, range.getOffset1(), range.getOffset2());
         }
+
         if (check) {
-          if (wasEnd) simple = false;
-          affectedRanges.add(range);
-        }
-        else {
-          if (!affectedRanges.isEmpty()) wasEnd = true;
+          if (first == null) {
+            first = range;
+          }
+          last = range;
+
+          Range shiftedRange = new Range(range);
+          shiftedRange.shift(shift);
+          doRollbackRange(shiftedRange);
+          shift += (range.getUOffset2() - range.getUOffset1()) - (range.getOffset2() - range.getOffset1());
         }
       }
 
-      if (simple) {
-        rollbackChangesSimple(affectedRanges);
+      if (first != null) {
+        int myFirstChangedLine = first.getOffset1();
+        int myLastChangedLine = first.getOffset1() == last.getOffset2() ? myFirstChangedLine : last.getOffset2() - 1;
+        int currentFirstChangedLine = myFirstChangedLine;
+        int currentLastChangedLine = myLastChangedLine + shift;
+
+        int myTotalLines = getLineCount(myDocument) - shift;
+
+        doUpdateRanges(myFirstChangedLine, myLastChangedLine, myTotalLines,
+                       currentFirstChangedLine, currentLastChangedLine);
       }
-      else {
-        rollbackChangesComplex(affectedRanges);
-      }
+
+      mySuppressUpdate = false;
     }
   }
 
@@ -628,80 +665,6 @@ public class LineStatusTracker {
     int next = lines.nextSetBit(start);
     if (next == -1) return false;
     return next < end;
-  }
-
-  private void rollbackChangesSimple(@NotNull List<Range> ranges) {
-    if (ranges.isEmpty()) return;
-
-    Range first = ranges.get(0);
-    Range last = ranges.get(ranges.size() - 1);
-
-    byte type = first == last ? first.getType() : Range.MODIFIED;
-    final Range merged = new Range(first.getOffset1(), last.getOffset2(), first.getUOffset1(), last.getUOffset2(), type);
-
-    // We don't expect complex Insertion/Deletion operation - they shouldn't exist
-    assert type != Range.MODIFIED || (first.getOffset1() != last.getOffset2() && first.getUOffset1() != last.getUOffset2());
-
-    rollbackChanges(merged);
-  }
-
-  private void rollbackChangesComplex(@NotNull List<Range> ranges) {
-    // We can't relay on assumption, that revert of a single change will not affect any other.
-    // This, among the others, is because of 'magic' ranges for revert, that will affect nearby lines implicitly.
-    // So it's dangerous to apply ranges ony-by-one and we have to create single atomic modification.
-    // Usage of Bulk mode will lead to full rebuild of tracker, and therefore will be slow..
-
-    if (ranges.isEmpty()) return;
-    if (ranges.size() == 1) {
-      rollbackChanges(ranges.get(0));
-      return;
-    }
-
-    Range first = ranges.get(0);
-    Range last = ranges.get(ranges.size() - 1);
-
-    // We don't expect complex Insertion/Deletion operation - they shouldn't exist.
-    assert first != last && first.getOffset1() != last.getOffset2() && first.getUOffset1() != last.getUOffset2();
-
-    final int start = getCurrentTextRange(first).getStartOffset();
-    final int end = getCurrentTextRange(last).getEndOffset();
-
-    StringBuilder builder = new StringBuilder();
-
-    int lastOffset = start;
-    for (Range range : ranges) {
-      TextRange textRange = getCurrentTextRange(range);
-
-      builder.append(myDocument.getText(new TextRange(lastOffset, textRange.getStartOffset())));
-      lastOffset = textRange.getEndOffset();
-
-      if (range.getType() == Range.MODIFIED) {
-        builder.append(getUpToDateContent(range));
-      }
-      else if (range.getType() == Range.INSERTED) {
-        if (builder.length() > 0) {
-          builder.deleteCharAt(builder.length() - 1);
-        }
-        else {
-          lastOffset++;
-        }
-      }
-      else if (range.getType() == Range.DELETED) {
-        CharSequence content = getUpToDateContent(range);
-        if (range.getOffset2() == getLineCount(myDocument)) {
-          builder.append('\n').append(content);
-        }
-        else {
-          builder.append(content).append('\n');
-        }
-      }
-      else {
-        throw new IllegalArgumentException("Unknown range type: " + range.getType());
-      }
-    }
-    builder.append(myDocument.getText(new TextRange(lastOffset, end)));
-
-    myDocument.replaceString(start, end, builder);
   }
 
   public CharSequence getUpToDateContent(@NotNull Range range) {

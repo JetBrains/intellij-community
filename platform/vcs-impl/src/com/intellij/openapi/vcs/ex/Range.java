@@ -64,6 +64,10 @@ public class Range {
     return 0;
   }
 
+  public Range(@NotNull Range range) {
+    this(range.getOffset1(), range.getOffset2(), range.getUOffset1(), range.getUOffset2(), range.getType());
+  }
+
   public Range(int offset1, int offset2, int uOffset1, int uOffset2, byte type) {
     myOffset1 = offset1;
     myOffset2 = offset2;
