@@ -694,9 +694,7 @@ public class LineStatusTracker {
     }
     builder.append(myDocument.getText(new TextRange(lastOffset, end)));
 
-    final String s = builder.toString();
-
-    myDocument.replaceString(start, end, s);
+    myDocument.replaceString(start, end, builder);
   }
 
   public CharSequence getUpToDateContent(@NotNull Range range) {

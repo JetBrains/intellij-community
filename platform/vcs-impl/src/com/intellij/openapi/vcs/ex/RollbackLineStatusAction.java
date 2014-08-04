@@ -32,49 +32,40 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class RollbackLineStatusAction extends DumbAwareAction {
-  public RollbackLineStatusAction() {
-    super(ActionsBundle.actionText("Vcs.RollbackChangedLines"),
-          ActionsBundle.actionDescription("Vcs.RollbackChangedLines"),
-          AllIcons.Actions.Reset);
-  }
-
   @Override
   public void update(AnActionEvent e) {
     Project project = e.getProject();
-    if (project == null) {
-      e.getPresentation().setEnabled(false);
-      return;
-    }
-    Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-    if (editor == null) {
-      e.getPresentation().setEnabled(false);
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+    if (project == null || editor == null) {
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
     LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
     if (tracker == null) {
-      e.getPresentation().setEnabled(false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    e.getPresentation().setEnabled(true);
+    e.getPresentation().setEnabledAndVisible(true);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
-    Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
+    Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
     LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
-    if (tracker == null) return;
+    assert tracker != null;
 
     rollback(tracker, editor, null);
   }
 
   protected static void rollback(@NotNull LineStatusTracker tracker, @Nullable Editor editor, @Nullable Range range) {
+    assert editor != null || range != null;
+
     if (range != null) {
       doRollback(tracker, range);
       return;
     }
 
-    if (editor == null) return;
     Document document = editor.getDocument();
     int totalLines = getLineCount(document);
 
@@ -116,7 +107,6 @@ public class RollbackLineStatusAction extends DumbAwareAction {
   }
 
   private static void execute(@NotNull final LineStatusTracker tracker, @NotNull final Runnable task) {
-    // TODO: is there possible data races?
     CommandProcessor.getInstance().executeCommand(tracker.getProject(), new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
