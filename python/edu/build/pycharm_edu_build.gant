@@ -154,7 +154,7 @@ public layoutEducational(String classesPath, Set usedJars) {
   def appInfo = appInfoFile(classesPath)
   def paths = new Paths(home)
   buildSearchableOptions("${projectBuilder.moduleOutput(findModule("platform-resources"))}/search", [], {
-    projectBuilder.moduleRuntimeClasspath(findModule("main_pycharm_ce"), false).each {
+    projectBuilder.moduleRuntimeClasspath(findModule("main_pycharm_edu"), false).each {
       ant.pathelement(location: it)
     }
   }, "-Didea.platform.prefix=PyCharmEdu -Didea.no.jre.check=true")
