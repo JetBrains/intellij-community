@@ -19,6 +19,7 @@ public class StudyDocumentListener extends DocumentAdapter {
   private final TaskFile myTaskFile;
   private int oldLine;
   private int oldLineStartOffset;
+  private TaskWindow myTaskWindow;
 
   public StudyDocumentListener(TaskFile taskFile) {
     myTaskFile = taskFile;
@@ -29,10 +30,16 @@ public class StudyDocumentListener extends DocumentAdapter {
   // with fragments containing "\n"
   @Override
   public void beforeDocumentChange(DocumentEvent e) {
-    int oldEnd = e.getOffset() + e.getOldLength();
+    int offset = e.getOffset();
+    int oldEnd = offset + e.getOldLength();
     Document document = e.getDocument();
     oldLine = document.getLineNumber(oldEnd);
     oldLineStartOffset = document.getLineStartOffset(oldLine);
+    int line = document.getLineNumber(offset);
+    int offsetInLine = offset - document.getLineStartOffset(line);
+    LogicalPosition pos = new LogicalPosition(line, offsetInLine);
+    myTaskWindow = myTaskFile.getTaskWindow(document, pos);
+
   }
 
   @Override
@@ -42,13 +49,9 @@ public class StudyDocumentListener extends DocumentAdapter {
       Document document = e.getDocument();
       int offset = e.getOffset();
       int change = event.getNewLength() - event.getOldLength();
-      int line = document.getLineNumber(offset);
-      int offsetInLine = offset - document.getLineStartOffset(line);
-      LogicalPosition pos = new LogicalPosition(line, offsetInLine);
-      TaskWindow taskWindow = myTaskFile.getTaskWindow(document, pos);
-      if (taskWindow != null) {
-        int newLength = taskWindow.getLength() + change;
-        taskWindow.setLength(newLength);
+      if (myTaskWindow != null) {
+        int newLength = myTaskWindow.getLength() + change;
+        myTaskWindow.setLength(newLength);
       }
       int newEnd = offset + event.getNewLength();
       int newLine = document.getLineNumber(newEnd);

@@ -108,7 +108,7 @@ public class TaskFile {
     int column = pos.column;
     int offset = document.getLineStartOffset(line) + column;
     for (TaskWindow tw : taskWindows) {
-      if (line == tw.getLine()) {
+      if (tw.getLine() <= line) {
         int twStartOffset = tw.getRealStartOffset(document);
         int twEndOffset = twStartOffset + tw.getLength();
         if (twStartOffset <= offset && offset <= twEndOffset) {
