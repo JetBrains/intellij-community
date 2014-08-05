@@ -136,7 +136,11 @@ public abstract class JavaPostfixTemplatesUtils {
 
   @Contract("null -> false")
   public static boolean isNotPrimitiveTypeExpression(@Nullable PsiExpression expression) {
-    return expression != null && expression.getType() != null && !(expression.getType() instanceof PsiPrimitiveType);
+    if (expression == null) {
+      return false;
+    }
+    PsiType type = expression.getType();
+    return type != null && !(type instanceof PsiPrimitiveType);
   }
 
   @Contract("null -> false")
