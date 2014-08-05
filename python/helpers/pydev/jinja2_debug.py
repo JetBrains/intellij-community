@@ -29,7 +29,7 @@ class Jinja2LineBreakpoint(LineBreakpoint):
 def is_jinja2_render_call(frame):
     try:
         name = frame.f_code.co_name
-        if name in ("root", "loop", "macro") or name.startswith("block_"):
+        if DictContains(frame.f_globals, "__jinja_template__") and name in ("root", "loop", "macro") or name.startswith("block_"):
             return True
         return False
     except:
