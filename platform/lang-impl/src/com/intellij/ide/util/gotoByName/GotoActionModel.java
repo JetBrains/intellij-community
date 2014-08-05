@@ -89,6 +89,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       }
     }
     myIndex = SearchableOptionsRegistrar.getInstance();
+    if (!EventQueue.isDispatchThread()) {
+      return;
+    }
     fillConfigurablesNames(ShowSettingsUtilImpl.getConfigurables(project, true));
   }
 
