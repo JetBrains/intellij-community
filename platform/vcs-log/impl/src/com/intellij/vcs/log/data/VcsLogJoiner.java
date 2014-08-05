@@ -101,7 +101,7 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
       searchHashes.remove(commit.getId());
     }
     if (searchHashes.size() != 0)
-      throw new IllegalStateException(ILLEGAL_DATA_RELOAD_ALL);
+      throw new VcsLogRefreshNotEnoughDataException();
     return lastIndex;
   }
 
@@ -153,7 +153,7 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
 
     private void markRealRedNode(@NotNull CommitId node) {
       if (!currentRed.remove(node))
-        throw new VcsLogRefreshNotEnoughDataException();
+        throw new IllegalStateException(ILLEGAL_DATA_RELOAD_ALL); // never happened
       allRedCommit.add(node);
     }
 
@@ -173,7 +173,7 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
         if (currentRed.isEmpty())
           return lastIndex + 1;
       }
-      throw new IllegalStateException(ILLEGAL_DATA_RELOAD_ALL);
+      throw new IllegalStateException(ILLEGAL_DATA_RELOAD_ALL); // see VcsLogJoinerTest#illegalStateExceptionTest
     }
 
     public Set<CommitId> getAllRedCommit() {
