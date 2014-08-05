@@ -17,6 +17,7 @@ package com.intellij.psi.formatter.xml;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.*;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
@@ -464,11 +465,28 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     return myNode.getElementType() == XmlTokenType.XML_CDATA_END;
   }
 
-  public static boolean containsWhiteSpacesOnly(ASTNode node) {
-    WhiteSpaceFormattingStrategy strategy =  WhiteSpaceFormattingStrategyFactory.getStrategy(node.getPsi().getLanguage());
-    String nodeText = node.getText();
-    int length = nodeText.length();
-    return strategy.check(nodeText, 0, length) >= length;
+  public static boolean containsWhiteSpacesOnly(@NotNull ASTNode node) {
+    PsiElement psiElement = node.getPsi();
+    if (psiElement instanceof PsiWhiteSpace) return true;
+    Language nodeLang = psiElement.getLanguage();
+    if (!nodeLang.isKindOf(XMLLanguage.INSTANCE) ||
+        isTextOnlyNode(node) ||
+        node.getElementType() == XmlElementType.XML_PROLOG) {
+      WhiteSpaceFormattingStrategy strategy = WhiteSpaceFormattingStrategyFactory.getStrategy(nodeLang);
+      int length = node.getTextLength();
+      return strategy.check(node.getChars(), 0, length) >= length;
+    }
+    return false;
+  }
+
+  private static boolean isTextOnlyNode(@NotNull ASTNode node) {
+    if (node.getPsi() instanceof XmlText) return true;
+    ASTNode firstChild = node.getFirstChildNode();
+    ASTNode lastChild = node.getLastChildNode();
+    if (firstChild != null && firstChild == lastChild && firstChild.getPsi() instanceof XmlText) {
+      return true;
+    }
+    return false;
   }
 
 }
