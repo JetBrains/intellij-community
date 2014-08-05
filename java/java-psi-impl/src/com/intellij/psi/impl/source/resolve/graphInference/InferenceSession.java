@@ -419,7 +419,7 @@ public class InferenceSession {
           for (int i = 0; i < typeParameters.length; i++) {
             PsiTypeParameter typeParameter = typeParameters[i];
             copy[i] = elementFactory.createTypeParameterFromText("rCopy" + typeParameter.getName(), null);
-            initBounds(copy[i]);
+            initBounds(myContext, copy[i]);
             subst = subst.put(typeParameter, elementFactory.createType(copy[i]));
           }
           final PsiType substitutedCapture = PsiUtil.captureToplevelWildcards(subst.substitute(returnType), myContext);
