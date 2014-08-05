@@ -92,7 +92,7 @@
 
     <extensionPoint qualifiedName="org.jetbrains.webServerPathHandler" interface="org.jetbrains.builtInWebServer.WebServerPathHandler"/>
     <extensionPoint qualifiedName="org.jetbrains.webServerFileHandler" interface="org.jetbrains.builtInWebServer.WebServerFileHandler"/>
-    <extensionPoint qualifiedName="org.jetbrains.webServerProjectRootsProvider" interface="org.jetbrains.builtInWebServer.ProjectRootsProvider"/>
+    <extensionPoint qualifiedName="org.jetbrains.webServerRootsProvider" interface="org.jetbrains.builtInWebServer.WebServerRootsProvider"/>
   </extensionPoints>
 
   <project-components>
@@ -549,6 +549,6 @@
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
     <webServerPathHandler implementation="org.jetbrains.builtInWebServer.DefaultWebServerPathHandler"/>
     <webServerFileHandler implementation="org.jetbrains.builtInWebServer.BuiltInWebServer$StaticFileHandler" order="last"/>
-    <webServerProjectRootsProvider implementation="org.jetbrains.builtInWebServer.ProjectRootsProviderImpl"/>
+    <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.ProjectRootsProviderImpl"/>
   </extensions>
 </idea-plugin>
