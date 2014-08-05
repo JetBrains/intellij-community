@@ -13,7 +13,7 @@ public abstract class FileHandler {
   static final ExtensionPointName<FileHandler> EP_NAME = ExtensionPointName.create("org.jetbrains.webServerFileHandler");
 
   public abstract boolean process(@NotNull VirtualFile file,
-                                  @NotNull String canonicalRequestPath,
+                                  @NotNull CharSequence canonicalRequestPath,
                                   @NotNull Project project,
                                   @NotNull FullHttpRequest request,
                                   @NotNull Channel channel) throws IOException;
