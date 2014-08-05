@@ -8,8 +8,8 @@ import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class ProjectRootsProvider {
-  static final ExtensionPointName<ProjectRootsProvider> EP_NAME = ExtensionPointName.create("org.jetbrains.webServerProjectRootsProvider");
+public abstract class WebServerRootsProvider {
+  static final ExtensionPointName<WebServerRootsProvider> EP_NAME = ExtensionPointName.create("org.jetbrains.webServerProjectRootsProvider");
 
   @Nullable
   /**
@@ -24,7 +24,7 @@ public abstract class ProjectRootsProvider {
     return false;
   }
 
-  public abstract static class PrefixlessProjectRootsProvider extends ProjectRootsProvider {
+  public abstract static class PrefixlessProjectRootsProvider extends WebServerRootsProvider {
     @Nullable
     @Override
     public final Pair<VirtualFile, Pair<VirtualFile, String>> resolve(@NotNull String path, @NotNull Project project) {

@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Implement {@link org.jetbrains.builtInWebServer.ProjectRootsProvider} to add your provider
+ * Implement {@link WebServerRootsProvider} to add your provider
  */
 public class WebServerPathToFileManager {
   private static final PairFunction<String, VirtualFile, VirtualFile> RELATIVE_PATH_RESOLVER = new PairFunction<String, VirtualFile, VirtualFile>() {
@@ -60,7 +60,7 @@ public class WebServerPathToFileManager {
         for (VFileEvent event : events) {
           if (event instanceof VFileContentChangeEvent) {
             VirtualFile file = ((VFileContentChangeEvent)event).getFile();
-            for (ProjectRootsProvider rootsProvider : ProjectRootsProvider.EP_NAME.getExtensions()) {
+            for (WebServerRootsProvider rootsProvider : WebServerRootsProvider.EP_NAME.getExtensions()) {
               if (rootsProvider.isClearCacheOnFileContentChanged(file)) {
                 clearCache();
                 break;
@@ -119,7 +119,7 @@ public class WebServerPathToFileManager {
   public Pair<VirtualFile, String> getRoot(@NotNull VirtualFile child) {
     Pair<VirtualFile, String> result = fileToRoot.getIfPresent(child);
     if (result == null) {
-      for (ProjectRootsProvider rootsProvider : ProjectRootsProvider.EP_NAME.getExtensions()) {
+      for (WebServerRootsProvider rootsProvider : WebServerRootsProvider.EP_NAME.getExtensions()) {
         result = rootsProvider.getRoot(child, project);
         if (result != null) {
           fileToRoot.put(child, result);
@@ -132,7 +132,7 @@ public class WebServerPathToFileManager {
 
   @Nullable
   VirtualFile findByRelativePath(@NotNull Project project, @NotNull String path) {
-    for (ProjectRootsProvider rootsProvider : ProjectRootsProvider.EP_NAME.getExtensions()) {
+    for (WebServerRootsProvider rootsProvider : WebServerRootsProvider.EP_NAME.getExtensions()) {
       Pair<VirtualFile, Pair<VirtualFile, String>> result = rootsProvider.resolve(path, project);
       if (result != null) {
         fileToRoot.put(result.first, result.second);
