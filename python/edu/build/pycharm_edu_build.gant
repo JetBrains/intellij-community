@@ -20,6 +20,8 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 setProperty("home", guessHome(this as Script))
 
 includeTargets << new File("${guessHome(this as Script)}/build/scripts/utils.gant")
+// signMacZip locates in ultimate_utils.gant
+includeTargets << new File("${guessHome(this)}/build/scripts/ultimate_utils.gant")
 includeTargets << new File("${guessHome(this)}/build/scripts/libLicenses.gant")
 
 requireProperty("buildNumber", requireProperty("build.number", snapshot))
@@ -137,8 +139,7 @@ target('default': "Build artifacts") {
   //          "${pythonEduHome}/build/strings.nsi", "${pythonEduHome}/build/paths.nsi",
   //          "pycharm", false, true, ".py", system_selector)
 
-  def extraArgs = ["build.code": "pycharmEDU-${buildName}", "build.number": "PE-$buildNumber", "artifacts.path": "${paths.artifacts}"]
-
+  def extraArgs = ["build.code": "pycharmEDU-${buildNumber}", "build.number": "PE-$buildNumber", "artifacts.path": "${paths.artifacts}"]
   signMacZip("pycharm", extraArgs)
   buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs)
 
