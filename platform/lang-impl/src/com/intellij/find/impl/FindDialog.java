@@ -610,25 +610,14 @@ public class FindDialog extends DialogWrapper {
       FindBundle.message("find.context.except.comments.scope.label"),
       FindBundle.message("find.context.except.literals.scope.label"),
       FindBundle.message("find.context.except.comments.and.literals.scope.label")});
-    final JPanel searchContextPanel = new JPanel(new GridBagLayout());
+    final JPanel searchContextPanel = new JPanel(new BorderLayout());
     searchContextPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gbConstraints.anchor = GridBagConstraints.WEST;
-
-    gbConstraints.gridx = 0;
-    gbConstraints.gridy = 0;
-    gbConstraints.gridwidth = 1;
-    gbConstraints.weightx = 1;
 
     JLabel searchContextLabel = new JLabel(FindBundle.message("find.context.combo.label"));
     searchContextLabel.setLabelFor(mySearchContext);
-    searchContextPanel.add(searchContextLabel, gbConstraints);
+    searchContextPanel.add(searchContextLabel, BorderLayout.WEST);
 
-    ++gbConstraints.gridx;
-
-    searchContextPanel.add(mySearchContext, gbConstraints);
+    searchContextPanel.add(mySearchContext, BorderLayout.CENTER);
 
     if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
       findOptionsPanel.add(searchContextPanel);
