@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
@@ -771,52 +772,61 @@ public class LineStatusTracker {
     synchronized (myLock) {
       if (myBulkUpdate) return;
 
-      mySuppressUpdate = true;
+      try {
+        mySuppressUpdate = true;
 
-      Range first = null;
-      Range last = null;
+        Range first = null;
+        Range last = null;
 
-      int shift = 0;
-      for (Range range : myRanges) {
-        if (!range.isValid()) {
-          LOG.warn("Rollback of invalid range");
-          break;
-        }
-
-        boolean check;
-        if (range.getLine1() == range.getLine2()) {
-          check = lines.get(range.getLine1());
-        }
-        else {
-          int next = lines.nextSetBit(range.getLine1());
-          check = next != -1 && next < range.getLine2();
-        }
-
-        if (check) {
-          if (first == null) {
-            first = range;
+        int shift = 0;
+        for (Range range : myRanges) {
+          if (!range.isValid()) {
+            LOG.warn("Rollback of invalid range");
+            break;
           }
-          last = range;
 
-          Range shiftedRange = new Range(range);
-          shiftedRange.shift(shift);
+          boolean check;
+          if (range.getLine1() == range.getLine2()) {
+            check = lines.get(range.getLine1());
+          }
+          else {
+            int next = lines.nextSetBit(range.getLine1());
+            check = next != -1 && next < range.getLine2();
+          }
 
-          doRollbackRange(shiftedRange);
+          if (check) {
+            if (first == null) {
+              first = range;
+            }
+            last = range;
 
-          shift += (range.getVcsLine2() - range.getVcsLine1()) - (range.getLine2() - range.getLine1());
+            Range shiftedRange = new Range(range);
+            shiftedRange.shift(shift);
+
+            doRollbackRange(shiftedRange);
+
+            shift += (range.getVcsLine2() - range.getVcsLine1()) - (range.getLine2() - range.getLine1());
+          }
+        }
+
+        if (first != null) {
+          int beforeChangedLine1 = first.getLine1();
+          int beforeChangedLine2 = last.getLine2();
+
+          int beforeTotalLines = getLineCount(myDocument) - shift;
+
+          doUpdateRanges(beforeChangedLine1, beforeChangedLine2, shift, beforeTotalLines);
         }
       }
-
-      if (first != null) {
-        int beforeChangedLine1 = first.getLine1();
-        int beforeChangedLine2 = last.getLine2();
-
-        int beforeTotalLines = getLineCount(myDocument) - shift;
-
-        doUpdateRanges(beforeChangedLine1, beforeChangedLine2, shift, beforeTotalLines);
+      catch (Throwable e) {
+        reinstallRanges();
+        if (e instanceof Error) throw ((Error)e);
+        if (e instanceof RuntimeException) throw ((RuntimeException)e);
+        throw new RuntimeException(e);
       }
-
-      mySuppressUpdate = false;
+      finally {
+        mySuppressUpdate = false;
+      }
     }
   }
 
