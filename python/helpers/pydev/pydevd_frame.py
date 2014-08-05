@@ -150,6 +150,10 @@ class PyDBFrame:
                 if  mainDebugger.jinja2_breakpoints:
                     can_skip = False
 
+                if info.pydev_call_inside_jinja2 is not None:
+                    # if we started debugging from python function called from template, and we have no another breakpoints in it
+                    can_skip = False
+
                 # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint,
                 # we will return nothing for the next trace
                 #also, after we hit a breakpoint and go to some other debugging state, we have to force the set trace anyway,
@@ -317,6 +321,7 @@ class PyDBFrame:
                         if event == 'return' and is_jinja2_context_call(frame.f_back):
                             #we return from python code to Jinja2 rendering frame
                             info.pydev_call_from_jinja2 = None
+                            info.pydev_call_inside_jinja2 = find_jinja2_render_frame(frame)
                             thread.additionalInfo.suspend_type = JINJA2_SUSPEND
                             stop = False
 
