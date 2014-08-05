@@ -199,7 +199,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
               }
             }
           }
-        }, ModalityState.defaultModalityState());
+        }, ModalityState.any());
         //noinspection ThrowableResultOfMethodCallIgnored
         if (ex.get() != null) {
           throw ex.get();
