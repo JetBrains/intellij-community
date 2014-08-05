@@ -1,5 +1,6 @@
 package ru.compscicenter.edide.course;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,6 +21,7 @@ import java.util.Map;
  */
 public class Task {
   public static final String TASK_DIR = "task";
+  private static final Logger LOG = Logger.getInstance(Task.class.getName());
   public String testFile;
   public int testNum;
   public String name;
@@ -171,6 +173,20 @@ public class Task {
   }
 
 
+  @Nullable
+  public VirtualFile getTaskDir(Project project) {
+    String lessonDirName = Lesson.LESSON_DIR + String.valueOf(myLesson.getIndex() + 1);
+    String taskDirName = TASK_DIR + String.valueOf(myIndex + 1);
+    VirtualFile courseDir = project.getBaseDir().findChild(Course.COURSE_DIR);
+    if (courseDir != null) {
+      VirtualFile lessonDir = courseDir.findChild(lessonDirName);
+      if (lessonDir != null) {
+        return lessonDir.findChild(taskDirName);
+      }
+    }
+    return null;
+  }
+
   /**
    * Gets text of resource file such as test input file or task text in needed format
    *
@@ -180,16 +196,22 @@ public class Task {
    */
   @Nullable
   public String getResourceText(@NotNull final Project project, @NotNull final String fileName, boolean wrapHTML) {
-    String lessonDirName = Lesson.LESSON_DIR + String.valueOf(myLesson.getIndex() + 1);
-    String taskDirName = TASK_DIR + String.valueOf(myIndex + 1);
-    VirtualFile courseDir = project.getBaseDir().findChild(Course.COURSE_DIR);
-    if (courseDir != null) {
-      VirtualFile lessonDir = courseDir.findChild(lessonDirName);
-      if (lessonDir != null) {
-        VirtualFile parentDir = lessonDir.findChild(taskDirName);
-        if (parentDir != null) {
-          return StudyUtils.getFileText(parentDir.getCanonicalPath(), fileName, wrapHTML);
-        }
+    VirtualFile taskDir = getTaskDir(project);
+    if (taskDir != null) {
+      return StudyUtils.getFileText(taskDir.getCanonicalPath(), fileName, wrapHTML);
+    }
+    return null;
+  }
+
+  public VirtualFile createResourceFile(@NotNull  final Project project, @NotNull final String name) {
+    VirtualFile taskDir = getTaskDir(project);
+    if (taskDir != null) {
+      try {
+        return taskDir.createChildData(this, name);
+      }
+      catch (IOException e) {
+        LOG.error("Failed to create resource file");
+        LOG.error(e);
       }
     }
     return null;

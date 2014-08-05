@@ -1,9 +1,13 @@
 package ru.compscicenter.edide.ui;
 
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
+import ru.compscicenter.edide.course.UserTest;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.text.BadLocationException;
 import java.awt.*;
 
 public class TestContentPanel extends JPanel {
@@ -11,9 +15,11 @@ public class TestContentPanel extends JPanel {
   private static final Font HEADER_FONT = new Font("Arial", Font.BOLD, 16);
   private final JTextArea myInputArea = new JTextArea();
   private final JTextArea myOutputArea = new JTextArea();
-  public TestContentPanel() {
+  public TestContentPanel(UserTest userTest) {
     this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     initContentLabel("input", myInputArea);
+    myInputArea.getDocument().addDocumentListener(new BufferUpdater(userTest.getInputBuffer()));
+    myInputArea.getDocument().addDocumentListener(new BufferUpdater(userTest.getOutputBuffer()));
     initContentLabel("output", myOutputArea);
   }
 
@@ -33,5 +39,24 @@ public class TestContentPanel extends JPanel {
 
   public  void addOutputContent(final String content) {
     myOutputArea.setText(content);
+  }
+
+  private class BufferUpdater extends DocumentAdapter {
+    private final StringBuffer myBuffer;
+
+    private BufferUpdater(StringBuffer buffer) {
+      myBuffer = buffer;
+    }
+
+    @Override
+    protected void textChanged(DocumentEvent e) {
+      myBuffer.delete(0, myBuffer.length());
+      try {
+        myBuffer.append(e.getDocument().getText(0, e.getDocument().getLength()));
+      }
+      catch (BadLocationException e1) {
+        e1.printStackTrace();
+      }
+    }
   }
 }
