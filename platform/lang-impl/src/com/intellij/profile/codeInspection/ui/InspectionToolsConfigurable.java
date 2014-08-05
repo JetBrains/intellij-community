@@ -532,6 +532,6 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   public JComponent getPreferredFocusedComponent() {
     final InspectionProfileImpl inspectionProfile = getSelectedObject();
     assert inspectionProfile != null : configuredProfiles();
-    return getProfilePanel(inspectionProfile).getTree();
+    return getProfilePanel(inspectionProfile).getPreferredFocusedComponent();
   }
 }
