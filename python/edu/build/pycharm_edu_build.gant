@@ -135,12 +135,12 @@ target('default': "Build artifacts") {
 
   buildNSIS([paths.distAll, paths.distWin],
             "${pythonEduHome}/build/strings.nsi", "${pythonEduHome}/build/paths.nsi",
-            "pycharm", false, true, system_selector)
+            "pycharm", false, true, ".py", system_selector)
 
+  def extraArgs = ["build.code": "pycharmEDU-${buildName}", "build.number": "PE-$buildNumber", "artifacts.path": "${paths.artifacts}"]
 
-
-  signMacZip("pycharm")
-  buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png")
+  signMacZip("pycharm", extraArgs)
+  buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs)
 
 }
 
