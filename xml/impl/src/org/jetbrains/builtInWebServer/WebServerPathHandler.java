@@ -30,10 +30,10 @@ import java.net.URI;
  * By default {@link org.jetbrains.builtInWebServer.PathToFileManager} will be used to map request to file.
  * If file physically exists in the file system, you must use {@link org.jetbrains.builtInWebServer.ProjectRootsProvider}.
  *
- * Consider to extend {@link org.jetbrains.builtInWebServer.PathHandlerAdapter} instead of implement low-level {@link #process(String, com.intellij.openapi.project.Project, io.netty.handler.codec.http.FullHttpRequest, io.netty.channel.Channel, String, String, boolean)}
+ * Consider to extend {@link WebServerPathHandlerAdapter} instead of implement low-level {@link #process(String, com.intellij.openapi.project.Project, io.netty.handler.codec.http.FullHttpRequest, io.netty.channel.Channel, String, String, boolean)}
  */
-public abstract class PathHandler {
-  static final ExtensionPointName<PathHandler> EP_NAME = ExtensionPointName.create("org.jetbrains.webServerPathHandler");
+public abstract class WebServerPathHandler {
+  static final ExtensionPointName<WebServerPathHandler> EP_NAME = ExtensionPointName.create("org.jetbrains.webServerPathHandler");
 
   public abstract boolean process(@NotNull String path,
                                   @NotNull Project project,

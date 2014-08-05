@@ -163,14 +163,14 @@ public final class BuiltInWebServer extends HttpRequestHandler {
       }
 
       // we must redirect "jsdebug" to "jsdebug/" as nginx does, otherwise browser will treat it as file instead of directory, so, relative path will not work
-      PathHandler.redirectToDirectory(request, channel, projectName);
+      WebServerPathHandler.redirectToDirectory(request, channel, projectName);
       return true;
     }
 
     final String path = FileUtil.toCanonicalPath(decodedPath.substring(offset + 1), '/');
     LOG.assertTrue(path != null);
 
-    for (PathHandler pathHandler : PathHandler.EP_NAME.getExtensions()) {
+    for (WebServerPathHandler pathHandler : WebServerPathHandler.EP_NAME.getExtensions()) {
       try {
         if (pathHandler.process(path, project, request, channel, projectName, decodedPath, isCustomHost)) {
           return true;

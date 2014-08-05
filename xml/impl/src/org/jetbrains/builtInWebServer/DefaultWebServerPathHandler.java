@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.Responses;
 
-final class DefaultPathHandler extends PathHandler {
+final class DefaultWebServerPathHandler extends WebServerPathHandler {
   @Override
   public boolean process(@NotNull String path,
                          @NotNull Project project,

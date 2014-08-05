@@ -21,7 +21,7 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class PathHandlerAdapter extends PathHandler {
+public abstract class WebServerPathHandlerAdapter extends WebServerPathHandler {
   protected abstract boolean process(@NotNull String path, @NotNull Project project, @NotNull FullHttpRequest request, @NotNull Channel channel);
 
   @Override
