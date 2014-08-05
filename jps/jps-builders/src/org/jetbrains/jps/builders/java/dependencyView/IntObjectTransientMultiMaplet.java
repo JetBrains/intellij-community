@@ -24,7 +24,7 @@ import java.util.Collection;
  * @author: db
  * Date: 08.03.11
  */
-class IntObjectTransientMultiMaplet<V extends Streamable> extends IntObjectMultiMaplet<V> {
+class IntObjectTransientMultiMaplet<V> extends IntObjectMultiMaplet<V> {
 
   private final TIntObjectHashMap<Collection<V>> myMap = new TIntObjectHashMap<Collection<V>>();
   private final CollectionFactory<V> myCollectionFactory;

@@ -28,7 +28,7 @@ import java.util.List;
  * @author: db
  * Date: 03.11.11
  */
-abstract class IntObjectMultiMaplet<V extends Streamable> implements Streamable {
+abstract class IntObjectMultiMaplet<V> implements Streamable {
   abstract boolean containsKey(final int key);
 
   abstract Collection<V> get(final int key);
@@ -78,12 +78,17 @@ abstract class IntObjectMultiMaplet<V extends Streamable> implements Streamable 
       final List<String> list = new LinkedList<String>();
 
       for (final V value : b) {
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        final PrintStream s = new PrintStream(baos);
+        if (value instanceof Streamable) {
+          final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+          final PrintStream s = new PrintStream(baos);
 
-        value.toStream(context, s);
+          ((Streamable)value).toStream(context, s);
 
-        list.add(baos.toString());
+          list.add(baos.toString());
+        }
+        else {
+          list.add(value.toString());
+        }
       }
 
       Collections.sort(list);
