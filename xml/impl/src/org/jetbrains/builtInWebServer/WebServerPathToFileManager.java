@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Implement {@link org.jetbrains.builtInWebServer.ProjectRootsProvider} to add your provider
  */
-public class PathToFileManager {
+public class WebServerPathToFileManager {
   private static final PairFunction<String, VirtualFile, VirtualFile> RELATIVE_PATH_RESOLVER = new PairFunction<String, VirtualFile, VirtualFile>() {
     @Nullable
     @Override
@@ -48,11 +48,11 @@ public class PathToFileManager {
   // time to expire should be greater than pathToFileCache
   private final Cache<VirtualFile, Pair<VirtualFile, String>> fileToRoot = CacheBuilder.newBuilder().maximumSize(512).expireAfterAccess(11, TimeUnit.MINUTES).build();
 
-  public static PathToFileManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, PathToFileManager.class);
+  public static WebServerPathToFileManager getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, WebServerPathToFileManager.class);
   }
 
-  public PathToFileManager(@NotNull Application application, @NotNull Project project) {
+  public WebServerPathToFileManager(@NotNull Application application, @NotNull Project project) {
     this.project = project;
     application.getMessageBus().connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override

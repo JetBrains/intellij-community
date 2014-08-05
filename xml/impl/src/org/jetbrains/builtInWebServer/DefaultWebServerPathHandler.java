@@ -33,7 +33,7 @@ final class DefaultWebServerPathHandler extends WebServerPathHandler {
                          @Nullable String projectName,
                          @NotNull String decodedRawPath,
                          boolean isCustomHost) {
-    PathToFileManager pathToFileManager = PathToFileManager.getInstance(project);
+    WebServerPathToFileManager pathToFileManager = WebServerPathToFileManager.getInstance(project);
     VirtualFile result = pathToFileManager.pathToFileCache.getIfPresent(path);
     boolean indexUsed = false;
     if (result == null || !result.isValid()) {

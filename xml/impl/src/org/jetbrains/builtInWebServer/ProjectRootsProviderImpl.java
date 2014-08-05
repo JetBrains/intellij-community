@@ -38,7 +38,7 @@ final class ProjectRootsProviderImpl extends ProjectRootsProvider {
 
         if (module != null && !module.isDisposed()) {
           path = path.substring(index + 1);
-          resolver = PathToFileManager.getInstance(project).getResolver(path);
+          resolver = WebServerPathToFileManager.getInstance(project).getResolver(path);
 
           ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
           Couple<VirtualFile> result = resolve(path, moduleRootManager.getSourceRoots(), resolver);
@@ -61,7 +61,7 @@ final class ProjectRootsProviderImpl extends ProjectRootsProvider {
       token.finish();
     }
 
-    resolver = PathToFileManager.getInstance(project).getResolver(path);
+    resolver = WebServerPathToFileManager.getInstance(project).getResolver(path);
     Pair<VirtualFile, Pair<VirtualFile, String>> result = findByRelativePath(project, path, modules, true, resolver);
     if (result == null) {
       // let's find in content roots

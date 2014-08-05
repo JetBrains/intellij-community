@@ -28,7 +28,7 @@ public abstract class ProjectRootsProvider {
     @Nullable
     @Override
     public final Pair<VirtualFile, Pair<VirtualFile, String>> resolve(@NotNull String path, @NotNull Project project) {
-      return resolve(path, project, PathToFileManager.getInstance(project).getResolver(path));
+      return resolve(path, project, WebServerPathToFileManager.getInstance(project).getResolver(path));
     }
 
     @Nullable

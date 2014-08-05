@@ -27,7 +27,7 @@ import org.jetbrains.io.Responses;
 import java.net.URI;
 
 /**
- * By default {@link org.jetbrains.builtInWebServer.PathToFileManager} will be used to map request to file.
+ * By default {@link WebServerPathToFileManager} will be used to map request to file.
  * If file physically exists in the file system, you must use {@link org.jetbrains.builtInWebServer.ProjectRootsProvider}.
  *
  * Consider to extend {@link WebServerPathHandlerAdapter} instead of implement low-level {@link #process(String, com.intellij.openapi.project.Project, io.netty.handler.codec.http.FullHttpRequest, io.netty.channel.Channel, String, String, boolean)}

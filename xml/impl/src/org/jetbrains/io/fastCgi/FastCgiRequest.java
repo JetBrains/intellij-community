@@ -12,7 +12,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.util.CharsetUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.builtInWebServer.PathToFileManager;
+import org.jetbrains.builtInWebServer.WebServerPathToFileManager;
 import org.jetbrains.io.Responses;
 
 import java.net.InetSocketAddress;
@@ -41,7 +41,7 @@ public class FastCgiRequest {
   }
 
   public void writeFileHeaders(@NotNull VirtualFile file, @NotNull Project project, @NotNull CharSequence canonicalRequestPath) {
-    Pair<VirtualFile, String> root = PathToFileManager.getInstance(project).getRoot(file);
+    Pair<VirtualFile, String> root = WebServerPathToFileManager.getInstance(project).getRoot(file);
     FastCgiService.LOG.assertTrue(root != null);
     addHeader("DOCUMENT_ROOT", root.first.getPath());
     addHeader("SCRIPT_FILENAME", file.getPath());
