@@ -46,7 +46,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.AppUIUtil;
@@ -103,7 +102,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private MyDependentBreakpointListener myDependentBreakpointListener;
   private XValueMarkers<?, ?> myValueMarkers;
   private final String mySessionName;
-  private XDebugSessionTab mySessionTab;
+  private @Nullable XDebugSessionTab mySessionTab;
   private XDebugSessionData mySessionData;
   private XBreakpoint<?> myActiveNonLineBreakpoint;
   private final EventDispatcher<XDebugSessionListener> myDispatcher = EventDispatcher.create(XDebugSessionListener.class);
@@ -316,6 +315,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public RunnerLayoutUi getUI() {
+    assertSessionTabInitialized();
     return mySessionTab.getUi();
   }
 
@@ -713,8 +713,10 @@ public class XDebugSessionImpl implements XDebugSession {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        mySessionTab.toFront(true);
-        mySessionTab.getUi().attractBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
+        if (mySessionTab != null) {
+          mySessionTab.toFront(true);
+          mySessionTab.getUi().attractBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
+        }
       }
     });
 
