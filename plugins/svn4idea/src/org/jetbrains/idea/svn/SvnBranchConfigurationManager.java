@@ -140,11 +140,6 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
       configuration.setTrunkUrl(configOrig.getTrunkUrl());
       configuration.setUserinfoInUrl(configOrig.isUserinfoInUrl());
       configuration.setBranchUrls(configOrig.getBranchUrls());
-      final HashMap<String, List<SvnBranchItem>> map = new HashMap<String, List<SvnBranchItem>>();
-      final Map<String, InfoStorage<List<SvnBranchItem>>> origMap = configOrig.getBranchMap();
-      for (String origKey : origMap.keySet()) {
-        map.put(origKey, origMap.get(origKey).getValue());
-      }
       result.myConfigurationMap.put(key, helper.prepareForSerialization(configuration));
     }
     result.mySupportsUserInfoFilter = true;
@@ -196,7 +191,6 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   public void loadState(final ConfigurationBean object) {
     final UrlSerializationHelper helper = new UrlSerializationHelper(SvnVcs.getInstance(myProject));
     final Map<String, SvnBranchConfiguration> map = object.myConfigurationMap;
-    final Map<String, SvnBranchConfiguration> newMap = new HashMap<String, SvnBranchConfiguration>(map.size(), 1);
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
 
     final Set<Pair<VirtualFile, SvnBranchConfigurationNew>> whatToInit = new HashSet<Pair<VirtualFile, SvnBranchConfigurationNew>>();
@@ -248,7 +242,6 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
       }
     });
     object.myConfigurationMap.clear();
-    object.myConfigurationMap.putAll(newMap);
     myConfigurationBean = object;
   }
 
@@ -307,7 +300,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
       final SvnBranchConfiguration result = new SvnBranchConfiguration();
       result.setTrunkUrl(newTrunkUrl);
       result.setBranchUrls(newBranchesList);
-      result.setUserinfoInUrl(userInfo != null && userInfo.length() > 0);
+      result.setUserinfoInUrl(userInfo.length() > 0);
       return result;
     }
 
