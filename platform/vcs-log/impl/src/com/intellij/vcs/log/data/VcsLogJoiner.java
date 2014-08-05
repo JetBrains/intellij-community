@@ -30,9 +30,7 @@ import java.util.*;
  * @author Kirill Likhodedov
  */
 public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
-  private final static int BOUND_SAVED_LOG = 10000;
 
-  public final static String NOT_ENOUGH_FIRST_BLOCK = "Not enough first block";
   public final static String ILLEGAL_DATA_RELOAD_ALL = "All data is illegal - request reload all";
 
   /**
@@ -100,8 +98,6 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
       Commit commit = commits.get(lastIndex);
       if (searchHashes.size() == 0)
         return lastIndex;
-      if (lastIndex > BOUND_SAVED_LOG)
-        throw new IllegalStateException(ILLEGAL_DATA_RELOAD_ALL);
       searchHashes.remove(commit.getId());
     }
     if (searchHashes.size() != 0)
@@ -157,16 +153,13 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
 
     private void markRealRedNode(@NotNull CommitId node) {
       if (!currentRed.remove(node))
-        throw new IllegalStateException(NOT_ENOUGH_FIRST_BLOCK);
+        throw new VcsLogRefreshNotEnoughDataException();
       allRedCommit.add(node);
     }
 
     private int getFirstSaveIndex() {
       for (int lastIndex = 0; lastIndex < savedLog.size(); lastIndex++) {
         Commit commit = savedLog.get(lastIndex);
-        if (lastIndex > BOUND_SAVED_LOG)
-          throw new IllegalStateException(ILLEGAL_DATA_RELOAD_ALL);
-
         boolean isGreen = currentGreen.contains(commit.getId());
         if (isGreen) {
           currentRed.remove(commit.getId());
