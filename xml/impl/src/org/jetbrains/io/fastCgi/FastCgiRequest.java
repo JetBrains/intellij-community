@@ -1,7 +1,6 @@
 package org.jetbrains.io.fastCgi;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -12,6 +11,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.util.CharsetUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.builtInWebServer.PathInfo;
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager;
 import org.jetbrains.io.Responses;
 
@@ -41,9 +41,9 @@ public class FastCgiRequest {
   }
 
   public void writeFileHeaders(@NotNull VirtualFile file, @NotNull Project project, @NotNull CharSequence canonicalRequestPath) {
-    Pair<VirtualFile, String> root = WebServerPathToFileManager.getInstance(project).getRoot(file);
+    PathInfo root = WebServerPathToFileManager.getInstance(project).getRoot(file);
     FastCgiService.LOG.assertTrue(root != null);
-    addHeader("DOCUMENT_ROOT", root.first.getPath());
+    addHeader("DOCUMENT_ROOT", root.getRoot().getPath());
     addHeader("SCRIPT_FILENAME", file.getPath());
     addHeader("SCRIPT_NAME", canonicalRequestPath);
   }

@@ -8,8 +8,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -46,7 +44,7 @@ public class WebServerPathToFileManager {
 
   final Cache<String, VirtualFile> pathToFileCache = CacheBuilder.newBuilder().maximumSize(512).expireAfterAccess(10, TimeUnit.MINUTES).build();
   // time to expire should be greater than pathToFileCache
-  private final Cache<VirtualFile, Pair<VirtualFile, String>> fileToRoot = CacheBuilder.newBuilder().maximumSize(512).expireAfterAccess(11, TimeUnit.MINUTES).build();
+  private final Cache<VirtualFile, PathInfo> fileToRoot = CacheBuilder.newBuilder().maximumSize(512).expireAfterAccess(11, TimeUnit.MINUTES).build();
 
   public static WebServerPathToFileManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, WebServerPathToFileManager.class);
@@ -106,18 +104,13 @@ public class WebServerPathToFileManager {
 
   @Nullable
   public String getPath(@NotNull VirtualFile file) {
-    Pair<VirtualFile, String> root = getRoot(file);
-    if (root == null) {
-      return null;
-    }
-    else {
-      return (root.second == null ? "" : root.second + '/') + VfsUtilCore.getRelativePath(file, root.first, '/');
-    }
+    PathInfo pathInfo = getRoot(file);
+    return pathInfo == null ? null : pathInfo.getPath();
   }
 
   @Nullable
-  public Pair<VirtualFile, String> getRoot(@NotNull VirtualFile child) {
-    Pair<VirtualFile, String> result = fileToRoot.getIfPresent(child);
+  public PathInfo getRoot(@NotNull VirtualFile child) {
+    PathInfo result = fileToRoot.getIfPresent(child);
     if (result == null) {
       for (WebServerRootsProvider rootsProvider : WebServerRootsProvider.EP_NAME.getExtensions()) {
         result = rootsProvider.getRoot(child, project);
@@ -133,10 +126,10 @@ public class WebServerPathToFileManager {
   @Nullable
   VirtualFile findByRelativePath(@NotNull Project project, @NotNull String path) {
     for (WebServerRootsProvider rootsProvider : WebServerRootsProvider.EP_NAME.getExtensions()) {
-      Pair<VirtualFile, Pair<VirtualFile, String>> result = rootsProvider.resolve(path, project);
+      PathInfo result = rootsProvider.resolve(path, project);
       if (result != null) {
-        fileToRoot.put(result.first, result.second);
-        return result.first;
+        fileToRoot.put(result.getChild(), result);
+        return result.getChild();
       }
     }
     return null;
