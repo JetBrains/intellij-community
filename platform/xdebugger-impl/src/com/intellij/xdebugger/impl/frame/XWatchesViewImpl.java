@@ -24,6 +24,7 @@ import com.intellij.ide.dnd.DnDNativeTarget;
 import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.SystemInfo;
@@ -246,7 +247,7 @@ public class XWatchesViewImpl implements DnDNativeTarget, XWatchesView, XDebugVi
 
   @Override
   public void processSessionEvent(@NotNull final SessionEvent event) {
-    if (getMainPanel().isShowing()) {
+    if (getMainPanel().isShowing() || ApplicationManager.getApplication().isUnitTestMode()) {
       myRebuildNeeded = false;
     }
     else {
