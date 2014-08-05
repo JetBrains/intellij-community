@@ -8,8 +8,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -22,7 +20,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class PathToFileManager {
+/**
+ * Implement {@link WebServerRootsProvider} to add your provider
+ */
+public class WebServerPathToFileManager {
   private static final PairFunction<String, VirtualFile, VirtualFile> RELATIVE_PATH_RESOLVER = new PairFunction<String, VirtualFile, VirtualFile>() {
     @Nullable
     @Override
@@ -43,13 +44,13 @@ public class PathToFileManager {
 
   final Cache<String, VirtualFile> pathToFileCache = CacheBuilder.newBuilder().maximumSize(512).expireAfterAccess(10, TimeUnit.MINUTES).build();
   // time to expire should be greater than pathToFileCache
-  private final Cache<VirtualFile, Pair<VirtualFile, String>> fileToRoot = CacheBuilder.newBuilder().maximumSize(512).expireAfterAccess(11, TimeUnit.MINUTES).build();
+  private final Cache<VirtualFile, PathInfo> fileToRoot = CacheBuilder.newBuilder().maximumSize(512).expireAfterAccess(11, TimeUnit.MINUTES).build();
 
-  public static PathToFileManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, PathToFileManager.class);
+  public static WebServerPathToFileManager getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, WebServerPathToFileManager.class);
   }
 
-  public PathToFileManager(@NotNull Application application, @NotNull Project project) {
+  public WebServerPathToFileManager(@NotNull Application application, @NotNull Project project) {
     this.project = project;
     application.getMessageBus().connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
@@ -57,7 +58,7 @@ public class PathToFileManager {
         for (VFileEvent event : events) {
           if (event instanceof VFileContentChangeEvent) {
             VirtualFile file = ((VFileContentChangeEvent)event).getFile();
-            for (ProjectRootsProvider rootsProvider : ProjectRootsProvider.EP_NAME.getExtensions()) {
+            for (WebServerRootsProvider rootsProvider : WebServerRootsProvider.EP_NAME.getExtensions()) {
               if (rootsProvider.isClearCacheOnFileContentChanged(file)) {
                 clearCache();
                 break;
@@ -103,20 +104,15 @@ public class PathToFileManager {
 
   @Nullable
   public String getPath(@NotNull VirtualFile file) {
-    Pair<VirtualFile, String> root = getRoot(file);
-    if (root == null) {
-      return null;
-    }
-    else {
-      return (root.second == null ? "" : root.second + '/') + VfsUtilCore.getRelativePath(file, root.first, '/');
-    }
+    PathInfo pathInfo = getRoot(file);
+    return pathInfo == null ? null : pathInfo.getPath();
   }
 
   @Nullable
-  public Pair<VirtualFile, String> getRoot(@NotNull VirtualFile child) {
-    Pair<VirtualFile, String> result = fileToRoot.getIfPresent(child);
+  public PathInfo getRoot(@NotNull VirtualFile child) {
+    PathInfo result = fileToRoot.getIfPresent(child);
     if (result == null) {
-      for (ProjectRootsProvider rootsProvider : ProjectRootsProvider.EP_NAME.getExtensions()) {
+      for (WebServerRootsProvider rootsProvider : WebServerRootsProvider.EP_NAME.getExtensions()) {
         result = rootsProvider.getRoot(child, project);
         if (result != null) {
           fileToRoot.put(child, result);
@@ -129,11 +125,11 @@ public class PathToFileManager {
 
   @Nullable
   VirtualFile findByRelativePath(@NotNull Project project, @NotNull String path) {
-    for (ProjectRootsProvider rootsProvider : ProjectRootsProvider.EP_NAME.getExtensions()) {
-      Pair<VirtualFile, Pair<VirtualFile, String>> result = rootsProvider.resolve(path, project);
+    for (WebServerRootsProvider rootsProvider : WebServerRootsProvider.EP_NAME.getExtensions()) {
+      PathInfo result = rootsProvider.resolve(path, project);
       if (result != null) {
-        fileToRoot.put(result.first, result.second);
-        return result.first;
+        fileToRoot.put(result.getChild(), result);
+        return result.getChild();
       }
     }
     return null;

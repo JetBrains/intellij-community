@@ -954,13 +954,15 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   public void markDirtied(@NotNull ProperTextRange yPositions) {
-    int start = Math.max(0, yPositions.getStartOffset() - myEditor.getLineHeight());
-    int end = myEditorScrollbarTop + myEditorTargetHeight == 0 ? yPositions.getEndOffset() + myEditor.getLineHeight()
-                                                               : Math
-                .min(myEditorScrollbarTop + myEditorTargetHeight, yPositions.getEndOffset() + myEditor.getLineHeight());
-    ProperTextRange adj = new ProperTextRange(start, Math.max(end, start));
+    if (myDirtyYPositions != WHOLE_DOCUMENT) {
+      int start = Math.max(0, yPositions.getStartOffset() - myEditor.getLineHeight());
+      int end = myEditorScrollbarTop + myEditorTargetHeight == 0 ? yPositions.getEndOffset() + myEditor.getLineHeight()
+                                                                 : Math
+                  .min(myEditorScrollbarTop + myEditorTargetHeight, yPositions.getEndOffset() + myEditor.getLineHeight());
+      ProperTextRange adj = new ProperTextRange(start, Math.max(end, start));
 
-    myDirtyYPositions = myDirtyYPositions == null ? adj : myDirtyYPositions.union(adj);
+      myDirtyYPositions = myDirtyYPositions == null ? adj : myDirtyYPositions.union(adj);
+    }
 
     myEditorScrollbarTop = 0;
     myEditorSourceHeight = 0;

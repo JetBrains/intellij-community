@@ -124,7 +124,7 @@ public class GithubShareAction extends DumbAwareAction {
       externalRemoteDetected = !gitRepository.getRemotes().isEmpty();
     }
 
-    final GithubAuthDataHolder authHolder = GithubAuthDataHolder.createFromSettings(null);
+    final GithubAuthDataHolder authHolder = GithubAuthDataHolder.createFromSettings();
 
     // get available GitHub repos with modal progress
     final GithubInfo githubInfo = loadGithubInfoWithModal(authHolder, project);

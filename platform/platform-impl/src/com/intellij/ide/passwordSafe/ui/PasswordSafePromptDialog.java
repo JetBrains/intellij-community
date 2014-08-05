@@ -73,10 +73,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
   /**
    * Ask password possibly asking password database first. The method could be invoked from any thread. If UI needs to be shown,
    * the method invokes {@link UIUtil#invokeAndWaitIfNeeded(Runnable)}
-   *
    * @param project       the context project
-   * @param modalityState the modality state using which any prompts initiated by the git process should be shown in the UI.
-   *                      If null then {@link ModalityState#defaultModalityState() the default modality state} will be used.
    * @param title         the dialog title
    * @param message       the message describing a resource for which password is asked
    * @param requestor     the password requestor
@@ -86,13 +83,12 @@ public class PasswordSafePromptDialog extends DialogWrapper {
    */
   @Nullable
   public static String askPassword(final Project project,
-                                   @Nullable ModalityState modalityState,
                                    final String title,
                                    final String message,
                                    @NotNull final Class<?> requestor,
                                    final String key,
                                    boolean resetPassword, String error) {
-    return askPassword(project, modalityState, title, message, requestor, key, resetPassword, error, null, null);
+    return askPassword(project, title, message, requestor, key, resetPassword, error, null, null);
   }
 
   /**
@@ -112,17 +108,14 @@ public class PasswordSafePromptDialog extends DialogWrapper {
                                    @NotNull final Class<?> requestor,
                                    final String key,
                                    boolean resetPassword) {
-    return askPassword(null, null, title, message, requestor, key, resetPassword, null);
+    return askPassword(null, title, message, requestor, key, resetPassword, null);
   }
 
 
   /**
    * Ask passphrase possibly asking password database first. The method could be invoked from any thread. If UI needs to be shown,
    * the method invokes {@link UIUtil#invokeAndWaitIfNeeded(Runnable)}
-   *
    * @param project       the context project (might be null)
-   * @param modalityState the modality state using which any prompts initiated by the git process should be shown in the UI.
-   *                      If null then {@link ModalityState#defaultModalityState() the default modality state} will be used.
    * @param title         the dialog title
    * @param message       the message describing a resource for which password is asked
    * @param requestor     the password requestor
@@ -132,13 +125,13 @@ public class PasswordSafePromptDialog extends DialogWrapper {
    */
   @Nullable
   public static String askPassphrase(final Project project,
-                                     @Nullable ModalityState modalityState, final String title,
+                                     final String title,
                                      final String message,
                                      @NotNull final Class<?> requestor,
                                      final String key,
                                      boolean resetPassword,
                                      String error) {
-    return askPassword(project, modalityState, title, message, requestor, key, resetPassword, error,
+    return askPassword(project, title, message, requestor, key, resetPassword, error,
                        "Passphrase:", "Remember the passphrase");
   }
 
@@ -146,10 +139,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
   /**
    * Ask password possibly asking password database first. The method could be invoked from any thread. If UI needs to be shown,
    * the method invokes {@link UIUtil#invokeAndWaitIfNeeded(Runnable)}
-   *
    * @param project       the context project
-   * @param modalityState the modality state using which any prompts initiated by the git process should be shown in the UI.
-   *                      If null then {@link ModalityState#defaultModalityState() the default modality state} will be used.
    * @param title         the dialog title
    * @param message       the message describing a resource for which password is asked
    * @param requestor     the password requestor
@@ -161,7 +151,6 @@ public class PasswordSafePromptDialog extends DialogWrapper {
    */
   @Nullable
   private static String askPassword(final Project project,
-                                    @Nullable ModalityState modalityState,
                                     final String title,
                                     final String message,
                                     @NotNull final Class<?> requestor,
@@ -176,7 +165,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
         ps.removePassword(project, requestor, key);
       }
       else {
-        String pw = ps.getPassword(project, requestor, key, modalityState);
+        String pw = ps.getPassword(project, requestor, key);
         if (pw != null) {
           return pw;
         }
@@ -214,7 +203,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
           }
         }
       }
-    }, modalityState == null ? ModalityState.defaultModalityState() : modalityState);
+    }, ModalityState.any());
     return ref.get();
   }
 }

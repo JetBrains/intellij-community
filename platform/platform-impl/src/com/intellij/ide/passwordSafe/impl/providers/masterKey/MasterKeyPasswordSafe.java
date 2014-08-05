@@ -154,8 +154,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
   }
 
   @Override
-  protected byte[] key(@Nullable final Project project, @NotNull final Class requestor,
-                       @Nullable ModalityState modalityState) throws PasswordSafeException {
+  protected byte[] key(@Nullable final Project project, @NotNull final Class requestor) throws PasswordSafeException {
     Application application = ApplicationManager.getApplication();
     if (!isTestMode() && application.isHeadlessEnvironment()) {
       throw new MasterPasswordUnavailableException("The provider is not available in headless environment");
@@ -200,7 +199,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
               }
             }
           }
-        }, modalityState == null ? ModalityState.defaultModalityState() : modalityState);
+        }, ModalityState.any());
         //noinspection ThrowableResultOfMethodCallIgnored
         if (ex.get() != null) {
           throw ex.get();
@@ -211,12 +210,11 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
   }
 
   @Override
-  public String getPassword(@Nullable Project project, @NotNull Class requestor, String key,
-                            @Nullable ModalityState modalityState) throws PasswordSafeException {
+  public String getPassword(@Nullable Project project, @NotNull Class requestor, String key) throws PasswordSafeException {
     if (database.isEmpty()) {
       return null;
     }
-    return super.getPassword(project, requestor, key, modalityState);
+    return super.getPassword(project, requestor, key);
   }
 
   @Override

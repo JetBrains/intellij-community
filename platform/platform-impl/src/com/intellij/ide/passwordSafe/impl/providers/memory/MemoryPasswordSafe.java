@@ -19,12 +19,10 @@ import com.intellij.ide.passwordSafe.impl.PasswordSafeTimed;
 import com.intellij.ide.passwordSafe.impl.providers.BasePasswordSafeProvider;
 import com.intellij.ide.passwordSafe.impl.providers.ByteArrayWrapper;
 import com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.security.SecureRandom;
 import java.util.Collections;
@@ -60,7 +58,7 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
   }
 
   @Override
-  protected byte[] key(Project project, @NotNull Class requestor, @Nullable ModalityState modalityState) {
+  protected byte[] key(Project project, @NotNull Class requestor) {
     if (key.get() == null) {
       byte[] rnd = new byte[EncryptionUtil.SECRET_KEY_SIZE_BYTES * 16];
       new SecureRandom().nextBytes(rnd);

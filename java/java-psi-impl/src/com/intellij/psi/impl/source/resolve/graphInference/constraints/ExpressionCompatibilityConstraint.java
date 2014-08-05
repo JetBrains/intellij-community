@@ -110,7 +110,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         if (typeParams != null) {
 
           final Set<PsiTypeParameter> oldBounds = ContainerUtil.newHashSet(session.getParamsToInfer());
-          final boolean sameMethodCall = session.initBounds(typeParams);
+          final boolean sameMethodCall = session.initBounds(myExpression, typeParams);
           PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
           final HashSet<InferenceVariable> variables = new HashSet<InferenceVariable>();
           session.collectDependencies(returnType, variables);
@@ -138,8 +138,8 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           }
 
           final Collection<PsiTypeParameter> params1 = session.getTypeParams();
-          final InferenceSession callSession = new InferenceSession(params1.toArray(new PsiTypeParameter[params1.size()]), substitutor, myExpression.getManager(), myExpression);
-          callSession.initBounds(params);
+          final InferenceSession callSession = new InferenceSession(params, substitutor, myExpression.getManager(), myExpression);
+          callSession.initBounds(session.getContext(), params1.toArray(new PsiTypeParameter[params1.size()]));
           if (method != null) {
             final PsiExpression[] args = argumentList.getExpressions();
             final PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -163,7 +163,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
                 }
               }
             }
-            session.liftBounds(inferenceVariables);
+            session.liftBounds(myExpression, inferenceVariables);
           } else {
             return false;
           }

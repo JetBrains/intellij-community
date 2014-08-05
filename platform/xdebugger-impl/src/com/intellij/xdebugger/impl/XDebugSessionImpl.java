@@ -91,7 +91,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private XDebugProcess myDebugProcess;
   private final Map<XBreakpoint<?>, CustomizedBreakpointPresentation> myRegisteredBreakpoints =
     new THashMap<XBreakpoint<?>, CustomizedBreakpointPresentation>();
-  private final Set<XBreakpoint<?>> myInactiveSlaveBreakpoints = new SmartHashSet<XBreakpoint<?>>();
+  private final Set<XBreakpoint<?>> myInactiveSlaveBreakpoints = Collections.synchronizedSet(new SmartHashSet<XBreakpoint<?>>());
   private boolean myBreakpointsDisabled;
   private final XDebuggerManagerImpl myDebuggerManager;
   private MyBreakpointListener myBreakpointListener;
@@ -309,6 +309,7 @@ public class XDebugSessionImpl implements XDebugSession {
     return myConsoleView;
   }
 
+  @Nullable
   public XDebugSessionTab getSessionTab() {
     return mySessionTab;
   }
@@ -420,7 +421,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   public boolean isBreakpointActive(final XBreakpoint<?> b) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    return !areBreakpointsMuted() && b.isEnabled() && !myInactiveSlaveBreakpoints.contains(b);
+    return !areBreakpointsMuted() && b.isEnabled() && !isInactiveSlaveBreakpoint(b);
   }
 
   @Override
@@ -712,7 +713,7 @@ public class XDebugSessionImpl implements XDebugSession {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        mySessionTab.toFront();
+        mySessionTab.toFront(true);
         mySessionTab.getUi().attractBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
       }
     });

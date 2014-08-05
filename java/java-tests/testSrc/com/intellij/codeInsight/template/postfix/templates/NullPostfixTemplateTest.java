@@ -38,4 +38,9 @@ public class NullPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testSecondStatement() {
     doTest();
   }
+
+
+  public void testSingleExclamationIgnored() {
+    doTest();
+  }
 }

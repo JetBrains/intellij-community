@@ -25,8 +25,11 @@ import org.jetbrains.annotations.Nullable;
  */
 @State(
   name = "MavenProjectSettings",
-  storages = {@Storage(
-    file = StoragePathMacros.PROJECT_CONFIG_DIR + "/mavenProjectSettings.xml")})
+  storages = {
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/mavenProjectSettings.xml", scheme = StorageScheme.DIRECTORY_BASED)
+  }
+)
 public class MavenProjectSettings implements PersistentStateComponent<MavenProjectSettings> {
 
   private final Project myProject;

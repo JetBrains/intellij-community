@@ -51,11 +51,11 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
     final PsiMethod element = getElement();
     if (element == null || element instanceof SyntheticElement) return result;
 
-    final TextRange range = element.getTextRange();
-    if (range == null) return result;
-
     final PsiFile psiFile = element.getContainingFile();
     if (psiFile == null || psiFile instanceof PsiCompiledElement) return result;
+
+    final TextRange range = element.getTextRange();
+    if (range == null) return result;
 
     final String fileText = psiFile.getText();
     if (fileText == null) return result;

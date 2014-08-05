@@ -47,9 +47,9 @@ public class MavenProjectReader {
 
   public MavenProjectReaderResult readProject(MavenGeneralSettings generalSettings,
                                               VirtualFile file,
-                                              Collection<String> explicitProfiles,
+                                              MavenExplicitProfiles explicitProfiles,
                                               MavenProjectReaderProjectLocator locator) {
-    Pair<RawModelReadResult, Collection<String>> readResult =
+    Pair<RawModelReadResult, MavenExplicitProfiles> readResult =
       doReadProjectModel(generalSettings, file, explicitProfiles, new THashSet<VirtualFile>(), locator);
 
     File basedir = getBaseDir(file);
@@ -76,11 +76,11 @@ public class MavenProjectReader {
     return new File(file.getParent().getPath());
   }
 
-  private Pair<RawModelReadResult, Collection<String>> doReadProjectModel(MavenGeneralSettings generalSettings,
-                                                                          VirtualFile file,
-                                                                          Collection<String> explicitProfiles,
-                                                                          Set<VirtualFile> recursionGuard,
-                                                                          MavenProjectReaderProjectLocator locator) {
+  private Pair<RawModelReadResult, MavenExplicitProfiles> doReadProjectModel(MavenGeneralSettings generalSettings,
+                                                                             VirtualFile file,
+                                                                             MavenExplicitProfiles explicitProfiles,
+                                                                             Set<VirtualFile> recursionGuard,
+                                                                             MavenProjectReaderProjectLocator locator) {
     RawModelReadResult cachedModel = myRawModelsCache.get(file);
     if (cachedModel == null) {
       cachedModel = doReadProjectModel(file, false);
@@ -364,7 +364,7 @@ public class MavenProjectReader {
 
   private static ProfileApplicationResult applyProfiles(MavenModel model,
                                                         File basedir,
-                                                        Collection<String> explicitProfiles,
+                                                        MavenExplicitProfiles explicitProfiles,
                                                         Collection<String> alwaysOnProfiles) {
     return MavenServerManager.getInstance().applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
   }
@@ -372,7 +372,7 @@ public class MavenProjectReader {
   private MavenModel resolveInheritance(final MavenGeneralSettings generalSettings,
                                         MavenModel model,
                                         final VirtualFile file,
-                                        final Collection<String> explicitProfiles,
+                                        final MavenExplicitProfiles explicitProfiles,
                                         final Set<VirtualFile> recursionGuard,
                                         final MavenProjectReaderProjectLocator locator,
                                         Collection<MavenProjectProblem> problems) {
@@ -456,21 +456,23 @@ public class MavenProjectReader {
   public MavenProjectReaderResult resolveProject(MavenGeneralSettings generalSettings,
                                                  MavenEmbedderWrapper embedder,
                                                  VirtualFile file,
-                                                 Collection<String> explicitProfiles,
+                                                 MavenExplicitProfiles explicitProfiles,
                                                  MavenProjectReaderProjectLocator locator) throws MavenProcessCanceledException {
     try {
-      MavenServerExecutionResult result = embedder.resolveProject(file, explicitProfiles);
-      if (result.projectData == null) {
+      MavenServerExecutionResult result =
+        embedder.resolveProject(file, explicitProfiles.getEnabledProfiles(), explicitProfiles.getDisabledProfiles());
+      MavenServerExecutionResult.ProjectData projectData = result.projectData;
+      if (projectData == null) {
         MavenProjectReaderResult temp = readProject(generalSettings, file, explicitProfiles, locator);
         temp.readingProblems.addAll(result.problems);
         temp.unresolvedArtifactIds.addAll(result.unresolvedArtifacts);
         return temp;
       }
 
-      return new MavenProjectReaderResult(result.projectData.mavenModel,
-                                          result.projectData.mavenModelMap,
-                                          result.projectData.activatedProfiles,
-                                          result.projectData.nativeMavenProject,
+      return new MavenProjectReaderResult(projectData.mavenModel,
+                                          projectData.mavenModelMap,
+                                          new MavenExplicitProfiles(projectData.activatedProfiles, explicitProfiles.getDisabledProfiles()),
+                                          projectData.nativeMavenProject,
                                           result.problems,
                                           result.unresolvedArtifacts);
     }
@@ -497,17 +499,18 @@ public class MavenProjectReader {
   public static MavenProjectReaderResult generateSources(MavenEmbedderWrapper embedder,
                                                          MavenImportingSettings importingSettings,
                                                          VirtualFile file,
-                                                         Collection<String> profiles,
+                                                         MavenExplicitProfiles profiles,
                                                          MavenConsole console) throws MavenProcessCanceledException {
     try {
       List<String> goals = Collections.singletonList(importingSettings.getUpdateFoldersOnImportPhase());
-      MavenServerExecutionResult result = embedder.execute(file, profiles, goals);
-      if (result.projectData == null) return null;
+      MavenServerExecutionResult result = embedder.execute(file, profiles.getEnabledProfiles(), profiles.getDisabledProfiles(), goals);
+      MavenServerExecutionResult.ProjectData projectData = result.projectData;
+      if (projectData == null) return null;
 
-      return new MavenProjectReaderResult(result.projectData.mavenModel,
-                                          result.projectData.mavenModelMap,
-                                          result.projectData.activatedProfiles,
-                                          result.projectData.nativeMavenProject,
+      return new MavenProjectReaderResult(projectData.mavenModel,
+                                          projectData.mavenModelMap,
+                                          new MavenExplicitProfiles(projectData.activatedProfiles, profiles.getDisabledProfiles()),
+                                          projectData.nativeMavenProject,
                                           result.problems,
                                           result.unresolvedArtifacts);
     }

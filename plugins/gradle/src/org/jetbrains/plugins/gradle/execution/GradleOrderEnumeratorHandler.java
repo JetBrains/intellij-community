@@ -90,25 +90,23 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
     if (externalProject == null) return false;
 
     if (includeProduction) {
-      addSourceRoots(externalProject.getSourceSets().get("main"), ExternalSystemSourceType.RESOURCE, result);
+      addOutputRoots(externalProject.getSourceSets().get("main"), ExternalSystemSourceType.RESOURCE, result);
     }
 
     if (includeTests) {
-      addSourceRoots(externalProject.getSourceSets().get("test"), ExternalSystemSourceType.TEST_RESOURCE, result);
+      addOutputRoots(externalProject.getSourceSets().get("test"), ExternalSystemSourceType.TEST_RESOURCE, result);
     }
 
     return true;
   }
 
-  private static void addSourceRoots(@Nullable ExternalSourceSet externalSourceSet,
+  private static void addOutputRoots(@Nullable ExternalSourceSet externalSourceSet,
                                      @NotNull ExternalSystemSourceType sourceType,
                                      @NotNull Collection<String> result) {
     if (externalSourceSet == null) return;
     final ExternalSourceDirectorySet directorySet = externalSourceSet.getSources().get(sourceType);
     if (directorySet == null) return;
 
-    for (File file : directorySet.getSrcDirs()) {
-      result.add(VfsUtilCore.pathToUrl(file.getAbsolutePath()));
-    }
+    result.add(VfsUtilCore.pathToUrl(directorySet.getOutputDir().getAbsolutePath()));
   }
 }

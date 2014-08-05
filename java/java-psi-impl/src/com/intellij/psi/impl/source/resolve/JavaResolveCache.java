@@ -86,12 +86,13 @@ public class JavaResolveCache {
 
   @Nullable
   public <T extends PsiExpression> PsiType getType(@NotNull T expr, @NotNull Function<T, PsiType> f) {
-    PsiType type = getCachedType(expr);
+    final boolean isOverloadCheck = MethodCandidateInfo.isOverloadCheck();
+    PsiType type = !isOverloadCheck ? getCachedType(expr) : null;
     if (type == null) {
       final RecursionGuard.StackStamp dStackStamp = PsiDiamondType.ourDiamondGuard.markStack();
       final RecursionGuard.StackStamp gStackStamp = PsiResolveHelper.ourGraphGuard.markStack();
       type = f.fun(expr);
-      if (!dStackStamp.mayCacheNow() || !gStackStamp.mayCacheNow() || !MethodCandidateInfo.ourOverloadGuard.currentStack().isEmpty()) {
+      if (!dStackStamp.mayCacheNow() || !gStackStamp.mayCacheNow() || isOverloadCheck) {
         return type;
       }
       if (type == null) type = TypeConversionUtil.NULL_TYPE;

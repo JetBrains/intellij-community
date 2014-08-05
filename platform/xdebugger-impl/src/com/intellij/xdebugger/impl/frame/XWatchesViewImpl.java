@@ -15,6 +15,8 @@
  */
 package com.intellij.xdebugger.impl.frame;
 
+import com.intellij.debugger.ui.DebuggerContentInfo;
+import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDManager;
@@ -22,6 +24,7 @@ import com.intellij.ide.dnd.DnDNativeTarget;
 import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.SystemInfo;
@@ -36,6 +39,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer;
@@ -68,6 +72,7 @@ public class XWatchesViewImpl implements DnDNativeTarget, XWatchesView, XDebugVi
   @NotNull private final XDebugSessionImpl mySession;
   private final JPanel myDecoratedPanel;
   private final CompositeDisposable myDisposables = new CompositeDisposable();
+  private boolean myRebuildNeeded;
 
   public XWatchesViewImpl(@NotNull final XDebugSessionImpl session) {
     mySession = session;
@@ -216,10 +221,40 @@ public class XWatchesViewImpl implements DnDNativeTarget, XWatchesView, XDebugVi
   public void addWatchExpression(@NotNull XExpression expression, int index, final boolean navigateToWatchNode) {
     myRootNode.addWatchExpression(mySession.getDebugProcess().getEvaluator(), expression, index, navigateToWatchNode);
     updateSessionData();
+    if (navigateToWatchNode) {
+      showWatchesTab();
+    }
+  }
+
+  private void showWatchesTab() {
+    XDebugSessionTab tab = mySession.getSessionTab();
+    if (tab != null) {
+      tab.toFront(false);
+      // restore watches tab if minimized
+      JComponent component = tab.getUi().getComponent();
+      if (component instanceof DataProvider) {
+        RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)component));
+        if (ui != null) {
+          ui.restoreContent(DebuggerContentInfo.WATCHES_CONTENT);
+        }
+      }
+    }
+  }
+
+  public boolean rebuildNeeded() {
+    return myRebuildNeeded;
   }
 
   @Override
   public void processSessionEvent(@NotNull final SessionEvent event) {
+    if (getMainPanel().isShowing() || ApplicationManager.getApplication().isUnitTestMode()) {
+      myRebuildNeeded = false;
+    }
+    else {
+      myRebuildNeeded = true;
+      return;
+    }
+
     XStackFrame stackFrame = mySession.getCurrentStackFrame();
     XDebuggerTree tree = myTreePanel.getTree();
 

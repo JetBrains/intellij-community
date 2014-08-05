@@ -1271,6 +1271,17 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return null;
   }
 
+  @Nullable
+  public void restoreContent(final String key) {
+    for (AnAction action : myMinimizedViewActions.getChildren(null)) {
+      Content content = ((RestoreViewAction)action).getContent();
+      if (key.equals(content.getUserData(ViewImpl.ID))) {
+        action.actionPerformed(null);
+        return;
+      }
+    }
+  }
+
   public void setToDisposeRemovedContent(final boolean toDispose) {
     myToDisposeRemovedContent = toDispose;
   }

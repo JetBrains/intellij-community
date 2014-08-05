@@ -201,11 +201,6 @@ public class GitRefManagerTest extends UsefulTestCase {
         }
         return infos;
       }
-
-      @Override
-      public void dispose() {
-      }
-
     });
     return ContainerUtil.sorted(refs, new GitRefManager(manager).getComparator());
   }

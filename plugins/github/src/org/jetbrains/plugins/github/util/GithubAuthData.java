@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.github.util;
 
-import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
@@ -53,8 +52,8 @@ public class GithubAuthData {
     myUseProxy = useProxy;
   }
 
-  public static GithubAuthData createFromSettings(@Nullable ModalityState state) {
-    return GithubSettings.getInstance().getAuthData(state);
+  public static GithubAuthData createFromSettings() {
+    return GithubSettings.getInstance().getAuthData();
   }
 
   public static GithubAuthData createAnonymous() {
