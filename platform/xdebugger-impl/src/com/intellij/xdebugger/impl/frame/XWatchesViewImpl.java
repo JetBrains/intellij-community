@@ -71,6 +71,7 @@ public class XWatchesViewImpl implements DnDNativeTarget, XWatchesView, XDebugVi
   @NotNull private final XDebugSessionImpl mySession;
   private final JPanel myDecoratedPanel;
   private final CompositeDisposable myDisposables = new CompositeDisposable();
+  private boolean myRebuildNeeded;
 
   public XWatchesViewImpl(@NotNull final XDebugSessionImpl session) {
     mySession = session;
@@ -239,8 +240,20 @@ public class XWatchesViewImpl implements DnDNativeTarget, XWatchesView, XDebugVi
     }
   }
 
+  public boolean rebuildNeeded() {
+    return myRebuildNeeded;
+  }
+
   @Override
   public void processSessionEvent(@NotNull final SessionEvent event) {
+    if (getMainPanel().isShowing()) {
+      myRebuildNeeded = false;
+    }
+    else {
+      myRebuildNeeded = true;
+      return;
+    }
+
     XStackFrame stackFrame = mySession.getCurrentStackFrame();
     XDebuggerTree tree = myTreePanel.getTree();
 
