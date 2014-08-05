@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -93,15 +94,11 @@ public class CodeStyleManager extends FileEditorManagerAdapter implements Window
         final String tabWidth = Utils.configValueForKey(outPairs, tabWidthKey);
         final String indentStyle = Utils.configValueForKey(outPairs, indentStyleKey);
         final FileType fileType = file.getFileType();
-        if (fileType instanceof LanguageFileType) {
-            final Language language = ((LanguageFileType)fileType).getLanguage();
-            final CommonCodeStyleSettings commonSettings = codeStyleSettings.getCommonSettings(language);
-            final CommonCodeStyleSettings.IndentOptions indentOptions = commonSettings.getIndentOptions();
-            applyIndentOptions(indentOptions, indentSize, tabWidth, indentStyle, file.getCanonicalPath());
-        } else if (!indentSize.isEmpty() || !tabWidth.isEmpty() || !indentStyle.isEmpty()){
-            LOG.warn("Unable to apply indent options for " + file.getCanonicalPath()
-                     + " because it is not associated with an intellij language");
-        }
+        final Language language = fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() :
+            PlainTextLanguage.INSTANCE;
+        final CommonCodeStyleSettings commonSettings = codeStyleSettings.getCommonSettings(language);
+        final CommonCodeStyleSettings.IndentOptions indentOptions = commonSettings.getIndentOptions();
+        applyIndentOptions(indentOptions, indentSize, tabWidth, indentStyle, file.getCanonicalPath());
     }
 
     private void applyIndentOptions(CommonCodeStyleSettings.IndentOptions indentOptions,
