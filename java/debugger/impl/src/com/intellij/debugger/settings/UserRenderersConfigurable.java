@@ -35,22 +35,22 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UserRenderersConfigurable implements ConfigurableUi<NodeRendererSettings> {
+public final class UserRenderersConfigurable extends JPanel implements ConfigurableUi<NodeRendererSettings> {
   private static final Icon ADD_ICON = IconUtil.getAddIcon();
   private static final Icon REMOVE_ICON = IconUtil.getRemoveIcon();
   private static final Icon COPY_ICON = PlatformIcons.COPY_ICON;
   private static final Icon UP_ICON = IconUtil.getMoveUpIcon();
   private static final Icon DOWN_ICON = IconUtil.getMoveDownIcon();
 
-  private JPanel myNameFieldPanel;
-  private JTextField myNameField;
+  private final JPanel myNameFieldPanel;
+  private final JTextField myNameField;
   private ElementsChooser<NodeRenderer> myRendererChooser;
   private NodeRenderer myCurrentRenderer = null;
   private final CompoundRendererConfigurable myRendererDataConfigurable = new CompoundRendererConfigurable();
 
-  @Override
-  @NotNull
-  public JComponent getComponent() {
+  public UserRenderersConfigurable() {
+    super(new BorderLayout(4, 0));
+
     JPanel left = new JPanel(new BorderLayout());
     left.add(createToolbar(), BorderLayout.NORTH);
     left.add(createRenderersList(), BorderLayout.CENTER);
@@ -75,10 +75,14 @@ public class UserRenderersConfigurable implements ConfigurableUi<NodeRendererSet
       }
     });
 
-    JPanel panel = new JPanel(new BorderLayout(4, 0));
-    panel.add(left, BorderLayout.WEST);
-    panel.add(center, BorderLayout.CENTER);
-    return panel;
+    add(left, BorderLayout.WEST);
+    add(center, BorderLayout.CENTER);
+  }
+
+  @Override
+  @NotNull
+  public JComponent getComponent() {
+    return this;
   }
 
   private JComponent createRenderersList() {
@@ -228,8 +232,8 @@ public class UserRenderersConfigurable implements ConfigurableUi<NodeRendererSet
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
-      final Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myRendererChooser.getSelectedElement() != null);
+
+      e.getPresentation().setEnabled(myRendererChooser.getSelectedElement() != null);
     }
   }
 
@@ -242,16 +246,14 @@ public class UserRenderersConfigurable implements ConfigurableUi<NodeRendererSet
     public void actionPerformed(AnActionEvent e) {
       final NodeRenderer selectedElement = myRendererChooser.getSelectedElement();
       if (selectedElement != null) {
-        final NodeRenderer cloned = (NodeRenderer)selectedElement.clone();
-        myRendererChooser.addElement(cloned, true);
+        myRendererChooser.addElement((NodeRenderer)selectedElement.clone(), true);
       }
     }
 
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
-      final Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myRendererChooser.getSelectedElement() != null);
+      e.getPresentation().setEnabled(myRendererChooser.getSelectedElement() != null);
     }
   }
 
@@ -284,8 +286,7 @@ public class UserRenderersConfigurable implements ConfigurableUi<NodeRendererSet
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
-      final Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myRendererChooser.getSelectedElement() != null);
+      e.getPresentation().setEnabled(myRendererChooser.getSelectedElement() != null);
     }
   }
 }
