@@ -309,6 +309,7 @@ public class XDebugSessionImpl implements XDebugSession {
     return myConsoleView;
   }
 
+  @Nullable
   public XDebugSessionTab getSessionTab() {
     return mySessionTab;
   }
