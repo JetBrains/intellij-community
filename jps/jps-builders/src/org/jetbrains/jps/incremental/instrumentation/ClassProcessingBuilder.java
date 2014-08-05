@@ -144,7 +144,7 @@ public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
       public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         result.set(version);
       }
-    }, 0);
+    }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
     return result.get();
   }
 
