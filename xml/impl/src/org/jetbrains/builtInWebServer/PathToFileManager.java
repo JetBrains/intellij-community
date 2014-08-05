@@ -22,6 +22,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Implement {@link org.jetbrains.builtInWebServer.ProjectRootsProvider} to add your provider
+ */
 public class PathToFileManager {
   private static final PairFunction<String, VirtualFile, VirtualFile> RELATIVE_PATH_RESOLVER = new PairFunction<String, VirtualFile, VirtualFile>() {
     @Nullable

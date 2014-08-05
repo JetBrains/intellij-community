@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.builtInWebServer;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,7 +21,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.UriUtil;
@@ -19,19 +33,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.HttpRequestHandler;
 import org.jetbrains.io.FileResponses;
-import org.jetbrains.io.Responses;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.URI;
 import java.net.UnknownHostException;
 
 import static org.jetbrains.io.Responses.sendOptionsResponse;
 import static org.jetbrains.io.Responses.sendStatus;
 
 public final class BuiltInWebServer extends HttpRequestHandler {
-  private static final Logger LOG = Logger.getInstance(BuiltInWebServer.class);
+  static final Logger LOG = Logger.getInstance(BuiltInWebServer.class);
 
   @Nullable
   public static VirtualFile findIndexFile(@NotNull VirtualFile basedir) {
@@ -101,7 +113,7 @@ public final class BuiltInWebServer extends HttpRequestHandler {
     return doProcess(request, context.channel(), projectName);
   }
 
-  public static boolean isOwnHostName(String host) {
+  public static boolean isOwnHostName(@NotNull String host) {
     if (NetUtils.isLocalhost(host)) {
       return true;
     }
@@ -151,68 +163,16 @@ public final class BuiltInWebServer extends HttpRequestHandler {
       }
 
       // we must redirect "jsdebug" to "jsdebug/" as nginx does, otherwise browser will treat it as file instead of directory, so, relative path will not work
-      redirectToDirectory(request, channel, projectName);
+      PathHandler.redirectToDirectory(request, channel, projectName);
       return true;
     }
 
     final String path = FileUtil.toCanonicalPath(decodedPath.substring(offset + 1), '/');
     LOG.assertTrue(path != null);
-    PathToFileManager pathToFileManager = PathToFileManager.getInstance(project);
-    VirtualFile result = pathToFileManager.pathToFileCache.getIfPresent(path);
-    boolean indexUsed = false;
-    if (result == null || !result.isValid()) {
-      result = pathToFileManager.findByRelativePath(project, path);
-      if (result == null) {
-        if (path.isEmpty()) {
-          sendStatus(HttpResponseStatus.NOT_FOUND, channel, "Index file doesn't exist.", request);
-          return true;
-        }
-        else {
-          return false;
-        }
-      }
-      else if (result.isDirectory()) {
-        if (!endsWithSlash(decodedPath)) {
-          redirectToDirectory(request, channel, isCustomHost ? path : (projectName + '/' + path));
-          return true;
-        }
 
-        result = findIndexFile(result);
-        if (result == null) {
-          sendStatus(HttpResponseStatus.NOT_FOUND, channel, "Index file doesn't exist.", request);
-          return true;
-        }
-        indexUsed = true;
-      }
-
-      pathToFileManager.pathToFileCache.put(path, result);
-    }
-    else if (!path.endsWith(result.getName())) {
-      if (endsWithSlash(decodedPath)) {
-        indexUsed = true;
-      }
-      else {
-        // FallbackResource feature in action, /login requested, /index.php retrieved, we must not redirect /login to /login/
-        if (path.endsWith(result.getParent().getName())) {
-          redirectToDirectory(request, channel, isCustomHost ? path : (projectName + '/' + path));
-          return true;
-        }
-      }
-    }
-
-    StringBuilder canonicalRequestPath = new StringBuilder();
-    canonicalRequestPath.append('/');
-    if (!isCustomHost) {
-      canonicalRequestPath.append(projectName).append('/');
-    }
-    canonicalRequestPath.append(path);
-    if (indexUsed) {
-      canonicalRequestPath.append('/').append(result.getName());
-    }
-
-    for (FileHandler fileHandler : FileHandler.EP_NAME.getExtensions()) {
+    for (PathHandler pathHandler : PathHandler.EP_NAME.getExtensions()) {
       try {
-        if (fileHandler.process(result, canonicalRequestPath, project, request, channel)) {
+        if (pathHandler.process(path, project, request, channel, projectName, decodedPath, isCustomHost)) {
           return true;
         }
       }
@@ -220,12 +180,7 @@ public final class BuiltInWebServer extends HttpRequestHandler {
         LOG.error(e);
       }
     }
-
     return false;
-  }
-
-  private static boolean endsWithSlash(String path) {
-    return path.charAt(path.length() - 1) == '/';
   }
 
   static final class StaticFileHandler extends FileHandler {
@@ -249,14 +204,6 @@ public final class BuiltInWebServer extends HttpRequestHandler {
       // deny access to .htaccess files
       return !result.isDirectory() && result.canRead() && !(result.isHidden() || result.getName().startsWith(".ht"));
     }
-  }
-
-  private static void redirectToDirectory(@NotNull HttpRequest request, @NotNull Channel channel, @NotNull String path) {
-    FullHttpResponse response = Responses.response(HttpResponseStatus.MOVED_PERMANENTLY);
-    URI url = VfsUtil.toUri("http://" + HttpHeaders.getHost(request) + '/' + path + '/');
-    LOG.assertTrue(url != null);
-    response.headers().add(HttpHeaders.Names.LOCATION, url.toASCIIString());
-    Responses.send(response, channel, request);
   }
 
   @Nullable

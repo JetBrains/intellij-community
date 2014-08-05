@@ -15,21 +15,23 @@
  */
 package org.jetbrains.builtInWebServer;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.FullHttpRequest;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
+public abstract class PathHandlerAdapter extends PathHandler {
+  protected abstract boolean process(@NotNull String path, @NotNull Project project, @NotNull FullHttpRequest request, @NotNull Channel channel);
 
-public abstract class FileHandler {
-  static final ExtensionPointName<FileHandler> EP_NAME = ExtensionPointName.create("org.jetbrains.webServerFileHandler");
-
-  public abstract boolean process(@NotNull VirtualFile file,
-                                  @NotNull CharSequence canonicalRequestPath,
-                                  @NotNull Project project,
-                                  @NotNull FullHttpRequest request,
-                                  @NotNull Channel channel) throws IOException;
+  @Override
+  public final boolean process(@NotNull String path,
+                               @NotNull Project project,
+                               @NotNull FullHttpRequest request,
+                               @NotNull Channel channel,
+                               @Nullable String projectName,
+                               @NotNull String decodedRawPath,
+                               boolean isCustomHost) {
+    return process(path, project, request, channel);
+  }
 }
