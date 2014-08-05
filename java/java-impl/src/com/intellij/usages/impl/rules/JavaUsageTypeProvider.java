@@ -70,7 +70,8 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
             return UsageType.RECURSION;
           }
           if (qualifier != null && !(qualifier instanceof PsiThisExpression) && calledMethod != null) {
-            if (haveCommonSuperMethod(containerMethod, calledMethod)) {
+            if (Comparing.equal(containerMethod.getName(), calledMethod.getName()) &&
+                haveCommonSuperMethod(containerMethod, calledMethod)) {
               boolean parametersDelegated = parametersDelegated(containerMethod, callExpression);
 
               if (qualifier instanceof PsiSuperExpression) {
