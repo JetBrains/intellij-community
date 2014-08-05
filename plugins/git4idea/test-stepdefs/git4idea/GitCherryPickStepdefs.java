@@ -15,33 +15,30 @@
  */
 package git4idea;
 
-import com.intellij.mock.MockVirtualFile;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.vcs.MockChangeListManager;
-import com.intellij.testFramework.vcs.MockContentRevision;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLogObjectsFactory;
-import com.intellij.vcs.log.impl.HashImpl;
 import cucumber.annotation.en.And;
 import cucumber.annotation.en.Given;
 import cucumber.annotation.en.Then;
 import cucumber.annotation.en.When;
 import git4idea.cherrypick.GitCherryPicker;
 import git4idea.config.GitVersionSpecialty;
+import git4idea.history.GitHistoryUtils;
 import git4idea.test.MockVcsHelper;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.openapi.vcs.Executor.echo;
 import static git4idea.GitCucumberWorld.*;
@@ -63,7 +60,7 @@ public class GitCherryPickStepdefs {
   }
 
   @When("^I cherry-pick the commit (\\w+)$")
-  public void I_cherry_pick_the_commit(String hash) {
+  public void I_cherry_pick_the_commit(String hash) throws VcsException {
     cherryPick(hash);
   }
 
@@ -232,36 +229,27 @@ public class GitCherryPickStepdefs {
     assertEquals("Default changelist is not active", DEFAULT, myChangeListManager.getDefaultChangeList().getName());
   }
 
-  private static void cherryPick(List<String> virtualHashes) {
-    List<VcsFullCommitDetails> commits = ContainerUtil.newArrayList();
-    for (String virtualHash : virtualHashes) {
-      commits.add(createMockCommit(virtualHash));
-    }
+  private static void cherryPick(final List<String> virtualHashes) throws VcsException {
+    List<VcsFullCommitDetails> commits = loadDetails(ContainerUtil.map(virtualHashes, new Function<String, String>() {
+      @Override
+      public String fun(String virtualHash) {
+        return virtualCommits.getRealCommit(virtualHash).getHash();
+      }
+    }), myProjectDir);
+
     new GitCherryPicker(myProject, myGit, myPlatformFacade, mySettings.isAutoCommitOnCherryPick())
-      .cherryPick(Collections.singletonMap(myRepository, commits));
+        .cherryPick(Collections.singletonMap(myRepository, commits));
   }
 
-  private static void cherryPick(String... virtualHashes) {
+  private static List<VcsFullCommitDetails> loadDetails(List<String> hashes, @NotNull VirtualFile root) throws VcsException {
+    String noWalk = GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(myVcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
+    List<String> params = new ArrayList<String>();
+    params.add(noWalk);
+    params.addAll(hashes);
+    return new ArrayList<VcsFullCommitDetails>(GitHistoryUtils.history(myProject, root, ArrayUtil.toStringArray(params)));
+  }
+
+  private static void cherryPick(String... virtualHashes) throws VcsException {
     cherryPick(Arrays.asList(virtualHashes));
   }
-
-  private static VcsFullCommitDetails createMockCommit(String virtualHash) {
-    CommitDetails realCommit = virtualCommits.getRealCommit(virtualHash);
-    return mockCommit(realCommit.getHash(), realCommit.getMessage());
-  }
-
-  private static VcsFullCommitDetails mockCommit(String hash, String message) {
-    final List<Change> changes = new ArrayList<Change>();
-    changes.add(new Change(null, new MockContentRevision(new FilePathImpl(new MockVirtualFile("name")), VcsRevisionNumber.NULL)));
-    return ServiceManager.getService(myProject, VcsLogObjectsFactory.class).createFullDetails(
-      HashImpl.build(hash), Collections.<Hash>emptyList(), 0, NullVirtualFile.INSTANCE, message, "John Smith", "john@mail.com", message,
-      "John Smith", "john@mail.com", 0, new ThrowableComputable<Collection<Change>, Exception>() {
-        @Override
-        public Collection<Change> compute() throws Exception {
-          return changes;
-        }
-      }
-    );
-  }
-
 }
