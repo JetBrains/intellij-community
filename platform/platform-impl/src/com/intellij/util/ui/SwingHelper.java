@@ -275,20 +275,7 @@ public class SwingHelper {
     textFieldWithHistory.addPopupMenuListener(new PopupMenuListener() {
       @Override
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-        List<String> newHistory = historyProvider.produce();
-        Set<String> newHistorySet = ContainerUtil.newHashSet(newHistory);
-        List<String> oldHistory = textFieldWithHistory.getHistory();
-        List<String> mergedHistory = ContainerUtil.newArrayList();
-        for (String item : oldHistory) {
-          if (!newHistorySet.contains(item)) {
-            mergedHistory.add(item);
-          }
-        }
-        mergedHistory.addAll(newHistory);
-        textFieldWithHistory.setHistory(mergedHistory);
-
-        setLongestAsPrototype(textFieldWithHistory, mergedHistory);
-
+        setHistory(textFieldWithHistory, historyProvider.produce(), true);
         // one-time initialization
         textFieldWithHistory.removePopupMenuListener(this);
       }
@@ -301,6 +288,30 @@ public class SwingHelper {
       public void popupMenuCanceled(PopupMenuEvent e) {
       }
     });
+  }
+
+  public static void setHistory(@NotNull TextFieldWithHistory textFieldWithHistory,
+                                @NotNull List<String> history,
+                                boolean mergeWithPrevHistory) {
+    Set<String> newHistorySet = ContainerUtil.newHashSet(history);
+    List<String> prevHistory = textFieldWithHistory.getHistory();
+    List<String> mergedHistory = ContainerUtil.newArrayList();
+    if (mergeWithPrevHistory) {
+      for (String item : prevHistory) {
+        if (!newHistorySet.contains(item)) {
+          mergedHistory.add(item);
+        }
+      }
+    }
+    else {
+      String currentText = textFieldWithHistory.getText();
+      if (StringUtil.isNotEmpty(currentText) && !newHistorySet.contains(currentText)) {
+        mergedHistory.add(currentText);
+      }
+    }
+    mergedHistory.addAll(history);
+    textFieldWithHistory.setHistory(mergedHistory);
+    setLongestAsPrototype(textFieldWithHistory, mergedHistory);
   }
 
   private static void setLongestAsPrototype(@NotNull JComboBox comboBox, @NotNull List<String> variants) {
@@ -440,20 +451,23 @@ public class SwingHelper {
     editorPane.setText(html);
   }
 
+  @NotNull
   public static TextFieldWithHistoryWithBrowseButton createTextFieldWithHistoryWithBrowseButton(@Nullable Project project,
                                                                                                 @NotNull String browseDialogTitle,
                                                                                                 @NotNull FileChooserDescriptor fileChooserDescriptor,
-                                                                                                @NotNull NotNullProducer<List<String>> historyProvider) {
+                                                                                                @Nullable NotNullProducer<List<String>> historyProvider) {
     TextFieldWithHistoryWithBrowseButton textFieldWithHistoryWithBrowseButton = new TextFieldWithHistoryWithBrowseButton();
-    final TextFieldWithHistory textFieldWithHistory = textFieldWithHistoryWithBrowseButton.getChildComponent();
+    TextFieldWithHistory textFieldWithHistory = textFieldWithHistoryWithBrowseButton.getChildComponent();
     textFieldWithHistory.setHistorySize(-1);
     textFieldWithHistory.setMinimumAndPreferredWidth(0);
-    addHistoryOnExpansion(textFieldWithHistory, historyProvider);
+    if (historyProvider != null) {
+      addHistoryOnExpansion(textFieldWithHistory, historyProvider);
+    }
     installFileCompletionAndBrowseDialog(
       project,
       textFieldWithHistoryWithBrowseButton,
-      browseDialogTitle, fileChooserDescriptor
-
+      browseDialogTitle,
+      fileChooserDescriptor
     );
     return textFieldWithHistoryWithBrowseButton;
   }
