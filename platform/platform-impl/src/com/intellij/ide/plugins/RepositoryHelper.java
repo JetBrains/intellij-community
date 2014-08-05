@@ -68,6 +68,8 @@ public class RepositoryHelper {
                                    HttpConfigurable.getInstance().openHttpConnection(url) :
                                    (HttpURLConnection)new URL(url).openConnection();
     connection.setRequestProperty("Accept-Encoding", "gzip");
+    connection.setReadTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
+    connection.setConnectTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
 
     if (indicator != null) {
       indicator.setText2(IdeBundle.message("progress.waiting.for.reply.from.plugin.manager", appInfo.getPluginManagerUrl()));
