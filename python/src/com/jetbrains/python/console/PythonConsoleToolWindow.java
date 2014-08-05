@@ -97,7 +97,7 @@ public class PythonConsoleToolWindow {
     panel.setContent(contentDescriptor.getComponent());
     //panel.addFocusListener(createFocusListener(toolWindow));
 
-
+    content.setComponent(panel);
     content.setPreferredFocusableComponent(contentDescriptor.getComponent());
   }
 
