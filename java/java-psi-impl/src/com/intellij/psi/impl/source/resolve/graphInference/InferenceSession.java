@@ -349,13 +349,17 @@ public class InferenceSession {
   }
 
   public boolean initBounds(PsiTypeParameter... typeParameters) {
+    return initBounds(myContext, typeParameters);
+  }
+
+  public boolean initBounds(PsiElement context, PsiTypeParameter... typeParameters) {
     boolean sameMethodCall = false;
     for (PsiTypeParameter parameter : typeParameters) {
       if (myInferenceVariables.containsKey(parameter)) {
         sameMethodCall = true;
         continue;
       }
-      InferenceVariable variable = new InferenceVariable(parameter);
+      InferenceVariable variable = new InferenceVariable(context, parameter);
       boolean added = false;
       final PsiClassType[] extendsListTypes = parameter.getExtendsListTypes();
       for (PsiType classType : extendsListTypes) {
@@ -701,7 +705,7 @@ public class InferenceSession {
         final PsiTypeParameter copy = elementFactory.createTypeParameterFromText("z" + parameter.getName(), null);
         final PsiType lub = getLowerBound(var, substitutor);
         final PsiType glb = getUpperBound(var, substitutor);
-        final InferenceVariable zVariable = new InferenceVariable(copy);
+        final InferenceVariable zVariable = new InferenceVariable(var.getCallContext(), copy);
         zVariable.addBound(glb, InferenceBound.UPPER);
         if (lub != PsiType.NULL) {
           if (!TypeConversionUtil.isAssignable(glb, lub)) {
@@ -1250,14 +1254,17 @@ public class InferenceSession {
     return myIncorporationPhase.hasCaptureConstraints(Arrays.asList(inferenceVariable));
   }
 
-  public void liftBounds(Collection<InferenceVariable> variables) {
+  public void liftBounds(PsiElement context, Collection<InferenceVariable> variables) {
     for (InferenceVariable variable : variables) {
       final PsiTypeParameter parameter = variable.getParameter();
       final InferenceVariable inferenceVariable = getInferenceVariable(parameter);
       if (inferenceVariable != null) {
-        for (InferenceBound boundType : InferenceBound.values()) {
-          for (PsiType bound : variable.getBounds(boundType)) {
-            inferenceVariable.addBound(bound, boundType);
+        final PsiElement callContext = inferenceVariable.getCallContext();
+        if (context.equals(callContext) || myContext.equals(callContext)) {
+          for (InferenceBound boundType : InferenceBound.values()) {
+            for (PsiType bound : variable.getBounds(boundType)) {
+              inferenceVariable.addBound(bound, boundType);
+            }
           }
         }
       } else {
@@ -1269,5 +1276,9 @@ public class InferenceSession {
   public static boolean wasUncheckedConversionPerformed(PsiElement call) {
     final Boolean erased = call.getUserData(ERASED);
     return erased != null && erased.booleanValue();
+  }
+
+  public PsiElement getContext() {
+    return myContext;
   }
 }

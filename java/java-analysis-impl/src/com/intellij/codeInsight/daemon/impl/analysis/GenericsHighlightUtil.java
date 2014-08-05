@@ -1292,5 +1292,31 @@ public class GenericsHighlightUtil {
       }
     }
   }
+
+  public static HighlightInfo checkInferredIntersections(PsiSubstitutor substitutor, TextRange ref) {
+    for (Map.Entry<PsiTypeParameter, PsiType> typeEntry : substitutor.getSubstitutionMap().entrySet()) {
+      final PsiType type = typeEntry.getValue();
+      if (type instanceof PsiIntersectionType) {
+        final PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
+        for (int i = 0; i < conjuncts.length; i++) {
+          PsiClass conjunct = PsiUtil.resolveClassInClassTypeOnly(conjuncts[i]);
+          if (conjunct != null && !conjunct.isInterface()) {
+            for (int i1 = i + 1; i1 < conjuncts.length; i1++) {
+              PsiClass oppositeConjunct = PsiUtil.resolveClassInClassTypeOnly(conjuncts[i1]);
+              if (oppositeConjunct != null && !oppositeConjunct.isInterface()) {
+                if (!conjunct.isInheritor(oppositeConjunct, true) && !oppositeConjunct.isInheritor(conjunct, true)) {
+                  return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                    .descriptionAndTooltip("Type parameter " + typeEntry.getKey().getName() + " has incompatible upper bounds: " +
+                                           conjunct.getName() + " and " + oppositeConjunct.getName())
+                    .range(ref).create();
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
 }
 
