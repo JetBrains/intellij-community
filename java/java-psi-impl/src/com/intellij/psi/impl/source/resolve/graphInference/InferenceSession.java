@@ -1030,7 +1030,7 @@ public class InferenceSession {
                                        boolean varargs) {
     final InferenceSession session = new InferenceSession(PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY, m2.getManager(), context);
     for (PsiTypeParameter param : PsiUtil.typeParametersIterable(m2)) {
-      session.initBounds(param);
+      session.initBounds(context, param);
     }
 
     final PsiParameter[] parameters1 = m1.getParameterList().getParameters();
