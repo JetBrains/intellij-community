@@ -17,8 +17,10 @@ package com.intellij.ide.util;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 
@@ -31,6 +33,7 @@ public abstract class PropertiesComponent {
 
   public abstract boolean isValueSet(String name);
 
+  @Nullable
   public abstract String getValue(@NonNls String name);
 
   public abstract void setValue(@NonNls String name, String value);
@@ -62,7 +65,10 @@ public abstract class PropertiesComponent {
 
   @NotNull
   public String getValue(@NonNls String name, @NotNull String defaultValue) {
-    return isValueSet(name) ? getValue(name) : defaultValue;
+    if (!isValueSet(name)) {
+      return defaultValue;
+    }
+    return ObjectUtils.notNull(getValue(name), defaultValue);
   }
 
   public final int getOrInitInt(@NonNls String name, int defaultValue) {

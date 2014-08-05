@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.ui;
 
 import com.intellij.ide.BrowserUtil;
@@ -48,7 +63,7 @@ public class SwingHelper {
    * stacked vertically each on another in a given order.
    *
    * @param childAlignmentX Component.LEFT_ALIGNMENT, Component.CENTER_ALIGNMENT or Component.RIGHT_ALIGNMENT
-   * @param children children components
+   * @param children        children components
    * @return created panel
    */
   @NotNull
@@ -76,7 +91,7 @@ public class SwingHelper {
    * stacked each on another in a given order.
    *
    * @param childAlignmentY Component.TOP_ALIGNMENT, Component.CENTER_ALIGNMENT or Component.BOTTOM_ALIGNMENT
-   * @param children children components
+   * @param children        children components
    * @return created panel
    */
   @NotNull
@@ -98,10 +113,11 @@ public class SwingHelper {
     for (Component child : children) {
       panel.add(child, childAlignment);
       if (child instanceof JComponent) {
-        JComponent jChild = (JComponent) child;
+        JComponent jChild = (JComponent)child;
         if (verticalOrientation) {
           jChild.setAlignmentX(childAlignment);
-        } else {
+        }
+        else {
           jChild.setAlignmentY(childAlignment);
         }
       }
@@ -259,20 +275,7 @@ public class SwingHelper {
     textFieldWithHistory.addPopupMenuListener(new PopupMenuListener() {
       @Override
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-        List<String> newHistory = historyProvider.produce();
-        Set<String> newHistorySet = ContainerUtil.newHashSet(newHistory);
-        List<String> oldHistory = textFieldWithHistory.getHistory();
-        List<String> mergedHistory = ContainerUtil.newArrayList();
-        for (String item : oldHistory) {
-          if (!newHistorySet.contains(item)) {
-            mergedHistory.add(item);
-          }
-        }
-        mergedHistory.addAll(newHistory);
-        textFieldWithHistory.setHistory(mergedHistory);
-
-        setLongestAsPrototype(textFieldWithHistory, mergedHistory);
-
+        setHistory(textFieldWithHistory, historyProvider.produce(), true);
         // one-time initialization
         textFieldWithHistory.removePopupMenuListener(this);
       }
@@ -287,11 +290,35 @@ public class SwingHelper {
     });
   }
 
+  public static void setHistory(@NotNull TextFieldWithHistory textFieldWithHistory,
+                                @NotNull List<String> history,
+                                boolean mergeWithPrevHistory) {
+    Set<String> newHistorySet = ContainerUtil.newHashSet(history);
+    List<String> prevHistory = textFieldWithHistory.getHistory();
+    List<String> mergedHistory = ContainerUtil.newArrayList();
+    if (mergeWithPrevHistory) {
+      for (String item : prevHistory) {
+        if (!newHistorySet.contains(item)) {
+          mergedHistory.add(item);
+        }
+      }
+    }
+    else {
+      String currentText = textFieldWithHistory.getText();
+      if (StringUtil.isNotEmpty(currentText) && !newHistorySet.contains(currentText)) {
+        mergedHistory.add(currentText);
+      }
+    }
+    mergedHistory.addAll(history);
+    textFieldWithHistory.setHistory(mergedHistory);
+    setLongestAsPrototype(textFieldWithHistory, mergedHistory);
+  }
+
   private static void setLongestAsPrototype(@NotNull JComboBox comboBox, @NotNull List<String> variants) {
     Object prototypeDisplayValue = comboBox.getPrototypeDisplayValue();
     String prototypeDisplayValueStr = null;
     if (prototypeDisplayValue instanceof String) {
-      prototypeDisplayValueStr = (String) prototypeDisplayValue;
+      prototypeDisplayValueStr = (String)prototypeDisplayValue;
     }
     else if (prototypeDisplayValue != null) {
       return;
@@ -422,6 +449,27 @@ public class SwingHelper {
       bodyInnerHtml
     );
     editorPane.setText(html);
+  }
+
+  @NotNull
+  public static TextFieldWithHistoryWithBrowseButton createTextFieldWithHistoryWithBrowseButton(@Nullable Project project,
+                                                                                                @NotNull String browseDialogTitle,
+                                                                                                @NotNull FileChooserDescriptor fileChooserDescriptor,
+                                                                                                @Nullable NotNullProducer<List<String>> historyProvider) {
+    TextFieldWithHistoryWithBrowseButton textFieldWithHistoryWithBrowseButton = new TextFieldWithHistoryWithBrowseButton();
+    TextFieldWithHistory textFieldWithHistory = textFieldWithHistoryWithBrowseButton.getChildComponent();
+    textFieldWithHistory.setHistorySize(-1);
+    textFieldWithHistory.setMinimumAndPreferredWidth(0);
+    if (historyProvider != null) {
+      addHistoryOnExpansion(textFieldWithHistory, historyProvider);
+    }
+    installFileCompletionAndBrowseDialog(
+      project,
+      textFieldWithHistoryWithBrowseButton,
+      browseDialogTitle,
+      fileChooserDescriptor
+    );
+    return textFieldWithHistoryWithBrowseButton;
   }
 
   private static class CopyLinkAction extends AnAction {

@@ -26,10 +26,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.artifacts.ArtifactManager;
-import com.intellij.packaging.artifacts.ArtifactProperties;
-import com.intellij.packaging.artifacts.ArtifactType;
+import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.elements.*;
 import com.intellij.util.PathUtil;
@@ -598,6 +595,32 @@ public class ArtifactUtil {
 
   public static String suggestArtifactFileName(String artifactName) {
     return PathUtil.suggestFileName(artifactName, true, true);
+  }
+
+  @Nullable
+  public static Artifact addArtifact(@NotNull ModifiableArtifactModel artifactModel,
+                                     @NotNull ArtifactType type,
+                                     @NotNull ArtifactTemplate artifactTemplate) {
+    final ArtifactTemplate.NewArtifactConfiguration configuration = artifactTemplate.createArtifact();
+    if (configuration == null) {
+      return null;
+    }
+
+    final String baseName = configuration.getArtifactName();
+    String name = baseName;
+    int i = 2;
+    while (artifactModel.findArtifact(name) != null) {
+      name = baseName + i;
+      i++;
+    }
+
+    ArtifactType actualType = configuration.getArtifactType();
+    if (actualType == null) {
+      actualType = type;
+    }
+    final ModifiableArtifact artifact = artifactModel.addArtifact(name, actualType, configuration.getRootElement());
+    artifactTemplate.setUpArtifact(artifact, configuration);
+    return artifact;
   }
 }
 

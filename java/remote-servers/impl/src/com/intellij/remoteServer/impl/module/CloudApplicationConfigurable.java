@@ -15,152 +15,20 @@
  */
 package com.intellij.remoteServer.impl.module;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.remoteServer.configuration.RemoteServer;
-import com.intellij.remoteServer.runtime.Deployment;
-import com.intellij.remoteServer.runtime.ServerConnection;
-import com.intellij.remoteServer.runtime.ServerConnector;
-import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
-import com.intellij.remoteServer.util.*;
-import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.Collection;
-import java.util.concurrent.atomic.AtomicReference;
+import java.awt.*;
 
 
-public abstract class CloudApplicationConfigurable<
-  SC extends CloudConfigurationBase,
-  DC extends CloudDeploymentNameConfiguration,
-  SR extends CloudMultiSourceServerRuntimeInstance<DC, ?, ?, ?>,
-  AC extends CloudApplicationConfiguration> {
+public abstract class CloudApplicationConfigurable {
 
-  private final Project myProject;
-  private final Disposable myParentDisposable;
+  public abstract Component getComponent();
 
-  private DelayedRunner myRunner;
+  public abstract void setAccount(RemoteServer<?> account);
 
-  private RemoteServer<?> myAccount;
-
-  public CloudApplicationConfigurable(@Nullable Project project, Disposable parentDisposable) {
-    myProject = project;
-    myParentDisposable = parentDisposable;
-  }
-
-  public void setAccount(RemoteServer<?> account) {
-    myAccount = account;
-    clearCloudData();
-  }
-
-  protected RemoteServer<SC> getAccount() {
-    return (RemoteServer<SC>)myAccount;
-  }
-
-  public JComponent getComponent() {
-    JComponent result = getMainPanel();
-    if (myRunner == null) {
-      myRunner = new DelayedRunner(result) {
-
-        private RemoteServer<?> myPreviousAccount;
-
-        @Override
-        protected boolean wasChanged() {
-          boolean result = myPreviousAccount != myAccount;
-          if (result) {
-            myPreviousAccount = myAccount;
-          }
-          return result;
-        }
-
-        @Override
-        protected void run() {
-          loadCloudData();
-        }
-      };
-      Disposer.register(myParentDisposable, myRunner);
-    }
-    return result;
-  }
-
-  protected void clearCloudData() {
-    getExistingComboBox().removeAllItems();
-  }
-
-  protected void loadCloudData() {
-    new ConnectionTask<Collection<Deployment>>("Loading existing applications list") {
-
-      @Override
-      protected void run(final ServerConnection<DC> connection,
-                         final Semaphore semaphore,
-                         final AtomicReference<Collection<Deployment>> result) {
-        connection.connectIfNeeded(new ServerConnector.ConnectionCallback<DC>() {
-
-          @Override
-          public void connected(@NotNull ServerRuntimeInstance<DC> serverRuntimeInstance) {
-            connection.computeDeployments(new Runnable() {
-
-              @Override
-              public void run() {
-                result.set(connection.getDeployments());
-                semaphore.up();
-                UIUtil.invokeLaterIfNeeded(new Runnable() {
-                  @Override
-                  public void run() {
-                    if (!Disposer.isDisposed(myParentDisposable)) {
-                      setupExistingApplications(result.get());
-                    }
-                  }
-                });
-              }
-            });
-          }
-
-          @Override
-          public void errorOccurred(@NotNull String errorMessage) {
-            runtimeErrorOccurred(errorMessage);
-            semaphore.up();
-          }
-        });
-      }
-
-      @Override
-      protected Collection<Deployment> run(SR serverRuntimeInstance) throws ServerRuntimeException {
-        return null;
-      }
-    }.performAsync();
-  }
-
-  private void setupExistingApplications(Collection<Deployment> deployments) {
-    JComboBox existingComboBox = getExistingComboBox();
-    existingComboBox.removeAllItems();
-    for (Deployment deployment : deployments) {
-      existingComboBox.addItem(deployment.getName());
-    }
-  }
-
-  protected Project getProject() {
-    return myProject;
-  }
-
-  protected abstract JComboBox getExistingComboBox();
-
-  protected abstract JComponent getMainPanel();
-
-  public abstract AC createConfiguration();
+  public abstract CloudApplicationConfiguration createConfiguration();
 
   public abstract void validate() throws ConfigurationException;
-
-  protected abstract class ConnectionTask<T> extends CloudConnectionTask<T, SC, DC, SR> {
-
-    public ConnectionTask(String title) {
-      super(myProject, title, CloudApplicationConfigurable.this.getAccount());
-    }
-  }
 }
 

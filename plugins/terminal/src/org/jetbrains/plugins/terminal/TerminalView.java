@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.notification.EventLog;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -23,7 +22,6 @@ import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.ui.JediTermWidget;
 import com.jediterm.terminal.ui.TabbedTerminalWidget;
 import com.jediterm.terminal.ui.TerminalWidget;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
@@ -54,7 +52,7 @@ public class TerminalView {
 
 
   public void initTerminal(final ToolWindow toolWindow) {
-    LocalTerminalDirectRunner terminalRunner = OpenLocalTerminalAction.createTerminalRunner(myProject);
+    LocalTerminalDirectRunner terminalRunner = LocalTerminalDirectRunner.createTerminalRunner(myProject);
 
     toolWindow.setToHideOnEmptyContent(true);
 
@@ -99,14 +97,9 @@ public class TerminalView {
     }
   }
 
-  private Content createTerminalInContentPanel(@Nullable LocalTerminalDirectRunner terminalRunner,
+  private Content createTerminalInContentPanel(@NotNull AbstractTerminalRunner terminalRunner,
                                                final @NotNull ToolWindow toolWindow) {
-    SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true) {
-      @Override
-      public Object getData(@NonNls String dataId) {
-        return PlatformDataKeys.HELP_ID.is(dataId) ? EventLog.HELP_ID : super.getData(dataId);
-      }
-    };
+    SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true);
 
     final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
     content.setCloseable(true);
@@ -162,14 +155,14 @@ public class TerminalView {
   }
 
   public void openLocalSession(Project project, ToolWindow terminal) {
-    LocalTerminalDirectRunner terminalRunner = OpenLocalTerminalAction.createTerminalRunner(project);
+    LocalTerminalDirectRunner terminalRunner = LocalTerminalDirectRunner.createTerminalRunner(project);
     openSession(terminal, terminalRunner);
   }
 
   private void openSession(@NotNull ToolWindow toolWindow, @NotNull AbstractTerminalRunner terminalRunner) {
     if (myTerminalWidget == null) {
       toolWindow.getContentManager().removeAllContents(true);
-      final Content content = createTerminalInContentPanel(null, toolWindow);
+      final Content content = createTerminalInContentPanel(terminalRunner, toolWindow);
       toolWindow.getContentManager().addContent(content);
     }
     else {
@@ -184,7 +177,7 @@ public class TerminalView {
     }, true);
   }
 
-  private ActionToolbar createToolbar(@Nullable final LocalTerminalDirectRunner terminalRunner,
+  private ActionToolbar createToolbar(@Nullable final AbstractTerminalRunner terminalRunner,
                                       @NotNull final JBTabbedTerminalWidget terminal, @NotNull ToolWindow toolWindow) {
     DefaultActionGroup group = new DefaultActionGroup();
 
@@ -215,10 +208,10 @@ public class TerminalView {
 
 
   private static class NewSession extends DumbAwareAction {
-    private final LocalTerminalDirectRunner myTerminalRunner;
+    private final AbstractTerminalRunner myTerminalRunner;
     private final TerminalWidget myTerminal;
 
-    public NewSession(@NotNull LocalTerminalDirectRunner terminalRunner, @NotNull TerminalWidget terminal) {
+    public NewSession(@NotNull AbstractTerminalRunner terminalRunner, @NotNull TerminalWidget terminal) {
       super("New Session", "Create New Terminal Session", AllIcons.General.Add);
       myTerminalRunner = terminalRunner;
       myTerminal = terminal;

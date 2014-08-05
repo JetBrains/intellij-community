@@ -59,7 +59,7 @@ public class IndexingStamp {
   private static final long UNINDEXED_STAMP = -1L; // we don't store trivial "absent" state
   private static final long INDEX_DATA_OUTDATED_STAMP = -2L;
 
-  private static final int VERSION = 12;
+  private static final int VERSION = 13;
   private static final ConcurrentHashMap<ID<?, ?>, Long> ourIndexIdToCreationStamp = new ConcurrentHashMap<ID<?, ?>, Long>();
   private static volatile long ourLastStamp; // ensure any file index stamp increases
 

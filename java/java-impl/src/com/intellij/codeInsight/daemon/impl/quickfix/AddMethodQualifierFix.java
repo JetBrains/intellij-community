@@ -88,6 +88,9 @@ public class AddMethodQualifierFix implements IntentionAction {
     }
 
     for (final PsiVariable var : CreateFromUsageUtils.guessMatchingVariables(methodCallElement)) {
+      if (var.getName() == null) {
+        continue;
+      }
       final PsiType type = var.getType();
       if (!(type instanceof PsiClassType)) {
         continue;
@@ -136,7 +139,7 @@ public class AddMethodQualifierFix implements IntentionAction {
         @NotNull
         @Override
         public String getTextFor(final PsiVariable value) {
-          return ObjectUtils.assertNotNull(value.getName());
+          return value.getName();
         }
 
         @Override

@@ -240,15 +240,14 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   @NotNull
   public <B extends XBreakpoint<?>> Collection<? extends B> getBreakpoints(@NotNull final XBreakpointType<B,?> type) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
+    Collection<? extends XBreakpointBase<?,?,?>> breakpoints = myBreakpoints.get(type);
+    Collection<? extends B> regular = breakpoints != null ? Collections.unmodifiableCollection((Collection<? extends B>)breakpoints) : Collections.<B>emptyList();
+
+    final XBreakpointBase<?, ?, ?> defaultBreakpoint = myDefaultBreakpoints.get(type);
+    if (defaultBreakpoint == null) return regular;
     List<B> result = new ArrayList<B>();
-    B defaultBreakpoint = getDefaultBreakpoint(type);
-    if (defaultBreakpoint != null) {
-      result.add(defaultBreakpoint);
-    }
-    Collection<XBreakpointBase<?, ?, ?>> breakpoints = myBreakpoints.get(type);
-    if (breakpoints != null) {
-      result.addAll((Collection<? extends B>)breakpoints);
-    }
+    result.add((B)defaultBreakpoint);
+    result.addAll(regular);
     return result;
   }
 

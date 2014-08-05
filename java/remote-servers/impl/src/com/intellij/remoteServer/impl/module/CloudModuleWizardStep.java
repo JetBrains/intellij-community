@@ -22,13 +22,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.util.CloudAccountSelectionEditor;
-import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.containers.HashSet;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 
 public class CloudModuleWizardStep extends ModuleWizardStep {
@@ -43,17 +43,17 @@ public class CloudModuleWizardStep extends ModuleWizardStep {
 
   private CloudAccountSelectionEditor myAccountSelectionPanel;
 
-  private Map<ServerType<?>, CloudApplicationConfigurable> myCloudType2ApplicationConfigurable;
+  private Set<ServerType<?>> myApplicationConfigurableTypes;
 
   public CloudModuleWizardStep(CloudModuleBuilder moduleBuilder, Project project, Disposable parentDisposable) {
     myModuleBuilder = moduleBuilder;
     myProject = project;
     myParentDisposable = parentDisposable;
 
-    myCloudType2ApplicationConfigurable = new HashMap<ServerType<?>, CloudApplicationConfigurable>();
+    myApplicationConfigurableTypes = new HashSet<ServerType<?>>();
 
     List<ServerType<?>> cloudTypes = new ArrayList<ServerType<?>>();
-    for (CloudModuleBuilderContribution contribution : CloudModuleBuilderContribution.EP_NAME.getExtensions()) {
+    for (CloudModuleBuilderContributionFactory contribution : CloudModuleBuilderContributionFactory.EP_NAME.getExtensions()) {
       cloudTypes.add(contribution.getCloudType());
     }
 
@@ -86,11 +86,8 @@ public class CloudModuleWizardStep extends ModuleWizardStep {
 
     ServerType<?> cloudType = account.getType();
     String cardName = cloudType.getId();
-    CloudApplicationConfigurable<?, ?, ?, ?> applicationConfigurable = getApplicationConfigurable();
-    if (applicationConfigurable == null) {
-      applicationConfigurable
-        = CloudModuleBuilderContribution.getInstanceByType(cloudType).createApplicationConfigurable(myProject, myParentDisposable);
-      myCloudType2ApplicationConfigurable.put(cloudType, applicationConfigurable);
+    CloudApplicationConfigurable applicationConfigurable = getApplicationConfigurable();
+    if (myApplicationConfigurableTypes.add(cloudType)) {
       myApplicationPanelPlaceHolder.add(applicationConfigurable.getComponent(), cardName);
     }
     applicationPlaceHolderLayout.show(myApplicationPanelPlaceHolder, cardName);
@@ -103,25 +100,25 @@ public class CloudModuleWizardStep extends ModuleWizardStep {
     return myMainPanel;
   }
 
-  private CloudApplicationConfigurable<?, ?, ?, ?> getApplicationConfigurable() {
+  private CloudApplicationConfigurable getApplicationConfigurable() {
     RemoteServer<?> account = getSelectedAccount();
     if (account == null) {
       return null;
     }
-    return myCloudType2ApplicationConfigurable.get(account.getType());
+    return myModuleBuilder.getContribution(account.getType()).getApplicationConfigurable(myProject, myParentDisposable);
   }
 
   @Override
   public void updateDataModel() {
     myModuleBuilder.setAccount(myAccountSelectionPanel.getSelectedAccount());
-    CloudApplicationConfigurable<?, ?, ?, ?> configurable = getApplicationConfigurable();
+    CloudApplicationConfigurable configurable = getApplicationConfigurable();
     myModuleBuilder.setApplicationConfiguration(configurable == null ? null : configurable.createConfiguration());
   }
 
   @Override
   public boolean validate() throws ConfigurationException {
     myAccountSelectionPanel.validate();
-    CloudApplicationConfigurable<?, ?, ?, ?> configurable = getApplicationConfigurable();
+    CloudApplicationConfigurable configurable = getApplicationConfigurable();
     if (configurable != null) {
       configurable.validate();
     }

@@ -119,7 +119,8 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   protected abstract PsiElement getElement();
 
   private void chooseTargetClass(List<PsiClass> classes, final Editor editor) {
-    final Project project = classes.get(0).getProject();
+    final PsiClass firstClass = classes.get(0);
+    final Project project = firstClass.getProject();
 
     final JList list = new JBList(classes);
     PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
@@ -128,12 +129,18 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     final PopupChooserBuilder builder = new PopupChooserBuilder(list);
     renderer.installSpeedSearch(builder);
 
+    final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, firstClass);
+    if (preselection != null) {
+      list.setSelectedValue(preselection, true);
+    }
+
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
         int index = list.getSelectedIndex();
         if (index < 0) return;
         final PsiClass aClass = (PsiClass) list.getSelectedValue();
+        AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, firstClass);
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           @Override
           public void run() {
