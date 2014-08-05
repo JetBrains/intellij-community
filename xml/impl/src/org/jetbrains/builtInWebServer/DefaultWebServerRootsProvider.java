@@ -18,7 +18,7 @@ import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class ProjectRootsProviderImpl extends WebServerRootsProvider {
+final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
   @Nullable
   @Override
   public Pair<VirtualFile, Pair<VirtualFile, String>> resolve(@NotNull String path, @NotNull Project project) {
