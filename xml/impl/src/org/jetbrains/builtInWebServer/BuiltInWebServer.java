@@ -183,7 +183,7 @@ public final class BuiltInWebServer extends HttpRequestHandler {
     return false;
   }
 
-  static final class StaticFileHandler extends FileHandler {
+  static final class StaticFileHandler extends WebServerFileHandler {
     @Override
     public boolean process(@NotNull VirtualFile file,
                            @NotNull CharSequence canonicalRequestPath,

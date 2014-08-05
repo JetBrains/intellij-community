@@ -86,7 +86,7 @@ final class DefaultPathHandler extends PathHandler {
       canonicalRequestPath.append('/').append(result.getName());
     }
 
-    for (FileHandler fileHandler : FileHandler.EP_NAME.getExtensions()) {
+    for (WebServerFileHandler fileHandler : WebServerFileHandler.EP_NAME.getExtensions()) {
       try {
         if (fileHandler.process(result, canonicalRequestPath, project, request, channel)) {
           return true;

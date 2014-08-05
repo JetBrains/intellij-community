@@ -24,8 +24,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public abstract class FileHandler {
-  static final ExtensionPointName<FileHandler> EP_NAME = ExtensionPointName.create("org.jetbrains.webServerFileHandler");
+public abstract class WebServerFileHandler {
+  static final ExtensionPointName<WebServerFileHandler> EP_NAME = ExtensionPointName.create("org.jetbrains.webServerFileHandler");
 
   public abstract boolean process(@NotNull VirtualFile file,
                                   @NotNull CharSequence canonicalRequestPath,
