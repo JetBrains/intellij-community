@@ -2696,8 +2696,8 @@ public class StringUtil extends StringUtilRt {
       index = Math.max(0, (words.size() - 1) / 2);
       String aWord = words.get(index);
       words.remove(index);
-      if (words.size() < 2) {
-        int toCut = length - removedLength - maxWidth + 3;
+      int toCut = length - removedLength - maxWidth + 3;
+      if (words.size() < 2 || (toCut < aWord.length() - 2 && removedLength == 0)) {
         int pos = (aWord.length() - toCut) / 2;
         toPaste = aWord.substring(0, pos) + "..." + aWord.substring(pos+toCut);
         break;
