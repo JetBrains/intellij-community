@@ -10,7 +10,7 @@ import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class ArtifactWebServerRootsProvider extends WebServerRootsProvider.PrefixlessWebServerRootsProvider {
+final class ArtifactWebServerRootsProvider extends PrefixlessWebServerRootsProvider {
   @Nullable
   @Override
   public Pair<VirtualFile, Pair<VirtualFile, String>> resolve(@NotNull String path, @NotNull Project project, @NotNull PairFunction<String, VirtualFile, VirtualFile> resolver) {
