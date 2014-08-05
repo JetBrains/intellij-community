@@ -24,7 +24,7 @@ public abstract class WebServerRootsProvider {
     return false;
   }
 
-  public abstract static class PrefixlessProjectRootsProvider extends WebServerRootsProvider {
+  public abstract static class PrefixlessWebServerRootsProvider extends WebServerRootsProvider {
     @Nullable
     @Override
     public final Pair<VirtualFile, Pair<VirtualFile, String>> resolve(@NotNull String path, @NotNull Project project) {
