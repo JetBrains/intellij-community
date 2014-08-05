@@ -57,7 +57,6 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   private static final Class<GitHttpAuthenticator> PASS_REQUESTER = GitHttpAuthenticator.class;
 
   @NotNull  private final Project myProject;
-  @Nullable private final ModalityState myModalityState;
   @NotNull  private final String myTitle;
   @NotNull private final String myUrlFromCommand;
 
@@ -69,10 +68,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @Nullable private GitHttpAuthDataProvider myDataProvider;
   private boolean myWasCancelled;
 
-  GitHttpGuiAuthenticator(@NotNull Project project, @Nullable ModalityState modalityState, @NotNull GitCommand command,
-                          @NotNull String url) {
+  GitHttpGuiAuthenticator(@NotNull Project project, @NotNull GitCommand command, @NotNull String url) {
     myProject = project;
-    myModalityState = modalityState;
     myTitle = "Git " + StringUtil.capitalize(command.name());
     myUrlFromCommand = url;
   }
@@ -97,7 +94,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     String prompt = "Enter the password for " + url;
     myPasswordKey = url;
-    String password = PasswordSafePromptDialog.askPassword(myProject, myModalityState, myTitle, prompt, PASS_REQUESTER, url, false, null);
+    String password = PasswordSafePromptDialog.askPassword(myProject, myTitle, prompt, PASS_REQUESTER, url, false, null);
     if (password == null) {
       myWasCancelled = true;
       return "";
@@ -152,7 +149,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
         dialog.set(new AuthDialog(myProject, myTitle, "Enter credentials for " + url, login, null, true));
         dialog.get().show();
       }
-    }, myModalityState == null ? ModalityState.defaultModalityState() : myModalityState);
+    }, ModalityState.any());
     return dialog.get();
   }
 

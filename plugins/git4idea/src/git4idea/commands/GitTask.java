@@ -324,7 +324,6 @@ public class GitTask {
 
     @Override
     public final void run(@NotNull ProgressIndicator indicator) {
-      myHandler.setModalityState(indicator.getModalityState());
       myDelegate.run(indicator);
     }
 

@@ -15,13 +15,11 @@
  */
 package git4idea.test;
 
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHttpAuthService;
 import git4idea.commands.GitHttpAuthenticator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Kirill Likhodedov
@@ -61,8 +59,7 @@ public class GitHttpAuthTestService extends GitHttpAuthService {
 
   @NotNull
   @Override
-  public GitHttpAuthenticator createAuthenticator(@NotNull Project project, @Nullable ModalityState state, @NotNull GitCommand command,
-                                                  @NotNull String url) {
+  public GitHttpAuthenticator createAuthenticator(@NotNull Project project, @NotNull GitCommand command, @NotNull String url) {
     return myAuthenticator;
   }
 
