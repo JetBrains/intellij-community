@@ -273,7 +273,7 @@ class PyDBFrame:
                             #we called function from context, the next step will be in function
                             info.pydev_call_from_jinja2 = 1
 
-                    if event == 'return' and is_jinja2_context_call(frame.f_back) and info.pydev_call_from_jinja2 is not None:
+                    if event == 'return' and is_jinja2_context_call(frame.f_back):
                         #we return from python code to Jinja2 rendering frame
                         info.pydev_step_stop = info.pydev_call_from_jinja2
                         info.pydev_call_from_jinja2 = None
@@ -319,7 +319,6 @@ class PyDBFrame:
                             info.pydev_call_from_jinja2 = None
                             thread.additionalInfo.suspend_type = JINJA2_SUSPEND
                             stop = False
-
 
                     #print "info.pydev_call_from_jinja2", info.pydev_call_from_jinja2, "stop", stop, "jinja_stop", jinja2_stop, \
                     #    "thread.additionalInfo.suspend_type", thread.additionalInfo.suspend_type
