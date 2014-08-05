@@ -133,9 +133,9 @@ target('default': "Build artifacts") {
   layoutEducational("${paths.sandbox}/classes/production", usedJars)
 
 
-  buildNSIS([paths.distAll, paths.distWin],
-            "${pythonEduHome}/build/strings.nsi", "${pythonEduHome}/build/paths.nsi",
-            "pycharm", false, true, ".py", system_selector)
+  //buildNSIS([paths.distAll, paths.distWin],
+  //          "${pythonEduHome}/build/strings.nsi", "${pythonEduHome}/build/paths.nsi",
+  //          "pycharm", false, true, ".py", system_selector)
 
   def extraArgs = ["build.code": "pycharmEDU-${buildName}", "build.number": "PE-$buildNumber", "artifacts.path": "${paths.artifacts}"]
 
