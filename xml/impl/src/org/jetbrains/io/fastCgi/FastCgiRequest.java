@@ -3,14 +3,16 @@ package org.jetbrains.io.fastCgi;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.builtInWebServer.PathToFileManager;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.util.CharsetUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.builtInWebServer.PathToFileManager;
 import org.jetbrains.io.Responses;
 
 import java.net.InetSocketAddress;
@@ -28,7 +30,7 @@ public class FastCgiRequest {
   private final ByteBuf buffer;
   final int requestId;
 
-  public FastCgiRequest(int requestId, ByteBufAllocator allocator) {
+  public FastCgiRequest(int requestId, @NotNull ByteBufAllocator allocator) {
     this.requestId = requestId;
 
     buffer = allocator.buffer();
@@ -38,7 +40,7 @@ public class FastCgiRequest {
     buffer.writeZero(5);
   }
 
-  public void writeFileHeaders(VirtualFile file, Project project, String canonicalRequestPath) {
+  public void writeFileHeaders(@NotNull VirtualFile file, @NotNull Project project, @NotNull CharSequence canonicalRequestPath) {
     Pair<VirtualFile, String> root = PathToFileManager.getInstance(project).getRoot(file);
     FastCgiService.LOG.assertTrue(root != null);
     addHeader("DOCUMENT_ROOT", root.first.getPath());
@@ -46,7 +48,7 @@ public class FastCgiRequest {
     addHeader("SCRIPT_NAME", canonicalRequestPath);
   }
 
-  public final void addHeader(@NotNull String key, @Nullable String value) {
+  public final void addHeader(@NotNull String key, @Nullable CharSequence value) {
     if (value == null) {
       return;
     }
@@ -75,8 +77,8 @@ public class FastCgiRequest {
       buffer.writeByte(valLength);
     }
 
-    buffer.writeBytes(key.getBytes());
-    buffer.writeBytes(value.getBytes());
+    buffer.writeBytes(key.getBytes(CharsetUtil.US_ASCII));
+    buffer.writeBytes(Unpooled.copiedBuffer(value, CharsetUtil.UTF_8));
   }
 
   public void writeHeaders(FullHttpRequest request, Channel clientChannel) {

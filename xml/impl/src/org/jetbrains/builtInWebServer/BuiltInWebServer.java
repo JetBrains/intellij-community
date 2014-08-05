@@ -30,7 +30,7 @@ import java.net.UnknownHostException;
 import static org.jetbrains.io.Responses.sendOptionsResponse;
 import static org.jetbrains.io.Responses.sendStatus;
 
-public class BuiltInWebServer extends HttpRequestHandler {
+public final class BuiltInWebServer extends HttpRequestHandler {
   private static final Logger LOG = Logger.getInstance(BuiltInWebServer.class);
 
   @Nullable
@@ -67,7 +67,7 @@ public class BuiltInWebServer extends HttpRequestHandler {
   }
 
   @Override
-  public boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
+  public boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) {
     if (request.method() == HttpMethod.OPTIONS) {
       sendOptionsResponse("GET, POST, HEAD, OPTIONS", request, context);
       return true;
@@ -123,7 +123,7 @@ public class BuiltInWebServer extends HttpRequestHandler {
     }
   }
 
-  private static boolean doProcess(FullHttpRequest request, Channel channel, @Nullable String projectName) {
+  private static boolean doProcess(@NotNull FullHttpRequest request, @NotNull Channel channel, @Nullable String projectName) {
     final String decodedPath = URLUtil.unescapePercentSequences(UriUtil.trimParameters(request.uri()));
     int offset;
     boolean emptyPath;
@@ -154,7 +154,6 @@ public class BuiltInWebServer extends HttpRequestHandler {
       redirectToDirectory(request, channel, projectName);
       return true;
     }
-
 
     final String path = FileUtil.toCanonicalPath(decodedPath.substring(offset + 1), '/');
     LOG.assertTrue(path != null);
@@ -213,7 +212,7 @@ public class BuiltInWebServer extends HttpRequestHandler {
 
     for (FileHandler fileHandler : FileHandler.EP_NAME.getExtensions()) {
       try {
-        if (fileHandler.process(result, canonicalRequestPath.toString(), project, request, channel)) {
+        if (fileHandler.process(result, canonicalRequestPath, project, request, channel)) {
           return true;
         }
       }
@@ -232,7 +231,7 @@ public class BuiltInWebServer extends HttpRequestHandler {
   static final class StaticFileHandler extends FileHandler {
     @Override
     public boolean process(@NotNull VirtualFile file,
-                           @NotNull String canonicalRequestPath,
+                           @NotNull CharSequence canonicalRequestPath,
                            @NotNull Project project,
                            @NotNull FullHttpRequest request,
                            @NotNull Channel channel) throws IOException {
@@ -252,9 +251,9 @@ public class BuiltInWebServer extends HttpRequestHandler {
     }
   }
 
-  private static void redirectToDirectory(HttpRequest request, Channel channel, String path) {
+  private static void redirectToDirectory(@NotNull HttpRequest request, @NotNull Channel channel, @NotNull String path) {
     FullHttpResponse response = Responses.response(HttpResponseStatus.MOVED_PERMANENTLY);
-    URI url = VfsUtil.toUri("http://" + HttpHeaders.getHost(request) + "/" + path + "/");
+    URI url = VfsUtil.toUri("http://" + HttpHeaders.getHost(request) + '/' + path + '/');
     LOG.assertTrue(url != null);
     response.headers().add(HttpHeaders.Names.LOCATION, url.toASCIIString());
     Responses.send(response, channel, request);
