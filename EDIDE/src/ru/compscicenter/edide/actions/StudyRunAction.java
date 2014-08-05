@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import ru.compscicenter.edide.StudyTaskManager;
+import ru.compscicenter.edide.StudyUtils;
 import ru.compscicenter.edide.course.Task;
 import ru.compscicenter.edide.course.TaskFile;
 import ru.compscicenter.edide.editor.StudyEditor;
@@ -37,8 +38,8 @@ public class StudyRunAction extends DumbAwareAction {
       TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
       assert selectedTaskFile != null;
       Task currentTask = selectedTaskFile.getTask();
-      if (currentTask.getInput() != null) {
-        cmd.addParameter(currentTask.getInput());
+      if (!currentTask.getUserTests().isEmpty()) {
+        cmd.addParameter(StudyUtils.getFirst(currentTask.getUserTests()).getInput());
       }
       try {
         Process p = cmd.createProcess();

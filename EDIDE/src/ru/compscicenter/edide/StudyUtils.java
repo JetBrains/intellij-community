@@ -44,12 +44,12 @@ public class StudyUtils {
       reader = new BufferedReader(new InputStreamReader(new FileInputStream(inputFile)));
       String line;
       while ((line = reader.readLine()) != null) {
-        taskText.append(line);
+        taskText.append(line).append("\n");
         if (wrapHTML) {
           taskText.append("<br>");
         }
       }
-      return UIUtil.toHtml(taskText.toString());
+      return wrapHTML ? UIUtil.toHtml(taskText.toString()) : taskText.toString();
     }
     catch (IOException e) {
       e.printStackTrace();

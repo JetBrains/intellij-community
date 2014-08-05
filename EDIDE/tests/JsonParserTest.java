@@ -3,6 +3,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Before;
 import org.junit.Test;
+import ru.compscicenter.edide.StudyUtils;
 import ru.compscicenter.edide.course.Course;
 
 import java.io.FileInputStream;
@@ -28,7 +29,7 @@ public class JsonParserTest {
   @Test
   public void testCourseLevel() {
     assertEquals(myCourse.getName(), "Python для начинающих");
-    assertEquals(myCourse.getLessons().get(1).getTaskList().get(0).getInput(), "sum-input.txt");
+    assertEquals(StudyUtils.getFirst(myCourse.getLessons().get(1).getTaskList().get(0).getUserTests()).getInput(), "sum-input.txt");
     assertEquals(myCourse.getLessons().size(), 2);
     assertEquals(myCourse.getLessons().get(0).getTaskList().size(), 2);
     assertEquals(myCourse.getLessons().get(1).getTaskList().size(), 1);

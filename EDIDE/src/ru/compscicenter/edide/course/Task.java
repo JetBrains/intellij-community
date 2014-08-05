@@ -10,6 +10,7 @@ import ru.compscicenter.edide.StudyUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,8 +27,7 @@ public class Task {
   public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
   private Lesson myLesson;
   public int myIndex;
-  public String input = null;
-  public String output = null;
+  public List<UserTest> userTests = new ArrayList<UserTest>();
 
   public int getTestNum() {
     return testNum;
@@ -67,6 +67,10 @@ public class Task {
         taskFile.setStatus(status);
       }
     }
+  }
+
+  public List<UserTest> getUserTests() {
+    return userTests;
   }
 
   public String getTestFile() {
@@ -164,14 +168,6 @@ public class Task {
 
   public Lesson getLesson() {
     return myLesson;
-  }
-
-  public String getInput() {
-    return input;
-  }
-
-  public String getOutput() {
-    return output;
   }
 
 
