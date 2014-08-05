@@ -218,7 +218,7 @@ public class FindDialog extends DialogWrapper {
     myReplacePrompt.setVisible(myModel.isReplaceState());
     myReplaceComboBox.setVisible(myModel.isReplaceState());
     if (myCbToSkipResultsWhenOneUsage != null) {
-      myCbToSkipResultsWhenOneUsage.setVisible(myModel.isReplaceState());
+      myCbToSkipResultsWhenOneUsage.setVisible(!myModel.isReplaceState());
     }
     myCbPreserveCase.setVisible(myModel.isReplaceState());
   }
@@ -349,9 +349,9 @@ public class FindDialog extends DialogWrapper {
       gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
       optionsPanel.add(createFilterPanel(),gbConstraints);
 
-      myCbToSkipResultsWhenOneUsage = createCheckbox(FindSettings.getInstance().isSkipResultsWithOneUsage(), FindBundle.message("find.options.skip.results.tab.with.one.usage.checkbox"));
+      myCbToSkipResultsWhenOneUsage = createCheckbox(FindSettings.getInstance().isSkipResultsWithOneUsage(), FindBundle.message("find.options.skip.results.tab.with.one.occurrence.checkbox"));
       optionsPanel.add(myCbToSkipResultsWhenOneUsage, gbConstraints);
-      myCbToSkipResultsWhenOneUsage.setVisible(myModel.isReplaceState());
+      myCbToSkipResultsWhenOneUsage.setVisible(!myModel.isReplaceState());
     }
     else {
       if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
