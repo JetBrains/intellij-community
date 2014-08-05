@@ -172,7 +172,7 @@ public abstract class GithubTest extends GitPlatformTest {
     myAuth = GithubAuthData.createBasicAuth(host, login1, password);
 
     myGitHubSettings = GithubSettings.getInstance();
-    myGitHubSettings.setAuthData(myAuth, false, null);
+    myGitHubSettings.setAuthData(myAuth, false);
 
     myHttpAuthService = (GitHttpAuthTestService)ServiceManager.getService(GitHttpAuthService.class);
 

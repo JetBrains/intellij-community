@@ -99,7 +99,7 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
   }
 
   protected void checkGithubExists() throws IOException {
-    GithubAuthData auth = myGitHubSettings.getAuthData(null);
+    GithubAuthData auth = myGitHubSettings.getAuthData();
     GithubRepoDetailed githubInfo = GithubApiUtil.getDetailedRepoInfo(auth, myLogin1, PROJECT_NAME);
     assertNotNull("GitHub repository does not exist", githubInfo);
   }

@@ -87,7 +87,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       return "";
     }
     url = adjustUrl(url);
-    Pair<GitHttpAuthDataProvider, AuthData> authData = findBestAuthData(url, myModalityState);
+    Pair<GitHttpAuthDataProvider, AuthData> authData = findBestAuthData(url);
     if (authData != null && authData.second.getPassword() != null) {
       String password = authData.second.getPassword();
       myDataProvider = authData.first;
@@ -114,7 +114,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @NotNull
   public String askUsername(@NotNull String url) {
     url = adjustUrl(url);
-    Pair<GitHttpAuthDataProvider, AuthData> authData = findBestAuthData(url, myModalityState);
+    Pair<GitHttpAuthDataProvider, AuthData> authData = findBestAuthData(url);
     String login = null;
     String password = null;
     if (authData != null) {
@@ -223,10 +223,10 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
   // return the first that knows username + password; otherwise return the first that knows just the username
   @Nullable
-  private Pair<GitHttpAuthDataProvider, AuthData> findBestAuthData(@NotNull String url, @Nullable ModalityState modalityState) {
+  private Pair<GitHttpAuthDataProvider, AuthData> findBestAuthData(@NotNull String url) {
     Pair<GitHttpAuthDataProvider, AuthData> candidate = null;
     for (GitHttpAuthDataProvider provider : getProviders()) {
-      AuthData data = provider.getAuthData(url, modalityState);
+      AuthData data = provider.getAuthData(url);
       if (data != null) {
         Pair<GitHttpAuthDataProvider, AuthData> pair = Pair.create(provider, data);
         if (data.getPassword() != null) {
@@ -268,12 +268,12 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     @Nullable
     @Override
-    public AuthData getAuthData(@NotNull String url, @Nullable ModalityState modalityState) {
+    public AuthData getAuthData(@NotNull String url) {
       String userName = getUsername(url);
       String key = makeKey(url, userName);
       final PasswordSafe passwordSafe = PasswordSafe.getInstance();
       try {
-        String password = passwordSafe.getPassword(myProject, PASS_REQUESTER, key, modalityState);
+        String password = passwordSafe.getPassword(myProject, PASS_REQUESTER, key);
         return new AuthData(StringUtil.notNullize(userName), password);
       }
       catch (PasswordSafeException e) {

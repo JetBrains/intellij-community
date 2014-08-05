@@ -176,7 +176,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
         ps.removePassword(project, requestor, key);
       }
       else {
-        String pw = ps.getPassword(project, requestor, key, modalityState);
+        String pw = ps.getPassword(project, requestor, key);
         if (pw != null) {
           return pw;
         }
