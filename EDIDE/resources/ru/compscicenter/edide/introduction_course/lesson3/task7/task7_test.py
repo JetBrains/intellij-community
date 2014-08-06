@@ -4,8 +4,8 @@ from test_helper import run_common_tests, import_file
 def test_value(path):
     file = import_file(path)
     if file.first_half == '\nit is a reall':
-        return "Bravo"
-    return "Remember about string slicing."
+        return "#study_plugin test OK"
+    return "#study_plugin Remember about string slicing."
 
 
 if __name__ == '__main__':
@@ -24,4 +24,4 @@ print (first_half)
     # TODO: get filepath. Let's now assume that we pass it as the last item in command-line
     import sys
     path = sys.argv[-1]
-    test_value(path)
+    print(test_value(path))

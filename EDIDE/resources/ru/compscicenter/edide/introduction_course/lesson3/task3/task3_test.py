@@ -20,4 +20,4 @@ print(p_letter)
     # TODO: get filepath. Let's now assume that we pass it as the last item in command-line
     import sys
     path = sys.argv[-1]
-    test_value(path)
+    print(test_value(path))

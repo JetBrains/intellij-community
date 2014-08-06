@@ -3,9 +3,9 @@ from test_helper import run_common_tests, import_file
 
 def test_value(path):
     file = import_file(path)
-    if file.contains == True:
-        return "Bravo"
-    return "Use 'in' operator for this check."
+    if file.contains:
+        return "#study_plugin test OK"
+    return "#study_plugin Use 'in' operator for this check."
 
 
 if __name__ == '__main__':
@@ -20,4 +20,4 @@ print(contains)
     # TODO: get filepath. Let's now assume that we pass it as the last item in command-line
     import sys
     path = sys.argv[-1]
-    test_value(path)
+    print(test_value(path))

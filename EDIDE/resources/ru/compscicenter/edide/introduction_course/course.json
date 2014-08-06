@@ -1,7 +1,7 @@
 {
   "name": "Introduction to Python",
-  "author": "Ekaterina Tuzova",
-  "description": "Introduction to Python",
+  "description": "Introduction course to Python",
+  "author": "PyCharm",
   "lessons": [
     {
       "name": "Introduction",
@@ -10,6 +10,7 @@
           "name": "Our first program",
           "text": "task1.html",
           "test_file": "task1_test.py",
+          "test_num" : 4,
           "task_files": {
             "helloworld.py": {
               "task_windows": [
@@ -28,6 +29,7 @@
           "name": "Comments",
           "text": "task2.html",
           "test_file": "task2_test.py",
+          "test_num": 4,
           "task_files": {
             "comments.py": {
               "task_windows": [
@@ -51,6 +53,7 @@
           "name": "Variable definition",
           "text": "task1.html",
           "test_file": "task1_test.py",
+          "test_num": 4,
           "task_files": {
             "variable_definition.py": {
               "task_windows": [
@@ -69,6 +72,7 @@
           "name": "Undefined variable",
           "text": "task2.html",
           "test_file": "task2_test.py",
+          "test_num": 3,
           "task_files": {
             "undefined_variable.py": {
               "task_windows": [
@@ -87,6 +91,7 @@
           "name": "Variable types",
           "text": "task3.html",
           "test_file": "task3_test.py",
+          "test_num": 4,
           "task_files": {
             "variable_type.py": {
               "task_windows": [
@@ -105,6 +110,7 @@
           "name": "Arithmetic Operators",
           "text": "task4.html",
           "test_file": "task4_test.py",
+          "test_num": 5,
           "task_files": {
             "arithmetic_operators.py": {
               "task_windows": [
@@ -130,6 +136,7 @@
           "name": "Assignments",
           "text": "task5.html",
           "test_file": "task5_test.py",
+          "test_num": 5,
           "task_files": {
             "assignments.py": {
               "task_windows": [
@@ -148,6 +155,7 @@
           "name": "Boolean operators",
           "text": "task6.html",
           "test_file": "task6_test.py",
+          "test_num": 5,
           "task_files": {
             "boolean_operators.py": {
               "task_windows": [
@@ -166,6 +174,7 @@
           "name": "Comparison operators",
           "text": "task7.html",
           "test_file": "task7_test.py",
+          "test_num": 5,
           "task_files": {
             "comparison_operators.py": {
               "task_windows": [
@@ -190,6 +199,7 @@
           "name": "Concatenation",
           "text": "task1.html",
           "test_file": "task1_test.py",
+          "test_num": 5,
           "task_files": {
             "concatenation.py": {
               "name": "concatenation.py",
@@ -209,6 +219,7 @@
           "name": "String multiplication",
           "text": "task2.html",
           "test_file": "task2_test.py",
+          "test_num": 5,
           "task_files": {
             "string_multiplication.py": {
               "task_windows": [
@@ -227,6 +238,7 @@
           "name": "String indexing",
           "text": "task3.html",
           "test_file": "task3_test.py",
+          "test_num": 5,
           "task_files": {
             "string_indexing.py": {
               "task_windows": [
@@ -245,6 +257,7 @@
           "name": "String negative indexing",
           "text": "task4.html",
           "test_file": "task4_test.py",
+          "test_num": 5,
           "task_files": {
             "negative_indexing.py": {
               "name": "negative_indexing.py",
@@ -264,6 +277,7 @@
           "name": "String slicing",
           "text": "task5.html",
           "test_file": "task5_test.py",
+          "test_num": 5,
           "task_files": {
             "slicing.py": {
               "name": "slicing.py",
@@ -283,6 +297,7 @@
           "name": "In operator",
           "text": "task6.html",
           "test_file": "task6_test.py",
+          "test_num": 5,
           "task_files": {
             "in_operator.py": {
               "name": "in_operator.py",
@@ -302,6 +317,7 @@
           "name": "String length",
           "text": "task7.html",
           "test_file": "task7_test.py",
+          "test_num": 5,
           "task_files": {
             "len_function.py": {
               "name": "len_function.py",
