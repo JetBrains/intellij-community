@@ -1,9 +1,5 @@
 package ru.compscicenter.edide.course;
 
-/**
- * author: liana
- * data: 8/5/14.
- */
 public class UserTest {
   private String input;
   private String output;
