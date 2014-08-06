@@ -43,6 +43,7 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
    * @throws PasswordSafeException in case of problems with access to the password database.
    * @throws IllegalStateException if the method is called from the read action.
    */
+  @NotNull
   protected abstract byte[] key(@Nullable Project project, @NotNull Class requestor) throws PasswordSafeException;
 
   @Nullable

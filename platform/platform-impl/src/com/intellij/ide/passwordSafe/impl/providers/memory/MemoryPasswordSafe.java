@@ -57,6 +57,7 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
     return Registry.intValue("passwordSafe.memorySafe.ttl");
   }
 
+  @NotNull
   @Override
   protected byte[] key(Project project, @NotNull Class requestor) {
     if (key.get() == null) {
