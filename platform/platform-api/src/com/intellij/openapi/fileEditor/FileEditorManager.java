@@ -30,7 +30,7 @@ public abstract class FileEditorManager {
 
   public static final Key<Boolean> USE_CURRENT_WINDOW = Key.create("OpenFile.searchForOpen");
 
-  public static FileEditorManager getInstance(Project project) {
+  public static FileEditorManager getInstance(@NotNull Project project) {
     return project.getComponent(FileEditorManager.class);
   }
 
