@@ -62,15 +62,17 @@ public class PyCallerFunctionTreeStructure extends HierarchyTreeStructure {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
-    final SearchScope searchScope = getSearchScope(myScopeType, function.getContainingClass());
-    final Set<PyFunction> functionsToFind = new HashSet<PyFunction>();
-    final Collection<PsiElement> superMethods = PySuperMethodsSearch.search(function, true).findAll();
-    functionsToFind.add(function);
-    for (PsiElement superMethod : superMethods) {
-      if (superMethod instanceof PyFunction) {
-        functionsToFind.add((PyFunction)superMethod);
-      }
-    }
+    PsiElement baseClass = function.getContainingClass();
+
+    //final SearchScope searchScope = getSearchScope(myScopeType, function.getContainingClass());
+    //final Set<PyFunction> functionsToFind = new HashSet<PyFunction>();
+    //final Collection<PsiElement> superMethods = PySuperMethodsSearch.search(function, true).findAll();
+    //functionsToFind.add(function);
+    //for (PsiElement superMethod : superMethods) {
+    //  if (superMethod instanceof PyFunction) {
+    //    functionsToFind.add((PyFunction)superMethod);
+    //  }
+    //}
 
     final List<PyFunction> callers = Lists.newArrayList();
     final HashMap<PyFunction, PyCallHierarchyNodeDescriptor> callerToDescriptorMap = new HashMap<PyFunction, PyCallHierarchyNodeDescriptor>();
@@ -84,9 +86,9 @@ public class PyCallerFunctionTreeStructure extends HierarchyTreeStructure {
 
       if (element instanceof PyArgumentList) {
         PyCallExpression callExpression = (PyCallExpression)element.getParent();
-        PsiElement def = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
-        if (def instanceof PyFunction) {
-          descriptors.add(new PyCallHierarchyNodeDescriptor(myProject, null, def, false, false));
+        PsiElement caller = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
+        if (caller instanceof PyFunction) {
+          callers.add((PyFunction)caller);
         }
       }
 
@@ -124,6 +126,8 @@ public class PyCallerFunctionTreeStructure extends HierarchyTreeStructure {
     }
 
     for (PyFunction caller: callers) {
+      if (!isInScope(baseClass, caller, myScopeType)) continue;
+
       PyCallHierarchyNodeDescriptor callerDescriptor = callerToDescriptorMap.get(caller);
       if (callerDescriptor == null) {
         callerDescriptor = new PyCallHierarchyNodeDescriptor(myProject, null, caller, false, false);

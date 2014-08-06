@@ -57,6 +57,8 @@ public class PyCalleeFunctionTreeStructure extends HierarchyTreeStructure {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
+    PsiElement baseClass = function.getContainingClass();
+
     final List<PyFunction> callees = Lists.newArrayList();
     final Map<PyFunction, PyCallHierarchyNodeDescriptor> calleeToDescriptorMap = new HashMap<PyFunction, PyCallHierarchyNodeDescriptor>();
     final List<PyCallHierarchyNodeDescriptor> descriptors = Lists.newArrayList();
@@ -85,6 +87,8 @@ public class PyCalleeFunctionTreeStructure extends HierarchyTreeStructure {
     }
 
     for (PyFunction callee: callees) {
+      if (!isInScope(baseClass, callee, myScopeType)) continue;
+
       PyCallHierarchyNodeDescriptor calleeDescriptor = calleeToDescriptorMap.get(callee);
       if (calleeDescriptor == null) {
         calleeDescriptor = new PyCallHierarchyNodeDescriptor(myProject, null, callee, false, false);
