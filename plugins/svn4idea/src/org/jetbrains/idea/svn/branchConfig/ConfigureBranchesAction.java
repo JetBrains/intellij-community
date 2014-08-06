@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.actions;
+package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -28,7 +27,6 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import icons.SvnIcons;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.dialogs.BranchConfigurationDialog;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 
 public class ConfigureBranchesAction extends AnAction implements DumbAware {

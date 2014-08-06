@@ -27,6 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.actions.AbstractShowPropertiesDiffAction;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.lock.Lock;
 import org.jetbrains.idea.svn.status.Status;

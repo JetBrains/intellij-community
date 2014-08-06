@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn;
+package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
@@ -23,9 +23,6 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.branchConfig.InfoStorage;
-import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
-import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 
 import java.io.DataInput;
 import java.io.DataOutput;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.idea.svn;
+package org.jetbrains.idea.svn.branchConfig;
 
 import org.jetbrains.annotations.NotNull;
 

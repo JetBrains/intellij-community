@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.actions;
+package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -30,13 +30,10 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
-import org.jetbrains.idea.svn.branchConfig.BranchesLoadRunnable;
-import org.jetbrains.idea.svn.branchConfig.InfoReliability;
-import org.jetbrains.idea.svn.branchConfig.NewRootBunch;
-import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
-import org.jetbrains.idea.svn.dialogs.BranchConfigurationDialog;
-import org.jetbrains.idea.svn.integrate.SvnBranchItem;
+import org.jetbrains.idea.svn.RootUrlInfo;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnFileUrlMapping;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 

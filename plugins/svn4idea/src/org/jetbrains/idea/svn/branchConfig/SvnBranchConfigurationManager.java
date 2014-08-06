@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.idea.svn;
+package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,8 +36,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.branchConfig.*;
-import org.jetbrains.idea.svn.integrate.SvnBranchItem;
+import org.jetbrains.idea.svn.SvnVcs;
 
 import java.io.File;
 import java.util.*;
@@ -53,7 +52,7 @@ import java.util.*;
     )}
 )
 public class SvnBranchConfigurationManager implements PersistentStateComponent<SvnBranchConfigurationManager.ConfigurationBean> {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnBranchConfigurationManager");
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager");
   private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
   private final SvnLoadedBrachesStorage myStorage;

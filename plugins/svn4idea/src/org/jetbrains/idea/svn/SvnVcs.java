@@ -68,6 +68,7 @@ import org.jetbrains.idea.svn.api.CmdClientFactory;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.SvnKitClientFactory;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
+import org.jetbrains.idea.svn.branchConfig.SvnLoadedBrachesStorage;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;

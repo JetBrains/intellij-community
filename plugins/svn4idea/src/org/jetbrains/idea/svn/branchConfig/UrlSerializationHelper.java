@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBranchConfiguration;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
