@@ -102,14 +102,14 @@ public class GitNewResetDialog extends DialogWrapper {
   private static String prepareDescription(@NotNull Project project, @NotNull Map<GitRepository, VcsFullCommitDetails> commits) {
     if (commits.size() == 1 && !isMultiRepo(project)) {
       Map.Entry<GitRepository, VcsFullCommitDetails> entry = commits.entrySet().iterator().next();
-      return String.format("Reset %s to %s", getSourceText(entry.getKey()), getTargetText(entry.getValue()));
+      return String.format("%s -> %s", getSourceText(entry.getKey()), getTargetText(entry.getValue()));
     }
 
-    StringBuilder desc = new StringBuilder("Reset ");
+    StringBuilder desc = new StringBuilder("");
     for (Map.Entry<GitRepository, VcsFullCommitDetails> entry : commits.entrySet()) {
       GitRepository repository = entry.getKey();
       VcsFullCommitDetails commit = entry.getValue();
-      desc.append(String.format("%s in %s to %s<br/>", getSourceText(repository),
+      desc.append(String.format("%s in %s -> %s<br/>", getSourceText(repository),
                                 getShortRepositoryName(repository), getTargetText(commit)));
     }
     return desc.toString();
