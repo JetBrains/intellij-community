@@ -1,10 +1,13 @@
 package ru.compscicenter.edide;
 
+import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.UIUtil;
 import ru.compscicenter.edide.editor.StudyEditor;
@@ -44,12 +47,12 @@ public class StudyUtils {
       reader = new BufferedReader(new InputStreamReader(new FileInputStream(inputFile)));
       String line;
       while ((line = reader.readLine()) != null) {
-        taskText.append(line);
+        taskText.append(line).append("\n");
         if (wrapHTML) {
           taskText.append("<br>");
         }
       }
-      return UIUtil.toHtml(taskText.toString());
+      return wrapHTML ? UIUtil.toHtml(taskText.toString()) : taskText.toString();
     }
     catch (IOException e) {
       e.printStackTrace();
@@ -78,5 +81,11 @@ public class StudyUtils {
     ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW).getContentManager().removeAllContents(false);
     StudyToolWindowFactory factory =  new StudyToolWindowFactory();
     factory.createToolWindowContent(project, ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW));
+  }
+
+  public  static void synchronize() {
+    FileDocumentManager.getInstance().saveAllDocuments();
+    SaveAndSyncHandlerImpl.refreshOpenFiles();
+    VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
   }
 }

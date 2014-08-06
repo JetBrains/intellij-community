@@ -19,6 +19,7 @@ import ru.compscicenter.edide.editor.StudyEditor;
 public class NextWindowAction extends DumbAwareAction {
   public static final String ACTION_ID = "NextWindow";
   public static final String SHORTCUT = "ctrl pressed PERIOD";
+  public static final String SHORTCUT2 = "ctrl pressed ENTER";
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();

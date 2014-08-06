@@ -26,4 +26,5 @@ public class StudyIcons {
   public static final Icon Refresh = load("/icons/refresh.png");
   public static final Icon Playground = load("/icons/playground.png");
   public static final Icon ErrorIcon = load("/icons/fatalError.png");
+  public static final Icon Add = load("/icons/add.png");
 }

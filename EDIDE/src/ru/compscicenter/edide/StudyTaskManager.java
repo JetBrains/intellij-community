@@ -115,6 +115,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
               addShortcut(NextWindowAction.SHORTCUT, NextWindowAction.ACTION_ID);
               addShortcut(PrevWindowAction.SHORTCUT, PrevWindowAction.ACTION_ID);
               addShortcut(ShowHintAction.SHORTCUT, ShowHintAction.ACTION_ID);
+              addShortcut(NextWindowAction.SHORTCUT2, NextWindowAction.ACTION_ID);
             }
           }
         });
