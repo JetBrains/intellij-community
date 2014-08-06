@@ -29,6 +29,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.debugger.PyHierarchyCallCacheManager;
 import com.jetbrains.python.debugger.PyHierarchyCallerData;
@@ -60,6 +61,7 @@ public class PyCallerFunctionTreeStructure extends HierarchyTreeStructure {
     if (function == null || nodeDescriptor == null) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
+
     final SearchScope searchScope = getSearchScope(myScopeType, function.getContainingClass());
     final Set<PyFunction> functionsToFind = new HashSet<PyFunction>();
     final Collection<PsiElement> superMethods = PySuperMethodsSearch.search(function, true).findAll();
@@ -70,7 +72,9 @@ public class PyCallerFunctionTreeStructure extends HierarchyTreeStructure {
       }
     }
 
-    List<PyCallHierarchyNodeDescriptor> descriptors = new ArrayList<PyCallHierarchyNodeDescriptor>();
+    final List<PyFunction> callers = Lists.newArrayList();
+    final HashMap<PyFunction, PyCallHierarchyNodeDescriptor> callerToDescriptorMap = new HashMap<PyFunction, PyCallHierarchyNodeDescriptor>();
+    final List<PyCallHierarchyNodeDescriptor> descriptors = new ArrayList<PyCallHierarchyNodeDescriptor>();
 
     final List<UsageInfo> usages = Lists.newArrayList();
     usages.addAll(PyRefactoringUtil.findUsages(function, false));
@@ -87,9 +91,9 @@ public class PyCallerFunctionTreeStructure extends HierarchyTreeStructure {
       }
 
       if (element instanceof PyCallExpression) {
-        PsiElement functionDef = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-        if (functionDef instanceof PyFunction) {
-          descriptors.add(new PyCallHierarchyNodeDescriptor(myProject, null, functionDef, false, false));
+        PsiElement caller = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+        if (caller instanceof PyFunction) {
+          callers.add((PyFunction)caller);
         }
       }
 
@@ -99,9 +103,9 @@ public class PyCallerFunctionTreeStructure extends HierarchyTreeStructure {
     }
 
     PyHierarchyCallCacheManager callCacheManager = PyHierarchyCallCacheManager.getInstance(myProject);
-    Object[] callers = callCacheManager.findFunctionCallers(function);
-    if (callers.length > 0) {
-      for (Object callerData: callers) {
+    Object[] dynamicCallers = callCacheManager.findFunctionCallers(function);
+    if (dynamicCallers.length > 0) {
+      for (Object callerData: dynamicCallers) {
         PyHierarchyCallerData data = (PyHierarchyCallerData)callerData;
         VirtualFile callerFile = LocalFileSystem.getInstance().findFileByPath(data.getCallerFile());
         if (callerFile == null) {
@@ -114,8 +118,17 @@ public class PyCallerFunctionTreeStructure extends HierarchyTreeStructure {
         PyFile pyCallerFile = (PyFile)file;
         PsiElement caller = pyCallerFile.getElementNamed(data.getCallerName());
         if (caller instanceof PyFunction) {
-          descriptors.add(new PyCallHierarchyNodeDescriptor(myProject, null, (PyFunction)caller, false, false));
+          callers.add((PyFunction)caller);
         }
+      }
+    }
+
+    for (PyFunction caller: callers) {
+      PyCallHierarchyNodeDescriptor callerDescriptor = callerToDescriptorMap.get(caller);
+      if (callerDescriptor == null) {
+        callerDescriptor = new PyCallHierarchyNodeDescriptor(myProject, null, caller, false, false);
+        callerToDescriptorMap.put(caller, callerDescriptor);
+        descriptors.add(callerDescriptor);
       }
     }
 

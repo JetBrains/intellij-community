@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.hierarchy.call;
 
+import com.google.common.collect.Lists;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
@@ -29,15 +30,14 @@ import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.debugger.PyHierarchyCallCacheManager;
 import com.jetbrains.python.debugger.PyHierarchyCalleeData;
 import com.jetbrains.python.debugger.PyHierarchyCallerData;
+import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 
 public class PyCalleeFunctionTreeStructure extends HierarchyTreeStructure {
@@ -57,12 +57,16 @@ public class PyCalleeFunctionTreeStructure extends HierarchyTreeStructure {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
-    List<PyCallHierarchyNodeDescriptor> descriptors = new ArrayList<PyCallHierarchyNodeDescriptor>();
+    final List<PyFunction> callees = Lists.newArrayList();
+    final Map<PyFunction, PyCallHierarchyNodeDescriptor> calleeToDescriptorMap = new HashMap<PyFunction, PyCallHierarchyNodeDescriptor>();
+    final List<PyCallHierarchyNodeDescriptor> descriptors = Lists.newArrayList();
+
+    findCallees(function, callees);
 
     PyHierarchyCallCacheManager callCacheManager = PyHierarchyCallCacheManager.getInstance(myProject);
-    Object[] callees = callCacheManager.findFunctionCallees(function);
-    if (callees.length > 0) {
-      for (Object calleeData: callees) {
+    Object[] dynamicCallees = callCacheManager.findFunctionCallees(function);
+    if (dynamicCallees.length > 0) {
+      for (Object calleeData: dynamicCallees) {
         PyHierarchyCalleeData data = (PyHierarchyCalleeData)calleeData;
         VirtualFile calleeFile = LocalFileSystem.getInstance().findFileByPath(data.getCalleeFile());
         if (calleeFile == null) {
@@ -75,11 +79,34 @@ public class PyCalleeFunctionTreeStructure extends HierarchyTreeStructure {
         PyFile pyCalleeFile = (PyFile)file;
         PsiElement callee = pyCalleeFile.getElementNamed(data.getCalleeName());
         if (callee instanceof PyFunction) {
-          descriptors.add(new PyCallHierarchyNodeDescriptor(myProject, null, callee, false, false));
+          callees.add((PyFunction)callee);
         }
       }
     }
 
+    for (PyFunction callee: callees) {
+      PyCallHierarchyNodeDescriptor calleeDescriptor = calleeToDescriptorMap.get(callee);
+      if (calleeDescriptor == null) {
+        calleeDescriptor = new PyCallHierarchyNodeDescriptor(myProject, null, callee, false, false);
+        calleeToDescriptorMap.put(callee, calleeDescriptor);
+        descriptors.add(calleeDescriptor);
+      }
+    }
+
     return ArrayUtil.toObjectArray(descriptors);
+  }
+
+  private static void findCallees(final PsiElement element, List<PyFunction> callees) {
+    final PsiElement[] children = element.getChildren();
+    for (PsiElement child: children) {
+      findCallees(child, callees);
+      if (child instanceof PyCallExpression) {
+        PyCallExpression callExpression = (PyCallExpression)child;
+        PsiElement function = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
+        if (function instanceof PyFunction) {
+          callees.add((PyFunction)function);
+        }
+      }
+    }
   }
 }
