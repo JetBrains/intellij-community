@@ -26,15 +26,13 @@ import org.jetbrains.annotations.NotNull;
 import ru.compscicenter.edide.StudyDocumentListener;
 import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.StudyUtils;
-import ru.compscicenter.edide.course.StudyStatus;
-import ru.compscicenter.edide.course.Task;
-import ru.compscicenter.edide.course.TaskFile;
-import ru.compscicenter.edide.course.TaskWindow;
+import ru.compscicenter.edide.course.*;
 import ru.compscicenter.edide.editor.StudyEditor;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
+import java.util.Map;
 
 public class CheckAction extends DumbAwareAction {
 
@@ -55,6 +53,10 @@ public class CheckAction extends DumbAwareAction {
       File testRunner = new File(myTaskDir.getPath(), myTask.getTestFile());
       GeneralCommandLine commandLine = new GeneralCommandLine();
       commandLine.setWorkDirectory(myTaskDir.getPath());
+      final Map<String, String> env = commandLine.getEnvironment();
+      final VirtualFile courseDir = project.getBaseDir().findChild(Course.COURSE_DIR);
+      if (courseDir != null)
+        env.put("PYTHONPATH", courseDir.getPath());
       if (sdk != null) {
         String pythonPath = sdk.getHomePath();
         if (pythonPath != null) {
@@ -133,7 +135,7 @@ public class CheckAction extends DumbAwareAction {
                   final StudyTestRunner testRunner = new StudyTestRunner(currentTask, taskDir);
                   Process testProcess = null;
                   try {
-                    testProcess = testRunner.launchTests(project, openedFile.getNameWithoutExtension());
+                    testProcess = testRunner.launchTests(project, openedFile.getPath());
                   }
                   catch (ExecutionException e) {
                     LOG.error(e);
