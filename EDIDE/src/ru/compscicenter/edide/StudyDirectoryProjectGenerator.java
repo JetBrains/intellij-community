@@ -115,7 +115,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
       String fileName = file.getName();
       String unzippedName = fileName.substring(0, fileName.indexOf("."));
       File courseDir = new File(myCoursesDir, unzippedName);
-      ZipUtil.unzip(null, myCoursesDir, file, null, null, true);
+      ZipUtil.unzip(null, courseDir, file, null, null, true);
       CourseInfo courseName = addCourse(myCourses, courseDir);
       flushCache();
       return courseName;
