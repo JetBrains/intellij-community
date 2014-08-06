@@ -74,7 +74,7 @@ public class ProgramRunnerUtil {
   }
 
   public static void executeConfiguration(Project project,
-                                          DataContext context,
+                                          @Nullable DataContext context,
                                           @Nullable RunnerAndConfigurationSettings configuration,
                                           Executor executor,
                                           ExecutionTarget target,
