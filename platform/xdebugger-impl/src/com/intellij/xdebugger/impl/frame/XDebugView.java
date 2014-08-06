@@ -16,13 +16,36 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.util.SingleAlarm;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
-public interface XDebugView extends Disposable {
-  enum SessionEvent {PAUSED, BEFORE_RESUME, RESUMED, STOPPED, FRAME_CHANGED, SETTINGS_CHANGED}
+public abstract class XDebugView implements Disposable {
+  public enum SessionEvent {PAUSED, BEFORE_RESUME, RESUMED, STOPPED, FRAME_CHANGED, SETTINGS_CHANGED}
 
-  void processSessionEvent(@NotNull SessionEvent event);
+  private final SingleAlarm myClearAlarm;
+  private static final int VIEW_CLEAR_DELAY = 100; //ms
+
+  public XDebugView(Disposable disposable) {
+    myClearAlarm = new SingleAlarm(new Runnable() {
+      @Override
+      public void run() {
+        clear();
+      }
+    }, VIEW_CLEAR_DELAY, disposable);
+  }
+
+  protected final void requestClear() {
+    myClearAlarm.cancelAndRequest();
+  }
+
+  protected final void cancelClear() {
+    myClearAlarm.cancel();
+  }
+
+  protected abstract void clear();
+
+  public abstract void processSessionEvent(@NotNull SessionEvent event);
 }

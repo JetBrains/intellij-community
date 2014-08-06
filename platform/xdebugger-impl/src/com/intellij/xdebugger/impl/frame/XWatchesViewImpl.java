@@ -64,7 +64,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class XWatchesViewImpl implements DnDNativeTarget, XWatchesView, XDebugView {
+public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWatchesView {
   private final XDebuggerTreePanel myTreePanel;
   private XDebuggerTreeState myTreeState;
   private XDebuggerTreeRestorer myTreeRestorer;
@@ -75,6 +75,7 @@ public class XWatchesViewImpl implements DnDNativeTarget, XWatchesView, XDebugVi
   private boolean myRebuildNeeded;
 
   public XWatchesViewImpl(@NotNull final XDebugSessionImpl session) {
+    super(session.getProject());
     mySession = session;
     myTreePanel = new XDebuggerTreePanel(session.getProject(), session.getDebugProcess().getEditorsProvider(), this, null,
                                          XDebuggerActions.WATCHES_TREE_POPUP_GROUP, ((XDebugSessionImpl)session).getValueMarkers());
@@ -269,6 +270,7 @@ public class XWatchesViewImpl implements DnDNativeTarget, XWatchesView, XDebugVi
     }
 
     if (stackFrame != null) {
+      cancelClear();
       tree.setSourcePosition(stackFrame.getSourcePosition());
       myRootNode.updateWatches(stackFrame.getEvaluator());
       if (myTreeState != null) {
@@ -276,9 +278,13 @@ public class XWatchesViewImpl implements DnDNativeTarget, XWatchesView, XDebugVi
       }
     }
     else {
-      tree.setSourcePosition(null);
-      myRootNode.updateWatches(null);
+      requestClear();
     }
+  }
+
+  protected void clear() {
+    getTree().setSourcePosition(null);
+    myRootNode.updateWatches(null);
   }
 
   public XDebuggerTree getTree() {
