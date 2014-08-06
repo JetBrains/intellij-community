@@ -118,7 +118,7 @@ public class GitNewResetDialog extends DialogWrapper {
   @NotNull
   private static String getTargetText(@NotNull VcsFullCommitDetails commit) {
     String commitMessage = StringUtil.shortenTextWithEllipsis(commit.getSubject(), 20, 0);
-    return "<code>" + commit.getId().toShortString() + " \"" + commitMessage + "\" by " + commit.getAuthor().getName() + "</code>";
+    return String.format("<code>%s \"%s\"</code> by <code>%s</code>", commit.getId().toShortString(), commitMessage, commit.getAuthor().getName());
   }
 
   @NotNull
