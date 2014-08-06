@@ -341,8 +341,8 @@ public class JavaStackFrame extends XStackFrame {
 
   private JavaValue createArgumentValue(int index, Value value, String name, EvaluationContextImpl evaluationContext) {
     ArgumentValueDescriptorImpl descriptor = myNodeManager.getArgumentValueDescriptor(null, index, value, name);
+    // setContext is required to calculate correct name
     descriptor.setContext(evaluationContext);
-    descriptor.updateRepresentation(evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
     return JavaValue.create(descriptor, evaluationContext, myNodeManager);
   }
 
