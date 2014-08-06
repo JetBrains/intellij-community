@@ -262,7 +262,7 @@ public class XDebugSessionImpl implements XDebugSession {
     return myCurrentPosition;
   }
 
-  public XDebugSessionTab init(final XDebugProcess process, @NotNull final XDebugSessionData sessionData) {
+  public XDebugSessionTab init(@NotNull XDebugProcess process, @NotNull XDebugSessionData sessionData, @Nullable RunContentDescriptor contentToReuse) {
     LOG.assertTrue(myDebugProcess == null);
     myDebugProcess = process;
     mySessionData = sessionData;
@@ -280,7 +280,7 @@ public class XDebugSessionImpl implements XDebugSession {
     //todo[nik] make 'createConsole()' method return ConsoleView
     myConsoleView = (ConsoleView)myDebugProcess.createConsole();
     if (!myShowTabOnSuspend) {
-      initSessionTab();
+      initSessionTab(contentToReuse);
     }
 
     return mySessionTab;
@@ -319,8 +319,8 @@ public class XDebugSessionImpl implements XDebugSession {
     return mySessionTab.getUi();
   }
 
-  private void initSessionTab() {
-    mySessionTab = new XDebugSessionTab(myProject, this, myIcon, myEnvironment, myRunner);
+  private void initSessionTab(@Nullable RunContentDescriptor contentToReuse) {
+    mySessionTab = new XDebugSessionTab(myProject, this, myIcon, myEnvironment, myRunner, contentToReuse);
     myDebugProcess.sessionInitialized();
   }
 
@@ -799,7 +799,7 @@ public class XDebugSessionImpl implements XDebugSession {
       public void run() {
         if (myShowTabOnSuspend) {
           myShowTabOnSuspend = false;
-          initSessionTab();
+          initSessionTab(null);
           showSessionTab();
         }
         if (myCurrentPosition != null) {

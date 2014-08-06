@@ -206,8 +206,9 @@ public class XDebuggerManagerImpl extends XDebuggerManager
     return session;
   }
 
-  private XDebugSessionImpl startSession(final RunContentDescriptor contentToReuse, final XDebugProcessStarter processStarter,
-                                         final XDebugSessionImpl session) throws ExecutionException {
+  private XDebugSessionImpl startSession(@Nullable RunContentDescriptor contentToReuse,
+                                         @NotNull XDebugProcessStarter processStarter,
+                                         @NotNull XDebugSessionImpl session) throws ExecutionException {
     XDebugProcess process = processStarter.start(session);
     myProject.getMessageBus().syncPublisher(TOPIC).processStarted(process);
 
@@ -222,7 +223,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
       ((XDebugProcessConfiguratorStarter)processStarter).configure(oldSessionData);
     }
 
-    session.init(process, oldSessionData);
+    session.init(process, oldSessionData, contentToReuse);
 
     mySessions.put(session.getDebugProcess().getProcessHandler(), session);
 
