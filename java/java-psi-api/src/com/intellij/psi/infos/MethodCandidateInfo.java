@@ -130,7 +130,6 @@ public class MethodCandidateInfo extends CandidateInfo{
           final CurrentCandidateProperties properties = new CurrentCandidateProperties(method, substitutor, isVarargs(), true);
           final CurrentCandidateProperties alreadyThere = map.put(getMarkerList(), properties);
           try {
-            properties.setSubstitutor(substitutor);
             PsiType[] argumentTypes = getArgumentTypes();
             if (argumentTypes == null) {
               return ApplicabilityLevel.NOT_APPLICABLE;
