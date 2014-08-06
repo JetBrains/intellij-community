@@ -15,28 +15,27 @@
  */
 package org.jetbrains.idea.svn.branchConfig;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
-import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,71 +50,92 @@ public class DefaultBranchConfigInitializer implements Runnable {
   @NonNls private static final String DEFAULT_BRANCHES_NAME = "branches";
   @NonNls private static final String DEFAULT_TAGS_NAME = "tags";
 
-  private final Project myProject;
-  private final NewRootBunch myBunch;
-  private final VirtualFile myRoot;
+  @NotNull private final Project myProject;
+  @NotNull private final NewRootBunch myBunch;
+  @NotNull private final VirtualFile myRoot;
 
-  public DefaultBranchConfigInitializer(final Project project, final NewRootBunch bunch, final VirtualFile root) {
+  public DefaultBranchConfigInitializer(@NotNull Project project, @NotNull NewRootBunch bunch, @NotNull VirtualFile root) {
     myProject = project;
     myRoot = root;
     myBunch = bunch;
   }
 
   public void run() {
-    final SvnBranchConfigurationNew result = loadDefaultConfiguration();
-    if (result != null) {
-      final Application application = ApplicationManager.getApplication();
-      for (String url : result.getBranchUrls()) {
-        application.executeOnPooledThread(new BranchesLoadRunnable(myProject, myBunch, url, InfoReliability.defaultValues, myRoot, null,
-                                                                   true));
+    SvnBranchConfigurationNew configuration = getDefaultConfiguration();
+
+    if (configuration != null) {
+      for (String url : configuration.getBranchUrls()) {
+        ApplicationManager.getApplication()
+          .executeOnPooledThread(new BranchesLoadRunnable(myProject, myBunch, url, InfoReliability.defaultValues, myRoot, null, true));
       }
-      myBunch.updateForRoot(myRoot, new InfoStorage<SvnBranchConfigurationNew>(result, InfoReliability.defaultValues), null);
+
+      myBunch.updateForRoot(myRoot, new InfoStorage<SvnBranchConfigurationNew>(configuration, InfoReliability.defaultValues), null);
     }
   }
 
   @Nullable
-  public SvnBranchConfigurationNew loadDefaultConfiguration() {
-    try {
-      final SvnVcs vcs = SvnVcs.getInstance(myProject);
+  public SvnBranchConfigurationNew getDefaultConfiguration() {
+    SvnBranchConfigurationNew result = null;
+    SvnVcs vcs = SvnVcs.getInstance(myProject);
+    SVNURL rootUrl = SvnUtil.getUrl(vcs, VfsUtilCore.virtualToIoFile(myRoot));
 
-      File rootFile = new File(myRoot.getPath());
-      final Info info = vcs.getInfo(rootFile);
-      if (info == null || info.getURL() == null) {
-        LOG.info("Directory is not a working copy: " + myRoot.getPresentableUrl());
-        return null;
+    if (rootUrl != null) {
+      try {
+        result = getDefaultConfiguration(vcs, rootUrl);
       }
-      SVNURL baseUrl = info.getURL();
-
-      final SvnBranchConfigurationNew result = new SvnBranchConfigurationNew();
-      result.setTrunkUrl(baseUrl.toString());
-      while (true) {
-        final String s = SVNPathUtil.tail(baseUrl.getPath());
-        if (s.equalsIgnoreCase(DEFAULT_TRUNK_NAME) || s.equalsIgnoreCase(DEFAULT_BRANCHES_NAME) || s.equalsIgnoreCase(DEFAULT_TAGS_NAME)) {
-          SVNURL rootPath = baseUrl.removePathTail();
-          SvnTarget target = SvnTarget.fromURL(rootPath);
-
-          vcs.getFactory(target).createBrowseClient().list(target, SVNRevision.HEAD, Depth.IMMEDIATES, createHandler(result, rootPath));
-          break;
-        }
-        if (SVNPathUtil.removeTail(baseUrl.getPath()).length() == 0) {
-          break;
-        }
-        baseUrl = baseUrl.removePathTail();
+      catch (SVNException e) {
+        LOG.info(e);
       }
-      return result;
+      catch (VcsException e) {
+        LOG.info(e);
+      }
     }
-    catch (SVNException e) {
-      LOG.info(e);
-      return null;
+    else {
+      LOG.info("Directory is not a working copy: " + myRoot.getPresentableUrl());
     }
-    catch (VcsException e) {
-      LOG.info(e);
-      return null;
-    }
+
+    return result;
   }
 
   @NotNull
-  private static DirectoryEntryConsumer createHandler(final SvnBranchConfigurationNew result, final SVNURL rootPath) {
+  private static SvnBranchConfigurationNew getDefaultConfiguration(@NotNull SvnVcs vcs, @NotNull SVNURL url)
+    throws SVNException, VcsException {
+    SvnBranchConfigurationNew result = new SvnBranchConfigurationNew();
+    result.setTrunkUrl(url.toString());
+
+    SVNURL branchLocationsParent = getBranchLocationsParent(url);
+    if (branchLocationsParent != null) {
+      SvnTarget target = SvnTarget.fromURL(branchLocationsParent);
+
+      vcs.getFactory(target).createBrowseClient().list(target, SVNRevision.HEAD, Depth.IMMEDIATES, createHandler(result, target.getURL()));
+    }
+
+    return result;
+  }
+
+  @Nullable
+  private static SVNURL getBranchLocationsParent(@NotNull SVNURL url) throws SVNException {
+    while (!hasEmptyName(url) && !hasDefaultName(url)) {
+      url = url.removePathTail();
+    }
+
+    return hasDefaultName(url) ? url.removePathTail() : null;
+  }
+
+  private static boolean hasEmptyName(@NotNull SVNURL url) {
+    return StringUtil.isEmpty(SVNPathUtil.tail(url.getPath()));
+  }
+
+  private static boolean hasDefaultName(@NotNull SVNURL url) {
+    String name = SVNPathUtil.tail(url.getPath());
+
+    return name.equalsIgnoreCase(DEFAULT_TRUNK_NAME) ||
+           name.equalsIgnoreCase(DEFAULT_BRANCHES_NAME) ||
+           name.equalsIgnoreCase(DEFAULT_TAGS_NAME);
+  }
+
+  @NotNull
+  private static DirectoryEntryConsumer createHandler(@NotNull final SvnBranchConfigurationNew result, @NotNull final SVNURL rootPath) {
     return new DirectoryEntryConsumer() {
 
       @Override
