@@ -102,7 +102,7 @@ public class GitNewResetDialog extends DialogWrapper {
   private static String prepareDescription(@NotNull Project project, @NotNull Map<GitRepository, VcsFullCommitDetails> commits) {
     if (commits.size() == 1 && !isMultiRepo(project)) {
       Map.Entry<GitRepository, VcsFullCommitDetails> entry = commits.entrySet().iterator().next();
-      return "Reset " + getSourceText(entry.getKey()) + " to " + getTargetText(entry.getValue());
+      return String.format("Reset %s to %s", getSourceText(entry.getKey()), getTargetText(entry.getValue()));
     }
 
     StringBuilder desc = new StringBuilder("Reset ");
@@ -118,16 +118,18 @@ public class GitNewResetDialog extends DialogWrapper {
   @NotNull
   private static String getTargetText(@NotNull VcsFullCommitDetails commit) {
     String commitMessage = StringUtil.shortenTextWithEllipsis(commit.getSubject(), 20, 0);
-    return String.format("<code>%s \"%s\"</code> by <code>%s</code>", commit.getId().toShortString(), commitMessage, commit.getAuthor().getName());
+    return String.format("<code><b>%s</b> \"%s\"</code> by <code>%s</code>",
+                         commit.getId().toShortString(), commitMessage, commit.getAuthor().getName());
   }
 
   @NotNull
   private static String getSourceText(@NotNull GitRepository repository) {
     String currentRevision = repository.getCurrentRevision();
     assert currentRevision != null;
-    return repository.getCurrentBranch() == null ?
-           "HEAD (" + GitUtil.getShortHash(currentRevision)  + ")" :
-           repository.getCurrentBranch().getName();
+    String text = repository.getCurrentBranch() == null ?
+                  "HEAD (" + GitUtil.getShortHash(currentRevision) + ")" :
+                  repository.getCurrentBranch().getName();
+    return "<b>" + text + "</b>";
   }
 
   private static boolean isMultiRepo(@NotNull Project project) {
