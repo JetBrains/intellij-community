@@ -19,8 +19,9 @@ public class TestContentPanel extends JPanel {
     this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     initContentLabel("input", myInputArea);
     myInputArea.getDocument().addDocumentListener(new BufferUpdater(userTest.getInputBuffer()));
-    myInputArea.getDocument().addDocumentListener(new BufferUpdater(userTest.getOutputBuffer()));
+    myOutputArea.getDocument().addDocumentListener(new BufferUpdater(userTest.getOutputBuffer()));
     initContentLabel("output", myOutputArea);
+    setEditable(userTest.isEditable());
   }
 
   private void initContentLabel(final String headerText, @NotNull final JTextArea contentArea) {
@@ -33,6 +34,10 @@ public class TestContentPanel extends JPanel {
     this.add(scroll);
   }
 
+  private void setEditable(boolean isEditable) {
+    myInputArea.setEditable(isEditable);
+    myOutputArea.setEditable(isEditable);
+  }
   public void addInputContent(final String content) {
     myInputArea.setText(content);
   }
@@ -42,9 +47,9 @@ public class TestContentPanel extends JPanel {
   }
 
   private class BufferUpdater extends DocumentAdapter {
-    private final StringBuffer myBuffer;
+    private final StringBuilder myBuffer;
 
-    private BufferUpdater(StringBuffer buffer) {
+    private BufferUpdater(StringBuilder buffer) {
       myBuffer = buffer;
     }
 

@@ -7,8 +7,9 @@ package ru.compscicenter.edide.course;
 public class UserTest {
   private String input;
   private String output;
-  private StringBuffer myInputBuffer = new StringBuffer();
-  private StringBuffer myOutputBuffer =  new StringBuffer();
+  private StringBuilder myInputBuffer = new StringBuilder();
+  private StringBuilder myOutputBuffer =  new StringBuilder();
+  private boolean myEditable = false;
 
   public String getInput() {
     return input;
@@ -26,11 +27,19 @@ public class UserTest {
     this.output = output;
   }
 
-  public StringBuffer getInputBuffer() {
+  public StringBuilder getInputBuffer() {
     return myInputBuffer;
   }
 
-  public StringBuffer getOutputBuffer() {
+  public StringBuilder getOutputBuffer() {
     return myOutputBuffer;
+  }
+
+  public boolean isEditable() {
+    return myEditable;
+  }
+
+  public void setEditable(boolean editable) {
+    myEditable = editable;
   }
 }
