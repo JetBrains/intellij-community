@@ -300,6 +300,10 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   }
 
   protected List<String> getActiveConsoleNames(final String consoleTitle) {
+    return getActiveConsolesFromRunToolWindow(consoleTitle);
+  }
+
+  protected List<String> getActiveConsolesFromRunToolWindow(final String consoleTitle) {
     List<RunContentDescriptor> consoles = ExecutionHelper.collectConsolesByDisplayName(myProject, new NotNullFunction<String, Boolean>() {
       @NotNull
       @Override
