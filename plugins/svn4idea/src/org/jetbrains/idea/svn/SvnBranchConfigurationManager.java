@@ -136,10 +136,9 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     for (VirtualFile root : myBunch.getMapCopy().keySet()) {
       final String key = root.getPath();
       final SvnBranchConfigurationNew configOrig = myBunch.getConfig(root);
-      final SvnBranchConfiguration configuration = new SvnBranchConfiguration();
-      configuration.setTrunkUrl(configOrig.getTrunkUrl());
-      configuration.setUserinfoInUrl(configOrig.isUserinfoInUrl());
-      configuration.setBranchUrls(configOrig.getBranchUrls());
+      final SvnBranchConfiguration configuration =
+        new SvnBranchConfiguration(configOrig.getTrunkUrl(), configOrig.getBranchUrls(), configOrig.isUserinfoInUrl());
+
       result.myConfigurationMap.put(key, helper.prepareForSerialization(configuration));
     }
     result.mySupportsUserInfoFilter = true;
@@ -274,11 +273,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
         newBranchesList.add(serializeUrl(s, withUserInfo));
       }
 
-      final SvnBranchConfiguration result = new SvnBranchConfiguration();
-      result.setTrunkUrl(trunkUrl);
-      result.setBranchUrls(newBranchesList);
-      result.setUserinfoInUrl(withUserInfo.isNull() ? false : withUserInfo.get());
-      return result;
+      return new SvnBranchConfiguration(trunkUrl, newBranchesList, withUserInfo.isNull() ? false : withUserInfo.get());
     }
 
     public SvnBranchConfiguration afterDeserialization(final String path, final SvnBranchConfiguration configuration) {
@@ -297,11 +292,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
         newBranchesList.add(deserializeUrl(s, userInfo));
       }
 
-      final SvnBranchConfiguration result = new SvnBranchConfiguration();
-      result.setTrunkUrl(newTrunkUrl);
-      result.setBranchUrls(newBranchesList);
-      result.setUserinfoInUrl(userInfo.length() > 0);
-      return result;
+      return new SvnBranchConfiguration(newTrunkUrl, newBranchesList, userInfo.length() > 0);
     }
 
     private static String serializeUrl(final String url, final Ref<Boolean> withUserInfo) {
