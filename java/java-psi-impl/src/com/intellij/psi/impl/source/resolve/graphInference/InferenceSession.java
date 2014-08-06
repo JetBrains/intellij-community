@@ -220,7 +220,7 @@ public class InferenceSession {
         return prepareSubstitution();
       }
 
-      if (parameters != null && args != null) {
+      if (parameters != null && args != null && !MethodCandidateInfo.isOverloadCheck()) {
         final Set<ConstraintFormula> additionalConstraints = new HashSet<ConstraintFormula>();
         if (parameters.length > 0) {
           collectAdditionalConstraints(parameters, args, properties.getMethod(), PsiSubstitutor.EMPTY, additionalConstraints, properties.isVarargs(), true);
