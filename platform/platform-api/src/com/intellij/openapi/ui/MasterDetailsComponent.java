@@ -122,7 +122,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   private boolean myHasDeletedItems;
   protected AutoScrollToSourceHandler myAutoScrollHandler;
 
-  private boolean myToReInitWholePanel = true;
+  protected boolean myToReInitWholePanel = true;
 
   protected MasterDetailsComponent() {
     this(new MasterDetailsState());
@@ -139,7 +139,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     reInitWholePanelIfNeeded();
   }
 
-  private void reInitWholePanelIfNeeded() {
+  protected void reInitWholePanelIfNeeded() {
     if (!myToReInitWholePanel) return;
 
     myWholePanel = new JPanel(new BorderLayout()) {
