@@ -142,12 +142,13 @@ public class RunContentDescriptor implements Disposable {
     return myContent;
   }
 
-  public void setRestarter(Runnable runnable) {
-    myRestarter = runnable;
-  }
-
+  @Nullable
   public Runnable getRestarter() {
     return myRestarter;
+  }
+
+  public void setRestarter(@Nullable Runnable runnable) {
+    myRestarter = runnable;
   }
 
   public boolean isActivateToolWindowWhenAdded() {
