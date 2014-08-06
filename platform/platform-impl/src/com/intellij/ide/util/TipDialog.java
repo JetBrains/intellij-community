@@ -33,6 +33,12 @@ import java.awt.event.ActionEvent;
 public class TipDialog extends DialogWrapper{
   private TipPanel myTipPanel;
 
+  @Nullable
+  @Override
+  protected String getDimensionServiceKey() {
+    return getClass().getName();
+  }
+
   public TipDialog(){
     super(WindowManagerEx.getInstanceEx().findVisibleFrame(), true);
     initialize();
