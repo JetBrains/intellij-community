@@ -17,16 +17,16 @@ import org.jetbrains.jps.LayoutInfo
 
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
-//setProperty("home", guessHome(this as Script))
+setProperty("home", guessHome(this as Script))
 
-includeTargets << new File("${guessHome(this as Script)}/community/build/scripts/utils.gant")
+includeTargets << new File("${guessHome(this as Script)}/build/scripts/utils.gant")
 // signMacZip locates in ultimate_utils.gant
- includeTargets << new File("${guessHome(this)}/build/scripts/ultimate_utils.gant")
-includeTargets << new File("${guessHome(this)}/community/build/scripts/libLicenses.gant")
+ includeTargets << new File("${guessHome(this)}/ultimate/build/scripts/ultimate_utils.gant")
+includeTargets << new File("${guessHome(this)}/build/scripts/libLicenses.gant")
 
 requireProperty("buildNumber", requireProperty("build.number", snapshot))
 
-setProperty("ch", "$home/community")
+setProperty("ch", "$home")
 setProperty("pythonCommunityHome", "$ch/python")
 setProperty("pythonEduHome", "$ch/python/edu")
 
