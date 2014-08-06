@@ -143,7 +143,11 @@ public class MethodCandidateInfo extends CandidateInfo{
             return applicabilityLevel;
           }
           finally {
-            if (alreadyThere == null) map.remove(getMarkerList());
+            if (alreadyThere == null) {
+              map.remove(getMarkerList());
+            } else {
+              map.put(getMarkerList(), alreadyThere);
+            }
           }
         }
         return getApplicabilityLevelInner();
@@ -269,10 +273,8 @@ public class MethodCandidateInfo extends CandidateInfo{
       CURRENT_CANDIDATE.set(map);
     }
     final PsiMethod method = getElement();
-    final CurrentCandidateProperties alreadyThere = map.get(getMarkerList());
-    if (alreadyThere == null) {
+    final CurrentCandidateProperties alreadyThere = 
       map.put(getMarkerList(), new CurrentCandidateProperties(method, super.getSubstitutor(), isVarargs(), !includeReturnConstraint));
-    }
     try {
       PsiTypeParameter[] typeParameters = method.getTypeParameters();
 
@@ -293,7 +295,11 @@ public class MethodCandidateInfo extends CandidateInfo{
         .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, mySubstitutor, parent, policy, myLanguageLevel);
     }
     finally {
-      if (alreadyThere == null) map.remove(getMarkerList());
+      if (alreadyThere == null) {
+        map.remove(getMarkerList());
+      } else {
+        map.put(getMarkerList(), alreadyThere);
+      }
     }
   }
 
