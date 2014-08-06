@@ -31,10 +31,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.*;
 
 import static com.intellij.psi.util.PsiFormatUtilBase.*;
 
@@ -47,20 +44,22 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
   @Override
   @NotNull
   public Collection<StructureViewTreeElement> getChildrenBase() {
-    final ArrayList<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
+    final List<StructureViewTreeElement> emptyResult = Collections.emptyList();
     final PsiMethod element = getElement();
-    if (element == null || element instanceof SyntheticElement) return result;
+    if (element == null || element instanceof SyntheticElement) return emptyResult;
 
     final PsiFile psiFile = element.getContainingFile();
-    if (psiFile == null || psiFile instanceof PsiCompiledElement) return result;
+    if (psiFile == null || psiFile instanceof PsiCompiledElement) return emptyResult;
 
     final TextRange range = element.getTextRange();
-    if (range == null) return result;
+    if (range == null) return emptyResult;
 
     final String fileText = psiFile.getText();
-    if (fileText == null) return result;
+    if (fileText == null) return emptyResult;
 
-    if (!range.substring(fileText).contains(PsiKeyword.CLASS)) return result;
+    if (!range.substring(fileText).contains(PsiKeyword.CLASS)) return emptyResult;
+
+    final ArrayList<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
 
     element.accept(new JavaRecursiveElementWalkingVisitor(){
       @Override public void visitClass(PsiClass aClass) {
