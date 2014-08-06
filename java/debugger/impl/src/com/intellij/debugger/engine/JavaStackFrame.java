@@ -38,13 +38,11 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTextContainer;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.*;
@@ -53,6 +51,7 @@ import com.sun.jdi.event.ExceptionEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -316,7 +315,8 @@ public class JavaStackFrame extends XStackFrame {
         for (Value argValue : argValues) {
           children.add(createArgumentValue(index++, argValue, null, evaluationContext));
         }
-        node.setMessage(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(), XDebuggerUIConstants.INFORMATION_MESSAGE_ICON, SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
+        //node.setMessage(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(), XDebuggerUIConstants.INFORMATION_MESSAGE_ICON, SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
+        children.add(new DummyMessageValueNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(), XDebuggerUIConstants.INFORMATION_MESSAGE_ICON));
         //myChildren.add(myNodeManager.createMessageNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE));
 
         // trying to collect values from variable slots
@@ -336,6 +336,33 @@ public class JavaStackFrame extends XStackFrame {
       else {
         throw e;
       }
+    }
+  }
+
+  static class DummyMessageValueNode extends XNamedValue {
+    private final String myMessage;
+    private final Icon myIcon;
+
+    public DummyMessageValueNode(String message, Icon icon) {
+      super("");
+      myMessage = message;
+      myIcon = icon;
+    }
+
+    @Override
+    public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
+      node.setPresentation(myIcon, new XValuePresentation() {
+        @NotNull
+        @Override
+        public String getSeparator() {
+          return "";
+        }
+
+        @Override
+        public void renderValue(@NotNull XValueTextRenderer renderer) {
+          renderer.renderValue(myMessage);
+        }
+      }, false);
     }
   }
 
