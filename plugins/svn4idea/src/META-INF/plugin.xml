@@ -128,8 +128,8 @@
                     serviceImplementation="org.jetbrains.idea.svn.history.LoadedRevisionsCache"/>
     <projectService serviceInterface="org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache"
                     serviceImplementation="org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache"/>
-    <projectService serviceInterface="org.jetbrains.idea.svn.branchConfig.SvnLoadedBrachesStorage"
-                    serviceImplementation="org.jetbrains.idea.svn.branchConfig.SvnLoadedBrachesStorage"/>
+    <projectService serviceInterface="org.jetbrains.idea.svn.branchConfig.SvnLoadedBranchesStorage"
+                    serviceImplementation="org.jetbrains.idea.svn.branchConfig.SvnLoadedBranchesStorage"/>
     <applicationService serviceInterface="org.jetbrains.idea.svn.branchConfig.SvnBranchMapperManager"
       serviceImplementation="org.jetbrains.idea.svn.branchConfig.SvnBranchMapperManager"/>
     <applicationService serviceInterface="org.jetbrains.idea.svn.dialogs.browserCache.SvnRepositoryCache"

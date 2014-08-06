@@ -55,12 +55,12 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager");
   private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
-  private final SvnLoadedBrachesStorage myStorage;
+  private final SvnLoadedBranchesStorage myStorage;
   private final ProgressManagerQueue myBranchesLoader;
 
   public SvnBranchConfigurationManager(final Project project,
                                        final ProjectLevelVcsManager vcsManager,
-                                       final SvnLoadedBrachesStorage storage) {
+                                       final SvnLoadedBranchesStorage storage) {
     myProject = project;
     myVcsManager = vcsManager;
     myStorage = storage;

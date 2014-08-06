@@ -68,7 +68,7 @@ import org.jetbrains.idea.svn.api.CmdClientFactory;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.SvnKitClientFactory;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
-import org.jetbrains.idea.svn.branchConfig.SvnLoadedBrachesStorage;
+import org.jetbrains.idea.svn.branchConfig.SvnLoadedBranchesStorage;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
@@ -148,7 +148,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   private final RootsToWorkingCopies myRootsToWorkingCopies;
   private final SvnAuthenticationNotifier myAuthNotifier;
-  private final SvnLoadedBrachesStorage myLoadedBranchesStorage;
+  private final SvnLoadedBranchesStorage myLoadedBranchesStorage;
 
   private final SvnExecutableChecker myChecker;
 
@@ -160,7 +160,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   private final boolean myLogExceptions;
 
-  public SvnVcs(final Project project, MessageBus bus, SvnConfiguration svnConfiguration, final SvnLoadedBrachesStorage storage) {
+  public SvnVcs(final Project project, MessageBus bus, SvnConfiguration svnConfiguration, final SvnLoadedBranchesStorage storage) {
     super(project, VCS_NAME);
 
     myLoadedBranchesStorage = storage;

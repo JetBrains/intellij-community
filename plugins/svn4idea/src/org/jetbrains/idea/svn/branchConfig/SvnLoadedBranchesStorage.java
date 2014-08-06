@@ -36,13 +36,13 @@ import java.util.*;
  * Date: 8/24/11
  * Time: 1:21 PM
  */
-public class SvnLoadedBrachesStorage {
+public class SvnLoadedBranchesStorage {
   private final Object myLock;
   private SmallMapSerializer<String, Map<String, Collection<SvnBranchItem>>> myState;
   private final File myFile;
   private final Project myProject;
 
-  public SvnLoadedBrachesStorage(final Project project) {
+  public SvnLoadedBranchesStorage(final Project project) {
     myProject = project;
     final File vcsFile = new File(PathManager.getSystemPath(), "vcs");
     File file = new File(vcsFile, "svn_branches");
