@@ -27,7 +27,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManagerQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener;
@@ -35,17 +34,10 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.branchConfig.InfoReliability;
-import org.jetbrains.idea.svn.branchConfig.InfoStorage;
-import org.jetbrains.idea.svn.branchConfig.NewRootBunch;
-import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
+import org.jetbrains.idea.svn.branchConfig.*;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
 import java.util.*;
@@ -148,47 +140,6 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     return result;
   }
 
-  private static class BranchesPreloader implements PairConsumer<SvnBranchConfigurationNew, SvnBranchConfigurationNew> {
-    private final Project myProject;
-    private final VirtualFile myRoot;
-    private final ProgressManagerQueue myQueue;
-    private final NewRootBunch myBunch;
-    private boolean myAll;
-
-    public BranchesPreloader(Project project, @NotNull final NewRootBunch bunch, VirtualFile root, final ProgressManagerQueue queue) {
-      myBunch = bunch;
-      myProject = project;
-      myRoot = root;
-      myQueue = queue;
-    }
-
-    public void consume(final SvnBranchConfigurationNew prev, final SvnBranchConfigurationNew next) {
-      myQueue.run(new Runnable() {
-        public void run() {
-          loadImpl(prev, next);
-        }
-      });
-    }
-
-    protected void loadImpl(final SvnBranchConfigurationNew prev, final SvnBranchConfigurationNew next) {
-      final Set<String> oldUrls = (prev == null) ? Collections.<String>emptySet() : new HashSet<String>(prev.getBranchUrls());
-      final SvnVcs vcs = SvnVcs.getInstance(myProject);
-      if (! vcs.isVcsBackgroundOperationsAllowed(myRoot)) return;
-
-      for (String newBranchUrl : next.getBranchUrls()) {
-        // check if cancel had been put 
-        if (! vcs.isVcsBackgroundOperationsAllowed(myRoot)) return;
-        if (myAll || (! oldUrls.contains(newBranchUrl))) {
-          new NewRootBunch.BranchesLoadRunnable(myProject, myBunch, newBranchUrl, InfoReliability.defaultValues, myRoot, null, true).run();
-        }
-      }
-    }
-
-    public void setAll(boolean all) {
-      myAll = all;
-    }
-  }
-
   public void loadState(final ConfigurationBean object) {
     final UrlSerializationHelper helper = new UrlSerializationHelper(SvnVcs.getInstance(myProject));
     final Map<String, SvnBranchConfiguration> map = object.myConfigurationMap;
@@ -252,86 +203,5 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     final List<SvnBranchItem> items = new ArrayList<SvnBranchItem>(collection);
     Collections.sort(items);
     return items;
-  }
-
-  private static class UrlSerializationHelper {
-    private final SvnVcs myVcs;
-
-    private UrlSerializationHelper(final SvnVcs vcs) {
-      myVcs = vcs;
-    }
-
-    public SvnBranchConfiguration prepareForSerialization(final SvnBranchConfiguration configuration) {
-      final Ref<Boolean> withUserInfo = new Ref<Boolean>();
-      final String trunkUrl = serializeUrl(configuration.getTrunkUrl(), withUserInfo);
-
-      if (Boolean.FALSE.equals(withUserInfo.get())) {
-        return configuration;
-      }
-
-      final List<String> branches = configuration.getBranchUrls();
-      final List<String> newBranchesList = new ArrayList<String>(branches.size());
-      for (String s : branches) {
-        newBranchesList.add(serializeUrl(s, withUserInfo));
-      }
-
-      return new SvnBranchConfiguration(trunkUrl, newBranchesList, withUserInfo.isNull() ? false : withUserInfo.get());
-    }
-
-    public SvnBranchConfiguration afterDeserialization(final String path, final SvnBranchConfiguration configuration) {
-      if (! configuration.isUserinfoInUrl()) {
-        return configuration;
-      }
-      final String userInfo = getUserInfo(path);
-      if (userInfo == null) {
-        return configuration;
-      }
-
-      final String newTrunkUrl = deserializeUrl(configuration.getTrunkUrl(), userInfo);
-      final List<String> branches = configuration.getBranchUrls();
-      final List<String> newBranchesList = new ArrayList<String>(branches.size());
-      for (String s : branches) {
-        newBranchesList.add(deserializeUrl(s, userInfo));
-      }
-
-      return new SvnBranchConfiguration(newTrunkUrl, newBranchesList, userInfo.length() > 0);
-    }
-
-    private static String serializeUrl(final String url, final Ref<Boolean> withUserInfo) {
-      if (Boolean.FALSE.equals(withUserInfo.get())) {
-        return url;
-      }
-      try {
-        final SVNURL svnurl = SVNURL.parseURIEncoded(url);
-        if (withUserInfo.isNull()) {
-          final String userInfo = svnurl.getUserInfo();
-          withUserInfo.set((userInfo != null) && (userInfo.length() > 0));
-        }
-        if (withUserInfo.get()) {
-          return SVNURL.create(svnurl.getProtocol(), null, svnurl.getHost(), SvnUtil.resolvePort(svnurl), svnurl.getURIEncodedPath(), true)
-            .toString();
-        }
-      }
-      catch (SVNException e) {
-        //
-      }
-      return url;
-    }
-
-    @Nullable
-    private String getUserInfo(final String path) {
-      final SVNURL svnurl = myVcs.getSvnFileUrlMapping().getUrlForFile(new File(path));
-      return svnurl != null ? svnurl.getUserInfo() : null;
-    }
-
-    private static String deserializeUrl(final String url, final String userInfo) {
-      try {
-        final SVNURL svnurl = SVNURL.parseURIEncoded(url);
-        return SVNURL.create(svnurl.getProtocol(), userInfo, svnurl.getHost(), SvnUtil.resolvePort(svnurl), svnurl.getURIEncodedPath(),
-                             true).toString();
-      } catch (SVNException e) {
-        return url;
-      }
-    }
   }
 }

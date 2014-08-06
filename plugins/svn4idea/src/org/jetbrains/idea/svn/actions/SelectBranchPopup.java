@@ -31,6 +31,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.branchConfig.BranchesLoadRunnable;
 import org.jetbrains.idea.svn.branchConfig.InfoReliability;
 import org.jetbrains.idea.svn.branchConfig.NewRootBunch;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
@@ -221,7 +222,7 @@ public class SelectBranchPopup {
         @Override
         protected void runImpl(@NotNull ProgressIndicator indicator) {
           final NewRootBunch manager = SvnBranchConfigurationManager.getInstance(myProject).getSvnBranchConfigManager();
-          new NewRootBunch.BranchesLoadRunnable(myProject, manager, selectedBranchesHolder, InfoReliability.setByUser, myVcsRoot, null, false).run();
+          new BranchesLoadRunnable(myProject, manager, selectedBranchesHolder, InfoReliability.setByUser, myVcsRoot, null, false).run();
         }
       });
     }

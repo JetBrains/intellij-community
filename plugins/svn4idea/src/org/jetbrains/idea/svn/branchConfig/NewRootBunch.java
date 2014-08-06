@@ -15,16 +15,12 @@
  */
 package org.jetbrains.idea.svn.branchConfig;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManagerQueue;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.CalledInBackground;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
@@ -135,88 +131,6 @@ public class NewRootBunch {
       //
     }
     return result.get();
-  }
-
-  public static class BranchesLoadRunnable implements Runnable {
-    private final Project myProject;
-    private final NewRootBunch myBunch;
-    private final VirtualFile myRoot;
-    @Nullable
-    private final Consumer<List<SvnBranchItem>> myCallback;
-    private final String myUrl;
-    private final InfoReliability myInfoReliability;
-    private boolean myPassive;
-
-    public BranchesLoadRunnable(final Project project,
-                                final NewRootBunch bunch,
-                                final String url,
-                                final InfoReliability infoReliability,
-                                final VirtualFile root,
-                                @Nullable final Consumer<List<SvnBranchItem>> callback,
-                                boolean passive) {
-      myProject = project;
-      myBunch = bunch;
-      myUrl = url;
-      myInfoReliability = infoReliability;
-      myRoot = root;
-      myCallback = callback;
-      myPassive = passive;
-    }
-
-    public void run() {
-      boolean callbackCalled = false;
-      try {
-        final List<SvnBranchItem> items = BranchesLoader.loadBranches(myProject, myUrl, myPassive);
-        myBunch.updateBranches(myRoot, myUrl, new InfoStorage<List<SvnBranchItem>>(items, myInfoReliability));
-        if (myCallback != null) {
-          myCallback.consume(items);
-          callbackCalled = true;
-        }
-      }
-      catch (VcsException e) {
-        showError(e);
-      }
-      catch (SVNException e) {
-        showError(e);
-      }
-      finally {
-        // callback must be called by contract
-        if (myCallback != null && (! callbackCalled)) {
-          myCallback.consume(null);
-        }
-      }
-    }
-
-    private void showError(Exception e) {
-      // already logged inside
-      if (InfoReliability.setByUser.equals(myInfoReliability)) {
-        VcsBalloonProblemNotifier.showOverChangesView(myProject, "Branches load error: " + e.getMessage(), MessageType.ERROR);
-      }
-    }
-  }
-
-  private static class DefaultBranchConfigInitializer implements Runnable {
-    private final Project myProject;
-    private final NewRootBunch myBunch;
-    private final VirtualFile myRoot;
-
-    private DefaultBranchConfigInitializer(final Project project, final NewRootBunch bunch, final VirtualFile root) {
-      myProject = project;
-      myRoot = root;
-      myBunch = bunch;
-    }
-
-    public void run() {
-      final SvnBranchConfigurationNew result = DefaultConfigLoader.loadDefaultConfiguration(myProject, myRoot);
-      if (result != null) {
-        final Application application = ApplicationManager.getApplication();
-        for (String url : result.getBranchUrls()) {
-          application.executeOnPooledThread(new BranchesLoadRunnable(myProject, myBunch, url, InfoReliability.defaultValues, myRoot, null,
-                                                                     true));
-        }
-        myBunch.updateForRoot(myRoot, new InfoStorage<SvnBranchConfigurationNew>(result, InfoReliability.defaultValues), null);
-      }
-    }
   }
 
   public Map<VirtualFile, SvnBranchConfigurationNew> getMapCopy() {
