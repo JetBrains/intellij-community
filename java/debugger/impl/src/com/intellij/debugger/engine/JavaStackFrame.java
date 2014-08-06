@@ -314,8 +314,7 @@ public class JavaStackFrame extends XStackFrame {
         final Collection<Value> argValues = frame.getArgumentValues();
         int index = 0;
         for (Value argValue : argValues) {
-          final ArgumentValueDescriptorImpl descriptor = myNodeManager.getArgumentValueDescriptor(null, index++, argValue, null);
-          children.add(JavaValue.create(descriptor, evaluationContext, myNodeManager));
+          children.add(createArgumentValue(index++, argValue, null, evaluationContext));
         }
         node.setMessage(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(), XDebuggerUIConstants.INFORMATION_MESSAGE_ICON, SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
         //myChildren.add(myNodeManager.createMessageNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE));
@@ -326,9 +325,7 @@ public class JavaStackFrame extends XStackFrame {
           try {
             final Map<DecompiledLocalVariable, Value> values = LocalVariablesUtil.fetchValues(frame.getStackFrame(), decompiled);
             for (DecompiledLocalVariable var : decompiled) {
-              final Value value = values.get(var);
-              final ArgumentValueDescriptorImpl descriptor = myNodeManager.getArgumentValueDescriptor(null, var.getSlot(), value, var.getName());
-              children.add(JavaValue.create(descriptor, evaluationContext, myNodeManager));
+              children.add(createArgumentValue(var.getSlot(), values.get(var), var.getName(), evaluationContext));
             }
           }
           catch (Exception ex) {
@@ -340,6 +337,13 @@ public class JavaStackFrame extends XStackFrame {
         throw e;
       }
     }
+  }
+
+  private JavaValue createArgumentValue(int index, Value value, String name, EvaluationContextImpl evaluationContext) {
+    ArgumentValueDescriptorImpl descriptor = myNodeManager.getArgumentValueDescriptor(null, index, value, name);
+    // setContext is required to calculate correct name
+    descriptor.setContext(evaluationContext);
+    return JavaValue.create(descriptor, evaluationContext, myNodeManager);
   }
 
   protected void superBuildVariables(final EvaluationContextImpl evaluationContext, XValueChildrenList children) throws EvaluateException {

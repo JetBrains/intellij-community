@@ -28,11 +28,11 @@ import org.jetbrains.annotations.Nullable;
 
 public class DiffRequestFactoryImpl extends DiffRequestFactory {
 
-  public MergeRequest createMergeRequest(String leftText,
-                                         String rightText,
-                                         String originalContent,
+  public MergeRequest createMergeRequest(@NotNull String leftText,
+                                         @NotNull String rightText,
+                                         @NotNull String originalContent,
                                          @NotNull VirtualFile file,
-                                         Project project,
+                                         @Nullable Project project,
                                          @Nullable final ActionButtonPresentation okButtonPresentation,
                                          @Nullable final ActionButtonPresentation cancelButtonPresentation) {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
@@ -46,23 +46,20 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     }
   }
 
-  public MergeRequest create3WayDiffRequest(final String leftText,
-                                            final String rightText,
-                                            final String originalContent,
+  public MergeRequest create3WayDiffRequest(@NotNull String leftText,
+                                            @NotNull String rightText,
+                                            @NotNull String originalContent,
                                             @Nullable FileType type,
-                                            final Project project,
+                                            @Nullable Project project,
                                             @Nullable final ActionButtonPresentation okButtonPresentation,
                                             @Nullable final ActionButtonPresentation cancelButtonPresentation) {
-    if (type != null) {
-      return new MergeRequestImpl(leftText, originalContent, rightText, type, project, okButtonPresentation, cancelButtonPresentation);
-    }
-    return new MergeRequestImpl(leftText, originalContent, rightText, project, okButtonPresentation, cancelButtonPresentation);
+    return new MergeRequestImpl(leftText, originalContent, rightText, type, project, okButtonPresentation, cancelButtonPresentation);
   }
 
-  public MergeRequest create3WayDiffRequest(final String leftText,
-                                            final String rightText,
-                                            final String originalContent,
-                                            final Project project,
+  public MergeRequest create3WayDiffRequest(@NotNull String leftText,
+                                            @NotNull String rightText,
+                                            @NotNull String originalContent,
+                                            @Nullable Project project,
                                             @Nullable final ActionButtonPresentation okButtonPresentation,
                                             @Nullable final ActionButtonPresentation cancelButtonPresentation) {
     return create3WayDiffRequest(leftText, rightText, originalContent, null, project, okButtonPresentation, cancelButtonPresentation);

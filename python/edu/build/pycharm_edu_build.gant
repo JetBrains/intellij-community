@@ -21,14 +21,14 @@ setProperty("home", guessHome(this as Script))
 
 includeTargets << new File("${guessHome(this as Script)}/build/scripts/utils.gant")
 // signMacZip locates in ultimate_utils.gant
-includeTargets << new File("${guessHome(this)}/build/scripts/ultimate_utils.gant")
+ includeTargets << new File("${guessHome(this)}/ultimate/build/scripts/ultimate_utils.gant")
 includeTargets << new File("${guessHome(this)}/build/scripts/libLicenses.gant")
 
 requireProperty("buildNumber", requireProperty("build.number", snapshot))
 
-setProperty("ch", home)
-setProperty("pythonCommunityHome", "$home/python")
-setProperty("pythonEduHome", "$home/python/edu")
+setProperty("ch", "$home")
+setProperty("pythonCommunityHome", "$ch/python")
+setProperty("pythonEduHome", "$ch/python/edu")
 
 // load ApplicationInfo.xml properties
 ant.xmlproperty(file: "$pythonEduHome/resources/idea/PyCharmEduApplicationInfo.xml", collapseAttributes: "true")
