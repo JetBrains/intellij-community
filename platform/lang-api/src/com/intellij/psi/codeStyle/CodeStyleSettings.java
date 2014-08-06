@@ -56,7 +56,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public CodeStyleSettings(boolean loadExtensions) {
     super(null);
-    RIGHT_MARGIN = DEFAULT_RIGHT_MARGIN;
     initTypeToName();
     initImportsByDefault();
 
@@ -244,6 +243,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public int INNER_CLASSES_ORDER_WEIGHT = 7;
 
 //----------------- WRAPPING ---------------------------
+  public int RIGHT_MARGIN = 120;
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
 
 

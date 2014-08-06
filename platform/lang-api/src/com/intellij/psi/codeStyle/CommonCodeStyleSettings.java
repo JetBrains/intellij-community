@@ -287,7 +287,6 @@ public class CommonCodeStyleSettings {
 
 //----------------- GENERAL --------------------
   public int RIGHT_MARGIN = -1;
-  public final static int DEFAULT_RIGHT_MARGIN = 120;
 
   public boolean LINE_COMMENT_AT_FIRST_COLUMN = true;
   public boolean BLOCK_COMMENT_AT_FIRST_COLUMN = true;
