@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -57,6 +58,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   private final ProjectLevelVcsManager myVcsManager;
   private final SvnLoadedBranchesStorage myStorage;
   private final ProgressManagerQueue myBranchesLoader;
+  private boolean myIsInitialized;
 
   public SvnBranchConfigurationManager(final Project project,
                                        final ProjectLevelVcsManager vcsManager,
@@ -85,7 +87,13 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   }
 
   public static SvnBranchConfigurationManager getInstance(final Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetService(project, SvnBranchConfigurationManager.class);
+    SvnBranchConfigurationManager result = PeriodicalTasksCloser.getInstance().safeGetService(project, SvnBranchConfigurationManager.class);
+
+    if (result != null) {
+      result.initialize();
+    }
+
+    return result;
   }
 
   public static class ConfigurationBean {
@@ -139,13 +147,24 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     return result;
   }
 
-  public void loadState(final ConfigurationBean object) {
-    final UrlSerializationHelper helper = new UrlSerializationHelper(SvnVcs.getInstance(myProject));
-    final Map<String, SvnBranchConfiguration> map = object.myConfigurationMap;
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+  public void loadState(ConfigurationBean object) {
+    myConfigurationBean = object;
+  }
 
-    final Set<Pair<VirtualFile, SvnBranchConfigurationNew>> whatToInit = new HashSet<Pair<VirtualFile, SvnBranchConfigurationNew>>();
-    for (Map.Entry<String, SvnBranchConfiguration> entry : map.entrySet()) {
+  private synchronized void initialize() {
+    if (!myIsInitialized) {
+      myIsInitialized = true;
+
+      preloadBranches(resolveAllBranchPoints());
+    }
+  }
+
+  @NotNull
+  private Set<Pair<VirtualFile, SvnBranchConfigurationNew>> resolveAllBranchPoints() {
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    final UrlSerializationHelper helper = new UrlSerializationHelper(SvnVcs.getInstance(myProject));
+    final Set<Pair<VirtualFile, SvnBranchConfigurationNew>> branchPointsToLoad = ContainerUtil.newHashSet();
+    for (Map.Entry<String, SvnBranchConfiguration> entry : myConfigurationBean.myConfigurationMap.entrySet()) {
       final SvnBranchConfiguration configuration = entry.getValue();
       final VirtualFile root = lfs.refreshAndFindFileByIoFile(new File(entry.getKey()));
       if (root == null) {
@@ -167,19 +186,23 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
         if (stored != null && ! stored.isEmpty()) {
           newConfig.addBranches(branchUrl, new InfoStorage<List<SvnBranchItem>>(stored, InfoReliability.setByUser));
         } else {
-          whatToInit.add(Pair.create(root, newConfig));
+          branchPointsToLoad.add(Pair.create(root, newConfig));
           newConfig.addBranches(branchUrl, new InfoStorage<List<SvnBranchItem>>(new ArrayList<SvnBranchItem>(), InfoReliability.empty));
         }
       }
 
       myBunch.updateForRoot(root, new InfoStorage<SvnBranchConfigurationNew>(newConfig, InfoReliability.setByUser), null);
     }
+    return branchPointsToLoad;
+  }
+
+  private void preloadBranches(@NotNull final Collection<Pair<VirtualFile, SvnBranchConfigurationNew>> branchPoints) {
     ((ProjectLevelVcsManagerImpl) myVcsManager).addInitializationRequest(VcsInitObject.BRANCHES, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
             try {
-              for (Pair<VirtualFile, SvnBranchConfigurationNew> pair : whatToInit) {
+              for (Pair<VirtualFile, SvnBranchConfigurationNew> pair : branchPoints) {
                 final BranchesPreloader branchesPreloader = new BranchesPreloader(myProject, myBunch, pair.getFirst(), myBranchesLoader);
                 branchesPreloader.setAll(true);
                 branchesPreloader.loadImpl(null, pair.getSecond());
@@ -192,8 +215,6 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
         });
       }
     });
-    object.myConfigurationMap.clear();
-    myConfigurationBean = object;
   }
 
   private List<SvnBranchItem> getStored(String branchUrl) {
