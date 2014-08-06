@@ -7,6 +7,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import org.jetbrains.annotations.NotNull;
@@ -65,6 +66,8 @@ public class PythonConsoleToolWindow {
   }
 
   private static void addContent(ToolWindow toolWindow, RunContentDescriptor contentDescriptor) {
+    toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
+
     Content content = toolWindow.getContentManager().findContent(contentDescriptor.getDisplayName());
     if (content == null) {
       content = createContent(contentDescriptor);
@@ -97,7 +100,7 @@ public class PythonConsoleToolWindow {
     panel.setContent(contentDescriptor.getComponent());
     //panel.addFocusListener(createFocusListener(toolWindow));
 
-
+    content.setComponent(panel);
     content.setPreferredFocusableComponent(contentDescriptor.getComponent());
   }
 

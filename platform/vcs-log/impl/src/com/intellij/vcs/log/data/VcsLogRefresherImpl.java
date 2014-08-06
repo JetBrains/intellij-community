@@ -377,7 +377,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
         LOG.error(e); // collecting information : how often this situation happens, do we need to try to load more or can safely reload all
       }
       catch (IllegalStateException e) {
-        LOG.info(e);
+        LOG.error(e);
       }
       return null;
     }

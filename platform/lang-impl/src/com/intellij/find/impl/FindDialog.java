@@ -218,7 +218,7 @@ public class FindDialog extends DialogWrapper {
     myReplacePrompt.setVisible(myModel.isReplaceState());
     myReplaceComboBox.setVisible(myModel.isReplaceState());
     if (myCbToSkipResultsWhenOneUsage != null) {
-      myCbToSkipResultsWhenOneUsage.setVisible(myModel.isReplaceState());
+      myCbToSkipResultsWhenOneUsage.setVisible(!myModel.isReplaceState());
     }
     myCbPreserveCase.setVisible(myModel.isReplaceState());
   }
@@ -349,9 +349,9 @@ public class FindDialog extends DialogWrapper {
       gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
       optionsPanel.add(createFilterPanel(),gbConstraints);
 
-      myCbToSkipResultsWhenOneUsage = createCheckbox(FindSettings.getInstance().isSkipResultsWithOneUsage(), FindBundle.message("find.options.skip.results.tab.with.one.usage.checkbox"));
+      myCbToSkipResultsWhenOneUsage = createCheckbox(FindSettings.getInstance().isSkipResultsWithOneUsage(), FindBundle.message("find.options.skip.results.tab.with.one.occurrence.checkbox"));
       optionsPanel.add(myCbToSkipResultsWhenOneUsage, gbConstraints);
-      myCbToSkipResultsWhenOneUsage.setVisible(myModel.isReplaceState());
+      myCbToSkipResultsWhenOneUsage.setVisible(!myModel.isReplaceState());
     }
     else {
       if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
@@ -610,25 +610,14 @@ public class FindDialog extends DialogWrapper {
       FindBundle.message("find.context.except.comments.scope.label"),
       FindBundle.message("find.context.except.literals.scope.label"),
       FindBundle.message("find.context.except.comments.and.literals.scope.label")});
-    final JPanel searchContextPanel = new JPanel(new GridBagLayout());
+    final JPanel searchContextPanel = new JPanel(new BorderLayout());
     searchContextPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gbConstraints.anchor = GridBagConstraints.WEST;
-
-    gbConstraints.gridx = 0;
-    gbConstraints.gridy = 0;
-    gbConstraints.gridwidth = 1;
-    gbConstraints.weightx = 1;
 
     JLabel searchContextLabel = new JLabel(FindBundle.message("find.context.combo.label"));
     searchContextLabel.setLabelFor(mySearchContext);
-    searchContextPanel.add(searchContextLabel, gbConstraints);
+    searchContextPanel.add(searchContextLabel, BorderLayout.WEST);
 
-    ++gbConstraints.gridx;
-
-    searchContextPanel.add(mySearchContext, gbConstraints);
+    searchContextPanel.add(mySearchContext, BorderLayout.CENTER);
 
     if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
       findOptionsPanel.add(searchContextPanel);

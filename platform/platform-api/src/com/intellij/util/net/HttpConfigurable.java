@@ -29,6 +29,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
@@ -64,6 +65,7 @@ import java.util.*;
 )
 public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, ApplicationComponent,
                                          ExportableApplicationComponent {
+  public static final int CONNECTION_TIMEOUT = SystemProperties.getIntProperty("connection.timeout", 10000);
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.net.HttpConfigurable");
   public boolean PROXY_TYPE_IS_SOCKS = false;
   public boolean USE_HTTP_PROXY = false;
@@ -348,8 +350,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
     final URLConnection connection = openConnection(url);
     try {
-      connection.setConnectTimeout(3 * 1000);
-      connection.setReadTimeout(3 * 1000);
+      connection.setConnectTimeout(CONNECTION_TIMEOUT);
+      connection.setReadTimeout(CONNECTION_TIMEOUT);
       connection.connect();
       connection.getInputStream();
     }

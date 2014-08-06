@@ -617,12 +617,21 @@ public final class UpdateChecker {
     Future<?> downloadThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         try {
-          URL requestUrl = new URL(url);
-          if (!StandardFileSystems.FILE_PROTOCOL.equals(requestUrl.getProtocol())) {
-            HttpConfigurable.getInstance().prepareURL(url);
-            requestUrl = new URL(url + (url.contains("?") ? "&" : "?") + "build=" + ApplicationInfo.getInstance().getBuild().asString());
+          final String urlToCheck;
+          if (!StandardFileSystems.FILE_PROTOCOL.equals(new URL(url).getProtocol())) {
+            urlToCheck = url + (url.contains("?") ? "&" : "?") + "build=" + ApplicationInfo.getInstance().getBuild().asString();
+          } else {
+            urlToCheck = url;
           }
-          inputStreams[0] = requestUrl.openStream();
+
+          HttpURLConnection connection = ApplicationManager.getApplication() != null ?
+                                         HttpConfigurable.getInstance().openHttpConnection(urlToCheck) :
+                                         (HttpURLConnection)new URL(urlToCheck).openConnection();
+          connection.setReadTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
+          connection.setConnectTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
+          connection.connect();
+
+          inputStreams[0] = connection.getInputStream();
         }
         catch (IOException e) {
           exception[0] = e;

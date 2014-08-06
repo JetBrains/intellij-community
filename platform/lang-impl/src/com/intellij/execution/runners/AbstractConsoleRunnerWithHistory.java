@@ -139,7 +139,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     myProcessHandler.startNotify();
   }
 
-  private String constructConsoleTitle(final @NotNull String consoleTitle) {
+  protected String constructConsoleTitle(final @NotNull String consoleTitle) {
     if (shouldAddNumberToTitle()) {
       List<String> activeConsoleNames = getActiveConsoleNames(consoleTitle);
       int max = 0;
