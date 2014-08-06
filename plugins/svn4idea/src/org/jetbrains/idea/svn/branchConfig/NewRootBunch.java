@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Map;
 
 // synch is here
-public class NewRootBunch implements SvnBranchConfigManager {
+public class NewRootBunch {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.branchConfig.NewRootBunch");
   private final Object myLock = new Object();
   private final Project myProject;
@@ -139,7 +139,7 @@ public class NewRootBunch implements SvnBranchConfigManager {
 
   public static class BranchesLoadRunnable implements Runnable {
     private final Project myProject;
-    private final SvnBranchConfigManager myBunch;
+    private final NewRootBunch myBunch;
     private final VirtualFile myRoot;
     @Nullable
     private final Consumer<List<SvnBranchItem>> myCallback;
@@ -148,7 +148,7 @@ public class NewRootBunch implements SvnBranchConfigManager {
     private boolean myPassive;
 
     public BranchesLoadRunnable(final Project project,
-                                final SvnBranchConfigManager bunch,
+                                final NewRootBunch bunch,
                                 final String url,
                                 final InfoReliability infoReliability,
                                 final VirtualFile root,
@@ -197,10 +197,10 @@ public class NewRootBunch implements SvnBranchConfigManager {
 
   private static class DefaultBranchConfigInitializer implements Runnable {
     private final Project myProject;
-    private final SvnBranchConfigManager myBunch;
+    private final NewRootBunch myBunch;
     private final VirtualFile myRoot;
 
-    private DefaultBranchConfigInitializer(final Project project, final SvnBranchConfigManager bunch, final VirtualFile root) {
+    private DefaultBranchConfigInitializer(final Project project, final NewRootBunch bunch, final VirtualFile root) {
       myProject = project;
       myRoot = root;
       myBunch = bunch;

@@ -39,7 +39,10 @@ import com.intellij.util.PairConsumer;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.branchConfig.*;
+import org.jetbrains.idea.svn.branchConfig.InfoReliability;
+import org.jetbrains.idea.svn.branchConfig.InfoStorage;
+import org.jetbrains.idea.svn.branchConfig.NewRootBunch;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -108,13 +111,13 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   }
 
   private ConfigurationBean myConfigurationBean = new ConfigurationBean();
-  private final SvnBranchConfigManager myBunch;
+  private final NewRootBunch myBunch;
 
   public SvnBranchConfigurationNew get(@NotNull final VirtualFile vcsRoot) throws VcsException {
     return myBunch.getConfig(vcsRoot);
   }
 
-  public SvnBranchConfigManager getSvnBranchConfigManager() {
+  public NewRootBunch getSvnBranchConfigManager() {
     return myBunch;
   }
 
@@ -149,11 +152,10 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     private final Project myProject;
     private final VirtualFile myRoot;
     private final ProgressManagerQueue myQueue;
-    private final SvnBranchConfigManager myBunch;
+    private final NewRootBunch myBunch;
     private boolean myAll;
 
-    public BranchesPreloader(Project project, @NotNull final SvnBranchConfigManager bunch, VirtualFile root,
-                             final ProgressManagerQueue queue) {
+    public BranchesPreloader(Project project, @NotNull final NewRootBunch bunch, VirtualFile root, final ProgressManagerQueue queue) {
       myBunch = bunch;
       myProject = project;
       myRoot = root;

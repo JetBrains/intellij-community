@@ -32,10 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
-import org.jetbrains.idea.svn.branchConfig.InfoReliability;
-import org.jetbrains.idea.svn.branchConfig.InfoStorage;
-import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigManager;
-import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
+import org.jetbrains.idea.svn.branchConfig.*;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.SVNURL;
@@ -59,7 +56,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
   private JList myLocationList;
   private JPanel myListPanel;
   private JLabel myErrorPrompt;
-  private final SvnBranchConfigManager mySvnBranchConfigManager;
+  private final NewRootBunch mySvnBranchConfigManager;
   private final VirtualFile myRoot;
 
   public BranchConfigurationDialog(@NotNull final Project project,
