@@ -288,6 +288,13 @@
             <option name="TAB_SIZE" value="8" />
           </indentOptions>
         </codeStyleSettings>
+        <codeStyleSettings language="jet">
+          <indentOptions>
+            <option name="INDENT_SIZE" value="2"/>
+            <option name="CONTINUATION_INDENT_SIZE" value="4"/>
+            <option name="TAB_SIZE" value="2"/>
+          </indentOptions>
+        </codeStyleSettings>
         <codeStyleSettings language="ruby">
           <option name="KEEP_LINE_BREAKS" value="false" />
           <option name="PARENT_SETTINGS_INSTALLED" value="true" />
