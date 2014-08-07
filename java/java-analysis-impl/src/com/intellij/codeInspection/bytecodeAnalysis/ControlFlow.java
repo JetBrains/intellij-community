@@ -826,6 +826,9 @@ class CfgAnalyzer implements Opcodes {
 
   public void analyze(final MethodNode m) throws AnalyzerException {
     n = m.instructions.size();
+    if ((m.access & (ACC_ABSTRACT | ACC_NATIVE)) != 0 || n == 0) {
+      return;
+    }
     insns = m.instructions;
     handlers = (List<TryCatchBlockNode>[]) new List<?>[n];
     subroutines = new Subroutine[n];
