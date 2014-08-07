@@ -186,9 +186,12 @@ public layoutEducational(String classesPath, Set usedJars) {
   def launcher = "${paths.distWin}/bin/pycharm.exe"
   List resourcePaths = ["$ch/community-resources/src",
     "$ch/platform/icons/src",
+    "$pythonCommunityHome/resources",
     "$pythonEduHome/resources"]
-  buildWinLauncher("$ch", "$ch/bin/WinLauncher/WinLauncher.exe", launcher,
+  buildWinLauncher(ch, "$ch/bin/WinLauncher/WinLauncher.exe", launcher,
                    appInfo, "$pythonEduHome/build/pycharm_edu_launcher.properties", system_selector, resourcePaths)
+  //signExe(launcher)
+  executeExternalAnt(["dirName": "${paths.distWin}/bin", "fileName": "pycharm.exe"], "$home/build/signBuild.xml")
 
   buildWinZip("${paths.artifacts}/pycharmPE-${buildNumber}.zip", [paths.distAll, paths.distWin])
 
