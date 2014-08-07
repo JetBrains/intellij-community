@@ -415,9 +415,13 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
       }
     }
 
-    final LookupItem item = PsiTypeLookupItem.createLookupItem(GenericsUtil.eliminateWildcards(type), place, isDiamond, ChooseTypeExpression.IMPORT_FIXER);
-    if (item.getObject() instanceof PsiClass) {
+    final PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(GenericsUtil.eliminateWildcards(type), place, isDiamond, ChooseTypeExpression.IMPORT_FIXER);
+    Object object = item.getObject();
+    if (object instanceof PsiClass) {
       JavaCompletionUtil.setShowFQN(item);
+      if (((PsiClass)object).hasModifierProperty(PsiModifier.ABSTRACT)) {
+        item.setIndicateAnonymous(true);
+      }
     }
     item.setInsertHandler(new AfterNewClassInsertHandler((PsiClassType)type, true));
     return item;
