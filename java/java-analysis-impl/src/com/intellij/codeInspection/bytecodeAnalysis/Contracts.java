@@ -198,7 +198,7 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
     for (int i = 0; i < nextInsnIndices.length; i++) {
       int nextInsnIndex = nextInsnIndices[i];
       Frame<BasicValue> nextFrame1 = nextFrame;
-      if (controlFlow.errorTransitions.contains(new Edge(insnIndex, nextInsnIndex))) {
+      if (controlFlow.errors[nextInsnIndex] && controlFlow.errorTransitions.contains(new Edge(insnIndex, nextInsnIndex))) {
         nextFrame1 = new Frame<BasicValue>(frame);
         nextFrame1.clearStack();
         nextFrame1.push(new BasicValue(Type.getType("java/lang/Throwable")));

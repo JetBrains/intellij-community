@@ -389,12 +389,14 @@ final class ControlFlowGraph {
   final String className;
   final MethodNode methodNode;
   final int[][] transitions;
+  final boolean[] errors;
   final Set<Edge> errorTransitions;
 
-  ControlFlowGraph(String className, MethodNode methodNode, int[][] transitions, Set<Edge> errorTransitions) {
+  ControlFlowGraph(String className, MethodNode methodNode, int[][] transitions, boolean[] errors, Set<Edge> errorTransitions) {
     this.className = className;
     this.methodNode = methodNode;
     this.transitions = transitions;
+    this.errors = errors;
     this.errorTransitions = errorTransitions;
   }
 
@@ -422,11 +424,13 @@ final class ControlFlowBuilder extends CfgAnalyzer {
   final MethodNode methodNode;
   final TIntArrayList[] transitions;
   final Set<Edge> errorTransitions;
+  private final boolean[] errors;
 
   ControlFlowBuilder(String className, MethodNode methodNode) {
     this.className = className;
     this.methodNode = methodNode;
     transitions = new TIntArrayList[methodNode.instructions.size()];
+    errors = new boolean[methodNode.instructions.size()];
     for (int i = 0; i < transitions.length; i++) {
       transitions[i] = new TIntArrayList();
     }
@@ -441,7 +445,7 @@ final class ControlFlowBuilder extends CfgAnalyzer {
     for (int i = 0; i < resultTransitions.length; i++) {
       resultTransitions[i] = transitions[i].toNativeArray();
     }
-    return new ControlFlowGraph(className, methodNode, resultTransitions, errorTransitions);
+    return new ControlFlowGraph(className, methodNode, resultTransitions, errors, errorTransitions);
   }
 
   @Override
@@ -456,6 +460,7 @@ final class ControlFlowBuilder extends CfgAnalyzer {
     if (!transitions[insn].contains(successor)) {
       transitions[insn].add(successor);
       errorTransitions.add(new Edge(insn, successor));
+      errors[successor] = true;
     }
     return true;
   }
