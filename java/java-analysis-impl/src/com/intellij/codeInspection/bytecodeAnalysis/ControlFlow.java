@@ -33,7 +33,8 @@ final class cfg {
   }
 
   static boolean[] resultOrigins(String className, MethodNode methodNode) throws AnalyzerException {
-    Frame<SourceValue>[] frames = new Analyzer<SourceValue>(new MinimalOriginInterpreter()).analyze(className, methodNode);
+    Type returnType = Type.getReturnType(methodNode.desc);
+    Frame<SourceValue>[] frames = new Analyzer<SourceValue>(new MinimalOriginInterpreter(isReferenceType(returnType))).analyze(className, methodNode);
     InsnList insns = methodNode.instructions;
     boolean[] result = new boolean[insns.size()];
     for (int i = 0; i < frames.length; i++) {
@@ -59,6 +60,12 @@ final class cfg {
     return result;
   }
 
+  static boolean isReferenceType(Type tp) {
+    int sort = tp.getSort();
+    return sort == Type.OBJECT || sort == Type.ARRAY;
+  }
+
+
   static boolean[] leakingParameters(String className, MethodNode methodNode) throws AnalyzerException {
     Frame<ParamsValue>[] frames = new Analyzer<ParamsValue>(new ParametersUsage(methodNode)).analyze(className, methodNode);
     InsnList insns = methodNode.instructions;
@@ -81,9 +88,14 @@ final class cfg {
   }
 
   static class MinimalOriginInterpreter extends SourceInterpreter {
+    //static final SourceValue[] sourceVals = {new SourceValue(1), new SourceValue(2)};
+
+    private final boolean isReference;
     private int mergedCount = 0;
 
-    static final SourceValue[] sourceVals = {new SourceValue(1), new SourceValue(2)};
+    MinimalOriginInterpreter(boolean isReference) {
+      this.isReference = isReference;
+    }
 
     @Override
     public SourceValue newOperation(AbstractInsnNode insn) {
@@ -91,12 +103,19 @@ final class cfg {
       switch (insn.getOpcode()) {
         case ICONST_0:
         case ICONST_1:
+          if (!isReference) {
+            return result;
+          }
+          return new SourceValue(result.getSize());
         case ACONST_NULL:
         case LDC:
         case NEW:
-          return result;
+          if (isReference) {
+            return result;
+          }
+          return new SourceValue(result.getSize());
         default:
-          return sourceVals[result.getSize() - 1];
+          return new SourceValue(result.getSize());
       }
     }
 
@@ -107,9 +126,11 @@ final class cfg {
         case CHECKCAST:
         case NEWARRAY:
         case ANEWARRAY:
-          return result;
+          if (isReference) {
+            return result;
+          }
         default:
-          return sourceVals[result.getSize() - 1];
+          return new SourceValue(result.getSize());
       }
     }
 
@@ -133,16 +154,45 @@ final class cfg {
         case LAND:
         case LOR:
         case LXOR:
-          return sourceVals[1];
+          return new SourceValue(2);
         default:
-          return sourceVals[0];
+          return new SourceValue(1);
       }
     }
 
     @Override
     public SourceValue ternaryOperation(AbstractInsnNode insn, SourceValue value1, SourceValue value2, SourceValue value3) {
-      return sourceVals[0];
+      return new SourceValue(1);
     }
+
+
+    @Override
+    public SourceValue naryOperation(AbstractInsnNode insn, List<? extends SourceValue> values) {
+      int opCode = insn.getOpcode();
+      switch (opCode) {
+        case INVOKESTATIC:
+        case INVOKESPECIAL:
+        case INVOKEVIRTUAL:
+        case INVOKEINTERFACE:
+          MethodInsnNode mNode = (MethodInsnNode)insn;
+          Type retType = Type.getReturnType(mNode.desc);
+          if (isReference && ((retType.getSort() == Type.OBJECT) || (retType.getSort() == Type.ARRAY))) {
+            return new SourceValue(1, insn);
+          }
+          if (!isReference && Type.BOOLEAN_TYPE.equals(retType)) {
+            return new SourceValue(1, insn);
+          }
+          return new SourceValue(retType.getSize());
+        case MULTIANEWARRAY:
+          return new SourceValue(1, insn);
+        default:
+          InvokeDynamicInsnNode dNode = (InvokeDynamicInsnNode) insn;
+          retType = Type.getReturnType(dNode.desc);
+          return new SourceValue(retType.getSize());
+      }
+    }
+
+
 
     @Override
     public SourceValue copyOperation(AbstractInsnNode insn, SourceValue value) {
