@@ -22,6 +22,7 @@ includeTargets << new File("$home/community/build/scripts/libLicenses.gant")
 includeTargets << new File("$home/build/scripts/ultimate_utils.gant")
 
 requireProperty("buildNumber", requireProperty("build.number", snapshot))
+setProperty("buildName", "PE-$buildNumber")
 setProperty("ch", "$home/community")
 setProperty("pythonCommunityHome", "$ch/python")
 setProperty("pythonEduHome", "$ch/python/edu")
@@ -140,7 +141,7 @@ target('default': "Build artifacts") {
   layoutEducational("${paths.sandbox}/classes/production", usedJars)
 
 
-  def extraArgs = ["build.code": "pycharmEDU-${buildNumber}", "build.number": "PE-$buildNumber", "artifacts.path": "${paths.artifacts}"]
+  def extraArgs = ["build.code": "pycharm${buildName}", "build.number": "PE-$buildNumber", "artifacts.path": "${paths.artifacts}"]
   signMacZip("pycharm", extraArgs)
   buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs)
 
@@ -189,17 +190,17 @@ public layoutEducational(String classesPath, Set usedJars) {
   //signExe(launcher)
   executeExternalAnt(["dirName": "${paths.distWin}/bin", "fileName": "pycharm.exe"], "$home/build/signBuild.xml")
 
-  buildWinZip("${paths.artifacts}/pycharmPE-${buildNumber}.zip", [paths.distAll, paths.distWin])
+  buildWinZip("${paths.artifacts}/pycharm${buildName}.zip", [paths.distAll, paths.distWin])
 
   buildNSIS([paths.distAll, paths.distWin],
             "$pythonEduHome/build/strings.nsi", "$pythonEduHome/build/paths.nsi",
-            "pycharmPE", false, true, ".py", system_selector)
+            "pycharm${buildName}", false, true, ".py", system_selector)
 
-  String tarRoot = isEap() ? "pycharm-edu-$buildNumber" : "pycharm-edu-${p("component.version.major")}.${p("component.version.minor")}"
-  buildTarGz(tarRoot, "$paths.artifacts/pycharmPE-${buildNumber}.tar", [paths.distAll, paths.distUnix])
+  String tarRoot = isEap() ? "pycharm-pe-$buildNumber" : "pycharm-pe-${p("component.version.major")}.${p("component.version.minor")}"
+  buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix])
 
   String macAppRoot = isEap() ? "PyCharm PE ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm PE.app/Contents"
-  buildMacZip(macAppRoot, "${paths.artifacts}/pycharmPE-${buildNumber}.sit", [paths.distAll], paths.distMac)
+  buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll], paths.distMac)
 }
 
 private layoutPlugins(layouts) {
