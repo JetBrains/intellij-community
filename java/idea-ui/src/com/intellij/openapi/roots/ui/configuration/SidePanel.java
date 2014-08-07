@@ -20,10 +20,7 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SeparatorWithText;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.navigation.History;
@@ -118,9 +115,18 @@ public class SidePanel extends JPanel {
           @Override
           protected void paintComponent(Graphics g) {
             if (Registry.is("ide.new.project.settings")) {
-              g.setColor(new JBColor(POPUP_SEPARATOR_FOREGROUND, Gray._80));
+              final JBColor separatorColor = new JBColor(POPUP_SEPARATOR_FOREGROUND, Gray._80);
+              g.setColor(separatorColor);
               if ("--".equals(getCaption())) {
-                g.drawLine(0, getHeight()/ 2, getWidth(), getHeight() /2);
+                final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+                final int h = getHeight() / 2;
+                g.drawLine(30, h, getWidth() - 30, h);
+                ((Graphics2D)g).setPaint(new GradientPaint(5, h, ColorUtil.toAlpha(separatorColor, 0), 30, h, separatorColor));
+                g.drawLine(5, h, 30, h);
+                ((Graphics2D)g).setPaint(
+                  new GradientPaint(getWidth() - 5, h, ColorUtil.toAlpha(separatorColor, 0), getWidth() - 30, h, separatorColor));
+                g.drawLine(getWidth() - 5, h, getWidth() - 30, h);
+                config.restore();
                 return;
               }
               Rectangle viewR = new Rectangle(0, getVgap(), getWidth() - 1, getHeight() - getVgap() - 1);
