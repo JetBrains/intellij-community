@@ -20,8 +20,8 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 setProperty("home", guessHome(this))
 
 includeTargets << new File("${guessHome(this as Script)}/build/scripts/utils.gant")
-includeTargets << new File("${guessHome(this)}/build/scripts/ultimate_utils.gant")
-includeTargets << new File("${guessHome(this)}/build/scripts/libLicenses.gant")
+includeTargets << new File("$home/build/scripts/ultimate_utils.gant")
+includeTargets << new File("$home/build/scripts/libLicenses.gant")
 
 requireProperty("buildNumber", requireProperty("build.number", snapshot))
 setProperty("ch", "$home/community")
