@@ -221,7 +221,7 @@ abstract class Analysis<Res> {
   final Res myIdentity;
 
   final Deque<PendingAction<Res>> pending = new LinkedList<PendingAction<Res>>();
-  final TIntObjectHashMap<List<State>> computed = new TIntObjectHashMap<List<State>>();
+  final protected List<State>[] computed;
   final TIntObjectHashMap<Res> results = new TIntObjectHashMap<Res>();
   final Key aKey;
 
@@ -242,6 +242,7 @@ abstract class Analysis<Res> {
     method = new Method(controlFlow.className, methodNode.name, methodNode.desc);
     dfsTree = richControlFlow.dfsTree;
     aKey = new Key(method, direction, stable);
+    computed = (List<State>[]) new List[controlFlow.transitions.length];
     myIdentity = identity();
   }
 
@@ -295,12 +296,7 @@ abstract class Analysis<Res> {
           State state = makeResult.state;
           int insnIndex = state.conf.insnIndex;
           results.put(state.index, result);
-          List<State> thisComputed = computed.get(insnIndex);
-          if (thisComputed == null) {
-            thisComputed = new ArrayList<State>();
-            computed.put(insnIndex, thisComputed);
-          }
-          thisComputed.add(state);
+          addComputed(insnIndex, state);
         }
       }
       else if (action instanceof ProceedState) {
@@ -320,16 +316,11 @@ abstract class Analysis<Res> {
         }
         if (fold) {
           results.put(state.index, myIdentity);
-          List<State> thisComputed = computed.get(insnIndex);
-          if (thisComputed == null) {
-            thisComputed = new ArrayList<State>();
-            computed.put(insnIndex, thisComputed);
-          }
-          thisComputed.add(state);
+          addComputed(insnIndex, state);
         }
         else {
           State baseState = null;
-          List<State> thisComputed = computed.get(insnIndex);
+          List<State> thisComputed = computed[insnIndex];
           if (thisComputed != null) {
             for (State prevState : thisComputed) {
               if (stateEquiv(state, prevState)) {
@@ -399,5 +390,14 @@ abstract class Analysis<Res> {
     }
     result.add(x);
     return result;
+  }
+
+  protected void addComputed(int i, State s) {
+    List<State> states = computed[i];
+    if (states == null) {
+      states = new ArrayList<State>();
+      computed[i] = states;
+    }
+    states.add(s);
   }
 }

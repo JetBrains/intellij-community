@@ -93,7 +93,7 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
 
     if (interpreter.deReferenced) {
       results.put(stateIndex, new Final<Key, Value>(Value.Bot));
-      computed.put(insnIndex, append(computed.get(insnIndex), state));
+      addComputed(insnIndex, state);
       return;
     }
 
@@ -108,28 +108,28 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
         BasicValue stackTop = popValue(frame);
         if (FalseValue == stackTop) {
           results.put(stateIndex, new Final<Key, Value>(Value.False));
-          computed.put(insnIndex, append(computed.get(insnIndex), state));
+          addComputed(insnIndex, state);
         }
         else if (TrueValue == stackTop) {
           results.put(stateIndex, new Final<Key, Value>(Value.True));
-          computed.put(insnIndex, append(computed.get(insnIndex), state));
+          addComputed(insnIndex, state);
         }
         else if (NullValue == stackTop) {
           results.put(stateIndex, new Final<Key, Value>(Value.Null));
-          computed.put(insnIndex, append(computed.get(insnIndex), state));
+          addComputed(insnIndex, state);
         }
         else if (stackTop instanceof NotNullValue) {
           results.put(stateIndex, new Final<Key, Value>(Value.NotNull));
-          computed.put(insnIndex, append(computed.get(insnIndex), state));
+          addComputed(insnIndex, state);
         }
         else if (stackTop instanceof ParamValue) {
           results.put(stateIndex, new Final<Key, Value>(inValue));
-          computed.put(insnIndex, append(computed.get(insnIndex), state));
+          addComputed(insnIndex, state);
         }
         else if (stackTop instanceof CallResultValue) {
           Set<Key> keys = ((CallResultValue) stackTop).inters;
           results.put(stateIndex, new Pending<Key, Value>(Collections.singleton(new Product<Key, Value>(Value.Top, keys))));
-          computed.put(insnIndex, append(computed.get(insnIndex), state));
+          addComputed(insnIndex, state);
         }
         else {
           earlyResult = new Final<Key, Value>(Value.Top);
@@ -137,7 +137,7 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
         return;
       case ATHROW:
         results.put(stateIndex, new Final<Key, Value>(Value.Bot));
-        computed.put(insnIndex, append(computed.get(insnIndex), state));
+        addComputed(insnIndex, state);
         return;
       default:
     }

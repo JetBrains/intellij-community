@@ -195,7 +195,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
     if (subResult == NPE) {
       results.put(stateIndex, NPE);
-      computed.put(insnIndex, append(computed.get(insnIndex), state));
+      addComputed(insnIndex, state);
       return;
     }
 
@@ -211,7 +211,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
           earlyResult = Return;
         } else {
           results.put(stateIndex, Return);
-          computed.put(insnIndex, append(computed.get(insnIndex), state));
+          addComputed(insnIndex, state);
         }
         return;
       default:
@@ -223,7 +223,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
       } else {
         results.put(stateIndex, Identity);
       }
-      computed.put(insnIndex, append(computed.get(insnIndex), state));
+      addComputed(insnIndex, state);
       return;
     }
 
