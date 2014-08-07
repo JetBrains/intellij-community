@@ -681,6 +681,24 @@ def staticOnWrapper() {
 ''', 'List')
   }
 
+  void testClassTest() {
+    assertScript('''
+class DelegatesToTest {
+    void create(@DelegatesTo.Target Class type, @DelegatesTo(genericTypeIndex = 0, strategy = Closure.OWNER_FIRST) Closure closure) {}
+
+
+    void doit() {
+        create(Person) {
+            a<caret>ge = 30 // IDEA 12.1.6 can resolve this property, 13.1.3 can't
+        }
+    }
+}
+
+class Person {
+    int age
+}
+''', 'Person')
+  }
 
   void assertScript(String text, String resolvedClass) {
     myFixture.configureByText('_a.groovy', text)
