@@ -16,10 +16,10 @@
 import org.jetbrains.jps.LayoutInfo
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
-includeTargets << new File("${guessHome(this as Script)}/build/scripts/utils.gant")
 setProperty("home", getHome())
+includeTargets << new File("$home/community/build/scripts/utils.gant")
+includeTargets << new File("$home/community/build/scripts/libLicenses.gant")
 includeTargets << new File("$home/build/scripts/ultimate_utils.gant")
-includeTargets << new File("$home/build/scripts/libLicenses.gant")
 
 requireProperty("buildNumber", requireProperty("build.number", snapshot))
 setProperty("ch", "$home/community")
@@ -37,8 +37,9 @@ setProperty("pluginFilter", new File("$pythonEduHome/build/plugin-list.txt").rea
 
 private String getHome(){
   // current file is supposed to be at build/scripts/*.gant path
-  String uri = requireProperty("gant.file")
-  return new File(new URI(uri).getSchemeSpecificPart()).getParentFile().getParentFile().getParentFile().getParent()
+  String uri = this["gant.file"]
+  print ("uri: " + uri )
+  return new File(new URI(uri).getSchemeSpecificPart()).getParentFile().getParentFile().getParentFile().getParentFile().getParentFile()
 }
 
 private List<String> pycharmPlatformApiModules() {
