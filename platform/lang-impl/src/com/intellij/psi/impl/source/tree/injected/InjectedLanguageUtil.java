@@ -93,7 +93,12 @@ public class InjectedLanguageUtil {
   public static Place getShreds(@NotNull FileViewProvider viewProvider) {
     if (!(viewProvider instanceof InjectedFileViewProvider)) return null;
     InjectedFileViewProvider myFileViewProvider = (InjectedFileViewProvider)viewProvider;
-    return ((DocumentWindowImpl)myFileViewProvider.getDocument()).getShreds();
+    return getShreds(myFileViewProvider.getDocument());
+  }
+
+  @NotNull
+  public static Place getShreds(@NotNull DocumentWindow document) {
+    return ((DocumentWindowImpl)document).getShreds();
   }
 
   public static void enumerate(@NotNull DocumentWindow documentWindow,
