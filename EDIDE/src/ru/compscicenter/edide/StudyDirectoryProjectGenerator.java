@@ -4,6 +4,8 @@ import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParser;
+import com.intellij.facet.ui.FacetEditorValidator;
+import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.lang.javascript.boilerplate.GithubDownloadUtil;
 import com.intellij.openapi.application.PathManager;
@@ -32,9 +34,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * User: lia
- */
+
 public class StudyDirectoryProjectGenerator extends PythonProjectGenerator implements DirectoryProjectGenerator {
   private static final Logger LOG = Logger.getInstance(StudyDirectoryProjectGenerator.class.getName());
   private static final String REPO_URL = "https://github.com/medvector/initial-python-course/archive/master.zip";
@@ -49,6 +49,7 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
   private Map<CourseInfo, File> myCourses = new HashMap<CourseInfo, File>();
   private File mySelectedCourseFile;
   private Project myProject;
+  public ValidationResult myValidationResult = new ValidationResult("selected course is not valid");
 
   @Nls
   @NotNull
@@ -56,6 +57,7 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
   public String getName() {
     return "Study project";
   }
+
 
   public void setCourses(Map<CourseInfo, File> courses) {
     myCourses = courses;
@@ -267,7 +269,11 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
   @NotNull
   @Override
   public ValidationResult validate(@NotNull String s) {
-    return ValidationResult.OK;
+    return myValidationResult;
+  }
+
+  public void setValidationResult(ValidationResult validationResult) {
+    myValidationResult = validationResult;
   }
 
   /**
@@ -357,6 +363,15 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
   @Nullable
   @Override
   public JComponent getSettingsPanel(File baseDir) throws ProcessCanceledException {
-    return new StudyNewProjectPanel(myProject, this, null).getContentPanel();
+    StudyNewProjectPanel settingsPanel = new StudyNewProjectPanel(this);
+    settingsPanel.registerValidators(new FacetValidatorsManager() {
+      public void registerValidator(FacetEditorValidator validator, JComponent... componentsToWatch) {
+        throw new UnsupportedOperationException();
+      }
+      public void validate() {
+        fireStateChanged();
+      }
+    });
+    return settingsPanel.getContentPanel();
   }
 }

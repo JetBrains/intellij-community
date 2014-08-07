@@ -1,5 +1,7 @@
 package ru.compscicenter.edide.ui;
 
+import com.intellij.facet.ui.FacetValidatorsManager;
+import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
@@ -23,25 +25,20 @@ import java.util.Set;
  * data: 7/31/14.
  */
 public class StudyNewProjectPanel{
-  private final StudyNewProjectDialog myDialog;
   private Set<CourseInfo> myAvailableCourses = new HashSet<CourseInfo>();
   private JComboBox myCoursesComboBox;
   private JButton myBrowseButton;
   private JButton myRefreshButton;
   private JPanel myContentPanel;
-  private JLabel myErrorLabel;
-  private JPanel myErrorPanel;
   private JLabel myAuthorLabel;
   private JLabel myDescriptionLabel;
-  private final Project myProject;
   private final StudyDirectoryProjectGenerator myGenerator;
   private static final String CONNECTION_ERROR = "<html>Failed to download courses.<br>Check your Internet connection.</html>";
   private static final String INVALID_COURSE = "Selected course is invalid";
+  private FacetValidatorsManager myValidationManager;
 
-  public StudyNewProjectPanel(final Project project, StudyDirectoryProjectGenerator generator, StudyNewProjectDialog dialog) {
-    myProject = project;
+  public StudyNewProjectPanel(StudyDirectoryProjectGenerator generator) {
     myGenerator = generator;
-    myDialog = dialog;
     Map<CourseInfo, File> courses = myGenerator.getCourses();
     if (courses.isEmpty()) {
       setError(CONNECTION_ERROR);
@@ -109,22 +106,25 @@ public class StudyNewProjectPanel{
   }
 
   private void setError(String errorMessage) {
-    myErrorPanel.setVisible(true);
-    myErrorLabel.setText(errorMessage);
-    if (myDialog != null) {
-      myDialog.enableOK(false);
+    myGenerator.setValidationResult(new ValidationResult(errorMessage));
+    if (myValidationManager != null) {
+      myValidationManager.validate();
     }
   }
 
   private void setOK() {
-    myErrorPanel.setVisible(false);
-    if (myDialog != null) {
-      myDialog.enableOK(true);
+    myGenerator.setValidationResult(ValidationResult.OK);
+    if (myValidationManager != null) {
+      myValidationManager.validate();
     }
   }
 
   public JPanel getContentPanel() {
     return myContentPanel;
+  }
+
+  public void registerValidators(final FacetValidatorsManager manager) {
+    myValidationManager = manager;
   }
 
 
